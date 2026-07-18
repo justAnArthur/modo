@@ -10,7 +10,7 @@
 // esbuild on the server, dynamic-importing the result, and calling it.
 
 import * as React from 'react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import * as esbuild from 'esbuild'
 import type { ParsedExample } from '../../exports/tsdoc'
 
@@ -79,16 +79,21 @@ export function Markdown({ source }: { source: string }): React.ReactNode {
 
 const cache = new Map<string, (Component: React.ComponentType<any>) => React.ReactNode>()
 
-async function compileExample(
+// synchronous compile. esbuild's `buildSync` is the only way to do
+// esbuild bundling without an async step. we then strip the import +
+// export statements esbuild emits (we pass `React` in as a parameter
+// instead) and invoke the body via `new Function`.
+//
+// the jsx transform is the classic `React.createElement` one (no
+// jsx-runtime imports), so the only external dep is `react`. the
+// result is a function `(Component) => ReactNode` that the renderer
+// calls synchronously during SSR and on every client render.
+function compileExampleSync(
   code: string,
   componentName: string,
-  factoryPath: string,
-): Promise<(Component: React.ComponentType<any>) => React.ReactNode> {
-  const key = `${factoryPath}:${componentName}:${code}`
+): (Component: React.ComponentType<any>) => React.ReactNode {
+  const key = `${componentName}:${code}`
   if (cache.has(key)) return cache.get(key)!
-  // wrap the code in a function. the user's code references the component
-  // by its real name; we destructure the parameter into that name so the
-  // user's JSX works as-is.
   const wrapped = `
 import * as React from 'react'
 export default function render(Component) {
@@ -96,32 +101,38 @@ export default function render(Component) {
   return (${code})
 }
 `
-  const result = await esbuild.build({
+  const result = esbuild.buildSync({
     stdin: { contents: wrapped, loader: 'tsx', resolveDir: process.cwd() },
     bundle: true,
     write: false,
     format: 'esm',
-    platform: 'browser',
-    jsx: 'automatic',
+    platform: 'neutral',
+    // classic transform: turns <Foo /> into React.createElement(Foo, ...).
+    // avoids the jsx-runtime import so the only external is react.
+    jsx: 'transform',
     target: 'es2020',
-    external: ['react', 'react-dom', 'react/jsx-runtime', 'modo-atomic-ui'],
+    external: ['react', 'react-dom', 'modo-atomic-ui'],
     logLevel: 'silent',
   })
-  const out = result.outputFiles?.[0]?.text
+  const out = result.outputFiles?.[0]?.text ?? ''
   if (!out) throw new Error('esbuild produced no output for example code')
-  // write to a temp .mjs and dynamic-import it.
-  const tmp = `${factoryPath.replace(/[^\w]/g, '_')}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.mjs`
-  const fs = await import('node:fs/promises')
-  await fs.writeFile(tmp, out)
-  try {
-    const mod = await import(tmp)
-    const fn = (mod as { default: (c: React.ComponentType<any>) => React.ReactNode }).default
-    cache.set(key, fn)
-    return fn
-  } finally {
-    // best-effort cleanup
-    setTimeout(() => { fs.unlink(tmp).catch(() => {}) }, 5000)
-  }
+  // strip the import + export statements (which can be multi-line).
+  // esbuild emits `import * as React from "react";` and
+  // `export { render as default };` (the latter can wrap across lines).
+  // we pass React in as a parameter and call the function directly.
+  const body = out
+    .replace(/^\s*import\s+[\s\S]*?;[\t ]*$/gm, '')           // import lines
+    .replace(/export\s*\{[\s\S]*?\}\s*;?/g, '')              // export {} blocks
+    .replace(/export\s+default\s+/g, '')                     // `export default `
+    .trim()
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
+  const fn = new Function('React', 'Component', `${body}\nreturn render(Component);`) as (
+    React: any,
+    Component: React.ComponentType<any>,
+  ) => React.ReactNode
+  const wrapped2 = (Component: React.ComponentType<any>) => fn(React, Component)
+  cache.set(key, wrapped2)
+  return wrapped2
 }
 
 // ── public component ────────────────────────────────────────────────
@@ -133,27 +144,25 @@ interface ExampleBlockProps {
 }
 
 export function ExampleBlock({ example, componentName, Component }: ExampleBlockProps) {
-  const [rendered, setRendered] = useState<React.ReactNode>(null)
-  const [error, setError] = useState<string | null>(null)
   const [showCode, setShowCode] = useState(false)
-  const factoryPath = typeof window !== 'undefined' ? window.location.pathname : 'ssr'
 
-  useEffect(() => {
-    let cancelled = false
-    compileExample(example.code, componentName, factoryPath)
-      .then((fn) => {
-        if (!cancelled) setRendered(fn(Component))
-      })
-      .catch((e) => {
-        if (!cancelled) setError((e as Error).message)
-      })
-    return () => { cancelled = true }
-  }, [example.code, componentName, factoryPath, Component])
+  // compile synchronously. the function is cached so subsequent renders
+  // (and re-renders after client-side hydration) are O(1).
+  let rendered: React.ReactNode
+  let error: string | null = null
+  try {
+    const fn = compileExampleSync(example.code, componentName)
+    rendered = fn(Component)
+  } catch (e) {
+    error = (e as Error).message
+  }
 
   return (
     <div data-aui="example-card">
       <div data-aui="example-card-stage">
-        {rendered ?? (error ? <code data-aui="example-error">{error}</code> : <span data-aui="example-loading">…</span>)}
+        {error
+          ? <code data-aui="example-error">{error}</code>
+          : rendered ?? <span data-aui="example-loading">…</span>}
       </div>
       <div data-aui="example-card-meta">
         <span data-aui="example-card-name">{example.name}</span>
