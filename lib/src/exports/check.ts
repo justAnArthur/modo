@@ -1,30 +1,39 @@
-// `modo check` — validate the user's project against the zod schemas.
-// config + tokens only for now; item validation is a future phase.
+// `modo check` — validate the user's project. the new world:
+//   - tokens are .css files (parsed by the same code the runtime plugin
+//     uses, but pulled into a helper exported from the lib so we can
+//     reuse it without importing the vite plugin).
+//   - items are .tsx files with a default export + TSDoc (parsed by
+//     parseItemFile/parseItemSource).
+//   - modo.config.ts is unchanged — it's still a TS file with a
+//     default export.
+//
+// issues are reported with the file + a single line of text, so the
+// CLI can print them like "✗ <file>" + "  <message>".
 
 import { z } from 'zod'
 import { readdir, readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import * as esbuild from 'esbuild'
 
-import {
-  siteConfigSchema,
-  colorGroupSchema,
-  surfaceGroupSchema,
-  genericTokenGroupSchema,
-  type TokenGroup,
-} from './schema'
+import { siteConfigSchema } from './schema'
+import { parseItemSource } from './tsdoc'
+import { parseCss, groupForVar, buildGroup, inferRole, inferSemantic } from '../runtime/plugins/tokens'
 
 interface Issue {
   file: string
   message: string
 }
 
+function flattenIssues(err: z.ZodError): string[] {
+  return err.issues.map((i) => `${i.path.join('.') || '<root>'}: ${i.message}`)
+}
+
 async function bundleTs(filePath: string, here: string): Promise<unknown> {
   const result = await esbuild.build({
     entryPoints: [filePath],
     bundle: true,
-    format: 'esm',
     write: false,
+    format: 'esm',
     platform: 'node',
     target: 'node20',
     external: ['react', 'react-dom', 'modo-atomic-ui'],
@@ -33,26 +42,43 @@ async function bundleTs(filePath: string, here: string): Promise<unknown> {
   })
   const code = result.outputFiles?.[0]?.text
   if (!code) throw new Error('esbuild produced no output')
-  const tmp = resolve(here, `.modo-check-tmp-${Date.now()}.mjs`)
+  const tmp = resolve(here, `.modo-check-tmp-${Date.now()}-${Math.random().toString(36).slice(2)}.mjs`)
   const fs = await import('node:fs/promises')
   await fs.writeFile(tmp, code)
-  const mod = await import(tmp)
-  await fs.unlink(tmp).catch(() => {})
-  return (mod as { default: unknown }).default
+  try {
+    const mod = await import(tmp)
+    return (mod as { default: unknown }).default
+  } finally {
+    await fs.unlink(tmp).catch(() => {})
+  }
 }
 
-function flattenIssues(err: z.ZodError): string[] {
-  return err.issues.map((i) => `${i.path.join('.') || '<root>'}: ${i.message}`)
-}
-
-const GROUP_TO_SCHEMA: Partial<Record<TokenGroup, z.ZodTypeAny>> = {
-  colors: colorGroupSchema,
-  surfaces: surfaceGroupSchema,
-  typography: genericTokenGroupSchema,
-  spacing: genericTokenGroupSchema,
-  radius: genericTokenGroupSchema,
-  shadows: genericTokenGroupSchema,
-  motion: genericTokenGroupSchema,
+// minimal validation of a token group's CSS — not a full schema, just
+// shape checks. CSS is loose by nature, but the lib downstream expects
+// specific keys per group.
+function validateTokenGroup(group: string, vars: { name: string; value: string; line: number }[]): string[] {
+  const issues: string[] = []
+  if (vars.length === 0) {
+    // surfaces.css is allowed to be empty (the lib synthesizes the 8 levels).
+    if (group !== 'surfaces') issues.push(`no --vars found`)
+    return issues
+  }
+  for (const v of vars) {
+    if (v.name === '') {
+      issues.push(`line ${v.line}: empty --var name`)
+      continue
+    }
+    // tokens with an enum-like role (e.g. --motion-fast) should have a value
+    // parseable as a duration / color / length. we keep this loose — the
+    // lib's runtime is tolerant.
+    if (group === 'spacing' && v.value && !/^-?\d+(\.\d+)?(px|rem|em|%)?$/.test(v.value.trim())) {
+      issues.push(`line ${v.line}: --${v.name} value "${v.value}" is not a length`)
+    }
+    if (group === 'motion' && v.name.startsWith('motion-') && v.value && !/^-?\d+(\.\d+)?ms$/.test(v.value.trim())) {
+      issues.push(`line ${v.line}: --${v.name} value "${v.value}" is not a duration`)
+    }
+  }
+  return issues
 }
 
 export async function runCheck(cwd: string, libRoot: string): Promise<{ ok: boolean; issues: Issue[] }> {
@@ -70,36 +96,62 @@ export async function runCheck(cwd: string, libRoot: string): Promise<{ ok: bool
     const r = siteConfigSchema.safeParse(config)
     if (!r.success) {
       for (const m of flattenIssues(r.error)) issues.push({ file: configPath, message: m })
-    } else {
-      // 2. validate each token group in ./tokens/
-      const tokensDir = resolve(cwd, 'tokens')
-      let files: string[] = []
+    }
+  }
+
+  // 2. validate each .css in tokens/
+  const tokensDir = resolve(cwd, 'tokens')
+  let tokenFiles: string[] = []
+  try {
+    tokenFiles = await readdir(tokensDir)
+  } catch {
+    // tokens dir missing is OK — the lib synthesizes what it can
+  }
+  for (const f of tokenFiles) {
+    if (!f.endsWith('.css')) {
+      if (f.endsWith('.ts') || f.endsWith('.tsx')) {
+        issues.push({ file: join(tokensDir, f), message: `tokens must be .css files (rename ${f} to ${f.replace(/\.tsx?$/, '.css')})` })
+      }
+      continue
+    }
+    const group = f.replace(/\.css$/, '')
+    const filePath = join(tokensDir, f)
+    let src: string
+    try {
+      src = await readFile(filePath, 'utf-8')
+    } catch (e) {
+      issues.push({ file: filePath, message: `failed to read: ${(e as Error).message}` })
+      continue
+    }
+    const vars = parseCss(src)
+    for (const issue of validateTokenGroup(group, vars)) {
+      issues.push({ file: filePath, message: issue })
+    }
+  }
+
+  // 3. validate each item file (primitives/components/blocks).
+  for (const tier of ['primitives', 'components', 'blocks'] as const) {
+    const tierDir = resolve(cwd, tier)
+    let entries: string[] = []
+    try {
+      entries = await readdir(tierDir, { withFileTypes: true }).then((e) =>
+        e.filter((x) => x.isDirectory()).map((x) => x.name)
+      )
+    } catch { /* tier dir missing — OK */ }
+    for (const id of entries) {
+      const filePath = join(tierDir, id, 'index.tsx')
+      let raw: string
       try {
-        files = await readdir(tokensDir)
+        raw = await readFile(filePath, 'utf-8')
       } catch (e) {
-        issues.push({ file: tokensDir, message: `failed to read: ${(e as Error).message}` })
+        issues.push({ file: filePath, message: `failed to read: ${(e as Error).message}` })
+        continue
       }
-      for (const f of files) {
-        if (!f.endsWith('.ts') && !f.endsWith('.tsx')) continue
-        const group = f.replace(/\.tsx?$/, '') as TokenGroup
-        const schema = GROUP_TO_SCHEMA[group]
-        if (!schema) {
-          issues.push({ file: join(tokensDir, f), message: `unknown token group: ${group}` })
-          continue
-        }
-        const filePath = join(tokensDir, f)
-        let parsed: unknown
-        try {
-          parsed = await bundleTs(filePath, libRoot)
-        } catch (e) {
-          issues.push({ file: filePath, message: `failed to load: ${(e as Error).message}` })
-          continue
-        }
-        const r2 = schema.safeParse(parsed)
-        if (!r2.success) {
-          for (const m of flattenIssues(r2.error)) issues.push({ file: filePath, message: m })
-        }
-      }
+      const parsed = parseItemSource(raw, filePath)
+      for (const err of parsed.errors) issues.push({ file: filePath, message: err })
+      if (!parsed.name) issues.push({ file: filePath, message: 'no default-exported function with a name' })
+      if (!parsed.description) issues.push({ file: filePath, message: 'missing JSDoc description' })
+      if (parsed.examples.length === 0) issues.push({ file: filePath, message: 'no @example blocks' })
     }
   }
 
