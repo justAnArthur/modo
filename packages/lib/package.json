@@ -17,6 +17,12 @@
         "default": "./dist/schema.js"
       }
     },
+    "./surfaces-runtime": {
+      "import": {
+        "types": "./dist/surfaces-runtime.d.ts",
+        "default": "./dist/surfaces-runtime.js"
+      }
+    },
     "./tokens": {
       "import": {
         "types": "./dist/tokens.d.ts",
@@ -27,12 +33,6 @@
       "import": {
         "types": "./dist/surfaces.d.ts",
         "default": "./dist/surfaces.js"
-      }
-    },
-    "./surfaces-runtime": {
-      "import": {
-        "types": "./dist/surfaces-runtime.d.ts",
-        "default": "./dist/surfaces-runtime.js"
       }
     },
     ".": {
@@ -51,6 +51,12 @@
       "import": {
         "types": "./dist/config.d.ts",
         "default": "./dist/config.js"
+      }
+    },
+    "./check": {
+      "import": {
+        "types": "./dist/check.d.ts",
+        "default": "./dist/check.js"
       }
     },
     "./package.json": "./package.json"
