@@ -1,13 +1,9 @@
 import '../../styles/base.css'
 import { tokens, errors as tokensErrors, css as tokensCss } from 'virtual:modo-tokens'
-import { items } from 'virtual:modo-items'
+import { items, byId } from 'virtual:modo-items'
+import { ExampleBlock } from '../../components/example-renderer'
 
-const exampleItems = import.meta.glob<{
-  Component: React.ComponentType<any>
-  meta: { name: string; description?: string; category: string }
-  examples: Array<{ name: string; props?: Record<string, unknown>; children?: string | number }>
-  props: Array<{ name: string; type: string; values?: readonly string[]; default?: unknown; description?: string }>
-}>('../../../../../demo/{primitives,components,blocks}/*/index.tsx', { eager: true })
+const exampleItems = import.meta.glob<any>('../../../../../demo/{primitives,components,blocks}/*/index.tsx', { eager: true })
 
 type Item = (typeof items)[number]
 type Tokens = typeof tokens
@@ -172,32 +168,45 @@ function ItemSection({ item }: { item: Item }) {
       </section>
     )
   }
-  const { Component, examples, props, meta } = mod
+  const Component = mod.Component ?? mod.default
+  const parsed = byId[`${item.category}/${item.id}`]
+  const meta = parsed ?? { name: item.id, description: '' }
+  const propDefs = parsed?.props ?? []
+  const examples = parsed?.examples ?? []
 
   return (
     <section data-aui="section">
       <h2 data-aui="section-title">{item.category} / {item.id}</h2>
       <p style={{ color: 'var(--muted-foreground)', margin: '0 0 16px' }}>
-        <strong style={{ color: 'var(--foreground)' }}>{meta?.name ?? item.id}</strong>
-        {meta?.description && <> — {meta.description}</>}
+        <strong style={{ color: 'var(--foreground)' }}>{meta.name}</strong>
+        {meta.description && <> — {meta.description}</>}
       </p>
       <div data-aui="examples">
-        {(examples ?? []).map((ex: any) => (
-          <ExampleCard
-            key={ex.name}
-            name={ex.name}
-            code={`<Component ${Object.entries(ex.props ?? {}).map(([k, v]) => `${k}="${v}"`).join(' ')} />`}
-          >
-            {Component ? <Component {...(ex.props ?? {})}>{ex.children}</Component> : <span>(no component export)</span>}
-          </ExampleCard>
+        {examples.map((ex: any, i: number) => (
+          <ExampleBlock key={i} example={ex} componentName={meta.name} Component={Component} />
         ))}
       </div>
-      {props && props.length > 0 && (
+      {propDefs.length > 0 && (
         <div style={{ marginTop: 24 }}>
           <h3 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted-foreground)', margin: '0 0 12px' }}>
             props
           </h3>
-          <PropTable props={props} />
+          <table data-aui="prop-table">
+            <thead>
+              <tr><th>prop</th><th>type</th><th>default</th><th>values</th><th>description</th></tr>
+            </thead>
+            <tbody>
+              {propDefs.map((p: any) => (
+                <tr key={p.name}>
+                  <td>{p.name}</td>
+                  <td>{p.type}</td>
+                  <td>{p.default !== undefined ? String(p.default) : '—'}</td>
+                  <td>{p.values ? p.values.join(' · ') : '—'}</td>
+                  <td>{p.description ?? ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
       {item.errors.length > 0 && (
