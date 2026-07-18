@@ -1,39 +1,57 @@
-import { define } from 'modo-atomic-ui/define'
-
-export const meta = define({
-  name: 'Button',
-  description: 'Triggers an action or event.',
-  category: 'primitives',
-})
-
-export function Component(props: {
+/**
+ * Triggers an action or event.
+ *
+ * @example
+ * # Primary
+ *
+ * The main call to action.
+ *
+ * ```tsx
+ * <Button variant="primary">Save</Button>
+ * ```
+ *
+ * @example
+ * # Secondary
+ *
+ * Use for non-destructive actions.
+ *
+ * ```tsx
+ * <Button variant="secondary">Cancel</Button>
+ * ```
+ *
+ * @example
+ * # Ghost
+ *
+ * Use for the least-emphasized action.
+ *
+ * ```tsx
+ * <Button variant="ghost">Skip</Button>
+ * ```
+ *
+ * @example
+ * # Disabled
+ *
+ * ```tsx
+ * <Button disabled>Save</Button>
+ * ```
+ */
+export default function Button({
+  variant = 'primary',
+  size = 'md',
+  disabled,
+  children,
+}: {
+  /** Visual style. @values primary, secondary, ghost */
   variant?: 'primary' | 'secondary' | 'ghost'
+  /** Size. @values sm, md, lg */
   size?: 'sm' | 'md' | 'lg'
+  /** Whether the button is disabled. @default false */
   disabled?: boolean
   children?: React.ReactNode
 }) {
-  const { variant = 'primary', size = 'md', disabled, children } = props
   return (
-    <button
-      data-variant={variant}
-      data-size={size}
-      disabled={disabled}
-      className="modo-button"
-    >
+    <button data-variant={variant} data-size={size} disabled={disabled} className="modo-button">
       {children}
     </button>
   )
 }
-
-export const examples = [
-  { name: 'Primary',   props: { variant: 'primary'   }, children: 'Save' },
-  { name: 'Secondary', props: { variant: 'secondary' }, children: 'Cancel' },
-  { name: 'Ghost',     props: { variant: 'ghost'     }, children: 'Skip' },
-  { name: 'Disabled',  props: { variant: 'primary', disabled: true }, children: 'Save' },
-] as const
-
-export const props = [
-  { name: 'variant',  type: 'enum',    values: ['primary', 'secondary', 'ghost'] as const, default: 'primary' },
-  { name: 'size',     type: 'enum',    values: ['sm', 'md', 'lg'] as const, default: 'md' },
-  { name: 'disabled', type: 'boolean', default: false },
-] as const

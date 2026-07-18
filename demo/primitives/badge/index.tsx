@@ -1,37 +1,78 @@
-import { define } from 'modo-atomic-ui/define'
-
-export const meta = define({
-  name: 'Badge',
-  description: 'Small status indicator or label.',
-  category: 'primitives',
-})
-
-export function Component(props: {
+/**
+ * Small status indicator or label.
+ *
+ * @example
+ * # Neutral / Soft
+ *
+ * The default tone.
+ *
+ * ```tsx
+ * <Badge tone="neutral">Draft</Badge>
+ * ```
+ *
+ * @example
+ * # Success / Soft
+ *
+ * ```tsx
+ * <Badge tone="success">Published</Badge>
+ * ```
+ *
+ * @example
+ * # Warning / Soft
+ *
+ * ```tsx
+ * <Badge tone="warning">Pending</Badge>
+ * ```
+ *
+ * @example
+ * # Danger / Soft
+ *
+ * ```tsx
+ * <Badge tone="danger">Failed</Badge>
+ * ```
+ *
+ * @example
+ * # Info / Soft
+ *
+ * ```tsx
+ * <Badge tone="info">Beta</Badge>
+ * ```
+ *
+ * @example
+ * # Solid
+ *
+ * High-emphasis variant. Use sparingly.
+ *
+ * ```tsx
+ * <Badge tone="success" variant="solid">Live</Badge>
+ * ```
+ *
+ * @example
+ * # Outline
+ *
+ * Low-emphasis variant. Use in dense lists.
+ *
+ * ```tsx
+ * <Badge tone="neutral" variant="outline">New</Badge>
+ * ```
+ */
+export default function Badge({
+  tone = 'neutral',
+  variant = 'soft',
+  size = 'sm',
+  children,
+}: {
+  /** Semantic tone. @values neutral, success, warning, danger, info */
   tone?: 'neutral' | 'success' | 'warning' | 'danger' | 'info'
+  /** Visual variant. @values solid, soft, outline */
   variant?: 'solid' | 'soft' | 'outline'
+  /** Size. @values sm, md */
   size?: 'sm' | 'md'
   children?: React.ReactNode
 }) {
-  const { tone = 'neutral', variant = 'soft', size = 'sm', children } = props
   return (
     <span data-tone={tone} data-variant={variant} data-size={size} className="modo-badge">
       {children}
     </span>
   )
 }
-
-export const examples = [
-  { name: 'Neutral / Soft',   props: { tone: 'neutral' }, children: 'Draft' },
-  { name: 'Success / Soft',   props: { tone: 'success' }, children: 'Published' },
-  { name: 'Warning / Soft',   props: { tone: 'warning' }, children: 'Pending' },
-  { name: 'Danger / Soft',    props: { tone: 'danger'  }, children: 'Failed' },
-  { name: 'Info / Soft',      props: { tone: 'info'    }, children: 'Beta' },
-  { name: 'Solid',            props: { tone: 'success', variant: 'solid' }, children: 'Live' },
-  { name: 'Outline',          props: { tone: 'neutral', variant: 'outline' }, children: 'New' },
-] as const
-
-export const props = [
-  { name: 'tone',     type: 'enum', values: ['neutral', 'success', 'warning', 'danger', 'info'] as const, default: 'neutral' },
-  { name: 'variant',  type: 'enum', values: ['solid', 'soft', 'outline'] as const, default: 'soft' },
-  { name: 'size',     type: 'enum', values: ['sm', 'md'] as const, default: 'sm' },
-] as const
