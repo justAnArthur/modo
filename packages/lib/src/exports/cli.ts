@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { readFile } from 'node:fs/promises'
 import * as esbuild from 'esbuild'
 import { spawn } from 'node:child_process'
+import { runCheck } from './check.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const here = resolve(__dirname, '..')                            // .../packages/lib
@@ -258,6 +259,22 @@ async function add(cwd: string, kind: string, name: string) {
   console.log(`[modo] added ${kind} ${name} → ${target}`)
 }
 
+async function check(cwd: string) {
+  const { ok, issues } = await runCheck(cwd, here)
+  if (ok) {
+    // eslint-disable-next-line no-console
+    console.log('[modo] check passed ✓')
+    return
+  }
+  for (const i of issues) {
+    // eslint-disable-next-line no-console
+    console.error(`✗ ${i.file}\n  ${i.message}`)
+  }
+  // eslint-disable-next-line no-console
+  console.error(`\n[modo] check failed: ${issues.length} issue${issues.length === 1 ? '' : 's'}`)
+  process.exit(1)
+}
+
 async function main() {
   const argv = process.argv.slice(2)
   const cmd = argv[0]
@@ -286,6 +303,9 @@ async function main() {
         process.exit(1)
       }
       await add(cwd, argv[1], argv[2])
+      break
+    case 'check':
+      await check(cwd)
       break
     default:
       console.error(`unknown command: ${cmd}`)
