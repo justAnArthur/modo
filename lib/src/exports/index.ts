@@ -1,8 +1,5 @@
 // type-only public API
 export { defineConfig } from './config'
-export { defineTokens } from './tokens'
-export { defineSurfaces } from './surfaces'
-export { define } from './define'
 
 // re-export the React primitives for the surfaces elevation model.
 // the user imports these in their components: <Elevated offset={2}>...

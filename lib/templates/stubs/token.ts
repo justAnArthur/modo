@@ -1,14 +1,15 @@
-// design tokens for the __NAME__ group.
-// see /docs/tokens for the schema + the conventions this group follows.
+// stub for `modo add token <group>`. creates a .css file with
+// placeholder custom properties for the chosen group. fill in
+// your values.
+//
+// group determines the css variable prefix:
+//   colors      --surface-1, --foreground, --accent, ...
+//   spacing     --xxs, --xs, --sm, --md, --lg, --xl, --2xl, --3xl
+//   radius      --none, --sm, --md, --lg, --xl, --2xl, --3xl, --full
+//   motion      --instant, --fast, --normal, --slow, --slower, --linear, --standard
+//   shadows     --shadow-1..8
+//   typography  --sans, --mono, --serif, --xs..--3xl
 
-export const __NAME__ = {
-  group: '__NAME__' as const,
-  description: 'TODO: what this token group represents.',
-  // TODO: fill in items matching the group's expected shape.
-  // for colors:        { items: { primary: { value, semantic, role } } }
-  // for surfaces:      { levels: { '1': { bg, shadow }, ... } }
-  // for typography:    { families: { ... }, scale: { ... } }
-  // for spacing:       { values: { 0: '0', 1: '0.25rem', ... } }
-  // for radius:        { values: { sm: '...', md: '...', ... } }
-  // for motion:        { durations: { ... }, easings: { ... } }
-} as const
+:root {
+  /* TODO: add your design tokens here. */
+}

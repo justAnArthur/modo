@@ -1,0 +1,13 @@
+/* motion tokens */
+:root {
+  --instant: 0ms;
+  --fast: 80ms;
+  --normal: 160ms;
+  --slow: 240ms;
+  --slower: 400ms;
+  --linear: linear;
+  --standard: cubic-bezier(0.2, 0, 0, 1);
+  --standard-out: cubic-bezier(0, 0, 0.2, 1);
+  --standard-in: cubic-bezier(0.4, 0, 1, 1);
+  --emphasized: cubic-bezier(0.2, 0, 0, 1.2);
+}

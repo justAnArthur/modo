@@ -1,0 +1,18 @@
+/* color tokens */
+:root {
+  --surface-1: #f4f4f5;
+  --surface-2: #f6f6f7;
+  --surface-3: #f8f8f9;
+  --surface-4: #fafafa;
+  --surface-5: #fbfbfc;
+  --surface-6: #fcfcfd;
+  --surface-7: #fdfdfd;
+  --surface-8: #ffffff;
+  --background: #f4f4f5;
+  --foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --border: color-mix(in oklab, #18181b 10%, transparent);
+  --accent: #3b82f6;
+  --accent-foreground: #ffffff;
+}

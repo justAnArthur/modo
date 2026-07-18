@@ -1,24 +1,13 @@
-import { define } from 'modo-atomic-ui/define'
+// stub for `modo add primitive <name>`. the user fills in the TSDoc
+// and the props, then writes the body. the lib extracts everything
+// (name, description, examples, props) from the JSDoc + the function's
+// TS type signature.
 
-export const meta = define({
-  name: '__NAME_PASCAL__',
-  description: 'TODO: short description of what __NAME__ does.',
-  category: 'primitives',
-})
-
-export function Component(props: {
+export default function __NAME_PASCAL__({
   // TODO: define the props your primitive accepts.
+  children,
+}: {
   children?: React.ReactNode
 }) {
-  const { children } = props
   return <div data-component="__NAME__">{children}</div>
 }
-
-export const examples = [
-  { name: 'Default', children: '__NAME__' },
-] as const
-
-export const props = [
-  // TODO: declare each prop with { name, type, values?, default? }.
-  //   type: 'enum' | 'boolean' | 'string' | 'number' | 'react-node'
-] as const

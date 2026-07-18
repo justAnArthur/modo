@@ -17,6 +17,24 @@
         "default": "./dist/schema.js"
       }
     },
+    "./tsdoc": {
+      "import": {
+        "types": "./dist/tsdoc.d.ts",
+        "default": "./dist/tsdoc.js"
+      }
+    },
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./config": {
+      "import": {
+        "types": "./dist/config.d.ts",
+        "default": "./dist/config.js"
+      }
+    },
     "./check": {
       "import": {
         "types": "./dist/check.d.ts",
@@ -27,42 +45,6 @@
       "import": {
         "types": "./dist/surfaces-runtime.d.ts",
         "default": "./dist/surfaces-runtime.js"
-      }
-    },
-    "./tsdoc": {
-      "import": {
-        "types": "./dist/tsdoc.d.ts",
-        "default": "./dist/tsdoc.js"
-      }
-    },
-    "./tokens": {
-      "import": {
-        "types": "./dist/tokens.d.ts",
-        "default": "./dist/tokens.js"
-      }
-    },
-    "./surfaces": {
-      "import": {
-        "types": "./dist/surfaces.d.ts",
-        "default": "./dist/surfaces.js"
-      }
-    },
-    ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      }
-    },
-    "./define": {
-      "import": {
-        "types": "./dist/define.d.ts",
-        "default": "./dist/define.js"
-      }
-    },
-    "./config": {
-      "import": {
-        "types": "./dist/config.d.ts",
-        "default": "./dist/config.js"
       }
     },
     "./package.json": "./package.json"
