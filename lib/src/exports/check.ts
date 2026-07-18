@@ -69,14 +69,26 @@ function validateTokenGroup(group: string, vars: { name: string; value: string; 
       issues.push(`line ${v.line}: empty --var name`)
       continue
     }
-    // tokens with an enum-like role (e.g. --motion-fast) should have a value
-    // parseable as a duration / color / length. we keep this loose — the
-    // lib's runtime is tolerant.
-    if (group === 'spacing' && v.value && !/^-?\d+(\.\d+)?(px|rem|em|%)?$/.test(v.value.trim())) {
-      issues.push(`line ${v.line}: --${v.name} value "${v.value}" is not a length`)
+    const value = v.value.trim()
+    if (!value) continue
+    if (group === 'spacing' && !/^-?\d+(\.\d+)?(px|rem|em|%)?$/.test(value)) {
+      issues.push(`line ${v.line}: --${v.name} value "${value}" is not a length`)
     }
-    if (group === 'motion' && v.name.startsWith('motion-') && v.value && !/^-?\d+(\.\d+)?ms$/.test(v.value.trim())) {
-      issues.push(`line ${v.line}: --${v.name} value "${v.value}" is not a duration`)
+    if (group === 'motion') {
+      // motion vars split into two groups: durations and easings. easings
+      // start with `ease-` or are the literal `linear`; everything else
+      // is a duration. we don't require a `motion-` prefix because the
+      // convention is to keep token names short (e.g. --fast, --slow).
+      const isEasing = v.name.startsWith('ease-') || v.name === 'linear'
+      if (isEasing) {
+        if (!/^(linear|cubic-bezier\(|steps\(|ease|ease-in|ease-out|ease-in-out)$/.test(value)) {
+          issues.push(`line ${v.line}: --${v.name} value "${value}" is not a recognized easing`)
+        }
+      } else {
+        if (!/^-?\d+(\.\d+)?\s*(ms|s)$/.test(value)) {
+          issues.push(`line ${v.line}: --${v.name} value "${value}" is not a duration (use Nms or Ns)`)
+        }
+      }
     }
   }
   return issues

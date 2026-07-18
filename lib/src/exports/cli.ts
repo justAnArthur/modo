@@ -39,10 +39,15 @@ const ADD_STUB: Record<AddKind, string> = {
 interface ModoConfig {
   name: string
   description?: string
-  tokens?: { source: string }
-  source?: { primitives: string; components: string; blocks: string }
+  logo?: { light?: string; dark?: string }
+  meta?: { description?: string; github?: string }
+  components?: Record<string, string>
   css?: string
-  theme?: { defaultDensity?: string; defaultTheme?: string }
+  theme?: {
+    fonts?: Record<string, string>
+    defaultDensity?: 'compact' | 'comfortable' | 'spacious'
+    defaultTheme?: 'light' | 'dark' | 'system'
+  }
 }
 
 async function readModoConfig(cwd: string): Promise<ModoConfig> {

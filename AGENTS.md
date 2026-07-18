@@ -2,27 +2,29 @@
 
 ## layout
 
-- `packages/lib/` — the npm package `modo-atomic-ui`. public API, schemas, internal Vike renderer, vite plugins, structural CSS, scaffold templates.
-- `packages/demo/` — the example DS `@modo-atomic-ui/demo`. tokens, primitives, components, blocks. the reference impl + the dev test.
+- `lib/` — the npm package `modo-atomic-ui`. public API, schemas, internal Vike renderer, vite plugins, structural CSS, scaffold templates, `modo` CLI.
+- `demo/` — the reference design system. tokens, primitives, components, blocks, `overrides.css`. the lib's user; everything the demo ships is "host content" that proves the lib is zero-content.
 
 ## conventions
 
-- **workspaces**: bun (matches `payload-www` convention). root `bun-workspace.toml` lists `packages/*`.
+- **workspaces**: bun. root `bun-workspace.toml` lists the workspaces.
 - **lib package**: ESM, `react-jsx`, `jsxImportSource: 'react'`. bunup builds `dist/` from `src/exports/*`. dts inferred.
-- **structural CSS, no design tokens**: the lib ships layout, grid, motion, focus, hover — all colors/spacing/values come from the user's `tokens/` via CSS variables.
-- **schema is the moat**: `defineConfig`, `defineTokens`, `defineSurfaces`, `define` are type-only at runtime; the lib validates with zod at dev/build time. wrong shape = lib fails loud.
-- **atomic design tiers**: `primitives/` (atoms), `components/` (molecules/organisms), `blocks/` (composed). the lib auto-discovers and renders each.
-- **surfaces (elevation model)**: the lib ships `<Elevated offset={n}>`, `<SurfaceProvider>`, `useSurface`. the user's `tokens/surfaces.ts` declares 8 levels with paired shadows. conventional offsets live in the schema.
-- **no Next.js, no Vite config in user project**: the lib owns its own Vite + Vike app. user sees only the lib's output (the docs site).
-- **bunup pattern**: `defineConfig` + `exports` plugin + ESM + `dts: { inferTypes: true }` + JSX automatic + `react` importSource. mirrors `~/Projects/utegsk/payload-www/plugins/translate/bunup.config.ts` exactly.
+- **structural CSS only**: the lib ships layout, grid, motion keyframes, focus rings, the docs chrome (sidebar / content / panel). NO design tokens, NO component visuals, NO copy, NO chrome content. all of that comes from the user's project.
+- **tokens as plain CSS** (in `tokens/*.css`). one file per group is recommended (`colors.css`, `spacing.css`, `radius.css`, `motion.css`, `shadows.css`, `surfaces.css`, `typography.css`). each file maps to a token group by filename. var prefixes (`--space-*`, `--motion-*`) are an alternative to file-per-group.
+- **item metadata via TSDoc** (default export + JSDoc). the parser extracts `name`, `description`, `props` (from the function's TS type signature + per-prop JSDoc), and `examples` (from `@example` blocks with optional `# Title` heading and ` ```tsx ` code fences).
+- **user CSS via `modo.config.ts: css`**. the lib injects this CSS as a global `<style>` tag at the top of the layout, after the lib's structural CSS. the demo's `overrides.css` is the canonical example.
+- **atomic design tiers**: `primitives/`, `components/`, `blocks/`. the lib auto-discovers by directory and renders each.
+- **surfaces (elevation model)**: the lib ships `<Elevated offset={n}>` / `<SurfaceProvider>` / `useSurface` from the main entry (`modo-atomic-ui`). the user's `tokens/shadows.css` declares the 8 shadow recipes. the `surfaces` group is synthesized by the lib (1..8 levels, each bg + shadow ref).
+- **chrome slots**: `modo.config.ts: components: { Select, Link, Button }` can override the lib's chrome with the user's components. unset = native fallback. the lib consumes these via the `virtual:modo-components` module.
+- **no Next.js, no Vite config in user project**: the lib owns its own Vite + Vike app. the user sees only the lib's output (the docs site).
 
 ## file naming
 
-- `tokens/*.ts` — `defineTokens({ group: 'colors' | 'surfaces' | 'shadows' | 'spacing' | 'radius' | 'motion' | 'typography', ... })`
-- `primitives/<name>/index.tsx` — exports `meta`, `Component`, `examples`, `props`
-- `primitives/<name>/<name>.mdx` — long-form docs (auto-bound via MDX components)
-- `components/`, `blocks/` — same shape as primitives/
+- `tokens/<group>.css` — custom properties for that group. empty `surfaces.css` is fine (the lib synthesizes the 8 levels).
+- `primitives/<name>/index.tsx` — default-exported function with TSDoc.
+- `primitives/<name>/<name>.mdx` — long-form docs (reserved for future MDX routing; not yet consumed by the lib).
+- `components/`, `blocks/` — same shape as primitives/.
 
 ## chrome hooks (data-aui attrs)
 
-`data-aui="sidebar"`, `"panel"`, `"content"`, `"card"`, `"row"`, `"cell"`, `"grid"`, `"swatch"`, `"surface-level"`, `"example-card"`, `"prop-table"`, `"search"`, `"control"`. user styles via their CSS targeting these.
+`data-aui="app"`, `"sidebar"`, `"panel"`, `"content"`, `"header"`, `"section"`, `"section-title"`, `"page-title"`, `"page-lead"`, `"card"`, `"row"`, `"cell"`, `"grid"`, `"swatch"`, `"surface-card"`, `"example-card"`, `"example-card-meta"`, `"example-card-stage"`, `"example-toggle"`, `"example-code"`, `"prop-table"`, `"control"`, `"control-input"`, `"user-select"`, `"search"`, `"raw-json"`, `"popover"`, `"tooltip"`, `"elevated"`. the lib sets structural styles for all of these; the user styles their own components via the same attrs.

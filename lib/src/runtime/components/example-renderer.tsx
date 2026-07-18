@@ -14,6 +14,17 @@ import { useState } from 'react'
 import * as esbuild from 'esbuild'
 import type { ParsedExample } from '../../exports/tsdoc'
 
+// HMR cache invalidation. when an item file changes, vite triggers
+// `import.meta.hot.invalidate()` on the modules that depend on it.
+// we listen here and clear the compile cache so a recompile picks up
+// the new source on the next render. the in-memory cache otherwise
+// holds the old compiled body for the lifetime of the dev server.
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    cache.clear()
+  })
+}
+
 // ── minimal markdown renderer ───────────────────────────────────────
 
 function renderInline(text: string): React.ReactNode[] {
@@ -140,8 +151,14 @@ export default function render(Component) {
 interface ExampleBlockProps {
   example: ParsedExample
   componentName: string
-  Component: React.ComponentType<any>
+  Component?: React.ComponentType<any> | null
 }
+
+// noop fallback for when the lib can't resolve a component (e.g. the
+// user's items are partially present, or a single item fails to bundle).
+// rendering a noop keeps the layout stable and the description + code
+// toggle still useful.
+const NoopComponent: React.ComponentType<any> = () => null
 
 export function ExampleBlock({ example, componentName, Component }: ExampleBlockProps) {
   const [showCode, setShowCode] = useState(false)
@@ -150,9 +167,10 @@ export function ExampleBlock({ example, componentName, Component }: ExampleBlock
   // (and re-renders after client-side hydration) are O(1).
   let rendered: React.ReactNode
   let error: string | null = null
+  const Resolved = Component ?? NoopComponent
   try {
     const fn = compileExampleSync(example.code, componentName)
-    rendered = fn(Component)
+    rendered = fn(Resolved)
   } catch (e) {
     error = (e as Error).message
   }

@@ -1,5 +1,5 @@
 // stub for `modo add block <name>`.
-import { Elevated } from 'modo-atomic-ui/surfaces-runtime'
+import { Elevated } from 'modo-atomic-ui'
 
 export default function __NAME_PASCAL__({
   onSubmit,
