@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "modo-atomic-ui": ["./src/exports/index.ts"],
+      "modo-atomic-ui/*": ["./src/exports/*"],
+      "@demo": ["../demo"],
+      "@demo/*": ["../demo/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "templates"]
+}

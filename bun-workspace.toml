@@ -1,0 +1,3 @@
+# bun workspace — matches the payload-www convention (bun.lock, no pnpm)
+[workspace]
+packages = ["packages/*"]

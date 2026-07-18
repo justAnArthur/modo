@@ -1,0 +1,78 @@
+{
+  "name": "modo-atomic-ui",
+  "description": "Atomic design system renderer — enforces the tokens/primitives/components/blocks structure and auto-renders the docs.",
+  "version": "0.0.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "templates",
+    "README.md"
+  ],
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./schema": {
+      "import": {
+        "types": "./dist/schema.d.ts",
+        "default": "./dist/schema.js"
+      }
+    },
+    "./tokens": {
+      "import": {
+        "types": "./dist/tokens.d.ts",
+        "default": "./dist/tokens.js"
+      }
+    },
+    "./surfaces": {
+      "import": {
+        "types": "./dist/surfaces.d.ts",
+        "default": "./dist/surfaces.js"
+      }
+    },
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./define": {
+      "import": {
+        "types": "./dist/define.d.ts",
+        "default": "./dist/define.js"
+      }
+    },
+    "./config": {
+      "import": {
+        "types": "./dist/config.d.ts",
+        "default": "./dist/config.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "modo": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "NODE_ENV=production bunup",
+    "dev": "vite --config src/runtime/vite.config.ts",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "vike": "^0.4.260",
+    "vike-react": "^0.6.25",
+    "vite": "^7.3.6",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@babel/preset-typescript": "^8.0.1",
+    "@types/node": "^22.20.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.7.0",
+    "bunup": "^0.16.32",
+    "esbuild": "^0.28.1",
+    "typescript": "^5.9.3"
+  }
+}
