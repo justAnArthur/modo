@@ -1,12 +1,13 @@
 #!/usr/bin/env node
-// phase 1: minimal `modo` CLI. full command set (init, build, check, add) lands in phase 3.
-// for now: `modo dev` reads `modo.config.ts` from cwd and starts the lib's internal vite.
+// phase 3: the `modo` CLI. `init` / `dev` / `build` / `add` / `check`.
+// reads `modo.config.ts` from cwd and runs the lib's internal vite/vike/validators.
 
 import { createServer } from 'vite'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readFile } from 'node:fs/promises'
 import * as esbuild from 'esbuild'
+import { spawn } from 'node:child_process'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const here = resolve(__dirname, '..')                            // .../packages/lib
@@ -101,8 +102,45 @@ function help() {
 
 Usage:
   modo dev              start the dev server (reads modo.config.ts from cwd)
+  modo build            pre-render the site to ./dist/client (static, deployable)
+  modo check            validate modo.config.ts + token files against the schema
+  modo init <name>      scaffold a new design system project in ./<name>
+  modo add <kind> <name>   scaffold primitives|components|blocks|tokens/<name>
   modo --help           show this help
 `)
+}
+
+async function build(cwd: string) {
+  const config = await readModoConfig(cwd)
+  if (!config.source) throw new Error('modo.config.ts must include `source: { primitives, components, blocks }`')
+
+  // hand off to vike build (lib-relative). vike requires `root` to match cwd,
+  // so we spawn the binary in the lib's runtime/ dir. then move the output
+  // to the user's project.
+  const previousCwd = process.cwd()
+  process.chdir(runtimeRoot)
+  try {
+    await new Promise<void>((resolveP, rejectP) => {
+      const child = spawn(
+        process.execPath,
+        [resolve(here, 'node_modules', 'vike', 'bin.js'), 'build', '--root', '.'],
+        { stdio: 'inherit', env: { ...process.env, MODO_DEMO_ROOT: cwd } }
+      )
+      child.on('exit', (code) => (code === 0 ? resolveP() : rejectP(new Error(`vike build exited with code ${code}`))))
+      child.on('error', rejectP)
+    })
+  } finally {
+    process.chdir(previousCwd)
+  }
+
+  // move dist/ to the user's project root.
+  const fs = await import('node:fs/promises')
+  const srcDist = resolve(runtimeRoot, 'dist')
+  const dstDist = resolve(cwd, 'dist')
+  await fs.rm(dstDist, { recursive: true, force: true })
+  await fs.rename(srcDist, dstDist)
+  // eslint-disable-next-line no-console
+  console.log(`[modo] → ${dstDist}`)
 }
 
 async function main() {
@@ -116,6 +154,9 @@ async function main() {
   switch (cmd) {
     case 'dev':
       await dev(cwd)
+      break
+    case 'build':
+      await build(cwd)
       break
     default:
       console.error(`unknown command: ${cmd}`)
