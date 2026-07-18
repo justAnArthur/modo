@@ -4,8 +4,9 @@
 // missing slots resolve to null; the lib's +Layout.tsx falls back to native.
 
 import type { Plugin } from 'vite'
-import { readFile } from 'node:fs/promises'
-import { resolve } from 'node:path'
+import { readFile, writeFile, unlink } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
 import * as esbuild from 'esbuild'
 
 export interface ComponentsPluginOptions {
@@ -15,6 +16,17 @@ export interface ComponentsPluginOptions {
 const SLOTS = ['Select', 'Link', 'Button'] as const
 type Slot = (typeof SLOTS)[number]
 
+// all temp file I/O is in os.tmpdir() so we never pollute the user's cwd
+// or the lib's source tree. names include Date.now() + a random suffix so
+// concurrent `modo dev` runs (or HMR reloads) don't collide.
+function tmpPath(prefix: string, ext = '.mjs'): string {
+  return join(tmpdir(), `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`)
+}
+
+async function safeUnlink(p: string): Promise<void> {
+  try { await unlink(p) } catch { /* already gone */ }
+}
+
 async function readConfig(root: string): Promise<Record<string, string> | null> {
   const candidates = ['modo.config.ts', 'modo.config.tsx']
   for (const name of candidates) {
@@ -23,8 +35,8 @@ async function readConfig(root: string): Promise<Record<string, string> | null> 
       // bundle the config file with a stub for `modo-atomic-ui/config` so
       // we can evaluate the default export without runtime resolution.
       const stub = `export const defineConfig = (c) => c\nexport {}\n`
-      const tmpStub = resolve(process.cwd(), `.modo-cfg-stub-${Date.now()}.mjs`)
-      await import('node:fs/promises').then((fs) => fs.writeFile(tmpStub, stub))
+      const tmpStub = tmpPath('modo-cfg-stub')
+      await writeFile(tmpStub, stub)
       try {
         const result = await esbuild.build({
           entryPoints: [p],
@@ -41,16 +53,16 @@ async function readConfig(root: string): Promise<Record<string, string> | null> 
         })
         const code = result.outputFiles?.[0]?.text
         if (!code) continue
-        const tmp = resolve(process.cwd(), `.modo-cfg-out-${Date.now()}.mjs`)
-        await import('node:fs/promises').then((fs) => fs.writeFile(tmp, code))
+        const tmp = tmpPath('modo-cfg-out')
+        await writeFile(tmp, code)
         try {
           const mod = await import(tmp)
           return ((mod as { default?: Record<string, unknown> }).default?.components as Record<string, string>) ?? null
         } finally {
-          await import('node:fs/promises').then((fs) => fs.unlink(tmp).catch(() => {}))
+          await safeUnlink(tmp)
         }
       } finally {
-        await import('node:fs/promises').then((fs) => fs.unlink(tmpStub).catch(() => {}))
+        await safeUnlink(tmpStub)
       }
     } catch {
       // try next candidate
@@ -67,11 +79,12 @@ function resolveSlot(componentPath: string, root: string): string {
   return abs.replace(/\.(tsx|ts|jsx|js)$/, '')
 }
 
-async function pickExisting(candidates: string[], fs: typeof import('node:fs/promises')): Promise<string | null> {
+async function pickExisting(candidates: string[]): Promise<string | null> {
+  const { stat } = await import('node:fs/promises')
   for (const c of candidates) {
     try {
-      const stat = await fs.stat(c)
-      if (stat.isFile()) return c
+      const s = await stat(c)
+      if (s.isFile()) return c
     } catch { /* keep looking */ }
   }
   return null
@@ -113,8 +126,7 @@ export function componentsPlugin(opts: ComponentsPluginOptions): Plugin {
           resolve(abs, 'index.tsx'),
           resolve(abs, 'index.ts'),
         ]
-        const fs = await import('node:fs/promises')
-        const entry = await pickExisting(candidates, fs)
+        const entry = await pickExisting(candidates)
         if (!entry) {
           bindings.push(`export const ${slot} = null;`)
           continue
@@ -135,8 +147,8 @@ export function componentsPlugin(opts: ComponentsPluginOptions): Plugin {
           bindings.push(`export const ${slot} = null;`)
           continue
         }
-        const tmp = resolve(process.cwd(), `.modo-cmp-${slot}-${Date.now()}-${i++}.mjs`)
-        await fs.writeFile(tmp, code)
+        const tmp = tmpPath(`modo-cmp-${slot}-${i++}`)
+        await writeFile(tmp, code)
         imports.push(`import * as __ns_${slot} from '${tmp}';`)
         // default export OR named export matching the slot
         bindings.push(`export const ${slot} = __ns_${slot}.default ?? __ns_${slot}['${slot}'] ?? null;`)

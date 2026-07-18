@@ -5,6 +5,8 @@
   "type": "module",
   "files": [
     "dist",
+    "src/runtime",
+    "src/exports",
     "templates",
     "README.md"
   ],
@@ -59,15 +61,13 @@
     "check": "tsc --noEmit"
   },
   "peerDependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
   },
   "dependencies": {
     "vike": "^0.4.260",
     "vike-react": "^0.6.25",
     "vite": "^7.3.6",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
     "zod": "^3.25.76"
   },
   "devDependencies": {

@@ -5,6 +5,7 @@ declare module 'virtual:modo-tokens' {
 }
 
 declare module 'virtual:modo-items' {
+  import type { ComponentType } from 'react'
   export interface DiscoveredItem {
     id: string
     category: 'primitives' | 'components' | 'blocks'
@@ -34,6 +35,8 @@ declare module 'virtual:modo-items' {
   }
   export const items: DiscoveredItem[]
   export const byId: Record<string, ParsedItemShape>
+  export const components: Record<string, React.ComponentType<any> | null>
+  export const dsRoot: string
 }
 
 declare module 'virtual:modo-components' {

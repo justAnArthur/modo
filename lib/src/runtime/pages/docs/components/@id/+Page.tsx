@@ -1,19 +1,16 @@
 // /docs/components/:id — per-component page.
 import { tokens, css as tokensCss } from 'virtual:modo-tokens'
-import { byId } from 'virtual:modo-items'
+import { byId, components as itemComponents } from 'virtual:modo-items'
 import { usePageContext } from 'vike-react/usePageContext'
 import { ExampleBlock } from '../../../../components/example-renderer'
-
-const items = import.meta.glob<any>('../../../../../../../demo/{primitives,components,blocks}/*/index.tsx', { eager: true })
 
 export default function ComponentPage() {
   const pageContext = usePageContext()
   const id = (pageContext.routeParams as { id: string }).id
-  const keys = Object.keys(items as Record<string, any>)
-  const match = keys.find((k) => k.endsWith(`/components/${id}/index.tsx`))
-  const mod = match ? (items as Record<string, any>)[match] : undefined
+  const key = `components/${id}`
+  const Component = itemComponents[key]
 
-  if (!mod) {
+  if (!Component) {
     return (
       <>
         <h1 data-aui="page-title">component not found</h1>
@@ -22,11 +19,10 @@ export default function ComponentPage() {
     )
   }
 
-  const Component = mod.Component ?? mod.default
-  const parsed = byId[`components/${id}`]
-  const meta = parsed ?? mod.meta ?? { name: id, description: '' }
-  const propDefs = parsed?.props ?? mod.props ?? []
-  const examples = parsed?.examples ?? mod.examples ?? []
+  const parsed = byId[key]
+  const meta = parsed ?? { name: id, description: '' }
+  const propDefs = parsed?.props ?? []
+  const examples = parsed?.examples ?? []
 
   return (
     <>

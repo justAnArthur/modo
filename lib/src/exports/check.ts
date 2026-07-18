@@ -13,11 +13,12 @@
 import { z } from 'zod'
 import { readdir, readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
+import { tmpdir } from 'node:os'
 import * as esbuild from 'esbuild'
 
 import { siteConfigSchema } from './schema'
 import { parseItemSource } from './tsdoc'
-import { parseCss, groupForVar, buildGroup, inferRole, inferSemantic } from '../runtime/plugins/tokens'
+import { parseCss } from './css-parser'
 
 interface Issue {
   file: string
@@ -42,7 +43,7 @@ async function bundleTs(filePath: string, here: string): Promise<unknown> {
   })
   const code = result.outputFiles?.[0]?.text
   if (!code) throw new Error('esbuild produced no output')
-  const tmp = resolve(here, `.modo-check-tmp-${Date.now()}-${Math.random().toString(36).slice(2)}.mjs`)
+  const tmp = join(tmpdir(), `modo-check-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mjs`)
   const fs = await import('node:fs/promises')
   await fs.writeFile(tmp, code)
   try {

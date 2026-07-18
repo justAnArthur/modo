@@ -3,7 +3,10 @@ import { tokens, errors as tokensErrors, css as tokensCss } from 'virtual:modo-t
 import { items, byId } from 'virtual:modo-items'
 import { ExampleBlock } from '../../components/example-renderer'
 
-const exampleItems = import.meta.glob<any>('../../../../../demo/{primitives,components,blocks}/*/index.tsx', { eager: true })
+// all item components + parsed metadata are pre-bundled by the source
+// plugin and exposed via the `virtual:modo-items` module. importing the
+// module here returns a fully-typed map keyed by `category/id`.
+import { components as itemComponents } from 'virtual:modo-items'
 
 type Item = (typeof items)[number]
 type Tokens = typeof tokens
@@ -158,18 +161,17 @@ function PropTable({ props }: { props: ReadonlyArray<{ name: string; type: strin
 }
 
 function ItemSection({ item }: { item: Item }) {
-  const candidate = `../../../../../demo/${item.category}/${item.id}/index.tsx`
-  const mod = exampleItems[candidate]
-  if (!mod) {
+  const key = `${item.category}/${item.id}`
+  const Component = itemComponents[key]
+  if (!Component) {
     return (
       <section data-aui="section">
-        <h2 data-aui="section-title">{item.category} / {item.id}</h2>
-        <div data-aui="errors">no import found for {candidate}</div>
+        <h2 data-aui="section-title">{key}</h2>
+        <div data-aui="errors">no component for {key}</div>
       </section>
     )
   }
-  const Component = mod.Component ?? mod.default
-  const parsed = byId[`${item.category}/${item.id}`]
+  const parsed = byId[key]
   const meta = parsed ?? { name: item.id, description: '' }
   const propDefs = parsed?.props ?? []
   const examples = parsed?.examples ?? []

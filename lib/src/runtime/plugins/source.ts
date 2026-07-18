@@ -1,10 +1,17 @@
 // scans the user's project for primitive/component/block items, parses each
 // one's default export with the TSDoc parser, and exposes a `virtual:modo-items`
-// module that the per-item page renderers consume.
+// module that the per-item page renderers consume. the module exports:
+//   - `items`:     metadata (id, category, file path, parse errors)
+//   - `byId`:      TSDoc-extracted data keyed by `category/id`
+//   - `components`: actual React component references keyed by `category/id`,
+//                   pre-bundled via esbuild and exposed as a static import map
+//   - `dsRoot`:    the user's project root (debug aid)
 
 import type { Plugin } from 'vite'
-import { readFile, readdir, stat } from 'node:fs/promises'
+import { readFile, readdir, stat, writeFile, unlink, mkdir, rm } from 'node:fs/promises'
 import { join, relative, resolve } from 'node:path'
+import { tmpdir } from 'node:os'
+import * as esbuild from 'esbuild'
 import { parseItemSource } from '../../exports/tsdoc'
 
 export interface SourcePluginOptions {
@@ -80,6 +87,44 @@ async function discoverDir(dir: string, category: DiscoveredItem['category']): P
 const VIRTUAL_ID = 'virtual:modo-items'
 const RESOLVED_VIRTUAL_ID = '\0' + VIRTUAL_ID
 
+// one tmp dir per vite session. cleaned on process exit. bundling every
+// item into its own .mjs keeps the dev/build graph fully static — the
+// virtual module becomes a literal `import * as ns_0 from '<abs path>'`
+// for each item, no async dynamic imports, no path-arithmetic in the
+// consumer code.
+const TMP_DIR = join(
+  tmpdir(),
+  `modo-items-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+)
+
+async function safeUnlink(p: string): Promise<void> {
+  try { await unlink(p) } catch { /* already gone */ }
+}
+
+async function bundleItem(entryAbs: string, idx: number): Promise<{ key: string; path: string } | null> {
+  try {
+    const result = await esbuild.build({
+      entryPoints: [entryAbs],
+      bundle: true,
+      write: false,
+      format: 'esm',
+      platform: 'neutral',
+      jsx: 'automatic',
+      loader: { '.tsx': 'tsx', '.ts': 'ts' },
+      external: ['react', 'react-dom', 'react/jsx-runtime'],
+      logLevel: 'silent',
+    })
+    const code = result.outputFiles?.[0]?.text
+    if (!code) return null
+    await mkdir(TMP_DIR, { recursive: true })
+    const out = join(TMP_DIR, `item-${idx}.mjs`)
+    await writeFile(out, code)
+    return { key: entryAbs, path: out }
+  } catch {
+    return null
+  }
+}
+
 export function sourcePlugin(options: SourcePluginOptions): Plugin {
   return {
     name: 'modo-atomic-ui:source',
@@ -102,21 +147,52 @@ export function sourcePlugin(options: SourcePluginOptions): Plugin {
       const all = [...primitives, ...components, ...blocks]
 
       // second pass: read each item's source, parse TSDoc, and bundle the
-      // parsed metadata into `byId`. the per-item page reads from byId.
+      // component. byId is the TSDoc parse result; components is the static
+      // import map the virtual module emits.
       const byId: Record<string, ReturnType<typeof parseItemSource>> = {}
+      const imports: string[] = []
+      const bindings: string[] = []
+      let i = 0
       for (const item of all) {
+        const key = `${item.category}/${item.id}`
         try {
           const raw = await readFile(item.filePath, 'utf-8')
-          byId[`${item.category}/${item.id}`] = parseItemSource(raw, item.filePath)
+          byId[key] = parseItemSource(raw, item.filePath)
         } catch {
           // already reported as an error in the discovery pass
         }
+        const bundled = await bundleItem(item.filePath, i++)
+        if (bundled) {
+          imports.push(`import * as __ns_${i} from '${bundled.path}';`)
+          bindings.push(`  '${key}': __ns_${i}.default ?? null,`)
+        } else {
+          bindings.push(`  '${key}': null,`)
+        }
       }
 
+      // best-effort cleanup of stale tmp dirs from previous vite sessions.
+      // we keep the current one alive for the whole session.
+      try {
+        const { readdir, stat: fstat } = await import('node:fs/promises')
+        for (const name of await readdir(tmpdir())) {
+          if (!name.startsWith('modo-items-')) continue
+          const p = join(tmpdir(), name)
+          if (p === TMP_DIR) continue
+          try {
+            const s = await fstat(p)
+            if (s.isDirectory() && Date.now() - s.mtimeMs > 60_000) {
+              await rm(p, { recursive: true, force: true }).catch(() => {})
+            }
+          } catch { /* gone */ }
+        }
+      } catch { /* noop */ }
+
       return [
+        ...imports,
         `export const items = ${JSON.stringify(all, null, 2)};`,
         `export const byId = ${JSON.stringify(byId, null, 2)};`,
         `export const dsRoot = ${JSON.stringify(dsRoot)};`,
+        `export const components = {\n${bindings.join('\n')}\n};`,
       ].join('\n')
     },
 

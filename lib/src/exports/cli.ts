@@ -6,6 +6,8 @@ import { createServer } from 'vite'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import * as esbuild from 'esbuild'
 import { spawn } from 'node:child_process'
 import { runCheck } from './check.js'
@@ -65,7 +67,7 @@ async function readModoConfig(cwd: string): Promise<ModoConfig> {
         lastErr = new Error('esbuild produced no output')
         continue
       }
-      const tmp = resolve(here, '.modo-config-tmp.mjs')
+      const tmp = join(tmpdir(), `modo-config-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mjs`)
       const fs = await import('node:fs/promises')
       await fs.writeFile(tmp, code)
       const mod = await import(tmp + '?t=' + Date.now())
