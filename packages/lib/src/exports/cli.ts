@@ -14,6 +14,24 @@ const here = resolve(__dirname, '..')                            // .../packages
 const exportsRoot = resolve(here, 'src', 'exports')
 const runtimeRoot = resolve(here, 'src', 'runtime')
 const templatesRoot = resolve(here, 'templates', 'default')
+const stubsRoot = resolve(here, 'templates', 'stubs')
+
+function toPascal(s: string): string {
+  return s
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((w) => w[0]!.toUpperCase() + w.slice(1))
+    .join('')
+}
+
+type AddKind = 'primitive' | 'component' | 'block' | 'token'
+
+const ADD_STUB: Record<AddKind, string> = {
+  primitive: 'primitive.tsx',
+  component: 'component.tsx',
+  block: 'block.tsx',
+  token: 'token.ts',
+}
 
 interface ModoConfig {
   name: string
@@ -203,6 +221,43 @@ async function substitutePlaceholders(rootDir: string, replacements: Record<stri
   await walk(rootDir)
 }
 
+async function add(cwd: string, kind: string, name: string) {
+  const fs = await import('node:fs/promises')
+  if (!(kind in ADD_STUB)) {
+    throw new Error(`unknown kind: ${kind} (expected: ${Object.keys(ADD_STUB).join(', ')})`)
+  }
+  const stubName = ADD_STUB[kind as AddKind]
+  const stubPath = resolve(stubsRoot, stubName)
+  if (!(await fs.stat(stubPath).catch(() => null))) {
+    throw new Error(`missing stub: ${stubPath}`)
+  }
+
+  const config = await readModoConfig(cwd)
+
+  let target: string
+  if (kind === 'token') {
+    const tokensDir = config.tokens?.source ?? './tokens'
+    target = resolve(cwd, tokensDir, `${name}.ts`)
+  } else {
+    const tier = kind === 'primitive' ? 'primitives' : kind === 'component' ? 'components' : 'blocks'
+    const sourceDir = config.source?.[tier as 'primitives' | 'components' | 'blocks'] ?? `./${tier}`
+    target = resolve(cwd, sourceDir, name, 'index.tsx')
+  }
+
+  if (await fs.stat(target).catch(() => null)) {
+    throw new Error(`destination already exists: ${target}`)
+  }
+  await fs.mkdir(resolve(target, '..'), { recursive: true })
+
+  let text = await fs.readFile(stubPath, 'utf8')
+  text = text.split('__NAME__').join(name)
+  text = text.split('__NAME_PASCAL__').join(toPascal(name))
+  await fs.writeFile(target, text)
+
+  // eslint-disable-next-line no-console
+  console.log(`[modo] added ${kind} ${name} → ${target}`)
+}
+
 async function main() {
   const argv = process.argv.slice(2)
   const cmd = argv[0]
@@ -224,6 +279,13 @@ async function main() {
         process.exit(1)
       }
       await init(cwd, argv[1])
+      break
+    case 'add':
+      if (!argv[1] || !argv[2]) {
+        console.error('usage: modo add <primitive|component|block|token> <name>')
+        process.exit(1)
+      }
+      await add(cwd, argv[1], argv[2])
       break
     default:
       console.error(`unknown command: ${cmd}`)
