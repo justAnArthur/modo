@@ -13,7 +13,27 @@ declare module 'virtual:modo-items' {
     hasMdx: boolean
     errors: string[]
   }
+  export interface ParsedItemShape {
+    name: string
+    description: string
+    props: Array<{
+      name: string
+      type: 'enum' | 'boolean' | 'string' | 'number' | 'react-node'
+      values?: string[]
+      default?: string | number | boolean
+      description?: string
+      required?: boolean
+    }>
+    examples: Array<{
+      name: string
+      description?: string
+      code: string
+      language: string
+    }>
+    errors: string[]
+  }
   export const items: DiscoveredItem[]
+  export const byId: Record<string, ParsedItemShape>
 }
 
 declare module 'virtual:modo-components' {

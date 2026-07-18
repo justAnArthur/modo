@@ -1,8 +1,10 @@
 // /docs/blocks/:id — per-block page.
 import { tokens, css as tokensCss } from 'virtual:modo-tokens'
+import { byId } from 'virtual:modo-items'
 import { usePageContext } from 'vike-react/usePageContext'
+import { ExampleBlock } from '../../../../components/example-renderer'
 
-const items = import.meta.glob<any>('../../../../../../demo/{primitives,components,blocks}/*/index.tsx', { eager: true })
+const items = import.meta.glob<any>('../../../../../../../demo/{primitives,components,blocks}/*/index.tsx', { eager: true })
 
 export default function BlockPage() {
   const pageContext = usePageContext()
@@ -20,23 +22,23 @@ export default function BlockPage() {
     )
   }
 
-  const { Component, examples, props: propDefs, meta } = mod
+  const Component = mod.Component ?? mod.default
+  const parsed = byId[`blocks/${id}`]
+  const meta = parsed ?? mod.meta ?? { name: id, description: '' }
+  const propDefs = parsed?.props ?? mod.props ?? []
+  const examples = parsed?.examples ?? mod.examples ?? []
+
   return (
     <>
       <style>{tokensCss}</style>
-      <h1 data-aui="page-title">{meta?.name ?? id}</h1>
-      {meta?.description && <p data-aui="page-lead">{meta.description}</p>}
+      <h1 data-aui="page-title">{meta.name}</h1>
+      {meta.description && <p data-aui="page-lead">{meta.description}</p>}
       <div data-aui="examples">
-        {(examples ?? []).map((ex: any) => (
-          <div key={ex.name} data-aui="example-card">
-            <div data-aui="example-card-stage">
-              <Component {...(ex.props ?? {})}>{ex.children}</Component>
-            </div>
-            <span data-aui="example-card-name">{ex.name}</span>
-          </div>
+        {examples.map((ex: any, i: number) => (
+          <ExampleBlock key={i} example={ex} componentName={meta.name} Component={Component} />
         ))}
       </div>
-      {propDefs && propDefs.length > 0 && (
+      {propDefs.length > 0 && (
         <table data-aui="prop-table">
           <thead>
             <tr><th>prop</th><th>type</th><th>default</th><th>values</th><th>description</th></tr>
