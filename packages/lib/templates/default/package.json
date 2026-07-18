@@ -1,0 +1,24 @@
+{
+  "name": "__NAME__",
+  "version": "0.0.0",
+  "description": "__DESCRIPTION__",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "modo dev",
+    "build": "modo build",
+    "preview": "npx serve dist/client",
+    "check": "modo check"
+  },
+  "dependencies": {
+    "modo-atomic-ui": "__MODO_VERSION__",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^5.9.3"
+  }
+}

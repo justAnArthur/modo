@@ -13,6 +13,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const here = resolve(__dirname, '..')                            // .../packages/lib
 const exportsRoot = resolve(here, 'src', 'exports')
 const runtimeRoot = resolve(here, 'src', 'runtime')
+const templatesRoot = resolve(here, 'templates', 'default')
 
 interface ModoConfig {
   name: string
@@ -143,6 +144,65 @@ async function build(cwd: string) {
   console.log(`[modo] → ${dstDist}`)
 }
 
+async function getLibVersion(): Promise<string> {
+  const pkg = JSON.parse(await readFile(resolve(here, 'package.json'), 'utf8')) as { version?: string }
+  return pkg.version ?? '0.0.0'
+}
+
+async function init(cwd: string, name: string) {
+  const fs = await import('node:fs/promises')
+  const dst = resolve(cwd, name)
+  if (await fs.stat(dst).catch(() => null)) {
+    throw new Error(`destination already exists: ${dst}`)
+  }
+  if (!(await fs.stat(templatesRoot).catch(() => null))) {
+    throw new Error(`template root missing: ${templatesRoot}`)
+  }
+
+  const version = await getLibVersion()
+  const replacements: Record<string, string> = {
+    __NAME__: name,
+    __DESCRIPTION__: `design system scaffolded with modo-atomic-ui`,
+    __MODO_VERSION__: `^${version}`,
+  }
+
+  await fs.cp(templatesRoot, dst, { recursive: true })
+  await substitutePlaceholders(dst, replacements)
+
+  // eslint-disable-next-line no-console
+  console.log(`[modo] scaffolded ${dst}\n  next: cd ${name} && npm install && npm run dev`)
+}
+
+async function substitutePlaceholders(rootDir: string, replacements: Record<string, string>) {
+  const fs = await import('node:fs/promises')
+  const skipDirs = new Set(['node_modules', 'dist', '.git'])
+  async function walk(dir: string): Promise<void> {
+    const entries = await fs.readdir(dir, { withFileTypes: true })
+    for (const entry of entries) {
+      const p = resolve(dir, entry.name)
+      if (entry.isDirectory()) {
+        if (!skipDirs.has(entry.name)) await walk(p)
+        continue
+      }
+      let text: string
+      try {
+        text = await fs.readFile(p, 'utf8')
+      } catch {
+        continue // binary, skip
+      }
+      let changed = false
+      for (const [from, to] of Object.entries(replacements)) {
+        if (text.includes(from)) {
+          text = text.split(from).join(to)
+          changed = true
+        }
+      }
+      if (changed) await fs.writeFile(p, text)
+    }
+  }
+  await walk(rootDir)
+}
+
 async function main() {
   const argv = process.argv.slice(2)
   const cmd = argv[0]
@@ -157,6 +217,13 @@ async function main() {
       break
     case 'build':
       await build(cwd)
+      break
+    case 'init':
+      if (!argv[1]) {
+        console.error('usage: modo init <name>')
+        process.exit(1)
+      }
+      await init(cwd, argv[1])
       break
     default:
       console.error(`unknown command: ${cmd}`)
