@@ -493,11 +493,13 @@ body {
 }
 [data-aui="motion-bar"] {
   display: block;
-  width: 60px;
+  /* bar width = duration * 0.8px/ms, so 80ms→64px, 240ms→192px, 400ms→320px.
+     clamped 16..400px so very fast and very slow durations stay visible. */
+  width: clamp(16px, calc(var(--motion-ms, 80) * 0.8px), 400px);
   height: 8px;
   background: var(--accent);
   border-radius: 4px;
-  animation: modo-motion-bar 2s infinite;
+  animation: modo-motion-bar var(--motion-duration, 2s) var(--ease-standard) infinite;
 }
 [data-aui="motion-value"] {
   font-size: 10px;
@@ -507,7 +509,7 @@ body {
 }
 @keyframes modo-motion-bar {
   0%, 100% { transform: translateX(0); opacity: 1; }
-  50% { transform: translateX(140px); opacity: 0.5; }
+  50% { transform: translateX(calc(var(--motion-bar-distance, 120px))); opacity: 0.5; }
 }
 
 /* ── data-theme="dark" overrides ─────────────────────────────────────────── */

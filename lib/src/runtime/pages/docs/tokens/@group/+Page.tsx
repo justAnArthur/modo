@@ -152,13 +152,27 @@ function TokenGroup({ group, data }: { group: string; data: any }) {
   if (group === 'motion' && data.durations) {
     return (
       <div data-aui="motion-scale">
-        {Object.entries(data.durations).map(([name, def]: [string, any]) => (
-          <div key={name} data-aui="motion-row">
-            <span data-aui="motion-name">{name}</span>
-            <div data-aui="motion-bar" style={{ animation: `modo-motion-bar 2s var(--ease-standard) infinite`, animationDuration: def.value }} />
-            <span data-aui="motion-value">{def.value} · {def.ms}ms</span>
-          </div>
-        ))}
+        {Object.entries(data.durations).map(([name, def]: [string, any]) => {
+          const ms = def.ms ?? 0
+          // bar width = ms * 0.8px (clamped in CSS). the animation also
+          // travels ms * 0.8px so visually "shorter" = faster.
+          const distance = `clamp(16px, ${ms * 0.8}px, 400px)`
+          return (
+            <div key={name} data-aui="motion-row">
+              <span data-aui="motion-name">{name}</span>
+              <div
+                data-aui="motion-bar"
+                style={{
+                  ['--motion-ms' as any]: ms,
+                  ['--motion-duration' as any]: def.value,
+                  ['--motion-bar-distance' as any]: distance,
+                  animationDuration: def.value,
+                }}
+              />
+              <span data-aui="motion-value">{def.value} · {def.ms}ms</span>
+            </div>
+          )
+        })}
       </div>
     )
   }
