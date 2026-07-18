@@ -32,6 +32,7 @@ export default function Layout({ children }: LayoutProps) {
         </p>
         <ThemeSwitcher />
         <DensitySwitcher />
+        <RadiusSwitcher />
       </aside>
     </div>
   )
@@ -106,6 +107,29 @@ function DensitySwitcher() {
           { value: 'compact', label: 'compact' },
           { value: 'comfortable', label: 'comfortable' },
           { value: 'spacious', label: 'spacious' },
+        ]}
+      />
+    </label>
+  )
+}
+
+function RadiusSwitcher() {
+  return (
+    <label data-aui="control" data-control="radius">
+      <span data-aui="control-label">Radius</span>
+      <SelectSlot
+        value={typeof localStorage !== 'undefined' ? (localStorage.getItem('modo-radius') ?? 'rounded') : 'rounded'}
+        onChange={(v) => {
+          if (v === 'rounded') {
+            document.documentElement.removeAttribute('data-radius')
+          } else {
+            document.documentElement.setAttribute('data-radius', v)
+          }
+          try { localStorage.setItem('modo-radius', v) } catch { /* noop */ }
+        }}
+        options={[
+          { value: 'rounded', label: 'rounded' },
+          { value: 'pill', label: 'pill' },
         ]}
       />
     </label>

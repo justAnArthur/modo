@@ -471,3 +471,46 @@ body {
   0%, 100% { transform: translateX(0); opacity: 1; }
   50% { transform: translateX(140px); opacity: 0.5; }
 }
+
+/* ── data-theme="dark" overrides ─────────────────────────────────────────── */
+/* minimal dark mode for the lib's chrome. the user's DS is responsible for
+   their own app's dark mode (they should write overrides for the same vars).
+   this gives the docs site a working dark toggle out of the box. */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --border: #27272a;
+  --accent: #3b82f6;
+  --accent-foreground: #fafafa;
+  --surface-1: #0a0a0a;
+  --surface-2: #111113;
+  --surface-3: #18181b;
+  --surface-4: #1f1f23;
+  --surface-5: #27272a;
+  --surface-6: #2f2f35;
+  --surface-7: #38383f;
+  --surface-8: #42424a;
+}
+
+/* ── data-density multiplier ─────────────────────────────────────────────── */
+/* --spacing-multiplier is set on <html data-density="...">. components
+   that need density-aware sizing should use
+   calc(var(--space-{n}, 0px) * var(--spacing-multiplier, 1)). */
+[data-density="compact"]    { --spacing-multiplier: 0.85; }
+[data-density="comfortable"] { --spacing-multiplier: 1; }
+[data-density="spacious"]   { --spacing-multiplier: 1.15; }
+
+/* ── data-radius="pill" overrides ────────────────────────────────────────── */
+/* the user can opt into a "pill" radius for the whole chrome. each surface
+   tier gets pushed up to 9999px, which approximates a fully rounded shape. */
+[data-radius="pill"] {
+  --radius-sm: 9999px;
+  --radius-md: 9999px;
+  --radius-lg: 9999px;
+  --radius-xl: 9999px;
+  --radius-2xl: 9999px;
+  --radius-3xl: 9999px;
+}
