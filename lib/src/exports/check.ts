@@ -60,9 +60,9 @@ export async function runCheck(cwd: string, libRoot: string): Promise<{ ok: bool
 
   // 1. parse + validate modo.config.ts
   const configPath = resolve(cwd, 'modo.config.ts')
-  let config: { tokens?: { source: string }; source?: { primitives: string; components: string; blocks: string } } | null = null
+  let config: unknown = null
   try {
-    config = (await bundleTs(configPath, libRoot)) as typeof config
+    config = await bundleTs(configPath, libRoot)
   } catch (e) {
     issues.push({ file: configPath, message: `failed to load: ${(e as Error).message}` })
   }
@@ -70,9 +70,9 @@ export async function runCheck(cwd: string, libRoot: string): Promise<{ ok: bool
     const r = siteConfigSchema.safeParse(config)
     if (!r.success) {
       for (const m of flattenIssues(r.error)) issues.push({ file: configPath, message: m })
-    } else if (r.data.tokens?.source) {
-      // 2. validate each token group
-      const tokensDir = resolve(cwd, r.data.tokens.source)
+    } else {
+      // 2. validate each token group in ./tokens/
+      const tokensDir = resolve(cwd, 'tokens')
       let files: string[] = []
       try {
         files = await readdir(tokensDir)

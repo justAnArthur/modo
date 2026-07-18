@@ -151,12 +151,9 @@ export const siteConfigSchema = z.object({
       github: z.string().url().optional(),
     })
     .optional(),
-  tokens: z.object({ source: z.string() }).optional(),
-  source: z.object({
-    primitives: z.string(),
-    components: z.string(),
-    blocks: z.string(),
-  }),
+  // 'components' maps lib chrome slot names to user-provided component paths.
+  // slots currently consumed: 'Select', 'Link', 'Button'. unset = native fallback.
+  components: z.record(z.string(), z.string()).optional(),
   css: z.string().optional(),
   theme: z
     .object({

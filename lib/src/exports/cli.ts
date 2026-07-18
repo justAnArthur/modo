@@ -83,8 +83,7 @@ async function readModoConfig(cwd: string): Promise<ModoConfig> {
 }
 
 async function dev(cwd: string) {
-  const config = await readModoConfig(cwd)
-  if (!config.source) throw new Error('modo.config.ts must include `source: { primitives, components, blocks }`')
+  await readModoConfig(cwd)  // validates that modo.config.ts exists + is valid
 
   const port = Number(process.env.PORT ?? 5173)
 
@@ -131,8 +130,7 @@ Usage:
 }
 
 async function build(cwd: string) {
-  const config = await readModoConfig(cwd)
-  if (!config.source) throw new Error('modo.config.ts must include `source: { primitives, components, blocks }`')
+  await readModoConfig(cwd)  // validates that modo.config.ts exists + is valid
 
   // hand off to vike build (lib-relative). vike requires `root` to match cwd,
   // so we spawn the binary in the lib's runtime/ dir. then move the output
@@ -233,16 +231,14 @@ async function add(cwd: string, kind: string, name: string) {
     throw new Error(`missing stub: ${stubPath}`)
   }
 
-  const config = await readModoConfig(cwd)
+  await readModoConfig(cwd)  // validates config
 
   let target: string
   if (kind === 'token') {
-    const tokensDir = config.tokens?.source ?? './tokens'
-    target = resolve(cwd, tokensDir, `${name}.ts`)
+    target = resolve(cwd, 'tokens', `${name}.ts`)
   } else {
     const tier = kind === 'primitive' ? 'primitives' : kind === 'component' ? 'components' : 'blocks'
-    const sourceDir = config.source?.[tier as 'primitives' | 'components' | 'blocks'] ?? `./${tier}`
-    target = resolve(cwd, sourceDir, name, 'index.tsx')
+    target = resolve(cwd, tier, name, 'index.tsx')
   }
 
   if (await fs.stat(target).catch(() => null)) {

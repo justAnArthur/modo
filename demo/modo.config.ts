@@ -6,12 +6,6 @@ export default defineConfig({
   meta: {
     github: 'https://github.com/modo-atomic-ui/modo-atomic-ui',
   },
-  tokens: { source: './tokens' },
-  source: {
-    primitives: './primitives',
-    components: './components',
-    blocks: './blocks',
-  },
   theme: {
     fonts: {
       sans: 'Inter Variable',
