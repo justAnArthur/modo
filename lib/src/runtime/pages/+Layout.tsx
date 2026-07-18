@@ -4,14 +4,15 @@
 // is the "make it yours" panel — uses the user's <Select> when provided
 // via modo.config.ts components.Select, otherwise native fallback.
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from '../components/link'
 import { SelectSlot } from '../components/slot'
 import { css as userCss } from 'virtual:modo-user-css'
 import { config as siteConfig, name as siteName, description as siteDescription } from 'virtual:modo-config'
-import { items, byId } from 'virtual:modo-items'
+import { items, byId, css as itemCssMap } from 'virtual:modo-items'
 import { useConfig } from 'vike-react/useConfig'
+import '../styles/base.css'
 import './+Layout.css'
 
 interface LayoutProps {
@@ -59,9 +60,23 @@ export default function Layout({ children }: LayoutProps) {
     title: siteName,
     description: siteDescription || undefined,
   })
+  // concat all per-item CSS into a single stylesheet. each item's
+  // component imports its own .css; the source plugin's esbuild step
+  // extracts those into a per-key map. order doesn't matter for
+  // distinct selectors, but we sort keys for stable output.
+  const itemCss = useMemo(
+    () =>
+      Object.keys(itemCssMap)
+        .sort()
+        .map((k) => itemCssMap[k])
+        .filter(Boolean)
+        .join('\n'),
+    [itemCssMap],
+  )
   return (
     <>
       {userCss && <style dangerouslySetInnerHTML={{ __html: userCss }} />}
+      {itemCss && <style dangerouslySetInnerHTML={{ __html: itemCss }} />}
       <div data-aui="app">
         <aside data-aui="sidebar">
           <div data-aui="sidebar-header">
@@ -75,7 +90,7 @@ export default function Layout({ children }: LayoutProps) {
         <aside data-aui="panel">
           <h2 data-aui="panel-title">make them yours</h2>
           <p data-aui="panel-hint">
-            override <code>data-aui</code> styles in your <code>overrides.css</code>.
+            override <code>data-aui</code> styles in your <code>global.css</code>.
           </p>
           <ThemeSwitcher />
           <DensitySwitcher />

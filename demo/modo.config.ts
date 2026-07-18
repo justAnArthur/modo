@@ -9,7 +9,7 @@ export default defineConfig({
   components: {
     Select: './components/select',
   },
-  css: './overrides.css',
+  css: './global.css',
   theme: {
     fonts: {
       sans: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',

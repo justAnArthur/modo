@@ -1,0 +1,19 @@
+/* input — demo-specific visuals for the Input primitive. */
+
+.modo-input {
+  display: inline-block;
+  width: 240px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 6px);
+  background: var(--surface-3, var(--background));
+  color: var(--foreground);
+  font: inherit;
+}
+.modo-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 24%, transparent);
+}
+.modo-input[data-size="sm"] { height: 28px; padding: 0 10px; font-size: 12px; }
+.modo-input[data-size="md"] { height: 32px; padding: 0 12px; font-size: 13px; }
+.modo-input[data-size="lg"] { height: 40px; padding: 0 18px; font-size: 14px; }

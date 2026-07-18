@@ -1,3 +1,5 @@
+import './input.css'
+
 /**
  * Single-line text input.
  *

@@ -1,0 +1,3 @@
+/* popover — demo-specific visuals for the Popover component. */
+
+[data-aui="popover"] { display: inline-block; }

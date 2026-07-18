@@ -1,0 +1,3 @@
+/* login-form — demo-specific visuals for the LoginForm block. */
+
+[data-block="login-form"] { display: flex; flex-direction: column; }

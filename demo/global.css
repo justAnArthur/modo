@@ -1,0 +1,45 @@
+/* demo global CSS — shared across all items, not specific to one.
+   - errors / diagnostics block (rendered by the lib in [data-aui="errors"])
+   - dark mode override (applied when the theme switcher sets data-theme="dark")
+   - pill radius override (applied when the radius switcher sets data-radius="pill")
+   - body defaults (font sizes that aren't in tokens/typography.css)
+*/
+
+[data-aui="errors"] {
+  background: color-mix(in oklab, var(--danger, #ef4444) 12%, transparent);
+  border: 1px solid color-mix(in oklab, var(--danger, #ef4444) 40%, transparent);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: color-mix(in oklab, var(--danger, #ef4444) 80%, var(--foreground));
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --border: #27272a;
+  --accent: #3b82f6;
+  --accent-foreground: #fafafa;
+  --surface-1: #0a0a0a;
+  --surface-2: #111113;
+  --surface-3: #18181b;
+  --surface-4: #1f1f23;
+  --surface-5: #27272a;
+  --surface-6: #2f2f35;
+  --surface-7: #38383f;
+  --surface-8: #42424a;
+}
+
+[data-radius="pill"] {
+  --radius-sm: 9999px;
+  --radius-md: 9999px;
+  --radius-lg: 9999px;
+  --radius-xl: 9999px;
+  --radius-2xl: 9999px;
+  --radius-3xl: 9999px;
+}

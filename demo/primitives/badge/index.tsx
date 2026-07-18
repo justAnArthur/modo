@@ -1,3 +1,5 @@
+import './badge.css'
+
 /**
  * Small status indicator or label.
  *

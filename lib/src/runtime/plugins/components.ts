@@ -138,7 +138,11 @@ export function componentsPlugin(opts: ComponentsPluginOptions): Plugin {
           format: 'esm',
           platform: 'neutral',
           jsx: 'automatic',
-          loader: { '.tsx': 'tsx', '.ts': 'ts', '.jsx': 'jsx', '.js': 'js' },
+          // we accept .css so esbuild doesn't error if the user imported
+          // a stylesheet in their Select. we don't capture it here — the
+          // source plugin already collects the CSS for all items. the
+          // output JS won't reference the CSS (esbuild strips it).
+          loader: { '.tsx': 'tsx', '.ts': 'ts', '.jsx': 'jsx', '.js': 'js', '.css': 'empty' },
           external: ['react', 'react-dom', 'react/jsx-runtime'],
           logLevel: 'silent',
         })

@@ -1,0 +1,3 @@
+/* tooltip — demo-specific visuals for the Tooltip component. */
+
+[data-aui="tooltip"] { display: inline-block; }

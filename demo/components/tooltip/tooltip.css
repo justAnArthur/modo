@@ -1,0 +1,6 @@
+/* tooltip — demo-specific visuals for the Tooltip component. the inline
+   styles on the elements are the actual demo; this file is intentionally
+   empty unless we want to add positioning/transitions later. */
+
+[data-aui="tooltip"] { display: inline-block; }
+[data-aui="tooltip-body"] { font-size: 11px; }

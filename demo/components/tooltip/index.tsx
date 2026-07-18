@@ -1,3 +1,5 @@
+import './tooltip.css'
+
 /**
  * Floating label that appears on hover. Uses `<Elevated offset={3}>`.
  *

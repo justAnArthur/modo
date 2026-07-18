@@ -1,4 +1,3 @@
-import '../../styles/base.css'
 import { tokens, errors as tokensErrors, css as tokensCss } from 'virtual:modo-tokens'
 import { items, byId } from 'virtual:modo-items'
 import { config as siteConfig } from 'virtual:modo-config'

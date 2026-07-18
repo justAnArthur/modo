@@ -1,3 +1,5 @@
+import './select.css'
+
 /**
  * A native-styled select for the lib chrome. Replace with a real one in
  * your project. The lib's `+Layout.tsx` consumes this via the

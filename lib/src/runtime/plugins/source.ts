@@ -101,8 +101,18 @@ async function safeUnlink(p: string): Promise<void> {
   try { await unlink(p) } catch { /* already gone */ }
 }
 
-async function bundleItem(entryAbs: string, idx: number): Promise<{ key: string; path: string } | null> {
+async function bundleItem(
+  entryAbs: string,
+  idx: number,
+): Promise<{ jsPath: string; css: string } | null> {
   try {
+    // bundle via entryPoints so esbuild can resolve the user's relative
+    // CSS imports (`./foo.css` from within the component file). the
+    // resulting CSS is a sibling output file; we collect it from
+    // outputFiles and inject it via a <style> tag in the layout. the
+    // JS is written to TMP_DIR so the virtual module can `import` it.
+    await mkdir(TMP_DIR, { recursive: true })
+    const jsPath = join(TMP_DIR, `item-${idx}.mjs`)
     const result = await esbuild.build({
       entryPoints: [entryAbs],
       bundle: true,
@@ -110,16 +120,21 @@ async function bundleItem(entryAbs: string, idx: number): Promise<{ key: string;
       format: 'esm',
       platform: 'neutral',
       jsx: 'automatic',
-      loader: { '.tsx': 'tsx', '.ts': 'ts' },
+      outfile: jsPath,
+      loader: { '.tsx': 'tsx', '.ts': 'ts', '.css': 'css' },
       external: ['react', 'react-dom', 'react/jsx-runtime'],
       logLevel: 'silent',
     })
-    const code = result.outputFiles?.[0]?.text
-    if (!code) return null
-    await mkdir(TMP_DIR, { recursive: true })
-    const out = join(TMP_DIR, `item-${idx}.mjs`)
-    await writeFile(out, code)
-    return { key: entryAbs, path: out }
+    const jsFile = result.outputFiles?.find(
+      (f) => f.path.endsWith('.js') || f.path.endsWith('.mjs') || f.path.endsWith('.tsx'),
+    )
+    if (!jsFile) return null
+    await writeFile(jsPath, jsFile.text)
+    const css = (result.outputFiles ?? [])
+      .filter((f) => f.path.endsWith('.css'))
+      .map((f) => f.text)
+      .join('\n')
+    return { jsPath, css }
   } catch {
     return null
   }
@@ -148,10 +163,12 @@ export function sourcePlugin(options: SourcePluginOptions): Plugin {
 
       // second pass: read each item's source, parse TSDoc, and bundle the
       // component. byId is the TSDoc parse result; components is the static
-      // import map the virtual module emits.
+      // import map the virtual module emits; css is the per-item CSS (each
+      // item's component imports its own .css which esbuild splits out).
       const byId: Record<string, ReturnType<typeof parseItemSource>> = {}
       const imports: string[] = []
-      const bindings: string[] = []
+      const compBindings: string[] = []
+      const cssBindings: string[] = []
       let i = 0
       for (const item of all) {
         const key = `${item.category}/${item.id}`
@@ -163,11 +180,13 @@ export function sourcePlugin(options: SourcePluginOptions): Plugin {
         }
         const bundled = await bundleItem(item.filePath, i++)
         if (bundled) {
-          imports.push(`import * as __ns_${i} from '${bundled.path}';`)
-          bindings.push(`  '${key}': __ns_${i}.default ?? null,`)
+          imports.push(`import * as __ns_${i} from '${bundled.jsPath}';`)
+          compBindings.push(`  '${key}': __ns_${i}.default ?? null,`)
         } else {
-          bindings.push(`  '${key}': null,`)
+          compBindings.push(`  '${key}': null,`)
         }
+        cssBindings.push(`  '${key}': ${JSON.stringify(bundled?.css ?? '')},`)
+        i++
       }
 
       // best-effort cleanup of stale tmp dirs from previous vite sessions.
@@ -192,7 +211,8 @@ export function sourcePlugin(options: SourcePluginOptions): Plugin {
         `export const items = ${JSON.stringify(all, null, 2)};`,
         `export const byId = ${JSON.stringify(byId, null, 2)};`,
         `export const dsRoot = ${JSON.stringify(dsRoot)};`,
-        `export const components = {\n${bindings.join('\n')}\n};`,
+        `export const components = {\n${compBindings.join('\n')}\n};`,
+        `export const css = {\n${cssBindings.join('\n')}\n};`,
       ].join('\n')
     },
 

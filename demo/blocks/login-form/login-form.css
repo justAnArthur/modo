@@ -1,0 +1,5 @@
+/* login-form — demo-specific visuals for the LoginForm block. the inline
+   styles on the elements handle layout; this file is intentionally
+   empty unless we add hover/focus states later. */
+
+[data-block="login-form"] { display: flex; flex-direction: column; }

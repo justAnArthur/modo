@@ -1,3 +1,5 @@
+import './button.css'
+
 /**
  * Triggers an action or event.
  *

@@ -1,3 +1,5 @@
+import './popover.css'
+
 /**
  * Floats above the page when triggered. Uses `<Elevated offset={2}>` so it stays
  * one notch above its substrate.

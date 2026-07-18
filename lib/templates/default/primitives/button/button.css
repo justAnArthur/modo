@@ -1,0 +1,34 @@
+/* button — demo-specific visuals for the Button primitive.
+   override the values below to match your design system. the lib
+   itself ships no component CSS; everything here is host content. */
+
+.modo-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+  user-select: none;
+}
+
+.modo-button[data-size="sm"] { height: 28px; padding: 0 10px; font-size: 12px; }
+.modo-button[data-size="md"] { height: 32px; padding: 0 14px; font-size: 13px; }
+.modo-button[data-size="lg"] { height: 40px; padding: 0 18px; font-size: 14px; }
+
+.modo-button[data-variant="primary"] {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+.modo-button[data-variant="secondary"] {
+  background: var(--muted);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+.modo-button[data-variant="ghost"] {
+  background: transparent;
+  color: var(--foreground);
+}

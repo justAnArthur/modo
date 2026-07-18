@@ -46,6 +46,7 @@ declare module 'virtual:modo-items' {
   export const items: DiscoveredItem[]
   export const byId: Record<string, ParsedItemShape>
   export const components: Record<string, React.ComponentType<any> | null>
+  export const css: Record<string, string>
   export const dsRoot: string
 }
 

@@ -1,0 +1,6 @@
+/* popover — demo-specific visuals for the Popover component. the inline
+   styles on the elements are the actual demo; this file is intentionally
+   empty unless we want to add positioning/transitions later. */
+
+[data-aui="popover"] { display: inline-block; }
+[data-aui="popover-body"] { font-size: 12px; }
