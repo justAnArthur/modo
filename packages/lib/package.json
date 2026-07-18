@@ -60,6 +60,7 @@
   },
   "scripts": {
     "build": "NODE_ENV=production bunup",
+    "build:runtime": "vike build --root src/runtime",
     "dev": "vite --config src/runtime/vite.config.ts",
     "check": "tsc --noEmit"
   },
