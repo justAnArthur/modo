@@ -1,18 +1,15 @@
 /* ── modo-atomic-ui structural CSS ──────────────────────────────────────────
-   layout, grid, motion, focus, hover. NO design tokens.
-   user tokens are read from their `tokens/*.ts` and injected as CSS variables
-   in :root by the `tokens` Vite plugin.
+   the lib ships only the structural skeleton: layout, grid, motion keyframes,
+   focus rings, the docs chrome (sidebar / content / panel). NO design tokens,
+   NO component visuals — those come from the user's `tokens/*.css` and
+   `modo.config.ts: css` override file.
    ─────────────────────────────────────────────────────────────────────────── */
-
-@import './shadows.css';
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 
 body {
   font-family: var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
-  font-size: 14px;
-  line-height: 1.5;
   color: var(--foreground);
   background: var(--background);
 }
@@ -216,121 +213,6 @@ body {
   font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
 }
 
-/* ── button styles (the user's DS, in this case) ── */
-
-.modo-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  font: inherit;
-  font-weight: 500;
-  transition: background-color 80ms ease, transform 80ms ease, border-color 80ms ease;
-  user-select: none;
-}
-.modo-button:active { transform: scale(0.98); }
-.modo-button:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent); }
-.modo-button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.modo-button[data-size="sm"] { height: 28px; padding: 0 10px; font-size: 12px; }
-.modo-button[data-size="md"] { height: 32px; padding: 0 14px; font-size: 13px; }
-.modo-button[data-size="lg"] { height: 40px; padding: 0 18px; font-size: 14px; }
-
-.modo-button[data-variant="primary"] {
-  background: var(--accent);
-  color: var(--accent-foreground);
-}
-.modo-button[data-variant="secondary"] {
-  background: var(--muted);
-  color: var(--foreground);
-  border-color: var(--border);
-}
-.modo-button[data-variant="ghost"] {
-  background: transparent;
-  color: var(--foreground);
-}
-.modo-button[data-variant="ghost"]:hover {
-  background: var(--muted);
-}
-
-/* ── input styles (user's DS) ── */
-
-.modo-input {
-  display: inline-block;
-  width: 240px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md, 6px);
-  background: var(--surface-3, var(--background));
-  color: var(--foreground);
-  font: inherit;
-  transition: border-color var(--motion-fast, 80ms) var(--ease-standard, ease);
-}
-.modo-input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 24%, transparent);
-}
-.modo-input:disabled { opacity: 0.5; cursor: not-allowed; }
-.modo-input[data-variant="error"] { border-color: #ef4444; }
-.modo-input[data-variant="error"]:focus {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px color-mix(in oklab, #ef4444 24%, transparent);
-}
-.modo-input[data-size="sm"] { height: 28px; padding: 0 10px; font-size: 12px; }
-.modo-input[data-size="md"] { height: 32px; padding: 0 12px; font-size: 13px; }
-.modo-input[data-size="lg"] { height: 40px; padding: 0 14px; font-size: 14px; }
-
-/* ── badge styles (the user's DS) ── */
-
-.modo-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font: inherit;
-  font-weight: 500;
-  border-radius: var(--radius-sm, 4px);
-  white-space: nowrap;
-}
-.modo-badge[data-size="sm"] { height: 22px; padding: 0 8px; font-size: 11px; }
-.modo-badge[data-size="md"] { height: 26px; padding: 0 10px; font-size: 12px; }
-
-/* soft (default) */
-.modo-badge[data-variant="soft"][data-tone="neutral"] { background: var(--muted); color: var(--foreground); }
-.modo-badge[data-variant="soft"][data-tone="success"] { background: color-mix(in oklab, #22c55e 14%, transparent); color: #15803d; }
-.modo-badge[data-variant="soft"][data-tone="warning"] { background: color-mix(in oklab, #f59e0b 14%, transparent); color: #b45309; }
-.modo-badge[data-variant="soft"][data-tone="danger"]  { background: color-mix(in oklab, #ef4444 14%, transparent); color: #b91c1c; }
-.modo-badge[data-variant="soft"][data-tone="info"]    { background: color-mix(in oklab, var(--accent) 14%, transparent); color: var(--accent); }
-
-/* solid */
-.modo-badge[data-variant="solid"][data-tone="neutral"] { background: var(--foreground); color: var(--background); }
-.modo-badge[data-variant="solid"][data-tone="success"] { background: #22c55e; color: #fff; }
-.modo-badge[data-variant="solid"][data-tone="warning"] { background: #f59e0b; color: #fff; }
-.modo-badge[data-variant="solid"][data-tone="danger"]  { background: #ef4444; color: #fff; }
-.modo-badge[data-variant="solid"][data-tone="info"]    { background: var(--accent); color: var(--accent-foreground); }
-
-/* outline */
-.modo-badge[data-variant="outline"] { background: transparent; border: 1px solid var(--border); }
-.modo-badge[data-variant="outline"][data-tone="success"] { border-color: #22c55e; color: #15803d; }
-.modo-badge[data-variant="outline"][data-tone="warning"] { border-color: #f59e0b; color: #b45309; }
-.modo-badge[data-variant="outline"][data-tone="danger"]  { border-color: #ef4444; color: #b91c1c; }
-.modo-badge[data-variant="outline"][data-tone="info"]    { border-color: var(--accent); color: var(--accent); }
-
-/* ── errors / diagnostics ── */
-
-[data-aui="errors"] {
-  background: color-mix(in oklab, #ef4444 12%, transparent);
-  border: 1px solid color-mix(in oklab, #ef4444 40%, transparent);
-  border-radius: 8px;
-  padding: 12px 16px;
-  color: #b91c1c;
-  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
-  font-size: 12px;
-  white-space: pre-wrap;
-}
-
 /* ── prop table ── */
 
 [data-aui="prop-table"] {
@@ -512,48 +394,12 @@ body {
   50% { transform: translateX(calc(var(--motion-bar-distance, 120px))); opacity: 0.5; }
 }
 
-/* ── data-theme="dark" overrides ─────────────────────────────────────────── */
-/* minimal dark mode for the lib's chrome. the user's DS is responsible for
-   their own app's dark mode (they should write overrides for the same vars).
-   this gives the docs site a working dark toggle out of the box. */
-[data-theme="dark"] {
-  color-scheme: dark;
-  --background: #0a0a0a;
-  --foreground: #fafafa;
-  --muted: #18181b;
-  --muted-foreground: #a1a1aa;
-  --border: #27272a;
-  --accent: #3b82f6;
-  --accent-foreground: #fafafa;
-  --surface-1: #0a0a0a;
-  --surface-2: #111113;
-  --surface-3: #18181b;
-  --surface-4: #1f1f23;
-  --surface-5: #27272a;
-  --surface-6: #2f2f35;
-  --surface-7: #38383f;
-  --surface-8: #42424a;
-}
-
 /* ── data-density multiplier ─────────────────────────────────────────────── */
-/* --spacing-multiplier is set on <html data-density="...">. components
-   that need density-aware sizing should use
-   calc(var(--space-{n}, 0px) * var(--spacing-multiplier, 1)). */
+/* structural: just exposes --spacing-multiplier so the user's components
+   can size themselves density-aware. no chrome overrides here. */
 [data-density="compact"]    { --spacing-multiplier: 0.85; }
 [data-density="comfortable"] { --spacing-multiplier: 1; }
 [data-density="spacious"]   { --spacing-multiplier: 1.15; }
-
-/* ── data-radius="pill" overrides ────────────────────────────────────────── */
-/* the user can opt into a "pill" radius for the whole chrome. each surface
-   tier gets pushed up to 9999px, which approximates a fully rounded shape. */
-[data-radius="pill"] {
-  --radius-sm: 9999px;
-  --radius-md: 9999px;
-  --radius-lg: 9999px;
-  --radius-xl: 9999px;
-  --radius-2xl: 9999px;
-  --radius-3xl: 9999px;
-}
 
 /* ── example card meta (TSDoc @example rendering) ──────────────── */
 
@@ -631,15 +477,4 @@ body {
 [data-aui="example-loading"] {
   color: var(--muted-foreground);
   font-size: 11px;
-}
-
-[data-aui="example-error"] {
-  display: block;
-  padding: 6px 8px;
-  background: color-mix(in oklab, #ef4444 8%, transparent);
-  border: 1px solid color-mix(in oklab, #ef4444 25%, transparent);
-  border-radius: var(--radius-sm, 4px);
-  color: color-mix(in oklab, #ef4444 90%, var(--foreground));
-  font-size: 10px;
-  font-family: var(--font-mono, monospace);
 }

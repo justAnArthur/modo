@@ -4,6 +4,16 @@ declare module 'virtual:modo-tokens' {
   export const css: string
 }
 
+declare module 'virtual:modo-user-css' {
+  export const css: string
+}
+
+declare module 'virtual:modo-config' {
+  export const config: Record<string, any>
+  export const name: string
+  export const description: string
+}
+
 declare module 'virtual:modo-items' {
   import type { ComponentType } from 'react'
   export interface DiscoveredItem {

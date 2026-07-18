@@ -235,29 +235,6 @@
   overflow-x: auto;
 }
 
-/* user-provided Select wrapper */
-[data-aui="user-select"] {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-[data-aui="user-select-inner"] {
-  background: var(--surface-3, var(--background));
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm, 4px);
-  padding: calc(4px * var(--spacing-multiplier, 1)) calc(6px * var(--spacing-multiplier, 1));
-  color: var(--foreground);
-  font: inherit;
-  font-size: 12px;
-  cursor: pointer;
-}
-[data-aui="user-select-badge"] {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--accent-foreground);
-  background: var(--accent);
-  padding: 1px 4px;
-  border-radius: 9999px;
-  font-weight: 600;
-}
+/* user-provided Select styles are user content — the demo's
+   overrides.css ships them for the demo. when a different consumer
+   provides their own Select, they bring their own styles too. */

@@ -9,10 +9,11 @@ export default defineConfig({
   components: {
     Select: './components/select',
   },
+  css: './overrides.css',
   theme: {
     fonts: {
-      sans: 'Inter Variable',
-      mono: 'JetBrains Mono Variable',
+      sans: 'Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      mono: 'ui-monospace, SFMono-Regular, "JetBrains Mono Variable", monospace',
     },
     defaultDensity: 'comfortable',
     defaultTheme: 'system',

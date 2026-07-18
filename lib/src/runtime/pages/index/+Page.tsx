@@ -1,6 +1,7 @@
 import '../../styles/base.css'
 import { tokens, errors as tokensErrors, css as tokensCss } from 'virtual:modo-tokens'
 import { items, byId } from 'virtual:modo-items'
+import { config as siteConfig } from 'virtual:modo-config'
 import { ExampleBlock } from '../../components/example-renderer'
 
 // all item components + parsed metadata are pre-bundled by the source
@@ -237,8 +238,10 @@ export default function Page() {
       <style>{tokensCss}</style>
       <div data-aui="page">
         <header data-aui="header">
-          <h1>modo-atomic-ui</h1>
-          <p>phase 1 — full atomic design system renderer. the lib ships structural CSS; the demo brings all the tokens.</p>
+          <h1>{(siteConfig as { name?: string }).name ?? 'design system'}</h1>
+          {(siteConfig as { description?: string }).description && (
+            <p>{(siteConfig as { description?: string }).description}</p>
+          )}
         </header>
 
         {tokensErrors.length > 0 && (
