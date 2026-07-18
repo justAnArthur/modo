@@ -1,11 +1,12 @@
 // shared layout for every page in the docs site.
 // wraps each page in <aside data-aui="sidebar"> (left) and
 // <main data-aui="content"> (center). the right <aside data-aui="panel">
-// is the "make it yours" panel — the user provides the actual switcher
-// logic in their overrides.css / JS.
+// is the "make it yours" panel — uses the user's <Select> when provided
+// via modo.config.ts components.Select, otherwise native fallback.
 
 import type { ReactNode } from 'react'
 import { Link } from '../components/link'
+import { SelectSlot } from '../components/slot'
 import './+Layout.css'
 
 interface LayoutProps {
@@ -71,10 +72,9 @@ function ThemeSwitcher() {
   return (
     <label data-aui="control" data-control="theme">
       <span data-aui="control-label">Theme</span>
-      <select
-        data-aui="control-input"
-        onChange={(e) => {
-          const v = e.target.value
+      <SelectSlot
+        value={typeof localStorage !== 'undefined' ? (localStorage.getItem('modo-theme') ?? 'system') : 'system'}
+        onChange={(v) => {
           if (v === 'system') {
             document.documentElement.removeAttribute('data-theme')
           } else {
@@ -82,12 +82,12 @@ function ThemeSwitcher() {
           }
           try { localStorage.setItem('modo-theme', v) } catch { /* noop */ }
         }}
-        defaultValue={typeof localStorage !== 'undefined' ? (localStorage.getItem('modo-theme') ?? 'system') : 'system'}
-      >
-        <option value="system">system</option>
-        <option value="light">light</option>
-        <option value="dark">dark</option>
-      </select>
+        options={[
+          { value: 'system', label: 'system' },
+          { value: 'light', label: 'light' },
+          { value: 'dark', label: 'dark' },
+        ]}
+      />
     </label>
   )
 }
@@ -96,19 +96,18 @@ function DensitySwitcher() {
   return (
     <label data-aui="control" data-control="density">
       <span data-aui="control-label">Density</span>
-      <select
-        data-aui="control-input"
-        onChange={(e) => {
-          const v = e.target.value
+      <SelectSlot
+        value={typeof localStorage !== 'undefined' ? (localStorage.getItem('modo-density') ?? 'comfortable') : 'comfortable'}
+        onChange={(v) => {
           document.documentElement.setAttribute('data-density', v)
           try { localStorage.setItem('modo-density', v) } catch { /* noop */ }
         }}
-        defaultValue={typeof localStorage !== 'undefined' ? (localStorage.getItem('modo-density') ?? 'comfortable') : 'comfortable'}
-      >
-        <option value="compact">compact</option>
-        <option value="comfortable">comfortable</option>
-        <option value="spacious">spacious</option>
-      </select>
+        options={[
+          { value: 'compact', label: 'compact' },
+          { value: 'comfortable', label: 'comfortable' },
+          { value: 'spacious', label: 'spacious' },
+        ]}
+      />
     </label>
   )
 }

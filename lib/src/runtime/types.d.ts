@@ -15,3 +15,10 @@ declare module 'virtual:modo-items' {
   }
   export const items: DiscoveredItem[]
 }
+
+declare module 'virtual:modo-components' {
+  import type { ComponentType } from 'react'
+  export const Select: ComponentType<any> | null
+  export const Link: ComponentType<any> | null
+  export const Button: ComponentType<any> | null
+}

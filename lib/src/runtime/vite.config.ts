@@ -3,12 +3,13 @@ import react from '@vitejs/plugin-react'
 import vike from 'vike/plugin'
 import { tokensPlugin } from './plugins/tokens'
 import { sourcePlugin } from './plugins/source'
+import { componentsPlugin } from './plugins/components'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const exportsRoot = resolve(__dirname, '../exports')
-const defaultDemoRoot = resolve(__dirname, '../../../demo')
+const defaultDemoRoot = resolve(__dirname, '../../demo')
 
 // vite config is a function so the CLI can pass the user's project root.
 // when invoked directly (`cd src/runtime && vite`), the default is used.
@@ -20,6 +21,7 @@ export default defineConfig((env): UserConfig => {
       vike(),
       tokensPlugin({ root: demoRoot }),
       sourcePlugin({ root: demoRoot }),
+      componentsPlugin({ root: demoRoot }),
     ],
     resolve: {
       alias: [

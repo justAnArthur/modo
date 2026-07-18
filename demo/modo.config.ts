@@ -6,6 +6,9 @@ export default defineConfig({
   meta: {
     github: 'https://github.com/modo-atomic-ui/modo-atomic-ui',
   },
+  components: {
+    Select: './components/select',
+  },
   theme: {
     fonts: {
       sans: 'Inter Variable',
