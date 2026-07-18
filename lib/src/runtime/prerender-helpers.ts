@@ -15,8 +15,9 @@ export async function listTokens(): Promise<string[]> {
   try {
     const files = await readdir(join(demoRoot, 'tokens'))
     for (const f of files) {
-      if (!f.endsWith('.ts') && !f.endsWith('.tsx')) continue
-      out.push(f.replace(/\.tsx?$/, ''))
+      if (f.endsWith('.ts') || f.endsWith('.tsx') || f.endsWith('.css')) {
+        out.push(f.replace(/\.(tsx?|css)$/, ''))
+      }
     }
   } catch { /* no tokens dir */ }
   return out

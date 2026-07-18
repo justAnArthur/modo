@@ -17,10 +17,22 @@
         "default": "./dist/schema.js"
       }
     },
+    "./check": {
+      "import": {
+        "types": "./dist/check.d.ts",
+        "default": "./dist/check.js"
+      }
+    },
     "./surfaces-runtime": {
       "import": {
         "types": "./dist/surfaces-runtime.d.ts",
         "default": "./dist/surfaces-runtime.js"
+      }
+    },
+    "./tsdoc": {
+      "import": {
+        "types": "./dist/tsdoc.d.ts",
+        "default": "./dist/tsdoc.js"
       }
     },
     "./tokens": {
@@ -51,12 +63,6 @@
       "import": {
         "types": "./dist/config.d.ts",
         "default": "./dist/config.js"
-      }
-    },
-    "./check": {
-      "import": {
-        "types": "./dist/check.d.ts",
-        "default": "./dist/check.js"
       }
     },
     "./package.json": "./package.json"

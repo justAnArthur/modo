@@ -4,18 +4,22 @@
   display: grid;
   grid-template-columns: 240px 1fr 240px;
   min-height: 100vh;
-  gap: 0;
+  gap: 16px;
+  padding: 16px;
+  background: var(--background);
 }
 
 [data-aui="sidebar"] {
   position: sticky;
-  top: 0;
-  height: 100vh;
+  top: 16px;
+  height: calc(100vh - 32px);
   display: flex;
   flex-direction: column;
   padding: calc(16px * var(--spacing-multiplier, 1)) calc(12px * var(--spacing-multiplier, 1));
-  border-right: 1px solid var(--border);
-  background: var(--surface-2, var(--background));
+  background: var(--surface-3, var(--background));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--shadow-2);
   font-size: 13px;
   overflow-y: auto;
 }
@@ -76,16 +80,22 @@
   max-width: 980px;
   margin: 0 auto;
   padding: calc(48px * var(--spacing-multiplier, 1)) calc(32px * var(--spacing-multiplier, 1)) calc(96px * var(--spacing-multiplier, 1));
+  background: var(--surface-3, var(--background));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--shadow-2);
 }
 
 [data-aui="panel"] {
   position: sticky;
-  top: 0;
-  height: 100vh;
+  top: 16px;
+  height: calc(100vh - 32px);
   align-self: start;
   padding: calc(20px * var(--spacing-multiplier, 1)) calc(16px * var(--spacing-multiplier, 1));
-  border-left: 1px solid var(--border);
-  background: var(--surface-2, var(--background));
+  background: var(--surface-3, var(--background));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--shadow-2);
   font-size: 12px;
   overflow-y: auto;
 }
@@ -158,12 +168,15 @@
 @media (max-width: 700px) {
   [data-aui="app"] {
     grid-template-columns: 1fr;
+    padding: 8px;
+    gap: 8px;
   }
   [data-aui="sidebar"] {
     position: static;
     height: auto;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
+  }
+  [data-aui="content"] {
+    padding: calc(24px * var(--spacing-multiplier, 1)) calc(16px * var(--spacing-multiplier, 1));
   }
 }
 /* ── docs page content ──────────────────────────────────────────────────── */

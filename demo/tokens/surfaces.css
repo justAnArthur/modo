@@ -1,0 +1,5 @@
+/* surfaces — synthesized by the lib from colors.css + shadows.css.
+   the lib's CSS tokens plugin reads this file's existence to know
+   that the surfaces group should be rendered on the docs site.
+   override --surface-N → var(--something-else) here to change the
+   color tokens a level uses. */
