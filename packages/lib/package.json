@@ -29,6 +29,12 @@
         "default": "./dist/surfaces.js"
       }
     },
+    "./surfaces-runtime": {
+      "import": {
+        "types": "./dist/surfaces-runtime.d.ts",
+        "default": "./dist/surfaces-runtime.js"
+      }
+    },
     ".": {
       "import": {
         "types": "./dist/index.d.ts",
@@ -56,6 +62,10 @@
     "build": "NODE_ENV=production bunup",
     "dev": "vite --config src/runtime/vite.config.ts",
     "check": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "dependencies": {
     "vike": "^0.4.260",

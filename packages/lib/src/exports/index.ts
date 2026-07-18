@@ -1,7 +1,14 @@
+// type-only public API
 export { defineConfig } from './config'
 export { defineTokens } from './tokens'
 export { defineSurfaces } from './surfaces'
 export { define } from './define'
+
+// re-export the React primitives for the surfaces elevation model.
+// the user imports these in their components: <Elevated offset={2}>...
+// available via the . runtime entry (./surfaces-runtime) to keep the
+// type-only subpath deps-free of react.
+export { Elevated, SurfaceProvider, useSurface } from './surfaces-runtime'
 
 export type {
   SiteConfig,
