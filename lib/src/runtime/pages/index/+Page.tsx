@@ -7,7 +7,7 @@ const exampleItems = import.meta.glob<{
   meta: { name: string; description?: string; category: string }
   examples: Array<{ name: string; props?: Record<string, unknown>; children?: string | number }>
   props: Array<{ name: string; type: string; values?: readonly string[]; default?: unknown; description?: string }>
-}>('../../../../../demo/{primitives,components,blocks}/*/index.tsx', { eager: true })
+}>('../../../../demo/{primitives,components,blocks}/*/index.tsx', { eager: true })
 
 type Item = (typeof items)[number]
 type Tokens = typeof tokens
@@ -162,7 +162,7 @@ function PropTable({ props }: { props: ReadonlyArray<{ name: string; type: strin
 }
 
 function ItemSection({ item }: { item: Item }) {
-  const candidate = `../../../../../demo/${item.category}/${item.id}/index.tsx`
+  const candidate = `../../../../demo/${item.category}/${item.id}/index.tsx`
   const mod = exampleItems[candidate]
   if (!mod) {
     return (

@@ -2,7 +2,7 @@
 import { tokens, css as tokensCss } from 'virtual:modo-tokens'
 import { usePageContext } from 'vike-react/usePageContext'
 
-const items = import.meta.glob<any>('../../../../../../../demo/{primitives,components,blocks}/*/index.tsx', { eager: true })
+const items = import.meta.glob<any>('../../../../../../demo/{primitives,components,blocks}/*/index.tsx', { eager: true })
 
 export default function ComponentPage() {
   const pageContext = usePageContext()

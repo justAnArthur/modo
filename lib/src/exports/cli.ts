@@ -11,7 +11,7 @@ import { spawn } from 'node:child_process'
 import { runCheck } from './check.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const here = resolve(__dirname, '..')                            // .../packages/lib
+const here = resolve(__dirname, '..')                            // .../<repo>/lib
 const exportsRoot = resolve(here, 'src', 'exports')
 const runtimeRoot = resolve(here, 'src', 'runtime')
 const templatesRoot = resolve(here, 'templates', 'default')

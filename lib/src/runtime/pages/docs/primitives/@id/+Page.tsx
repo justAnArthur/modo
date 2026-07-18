@@ -1,21 +1,21 @@
-// /docs/blocks/:id — per-block page.
+// /docs/primitives/:id — per-primitive page.
 import { tokens, css as tokensCss } from 'virtual:modo-tokens'
 import { usePageContext } from 'vike-react/usePageContext'
 
-const items = import.meta.glob<any>('../../../../../../../demo/{primitives,components,blocks}/*/index.tsx', { eager: true })
+const items = import.meta.glob<any>('../../../../../../demo/{primitives,components,blocks}/*/index.tsx', { eager: true })
 
-export default function BlockPage() {
+export default function PrimitivePage() {
   const pageContext = usePageContext()
   const id = (pageContext.routeParams as { id: string }).id
   const keys = Object.keys(items as Record<string, any>)
-  const match = keys.find((k) => k.endsWith(`/blocks/${id}/index.tsx`))
+  const match = keys.find((k) => k.endsWith(`/primitives/${id}/index.tsx`))
   const mod = match ? (items as Record<string, any>)[match] : undefined
 
   if (!mod) {
     return (
       <>
-        <h1 data-aui="page-title">block not found</h1>
-        <p>no block with id <code>{id}</code>.</p>
+        <h1 data-aui="page-title">primitive not found</h1>
+        <p>no primitive with id <code>{id}</code>.</p>
       </>
     )
   }

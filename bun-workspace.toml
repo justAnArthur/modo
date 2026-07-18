@@ -1,3 +1,3 @@
-# bun workspace — matches the payload-www convention (bun.lock, no pnpm)
+# bun workspace — flat layout: lib + demo at the root
 [workspace]
-packages = ["packages/*"]
+packages = ["lib", "demo"]

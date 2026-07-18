@@ -4,7 +4,7 @@
   "private": true,
   "description": "modo-atomic-ui — atomic design system renderer. monorepo root.",
   "type": "module",
-  "workspaces": ["packages/*"],
+  "workspaces": ["lib", "demo"],
   "scripts": {
     "build": "bun --filter 'modo-atomic-ui' build",
     "dev": "bun --filter '@modo-atomic-ui/demo' dev",
