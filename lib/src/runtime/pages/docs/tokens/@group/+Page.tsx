@@ -55,17 +55,39 @@ function TokenGroup({ group, data }: { group: string; data: any }) {
   if (group === 'surfaces' && data.levels) {
     return (
       <>
-        <div data-aui="surfaces-ladder">
+        {/* horizontal ladder: 8 swatches side-by-side, each lifted via its
+            own shadow recipe. the demo tint makes the shadow visible. */}
+        <div data-aui="surfaces-ladder-row">
           {Object.entries(data.levels).map(([n, lvl]: [string, any]) => (
-            <div key={n} data-aui="surface-level" data-level={n}>
-              <span data-aui="surface-level-num">{n}</span>
-              <span data-aui="surface-level-swatch" style={{ background: `var(--surface-${n})`, boxShadow: `var(--shadow-${n})` }} />
-              <span data-aui="surface-level-meta">bg: surface-{n} · shadow: shadow-{n}</span>
+            <div key={n} data-aui="surface-card" data-level={n}>
+              <span data-aui="surface-card-num">{n}</span>
+              <span
+                data-aui="surface-card-swatch"
+                style={{ background: `var(--surface-${n})`, boxShadow: `var(--shadow-${n})` }}
+              />
+              <span data-aui="surface-card-meta">
+                bg surface-{n}<br />
+                shadow shadow-{n}
+              </span>
             </div>
           ))}
         </div>
+
+        {/* vertical list: bigger swatches on a darker bg, so shadows pop */}
+        <div data-aui="surfaces-ladder-stack" style={{ background: 'var(--surface-2)' }}>
+          {Object.entries(data.levels).map(([n, lvl]: [string, any]) => (
+            <div key={n} data-aui="surface-card-lg" data-level={n}>
+              <span data-aui="surface-card-num">{n}</span>
+              <span
+                data-aui="surface-card-swatch-lg"
+                style={{ background: `var(--surface-${n})`, boxShadow: `var(--shadow-${n})` }}
+              />
+            </div>
+          ))}
+        </div>
+
         {data.conventions && (
-          <div style={{ marginTop: 16, fontSize: 12, color: 'var(--muted-foreground)' }}>
+          <div data-aui="surface-conventions">
             <strong>conventions:</strong>{' '}
             {Object.entries(data.conventions).map(([name, c]: [string, any]) => `${name} = +${c.offset}`).join(' · ')}
           </div>
