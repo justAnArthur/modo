@@ -215,17 +215,24 @@ export function sourcePlugin(options: SourcePluginOptions): Plugin {
       if (!ctx.file.startsWith(dsRoot)) return
       // invalidate the virtual modules so the next request re-runs `load()`,
       // re-bundles user items (new tmp .mjs paths) and picks up new content.
-      const invalidated: NonNullable<ReturnType<typeof ctx.server.moduleGraph.getModuleById>>[] = []
       for (const id of [RESOLVED_DATA, RESOLVED_CSS]) {
         const mod = ctx.server.moduleGraph.getModuleById(id)
-        if (mod) { ctx.server.moduleGraph.invalidateModule(mod); invalidated.push(mod) }
+        if (mod) ctx.server.moduleGraph.invalidateModule(mod)
       }
-      // returning `[]` would tell Vite "no HMR needed" and silently swallow
-      // the change — the page would never refresh. returning the modules
-      // makes Vite send an HMR boundary update to the client, which forces
-      // a full reload for the page (the virtual module is not a React
-      // HMR-friendly boundary, so Vike reloads the route).
-      return invalidated
+      // these virtual modules are server-side only — they have no
+      // representation in the client module graph, so Vite filters them
+      // out and the client never receives an HMR signal. force a full
+      // page reload via the HMR WebSocket instead. (Vite itself does
+      // this for files it can't HMR-match — see handleHMRUpdate in
+      // vite/dist/node/chunks/config.js.)
+      ctx.server.environments.client.hot.send({
+        type: 'full-reload',
+        path: '*',
+        triggeredBy: ctx.file,
+      })
+      // returning `[]` here tells Vite "no module-level HMR needed" — the
+      // full-reload above is what actually refreshes the page.
+      return []
     },
   }
 }

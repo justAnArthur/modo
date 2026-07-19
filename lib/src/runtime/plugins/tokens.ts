@@ -158,14 +158,18 @@ export function tokensPlugin(options: TokensPluginOptions): Plugin {
     async handleHotUpdate(ctx) {
       if (!ctx.file.startsWith(join(options.root, 'tokens'))) return
       // invalidate so `load()` re-runs and re-parses the CSS files.
-      // returning the modules (not `[]`) is required — `[]` means
-      // "no HMR needed" in Vite and the page would never refresh.
       const data = server?.moduleGraph.getModuleById(RESOLVED_DATA)
       const css = server?.moduleGraph.getModuleById(RESOLVED_CSS)
-      const invalidated: NonNullable<typeof data>[] = []
-      if (data) { server!.moduleGraph.invalidateModule(data); invalidated.push(data) }
-      if (css)  { server!.moduleGraph.invalidateModule(css);  invalidated.push(css) }
-      return invalidated
+      if (data) server!.moduleGraph.invalidateModule(data)
+      if (css)  server!.moduleGraph.invalidateModule(css)
+      // virtual modules are server-side only — force a full page reload
+      // via the HMR WebSocket so the client picks up the new tokens.
+      server!.environments.client.hot.send({
+        type: 'full-reload',
+        path: '*',
+        triggeredBy: ctx.file,
+      })
+      return []
     },
   }
 }

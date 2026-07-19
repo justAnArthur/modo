@@ -99,9 +99,14 @@ export function componentsPlugin(opts: ComponentsPluginOptions): Plugin {
       const mod = ctx.server.moduleGraph.getModuleById('\0virtual:modo-components')
       if (!mod) return
       ctx.server.moduleGraph.invalidateModule(mod)
-      // return the module (not `[]`) so Vite sends an HMR update to the
-      // client — otherwise the page never refreshes.
-      return [mod]
+      // virtual module is server-side only — force a full page reload via
+      // the HMR WebSocket so the client picks up the new chrome.
+      ctx.server.environments.client.hot.send({
+        type: 'full-reload',
+        path: '*',
+        triggeredBy: ctx.file,
+      })
+      return []
     },
   }
 }
