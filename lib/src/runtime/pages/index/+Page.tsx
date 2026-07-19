@@ -1,12 +1,11 @@
 import { tokens, errors as tokensErrors, css as tokensCss } from 'virtual:modo-tokens'
-import { items, byId } from 'virtual:modo-items'
+import { items, byId, components as itemComponents, examples as itemExamples } from 'virtual:modo-items'
 import { config as siteConfig } from 'virtual:modo-config'
 import { ExampleBlock } from '../../components/example-renderer'
 
 // all item components + parsed metadata are pre-bundled by the source
 // plugin and exposed via the `virtual:modo-items` module. importing the
 // module here returns a fully-typed map keyed by `category/id`.
-import { components as itemComponents } from 'virtual:modo-items'
 
 type Item = (typeof items)[number]
 type Tokens = typeof tokens
@@ -175,6 +174,7 @@ function ItemSection({ item }: { item: Item }) {
   const meta = parsed ?? { name: item.id, description: '' }
   const propDefs = parsed?.props ?? []
   const examples = parsed?.examples ?? []
+  const compiledBodies = itemExamples[key] ?? {}
 
   return (
     <section data-aui="section">
@@ -185,7 +185,13 @@ function ItemSection({ item }: { item: Item }) {
       </p>
       <div data-aui="examples">
         {examples.map((ex: any, i: number) => (
-          <ExampleBlock key={i} example={ex} componentName={meta.name} Component={Component} />
+          <ExampleBlock
+            key={i}
+            example={ex}
+            componentName={meta.name}
+            Component={Component}
+            compiledBody={compiledBodies[i]}
+          />
         ))}
       </div>
       {propDefs.length > 0 && (

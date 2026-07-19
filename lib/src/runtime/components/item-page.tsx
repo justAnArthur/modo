@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { tokens, css as tokensCss } from 'virtual:modo-tokens'
-import { byId, components as itemComponents } from 'virtual:modo-items'
+import { byId, components as itemComponents, examples as itemExamples } from 'virtual:modo-items'
 import { ExampleBlock } from './example-renderer'
 
 type Tier = 'primitives' | 'components' | 'blocks'
@@ -36,6 +36,7 @@ export function ItemPage({ tier }: { tier: Tier }) {
   const meta = parsed ?? { name: id, description: '' }
   const propDefs = parsed?.props ?? []
   const examples = parsed?.examples ?? []
+  const compiledBodies = itemExamples[key] ?? {}
 
   return (
     <>
@@ -44,7 +45,13 @@ export function ItemPage({ tier }: { tier: Tier }) {
       {meta.description && <p data-aui="page-lead">{meta.description}</p>}
       <div data-aui="examples">
         {examples.map((ex, i: number) => (
-          <ExampleBlock key={i} example={ex} componentName={meta.name} Component={Component} />
+          <ExampleBlock
+            key={i}
+            example={ex}
+            componentName={meta.name}
+            Component={Component}
+            compiledBody={compiledBodies[i]}
+          />
         ))}
       </div>
       {propDefs.length > 0 && (

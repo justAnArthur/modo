@@ -47,6 +47,11 @@ declare module 'virtual:modo-items' {
   export const byId: Record<string, ParsedItemShape>
   export const components: Record<string, React.ComponentType<any> | null>
   export const css: Record<string, string>
+  // pre-compiled example function bodies, keyed by `category/id` then
+  // by the example's index in `byId[key].examples`. each body is a
+  // string the client uses with `new Function(...)` to construct the
+  // renderer. empty string = compile failed.
+  export const examples: Record<string, Record<number, string>>
   export const dsRoot: string
 }
 

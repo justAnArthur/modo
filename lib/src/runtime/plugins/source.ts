@@ -3,16 +3,29 @@
 // module that the per-item page renderers consume. the module exports:
 //   - `items`:     metadata (id, category, file path, parse errors)
 //   - `byId`:      TSDoc-extracted data keyed by `category/id`
-//   - `components`: actual React component references keyed by `category/id`,
-//                   pre-bundled via esbuild and exposed as a static import map
+//   - `components`: pre-bundled React component references keyed by `category/id`
+//   - `css`:       per-item CSS strings (the user's component CSS, bundled)
+//   - `examples`:  per-key map of pre-compiled example function bodies
+//                  (`'primitives/button'` → `0` → body string), so the
+//                  universal example-renderer can construct functions
+//                  via `new Function()` without shipping esbuild to
+//                  the client.
 //   - `dsRoot`:    the user's project root (debug aid)
+//
+// esbuild is used to (a) bundle the user's item component (and its
+// CSS) and (b) pre-compile each example's JSX into a function body.
+// both happen in the source plugin's load() (server-only); the
+// results are serialized as strings into the virtual module so the
+// client never imports esbuild.
 
 import type { Plugin } from 'vite'
-import { readFile, readdir, stat, writeFile, unlink, mkdir, rm } from 'node:fs/promises'
+import { readFile, readdir, stat, writeFile, mkdir, rm } from 'node:fs/promises'
+import { readFileSync as readFileSyncFs } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import * as esbuild from 'esbuild'
 import { parseItemSource } from '../../exports/tsdoc'
+import { compileExampleBody } from '../components/example-compiler'
 
 export interface SourcePluginOptions {
   root: string
@@ -67,7 +80,6 @@ async function discoverDir(dir: string, category: DiscoveredItem['category']): P
       hasMdx = false
     }
 
-    // TSDoc parse for the validation report (errors on this item).
     const parsed = parseItemSource(raw, indexPath)
     if (parsed.errors.length > 0) errors.push(...parsed.errors)
     if (!parsed.name) errors.push('no default-exported function with a name')
@@ -87,19 +99,14 @@ async function discoverDir(dir: string, category: DiscoveredItem['category']): P
 const VIRTUAL_ID = 'virtual:modo-items'
 const RESOLVED_VIRTUAL_ID = '\0' + VIRTUAL_ID
 
-// one tmp dir per vite session. cleaned on process exit. bundling every
-// item into its own .mjs keeps the dev/build graph fully static — the
-// virtual module becomes a literal `import * as ns_0 from '<abs path>'`
-// for each item, no async dynamic imports, no path-arithmetic in the
-// consumer code.
+// one tmp dir per vite session. bundling every item into its own .mjs
+// keeps the dev/build graph fully static — the virtual module becomes
+// a literal `import * as ns_0 from '<abs path>'` for each item, no
+// async dynamic imports, no path-arithmetic in the consumer code.
 const TMP_DIR = join(
   tmpdir(),
   `modo-items-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
 )
-
-async function safeUnlink(p: string): Promise<void> {
-  try { await unlink(p) } catch { /* already gone */ }
-}
 
 async function bundleItem(
   entryAbs: string,
@@ -109,8 +116,7 @@ async function bundleItem(
     // bundle via entryPoints so esbuild can resolve the user's relative
     // CSS imports (`./foo.css` from within the component file). the
     // resulting CSS is a sibling output file; we collect it from
-    // outputFiles and inject it via a <style> tag in the layout. the
-    // JS is written to TMP_DIR so the virtual module can `import` it.
+    // outputFiles and inject it via a <style> tag in the layout.
     await mkdir(TMP_DIR, { recursive: true })
     const jsPath = join(TMP_DIR, `item-${idx}.mjs`)
     const result = await esbuild.build({
@@ -161,23 +167,30 @@ export function sourcePlugin(options: SourcePluginOptions): Plugin {
       ])
       const all = [...primitives, ...components, ...blocks]
 
-      // second pass: read each item's source, parse TSDoc, and bundle the
-      // component. byId is the TSDoc parse result; components is the static
-      // import map the virtual module emits; css is the per-item CSS (each
-      // item's component imports its own .css which esbuild splits out).
+      // second pass: read each item's source, parse TSDoc, bundle the
+      // component, and pre-compile each @example into a function body.
+      // results:
+      //   byId      — TSDoc parse result
+      //   components — static import map (the actual React components)
+      //   css       — per-item CSS strings
+      //   examples  — per-key map of pre-compiled example bodies
       const byId: Record<string, ReturnType<typeof parseItemSource>> = {}
       const imports: string[] = []
       const compBindings: string[] = []
       const cssBindings: string[] = []
+      const exampleBindings: string[] = []
       let i = 0
       for (const item of all) {
         const key = `${item.category}/${item.id}`
-        try {
-          const raw = await readFile(item.filePath, 'utf-8')
-          byId[key] = parseItemSource(raw, item.filePath)
-        } catch {
-          // already reported as an error in the discovery pass
-        }
+        const parsed = (() => {
+          try {
+            const raw = readFileSyncFs(item.filePath, 'utf-8')
+            byId[key] = parseItemSource(raw, item.filePath)
+            return byId[key]!
+          } catch {
+            return undefined
+          }
+        })()
         const bundled = await bundleItem(item.filePath, i++)
         if (bundled) {
           imports.push(`import * as __ns_${i} from '${bundled.jsPath}';`)
@@ -186,6 +199,21 @@ export function sourcePlugin(options: SourcePluginOptions): Plugin {
           compBindings.push(`  '${key}': null,`)
         }
         cssBindings.push(`  '${key}': ${JSON.stringify(bundled?.css ?? '')},`)
+        // pre-compile each example's JSX into a function body. the
+        // result is a string the client uses with `new Function()`.
+        const exMap: Record<number, string> = {}
+        const componentName = parsed?.name ?? item.id
+        if (parsed?.examples) {
+          for (let idx = 0; idx < parsed.examples.length; idx++) {
+            const ex = parsed.examples[idx]!
+            try {
+              exMap[idx] = compileExampleBody(ex.code, componentName)
+            } catch {
+              exMap[idx] = ''
+            }
+          }
+        }
+        exampleBindings.push(`  '${key}': ${JSON.stringify(exMap)},`)
         i++
       }
 
@@ -213,6 +241,7 @@ export function sourcePlugin(options: SourcePluginOptions): Plugin {
         `export const dsRoot = ${JSON.stringify(dsRoot)};`,
         `export const components = {\n${compBindings.join('\n')}\n};`,
         `export const css = {\n${cssBindings.join('\n')}\n};`,
+        `export const examples = {\n${exampleBindings.join('\n')}\n};`,
       ].join('\n')
     },
 

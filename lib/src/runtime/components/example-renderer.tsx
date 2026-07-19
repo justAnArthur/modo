@@ -1,34 +1,55 @@
 // renders a `ParsedExample` from the TSDoc parser. each example is:
 //   - title (h3)
 //   - description (lightweight markdown: paragraphs, inline *, **, `code`)
-//   - code (jsx) — rendered as a live component AND shown as source, with a
-//     toggle.
+//   - code (jsx) — shown as source with a toggle
+//   - compiledBody (string) — the JS-compiled function body produced
+//     by the server-side `example-compiler`. this file does NOT
+//     import esbuild; the lib keeps esbuild out of the client bundle
+//     by pre-compiling examples at build / dev-server time and
+//     shipping the body strings through `virtual:modo-items.examples`.
 //
-// the live render works by wrapping the code in a function that takes the
-// actual component as a parameter (so the user can write `<Button>...` and we
-// bind `Button` to the parameter via destructuring), compiling it with
-// esbuild on the server, dynamic-importing the result, and calling it.
+// the body is wrapped in `new Function('React', 'Component', body +
+// 'return render(Component);')` so the function is constructed lazily
+// on the client without esbuild. the cache is module-scoped so the
+// function is created once per compiled body across all renders.
 
 import * as React from 'react'
 import { useState } from 'react'
-import * as esbuild from 'esbuild'
 import type { ParsedExample } from '../../exports/tsdoc'
 
-// HMR cache invalidation. when an item file changes, vite triggers
-// `import.meta.hot.invalidate()` on the modules that depend on it.
-// we listen here and clear the compile cache so a recompile picks up
-// the new source on the next render. the in-memory cache otherwise
-// holds the old compiled body for the lifetime of the dev server.
+// HMR: when an item file changes, the source plugin re-runs and
+// re-publishes the virtual:modo-items module. we don't need to clear
+// the function cache ourselves — the re-render of ExampleBlock will
+// receive a new compiledBody string and construct a new function.
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
-    cache.clear()
+    fnCache.clear()
   })
+}
+
+const fnCache = new Map<string, (React: any, Component: React.ComponentType<any>) => React.ReactNode>()
+
+// noop fallback for when the lib can't resolve a component (e.g. the
+// user's items are partially present, or a single item fails to bundle).
+// rendering a noop keeps the layout stable and the description + code
+// toggle still useful.
+const NoopComponent: React.ComponentType<any> = () => null
+
+function buildRenderer(body: string) {
+  // the body is just the function contents (after esbuild stripped the
+  // import/export wrappers). we wrap it as `return render(...);` so the
+  // result of the function body becomes the function's return value.
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
+  const fn = new Function('React', 'Component', `${body}\nreturn render(Component);`) as (
+    React: typeof import('react'),
+    Component: React.ComponentType<any>,
+  ) => React.ReactNode
+  return fn
 }
 
 // ── minimal markdown renderer ───────────────────────────────────────
 
 function renderInline(text: string): React.ReactNode[] {
-  // very small: handle **bold**, *italic*, `code`. everything else is plain.
   const out: React.ReactNode[] = []
   let i = 0
   let key = 0
@@ -57,7 +78,6 @@ function renderInline(text: string): React.ReactNode[] {
         continue
       }
     }
-    // collect plain text up to the next special char
     let j = i
     while (j < text.length && text[j] !== '`' && text[j] !== '*') j++
     out.push(text.slice(i, j))
@@ -68,7 +88,6 @@ function renderInline(text: string): React.ReactNode[] {
 
 export function Markdown({ source }: { source: string }): React.ReactNode {
   if (!source) return null
-  // split on blank lines into paragraphs; lines starting with # are headings.
   const blocks = source.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean)
   return (
     <>
@@ -86,93 +105,40 @@ export function Markdown({ source }: { source: string }): React.ReactNode {
   )
 }
 
-// ── live code compilation ───────────────────────────────────────────
-
-const cache = new Map<string, (Component: React.ComponentType<any>) => React.ReactNode>()
-
-// synchronous compile. esbuild's `buildSync` is the only way to do
-// esbuild bundling without an async step. we then strip the import +
-// export statements esbuild emits (we pass `React` in as a parameter
-// instead) and invoke the body via `new Function`.
-//
-// the jsx transform is the classic `React.createElement` one (no
-// jsx-runtime imports), so the only external dep is `react`. the
-// result is a function `(Component) => ReactNode` that the renderer
-// calls synchronously during SSR and on every client render.
-function compileExampleSync(
-  code: string,
-  componentName: string,
-): (Component: React.ComponentType<any>) => React.ReactNode {
-  const key = `${componentName}:${code}`
-  if (cache.has(key)) return cache.get(key)!
-  const wrapped = `
-import * as React from 'react'
-export default function render(Component) {
-  const ${componentName} = Component
-  return (${code})
-}
-`
-  const result = esbuild.buildSync({
-    stdin: { contents: wrapped, loader: 'tsx', resolveDir: process.cwd() },
-    bundle: true,
-    write: false,
-    format: 'esm',
-    platform: 'neutral',
-    // classic transform: turns <Foo /> into React.createElement(Foo, ...).
-    // avoids the jsx-runtime import so the only external is react.
-    jsx: 'transform',
-    target: 'es2020',
-    external: ['react', 'react-dom', 'modo-atomic-ui'],
-    logLevel: 'silent',
-  })
-  const out = result.outputFiles?.[0]?.text ?? ''
-  if (!out) throw new Error('esbuild produced no output for example code')
-  // strip the import + export statements (which can be multi-line).
-  // esbuild emits `import * as React from "react";` and
-  // `export { render as default };` (the latter can wrap across lines).
-  // we pass React in as a parameter and call the function directly.
-  const body = out
-    .replace(/^\s*import\s+[\s\S]*?;[\t ]*$/gm, '')           // import lines
-    .replace(/export\s*\{[\s\S]*?\}\s*;?/g, '')              // export {} blocks
-    .replace(/export\s+default\s+/g, '')                     // `export default `
-    .trim()
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
-  const fn = new Function('React', 'Component', `${body}\nreturn render(Component);`) as (
-    React: any,
-    Component: React.ComponentType<any>,
-  ) => React.ReactNode
-  const wrapped2 = (Component: React.ComponentType<any>) => fn(React, Component)
-  cache.set(key, wrapped2)
-  return wrapped2
-}
-
 // ── public component ────────────────────────────────────────────────
 
 interface ExampleBlockProps {
   example: ParsedExample
   componentName: string
   Component?: React.ComponentType<any> | null
+  /**
+   * the pre-compiled function body. produced by `example-compiler`
+   * (server-only) and shipped to the client through the source
+   * plugin's virtual module export. if missing, we render a
+   * placeholder (the example can't run without a compiled body).
+   */
+  compiledBody?: string
 }
 
-// noop fallback for when the lib can't resolve a component (e.g. the
-// user's items are partially present, or a single item fails to bundle).
-// rendering a noop keeps the layout stable and the description + code
-// toggle still useful.
-const NoopComponent: React.ComponentType<any> = () => null
-
-export function ExampleBlock({ example, componentName, Component }: ExampleBlockProps) {
+export function ExampleBlock({ example, componentName, Component, compiledBody }: ExampleBlockProps) {
   const [showCode, setShowCode] = useState(false)
 
-  // compile synchronously. the function is cached so subsequent renders
-  // (and re-renders after client-side hydration) are O(1).
   let rendered: React.ReactNode
   let error: string | null = null
   const Resolved = Component ?? NoopComponent
-  try {
-    const fn = compileExampleSync(example.code, componentName)
-    rendered = fn(Resolved)
-  } catch (e) {
-    error = (e as Error).message
+  if (compiledBody) {
+    try {
+      let fn = fnCache.get(compiledBody)
+      if (!fn) {
+        fn = buildRenderer(compiledBody)
+        fnCache.set(compiledBody, fn)
+      }
+      rendered = fn(React, Resolved)
+    } catch (e) {
+      error = (e as Error).message
+    }
+  } else {
+    error = 'example not pre-compiled (server-side compilation missing)'
   }
 
   return (
