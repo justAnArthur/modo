@@ -31,4 +31,7 @@ export default defineConfig({
   plugins: [
     exports({}),
   ],
+  // bunup doesn't preserve the shebang exec bit on `dist/cli.js`, but the
+  // `bin` entry needs it to be runnable. chmod after every build.
+  onSuccess: 'chmod +x dist/cli.js',
 }) as DefineConfigItem

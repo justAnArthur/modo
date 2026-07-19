@@ -19,10 +19,40 @@
         "default": "./dist/schema.js"
       }
     },
+    "./check": {
+      "import": {
+        "types": "./dist/check.d.ts",
+        "default": "./dist/check.js"
+      }
+    },
+    "./surfaces-runtime": {
+      "import": {
+        "types": "./dist/surfaces-runtime.d.ts",
+        "default": "./dist/surfaces-runtime.js"
+      }
+    },
     "./tsdoc": {
       "import": {
         "types": "./dist/tsdoc.d.ts",
         "default": "./dist/tsdoc.js"
+      }
+    },
+    "./css-parser": {
+      "import": {
+        "types": "./dist/css-parser.d.ts",
+        "default": "./dist/css-parser.js"
+      }
+    },
+    "./modo-config": {
+      "import": {
+        "types": "./dist/modo-config.d.ts",
+        "default": "./dist/modo-config.js"
+      }
+    },
+    "./view": {
+      "import": {
+        "types": "./dist/view.d.ts",
+        "default": "./dist/view.js"
       }
     },
     ".": {
@@ -35,18 +65,6 @@
       "import": {
         "types": "./dist/config.d.ts",
         "default": "./dist/config.js"
-      }
-    },
-    "./check": {
-      "import": {
-        "types": "./dist/check.d.ts",
-        "default": "./dist/check.js"
-      }
-    },
-    "./surfaces-runtime": {
-      "import": {
-        "types": "./dist/surfaces-runtime.d.ts",
-        "default": "./dist/surfaces-runtime.js"
       }
     },
     "./package.json": "./package.json"

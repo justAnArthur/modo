@@ -1,12 +1,9 @@
 declare module 'virtual:modo-tokens' {
   export const tokens: Record<string, any>
   export const errors: string[]
-  export const css: string
 }
 
-declare module 'virtual:modo-user-css' {
-  export const css: string
-}
+declare module 'virtual:modo-tokens-css'
 
 declare module 'virtual:modo-config' {
   export const config: Record<string, any>
@@ -14,12 +11,14 @@ declare module 'virtual:modo-config' {
   export const description: string
 }
 
+declare module 'virtual:modo-user-css'
+
 declare module 'virtual:modo-items' {
   import type { ComponentType } from 'react'
   export interface DiscoveredItem {
     id: string
     category: 'primitives' | 'components' | 'blocks'
-    importPath: string
+    cssPath: string | null
     filePath: string
     hasMdx: boolean
     errors: string[]
@@ -46,7 +45,6 @@ declare module 'virtual:modo-items' {
   export const items: DiscoveredItem[]
   export const byId: Record<string, ParsedItemShape>
   export const components: Record<string, React.ComponentType<any> | null>
-  export const css: Record<string, string>
   // pre-compiled example function bodies, keyed by `category/id` then
   // by the example's index in `byId[key].examples`. each body is a
   // string the client uses with `new Function(...)` to construct the
@@ -55,9 +53,17 @@ declare module 'virtual:modo-items' {
   export const dsRoot: string
 }
 
+declare module 'virtual:modo-items-css'
+
 declare module 'virtual:modo-components' {
   import type { ComponentType } from 'react'
   export const Select: ComponentType<any> | null
   export const Link: ComponentType<any> | null
   export const Button: ComponentType<any> | null
+  // per-control overrides for the docs site's right-side view panel.
+  // each receives { current, options, set } (the ViewControlState shape
+  // from exports/view.tsx). unset = lib's default <select> for that control.
+  export const Theme: ComponentType<any> | null
+  export const Density: ComponentType<any> | null
+  export const Radius: ComponentType<any> | null
 }

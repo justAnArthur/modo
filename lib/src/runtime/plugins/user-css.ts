@@ -1,74 +1,29 @@
 // reads `modo.config.ts` once and exposes two virtual modules:
-//   - virtual:modo-user-css   : the CSS file referenced from config.css
-//   - virtual:modo-config     : the full config object (name, description,
-//                                theme, meta, components map) for the layout
-//                                and per-page renderers
+//   - virtual:modo-config         : the full config object (name,
+//                                   description, theme, meta, components
+//                                   map) for the layout and per-page
+//                                   renderers
+//   - virtual:modo-user-css       : a side-effect import of the CSS file
+//                                   referenced from `config.css`. Vite
+//                                   injects it as real CSS. if `config.css`
+//                                   is unset, the module is empty (no import).
 //
-// if the user doesn't set `css`, the user-css module exports an empty
-// string. the config module exports an empty object so consumers can
-// always destructure without nullish handling.
+// if the user doesn't set `css`, the css module is a no-op. the config
+// module exports an empty object so consumers can always destructure
+// without nullish handling.
 
 import type { Plugin } from 'vite'
-import { readFile, writeFile, unlink } from 'node:fs/promises'
 import { resolve } from 'node:path'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import * as esbuild from 'esbuild'
+import { loadModoConfig } from '../../exports/modo-config'
 
 export interface UserCssPluginOptions {
   root: string  // user's project root
 }
 
-const VIRTUAL_USER_CSS = 'virtual:modo-user-css'
 const VIRTUAL_CONFIG = 'virtual:modo-config'
-const RESOLVED_USER_CSS = '\0' + VIRTUAL_USER_CSS
+const VIRTUAL_USER_CSS = 'virtual:modo-user-css'
 const RESOLVED_CONFIG = '\0' + VIRTUAL_CONFIG
-
-async function safeUnlink(p: string): Promise<void> {
-  try { await unlink(p) } catch { /* already gone */ }
-}
-
-async function loadModoConfig(root: string): Promise<unknown> {
-  const candidates = ['modo.config.ts', 'modo.config.tsx']
-  for (const name of candidates) {
-    const p = resolve(root, name)
-    try {
-      const stub = `export const defineConfig = (c) => c\nexport {}\n`
-      const tmpStub = join(tmpdir(), `modo-cfg-stub-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mjs`)
-      await writeFile(tmpStub, stub)
-      try {
-        const result = await esbuild.build({
-          entryPoints: [p],
-          bundle: true,
-          write: false,
-          format: 'esm',
-          platform: 'node',
-          target: 'node20',
-          alias: {
-            'modo-atomic-ui/config': tmpStub,
-            'modo-atomic-ui': tmpStub,
-          },
-          logLevel: 'silent',
-        })
-        const code = result.outputFiles?.[0]?.text
-        if (!code) continue
-        const tmp = join(tmpdir(), `modo-cfg-out-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mjs`)
-        await writeFile(tmp, code)
-        try {
-          const mod = await import(tmp)
-          return (mod as { default?: unknown }).default ?? null
-        } finally {
-          await safeUnlink(tmp)
-        }
-      } finally {
-        await safeUnlink(tmpStub)
-      }
-    } catch {
-      // try next candidate
-    }
-  }
-  return null
-}
+const RESOLVED_USER_CSS = '\0' + VIRTUAL_USER_CSS
 
 export function userCssPlugin(options: UserCssPluginOptions): Plugin {
   return {
@@ -76,8 +31,8 @@ export function userCssPlugin(options: UserCssPluginOptions): Plugin {
     enforce: 'pre',
 
     resolveId(id) {
-      if (id === VIRTUAL_USER_CSS) return RESOLVED_USER_CSS
       if (id === VIRTUAL_CONFIG) return RESOLVED_CONFIG
+      if (id === VIRTUAL_USER_CSS) return RESOLVED_USER_CSS
       return null
     },
 
@@ -88,14 +43,8 @@ export function userCssPlugin(options: UserCssPluginOptions): Plugin {
       }
       if (id === RESOLVED_USER_CSS) {
         const cssPath = (config as { css?: string } | null)?.css
-        if (!cssPath) return `export const css = '';`
-        const abs = resolve(options.root, cssPath)
-        try {
-          const src = await readFile(abs, 'utf-8')
-          return `export const css = ${JSON.stringify(src)};`
-        } catch {
-          return `export const css = '';`
-        }
+        if (!cssPath) return ''
+        return `import ${JSON.stringify(resolve(options.root, cssPath))};\n`
       }
       return null
     },

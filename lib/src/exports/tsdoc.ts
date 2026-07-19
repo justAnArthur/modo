@@ -24,7 +24,6 @@
 //     (used when no destructured default is present)
 
 import * as ts from 'typescript'
-import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
 export interface ParsedProp {
@@ -175,28 +174,6 @@ function parseExample(name: string, body: string): ParsedExample {
 
 // ── type extraction ───────────────────────────────────────────────────
 
-function tsTypeToPropType(t: ts.Type): ParsedProp['type'] {
-  if (t.flags & ts.TypeFlags.Boolean || t.flags & ts.TypeFlags.BooleanLiteral) return 'boolean'
-  if (t.flags & ts.TypeFlags.Number || t.flags & ts.TypeFlags.NumberLiteral) return 'number'
-  if (t.flags & ts.TypeFlags.String || t.flags & ts.TypeFlags.StringLiteral) return 'string'
-  // union of string literals → enum
-  if (t.isUnion()) {
-    const allStrings = t.types.every((u) => u.flags & ts.TypeFlags.StringLiteral)
-    if (allStrings) return 'enum'
-  }
-  // ReactNode, ReactElement, JSX.Element
-  const sym = t.symbol?.name ?? (t.aliasSymbol?.name ?? '')
-  if (sym.includes('ReactNode') || sym.includes('ReactElement') || sym.includes('JSX')) return 'react-node'
-  return 'string' // fallback — better than crashing
-}
-
-function extractEnumValues(t: ts.Type): string[] {
-  if (!t.isUnion()) return []
-  return t.types
-    .filter((u) => u.flags & ts.TypeFlags.StringLiteral)
-    .map((u) => (u as ts.LiteralType).value as string)
-}
-
 function defaultValueFromInitializer(init: ts.Expression): string | number | boolean | undefined {
   if (ts.isStringLiteral(init) || ts.isNoSubstitutionTemplateLiteral(init)) return init.text
   if (ts.isNumericLiteral(init)) return Number(init.text)
@@ -207,13 +184,6 @@ function defaultValueFromInitializer(init: ts.Expression): string | number | boo
 }
 
 // ── main entry: parse a single .tsx file ───────────────────────────────
-
-export async function parseItemFile(filePath: string): Promise<ParsedItem> {
-  const src = await readFile(filePath, 'utf-8')
-  const errors: string[] = []
-  const sourceFile = ts.createSourceFile(filePath, src, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
-  return parseFromSourceFile(sourceFile, filePath)
-}
 
 function parseFromSourceFile(sourceFile: ts.SourceFile, filePath: string): ParsedItem {
   const errors: string[] = []

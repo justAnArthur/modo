@@ -6,15 +6,12 @@ import { createServer } from 'vite'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
-import * as esbuild from 'esbuild'
 import { spawn } from 'node:child_process'
 import { runCheck } from './check.js'
+import { loadModoConfig } from './modo-config.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const here = resolve(__dirname, '..')                            // .../<repo>/lib
-const exportsRoot = resolve(here, 'src', 'exports')
 const runtimeRoot = resolve(here, 'src', 'runtime')
 const templatesRoot = resolve(here, 'templates', 'default')
 const stubsRoot = resolve(here, 'templates', 'stubs')
@@ -36,61 +33,8 @@ const ADD_STUB: Record<AddKind, string> = {
   token: 'token.ts',
 }
 
-interface ModoConfig {
-  name: string
-  description?: string
-  logo?: { light?: string; dark?: string }
-  meta?: { description?: string; github?: string }
-  components?: Record<string, string>
-  css?: string
-  theme?: {
-    fonts?: Record<string, string>
-    defaultDensity?: 'compact' | 'comfortable' | 'spacious'
-    defaultTheme?: 'light' | 'dark' | 'system'
-  }
-}
-
-async function readModoConfig(cwd: string): Promise<ModoConfig> {
-  const candidates = ['modo.config.ts', 'modo.config.tsx', 'modo.config.js', 'modo.config.mjs']
-  let lastErr: unknown = null
-  for (const name of candidates) {
-    const p = resolve(cwd, name)
-    try {
-      const result = await esbuild.build({
-        entryPoints: [p],
-        bundle: true,
-        format: 'esm',
-        write: false,
-        platform: 'node',
-        target: 'node20',
-        external: ['vite', 'vike', 'vike-react', 'react', 'react-dom'],
-        alias: { 'modo-atomic-ui': exportsRoot },
-        logLevel: 'silent',
-      })
-      const code = result.outputFiles?.[0]?.text
-      if (!code) {
-        lastErr = new Error('esbuild produced no output')
-        continue
-      }
-      const tmp = join(tmpdir(), `modo-config-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mjs`)
-      const fs = await import('node:fs/promises')
-      await fs.writeFile(tmp, code)
-      const mod = await import(tmp + '?t=' + Date.now())
-      const cfg = (mod as { default: ModoConfig }).default
-      await fs.unlink(tmp).catch(() => {})
-      if (cfg && typeof cfg === 'object') return cfg
-      lastErr = new Error(`default export in ${name} is not an object`)
-    } catch (e) {
-      lastErr = e
-      // eslint-disable-next-line no-console
-      console.error(`[modo] ${p}: ${(e as Error).message}`)
-    }
-  }
-  throw new Error(`failed to read modo.config from ${cwd}: ${(lastErr as Error)?.message ?? 'not found'}`)
-}
-
 async function dev(cwd: string) {
-  await readModoConfig(cwd)  // validates that modo.config.ts exists + is valid
+  await loadModoConfig(cwd)  // validates that modo.config.ts exists + is valid
 
   const port = Number(process.env.PORT ?? 5173)
 
@@ -137,7 +81,7 @@ Usage:
 }
 
 async function build(cwd: string) {
-  await readModoConfig(cwd)  // validates that modo.config.ts exists + is valid
+  await loadModoConfig(cwd)  // validates that modo.config.ts exists + is valid
 
   // hand off to vike build (lib-relative). vike requires `root` to match cwd,
   // so we spawn the binary in the lib's runtime/ dir. then move the output
@@ -238,7 +182,7 @@ async function add(cwd: string, kind: string, name: string) {
     throw new Error(`missing stub: ${stubPath}`)
   }
 
-  await readModoConfig(cwd)  // validates config
+  await loadModoConfig(cwd)  // validates config
 
   let target: string
   if (kind === 'token') {
@@ -263,7 +207,7 @@ async function add(cwd: string, kind: string, name: string) {
 }
 
 async function check(cwd: string) {
-  const { ok, issues } = await runCheck(cwd, here)
+  const { ok, issues } = await runCheck(cwd)
   if (ok) {
     // eslint-disable-next-line no-console
     console.log('[modo] check passed ✓')

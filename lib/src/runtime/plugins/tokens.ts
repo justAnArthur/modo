@@ -19,14 +19,19 @@
 // (--space-* → spacing, --motion-* → motion, etc.) with optional section
 // comments as overrides (`/* @group colors */`).
 //
-// output is `virtual:modo-tokens` with the same shape the old TS-based
-// plugin produced: `tokens.<group>` for each group, `errors` for issues,
-// and `css` for the `:root { ... }` block the renderer injects.
+// the plugin exposes two virtual modules:
+//   - virtual:modo-tokens       : { tokens, errors } — structured data
+//                                 consumed by the docs data tables
+//   - virtual:modo-tokens-css   : a side-effect import of each discovered
+//                                 CSS file. Vite injects them as real
+//                                 <link>/<style> tags — the user's source
+//                                 CSS is loaded once, no synthesis, no
+//                                 re-emission.
 
 import type { Plugin, ViteDevServer } from 'vite'
 import { readFile, readdir } from 'node:fs/promises'
 import { join, basename, extname } from 'node:path'
-import { GROUPS, type Group, type ParsedVar, parseCss, groupForVar, buildGroup } from '../../exports/css-parser'
+import { GROUPS, type Group, type ParsedVar, parseCss, buildGroup, groupForVar } from '../../exports/css-parser'
 
 export interface TokensPluginOptions {
   root: string
@@ -38,23 +43,31 @@ interface DiscoveredGroup {
   errors: string[]
 }
 
-async function discoverTokens(root: string): Promise<{ groups: DiscoveredGroup[]; errors: string[] }> {
+interface TokensDiscovery {
+  groups: DiscoveredGroup[]
+  errors: string[]
+  cssFiles: string[]
+}
+
+async function discoverTokens(root: string): Promise<TokensDiscovery> {
   const errors: string[] = []
   const tokensDir = join(root, 'tokens')
-  let files: string[] = []
+  const files: string[] = []
   try {
-    files = await readdir(tokensDir)
+    const all = await readdir(tokensDir)
+    for (const f of all) if (extname(f) === '.css') files.push(f)
   } catch {
     errors.push(`tokens directory not found at ${tokensDir}`)
-    return { groups: [], errors }
+    return { groups: [], errors, cssFiles: [] }
   }
+
+  const cssFiles = files.map((f) => join(tokensDir, f))
 
   // 1. collect every --var from every .css file, tagged with the file's
   //    group (from filename) or null (single-file mode).
   type Tagged = { var: ParsedVar; fileGroup: Group | null }
   const all: Tagged[] = []
   for (const file of files) {
-    if (extname(file) !== '.css') continue
     const stem = basename(file, '.css')
     const fileGroup: Group | null = (GROUPS as readonly string[]).includes(stem) ? (stem as Group) : null
     const src = await readFile(join(tokensDir, file), 'utf-8')
@@ -90,69 +103,30 @@ async function discoverTokens(root: string): Promise<{ groups: DiscoveredGroup[]
     groups.push({ name, raw: buildGroup(name, vars), errors: [] })
   }
 
-  return { groups, errors }
+  return { groups, errors, cssFiles }
 }
 
-// ── :root block generation (for the renderer) ────────────────────────
-
-function buildCss(groups: DiscoveredGroup[]): string {
-  const lines: string[] = [':root {']
-  for (const g of groups) {
-    const data = g.raw as Record<string, unknown>
-    if (g.name === 'colors' && data.items) {
-      const items = data.items as Record<string, { value: string }>
-      for (const [name, tok] of Object.entries(items)) {
-        lines.push(`  --${name.replace(/_/g, '-')}: ${tok.value};`)
-      }
-    } else if (g.name === 'surfaces' && data.levels) {
-      const levels = data.levels as Record<string, { bg: string; shadow: string }>
-      for (const [n, lvl] of Object.entries(levels)) {
-        lines.push(`  --surface-${n}: var(--${lvl.bg.replace(/_/g, '-')});`)
-        lines.push(`  --shadow-${n}: var(--${lvl.shadow.replace(/_/g, '-')});`)
-      }
-    } else if (g.name === 'typography' && data.families) {
-      const families = data.families as Record<string, string>
-      for (const [name, value] of Object.entries(families)) {
-        lines.push(`  --font-${name}: ${value};`)
-      }
-    } else if (g.name === 'spacing' && data.scale) {
-      const scale = data.scale as Record<string, { value: string }>
-      for (const [name, tok] of Object.entries(scale)) {
-        lines.push(`  --space-${name.replace(/_/g, '-')}: ${tok.value};`)
-      }
-    } else if (g.name === 'radius' && data.scale) {
-      const scale = data.scale as Record<string, { value: string }>
-      for (const [name, tok] of Object.entries(scale)) {
-        lines.push(`  --radius-${name.replace(/_/g, '-')}: ${tok.value};`)
-      }
-    } else if (g.name === 'motion' && data.durations) {
-      const durations = data.durations as Record<string, { value: string }>
-      for (const [name, tok] of Object.entries(durations)) {
-        lines.push(`  --motion-${name.replace(/_/g, '-')}: ${tok.value};`)
-      }
-    } else if (g.name === 'motion' && data.easings) {
-      const easings = data.easings as Record<string, { value: string }>
-      for (const [name, tok] of Object.entries(easings)) {
-        lines.push(`  --ease-${name.replace(/_/g, '-')}: ${tok.value};`)
-      }
-    }
-  }
-  lines.push('}')
-  return lines.join('\n') + '\n'
-}
-
-function buildJsonModule(groups: DiscoveredGroup[], errors: string[]): string {
+function buildDataModule(groups: DiscoveredGroup[], errors: string[]): string {
   const tokensByName: Record<string, unknown> = {}
   for (const g of groups) tokensByName[g.name] = g.raw
   return [
     `export const tokens = ${JSON.stringify(tokensByName)};`,
     `export const errors = ${JSON.stringify(errors)};`,
-    `export const css = ${JSON.stringify(buildCss(groups))};`,
   ].join('\n')
 }
 
-const VIRTUAL_ID = 'virtual:modo-tokens'
-const RESOLVED_VIRTUAL_ID = '\0' + VIRTUAL_ID
+function buildCssModule(cssFiles: string[]): string {
+  // side-effect imports of each discovered token file. Vite walks
+  // these and injects them as <link>/<style> tags in the right order.
+  // sort for stable output (the user can override an earlier token by
+  // declaring it in a file that sorts later; alphabetical is fine).
+  return [...cssFiles].sort().map((f) => `import ${JSON.stringify(f)};`).join('\n') + '\n'
+}
+
+const VIRTUAL_DATA = 'virtual:modo-tokens'
+const VIRTUAL_CSS = 'virtual:modo-tokens-css'
+const RESOLVED_DATA = '\0' + VIRTUAL_DATA
+const RESOLVED_CSS = '\0' + VIRTUAL_CSS
 
 export function tokensPlugin(options: TokensPluginOptions): Plugin {
   let server: ViteDevServer | null = null
@@ -162,14 +136,16 @@ export function tokensPlugin(options: TokensPluginOptions): Plugin {
     enforce: 'pre',
 
     resolveId(id) {
-      if (id === VIRTUAL_ID) return RESOLVED_VIRTUAL_ID
+      if (id === VIRTUAL_DATA) return RESOLVED_DATA
+      if (id === VIRTUAL_CSS) return RESOLVED_CSS
       return null
     },
 
     async load(id) {
-      if (id !== RESOLVED_VIRTUAL_ID) return null
-      const { groups, errors } = await discoverTokens(options.root)
-      return buildJsonModule(groups, errors)
+      if (id !== RESOLVED_DATA && id !== RESOLVED_CSS) return null
+      const { groups, errors, cssFiles } = await discoverTokens(options.root)
+      if (id === RESOLVED_DATA) return buildDataModule(groups, errors)
+      return buildCssModule(cssFiles)
     },
 
     configureServer(s) {
@@ -177,12 +153,12 @@ export function tokensPlugin(options: TokensPluginOptions): Plugin {
     },
 
     async handleHotUpdate(ctx) {
-      if (ctx.file.startsWith(join(options.root, 'tokens'))) {
-        const mod = server?.moduleGraph.getModuleById(RESOLVED_VIRTUAL_ID)
-        if (mod) server!.moduleGraph.invalidateModule(mod)
-        return []
-      }
-      return
+      if (!ctx.file.startsWith(join(options.root, 'tokens'))) return
+      const data = server?.moduleGraph.getModuleById(RESOLVED_DATA)
+      const css = server?.moduleGraph.getModuleById(RESOLVED_CSS)
+      if (data) server!.moduleGraph.invalidateModule(data)
+      if (css) server!.moduleGraph.invalidateModule(css)
+      return []
     },
   }
 }

@@ -2,9 +2,7 @@
 // the per-tier +Page.tsx is just a tiny wrapper that picks the category
 // and lets the dynamic route param drive the key.
 
-import type { ReactNode } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
-import { tokens, css as tokensCss } from 'virtual:modo-tokens'
 import { byId, components as itemComponents, examples as itemExamples } from 'virtual:modo-items'
 import { ExampleBlock } from './example-renderer'
 
@@ -25,7 +23,6 @@ export function ItemPage({ tier }: { tier: Tier }) {
   if (!Component) {
     return (
       <>
-        <style>{tokensCss}</style>
         <h1 data-aui="page-title">{TIER_LABEL[tier]} not found</h1>
         <p>no {TIER_LABEL[tier]} with id <code>{id}</code>.</p>
       </>
@@ -40,7 +37,6 @@ export function ItemPage({ tier }: { tier: Tier }) {
 
   return (
     <>
-      <style>{tokensCss}</style>
       <h1 data-aui="page-title">{meta.name}</h1>
       {meta.description && <p data-aui="page-lead">{meta.description}</p>}
       <div data-aui="examples">

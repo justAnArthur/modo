@@ -13,12 +13,11 @@
 import { z } from 'zod'
 import { readdir, readFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
-import { tmpdir } from 'node:os'
-import * as esbuild from 'esbuild'
 
 import { siteConfigSchema } from './schema'
 import { parseItemSource } from './tsdoc'
 import { parseCss } from './css-parser'
+import { loadModoConfig } from './modo-config'
 
 interface Issue {
   file: string
@@ -27,31 +26,6 @@ interface Issue {
 
 function flattenIssues(err: z.ZodError): string[] {
   return err.issues.map((i) => `${i.path.join('.') || '<root>'}: ${i.message}`)
-}
-
-async function bundleTs(filePath: string, here: string): Promise<unknown> {
-  const result = await esbuild.build({
-    entryPoints: [filePath],
-    bundle: true,
-    write: false,
-    format: 'esm',
-    platform: 'node',
-    target: 'node20',
-    external: ['react', 'react-dom', 'modo-atomic-ui'],
-    alias: { 'modo-atomic-ui': resolve(here, 'src', 'exports') },
-    logLevel: 'silent',
-  })
-  const code = result.outputFiles?.[0]?.text
-  if (!code) throw new Error('esbuild produced no output')
-  const tmp = join(tmpdir(), `modo-check-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.mjs`)
-  const fs = await import('node:fs/promises')
-  await fs.writeFile(tmp, code)
-  try {
-    const mod = await import(tmp)
-    return (mod as { default: unknown }).default
-  } finally {
-    await fs.unlink(tmp).catch(() => {})
-  }
 }
 
 // minimal validation of a token group's CSS — not a full schema, just
@@ -94,14 +68,14 @@ function validateTokenGroup(group: string, vars: { name: string; value: string; 
   return issues
 }
 
-export async function runCheck(cwd: string, libRoot: string): Promise<{ ok: boolean; issues: Issue[] }> {
+export async function runCheck(cwd: string): Promise<{ ok: boolean; issues: Issue[] }> {
   const issues: Issue[] = []
 
   // 1. parse + validate modo.config.ts
   const configPath = resolve(cwd, 'modo.config.ts')
   let config: unknown = null
   try {
-    config = await bundleTs(configPath, libRoot)
+    config = await loadModoConfig(cwd)
   } catch (e) {
     issues.push({ file: configPath, message: `failed to load: ${(e as Error).message}` })
   }

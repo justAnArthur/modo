@@ -10,19 +10,8 @@ export { defineConfig } from './config'
 
 export { Elevated, SurfaceProvider, useSurface } from './surfaces-runtime'
 
-export type {
-  SiteConfig,
-  ColorGroup,
-  ColorToken,
-  SurfaceGroup,
-  SurfaceLevel,
-  SurfaceConvention,
-  ItemMeta,
-  ItemSchema,
-  ItemCategory,
-  PropSchema,
-  PropType,
-  ExampleSchema,
-  Semantic,
-  Role,
-} from './schema'
+export { useTheme, useDensity, useRadius } from './view'
+
+export type { SiteConfig } from './schema'
+
+export type { ViewControl, ViewControlState, ViewOption } from './view'
