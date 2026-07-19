@@ -54,12 +54,18 @@ export default function Layout({ children }: LayoutProps) {
   useChromePreferences()
   // set the page title + description from the user's modo.config.ts.
   // the +config.ts static fallback is overridden here so the rendered
-  // HTML matches the project name, not the lib's name.
+  // HTML matches the project name, not the lib's name. called once
+  // in useEffect — invoking useConfig's returned setter on every
+  // render causes applyHead() to thrash document.title during client
+  // navigation, which breaks vike-react's <a> interception on some
+  // browsers. useEffect is the safe pattern.
   const setConfig = useConfig()
-  setConfig({
-    title: siteName,
-    description: siteDescription || undefined,
-  })
+  useEffect(() => {
+    setConfig({
+      title: siteName,
+      description: siteDescription || undefined,
+    })
+  }, [siteName, siteDescription, setConfig])
   // concat all per-item CSS into a single stylesheet. each item's
   // component imports its own .css; the source plugin's esbuild step
   // extracts those into a per-key map. order doesn't matter for
