@@ -47,6 +47,7 @@ export default function Layout({ children }: LayoutProps) {
       <main data-aui="content">
         {children}
       </main>
+      <aside data-aui="panel" />
     </div>
   )
 }

@@ -1,8 +1,8 @@
-/* ── app shell (sidebar + content) ──────────────────────────────────────── */
+/* ── app shell (sidebar + content + panel) ───────────────────────────────── */
 
 [data-aui="app"] {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 240px 1fr 240px;
   min-height: 100vh;
   gap: 16px;
   padding: 16px;
@@ -80,6 +80,27 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-xl, 13px);
   box-shadow: var(--shadow-2);
+}
+
+[data-aui="panel"] {
+  position: sticky;
+  top: 16px;
+  height: calc(100vh - 32px);
+  align-self: start;
+  padding: calc(20px * var(--spacing-multiplier, 1)) calc(16px * var(--spacing-multiplier, 1));
+  font-size: var(--xs, 12px);
+  overflow-y: auto;
+}
+
+/* on screens < 1100px, hide the right panel (it doesn't fit comfortably) */
+@media (max-width: 1099px) {
+  [data-aui="app"] {
+    grid-template-columns: 240px 1fr;
+  }
+
+  [data-aui="panel"] {
+    display: none;
+  }
 }
 
 @media (max-width: 700px) {
