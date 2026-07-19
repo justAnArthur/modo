@@ -83,5 +83,25 @@ export function componentsPlugin(opts: ComponentsPluginOptions): Plugin {
       }
       return [...imports, ...bindings].join('\n')
     },
+
+    configureServer(s) {
+      // chrome slot components (Select, Link, Button, etc.) live in the
+      // user's project — same caveat as source.ts: vite's default
+      // chokidar doesn't watch them. add the project root so edits fire
+      // handleHotUpdate.
+      s.watcher.add(opts.root)
+    },
+
+    async handleHotUpdate(ctx) {
+      const dsRoot = resolve(opts.root)
+      if (!ctx.file.startsWith(dsRoot)) return
+      // re-bundle user chrome slot components and refresh the page.
+      const mod = ctx.server.moduleGraph.getModuleById('\0virtual:modo-components')
+      if (!mod) return
+      ctx.server.moduleGraph.invalidateModule(mod)
+      // return the module (not `[]`) so Vite sends an HMR update to the
+      // client — otherwise the page never refreshes.
+      return [mod]
+    },
   }
 }

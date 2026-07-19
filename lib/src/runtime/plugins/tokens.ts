@@ -150,15 +150,22 @@ export function tokensPlugin(options: TokensPluginOptions): Plugin {
 
     configureServer(s) {
       server = s
+      // token CSS files live in the user's project — same caveat as the
+      // source plugin: vite's default chokidar doesn't watch them.
+      s.watcher.add(join(options.root, 'tokens'))
     },
 
     async handleHotUpdate(ctx) {
       if (!ctx.file.startsWith(join(options.root, 'tokens'))) return
+      // invalidate so `load()` re-runs and re-parses the CSS files.
+      // returning the modules (not `[]`) is required — `[]` means
+      // "no HMR needed" in Vite and the page would never refresh.
       const data = server?.moduleGraph.getModuleById(RESOLVED_DATA)
       const css = server?.moduleGraph.getModuleById(RESOLVED_CSS)
-      if (data) server!.moduleGraph.invalidateModule(data)
-      if (css) server!.moduleGraph.invalidateModule(css)
-      return []
+      const invalidated: NonNullable<typeof data>[] = []
+      if (data) { server!.moduleGraph.invalidateModule(data); invalidated.push(data) }
+      if (css)  { server!.moduleGraph.invalidateModule(css);  invalidated.push(css) }
+      return invalidated
     },
   }
 }

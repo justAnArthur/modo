@@ -114,6 +114,15 @@ export function sourcePlugin(options: SourcePluginOptions): Plugin {
       return null
     },
 
+    configureServer(s) {
+      // the user's items live in a directory that vite's default chokidar
+      // doesn't watch (they're not in the import graph — we bundle them
+      // into tmp .mjs files via esbuild, so vite never imports them
+      // directly). without this, edits to `demo/components/foo/index.tsx`
+      // never fire handleHotUpdate and the page never refreshes.
+      s.watcher.add(options.root)
+    },
+
     async load(id) {
       if (id !== RESOLVED_DATA && id !== RESOLVED_CSS) return null
 
@@ -204,11 +213,19 @@ export function sourcePlugin(options: SourcePluginOptions): Plugin {
     async handleHotUpdate(ctx) {
       const dsRoot = resolve(options.root)
       if (!ctx.file.startsWith(dsRoot)) return
-      const data = (this as any).environment?.moduleGraph?.getModuleById?.(RESOLVED_DATA)
-      const css = (this as any).environment?.moduleGraph?.getModuleById?.(RESOLVED_CSS)
-      if (data) data.invalidate?.()
-      if (css) css.invalidate?.()
-      return []
+      // invalidate the virtual modules so the next request re-runs `load()`,
+      // re-bundles user items (new tmp .mjs paths) and picks up new content.
+      const invalidated: NonNullable<ReturnType<typeof ctx.server.moduleGraph.getModuleById>>[] = []
+      for (const id of [RESOLVED_DATA, RESOLVED_CSS]) {
+        const mod = ctx.server.moduleGraph.getModuleById(id)
+        if (mod) { ctx.server.moduleGraph.invalidateModule(mod); invalidated.push(mod) }
+      }
+      // returning `[]` would tell Vite "no HMR needed" and silently swallow
+      // the change — the page would never refresh. returning the modules
+      // makes Vite send an HMR boundary update to the client, which forces
+      // a full reload for the page (the virtual module is not a React
+      // HMR-friendly boundary, so Vike reloads the route).
+      return invalidated
     },
   }
 }
