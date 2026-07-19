@@ -1,6 +1,5 @@
-/* select — visuals for the user-provided Select that the lib uses for
-   the theme/density/radius switchers in its chrome. when a different
-   consumer provides their own Select, they bring their own styles. */
+/* select — demo component. the [data-aui="user-select-*"] rules style
+   the example component on the docs site. */
 
 [data-aui="user-select"] {
   display: inline-flex;
@@ -16,14 +15,4 @@
   font: inherit;
   font-size: 12px;
   cursor: pointer;
-}
-[data-aui="user-select-badge"] {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--accent-foreground);
-  background: var(--accent);
-  padding: 1px 4px;
-  border-radius: 9999px;
-  font-weight: 600;
 }

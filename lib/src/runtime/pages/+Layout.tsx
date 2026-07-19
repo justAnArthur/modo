@@ -1,8 +1,6 @@
 // shared layout for every page in the docs site.
 // wraps each page in <aside data-aui="sidebar"> (left) and
-// <main data-aui="content"> (center). the right <aside data-aui="panel">
-// is the chrome panel — see components/chrome-panel.tsx for how
-// users can replace it via `components.Chrome` in modo.config.ts.
+// <main data-aui="content"> (center).
 //
 // CSS is loaded via side-effect imports of the three virtual CSS modules:
 // tokens, items, user overrides. Vite injects them in import order, so
@@ -10,8 +8,6 @@
 
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
-import { Link } from '../components/link'
-import { ViewPanel } from '../components/view-panel'
 import { config as siteConfig, name as siteName, description as siteDescription } from 'virtual:modo-config'
 import { items, byId } from 'virtual:modo-items'
 import { useConfig } from 'vike-react/useConfig'
@@ -44,16 +40,13 @@ export default function Layout({ children }: LayoutProps) {
     <div data-aui="app">
       <aside data-aui="sidebar">
         <div data-aui="sidebar-header">
-          <Link href="/" data-aui="sidebar-brand">{siteName}</Link>
+          <a href="/" data-aui="sidebar-brand">{siteName}</a>
         </div>
         <SidebarNav />
       </aside>
       <main data-aui="content">
         {children}
       </main>
-      <aside data-aui="panel">
-        <ViewPanel />
-      </aside>
     </div>
   )
 }
@@ -96,7 +89,7 @@ function SidebarNav() {
       <ul data-aui="sidebar-list">
         {TOKEN_GROUPS.map((g) => (
           <li key={g.key}>
-            <Link href={`/docs/tokens/${g.key}`} data-aui="sidebar-link">{g.label}</Link>
+            <a href={`/docs/tokens/${g.key}`} data-aui="sidebar-link">{g.label}</a>
           </li>
         ))}
       </ul>
@@ -107,7 +100,7 @@ function SidebarNav() {
             <ul data-aui="sidebar-list">
               {byTier[tier].map((it) => (
                 <li key={it.id}>
-                  <Link href={`/docs/${tier}/${it.id}`} data-aui="sidebar-link">{it.label}</Link>
+                  <a href={`/docs/${tier}/${it.id}`} data-aui="sidebar-link">{it.label}</a>
                 </li>
               ))}
             </ul>

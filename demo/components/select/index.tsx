@@ -1,12 +1,11 @@
 import './select.css'
 
 /**
- * A native-styled select for the lib chrome. Replace with a real one in
- * your project. The lib's `+Layout.tsx` consumes this via the
- * `components: { Select }` field in `modo.config.ts`.
+ * A native-styled select. Wraps a real <select> with a small badge so it
+ * is recognisable in the docs examples.
  *
  * @example
- * # Theme
+ * # Default
  *
  * ```tsx
  * <Select
@@ -21,10 +20,10 @@ import './select.css'
  * ```
  */
 export default function Select({
-  value,
-  onValueChange,
-  options,
-}: {
+                                 value,
+                                 onValueChange,
+                                 options,
+                               }: {
   /** Currently selected option value. */
   value: string
   /** Called with the new value when the user picks a different option. */
@@ -43,7 +42,6 @@ export default function Select({
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-      <span data-aui="user-select-badge">user</span>
     </span>
   )
 }

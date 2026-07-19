@@ -15,7 +15,6 @@
 - **user CSS via `modo.config.ts: css`**. the lib injects this CSS as a global `<style>` tag at the top of the layout, after the lib's structural CSS. the demo's `overrides.css` is the canonical example.
 - **atomic design tiers**: `primitives/`, `components/`, `blocks/`. the lib auto-discovers by directory and renders each.
 - **surfaces (elevation model)**: the lib ships `<Elevated offset={n}>` / `<SurfaceProvider>` / `useSurface` from the main entry (`modo-atomic-ui`). the user's `tokens/shadows.css` declares the 8 shadow recipes. the `surfaces` group is synthesized by the lib (1..8 levels, each bg + shadow ref).
-- **chrome slots**: `modo.config.ts: components: { Select, Link, Button }` can override the lib's chrome with the user's components. unset = native fallback. the lib consumes these via the `virtual:modo-components` module.
 - **no Next.js, no Vite config in user project**: the lib owns its own Vite + Vike app. the user sees only the lib's output (the docs site).
 
 ## file naming
@@ -27,4 +26,4 @@
 
 ## chrome hooks (data-aui attrs)
 
-`data-aui="app"`, `"sidebar"`, `"panel"`, `"content"`, `"header"`, `"section"`, `"section-title"`, `"page-title"`, `"page-lead"`, `"card"`, `"row"`, `"cell"`, `"grid"`, `"swatch"`, `"surface-card"`, `"example-card"`, `"example-card-meta"`, `"example-card-stage"`, `"example-toggle"`, `"example-code"`, `"prop-table"`, `"control"`, `"control-input"`, `"user-select"`, `"search"`, `"raw-json"`, `"popover"`, `"tooltip"`, `"elevated"`. the lib sets structural styles for all of these; the user styles their own components via the same attrs.
+`data-aui="app"`, `"sidebar"`, `"content"`, `"header"`, `"section"`, `"section-title"`, `"page-title"`, `"page-lead"`, `"card"`, `"row"`, `"cell"`, `"grid"`, `"swatch"`, `"surface-card"`, `"example-card"`, `"example-card-meta"`, `"example-card-stage"`, `"example-toggle"`, `"example-code"`, `"prop-table"`, `"search"`, `"raw-json"`, `"elevated"`. the lib sets structural styles for all of these; the user styles their own components via the same attrs.

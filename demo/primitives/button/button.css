@@ -13,27 +13,55 @@
   transition: background-color 80ms ease, transform 80ms ease, border-color 80ms ease;
   user-select: none;
 }
-.modo-button:active { transform: scale(0.98); }
-.modo-button:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent); }
-.modo-button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.modo-button[data-size="sm"] { height: 28px; padding: 0 10px; font-size: 12px; }
-.modo-button[data-size="md"] { height: 32px; padding: 0 14px; font-size: 13px; }
-.modo-button[data-size="lg"] { height: 40px; padding: 0 18px; font-size: 14px; }
+.modo-button:active {
+  transform: scale(0.98);
+}
+
+.modo-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.modo-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modo-button[data-size="sm"] {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.modo-button[data-size="md"] {
+  height: 32px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.modo-button[data-size="lg"] {
+  height: 40px;
+  padding: 0 18px;
+  font-size: 14px;
+}
 
 .modo-button[data-variant="primary"] {
   background: var(--accent);
   color: var(--accent-foreground);
 }
+
 .modo-button[data-variant="secondary"] {
   background: var(--muted);
   color: var(--foreground);
   border-color: var(--border);
 }
+
 .modo-button[data-variant="ghost"] {
   background: transparent;
   color: var(--foreground);
 }
+
 .modo-button[data-variant="ghost"]:hover {
   background: var(--muted);
 }

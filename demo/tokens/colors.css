@@ -1,10 +1,18 @@
-/* color tokens — read by the lib's CSS tokens plugin.
-   the plugin infers semantic + role from the variable name:
-   --surface-* / background / muted → surface / bg
-   --foreground / *-foreground → text / fg
-   --border → stroke / border
-   --accent / accent-* → brand / bg */
+/* color tokens — one file for everything color-related:
+   - light defaults (:root)
+   - dark via OS preference (@media prefers-color-scheme: dark)
+   - dark via explicit user choice ([data-theme="dark"])
+   - shadow recipes (used by the surfaces ladder + <Elevated>) */
+
 :root {
+  --background: #f4f4f5;
+  --foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --border: color-mix(in oklab, #18181b 10%, transparent);
+  --accent: #3b82f6;
+  --accent-foreground: #ffffff;
+
   --surface-1: #f4f4f5;
   --surface-2: #f6f6f7;
   --surface-3: #f8f8f9;
@@ -13,11 +21,56 @@
   --surface-6: #fcfcfd;
   --surface-7: #fdfdfd;
   --surface-8: #ffffff;
-  --background: #f4f4f5;
-  --foreground: #18181b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --border: color-mix(in oklab, #18181b 10%, transparent);
+
+  --shadow-color: rgb(0 0 0 / 0.06);
+  --shadow-1: 0 0 0 1px var(--shadow-color);
+  --shadow-2: 0 0 0 1px var(--shadow-color), 0 1px 1px -0.5px var(--shadow-color);
+  --shadow-3: 0 0 0 1px var(--shadow-color), 0 1px 1px -0.5px var(--shadow-color), 0 3px 3px -1.5px var(--shadow-color);
+  --shadow-4: 0 0 0 1px var(--shadow-color), 0 1px 1px -0.5px var(--shadow-color), 0 3px 3px -1.5px var(--shadow-color), 0 6px 6px -3px var(--shadow-color);
+  --shadow-5: 0 0 0 1px var(--shadow-color), 0 1px 1px -0.5px var(--shadow-color), 0 3px 3px -1.5px var(--shadow-color), 0 6px 6px -3px var(--shadow-color), 0 12px 12px -6px var(--shadow-color);
+  --shadow-6: 0 0 0 1px var(--shadow-color), 0 1px 1px -0.5px var(--shadow-color), 0 3px 3px -1.5px var(--shadow-color), 0 6px 6px -3px var(--shadow-color), 0 12px 12px -6px var(--shadow-color), 0 24px 24px -12px var(--shadow-color);
+  --shadow-7: 0 0 0 1px var(--shadow-color), 0 1px 1px -0.5px var(--shadow-color), 0 3px 3px -1.5px var(--shadow-color), 0 6px 6px -3px var(--shadow-color), 0 12px 12px -6px var(--shadow-color), 0 24px 24px -12px var(--shadow-color), 0 48px 48px -24px var(--shadow-color);
+  --shadow-8: 0 0 0 1px var(--shadow-color), 0 1px 1px -0.5px var(--shadow-color), 0 3px 3px -1.5px var(--shadow-color), 0 6px 6px -3px var(--shadow-color), 0 12px 12px -6px var(--shadow-color), 0 24px 24px -12px var(--shadow-color), 0 48px 48px -24px var(--shadow-color), 0 96px 96px -48px var(--shadow-color);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --background: #0a0a0a;
+    --foreground: #fafafa;
+    --muted: #18181b;
+    --muted-foreground: #a1a1aa;
+    --border: #27272a;
+    --accent: #3b82f6;
+    --accent-foreground: #fafafa;
+
+    --surface-1: #0a0a0a;
+    --surface-2: #111113;
+    --surface-3: #18181b;
+    --surface-4: #1f1f23;
+    --surface-5: #27272a;
+    --surface-6: #2f2f35;
+    --surface-7: #38383f;
+    --surface-8: #42424a;
+  }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --muted: #18181b;
+  --muted-foreground: #a1a1aa;
+  --border: #27272a;
   --accent: #3b82f6;
-  --accent-foreground: #ffffff;
+  --accent-foreground: #fafafa;
+
+  --surface-1: #0a0a0a;
+  --surface-2: #111113;
+  --surface-3: #18181b;
+  --surface-4: #1f1f23;
+  --surface-5: #27272a;
+  --surface-6: #2f2f35;
+  --surface-7: #38383f;
+  --surface-8: #42424a;
 }

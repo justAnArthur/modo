@@ -54,16 +54,3 @@ declare module 'virtual:modo-items' {
 }
 
 declare module 'virtual:modo-items-css'
-
-declare module 'virtual:modo-components' {
-  import type { ComponentType } from 'react'
-  export const Select: ComponentType<any> | null
-  export const Link: ComponentType<any> | null
-  export const Button: ComponentType<any> | null
-  // per-control overrides for the docs site's right-side view panel.
-  // each receives { current, options, set } (the ViewControlState shape
-  // from exports/view.tsx). unset = lib's default <select> for that control.
-  export const Theme: ComponentType<any> | null
-  export const Density: ComponentType<any> | null
-  export const Radius: ComponentType<any> | null
-}

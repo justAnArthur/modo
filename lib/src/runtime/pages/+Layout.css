@@ -1,8 +1,8 @@
-/* ── app shell (sidebar + content + panel) ───────────────────────────────── */
+/* ── app shell (sidebar + content) ──────────────────────────────────────── */
 
 [data-aui="app"] {
   display: grid;
-  grid-template-columns: 240px 1fr 240px;
+  grid-template-columns: 240px 1fr;
   min-height: 100vh;
   gap: 16px;
   padding: 16px;
@@ -16,18 +16,12 @@
   display: flex;
   flex-direction: column;
   padding: calc(16px * var(--spacing-multiplier, 1)) calc(12px * var(--spacing-multiplier, 1));
-  background: var(--surface-3, var(--background));
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg, 12px);
-  box-shadow: var(--shadow-2);
   font-size: var(--sm, 13px);
   overflow-y: auto;
 }
 
 [data-aui="sidebar-header"] {
   padding: calc(4px * var(--spacing-multiplier, 1)) calc(8px * var(--spacing-multiplier, 1)) calc(16px * var(--spacing-multiplier, 1));
-  border-bottom: 1px solid var(--border);
-  margin-bottom: calc(12px * var(--spacing-multiplier, 1));
 }
 
 [data-aui="sidebar-brand"] {
@@ -64,10 +58,12 @@
   text-decoration: none;
   transition: background-color 80ms ease, color 80ms ease;
 }
+
 [data-aui="sidebar-link"]:hover {
   background: var(--surface-3, var(--muted));
   color: var(--foreground);
 }
+
 [data-aui="sidebar-link"][aria-current="page"] {
   background: var(--surface-4, var(--muted));
   color: var(--foreground);
@@ -76,109 +72,33 @@
 
 [data-aui="content"] {
   flex: 1;
-  min-width: 0;
-  max-width: 980px;
+  width: 100%;
+  max-width: 50rem;
   margin: 0 auto;
   padding: calc(48px * var(--spacing-multiplier, 1)) calc(32px * var(--spacing-multiplier, 1)) calc(96px * var(--spacing-multiplier, 1));
   background: var(--surface-3, var(--background));
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-xl, 13px);
   box-shadow: var(--shadow-2);
 }
 
-[data-aui="panel"] {
-  position: sticky;
-  top: 16px;
-  height: calc(100vh - 32px);
-  align-self: start;
-  padding: calc(20px * var(--spacing-multiplier, 1)) calc(16px * var(--spacing-multiplier, 1));
-  background: var(--surface-3, var(--background));
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg, 12px);
-  box-shadow: var(--shadow-2);
-  font-size: var(--xs, 12px);
-  overflow-y: auto;
-}
-
-[data-aui="panel-title"] {
-  margin: 0 0 calc(4px * var(--spacing-multiplier, 1));
-  font-size: var(--sm, 13px);
-  font-weight: 700;
-  color: var(--foreground);
-  letter-spacing: -0.01em;
-}
-
-[data-aui="panel-hint"] {
-  margin: 0 0 calc(16px * var(--spacing-multiplier, 1));
-  font-size: var(--xs, 11px);
-  color: var(--muted-foreground);
-  line-height: 1.4;
-}
-[data-aui="panel-hint"] code {
-  background: var(--surface-3, var(--muted));
-  padding: 1px 5px;
-  border-radius: 3px;
-  font-size: var(--xs, 10px);
-  font-family: var(--font-mono, monospace);
-}
-
-[data-aui="control"] {
-  display: flex;
-  flex-direction: column;
-  gap: calc(4px * var(--spacing-multiplier, 1));
-  margin-bottom: calc(12px * var(--spacing-multiplier, 1));
-}
-
-[data-aui="control-label"] {
-  font-size: var(--xs, 10px);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted-foreground);
-  font-weight: 600;
-}
-
-[data-aui="control-input"] {
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm, 4px);
-  padding: calc(4px * var(--spacing-multiplier, 1)) calc(6px * var(--spacing-multiplier, 1));
-  color: var(--foreground);
-  font: inherit;
-  font-size: var(--xs, 12px);
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23737373' fill='none' stroke-width='1.5'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 6px center;
-  padding-right: 22px;
-}
-[data-aui="control-input"]:hover {
-  background-color: var(--surface-3, var(--muted));
-}
-
-/* on screens < 1100px, hide the right panel (it doesn't fit comfortably) */
-@media (max-width: 1099px) {
-  [data-aui="app"] {
-    grid-template-columns: 240px 1fr;
-  }
-  [data-aui="panel"] {
-    display: none;
-  }
-}
 @media (max-width: 700px) {
   [data-aui="app"] {
     grid-template-columns: 1fr;
     padding: 8px;
     gap: 8px;
   }
+
   [data-aui="sidebar"] {
     position: static;
     height: auto;
   }
+
   [data-aui="content"] {
     padding: calc(24px * var(--spacing-multiplier, 1)) calc(16px * var(--spacing-multiplier, 1));
   }
 }
+
 /* ── docs page content ──────────────────────────────────────────────────── */
 
 [data-aui="page-title"] {
@@ -219,6 +139,7 @@
   font-size: var(--sm, 13px);
   transition: background-color 80ms ease, border-color 80ms ease;
 }
+
 [data-aui="docs-foundation-list"] a:hover,
 [data-aui="docs-item-list"] a:hover {
   background: var(--surface-4, var(--muted));
@@ -234,7 +155,3 @@
   padding: 12px;
   overflow-x: auto;
 }
-
-/* user-provided Select styles are user content — the demo's
-   overrides.css ships them for the demo. when a different consumer
-   provides their own Select, they bring their own styles too. */

@@ -58,20 +58,21 @@ import './badge.css'
  * <Badge tone="neutral" variant="outline">New</Badge>
  * ```
  */
-export default function Badge({
-  tone = 'neutral',
-  variant = 'soft',
-  size = 'sm',
-  children,
-}: {
-  /** Semantic tone. @values neutral, success, warning, danger, info */
-  tone?: 'neutral' | 'success' | 'warning' | 'danger' | 'info'
-  /** Visual variant. @values solid, soft, outline */
-  variant?: 'solid' | 'soft' | 'outline'
-  /** Size. @values sm, md */
-  size?: 'sm' | 'md'
-  children?: React.ReactNode
-}) {
+export default function Badge(
+  {
+    tone = 'neutral',
+    variant = 'soft',
+    size = 'sm',
+    children
+  }: {
+    /** Semantic tone. @values neutral, success, warning, danger, info */
+    tone?: 'neutral' | 'success' | 'warning' | 'danger' | 'info'
+    /** Visual variant. @values solid, soft, outline */
+    variant?: 'solid' | 'soft' | 'outline'
+    /** Size. @values sm, md */
+    size?: 'sm' | 'md'
+    children?: React.ReactNode
+  }) {
   return (
     <span data-tone={tone} data-variant={variant} data-size={size} className="modo-badge">
       {children}

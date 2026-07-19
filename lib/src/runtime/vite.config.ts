@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react'
 import vike from 'vike/plugin'
 import { tokensPlugin } from './plugins/tokens'
 import { sourcePlugin } from './plugins/source'
-import { componentsPlugin } from './plugins/components'
 import { userCssPlugin } from './plugins/user-css'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -22,7 +21,6 @@ export default defineConfig({
     vike(),
     tokensPlugin({ root: demoRoot }),
     sourcePlugin({ root: demoRoot }),
-    componentsPlugin({ root: demoRoot }),
     userCssPlugin({ root: demoRoot }),
   ],
   resolve: {

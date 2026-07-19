@@ -49,12 +49,6 @@
         "default": "./dist/modo-config.js"
       }
     },
-    "./view": {
-      "import": {
-        "types": "./dist/view.d.ts",
-        "default": "./dist/view.js"
-      }
-    },
     ".": {
       "import": {
         "types": "./dist/index.d.ts",

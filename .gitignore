@@ -12,3 +12,4 @@ dist
 .modo-token-tmp-*.mjs
 .modo-cmp-*.mjs
 .modo-cfg-*.mjs
+lib/_archived/

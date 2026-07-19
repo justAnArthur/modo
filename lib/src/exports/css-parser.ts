@@ -68,7 +68,15 @@ function parseSections(src: string): ParsedSection[] {
   let current = out[0]!
 
   // walk line by line to track line numbers and to honor section comments.
+  // for the data model we only collect vars from top-level `:root` blocks.
+  // vars inside `@media (prefers-color-scheme: dark)` or `[data-theme="dark"]`
+  // are still emitted to the actual CSS (via Vite's side-effect import) but
+  // skipped here so the docs swatch labels stay aligned with the default
+  // light values. nested `:root` selectors (e.g. inside @media) are also
+  // skipped — `blockDepth > 1` means we're inside a wrapper block.
   const lines = src.split('\n')
+  let blockDepth = 0
+  let rootSelector = ''
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]!
 
@@ -83,9 +91,23 @@ function parseSections(src: string): ParsedSection[] {
       }
     }
 
+    // block opens/closes on this line
+    const opens = (line.match(/\{/g) ?? []).length
+    const closes = (line.match(/\}/g) ?? []).length
+    if (opens > 0) {
+      blockDepth += opens
+      if (blockDepth === 1) {
+        rootSelector = line.split('{')[0]?.trim() ?? ''
+      }
+    }
+    if (closes > 0) {
+      blockDepth = Math.max(0, blockDepth - closes)
+      if (blockDepth === 0) rootSelector = ''
+    }
+
     // declaration? `--name: value;`  (value may contain colons inside parens)
     const declMatch = line.match(/^\s*--([\w-]+)\s*:\s*(.+?);?\s*$/)
-    if (declMatch) {
+    if (declMatch && rootSelector.startsWith(':root') && blockDepth === 1) {
       const name = declMatch[1]!
       let value = declMatch[2]!.trim()
       if (value.endsWith(';')) value = value.slice(0, -1).trim()

@@ -14,12 +14,6 @@ body {
   background: var(--background);
 }
 
-[data-aui="page"] {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 48px 24px 96px;
-}
-
 [data-aui="header"] {
   display: flex;
   align-items: baseline;
