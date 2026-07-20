@@ -16,7 +16,7 @@
 import * as React from 'react'
 import { useState } from 'react'
 import type { ParsedExample } from '../../lib/tsdoc.parser'
-import Elevated from 'virtual:modo-elevated'
+import Elevated, { isProvided as elevatedIsProvided } from 'virtual:modo-elevated'
 
 // HMR: when an item file changes, the source plugin re-runs and
 // re-publishes the virtual:modo-items module. we don't need to clear
@@ -144,12 +144,19 @@ export function ExampleBlock({ example, componentName, Component, compiledBody }
 
   return (
     <div data-aui="example-card">
-      <div data-aui="example-card-stage">
-        <div data-aui="stage-elevated"><Elevated /></div>
-        {error
-          ? <code data-aui="example-error">{error}</code>
-          : rendered ?? <span data-aui="example-loading">…</span>}
-      </div>
+      {elevatedIsProvided ? (
+        <Elevated data-aui="example-card-stage">
+          {error
+            ? <code data-aui="example-error">{error}</code>
+            : rendered ?? <span data-aui="example-loading">…</span>}
+        </Elevated>
+      ) : (
+        <div data-aui="example-card-stage">
+          {error
+            ? <code data-aui="example-error">{error}</code>
+            : rendered ?? <span data-aui="example-loading">…</span>}
+        </div>
+      )}
       <button
         type="button"
         data-aui="example-toggle"
