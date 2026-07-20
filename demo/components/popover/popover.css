@@ -1,6 +1,25 @@
-/* popover — demo-specific visuals for the Popover component. the inline
-   styles on the elements are the actual demo; this file is intentionally
-   empty unless we want to add positioning/transitions later. */
+/* popover — demo-specific visuals. the panel body bg + shadow come from
+   <Elevated offset={2}>; this file holds sizing, typography, and the
+   goo-body geometry. */
 
-[data-aui="popover"] { display: inline-block; }
-[data-aui="popover-body"] { font-size: 12px; }
+/* the panel content body. width/typography go here because they're
+   component-specific; bg + shadow + radius + border come from Elevated. */
+.popover-panel-body {
+  width: max-content;
+  max-width: min(92vw, 20rem);
+  padding: var(--lg, 16px);
+  color: var(--foreground);
+  outline: none;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+[data-aui="popover"] {
+  display: inline-flex;
+}
+
+[data-aui="popover-demo-trigger"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent);
+}
