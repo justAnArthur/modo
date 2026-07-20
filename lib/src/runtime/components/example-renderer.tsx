@@ -16,7 +16,7 @@
 import * as React from 'react'
 import { useState } from 'react'
 import type { ParsedExample } from '../../lib/tsdoc.parser'
-import Elevated from 'modo.elevated'
+import Elevated from 'virtual:modo-elevated'
 
 // HMR: when an item file changes, the source plugin re-runs and
 // re-publishes the virtual:modo-items module. we don't need to clear

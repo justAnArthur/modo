@@ -4,6 +4,7 @@ import vike from 'vike/plugin'
 import { tokensPlugin } from './plugins/tokens'
 import { sourcePlugin } from './plugins/source'
 import { userCssPlugin } from './plugins/user-css'
+import { elevatedPlugin } from './plugins/elevated'
 import { loadModoConfig } from '../lib/config.loader'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -36,13 +37,13 @@ const baseConfig: UserConfig = {
     tokensPlugin({ root: demoRoot }),
     sourcePlugin({ root: demoRoot }),
     userCssPlugin({ root: demoRoot }),
+    elevatedPlugin({ root: demoRoot }),
   ],
   resolve: {
     alias: [
       { find: /^modo-atomic-ui\/(.+)$/, replacement: `${exportsRoot}/$1` },
       { find: 'modo-atomic-ui', replacement: exportsRoot },
       { find: 'modo.panel', replacement: `${demoRoot}/modo.panel` },
-      { find: 'modo.elevated', replacement: `${demoRoot}/admin/components/elevated` },
       { find: /^@demo\/(.+)$/, replacement: `${demoRoot}/$1` },
       { find: '@demo', replacement: demoRoot },
     ],

@@ -61,8 +61,13 @@ declare module 'modo.panel' {
   export default Panel
 }
 
-declare module 'modo.elevated' {
-  import type { ComponentType } from 'react'
-  const Elevated: ComponentType
+declare module 'virtual:modo-elevated' {
+  import type { ComponentType, ReactNode } from 'react'
+  // the lib doesn't know the user's component signature — pass through
+  // whatever props (children, data-aui, etc.) the calling site supplies.
+  // the user's convention file is responsible for declaring/accepting
+  // its own props.
+  const Elevated: ComponentType<{ children?: ReactNode; [key: string]: unknown }>
   export default Elevated
+  export const isProvided: boolean
 }

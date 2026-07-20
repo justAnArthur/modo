@@ -1,6 +1,12 @@
 // shared layout for every page in the docs site.
-// wraps each page in <aside data-aui="sidebar"> (left) and
-// <main data-aui="content"> (center).
+// wraps each page in <aside data-aui="sidebar"> (left), the content
+// area (center), and <aside data-aui="panel"> (right).
+//
+// the content area is `<Elevated data-aui="content">` when the user
+// has provided a `admin/components/elevated.tsx` convention file,
+// otherwise the plain `<main data-aui="content">` fallback. the
+// Elevated variant lets the user replace the content surface with
+// their own surface-elevation primitive (or any React component).
 //
 // CSS is loaded via side-effect imports of the three virtual CSS modules:
 // tokens, items, user overrides. Vite injects them in import order, so
@@ -9,7 +15,7 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import Panel from 'modo.panel'
-import Elevated from 'modo.elevated'
+import Elevated, { isProvided as elevatedIsProvided } from 'virtual:modo-elevated'
 import { name as siteName, description as siteDescription } from 'virtual:config.loader'
 import { useConfig } from 'vike-react/useConfig'
 import { SidebarNav } from '../sidebar-nav'
@@ -40,16 +46,17 @@ export default function Layout({ children }: LayoutProps) {
   }, [siteName, siteDescription, setConfig])
   return (
     <div data-aui="app">
-      <div data-aui="page-elevated"><Elevated /></div>
       <aside data-aui="sidebar">
         <div data-aui="sidebar-header">
           <a href="/" data-aui="sidebar-brand">{siteName}</a>
         </div>
         <SidebarNav />
       </aside>
-      <main data-aui="content">
-        {children}
-      </main>
+      {elevatedIsProvided ? (
+        <Elevated data-aui="content">{children}</Elevated>
+      ) : (
+        <main data-aui="content">{children}</main>
+      )}
       <aside data-aui="panel">
         <Panel />
       </aside>

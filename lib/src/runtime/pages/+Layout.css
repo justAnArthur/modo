@@ -7,18 +7,6 @@
   gap: 16px;
   padding: 16px;
   background: var(--background);
-  /* stacking context so the page-elevated child (z-index: -1) paints
-     behind the in-flow sidebar/content/panel children rather than
-     in front of them. */
-  position: relative;
-  z-index: 0;
-}
-
-[data-aui="page-elevated"] {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
 }
 
 [data-aui="sidebar"] {
