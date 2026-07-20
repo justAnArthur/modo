@@ -3,8 +3,7 @@
 
 import { readdir } from 'node:fs/promises'
 import { join } from 'node:path'
-
-export type Tier = 'primitives' | 'components' | 'blocks'
+import type { Tier } from './tiers'
 
 export async function listTokens(): Promise<string[]> {
   const demoRoot = process.env.MODO_DEMO_ROOT

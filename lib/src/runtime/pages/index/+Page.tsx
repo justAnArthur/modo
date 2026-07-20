@@ -6,7 +6,7 @@
 import { tokens, errors as tokensErrors } from 'virtual:modo-tokens'
 import { items, byId, components as itemComponents, examples as itemExamples } from 'virtual:modo-items'
 import { config as siteConfig } from 'virtual:modo-config'
-import { ExampleBlock } from '../../components/example-renderer'
+import { ItemExamples } from '../../components/item-examples'
 import { PropTable } from '../../components/prop-table'
 import {
   ColorSwatchGrid,
@@ -40,26 +40,19 @@ function ItemSection({ item }: { item: Item }) {
   return (
     <section data-aui="section">
       <h2 data-aui="section-title">{item.category} / {item.id}</h2>
-      <p style={{ color: 'var(--muted-foreground)', margin: '0 0 16px' }}>
-        <strong style={{ color: 'var(--foreground)' }}>{meta.name}</strong>
+      <p data-aui="item-section-lead">
+        <strong>{meta.name}</strong>
         {meta.description && <> — {meta.description}</>}
       </p>
-      <div data-aui="examples">
-        {examples.map((ex: any, i: number) => (
-          <ExampleBlock
-            key={i}
-            example={ex}
-            componentName={meta.name}
-            Component={Component}
-            compiledBody={compiledBodies[i]}
-          />
-        ))}
-      </div>
+      <ItemExamples
+        examples={examples}
+        componentName={meta.name}
+        Component={Component}
+        compiledBodies={compiledBodies}
+      />
       {propDefs.length > 0 && (
-        <div style={{ marginTop: 24 }}>
-          <h3 style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted-foreground)', margin: '0 0 12px' }}>
-            props
-          </h3>
+        <div data-aui="item-props">
+          <h3 data-aui="item-props-title">props</h3>
           <PropTable props={propDefs} />
         </div>
       )}
@@ -74,7 +67,7 @@ function TokenSection({ group, name, children }: { group: string; name: string; 
   return (
     <section data-aui="section">
       <h2 data-aui="section-title">{name}</h2>
-      <p style={{ color: 'var(--muted-foreground)', margin: '0 0 16px', fontSize: 12 }}>
+      <p data-aui="section-lead">
         {String((tokens as any)[group]?.description ?? '')}
       </p>
       {children}

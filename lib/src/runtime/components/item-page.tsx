@@ -4,16 +4,9 @@
 
 import { usePageContext } from 'vike-react/usePageContext'
 import { byId, components as itemComponents, examples as itemExamples } from 'virtual:modo-items'
-import { ExampleBlock } from './example-renderer'
+import { ItemExamples } from './item-examples'
 import { PropTable } from './prop-table'
-
-type Tier = 'primitives' | 'components' | 'blocks'
-
-const TIER_LABEL: Record<Tier, string> = {
-  primitives: 'primitive',
-  components: 'component',
-  blocks: 'block',
-}
+import { TIER_LABEL_SINGULAR, type Tier } from '../tiers'
 
 export function ItemPage({ tier }: { tier: Tier }) {
   const pageContext = usePageContext()
@@ -24,8 +17,8 @@ export function ItemPage({ tier }: { tier: Tier }) {
   if (!Component) {
     return (
       <>
-        <h1 data-aui="page-title">{TIER_LABEL[tier]} not found</h1>
-        <p>no {TIER_LABEL[tier]} with id <code>{id}</code>.</p>
+        <h1 data-aui="page-title">{TIER_LABEL_SINGULAR[tier]} not found</h1>
+        <p>no {TIER_LABEL_SINGULAR[tier]} with id <code>{id}</code>.</p>
       </>
     )
   }
@@ -40,17 +33,12 @@ export function ItemPage({ tier }: { tier: Tier }) {
     <>
       <h1 data-aui="page-title">{meta.name}</h1>
       {meta.description && <p data-aui="page-lead">{meta.description}</p>}
-      <div data-aui="examples">
-        {examples.map((ex, i: number) => (
-          <ExampleBlock
-            key={i}
-            example={ex}
-            componentName={meta.name}
-            Component={Component}
-            compiledBody={compiledBodies[i]}
-          />
-        ))}
-      </div>
+      <ItemExamples
+        examples={examples}
+        componentName={meta.name}
+        Component={Component}
+        compiledBodies={compiledBodies}
+      />
       <PropTable props={propDefs} />
     </>
   )

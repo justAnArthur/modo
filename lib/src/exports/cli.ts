@@ -9,20 +9,13 @@ import { readFile } from 'node:fs/promises'
 import { spawn } from 'node:child_process'
 import { runCheck } from './check.js'
 import { loadModoConfig } from './modo-config.js'
+import { toPascal } from './tsdoc.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const here = resolve(__dirname, '..')                            // .../<repo>/lib
 const runtimeRoot = resolve(here, 'src', 'runtime')
 const templatesRoot = resolve(here, 'templates', 'default')
 const stubsRoot = resolve(here, 'templates', 'stubs')
-
-function toPascal(s: string): string {
-  return s
-    .split(/[-_\s]+/)
-    .filter(Boolean)
-    .map((w) => w[0]!.toUpperCase() + w.slice(1))
-    .join('')
-}
 
 type AddKind = 'primitive' | 'component' | 'block' | 'token'
 

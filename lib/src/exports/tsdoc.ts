@@ -356,7 +356,7 @@ function parseDefaultLiteral(raw: string | undefined): string | number | boolean
   return raw
 }
 
-function toPascal(s: string): string {
+export function toPascal(s: string): string {
   return s
     .split(/[-_\s]+/)
     .filter(Boolean)
