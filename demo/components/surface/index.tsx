@@ -1,5 +1,7 @@
 import './surface.css'
-import { Elevated, SurfaceProvider } from './elevated'
+// import through the lib's admin convention file, same reason as the
+// popover — keeps the SurfaceContext shared with the lib's runtime.
+import { Elevated, SurfaceProvider } from '../../admin/components/elevated'
 
 /**
  * A swatch at a fixed level of the surface ladder. Pairs the level's

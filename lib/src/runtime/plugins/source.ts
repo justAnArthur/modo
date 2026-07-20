@@ -15,7 +15,7 @@ import type { Plugin } from 'vite'
 import { readFile, readdir, stat } from 'node:fs/promises'
 import { readFileSync as readFileSyncFs } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { parseItemSource } from '../../exports/tsdoc'
+import { parseItemSource } from '../../lib/tsdoc.parser'
 import { compileExampleBody } from '../components/example-compiler'
 import { bundleUserItem } from './_helpers'
 
@@ -161,7 +161,7 @@ export function sourcePlugin(options: SourcePluginOptions): Plugin {
         } catch {
           byId[key] = { name: item.id, description: '', props: [], examples: [], errors: [] }
         }
-        const bundled = await bundleUserItem(item.filePath, { prefix: `modo-items-${i++}` })
+        const bundled = await bundleUserItem(item.filePath, { prefix: `modo-items-${i++}`, root: options.root })
         if (bundled?.path) {
           imports.push(`import * as __ns_${i} from '${bundled.path}';`)
           compBindings.push(`  '${key}': __ns_${i}.default ?? null,`)

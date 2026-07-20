@@ -54,7 +54,14 @@ const baseConfig: UserConfig = {
     strictPort: true,
     fs: {
       // allow reading outside vite root — the user's DS lives outside
-      allow: [resolve(__dirname, '../..'), resolve(__dirname, '../../..')],
+      allow: [
+        resolve(__dirname, '../..'),
+        resolve(__dirname, '../../..'),
+        // source plugin writes per-item esbuild bundles here so external
+        // imports (e.g. the user's admin/components/elevated.tsx) emit
+        // short relative paths Vite can resolve. see _helpers.ts.
+        resolve(demoRoot, '.modo-tmp'),
+      ],
     },
   },
 }

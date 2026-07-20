@@ -8,8 +8,11 @@ dist
 .mavis
 .opencode
 *.tmp
-.modo-config-tmp.mjs
+.config.loader-tmp.mjs
 .modo-token-tmp-*.mjs
 .modo-cmp-*.mjs
 .modo-cfg-*.mjs
+.modo-items-*.mjs
+.modo-cache/
+.modo-tmp/
 lib/_archived/
