@@ -19,12 +19,6 @@
         "default": "./dist/schema.js"
       }
     },
-    "./check": {
-      "import": {
-        "types": "./dist/check.d.ts",
-        "default": "./dist/check.js"
-      }
-    },
     "./surfaces-runtime": {
       "import": {
         "types": "./dist/surfaces-runtime.d.ts",
@@ -59,6 +53,12 @@
       "import": {
         "types": "./dist/config.d.ts",
         "default": "./dist/config.js"
+      }
+    },
+    "./check": {
+      "import": {
+        "types": "./dist/check.d.ts",
+        "default": "./dist/check.js"
       }
     },
     "./package.json": "./package.json"
