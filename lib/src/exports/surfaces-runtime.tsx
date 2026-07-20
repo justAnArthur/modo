@@ -51,7 +51,7 @@ interface ElevatedProps extends ComponentPropsWithoutRef<'div'> {
  * pairs with --surface-N + --shadow-N from the user's tokens.
  */
 export const Elevated = forwardRef<HTMLDivElement, ElevatedProps>(
-  ({ offset, shadowLevel, className, children, ...props }, ref) => {
+  ({ offset, shadowLevel, className, children, style, ...props }, ref) => {
     const substrate = useSurface()
     const level = Math.min(Math.max(1, substrate + offset), 8)
     const shadow = shadowLevel ?? level
@@ -66,7 +66,7 @@ export const Elevated = forwardRef<HTMLDivElement, ElevatedProps>(
           style={{
             background: `var(--surface-${level})`,
             boxShadow: `var(--shadow-${shadow})`,
-            ...props.style,
+            ...style,
           }}
           {...props}
         >
