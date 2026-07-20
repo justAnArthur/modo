@@ -26,4 +26,4 @@
 
 ## chrome hooks (data-aui attrs)
 
-`data-aui="app"`, `"sidebar"`, `"content"`, `"header"`, `"section"`, `"section-title"`, `"page-title"`, `"page-lead"`, `"card"`, `"row"`, `"cell"`, `"grid"`, `"swatch"`, `"surface-card"`, `"example-card"`, `"example-card-meta"`, `"example-card-stage"`, `"example-toggle"`, `"example-code"`, `"prop-table"`, `"search"`, `"raw-json"`, `"elevated"`. the lib sets structural styles for all of these; the user styles their own components via the same attrs.
+`data-aui="app"`, `"sidebar"`, `"content"`, `"header"`, `"section"`, `"section-title"`, `"page-title"`, `"page-lead"`, `"swatch"`, `"surface-card"`, `"example-card"`, `"example-card-meta"`, `"example-card-stage"`, `"example-toggle"`, `"example-code"`, `"prop-table"`, `"raw-json"`, `"elevated"`. the lib sets structural styles for all of these; the user styles their own components via the same attrs.

@@ -45,23 +45,21 @@ function validateTokenGroup(group: string, vars: { name: string; value: string; 
     }
     const value = v.value.trim()
     if (!value) continue
-    if (group === 'spacing' && !/^-?\d+(\.\d+)?(px|rem|em|%)?$/.test(value)) {
+    if (group === 'spacing' && !/^0$|^-?\d+(\.\d+)?(px|rem|em|%)$/.test(value)) {
       issues.push(`line ${v.line}: --${v.name} value "${value}" is not a length`)
     }
     if (group === 'motion') {
-      // motion vars split into two groups: durations and easings. easings
-      // start with `ease-` or are the literal `linear`; everything else
-      // is a duration. we don't require a `motion-` prefix because the
-      // convention is to keep token names short (e.g. --fast, --slow).
-      const isEasing = v.name.startsWith('ease-') || v.name === 'linear'
-      if (isEasing) {
-        if (!/^(linear|cubic-bezier\(|steps\(|ease|ease-in|ease-out|ease-in-out)$/.test(value)) {
-          issues.push(`line ${v.line}: --${v.name} value "${value}" is not a recognized easing`)
-        }
+      // classify by value, not by name. keywords + cubic-bezier/steps are
+      // easings; Nms/Ns is a duration. names like --standard, --fast, --slow
+      // are conventions — the value shape is what matters.
+      if (/^(linear|ease|ease-in|ease-out|ease-in-out)$/.test(value)) {
+        // recognized easing keyword
+      } else if (/^cubic-bezier\(.+\)$/.test(value) || /^steps\(.+\)$/.test(value)) {
+        // recognized easing function
+      } else if (/^-?\d+(\.\d+)?\s*(ms|s)$/.test(value)) {
+        // recognized duration
       } else {
-        if (!/^-?\d+(\.\d+)?\s*(ms|s)$/.test(value)) {
-          issues.push(`line ${v.line}: --${v.name} value "${value}" is not a duration (use Nms or Ns)`)
-        }
+        issues.push(`line ${v.line}: --${v.name} value "${value}" is not a valid duration (Nms/Ns) or easing (linear / ease* / cubic-bezier(...) / steps(...))`)
       }
     }
   }

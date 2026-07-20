@@ -6,8 +6,6 @@ import { join } from 'node:path'
 
 export type Tier = 'primitives' | 'components' | 'blocks'
 
-const TIERS: readonly Tier[] = ['primitives', 'components', 'blocks']
-
 export async function listTokens(): Promise<string[]> {
   const demoRoot = process.env.MODO_DEMO_ROOT
   if (!demoRoot) return []
@@ -37,5 +35,3 @@ export async function listTier(tier: Tier): Promise<string[]> {
   } catch { /* tier dir missing */ }
   return out
 }
-
-export { TIERS }
