@@ -11,6 +11,10 @@
 // if the user doesn't set `css`, the css module is a no-op. the config
 // module exports an empty object so consumers can always destructure
 // without nullish handling.
+//
+// the config load is cached in plugin scope: vite calls `load()` once
+// per virtual module per HMR cycle, so without the cache we'd esbuild
+// `modo.config.ts` twice per save. cache invalidates on vite restart.
 
 import type { Plugin } from 'vite'
 import { resolve } from 'node:path'
@@ -26,6 +30,12 @@ const RESOLVED_CONFIG = '\0' + VIRTUAL_CONFIG
 const RESOLVED_USER_CSS = '\0' + VIRTUAL_USER_CSS
 
 export function userCssPlugin(options: UserCssPluginOptions): Plugin {
+  let cached: unknown = undefined
+  const getConfig = async () => {
+    if (cached === undefined) cached = await loadModoConfig(options.root)
+    return cached
+  }
+
   return {
     name: 'modo-atomic-ui:user-css',
     enforce: 'pre',
@@ -37,16 +47,14 @@ export function userCssPlugin(options: UserCssPluginOptions): Plugin {
     },
 
     async load(id) {
-      const config = await loadModoConfig(options.root)
+      if (id !== RESOLVED_CONFIG && id !== RESOLVED_USER_CSS) return null
+      const config = await getConfig()
       if (id === RESOLVED_CONFIG) {
         return `export const config = ${JSON.stringify(config ?? {})};\nexport const name = ${JSON.stringify((config as { name?: string } | null)?.name ?? 'modo-atomic-ui')};\nexport const description = ${JSON.stringify((config as { description?: string } | null)?.description ?? '')};`
       }
-      if (id === RESOLVED_USER_CSS) {
-        const cssPath = (config as { css?: string } | null)?.css
-        if (!cssPath) return ''
-        return `import ${JSON.stringify(resolve(options.root, cssPath))};\n`
-      }
-      return null
+      const cssPath = (config as { css?: string } | null)?.css
+      if (!cssPath) return ''
+      return `import ${JSON.stringify(resolve(options.root, cssPath))};\n`
     },
   }
 }

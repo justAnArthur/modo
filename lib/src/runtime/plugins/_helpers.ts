@@ -37,7 +37,7 @@ interface BundleItemOptions {
 export async function bundleUserItem(
   entry: string,
   opts: BundleItemOptions,
-): Promise<{ path: string; code: string } | null> {
+): Promise<{ path: string } | null> {
   const tmp = tmpPath(opts.prefix)
   try {
     const result = await esbuild.build({
@@ -52,10 +52,9 @@ export async function bundleUserItem(
       external: ['react', 'react-dom', 'react/jsx-runtime'],
       logLevel: 'silent',
     })
-    const code = result.outputFiles?.[0]?.text
-    if (!code) return null
-    await writeFile(tmp, code)
-    return { path: tmp, code }
+    if (!result.outputFiles?.[0]?.text) return null
+    await writeFile(tmp, result.outputFiles[0].text)
+    return { path: tmp }
   } catch {
     await safeUnlink(tmp)
     return null

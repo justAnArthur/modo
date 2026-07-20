@@ -12,10 +12,9 @@
 // string concat, no <style dangerouslySetInnerHTML>.
 
 import type { Plugin } from 'vite'
-import { readFile, readdir, stat, rm } from 'node:fs/promises'
+import { readFile, readdir, stat } from 'node:fs/promises'
 import { readFileSync as readFileSyncFs } from 'node:fs'
-import { join, relative, resolve } from 'node:path'
-import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
 import { parseItemSource } from '../../exports/tsdoc'
 import { compileExampleBody } from '../components/example-compiler'
 import { bundleUserItem } from './_helpers'
@@ -185,20 +184,6 @@ export function sourcePlugin(options: SourcePluginOptions): Plugin {
         exampleBindings.push(`  '${key}': ${JSON.stringify(exMap)},`)
         i++
       }
-
-      // best-effort cleanup of stale tmp dirs from previous vite sessions.
-      try {
-        for (const name of await readdir(tmpdir())) {
-          if (!name.startsWith('modo-items-')) continue
-          const p = join(tmpdir(), name)
-          try {
-            const s = await stat(p)
-            if (s.isDirectory() && Date.now() - s.mtimeMs > 60_000) {
-              await rm(p, { recursive: true, force: true }).catch(() => {})
-            }
-          } catch { /* gone */ }
-        }
-      } catch { /* noop */ }
 
       return [
         ...imports,
