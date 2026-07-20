@@ -97,12 +97,6 @@ body {
 
 /* ── surfaces ladder ── */
 
-[data-aui="surfaces-ladder"] {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 [data-aui="surfaces-ladder-row"] {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
@@ -387,13 +381,6 @@ body {
   0%, 100% { transform: translateX(0); opacity: 1; }
   50% { transform: translateX(calc(var(--motion-bar-distance, 120px))); opacity: 0.5; }
 }
-
-/* ── data-density multiplier ─────────────────────────────────────────────── */
-/* structural: just exposes --spacing-multiplier so the user's components
-   can size themselves density-aware. no chrome overrides here. */
-[data-density="compact"]    { --spacing-multiplier: 0.85; }
-[data-density="comfortable"] { --spacing-multiplier: 1; }
-[data-density="spacious"]   { --spacing-multiplier: 1.15; }
 
 /* ── example card meta (TSDoc @example rendering) ──────────────── */
 
