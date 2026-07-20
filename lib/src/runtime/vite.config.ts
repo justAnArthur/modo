@@ -1,9 +1,11 @@
-import { defineConfig } from 'vite'
+import { defineConfig, mergeConfig, type UserConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import vike from 'vike/plugin'
 import { tokensPlugin } from './plugins/tokens'
 import { sourcePlugin } from './plugins/source'
 import { userCssPlugin } from './plugins/user-css'
+import { adminPlugin } from './plugins/admin'
+import { loadModoConfig } from '../lib/config.loader'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -15,13 +17,27 @@ const defaultDemoRoot = resolve(__dirname, '../../../demo')
 // (`cd src/runtime && vite`), the default demo root is used.
 const demoRoot = process.env.MODO_DEMO_ROOT ?? defaultDemoRoot
 
-export default defineConfig({
+// opt-in: if the user adds a `vite` field to their modo.config.ts, merge
+// it into the base config. this lets them drop in vite plugins (e.g.
+// @tailwindcss/vite) without the lib baking them in. the field is
+// validated as `unknown` by the lib; structural validation happens at
+// vite's config-load time.
+async function loadUserVite(): Promise<UserConfig | null> {
+  const userConfig = await loadModoConfig(demoRoot).catch(() => null)
+  if (!userConfig || typeof userConfig !== 'object') return null
+  const vite = (userConfig as { vite?: unknown }).vite
+  if (!vite || typeof vite !== 'object') return null
+  return vite as UserConfig
+}
+
+const baseConfig: UserConfig = {
   plugins: [
     react(),
     vike(),
     tokensPlugin({ root: demoRoot }),
     sourcePlugin({ root: demoRoot }),
     userCssPlugin({ root: demoRoot }),
+    adminPlugin({ root: demoRoot }),
   ],
   resolve: {
     alias: [
@@ -41,4 +57,9 @@ export default defineConfig({
       allow: [resolve(__dirname, '../..'), resolve(__dirname, '../../..')],
     },
   },
+}
+
+export default defineConfig(async () => {
+  const userVite = await loadUserVite()
+  return userVite ? mergeConfig(baseConfig, userVite) : baseConfig
 })

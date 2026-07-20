@@ -9,7 +9,8 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import Panel from 'modo.panel'
-import { name as siteName, description as siteDescription } from 'virtual:modo-config'
+import Elevated from 'virtual:modo-elevated'
+import { name as siteName, description as siteDescription } from 'virtual:config.loader'
 import { useConfig } from 'vike-react/useConfig'
 import { SidebarNav } from '../sidebar-nav'
 import '../styles/base.css'
@@ -39,6 +40,7 @@ export default function Layout({ children }: LayoutProps) {
   }, [siteName, siteDescription, setConfig])
   return (
     <div data-aui="app">
+      <div data-aui="page-elevated"><Elevated /></div>
       <aside data-aui="sidebar">
         <div data-aui="sidebar-header">
           <a href="/" data-aui="sidebar-brand">{siteName}</a>

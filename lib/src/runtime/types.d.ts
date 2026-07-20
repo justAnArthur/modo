@@ -5,7 +5,7 @@ declare module 'virtual:modo-tokens' {
 
 declare module 'virtual:modo-tokens-css'
 
-declare module 'virtual:modo-config' {
+declare module 'virtual:config.loader' {
   export const config: Record<string, any>
   export const name: string
   export const description: string
@@ -59,4 +59,11 @@ declare module 'modo.panel' {
   import type { ComponentType } from 'react'
   const Panel: ComponentType
   export default Panel
+}
+
+declare module 'virtual:modo-elevated' {
+  import type { ComponentType } from 'react'
+  const Elevated: ComponentType
+  export default Elevated
+  export { Elevated }
 }
