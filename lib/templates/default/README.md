@@ -16,6 +16,7 @@ npm run check      # validate modo.config.ts + token files
 ```
 .
 ├── modo.config.ts       # site config (name, description, css)
+├── modo.panel.tsx       # the right-side panel — your component, your chrome
 ├── package.json
 ├── tsconfig.json
 ├── overrides.css        # your component visuals (consumed via modo.config.ts: css)

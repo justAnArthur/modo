@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 const exportsRoot = resolve(__dirname, '../exports')
-const defaultDemoRoot = resolve(__dirname, '../../demo')
+const defaultDemoRoot = resolve(__dirname, '../../../demo')
 // the user's project root is passed via MODO_DEMO_ROOT (set by the modo
 // CLI before spawning vite). when invoked directly from the lib
 // (`cd src/runtime && vite`), the default demo root is used.
@@ -27,6 +27,7 @@ export default defineConfig({
     alias: [
       { find: /^modo-atomic-ui\/(.+)$/, replacement: `${exportsRoot}/$1` },
       { find: 'modo-atomic-ui', replacement: exportsRoot },
+      { find: 'modo.panel', replacement: `${demoRoot}/modo.panel` },
       { find: /^@demo\/(.+)$/, replacement: `${demoRoot}/$1` },
       { find: '@demo', replacement: demoRoot },
     ],

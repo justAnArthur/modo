@@ -54,3 +54,9 @@ declare module 'virtual:modo-items' {
 }
 
 declare module 'virtual:modo-items-css'
+
+declare module 'modo.panel' {
+  import type { ComponentType } from 'react'
+  const Panel: ComponentType
+  export default Panel
+}

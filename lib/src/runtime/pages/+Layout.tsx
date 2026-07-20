@@ -8,6 +8,7 @@
 
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
+import Panel from 'modo.panel'
 import { config as siteConfig, name as siteName, description as siteDescription } from 'virtual:modo-config'
 import { items, byId } from 'virtual:modo-items'
 import { useConfig } from 'vike-react/useConfig'
@@ -47,7 +48,9 @@ export default function Layout({ children }: LayoutProps) {
       <main data-aui="content">
         {children}
       </main>
-      <aside data-aui="panel" />
+      <aside data-aui="panel">
+        <Panel />
+      </aside>
     </div>
   )
 }
