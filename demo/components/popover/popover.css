@@ -1,10 +1,9 @@
 /* popover — demo-specific visuals. the panel body bg + shadow come from
    <Elevated offset={2}>; this file holds sizing, typography, and the
-   goo-body geometry. */
+   focus ring. the wrap's opacity/transform/clip-path transitions are
+   driven from the JSX style prop. */
 
-/* the panel content body. width/typography go here because they're
-   component-specific; bg + shadow + radius + border come from Elevated. */
-.popover-panel-body {
+.popover-body {
   width: max-content;
   max-width: min(92vw, 20rem);
   padding: var(--lg, 16px);
@@ -19,7 +18,7 @@
   display: inline-flex;
 }
 
-[data-aui="popover-demo-trigger"]:focus-visible {
+[data-aui="popover-trigger"]:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--accent);
 }
