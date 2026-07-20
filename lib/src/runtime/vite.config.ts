@@ -44,6 +44,7 @@ const baseConfig: UserConfig = {
       { find: /^modo-atomic-ui\/(.+)$/, replacement: `${exportsRoot}/$1` },
       { find: 'modo-atomic-ui', replacement: exportsRoot },
       { find: 'modo.panel', replacement: `${demoRoot}/modo.panel` },
+      { find: 'modo.head', replacement: `${demoRoot}/modo.head` },
       { find: /^@demo\/(.+)$/, replacement: `${demoRoot}/$1` },
       { find: '@demo', replacement: demoRoot },
     ],

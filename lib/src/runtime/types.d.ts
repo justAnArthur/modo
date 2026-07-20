@@ -61,6 +61,10 @@ declare module 'modo.panel' {
   export default Panel
 }
 
+declare module 'modo.head' {
+  export const SCRIPT: string
+}
+
 declare module 'virtual:modo-elevated' {
   import type { ComponentType, ReactNode } from 'react'
   // the lib doesn't know the user's component signature — pass through

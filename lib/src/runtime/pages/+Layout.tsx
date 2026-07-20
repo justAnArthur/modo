@@ -15,6 +15,7 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import Panel from 'modo.panel'
+import { SCRIPT as headScript } from 'modo.head'
 import Elevated, { isProvided as elevatedIsProvided } from 'virtual:modo-elevated'
 import { name as siteName, description as siteDescription } from 'virtual:config.loader'
 import { useConfig } from 'vike-react/useConfig'
@@ -46,17 +47,29 @@ export default function Layout({ children }: LayoutProps) {
   }, [siteName, siteDescription, setConfig])
   return (
     <div data-aui="app">
+      {/*
+        blocking <script> at the top of <body>. inline scripts (no
+        async/defer) block the parser — the browser pauses to execute
+        this before any visible <body> content is parsed, so a
+        stored theme/color-scheme is applied to <html> before the
+        first paint. on client-side nav, the script stays in the DOM
+        (React reuses the same <script> element via reconciliation)
+        and the theme is already set, so no flash.
+      */}
+      <script dangerouslySetInnerHTML={{ __html: headScript }} />
       <aside data-aui="sidebar">
         <div data-aui="sidebar-header">
           <a href="/" data-aui="sidebar-brand">{siteName}</a>
         </div>
         <SidebarNav />
       </aside>
+
       {elevatedIsProvided ? (
         <Elevated data-aui="content">{children}</Elevated>
       ) : (
         <main data-aui="content">{children}</main>
       )}
+
       <aside data-aui="panel">
         <Panel />
       </aside>
