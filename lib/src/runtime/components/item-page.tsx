@@ -5,6 +5,7 @@
 import { usePageContext } from 'vike-react/usePageContext'
 import { byId, components as itemComponents, examples as itemExamples } from 'virtual:modo-items'
 import { ExampleBlock } from './example-renderer'
+import { PropTable } from './prop-table'
 
 type Tier = 'primitives' | 'components' | 'blocks'
 
@@ -50,24 +51,7 @@ export function ItemPage({ tier }: { tier: Tier }) {
           />
         ))}
       </div>
-      {propDefs.length > 0 && (
-        <table data-aui="prop-table">
-          <thead>
-            <tr><th>prop</th><th>type</th><th>default</th><th>values</th><th>description</th></tr>
-          </thead>
-          <tbody>
-            {propDefs.map((p) => (
-              <tr key={p.name}>
-                <td>{p.name}</td>
-                <td>{p.type}</td>
-                <td>{p.default !== undefined ? String(p.default) : '—'}</td>
-                <td>{p.values ? p.values.join(' · ') : '—'}</td>
-                <td>{p.description ?? ''}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <PropTable props={propDefs} />
     </>
   )
 }

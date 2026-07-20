@@ -7,6 +7,7 @@ import { tokens, errors as tokensErrors } from 'virtual:modo-tokens'
 import { items, byId, components as itemComponents, examples as itemExamples } from 'virtual:modo-items'
 import { config as siteConfig } from 'virtual:modo-config'
 import { ExampleBlock } from '../../components/example-renderer'
+import { PropTable } from '../../components/prop-table'
 import {
   ColorSwatchGrid,
   SurfacesLadder,
@@ -18,44 +19,6 @@ import {
 
 type Item = (typeof items)[number]
 type Tokens = typeof tokens
-
-function ExampleCard({ name, children, code }: { name: string; children: React.ReactNode; code?: string }) {
-  return (
-    <div data-aui="example-card">
-      <div data-aui="example-card-stage">{children}</div>
-      <span data-aui="example-card-name">{name}</span>
-      {code && <code style={{ fontSize: 10, color: 'var(--muted-foreground)', fontFamily: 'var(--font-mono)' }}>{code}</code>}
-    </div>
-  )
-}
-
-function PropTable({ props }: { props: ReadonlyArray<{ name: string; type: string; values?: readonly string[]; default?: unknown; description?: string }> }) {
-  if (!props.length) return null
-  return (
-    <table data-aui="prop-table">
-      <thead>
-        <tr>
-          <th>prop</th>
-          <th>type</th>
-          <th>default</th>
-          <th>values</th>
-          <th>description</th>
-        </tr>
-      </thead>
-      <tbody>
-        {props.map((p) => (
-          <tr key={p.name}>
-            <td>{p.name}</td>
-            <td>{p.type}</td>
-            <td>{p.default !== undefined ? String(p.default) : '—'}</td>
-            <td>{p.values ? p.values.join(' · ') : '—'}</td>
-            <td>{p.description ?? ''}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  )
-}
 
 function ItemSection({ item }: { item: Item }) {
   const key = `${item.category}/${item.id}`
