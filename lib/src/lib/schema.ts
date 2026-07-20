@@ -22,23 +22,6 @@ export const siteConfigSchema = z.object({
     })
     .optional(),
   css: z.string().optional(),
-  // user-supplied evaluable components the lib renders into known chrome
-  // slots. paths resolve from the project root and require an extension
-  // (e.g. './components/elevated.tsx'). missing files warn at startup
-  // and fall through to a noop.
-  admin: z
-    .object({
-      components: z
-        .object({
-          // a single React component used as both the page background
-          // and the background behind each rendered example. sits
-          // behind content via absolute positioning + pointer-events:
-          // none — the user owns visual styling inside the component.
-          elevated: z.string().optional(),
-        })
-        .optional(),
-    })
-    .optional(),
   // passthrough — full vite UserConfig. validated structurally by vite
   // at config-load time, not by the lib. see runtime/vite.config.ts
   // for the merge.

@@ -61,9 +61,8 @@ declare module 'modo.panel' {
   export default Panel
 }
 
-declare module 'virtual:modo-elevated' {
+declare module 'modo.elevated' {
   import type { ComponentType } from 'react'
   const Elevated: ComponentType
   export default Elevated
-  export { Elevated }
 }

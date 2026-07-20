@@ -9,7 +9,7 @@
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import Panel from 'modo.panel'
-import Elevated from 'virtual:modo-elevated'
+import Elevated from 'modo.elevated'
 import { name as siteName, description as siteDescription } from 'virtual:config.loader'
 import { useConfig } from 'vike-react/useConfig'
 import { SidebarNav } from '../sidebar-nav'
