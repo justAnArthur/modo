@@ -15,7 +15,7 @@
 
 import * as React from 'react'
 import { useState } from 'react'
-import type { ParsedExample } from '../../exports/tsdoc'
+import type { ParsedExample } from '../../lib/tsdoc.parser'
 
 // HMR: when an item file changes, the source plugin re-runs and
 // re-publishes the virtual:modo-items module. we don't need to clear
@@ -148,6 +148,14 @@ export function ExampleBlock({ example, componentName, Component, compiledBody }
           ? <code data-aui="example-error">{error}</code>
           : rendered ?? <span data-aui="example-loading">…</span>}
       </div>
+      <button
+        type="button"
+        data-aui="example-toggle"
+        aria-expanded={showCode}
+        onClick={() => setShowCode((v) => !v)}
+      >
+        {showCode ? 'hide code' : 'show code'}
+      </button>
       <div data-aui="example-card-meta">
         <span data-aui="example-card-name">{example.name}</span>
         {example.description && (
@@ -155,16 +163,6 @@ export function ExampleBlock({ example, componentName, Component, compiledBody }
             <Markdown source={example.description} />
           </div>
         )}
-        <div data-aui="example-card-actions">
-          <button
-            type="button"
-            data-aui="example-toggle"
-            aria-expanded={showCode}
-            onClick={() => setShowCode((v) => !v)}
-          >
-            {showCode ? 'hide code' : 'show code'}
-          </button>
-        </div>
         {showCode && (
           <pre data-aui="example-code"><code>{example.code}</code></pre>
         )}

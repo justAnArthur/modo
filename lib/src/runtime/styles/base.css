@@ -95,34 +95,35 @@ body {
   color: var(--muted-foreground);
 }
 
-/* ── examples grid (bento) ── */
+/* ── examples (stacked blocks, not a bento grid) ── */
 
 [data-aui="examples"] {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 [data-aui="example-card"] {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 24px 16px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface-3, var(--background));
-  transition: background-color 80ms ease;
-}
-
-[data-aui="example-card"]:hover {
-  background: var(--muted);
+  gap: 12px;
+  position: relative;
+  /* the card is a section, not a tile. no border / no background — the
+     host may add chrome via the same data-aui. overflow visible so
+     absolute-positioned children (popovers, dropdowns, the toggle)
+     don't get clipped at the card edge. */
+  overflow: visible;
 }
 
 [data-aui="example-card-stage"] {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
+  min-height: 120px;
+  /* flex-center is safe here: the rendered example is the only flex
+     child, and any absolute-positioned descendants it owns (popovers,
+     dropdowns) resolve to the next positioned ancestor — which lives
+     outside the stage, so nothing gets clipped at the stage bounds. */
 }
 
 [data-aui="example-card-name"] {
@@ -350,13 +351,13 @@ body {
   border-radius: 3px;
 }
 
-[data-aui="example-card-actions"] {
-  display: flex;
-  gap: 6px;
-  margin-top: 4px;
-}
-
 [data-aui="example-toggle"] {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 120ms ease;
   background: transparent;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm, 4px);
@@ -371,6 +372,15 @@ body {
 [data-aui="example-toggle"]:hover {
   background: var(--surface-3, var(--muted));
   color: var(--foreground);
+}
+/* reveal on card hover or keyboard focus within the card.
+   touch devices have no hover — keep the toggle visible there. */
+[data-aui="example-card"]:hover [data-aui="example-toggle"],
+[data-aui="example-card"]:focus-within [data-aui="example-toggle"] {
+  opacity: 1;
+}
+@media (hover: none) {
+  [data-aui="example-toggle"] { opacity: 1; }
 }
 
 [data-aui="example-code"] {
