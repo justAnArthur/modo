@@ -31,8 +31,6 @@
         "modo": "./dist/cli.js",
       },
       "dependencies": {
-        "react": "^19.2.7",
-        "react-dom": "^19.2.7",
         "vike": "^0.4.260",
         "vike-react": "^0.6.25",
         "vite": "^7.3.6",
@@ -49,8 +47,8 @@
         "typescript": "^5.9.3",
       },
       "peerDependencies": {
-        "react": "^19.0.0",
-        "react-dom": "^19.0.0",
+        "react": ">=18.0.0",
+        "react-dom": ">=18.0.0",
       },
     },
   },
