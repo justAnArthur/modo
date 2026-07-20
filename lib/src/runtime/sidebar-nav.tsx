@@ -8,7 +8,6 @@ import { TIER_LABEL, TIER_ORDER, type Tier } from './tiers'
 
 const TOKEN_GROUPS: { key: string; label: string }[] = [
   { key: 'colors', label: 'Colors' },
-  { key: 'surfaces', label: 'Surfaces' },
   { key: 'typography', label: 'Typography' },
   { key: 'spacing', label: 'Spacing' },
   { key: 'radius', label: 'Radius' },

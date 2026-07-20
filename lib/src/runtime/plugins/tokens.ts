@@ -90,14 +90,8 @@ async function discoverTokens(root: string): Promise<TokensDiscovery> {
   }
 
   // 3. assemble each group with the same shape the old plugin produced.
-  // the 'surfaces' group is always synthesized (1..8 levels, each with
-  // bg + shadow refs) — even if the user didn't write a surfaces.css.
   const groups: DiscoveredGroup[] = []
   for (const name of GROUPS) {
-    if (name === 'surfaces') {
-      groups.push({ name, raw: buildGroup('surfaces', []), errors: [] })
-      continue
-    }
     const vars = byGroup[name]
     if (!vars || vars.length === 0) continue
     groups.push({ name, raw: buildGroup(name, vars), errors: [] })

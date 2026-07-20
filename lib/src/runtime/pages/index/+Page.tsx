@@ -10,7 +10,6 @@ import { ItemExamples } from '../../components/item-examples'
 import { PropTable } from '../../components/prop-table'
 import {
   ColorSwatchGrid,
-  SurfacesLadder,
   TypographyScale,
   SpacingScale,
   RadiusScale,
@@ -95,12 +94,6 @@ export default function Page() {
       {t.colors && (
         <TokenSection group="colors" name="color tokens">
           <ColorSwatchGrid items={t.colors.items} />
-        </TokenSection>
-      )}
-
-      {t.surfaces && (
-        <TokenSection group="surfaces" name="surfaces (8-level ladder)">
-          <SurfacesLadder levels={t.surfaces.levels} conventions={t.surfaces.conventions} />
         </TokenSection>
       )}
 

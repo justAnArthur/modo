@@ -15,10 +15,6 @@ export async function listTokens(): Promise<string[]> {
       if (f.endsWith('.css')) out.push(f.replace(/\.css$/, ''))
     }
   } catch { /* no tokens dir */ }
-  // surfaces is always synthesized by the lib from colors+shadow vars
-  // (1..8 ladder, each with bg + shadow refs). the docs page renders
-  // even when no surfaces.css file exists in the user's project.
-  if (!out.includes('surfaces')) out.push('surfaces')
   return out
 }
 

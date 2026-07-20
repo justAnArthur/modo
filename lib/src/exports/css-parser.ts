@@ -20,7 +20,6 @@ interface ParsedSection {
 
 export const GROUPS = [
   'colors',
-  'surfaces',
   'typography',
   'spacing',
   'radius',
@@ -34,7 +33,6 @@ export type Group = (typeof GROUPS)[number]
 const PREFIX_TO_GROUP: Record<string, Group> = {
   'color': 'colors',
   'colors': 'colors',
-  'surface': 'colors',
   'foreground': 'colors',
   'background': 'colors',
   'muted': 'colors',
@@ -148,7 +146,6 @@ export function inferSemantic(name: string): 'bg' | 'fg' | 'border' | 'text' | '
 //   motion:     { group, durations: { ... }, easings: { ... } }
 //   typography: { group, families: { ... }, scale: { ... } }
 //   shadows:    { group, levels: { name: { value } } }
-//   surfaces:   { group, levels: { '1'..'8': { bg, shadow } } }  (synthesized from colors)
 export function buildGroup(name: string, vars: ParsedVar[]): unknown {
   if (name === 'colors') {
     const items: Record<string, { value: string; semantic: string; role: string }> = {}
@@ -205,14 +202,6 @@ export function buildGroup(name: string, vars: ParsedVar[]): unknown {
       }
     }
     return { group: 'typography', families, scale }
-  }
-  if (name === 'surfaces') {
-    // synthesized: levels 1..8 each with bg + shadow refs.
-    const levels: Record<string, { bg: string; shadow: string }> = {}
-    for (let i = 1; i <= 8; i++) {
-      levels[String(i)] = { bg: `surface-${i}`, shadow: `shadow-${i}` }
-    }
-    return { group: 'surfaces', levels }
   }
   return { group: name }
 }

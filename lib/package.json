@@ -19,12 +19,6 @@
         "default": "./dist/schema.js"
       }
     },
-    "./surfaces-runtime": {
-      "import": {
-        "types": "./dist/surfaces-runtime.d.ts",
-        "default": "./dist/surfaces-runtime.js"
-      }
-    },
     "./tsdoc": {
       "import": {
         "types": "./dist/tsdoc.d.ts",

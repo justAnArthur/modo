@@ -34,8 +34,7 @@ function flattenIssues(err: z.ZodError): string[] {
 function validateTokenGroup(group: string, vars: { name: string; value: string; line: number }[]): string[] {
   const issues: string[] = []
   if (vars.length === 0) {
-    // surfaces.css is allowed to be empty (the lib synthesizes the 8 levels).
-    if (group !== 'surfaces') issues.push(`no --vars found`)
+    issues.push(`no --vars found`)
     return issues
   }
   for (const v of vars) {

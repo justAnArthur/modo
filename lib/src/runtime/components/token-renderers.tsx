@@ -33,47 +33,6 @@ export function ColorSwatchGrid({ items }: { items: Record<string, { value: stri
   )
 }
 
-// ── surfaces (8-level ladder) ─────────────────────────────────────────
-
-export function SurfacesLadder({ levels, conventions }: { levels: Record<string, { bg: string; shadow: string }>; conventions?: Record<string, { offset: number }> }) {
-  return (
-    <>
-      <div data-aui="surfaces-ladder-row">
-        {Object.entries(levels).map(([n, lvl]) => (
-          <div key={n} data-aui="surface-card" data-level={n}>
-            <span data-aui="surface-card-num">{n}</span>
-            <span
-              data-aui="surface-card-swatch"
-              style={{ background: `var(--surface-${n})`, boxShadow: `var(--${lvl.shadow})` }}
-            />
-            <span data-aui="surface-card-meta">
-              bg surface-{n}<br />
-              shadow {lvl.shadow}
-            </span>
-          </div>
-        ))}
-      </div>
-      <div data-aui="surfaces-ladder-stack" style={{ background: 'var(--surface-2)' }}>
-        {Object.entries(levels).map(([n, lvl]) => (
-          <div key={n} data-aui="surface-card-lg" data-level={n}>
-            <span data-aui="surface-card-num">{n}</span>
-            <span
-              data-aui="surface-card-swatch-lg"
-              style={{ background: `var(--surface-${n})`, boxShadow: `var(--${lvl.shadow})` }}
-            />
-          </div>
-        ))}
-      </div>
-      {conventions && (
-        <div data-aui="surface-conventions">
-          <strong>conventions:</strong>{' '}
-          {Object.entries(conventions).map(([name, c]) => `${name} = +${c.offset}`).join(' · ')}
-        </div>
-      )}
-    </>
-  )
-}
-
 // ── typography ────────────────────────────────────────────────────────
 
 export function TypographyScale({ typography }: { typography: any }) {
@@ -180,9 +139,6 @@ export function MotionScale({ motion }: { motion: any }) {
 export function TokenGroup({ group, data }: { group: string; data: any }): ReactNode {
   if (group === 'colors' && data.items) {
     return <ColorSwatchGrid items={data.items} />
-  }
-  if (group === 'surfaces' && data.levels) {
-    return <SurfacesLadder levels={data.levels} conventions={data.conventions} />
   }
   if (group === 'typography') {
     return <TypographyScale typography={data} />
