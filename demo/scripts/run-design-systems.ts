@@ -26,7 +26,7 @@ for (const e of readdirSync(DS_DIR, { withFileTypes: true })) {
   try { unlinkSync(join(DS_DIR, e.name, TEMP_CONFIG)) } catch {}
 }
 
-const items = [{ label: 'Switcher', component: '../components/demo-switcher' }]
+const items = [{ label: 'Switcher', component: '../../components/demo-switcher' }]
 const splice = (source: string): string => {
   const i = source.lastIndexOf('}')
   if (i < 0) return source
