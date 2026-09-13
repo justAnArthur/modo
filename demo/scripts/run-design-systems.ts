@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { spawn, type ChildProcess } from 'node:child_process'
+import { spawn, execSync, type ChildProcess } from 'node:child_process'
 import { readdirSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -20,6 +20,14 @@ if (targets.length === 0) {
   process.stderr.write('usage: bun scripts/run-design-systems.ts [name ...]\n')
   process.exit(1)
 }
+
+// Kill any stale `modo dev` processes from a previous run that
+// didn't clean up. Match the lib's `node .../modo dev` argv (not
+// just `bunx modo`) since Vite orphans can outlive their bunx parent.
+try {
+  execSync("pkill -f 'modo dev' 2>/dev/null", { stdio: 'ignore' })
+  execSync('sleep 0.5', { stdio: 'ignore' })
+} catch {}
 
 for (const e of readdirSync(DS_DIR, { withFileTypes: true })) {
   if (!e.isDirectory()) continue
