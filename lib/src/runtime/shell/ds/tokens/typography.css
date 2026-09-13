@@ -1,9 +1,0 @@
-:root {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --font-size-h1: 2rem;
-  --font-size-h2: 1.25rem;
-  --font-size-body: 0.95rem;
-  --leading-normal: 1.5;
-  --tracking-tight: -0.01em;
-}

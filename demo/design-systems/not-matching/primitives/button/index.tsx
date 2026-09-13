@@ -2,7 +2,8 @@ import './button.css'
 
 /**
  * Intentionally missing the `children` prop — the shell slot resolver
- * (which requires `children`) falls through to the lib's built-in shell DS.
+ * (which requires `children`) cannot match this primitive, so the lib
+ * logs a warning and the Button slot is omitted from the chrome.
  *
  * @example
  * # No children

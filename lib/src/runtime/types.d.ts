@@ -66,11 +66,6 @@ declare module 'virtual:modo-shell-css' {
   export default css
 }
 
-declare module 'virtual:modo-shell-ds-css' {
-  const css: string
-  export default css
-}
-
 declare module 'virtual:modo-warnings' {
   export const warnings: string[]
 }

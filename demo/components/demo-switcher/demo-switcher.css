@@ -11,7 +11,7 @@
   text-decoration: none;
 }
 
-[data-aui="demo-switcher"] a[data-current] {
+[data-aui="demo-switcher"] a[data-current="true"] {
   opacity: 0.5;
   pointer-events: none;
 }

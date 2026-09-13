@@ -87,7 +87,7 @@ export interface UserConfigLite {
 export interface LoadedComponent {
   Component: React.ComponentType<any>
   cssPaths: string[]
-  source: 'config' | 'interface-match' | 'shell-ds' | 'omitted'
+  source: 'config' | 'interface-match' | 'omitted'
   resolvedPath: string
   /** Path to the bundled .mjs file (when the loader created one). */
   bundlePath?: string
@@ -107,7 +107,6 @@ export interface ResolvedShell {
   Panel: LoadedComponent
 }
 
-export type LoadShellDS = (slotPath: string) => Promise<LoadedComponent | null>
 export type LoadUserPath = (path: string) => Promise<LoadedComponent | null>
 
 export interface ResolveOptions {
@@ -117,7 +116,6 @@ export interface ResolveOptions {
 export async function resolveShellSlots(
   config: UserConfigLite,
   userItems: ParsedItemLite[],
-  loadShellDS: LoadShellDS,
   loadUserPath: LoadUserPath,
   opts: ResolveOptions = {},
 ): Promise<ResolvedShell> {
@@ -125,7 +123,7 @@ export async function resolveShellSlots(
 
   async function pick(slotName: ShellSlot['name'], member?: SlotMember): Promise<LoadedComponent> {
     const base = member ?? SLOTS.find((s) => s.name === slotName)!
-    const { requiredProps: required, userTier: tier, fallback } = base
+    const { requiredProps: required, userTier: tier } = base
 
     const explicit = config.shell?.[slotName]
     if (explicit) {
@@ -154,9 +152,6 @@ export async function resolveShellSlots(
         return { ...loaded, source: 'interface-match', resolvedPath: `${c.tier}/${c.id}` }
       }
     }
-
-    const ds = await loadShellDS(fallback)
-    if (ds) return { ...ds, source: 'shell-ds', resolvedPath: `shell-ds:${fallback}` }
 
     warnings.push(`Shell slot "${slotName}${member ? `.${member.name}` : ''}" could not be resolved`)
     return {
@@ -191,14 +186,28 @@ export async function resolveShellSlots(
     }
   }
 
+  const sidebarFromRoot = rootPicks.Sidebar.source === 'interface-match'
+  const sidebarItem = fromRoot('Item') ?? (sidebarFromRoot ? null : await pick('Sidebar', sidebarMembers.Item))
+  const sidebarSection = fromRoot('Section') ?? (sidebarFromRoot ? null : await pick('Sidebar', sidebarMembers.Section))
+
   return {
     Button: rootPicks.Button,
     Link: rootPicks.Link,
     Code: rootPicks.Code,
     Sidebar: {
       Root: rootPicks.Sidebar,
-      Item: fromRoot('Item') ?? await pick('Sidebar', sidebarMembers.Item),
-      Section: fromRoot('Section') ?? await pick('Sidebar', sidebarMembers.Section),
+      Item: sidebarItem ?? {
+        Component: null as unknown as React.ComponentType<any>,
+        cssPaths: [],
+        source: 'omitted',
+        resolvedPath: '',
+      },
+      Section: sidebarSection ?? {
+        Component: null as unknown as React.ComponentType<any>,
+        cssPaths: [],
+        source: 'omitted',
+        resolvedPath: '',
+      },
     },
     Panel: rootPicks.Panel,
   }

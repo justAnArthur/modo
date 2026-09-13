@@ -1,5 +1,4 @@
 import './shell/shell.css'
-import 'virtual:modo-shell-ds-css'
 import 'virtual:modo-config'
 import 'virtual:modo-tokens-css'
 import { tokens } from 'virtual:modo-tokens'

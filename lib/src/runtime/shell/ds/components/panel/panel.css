@@ -1,6 +1,0 @@
-/* Shell DS Panel — minimal visual only. */
-
-[data-aui="shell-panel"] {
-  color: var(--foreground, #18181b);
-  font-size: 0.875rem;
-}

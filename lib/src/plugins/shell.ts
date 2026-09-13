@@ -23,10 +23,6 @@ const SHELL_VIRTUAL = 'virtual:modo-shell'
 const SHELL_RESOLVED = '\0virtual:modo-shell'
 const SHELL_CSS_VIRTUAL = 'virtual:modo-shell-css'
 const SHELL_CSS_RESOLVED = '\0virtual:modo-shell-css'
-const SHELL_DS_CSS_VIRTUAL = 'virtual:modo-shell-ds-css'
-const SHELL_DS_CSS_RESOLVED = '\0virtual:modo-shell-ds-css'
-
-const DS_ROOT = (libDir: string) => resolve(libDir, 'src', 'runtime', 'shell', 'ds')
 
 function tmpDir(root: string): string {
   return resolve(root, '.modo-tmp')
@@ -114,19 +110,6 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
   const config = await loadModoConfig(configPath)
   const userItems = await discoverUserItems(opts.userRoot)
 
-  async function loadShellDS(slotPath: string): Promise<LoadedComponent | null> {
-    const file = resolve(DS_ROOT(opts.libDir), slotPath, 'index.tsx')
-    if (!existsSync(file)) return null
-    const { path, Component } = await bundle(file, opts.userRoot, `ds-${slotPath.replace(/[/]/g, '-')}`)
-    return {
-      Component: Component as React.ComponentType<any>,
-      cssPaths: discoverCssForFile(file),
-      source: 'shell-ds',
-      resolvedPath: `shell-ds:${slotPath}`,
-      bundlePath: path,
-    }
-  }
-
   async function loadUserPath(p: string): Promise<LoadedComponent | null> {
     const abs = resolve(opts.userRoot, p)
     if (!existsSync(abs)) return null
@@ -150,7 +133,6 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
   const resolved = await resolveShellSlots(
     { name: config.name, shell: config.shell },
     userItems,
-    loadShellDS,
     loadUserPath,
     { warnings },
   )
@@ -207,35 +189,15 @@ export function shellPlugin(options: Options): Plugin {
     return cachePromise
   }
 
-  const shellDsCssFiles: string[] = []
-  function collectShellDsCss() {
-    const root = DS_ROOT(options.libDir)
-    const visit = (dir: string) => {
-      if (!existsSync(dir)) return
-      for (const f of readdirSync(dir)) {
-        const p = resolve(dir, f)
-        if (statSync(p).isDirectory()) visit(p)
-        else if (p.endsWith('.css')) shellDsCssFiles.push(p)
-      }
-    }
-    visit(root)
-  }
-  collectShellDsCss()
-
   return {
     name: 'modo:shell',
     enforce: 'pre',
     resolveId(id) {
       if (id === SHELL_VIRTUAL) return SHELL_RESOLVED
       if (id === SHELL_CSS_VIRTUAL) return SHELL_CSS_RESOLVED
-      if (id === SHELL_DS_CSS_VIRTUAL) return SHELL_DS_CSS_RESOLVED
       return null
     },
     async load(id) {
-      if (id === SHELL_DS_CSS_RESOLVED) {
-        const imports = shellDsCssFiles.map((f) => `import ${JSON.stringify(f)};`).join('\n')
-        return [imports, `export default '';`].join('\n')
-      }
       if (id === SHELL_RESOLVED) {
         const { shell, warnings } = await getCache()
         if (warnings.length > 0) {

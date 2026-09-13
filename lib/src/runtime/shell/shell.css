@@ -1,21 +1,15 @@
-/* Structural CSS only — no colors, no theming, no component visuals beyond
-   layout. Tokens come from the user's `tokens/` (or shell DS defaults). */
-
-:root {
-  color-scheme: light dark;
-}
+/* Structural CSS only. No colors, no backgrounds, no component visuals.
+   The host owns all tokens and visual styling via the same data-aui attrs. */
 
 [data-aui="app"] {
   display: grid;
   grid-template-columns: 240px 1fr 280px;
   min-height: 100vh;
   font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
-  color: var(--foreground, #18181b);
-  background: var(--background, #f4f4f5);
 }
 
 [data-aui="sidebar"] {
-  border-right: 1px solid var(--border, #d4d4d8);
+  border-right: 1px solid var(--border);
   overflow-y: auto;
   position: sticky;
   top: 0;
@@ -29,7 +23,7 @@
 }
 
 [data-aui="panel"] {
-  border-left: 1px solid var(--border, #d4d4d8);
+  border-left: 1px solid var(--border);
   padding: var(--space-4, 16px);
   overflow-y: auto;
   position: sticky;
@@ -45,7 +39,6 @@
 
 [data-aui="page-lead"] {
   margin: 0 0 var(--space-5, 24px);
-  color: var(--muted-foreground, #71717a);
 }
 
 [data-aui="section"] {
@@ -60,11 +53,10 @@
 }
 
 [data-aui="example-card"] {
-  border: 1px solid var(--border, #d4d4d8);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md, 6px);
   padding: var(--space-4, 16px);
   margin: 0 0 var(--space-3, 12px);
-  background: var(--background, #f4f4f5);
 }
 
 [data-aui="example-card-stage"] {
@@ -94,7 +86,7 @@
 
 [data-aui="prop-table"] th,
 [data-aui="prop-table"] td {
-  border-bottom: 1px solid var(--border, #d4d4d8);
+  border-bottom: 1px solid var(--border);
   padding: var(--space-2, 8px);
   text-align: left;
   vertical-align: top;
@@ -109,12 +101,12 @@
   width: 1.25rem;
   height: 1.25rem;
   border-radius: var(--radius-sm, 4px);
-  border: 1px solid var(--border, #d4d4d8);
+  border: 1px solid var(--border);
   vertical-align: middle;
   margin-right: var(--space-2, 8px);
 }
 
 *:focus-visible {
-  outline: 2px solid var(--accent, #3b82f6);
+  outline: 2px solid var(--accent, currentColor);
   outline-offset: 2px;
 }
