@@ -15,4 +15,6 @@ dist
 .modo-items-*.mjs
 .modo-cache/
 .modo-tmp/
+.modo.config.ts
+.peers.json
 lib/_archived/

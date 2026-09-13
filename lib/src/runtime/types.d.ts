@@ -30,6 +30,7 @@ declare module 'virtual:modo-items' {
   export const byId: Record<string, ItemEntry>
   export const components: Record<string, ComponentType<any>>
   export const byName: Record<string, ComponentType<any>>
+  export const primitives: Record<string, ComponentType<any>>
   export const examples: Record<string, Array<{ title?: string; description?: string; code: string }>>
   export const props: Record<string, ItemProp[]>
 }
@@ -41,14 +42,22 @@ declare module 'virtual:modo-items-css' {
 
 declare module 'virtual:modo-shell' {
   import type { ComponentType } from 'react'
+  export type PanelItemExport = {
+    label: string
+    bundlePath: string
+    Component: ComponentType<any>
+    cssPaths: string[]
+  }
   export type ResolvedShellExport = {
     Button: ComponentType<any>
     Link: ComponentType<any>
     Code: ComponentType<any>
     Sidebar: { Root: ComponentType<any>; Item: ComponentType<any>; Section: ComponentType<any> }
     Panel: ComponentType<any>
+    primitives: Record<string, ComponentType<any>>
   }
   export const shell: ResolvedShellExport
+  export const panelItems: PanelItemExport[]
   export const shellCSS: string
 }
 

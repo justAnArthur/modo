@@ -1,0 +1,8 @@
+.my-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.my-link:hover {
+  text-decoration: underline;
+}

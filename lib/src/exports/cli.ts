@@ -50,8 +50,8 @@ async function main() {
   try {
     switch (cmd) {
       case 'init': await runInit(args.slice(1)); break
-      case 'dev': await runVite('dev'); break
-      case 'build': await runVite('build'); break
+      case 'dev': await runVite('dev', args.slice(1)); break
+      case 'build': await runVite('build', args.slice(1)); break
       case 'add': await runAdd(args.slice(1)); break
       case 'check': await runCheck(); break
       default:
@@ -83,10 +83,14 @@ async function runInit(args: string[]) {
   process.stdout.write(`Scaffolded ${projectDir}\n`)
 }
 
-async function runVite(mode: 'dev' | 'build') {
+async function runVite(mode: 'dev' | 'build', args: string[] = []) {
   const cwd = process.cwd()
-  await loadModoConfig(cwd)
+  const configIdx = args.indexOf('--config')
+  const configArg = configIdx >= 0 ? args[configIdx + 1] : undefined
+  const configPath = configArg ? resolve(cwd, configArg) : resolve(cwd, 'modo.config.ts')
+  await loadModoConfig(configPath)
   process.env.MODO_USER_ROOT = cwd
+  process.env.MODO_CONFIG_PATH = configPath
   process.chdir(runtimeRoot)
   await importViteAndRun(runtimeRoot, mode)
 }
@@ -118,7 +122,7 @@ async function runAdd(args: string[]) {
 }
 
 async function runCheck() {
-  const cfg = await loadModoConfig(process.cwd())
+  const cfg = await loadModoConfig(resolve(process.cwd(), 'modo.config.ts'))
   process.stdout.write(`OK — modo.config.ts is valid (name="${cfg.name}")\n`)
 }
 

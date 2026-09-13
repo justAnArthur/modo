@@ -160,6 +160,7 @@ export function itemsPlugin(options: Options): Plugin {
           `export const byId = {${byIdJson}};`,
           `export const components = {${itemsJson}};`,
           `export const byName = {${byNameJson}};`,
+          `export const primitives = byName;`,
           `export const examples = {${examplesJson}};`,
           `export const props = {${propsJson}};`,
         ].join('\n')

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { shell } from 'virtual:modo-shell'
+import { shell, panelItems } from 'virtual:modo-shell'
 import { SidebarNav } from '../nav'
 
 export function Shell({ children }: { children: ReactNode }) {
@@ -12,8 +12,22 @@ export function Shell({ children }: { children: ReactNode }) {
       </aside>
       {children}
       <aside data-aui="panel">
-        <shell.Panel>{null}</shell.Panel>
+        <shell.Panel>
+          {panelItems.map((it) => (
+            <PanelItem key={it.bundlePath} item={it} />
+          ))}
+        </shell.Panel>
       </aside>
     </div>
+  )
+}
+
+function PanelItem({ item }: { item: (typeof panelItems)[number] }) {
+  const LabelComp = shell.primitives[item.label]
+  return (
+    <section data-aui="panel-item">
+      {LabelComp ? <LabelComp>{item.label}</LabelComp> : <span>{item.label}</span>}
+      <item.Component />
+    </section>
   )
 }

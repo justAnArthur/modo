@@ -23,7 +23,7 @@ export default defineConfig({
   ],
   server: {
     host: '127.0.0.1',
-    port: 5173,
+    port: Number(process.env.MODO_PORT) || 5173,
     strictPort: true,
     fs: {
       allow: [RUNTIME_DIR, LIB_DIR, USER_ROOT, resolve(USER_ROOT, '.modo-tmp')],

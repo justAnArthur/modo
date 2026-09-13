@@ -11,11 +11,10 @@ function ensureCacheDir() {
   mkdirSync(cacheDir, { recursive: true })
 }
 
-export async function loadModoConfig(userRoot: string): Promise<SiteConfig> {
-  const configPath = resolve(userRoot, 'modo.config.ts')
+export async function loadModoConfig(configPath: string): Promise<SiteConfig> {
   if (!existsSync(configPath)) {
     throw new Error(
-      `modo.config.ts not found in ${userRoot}.\nRun \`modo init <name>\` to scaffold a project.`,
+      `modo config not found at ${configPath}.\nRun \`modo init <name>\` to scaffold a project.`,
     )
   }
   ensureCacheDir()

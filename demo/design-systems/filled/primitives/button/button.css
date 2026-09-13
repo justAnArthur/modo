@@ -1,0 +1,13 @@
+.my-btn {
+  padding: var(--sm) var(--md);
+  background: var(--accent);
+  color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font: inherit;
+}
+
+.my-btn[data-variant="secondary"] {
+  background: var(--muted);
+  color: var(--fg);
+}

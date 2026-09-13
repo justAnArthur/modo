@@ -12,11 +12,24 @@ export const shellSchema = z
   })
   .strict()
 
+const panelItemSchema = z
+  .object({
+    label: z.string(),
+    component: z.string(),
+  })
+  .strict()
+
 export const siteConfigSchema = z
   .object({
     name: z.string(),
     description: z.string().optional(),
     shell: shellSchema.optional(),
+    panel: z
+      .object({
+        items: z.array(panelItemSchema),
+      })
+      .strict()
+      .optional(),
     css: z.string().optional(),
   })
   .strict()

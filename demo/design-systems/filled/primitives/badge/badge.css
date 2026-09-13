@@ -1,0 +1,14 @@
+.my-badge {
+  display: inline-flex;
+  padding: 2px var(--sm);
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.my-badge[data-variant="outline"] {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+}

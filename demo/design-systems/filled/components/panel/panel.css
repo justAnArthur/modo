@@ -1,0 +1,5 @@
+.my-panel {
+  padding: var(--md);
+  background: var(--muted);
+  color: var(--fg);
+}

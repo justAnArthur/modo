@@ -96,11 +96,22 @@ async function discoverUserItems(userRoot: string): Promise<ParsedItemLite[]> {
   return items
 }
 
-type ResolvedShellExport = ResolvedShell & { cssFiles: string[] }
+type PanelItemExport = {
+  label: string
+  bundlePath: string
+  Component: unknown
+  cssPaths: string[]
+}
+
+type ResolvedShellExport = ResolvedShell & {
+  cssFiles: string[]
+  panelItems: PanelItemExport[]
+}
 
 async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShellExport; warnings: string[] }> {
   const warnings: string[] = []
-  const config = await loadModoConfig(opts.userRoot)
+  const configPath = process.env.MODO_CONFIG_PATH ?? resolve(opts.userRoot, 'modo.config.ts')
+  const config = await loadModoConfig(configPath)
   const userItems = await discoverUserItems(opts.userRoot)
 
   async function loadShellDS(slotPath: string): Promise<LoadedComponent | null> {
@@ -143,6 +154,20 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
     loadUserPath,
     { warnings },
   )
+  const panelItems: PanelItemExport[] = []
+  for (const item of config.panel?.items ?? []) {
+    const lc = await loadUserPath(item.component)
+    if (!lc?.bundlePath) {
+      warnings.push(`panel item "${item.label}" component "${item.component}" could not be resolved`)
+      continue
+    }
+    panelItems.push({
+      label: item.label,
+      bundlePath: lc.bundlePath,
+      Component: lc.Component,
+      cssPaths: lc.cssPaths,
+    })
+  }
   const cssFiles = [
     ...resolved.Button.cssPaths,
     ...resolved.Link.cssPaths,
@@ -151,6 +176,7 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
     ...resolved.Sidebar.Item.cssPaths,
     ...resolved.Sidebar.Section.cssPaths,
     ...resolved.Panel.cssPaths,
+    ...panelItems.flatMap((it) => it.cssPaths),
   ]
   return {
     shell: {
@@ -160,6 +186,7 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
       Sidebar: { Root: resolved.Sidebar.Root, Item: resolved.Sidebar.Item, Section: resolved.Sidebar.Section },
       Panel: resolved.Panel,
       cssFiles,
+      panelItems,
     },
     warnings,
   }
@@ -223,17 +250,33 @@ export function shellPlugin(options: Options): Plugin {
           { name: '__SidebarSection', bundlePath: shell.Sidebar.Section.bundlePath },
           { name: '__Panel', bundlePath: shell.Panel.bundlePath },
         ]
-        const imports = slotBindings
-          .filter((s) => s.bundlePath)
-          .map((s) => `import __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`)
-          .join('\n')
-        const bindings = slotBindings
-          .map((s) =>
+        const panelItemBindings = shell.panelItems.map((it, idx) => ({
+          name: `__PanelItem${idx}`,
+          bundlePath: it.bundlePath,
+        }))
+        const imports = [
+          `import { primitives as __primitives } from 'virtual:modo-items';`,
+          ...slotBindings
+            .filter((s) => s.bundlePath)
+            .map((s) => `import __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`),
+          ...panelItemBindings.map((s) => `import __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`),
+        ].join('\n')
+        const bindings = [
+          ...slotBindings.map((s) =>
             s.bundlePath
               ? `const ${s.name} = (__mod_${s.name}.default ?? __mod_${s.name});`
               : `const ${s.name} = null;`,
+          ),
+          ...panelItemBindings.map(
+            (s) => `const ${s.name}_Comp = (__mod_${s.name}.default ?? __mod_${s.name});`,
+          ),
+        ].join('\n')
+        const panelItemsJson = shell.panelItems
+          .map(
+            (it, idx) =>
+              `{ label: ${JSON.stringify(it.label)}, bundlePath: ${JSON.stringify(it.bundlePath)}, Component: __PanelItem${idx}_Comp, cssPaths: ${JSON.stringify(it.cssPaths)} }`,
           )
-          .join('\n')
+          .join(',')
         return [
           imports,
           bindings,
@@ -243,7 +286,9 @@ export function shellPlugin(options: Options): Plugin {
           `  Code: __Code,`,
           `  Sidebar: { Root: __SidebarRoot, Item: (__SidebarRoot && __SidebarRoot.Item) ?? __SidebarItem, Section: (__SidebarRoot && __SidebarRoot.Section) ?? __SidebarSection },`,
           `  Panel: __Panel,`,
+          `  primitives: __primitives,`,
           `};`,
+          `export const panelItems = [${panelItemsJson}];`,
           `export const shellCSS = '';`,
           `export default shell;`,
         ].join('\n')

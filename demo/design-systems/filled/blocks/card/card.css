@@ -1,0 +1,16 @@
+.my-card {
+  padding: var(--md);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.my-card-title {
+  margin: 0 0 var(--sm);
+  color: var(--fg);
+}
+
+.my-card-body {
+  margin-bottom: var(--sm);
+  color: var(--fg);
+}
