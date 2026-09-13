@@ -1,3 +1,5 @@
+import type { ComponentType, ReactNode } from 'react'
+
 export type Tier = 'primitives' | 'components' | 'blocks'
 
 export interface ParsedItemLite {
@@ -6,7 +8,7 @@ export interface ParsedItemLite {
   tier: Tier
   props: Array<{ name: string; optional: boolean }>
   /** Live Component, populated by the shell plugin when it bundles the item. */
-  Component?: React.ComponentType<any>
+  Component?: ComponentType<any>
   /** file:// URL of the bundled .mjs for this item. */
   bundleUrl?: string
 }
@@ -85,12 +87,14 @@ export interface UserConfigLite {
 }
 
 export interface LoadedComponent {
-  Component: React.ComponentType<any>
+  Component: ComponentType<any>
   cssPaths: string[]
-  source: 'config' | 'interface-match' | 'omitted'
+  source: 'config' | 'interface-match' | 'fallback'
   resolvedPath: string
   /** Path to the bundled .mjs file (when the loader created one). */
   bundlePath?: string
+  /** When source is 'fallback', the name of the plain-HTML component to import. */
+  fallbackName?: 'PlainButton' | 'PlainLink' | 'PlainCode' | 'PlainPanel' | 'PlainSidebarItem' | 'PlainSidebarSection' | 'PlainSidebarRoot'
 }
 
 export interface ResolvedSidebar {
@@ -113,6 +117,89 @@ export interface ResolveOptions {
   warnings?: string[]
 }
 
+/* Plain HTML fallbacks. No styling, no defaults — semantic tags only so the
+   chrome renders something usable when the user project ships no DS. The user's
+   primitives/components override these whenever they satisfy the slot contract. */
+
+export function PlainButton({ children, disabled, onClick, type = 'button', ...rest }: any) {
+  return (
+    <button type={type} disabled={disabled} onClick={onClick} {...rest}>
+      {children}
+    </button>
+  )
+}
+
+export function PlainLink({ href, children, ...rest }: any) {
+  return (
+    <a href={href} {...rest}>
+      {children}
+    </a>
+  )
+}
+
+export function PlainCode({ children, ...rest }: any) {
+  return (
+    <pre {...rest}>
+      <code>{children}</code>
+    </pre>
+  )
+}
+
+export function PlainPanel({ children }: { children?: ReactNode }) {
+  return <div>{children}</div>
+}
+
+export function PlainSidebarRoot({ children }: { children?: ReactNode }) {
+  return <nav>{children}</nav>
+}
+
+export function PlainSidebarItem({ href, active, children }: { href: string; active?: boolean; children?: ReactNode }) {
+  return (
+    <a href={href} aria-current={active ? 'page' : undefined}>
+      {children}
+    </a>
+  )
+}
+
+export function PlainSidebarSection({ title, children }: { title: string; children?: ReactNode }) {
+  return (
+    <div>
+      <h3>{title}</h3>
+      <div>{children}</div>
+    </div>
+  )
+}
+
+const PlainSidebar = Object.assign(PlainSidebarRoot, {
+  Item: PlainSidebarItem,
+  Section: PlainSidebarSection,
+})
+
+function fallbackFor(
+  slotName: 'Button' | 'Link' | 'Code' | 'Panel' | 'SidebarRoot',
+): ComponentType<any> {
+  switch (slotName) {
+    case 'Button': return PlainButton
+    case 'Link': return PlainLink
+    case 'Code': return PlainCode
+    case 'Panel': return PlainPanel
+    case 'SidebarRoot': return PlainSidebarRoot
+  }
+}
+
+function omitted(
+  slotName: 'Button' | 'Link' | 'Code' | 'Panel' | 'Sidebar',
+): LoadedComponent {
+  const fallbackName = slotName === 'Sidebar' ? 'SidebarRoot' : slotName
+  return {
+    Component: fallbackFor(fallbackName),
+    cssPaths: [],
+    source: 'fallback',
+    resolvedPath: `fallback:${slotName}`,
+    fallbackName: `Plain${fallbackName}`,
+  }
+}
+
 export async function resolveShellSlots(
   config: UserConfigLite,
   userItems: ParsedItemLite[],
@@ -120,6 +207,9 @@ export async function resolveShellSlots(
   opts: ResolveOptions = {},
 ): Promise<ResolvedShell> {
   const warnings = opts.warnings ?? []
+  // Genuinely-empty projects (no items, no shell mapping) shouldn't spam 7
+  // warnings on every boot — the absence is the user's intent, not a bug.
+  const silence = userItems.length === 0 && Object.keys(config.shell ?? {}).length === 0
 
   async function pick(slotName: ShellSlot['name'], member?: SlotMember): Promise<LoadedComponent> {
     const base = member ?? SLOTS.find((s) => s.name === slotName)!
@@ -140,7 +230,7 @@ export async function resolveShellSlots(
       const c = candidates[0]!
       if (c.bundleUrl || c.Component) {
         return {
-          Component: null as unknown as React.ComponentType<any>,
+          Component: null as unknown as ComponentType<any>,
           cssPaths: [],
           source: 'interface-match',
           resolvedPath: `${c.tier}/${c.id}`,
@@ -153,13 +243,8 @@ export async function resolveShellSlots(
       }
     }
 
-    warnings.push(`Shell slot "${slotName}${member ? `.${member.name}` : ''}" could not be resolved`)
-    return {
-      Component: null as unknown as React.ComponentType<any>,
-      cssPaths: [],
-      source: 'omitted',
-      resolvedPath: '',
-    }
+    if (!silence) warnings.push(`Shell slot "${slotName}${member ? `.${member.name}` : ''}" could not be resolved`)
+    return omitted(slotName)
   }
 
   const rootPicks = {
@@ -171,7 +256,7 @@ export async function resolveShellSlots(
   }
 
   const sidebarRootComp = rootPicks.Sidebar.Component as unknown as
-    | { Root?: any; Item?: any; Section?: any }
+    | { Item?: any; Section?: any }
     | null
   const sidebarMembers = SLOTS.find((s) => s.name === 'Sidebar')!.members!
 
@@ -190,24 +275,29 @@ export async function resolveShellSlots(
   const sidebarItem = fromRoot('Item') ?? (sidebarFromRoot ? null : await pick('Sidebar', sidebarMembers.Item))
   const sidebarSection = fromRoot('Section') ?? (sidebarFromRoot ? null : await pick('Sidebar', sidebarMembers.Section))
 
+  const fallbackItem: LoadedComponent = {
+    Component: PlainSidebarItem,
+    cssPaths: [],
+    source: 'fallback',
+    resolvedPath: 'fallback:Sidebar.Item',
+    fallbackName: 'PlainSidebarItem',
+  }
+  const fallbackSection: LoadedComponent = {
+    Component: PlainSidebarSection,
+    cssPaths: [],
+    source: 'fallback',
+    resolvedPath: 'fallback:Sidebar.Section',
+    fallbackName: 'PlainSidebarSection',
+  }
+
   return {
     Button: rootPicks.Button,
     Link: rootPicks.Link,
     Code: rootPicks.Code,
     Sidebar: {
       Root: rootPicks.Sidebar,
-      Item: sidebarItem ?? {
-        Component: null as unknown as React.ComponentType<any>,
-        cssPaths: [],
-        source: 'omitted',
-        resolvedPath: '',
-      },
-      Section: sidebarSection ?? {
-        Component: null as unknown as React.ComponentType<any>,
-        cssPaths: [],
-        source: 'omitted',
-        resolvedPath: '',
-      },
+      Item: sidebarItem ?? fallbackItem,
+      Section: sidebarSection ?? fallbackSection,
     },
     Panel: rootPicks.Panel,
   }

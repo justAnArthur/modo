@@ -1,4 +1,5 @@
 import type { Plugin } from 'vite'
+import type { ComponentType } from 'react'
 import { existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { resolve, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -203,32 +204,37 @@ export function shellPlugin(options: Options): Plugin {
         if (warnings.length > 0) {
           process.stderr.write(`[modo:shell] warnings:\n${warnings.map((w) => '  • ' + w).join('\n')}\n`)
         }
-        const slotBindings: Array<{ name: string; bundlePath?: string }> = [
-          { name: '__Button', bundlePath: shell.Button.bundlePath },
-          { name: '__Link', bundlePath: shell.Link.bundlePath },
-          { name: '__Code', bundlePath: shell.Code.bundlePath },
-          { name: '__SidebarRoot', bundlePath: shell.Sidebar.Root.bundlePath },
-          { name: '__SidebarItem', bundlePath: shell.Sidebar.Item.bundlePath },
-          { name: '__SidebarSection', bundlePath: shell.Sidebar.Section.bundlePath },
-          { name: '__Panel', bundlePath: shell.Panel.bundlePath },
+        const slotBindings: Array<{ name: string; bundlePath?: string; fallbackName?: string }> = [
+          { name: '__Button', bundlePath: shell.Button.bundlePath, fallbackName: shell.Button.fallbackName },
+          { name: '__Link', bundlePath: shell.Link.bundlePath, fallbackName: shell.Link.fallbackName },
+          { name: '__Code', bundlePath: shell.Code.bundlePath, fallbackName: shell.Code.fallbackName },
+          { name: '__SidebarRoot', bundlePath: shell.Sidebar.Root.bundlePath, fallbackName: shell.Sidebar.Root.fallbackName },
+          { name: '__SidebarItem', bundlePath: shell.Sidebar.Item.bundlePath, fallbackName: shell.Sidebar.Item.fallbackName },
+          { name: '__SidebarSection', bundlePath: shell.Sidebar.Section.bundlePath, fallbackName: shell.Sidebar.Section.fallbackName },
+          { name: '__Panel', bundlePath: shell.Panel.bundlePath, fallbackName: shell.Panel.fallbackName },
         ]
         const panelItemBindings = shell.panelItems.map((it, idx) => ({
           name: `__PanelItem${idx}`,
           bundlePath: it.bundlePath,
         }))
+        const fallbackImports = slotBindings
+          .filter((s) => s.fallbackName && !s.bundlePath)
+          .map((s) => `import { ${s.fallbackName} as __fb_${s.name} } from '../lib/slots';`)
+          .join('\n')
         const imports = [
           `import { primitives as __primitives } from 'virtual:modo-items';`,
+          fallbackImports,
           ...slotBindings
             .filter((s) => s.bundlePath)
             .map((s) => `import __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`),
           ...panelItemBindings.map((s) => `import __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`),
         ].join('\n')
         const bindings = [
-          ...slotBindings.map((s) =>
-            s.bundlePath
-              ? `const ${s.name} = (__mod_${s.name}.default ?? __mod_${s.name});`
-              : `const ${s.name} = null;`,
-          ),
+          ...slotBindings.map((s) => {
+            if (s.bundlePath) return `const ${s.name} = (__mod_${s.name}.default ?? __mod_${s.name});`
+            if (s.fallbackName) return `const ${s.name} = __fb_${s.name};`
+            return `const ${s.name} = null;`
+          }),
           ...panelItemBindings.map(
             (s) => `const ${s.name}_Comp = (__mod_${s.name}.default ?? __mod_${s.name});`,
           ),
