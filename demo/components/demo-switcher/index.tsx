@@ -23,6 +23,8 @@ export default function DemoSwitcher() {
           <a
             key={p.name}
             href={p.url}
+            target="_blank"
+            rel="noopener"
             aria-current={current ? 'page' : undefined}
             data-current={current}
           >

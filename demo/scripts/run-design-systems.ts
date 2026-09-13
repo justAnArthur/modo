@@ -39,7 +39,7 @@ const splice = (source: string): string => {
 writeFileSync(
   PEERS_FILE,
   JSON.stringify(
-    targets.map((name, i) => ({ name, url: `http://localhost:${5173 + i}/` })),
+    targets.map((name, i) => ({ name, url: `http://127.0.0.1:${5173 + i}/` })),
     null,
     2,
   ),
