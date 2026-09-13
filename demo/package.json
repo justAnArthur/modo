@@ -5,8 +5,7 @@
   "version": "0.1.0",
   "description": "the reference impl. tokens → primitives → components → blocks.",
   "scripts": {
-    "dev": "cd design-systems/very-rich && bunx modo dev",
-    "samples": "bun scripts/run-design-systems.ts",
+    "dev": "bun scripts/run-design-systems.ts",
     "samples:filled": "bun scripts/run-design-systems.ts filled",
     "build": "modo build",
     "check": "tsc --noEmit"
