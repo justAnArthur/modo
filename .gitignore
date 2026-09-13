@@ -17,4 +17,6 @@ dist
 .modo-tmp/
 .modo.config.ts
 .peers.json
+.peers.json.d.ts
 lib/_archived/
+docs/
