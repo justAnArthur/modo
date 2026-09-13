@@ -30,7 +30,10 @@ const items = [{ label: 'Switcher', component: '../components/demo-switcher' }]
 const splice = (source: string): string => {
   const i = source.lastIndexOf('}')
   if (i < 0) return source
-  return source.slice(0, i) + `,\n  panel: { items: ${JSON.stringify(items)} }\n` + source.slice(i)
+  const head = source.slice(0, i)
+  const tail = source.slice(i)
+  const sep = /,\s*$/.test(head) ? '\n  ' : ',\n  '
+  return head + sep + `panel: { items: ${JSON.stringify(items)} }\n` + tail
 }
 
 writeFileSync(
