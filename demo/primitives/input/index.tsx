@@ -1,7 +1,7 @@
 import './input.css'
 
 /**
- * Single-line text input.
+ * Single-line text input. Standard controlled/uncontrolled usage.
  *
  * @example
  * # Default
@@ -11,10 +11,10 @@ import './input.css'
  * ```
  *
  * @example
- * # Error
+ * # Controlled
  *
  * ```tsx
- * <Input variant="error" placeholder="Invalid value" />
+ * <Input value="hello" onChange={() => {}} />
  * ```
  *
  * @example
@@ -23,49 +23,36 @@ import './input.css'
  * ```tsx
  * <Input disabled placeholder="Cannot edit" />
  * ```
- *
- * @example
- * # Small
- *
- * ```tsx
- * <Input size="sm" placeholder="Compact" />
- * ```
- *
- * @example
- * # Large
- *
- * ```tsx
- * <Input size="lg" placeholder="Roomy" />
- * ```
  */
 export default function Input({
-  variant = 'default',
-  size = 'md',
-  disabled,
-  placeholder,
   value,
   onChange,
+  placeholder,
+  disabled,
+  className,
+  ...rest
 }: {
-  /** Visual state. @values default, error */
-  variant?: 'default' | 'error'
-  /** Size. @values sm, md, lg */
-  size?: 'sm' | 'md' | 'lg'
+  /** Controlled value. */
+  value?: string
+  /** Change handler. */
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+  /** Placeholder text. */
+  placeholder?: string
   /** Whether the input is disabled. @default false */
   disabled?: boolean
-  /** Placeholder text. @default 'Type here…' */
-  placeholder?: string
-  value?: string
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+  /** Additional classes appended to `my-input`. */
+  className?: string
+  /** Catch-all for `type`, `aria-*`, etc. — not shown in the prop table. */
+  [key: string]: unknown
 }) {
   return (
     <input
-      data-variant={variant}
-      data-size={size}
       disabled={disabled}
-      placeholder={placeholder ?? 'Type here…'}
+      placeholder={placeholder}
       value={value}
       onChange={onChange}
-      className="modo-input"
+      className={className ? `my-input ${className}` : 'my-input'}
+      {...rest}
     />
   )
 }

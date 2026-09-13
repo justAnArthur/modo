@@ -1,14 +1,9 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "modo-atomic-ui": ["./src/exports/index.ts"],
-      "modo-atomic-ui/*": ["./src/exports/*"],
-      "@demo": ["../demo"],
-      "@demo/*": ["../demo/*"]
-    }
+    "noEmit": true,
+    "rootDir": "src",
+    "types": ["node", "vite/client"]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "templates"]
+  "include": ["src/**/*"]
 }

@@ -1,18 +1,22 @@
-/* select — demo component. the [data-aui="user-select-*"] rules style
-   the example component on the docs site. */
+/* select — demo-specific visuals for the Select component. */
 
-[data-aui="user-select"] {
+.my-select {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-}
-[data-aui="user-select-inner"] {
-  background: var(--surface-3, var(--background));
+  height: 32px;
+  padding: 0 var(--space-2);
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm, 4px);
-  padding: 4px 6px;
+  border-radius: var(--radius-md);
+  background: var(--background);
   color: var(--foreground);
-  font: inherit;
-  font-size: 12px;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
   cursor: pointer;
+  transition: border-color var(--motion-fast) var(--ease-standard);
+}
+
+.my-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 24%, transparent);
 }

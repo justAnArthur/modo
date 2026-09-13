@@ -1,13 +1,23 @@
-// stub for `modo add primitive <name>`. the user fills in the TSDoc
-// and the props, then writes the body. the lib extracts everything
-// (name, description, examples, props) from the JSDoc + the function's
-// TS type signature.
+import type { ReactNode } from 'react'
+import './__NAME__.css'
 
-export default function __NAME_PASCAL__({
-  // TODO: define the props your primitive accepts.
-  children,
-}: {
-  children?: React.ReactNode
-}) {
-  return <div data-component="__NAME__">{children}</div>
+export interface __NAME_PASCAL__Props {
+  /** Description of the primary prop. */
+  children?: ReactNode
+  /** Optional className. */
+  className?: string
+}
+
+/**
+ * __NAME_PASCAL__ — short description.
+ *
+ * @example
+ * # Basic
+ *
+ * ```tsx
+ * <__NAME_PASCAL__>Hello</__NAME_PASCAL__>
+ * ```
+ */
+export default function __NAME_PASCAL__({ children, className }: __NAME_PASCAL__Props) {
+  return <div className={className}>{children}</div>
 }

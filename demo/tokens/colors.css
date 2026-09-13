@@ -1,26 +1,28 @@
-/* color tokens — one file for everything color-related:
+/* color tokens — shadcn-style palette with light + dark variants.
    - light defaults (:root)
    - dark via OS preference (@media prefers-color-scheme: dark)
    - dark via explicit user choice ([data-theme="dark"])
-   - shadow recipes (used by the surfaces ladder + <Elevated>) */
+   - shadow recipes for the elevation ladder. */
 
 :root {
-  --background: #f4f4f5;
-  --foreground: #18181b;
+  --background: #ffffff;
+  --foreground: #0a0a0a;
   --muted: #f4f4f5;
   --muted-foreground: #71717a;
-  --border: color-mix(in oklab, #18181b 10%, transparent);
+  --border: #e4e4e7;
   --accent: #3b82f6;
   --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
 
-  --surface-1: #f4f4f5;
-  --surface-2: #f6f6f7;
-  --surface-3: #f8f8f9;
-  --surface-4: #fafafa;
-  --surface-5: #fbfbfc;
-  --surface-6: #fcfcfd;
-  --surface-7: #fdfdfd;
-  --surface-8: #ffffff;
+  --surface-1: #fafafa;
+  --surface-2: #f4f4f5;
+  --surface-3: #e4e4e7;
+  --surface-4: #d4d4d8;
+  --surface-5: #f4f4f5;
+  --surface-6: #e4e4e7;
+  --surface-7: #d4d4d8;
+  --surface-8: #a1a1aa;
 
   --shadow-color: rgb(0 0 0 / 0.06);
   --shadow-1: 0 0 0 1px var(--shadow-color);
@@ -43,6 +45,8 @@
     --border: #27272a;
     --accent: #3b82f6;
     --accent-foreground: #fafafa;
+    --destructive: #ef4444;
+    --destructive-foreground: #fafafa;
 
     --surface-1: #0a0a0a;
     --surface-2: #111113;
@@ -64,6 +68,8 @@
   --border: #27272a;
   --accent: #3b82f6;
   --accent-foreground: #fafafa;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
 
   --surface-1: #0a0a0a;
   --surface-2: #111113;

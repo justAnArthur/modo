@@ -1,13 +1,1 @@
-/* global CSS — shared across all items, not specific to one.
-   this is loaded by the lib via modo.config.ts: css. */
-
-[data-aui="errors"] {
-  background: color-mix(in oklab, var(--danger, #ef4444) 12%, transparent);
-  border: 1px solid color-mix(in oklab, var(--danger, #ef4444) 40%, transparent);
-  border-radius: 8px;
-  padding: 12px 16px;
-  color: color-mix(in oklab, var(--danger, #ef4444) 80%, var(--foreground));
-  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
-  font-size: 12px;
-  white-space: pre-wrap;
-}
+/* Optional global styles for __NAME__. Loaded after tokens; user wins. */

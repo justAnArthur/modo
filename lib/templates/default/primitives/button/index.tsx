@@ -1,58 +1,38 @@
+import type { ReactNode, MouseEventHandler } from 'react'
 import './button.css'
 
-/**
- * Triggers an action or event.
- *
- * @example
- * # Primary
- *
- * The main call to action.
- *
- * ```tsx
- * <Button variant="primary">Save</Button>
- * ```
- *
- * @example
- * # Secondary
- *
- * Use for non-destructive actions.
- *
- * ```tsx
- * <Button variant="secondary">Cancel</Button>
- * ```
- *
- * @example
- * # Ghost
- *
- * Use for the least-emphasized action.
- *
- * ```tsx
- * <Button variant="ghost">Skip</Button>
- * ```
- *
- * @example
- * # Disabled
- *
- * ```tsx
- * <Button disabled>Save</Button>
- * ```
- */
+export interface ButtonProps {
+  /** Visual variant. */
+  variant?: 'primary' | 'secondary' | 'ghost'
+  /** Size preset. */
+  size?: 'sm' | 'md' | 'lg'
+  /** Disable interaction. */
+  disabled?: boolean
+  /** Click handler. */
+  onClick?: MouseEventHandler<HTMLButtonElement>
+  /** Optional className. */
+  className?: string
+  /** Button content. */
+  children?: ReactNode
+}
+
 export default function Button({
   variant = 'primary',
   size = 'md',
   disabled,
+  onClick,
+  className,
   children,
-}: {
-  /** Visual style. @values primary, secondary, ghost */
-  variant?: 'primary' | 'secondary' | 'ghost'
-  /** Size. @values sm, md, lg */
-  size?: 'sm' | 'md' | 'lg'
-  /** Whether the button is disabled. @default false */
-  disabled?: boolean
-  children?: React.ReactNode
-}) {
+}: ButtonProps) {
+  const cls = [className].filter(Boolean).join(' ')
   return (
-    <button data-variant={variant} data-size={size} disabled={disabled} className="modo-button">
+    <button
+      data-variant={variant}
+      data-size={size}
+      disabled={disabled}
+      onClick={onClick}
+      className={cls}
+    >
       {children}
     </button>
   )

@@ -1,34 +1,25 @@
-/* button — demo-specific visuals for the Button primitive.
-   override the values below to match your design system. the lib
-   itself ships no component CSS; everything here is host content. */
-
-.modo-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+button[data-variant] {
+  display: inline-block;
   border: 1px solid transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  font: inherit;
+  border-radius: var(--radius-md, 6px);
+  font-family: inherit;
   font-weight: 500;
-  user-select: none;
+  cursor: pointer;
+  padding: 0.4rem 0.75rem;
 }
 
-.modo-button[data-size="sm"] { height: 28px; padding: 0 10px; font-size: 12px; }
-.modo-button[data-size="md"] { height: 32px; padding: 0 14px; font-size: 13px; }
-.modo-button[data-size="lg"] { height: 40px; padding: 0 18px; font-size: 14px; }
+button[data-variant="primary"] {
+  background: var(--accent, #3b82f6);
+  color: var(--accent-foreground, #ffffff);
+}
 
-.modo-button[data-variant="primary"] {
-  background: var(--accent);
-  color: var(--accent-foreground);
+button[data-variant="secondary"] {
+  background: var(--muted, #f4f4f5);
+  color: var(--foreground, #0a0a0a);
+  border-color: var(--border, #e4e4e7);
 }
-.modo-button[data-variant="secondary"] {
-  background: var(--muted);
-  color: var(--foreground);
-  border-color: var(--border);
-}
-.modo-button[data-variant="ghost"] {
+
+button[data-variant="ghost"] {
   background: transparent;
-  color: var(--foreground);
+  color: var(--foreground, #0a0a0a);
 }

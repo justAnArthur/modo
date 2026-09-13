@@ -1,0 +1,22 @@
+/* code — demo-specific visuals for the Code primitive. */
+
+.my-code {
+  display: block;
+  padding: 12px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  color: var(--foreground);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  overflow-x: auto;
+}
+
+.my-code code {
+  font-family: inherit;
+  font-size: inherit;
+  background: none;
+  padding: 0;
+}

@@ -1,80 +1,50 @@
 import './badge.css'
 
 /**
- * Small status indicator or label.
+ * Small inline pill for status, count, or tag.
  *
  * @example
- * # Neutral / Soft
- *
- * The default tone.
+ * # Default
  *
  * ```tsx
- * <Badge tone="neutral">Draft</Badge>
+ * <Badge>New</Badge>
  * ```
  *
  * @example
- * # Success / Soft
+ * # Secondary
+ *
+ * Lower-contrast — use in dense lists.
  *
  * ```tsx
- * <Badge tone="success">Published</Badge>
- * ```
- *
- * @example
- * # Warning / Soft
- *
- * ```tsx
- * <Badge tone="warning">Pending</Badge>
- * ```
- *
- * @example
- * # Danger / Soft
- *
- * ```tsx
- * <Badge tone="danger">Failed</Badge>
- * ```
- *
- * @example
- * # Info / Soft
- *
- * ```tsx
- * <Badge tone="info">Beta</Badge>
- * ```
- *
- * @example
- * # Solid
- *
- * High-emphasis variant. Use sparingly.
- *
- * ```tsx
- * <Badge tone="success" variant="solid">Live</Badge>
+ * <Badge variant="secondary">Draft</Badge>
  * ```
  *
  * @example
  * # Outline
  *
- * Low-emphasis variant. Use in dense lists.
+ * Bordered, transparent.
  *
  * ```tsx
- * <Badge tone="neutral" variant="outline">New</Badge>
+ * <Badge variant="outline">Beta</Badge>
  * ```
  */
-export default function Badge(
-  {
-    tone = 'neutral',
-    variant = 'soft',
-    size = 'sm',
-    children
-  }: {
-    /** Semantic tone. @values neutral, success, warning, danger, info */
-    tone?: 'neutral' | 'success' | 'warning' | 'danger' | 'info'
-    /** Visual variant. @values solid, soft, outline */
-    variant?: 'solid' | 'soft' | 'outline'
-    /** Size. @values sm, md */
-    size?: 'sm' | 'md'
-    children?: React.ReactNode
-  }) {
+export default function Badge({
+  variant = 'default',
+  children,
+  className,
+}: {
+  /** Visual variant. @values default, secondary, outline @default 'default' */
+  variant?: 'default' | 'secondary' | 'outline'
+  /** Pill text. */
+  children?: React.ReactNode
+  /** Additional classes appended to `my-badge`. */
+  className?: string
+}) {
   return (
-    <span data-tone={tone} data-variant={variant} data-size={size} className="modo-badge">
+    <span
+      data-variant={variant}
+      className={className ? `my-badge ${className}` : 'my-badge'}
+    >
       {children}
     </span>
   )

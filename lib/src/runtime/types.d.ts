@@ -1,77 +1,67 @@
+declare module 'virtual:modo-config' {
+  import type { SiteConfig } from '../lib/schema'
+  export const config: SiteConfig
+  export default config
+}
+
 declare module 'virtual:modo-tokens' {
-  export const tokens: Record<string, any>
+  import type { ParsedVar, Swatch } from '../lib/css'
+  export const tokens: Array<{ name: string; vars: Array<ParsedVar & { swatch?: Swatch }> }>
   export const errors: string[]
 }
 
-declare module 'virtual:modo-tokens-css'
-
-declare module 'virtual:config.loader' {
-  export const config: Record<string, any>
-  export const name: string
-  export const description: string
+declare module 'virtual:modo-tokens-css' {
+  const css: string
+  export default css
 }
-
-declare module 'virtual:modo-user-css'
 
 declare module 'virtual:modo-items' {
   import type { ComponentType } from 'react'
-  export interface DiscoveredItem {
+  export type ItemProp = { name: string; type: string; optional: boolean; default?: string; description?: string }
+  export type ItemEntry = {
     id: string
-    category: 'primitives' | 'components' | 'blocks'
-    cssPath: string | null
-    filePath: string
-    hasMdx: boolean
-    errors: string[]
-  }
-  export interface ParsedItemShape {
+    tier: 'primitives' | 'components' | 'blocks'
     name: string
     description: string
-    props: Array<{
-      name: string
-      type: 'enum' | 'boolean' | 'string' | 'number' | 'react-node'
-      values?: string[]
-      default?: string | number | boolean
-      description?: string
-      required?: boolean
-    }>
-    examples: Array<{
-      name: string
-      description?: string
-      code: string
-      language: string
-    }>
-    errors: string[]
+    props: ItemProp[]
+    Component: ComponentType<any>
   }
-  export const items: DiscoveredItem[]
-  export const byId: Record<string, ParsedItemShape>
-  export const components: Record<string, React.ComponentType<any> | null>
-  // pre-compiled example function bodies, keyed by `category/id` then
-  // by the example's index in `byId[key].examples`. each body is a
-  // string the client uses with `new Function(...)` to construct the
-  // renderer. empty string = compile failed.
-  export const examples: Record<string, Record<number, string>>
-  export const dsRoot: string
+  export const items: ItemEntry[]
+  export const byId: Record<string, ItemEntry>
+  export const components: Record<string, ComponentType<any>>
+  export const byName: Record<string, ComponentType<any>>
+  export const examples: Record<string, Array<{ title?: string; description?: string; code: string }>>
+  export const props: Record<string, ItemProp[]>
 }
 
-declare module 'virtual:modo-items-css'
+declare module 'virtual:modo-items-css' {
+  const css: string
+  export default css
+}
 
-declare module 'modo.panel' {
+declare module 'virtual:modo-shell' {
   import type { ComponentType } from 'react'
-  const Panel: ComponentType
-  export default Panel
+  export type ResolvedShellExport = {
+    Button: ComponentType<any>
+    Link: ComponentType<any>
+    Code: ComponentType<any>
+    Sidebar: { Root: ComponentType<any>; Item: ComponentType<any>; Section: ComponentType<any> }
+    Panel: ComponentType<any>
+  }
+  export const shell: ResolvedShellExport
+  export const shellCSS: string
 }
 
-declare module 'modo.head' {
-  export const SCRIPT: string
+declare module 'virtual:modo-shell-css' {
+  const css: string
+  export default css
 }
 
-declare module 'virtual:modo-elevated' {
-  import type { ComponentType, ReactNode } from 'react'
-  // the lib doesn't know the user's component signature — pass through
-  // whatever props (children, data-aui, etc.) the calling site supplies.
-  // the user's convention file is responsible for declaring/accepting
-  // its own props.
-  const Elevated: ComponentType<{ children?: ReactNode; [key: string]: unknown }>
-  export default Elevated
-  export const isProvided: boolean
+declare module 'virtual:modo-shell-ds-css' {
+  const css: string
+  export default css
+}
+
+declare module 'virtual:modo-warnings' {
+  export const warnings: string[]
 }

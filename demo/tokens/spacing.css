@@ -1,13 +1,11 @@
-/* spacing tokens — t-shirt scale */
+/* spacing tokens — shadcn-style scale plus t-shirt extensions. */
 :root {
-  --0: 0;
-  --px: 1px;
-  --xxs: 2px;
-  --xs: 4px;
-  --sm: 8px;
-  --md: 12px;
-  --lg: 16px;
-  --xl: 24px;
-  --2xl: 32px;
-  --3xl: 48px;
+  --space-0: 0;
+  --space-px: 1px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
 }

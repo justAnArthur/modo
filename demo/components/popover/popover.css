@@ -1,24 +1,33 @@
-/* popover — demo-specific visuals. the panel body bg + shadow come from
-   <Elevated offset={2}>; this file holds sizing, typography, and the
-   focus ring. the wrap's opacity/transform/clip-path transitions are
-   driven from the JSX style prop. */
+/* popover — demo-specific visuals for the Popover component. */
 
-.popover-body {
-  width: max-content;
-  max-width: min(92vw, 20rem);
-  padding: var(--lg, 16px);
+.my-popover {
+  position: relative;
+  display: inline-block;
+}
+
+.my-popover-trigger {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--background);
   color: var(--foreground);
-  outline: none;
-  font: inherit;
-  font-size: 13px;
-  line-height: 1.5;
+  cursor: pointer;
 }
 
-[data-aui="popover"] {
-  display: inline-flex;
-}
-
-[data-aui="popover-trigger"]:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--accent);
+.my-popover-panel {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  display: block;
+  padding: var(--space-3);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-3);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  z-index: 10;
 }

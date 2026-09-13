@@ -1,0 +1,45 @@
+/* Shell DS Sidebar — minimal visual only. */
+
+[data-aui="shell-sidebar"] {
+  padding: var(--space-4, 16px);
+  font-size: 0.875rem;
+}
+
+[data-aui="shell-sidebar-section"] {
+  margin: 0 0 var(--space-4, 16px);
+}
+
+[data-aui="shell-sidebar-section-title"] {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-tight, -0.01em);
+  color: var(--muted-foreground, #71717a);
+  margin: 0 0 var(--space-2, 8px);
+  padding: 0 var(--space-2, 8px);
+}
+
+[data-aui="shell-sidebar-section-items"] {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+[data-aui="shell-sidebar-item"] {
+  display: block;
+  padding: var(--space-2, 8px);
+  border-radius: var(--radius-sm, 4px);
+  color: var(--foreground, #18181b);
+  text-decoration: none;
+  transition: background-color var(--motion-fast, 120ms) var(--ease-standard);
+}
+
+[data-aui="shell-sidebar-item"]:hover {
+  background: var(--muted, #f4f4f5);
+}
+
+[data-aui="shell-sidebar-item"][data-active="true"] {
+  background: var(--muted, #f4f4f5);
+  color: var(--accent, #3b82f6);
+  font-weight: 600;
+}

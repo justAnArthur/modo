@@ -1,20 +1,23 @@
-// stub for `modo add component <name>`.
-import { Elevated } from 'modo-atomic-ui'
+import type { ReactNode } from 'react'
+import './__NAME__.css'
 
-export default function __NAME_PASCAL__({
-  // TODO: define the props your component accepts.
-  trigger,
-  children,
-}: {
-  trigger?: React.ReactNode
-  children?: React.ReactNode
-}) {
-  return (
-    <Elevated offset={3}>
-      <div data-component="__NAME__">
-        {trigger}
-        {children}
-      </div>
-    </Elevated>
-  )
+export interface __NAME_PASCAL__Props {
+  /** Description of the primary prop. */
+  children?: ReactNode
+  /** Optional className. */
+  className?: string
+}
+
+/**
+ * __NAME_PASCAL__ — short description.
+ *
+ * @example
+ * # Basic
+ *
+ * ```tsx
+ * <__NAME_PASCAL__>Hello</__NAME_PASCAL__>
+ * ```
+ */
+export default function __NAME_PASCAL__({ children, className }: __NAME_PASCAL__Props) {
+  return <div className={className}>{children}</div>
 }

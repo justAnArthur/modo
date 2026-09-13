@@ -14,8 +14,8 @@ user-visible feature. The public API surface stays the same: `defineConfig`,
 
 Top 3 things I'd cut first:
 
-1. **5 dead subpath exports** (`./check`, `./schema`, `./tsdoc`, `./css-parser`,
-   `./modo-config`, plus the "back-compat" `./surfaces-runtime`). They're
+1. **5 dead subpath exports** (`./check`, `./schema`, `./tsdoc.parser`, `./css.parser`,
+   `./config.loader`, plus the "back-compat" `./surfaces-runtime`). They're
    internal plumbing dressed as public API.
 2. **The hand-rolled `ExampleCard` + `PropTable` in `index/+Page.tsx`** duplicate
    `ExampleBlock` (from `example-renderer.tsx`) and the prop table from
@@ -48,9 +48,9 @@ export type { SiteConfig } from './schema'
 | `./schema` | `check.ts` only | no | **delete** |
 | `./check` | `cli.ts` only | no | **delete** |
 | `./surfaces-runtime` | not used by anyone | "back-compat" for v0.0.0 | **delete** |
-| `./tsdoc` | `check.ts` only | no | **delete** |
-| `./css-parser` | `tokens.ts` plugin + `check.ts` | no | **delete** |
-| `./modo-config` | `user-css.ts` plugin + `check.ts` + `cli.ts` | no | **delete** |
+| `./tsdoc.parser` | `check.ts` only | no | **delete** |
+| `./css.parser` | `tokens.ts` plugin + `check.ts` | no | **delete** |
+| `./config.loader` | `user-css.ts` plugin + `check.ts` + `cli.ts` | no | **delete** |
 
 The 5 internal subpath exports were never intended as public API. They exist
 because `bunup`'s `exports({})` plugin emits one `.js`+`.d.ts` per `src/exports/*`
@@ -87,10 +87,10 @@ re-touch.
 
 #### 1. Dead subpath exports (5 subpaths, ~30 lines of build glue + package.json)
 
-**Files:** `lib/package.json` (`exports` map), `lib/src/exports/{check,schema,tsdoc,css-parser,modo-config,surfaces-runtime}.{ts,tsx}`.
+**Files:** `lib/package.json` (`exports` map), `lib/src/exports/{check,schema,tsdoc,css.parser,config.loader,surfaces-runtime}.{ts,tsx}`.
 
 **Why dead:**
-- `./check`, `./schema`, `./tsdoc`, `./css-parser`, `./modo-config` are only
+- `./check`, `./schema`, `./tsdoc.parser`, `./css.parser`, `./config.loader` are only
   imported by other internal modules. No user code can import them without
   knowing internal layout. None of them are documented in AGENTS.md.
 - `./surfaces-runtime` is the canonical source of the same exports (re-exported
@@ -185,7 +185,7 @@ list down. **Minor (~3 lines).** Skip in this pass.
 #### 9. `user-css.ts` calls `loadModoConfig` on every load (mild perf bug)
 
 `user-css.ts:31` calls `loadModoConfig` on every `load(id)` call. Vite calls
-`load` once per virtual module — but both `virtual:modo-config` and
+`load` once per virtual module — but both `virtual:config.loader` and
 `virtual:modo-user-css` invoke the same `load`, so `loadModoConfig` is
 called twice per HMR cycle (once for each virtual module that doesn't
 match `id`). **Mild fix:** cache the config load in the plugin closure.
@@ -274,7 +274,7 @@ The TSDoc parser is the lib's core differentiator. It does:
 It's a lot of code, but every piece is needed. **Don't touch.** Phase 4
 ("MDX") might add to it.
 
-#### 17. `css-parser.ts` is 218 lines
+#### 17. `css.parser.ts` is 218 lines
 
 Token parser: handles prefix inference, group comments, `parseSections`,
 `buildGroup` for each of 7 groups, `inferRole`, `inferSemantic`. Could
@@ -311,7 +311,7 @@ line). ~30 seconds. **Keep `elevated`**.
 - Public API: `defineConfig`, `Elevated`/`SurfaceProvider`/`useSurface`, `SiteConfig`.
 - CLI: all 5 commands.
 - Templates: both `default/` and `stubs/`.
-- `tsdoc.ts`, `css-parser.ts`, `modo-config.ts`, `check.ts` (the actual
+- `tsdoc.ts`, `css.parser.ts`, `config.loader.ts`, `check.ts` (the actual
   modules — just their subpath exports go away).
 - TSDoc parser, example compiler, example renderer.
 - `lib/_archived/` (history).

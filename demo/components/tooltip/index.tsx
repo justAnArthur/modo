@@ -1,8 +1,8 @@
 import './tooltip.css'
-import { useState } from "react";
+import { useState } from 'react'
 
 /**
- * Floating label that appears on hover. Uses `<Elevated offset={3}>`.
+ * Floating label on hover. Simple bubble — no popper math.
  *
  * @example
  * # Default
@@ -26,9 +26,9 @@ import { useState } from "react";
  * ```
  */
 export default function Tooltip({
-                                  label = 'Tooltip text',
-                                  children = 'Hover me',
-                                }: {
+  label = 'Tooltip text',
+  children = 'Hover me',
+}: {
   /** Text shown in the tooltip. @default 'Tooltip text' */
   label?: string
   /** The trigger element. @default 'Hover me' */
@@ -37,46 +37,15 @@ export default function Tooltip({
   const [open, setOpen] = useState(false)
 
   return (
-    <span
-      data-aui="tooltip"
-      style={{ position: 'relative', display: 'inline-block' }}
-      tabIndex={0}
-    >
+    <span className="my-tooltip">
       <span
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
-        data-aui="tooltip-trigger"
-        style={{
-          display: 'inline-block',
-          padding: '4px 8px',
-          border: '1px dashed var(--border)',
-          borderRadius: 'var(--radius-md, 6px)',
-        }}
+        className="my-tooltip-trigger"
       >
         {children}
       </span>
-
-      {open &&
-				<span
-					data-aui="tooltip-body"
-					style={{
-            position: 'absolute',
-            bottom: 'calc(100% + 6px)',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            padding: '4px 8px',
-            background: 'var(--surface-3, var(--background))',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-sm, 4px)',
-            boxShadow: 'var(--shadow-3)',
-            fontSize: 11,
-            color: 'var(--foreground)',
-            whiteSpace: 'nowrap',
-            zIndex: 10,
-          }}
-				>
-        {label}
-      </span>}
+      {open && <span className="my-tooltip-bubble">{label}</span>}
     </span>
   )
 }

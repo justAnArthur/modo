@@ -1,14 +1,12 @@
-/* typography tokens */
+/* typography tokens — system stack + t-shirt scale. */
 :root {
-  --sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --mono: ui-monospace, SFMono-Regular, 'JetBrains Mono Variable', monospace;
-  --serif: 'Iowan Old Style', 'Apple Garamond', Baskerville, 'Times New Roman', serif;
-  --xs: 12px;
-  --sm: 13px;
-  --base: 14px;
-  --md: 15px;
-  --lg: 17px;
-  --xl: 20px;
-  --2xl: 24px;
-  --3xl: 30px;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, 'JetBrains Mono Variable', monospace;
+
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
 }
