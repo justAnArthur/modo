@@ -14,7 +14,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <aside data-aui="panel">
         <shell.Panel>
           {panelItems.map((it) => (
-            <PanelItem key={it.bundlePath} item={it} />
+            <PanelItem key={it.bundlePath} item={it} shell={shell} />
           ))}
         </shell.Panel>
       </aside>
@@ -22,12 +22,12 @@ export function Shell({ children }: { children: ReactNode }) {
   )
 }
 
-function PanelItem({ item }: { item: (typeof panelItems)[number] }) {
-  const LabelComp = shell.primitives[item.label]
+function PanelItem({ item, shell: shellProp }: { item: (typeof panelItems)[number]; shell: typeof shell }) {
+  const LabelComp = shellProp.primitives[item.label]
   return (
     <section data-aui="panel-item">
       {LabelComp ? <LabelComp>{item.label}</LabelComp> : <span>{item.label}</span>}
-      <item.Component />
+      <item.Component shell={shellProp} />
     </section>
   )
 }
