@@ -75,7 +75,7 @@ The bump + release + dual-publish pipeline is driven by [`just-github-actions-n-
 
 ### Pipeline
 
-1. Conventional commit to `main` → `bump-version.yml` reads the scope (`lib` or `modo`), bumps `lib/package.json`, creates annotated tag `modo@<version>` with JSON `{"deployTargets":["npm"]}`, pushes the tag.
+1. Conventional commit to `main` → `bump-version.yml` reads the scope (`lib` or `modo` or `justanarthur` or `@justanarthur/modo`), bumps `lib/package.json`, creates annotated tag `@justanarthur/modo@<version>` with JSON `{"deployTargets":["npm"]}`, pushes the tag.
 2. Tag push → `publish-npm-on-tag.yml` resolves metadata, installs deps, builds, runs `bun publish -p --access public --tag <dist-tag>` to npmjs.com.
 3. Bun's `postpublish` lifecycle runs `lib/scripts/publish-to-github-packages.mjs`, which swaps `.npmrc` to `https://npm.pkg.github.com/`, re-runs `bun publish --ignore-scripts --access public`, then restores the original `.npmrc`.
 4. `publish-npm-on-tag.yml` creates the GitHub Release with conventional-commit notes.
@@ -85,8 +85,8 @@ The bump + release + dual-publish pipeline is driven by [`just-github-actions-n-
 The toolkit's tag annotation must be a JSON object. The first tag has to be created manually because there is no prior commit for `bump-version.yml` to derive it from:
 
 ```sh
-git tag -a modo@0.1.0 -m '{"deployTargets":["npm"]}'
-git push origin modo@0.1.0
+git tag -a @justanarthur/modo@0.1.0 -m '{"deployTargets":["npm"]}'
+git push origin @justanarthur/modo@0.1.0
 ```
 
 From the second release onward, `bump-version.yml` generates the annotation automatically.

@@ -1,10 +1,10 @@
 {
-  "name": "modo",
+  "name": "@justanarthur/modo",
   "type": "module",
   "version": "0.1.0",
   "description": "Atomic design system renderer — reads tokens/primitives/components/blocks and produces a docs site that uses the user's components in the chrome.",
   "properties": {
-    "gitCommitScopeRelatedNames": "lib,modo"
+    "gitCommitScopeRelatedNames": "lib,modo,justanarthur,@justanarthur/modo,justanarthur/modo"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
