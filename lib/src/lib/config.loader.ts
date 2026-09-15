@@ -27,7 +27,7 @@ export async function loadModoConfig(configPath: string): Promise<SiteConfig> {
       outfile: outFile,
       platform: 'node',
       target: 'es2022',
-      external: ['react', 'react-dom', 'react/jsx-runtime', 'modo', 'modo/config'],
+      external: ['react', 'react-dom', 'react/jsx-runtime', '@justanarthur/modo', '@justanarthur/modo/config'],
       loader: { '.ts': 'ts', '.tsx': 'tsx', '.css': 'empty' },
     })
     let mod: { default?: unknown }
@@ -35,9 +35,9 @@ export async function loadModoConfig(configPath: string): Promise<SiteConfig> {
       mod = (await import(pathToFileURL(outFile).href)) as { default?: unknown }
     } catch (err) {
       const msg = (err as Error).message ?? String(err)
-      if (msg.includes('Cannot find module') && msg.includes('modo')) {
+      if (msg.includes('Cannot find module') && msg.includes('@justanarthur/modo')) {
         throw new Error(
-          `Cannot resolve "modo" while loading modo.config.ts.\nMake sure dependencies are installed (run \`bun install\` or \`npm install\`).`,
+          `Cannot resolve "@justanarthur/modo" while loading modo.config.ts.\nMake sure dependencies are installed (run \`bun install\` or \`npm install\`).`,
         )
       }
       throw err

@@ -1,3 +1,3 @@
-import { defineConfig } from 'modo/config'
+import { defineConfig } from '@justanarthur/modo/config'
 
 export default defineConfig({ name: 'empty' })

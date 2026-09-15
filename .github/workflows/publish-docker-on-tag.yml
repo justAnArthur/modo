@@ -1,0 +1,162 @@
+# publish-docker-on-tag.yml
+# ---
+# builds and publishes a docker image to ghcr, then creates a github
+# release with auto-generated release notes when a version tag is pushed.
+#
+# automatically skips packages that don't have "docker" in their tag
+# annotation's deploy targets. for legacy tags without annotations,
+# falls back to the get-dockerfile-path action (exits if no Dockerfile).
+#
+# copy this file into your repo's `.github/workflows/` and adjust
+# the `push.tags` pattern to match your package naming convention.
+#
+# can also be called as a reusable workflow:
+#
+#   jobs:
+#     publish:
+#       uses: justAnArthur/just-github-actions-n-workflows/.github/workflows/publish-docker-on-tag.yml@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+#       with:
+#         tag: ${{ github.ref_name }}
+#       secrets:
+#         NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+#
+# required secrets:
+#   NPM_TOKEN — npm registry token (optional, passed as docker build arg)
+# ---
+
+# toolkit-ref: @justanarthur/just-github-actions-n-workflows@1.0.1
+name: publish-docker-on-tag
+run-name: "publish-docker — ${{ inputs.tag || github.ref_name }}"
+
+on:
+  push:
+    tags: [ "**@*" ]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'tag to build (e.g. "@scope/pkg@1.2.3-canary.4")'
+        type: string
+        required: true
+  workflow_call:
+    inputs:
+      tag:
+        description: 'tag to build (e.g. "@scope/pkg@1.2.3-canary.4")'
+        type: string
+        required: true
+    secrets:
+      NPM_TOKEN:
+        description: "npm registry token (passed as docker build arg)"
+        required: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  resolve-meta:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      pkg_name: ${{ steps.meta.outputs.pkg_name }}
+      version: ${{ steps.meta.outputs.version }}
+      is_prerelease: ${{ steps.meta.outputs.is_prerelease }}
+      has_annotation: ${{ steps.meta.outputs.has_annotation }}
+      publish_docker: ${{ steps.meta.outputs.publish_docker }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag || github.ref_name }}
+          lfs: true
+
+      - name: Fetch all tags
+        uses: justAnArthur/just-github-actions-n-workflows/actions/fetch-tags@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+
+      - name: Resolve tag metadata
+        id: meta
+        uses: justAnArthur/just-github-actions-n-workflows/actions/resolve-tag-meta@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+        with:
+          tag: ${{ inputs.tag || github.ref_name }}
+
+  build-and-publish-docker:
+    needs: resolve-meta
+    if: >-
+      needs.resolve-meta.outputs.has_annotation != 'true' ||
+      needs.resolve-meta.outputs.publish_docker == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.resolve-meta.outputs.tag || inputs.tag || github.ref_name }}
+          lfs: true
+
+      - name: Fetch all tags
+        uses: justAnArthur/just-github-actions-n-workflows/actions/fetch-tags@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+
+      - name: Resolve dockerfile path
+        id: dockerfile
+        uses: justAnArthur/just-github-actions-n-workflows/actions/get-dockerfile-path@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+        with:
+          tag_name: ${{ needs.resolve-meta.outputs.tag || inputs.tag || github.ref_name }}
+
+      - name: Prepare image metadata
+        id: prepare
+        uses: justAnArthur/just-github-actions-n-workflows/actions/prepare-docker-meta@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+        with:
+          tag_name: ${{ needs.resolve-meta.outputs.tag || inputs.tag || github.ref_name }}
+          dockerfile: ${{ steps.dockerfile.outputs.dockerfile }}
+          context: ${{ steps.dockerfile.outputs.context }}
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push docker image to ghcr
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ steps.prepare.outputs.context }}
+          file: ${{ steps.prepare.outputs.dockerfile }}
+          push: true
+          tags: ghcr.io/${{ steps.prepare.outputs.repository }}/${{ steps.prepare.outputs.package_image_name }}:${{ steps.prepare.outputs.image_tag }}
+          platforms: linux/amd64
+          build-args: |
+            USERNAME_GITHUB=${{ github.actor }}
+            TOKEN_GITHUB=${{ secrets.GITHUB_TOKEN }}
+            TAG_NAME=${{ steps.prepare.outputs.original_tag }}
+            SANITIZED_IMAGE_TAG=${{ steps.prepare.outputs.image_tag }}
+            NPM_TOKEN=${{ secrets.NPM_TOKEN }}
+          labels: |
+            org.opencontainers.image.version=${{ steps.prepare.outputs.original_tag }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.description=Docker image for ${{ steps.prepare.outputs.package_raw }} built from tag ${{ steps.prepare.outputs.original_tag }}
+
+      - name: Generate release notes
+        id: generate_release_notes
+        uses: justAnArthur/just-github-actions-n-workflows/actions/generate-release-notes@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+        with:
+          tag_name: ${{ steps.prepare.outputs.original_tag }}
+          root_dir: ${{ github.workspace }}
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.prepare.outputs.original_tag }}
+          name: ${{ steps.prepare.outputs.original_tag }}
+          prerelease: ${{ needs.resolve-meta.outputs.is_prerelease == 'true' }}
+          body: |
+            ## release notes
+
+            ${{ steps.generate_release_notes.outputs.release_notes }}
+
+            ## docker image
+
+            published to [github container registry](https://github.com/${{ github.repository }}/pkgs/container/${{ steps.prepare.outputs.repo_name }}%2F${{ steps.prepare.outputs.package_image_name }}?tag=${{ steps.prepare.outputs.image_tag }})
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
