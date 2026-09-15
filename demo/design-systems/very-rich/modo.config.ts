@@ -1,7 +1,7 @@
-import { defineConfig } from 'modo-atomic-ui/config'
+import { defineConfig } from 'modo/config'
 
 export default defineConfig({
-  name: 'modo-atomic-ui demo',
+  name: 'modo demo',
   description: 'the reference impl. tokens → primitives → components → blocks.',
   // explicit shell mapping — demonstrates the resolver's first tier.
   // the Panel slot would otherwise fall through to the user's components/ panel

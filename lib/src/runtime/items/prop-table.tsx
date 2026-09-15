@@ -4,7 +4,7 @@ export function PropTable({ itemId }: { itemId: string }) {
   const list = propsMap[itemId] ?? []
   if (!list.length) return <p>No documented props.</p>
   return (
-    <table data-aui="prop-table">
+    <table data-modo="prop-table">
       <thead>
         <tr>
           <th>Name</th>

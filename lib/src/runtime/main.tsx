@@ -20,7 +20,7 @@ void examples
 void shell
 
 const rootEl = document.getElementById('root')
-if (!rootEl) throw new Error('modo-atomic-ui: missing #root in index.html')
+if (!rootEl) throw new Error('modo: missing #root in index.html')
 
 createRoot(rootEl).render(
   <StrictMode>

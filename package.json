@@ -1,13 +1,13 @@
 {
-  "name": "modo-atomic-ui-monorepo",
+  "name": "modo-monorepo",
   "version": "0.0.0",
   "private": true,
-  "description": "modo-atomic-ui — atomic design system renderer. monorepo root.",
+  "description": "modo — atomic design system renderer. monorepo root.",
   "type": "module",
   "workspaces": ["lib", "demo"],
   "scripts": {
-    "build": "bun --filter 'modo-atomic-ui' build",
-    "dev": "bun --filter '@modo-atomic-ui/demo' dev",
+    "build": "bun --filter 'modo' build",
+    "dev": "bun --filter '@modo/demo' dev",
     "check": "bun --filter '*' check",
     "typecheck": "bun --filter '*' check"
   },

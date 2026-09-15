@@ -1,4 +1,4 @@
-import { defineConfig } from 'modo-atomic-ui/config'
+import { defineConfig } from 'modo/config'
 
 export default defineConfig({
   name: '__NAME__',

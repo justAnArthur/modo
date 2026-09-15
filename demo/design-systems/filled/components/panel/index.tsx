@@ -2,7 +2,7 @@ import './panel.css'
 
 /**
  * Right-side panel wrapper. The lib's docs chrome renders this inside
- * `<aside data-aui="panel">`.
+ * `<aside data-modo="panel">`.
  *
  * @example
  * # Default
@@ -18,7 +18,7 @@ export default function Panel({ children }: {
   children?: React.ReactNode
 }) {
   return (
-    <div data-aui="shell-panel" className="my-panel">
+    <div data-modo="shell-panel" className="my-panel">
       {children}
     </div>
   )

@@ -1,5 +1,5 @@
 {
-  "name": "modo-atomic-ui",
+  "name": "modo",
   "type": "module",
   "version": "0.1.0",
   "description": "Atomic design system renderer — reads tokens/primitives/components/blocks and produces a docs site that uses the user's components in the chrome.",

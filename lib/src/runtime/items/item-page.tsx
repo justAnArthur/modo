@@ -7,20 +7,20 @@ export function ItemPage({ tier, id }: { tier: 'primitives' | 'components' | 'bl
   if (!entry) {
     return (
       <article>
-        <h1 data-aui="page-title">{tier}/{id}</h1>
-        <p data-aui="page-lead">Item not found.</p>
+        <h1 data-modo="page-title">{tier}/{id}</h1>
+        <p data-modo="page-lead">Item not found.</p>
       </article>
     )
   }
   return (
     <article>
       <header>
-        <h1 data-aui="page-title">{entry.name}</h1>
-        {entry.description ? <p data-aui="page-lead">{entry.description}</p> : null}
+        <h1 data-modo="page-title">{entry.name}</h1>
+        {entry.description ? <p data-modo="page-lead">{entry.description}</p> : null}
       </header>
       <ItemExamples examples={examplesMap[`${tier}:${id}`] ?? []} componentName={entry.name} />
-      <section data-aui="section">
-        <h2 data-aui="section-title">Props</h2>
+      <section data-modo="section">
+        <h2 data-modo="section-title">Props</h2>
         <PropTable itemId={`${tier}:${id}`} />
       </section>
     </article>

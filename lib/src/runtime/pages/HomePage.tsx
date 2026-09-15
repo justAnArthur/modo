@@ -9,14 +9,14 @@ const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1)
 
 export function HomePage() {
   return (
-    <main data-aui="content">
+    <main data-modo="content">
       <header>
-        <h1 data-aui="page-title">Foundations</h1>
-        <p data-aui="page-lead">Tokens, primitives, components, and blocks in this design system.</p>
+        <h1 data-modo="page-title">Foundations</h1>
+        <p data-modo="page-lead">Tokens, primitives, components, and blocks in this design system.</p>
       </header>
       {tokens.length > 0 && (
-        <section data-aui="section">
-          <h2 data-aui="section-title">Tokens</h2>
+        <section data-modo="section">
+          <h2 data-modo="section-title">Tokens</h2>
           <ul>
             {tokens.map((g) => (
               <li key={g.name}>
@@ -42,8 +42,8 @@ function TierSection({ title, tier, list }: {
   list: typeof items
 }) {
   return (
-    <section data-aui="section">
-      <h2 data-aui="section-title">{title}</h2>
+    <section data-modo="section">
+      <h2 data-modo="section-title">{title}</h2>
       <ul>
         {list.map((it) => (
           <li key={it.id}>

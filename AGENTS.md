@@ -1,8 +1,8 @@
-# AGENTS.md — modo-atomic-ui monorepo
+# AGENTS.md — modo monorepo
 
 ## layout
 
-- `lib/` — the npm package `modo-atomic-ui`. public API, schemas, internal Vike renderer, vite plugins, structural CSS, scaffold templates, `modo` CLI.
+- `lib/` — the npm package `modo`. public API, schemas, internal Vike renderer, vite plugins, structural CSS, scaffold templates, `modo` CLI.
 - `demo/` — the reference design system. tokens, primitives, components, blocks, `overrides.css`. the lib's user; everything the demo ships is "host content" that proves the lib is zero-content.
 
 ## conventions
@@ -24,6 +24,6 @@
 - `primitives/<name>/<name>.mdx` — long-form docs (reserved for future MDX routing; not yet consumed by the lib).
 - `components/`, `blocks/` — same shape as primitives/.
 
-## chrome hooks (data-aui attrs)
+## chrome hooks (data-modo attrs)
 
-`data-aui="app"`, `"sidebar"`, `"content"`, `"header"`, `"section"`, `"section-title"`, `"page-title"`, `"page-lead"`, `"swatch"`, `"example-card"`, `"example-card-meta"`, `"example-card-stage"`, `"example-toggle"`, `"example-code"`, `"prop-table"`, `"raw-json"`. the lib sets structural styles for all of these; the user styles their own components via the same attrs. `data-aui="elevated"` is the contract the elevation primitives set on their root div — the host owns any visual styling for it.
+`data-modo="app"`, `"sidebar"`, `"content"`, `"header"`, `"section"`, `"section-title"`, `"page-title"`, `"page-lead"`, `"swatch"`, `"example-card"`, `"example-card-meta"`, `"example-card-stage"`, `"example-toggle"`, `"example-code"`, `"prop-table"`, `"raw-json"`. the lib sets structural styles for all of these; the user styles their own components via the same attrs. `data-modo="elevated"` is the contract the elevation primitives set on their root div — the host owns any visual styling for it.

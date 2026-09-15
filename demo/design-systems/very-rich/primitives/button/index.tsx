@@ -95,7 +95,7 @@ export default function Button({
     <button
       data-variant={variant}
       data-size={size}
-      data-aui="shell-button"
+      data-modo="shell-button"
       disabled={disabled}
       onClick={onClick}
       className={className ? `my-btn ${className}` : 'my-btn'}

@@ -4,14 +4,14 @@ import { SidebarNav } from '../nav'
 
 export function Shell({ children }: { children: ReactNode }) {
   return (
-    <div data-aui="app">
-      <aside data-aui="sidebar">
+    <div data-modo="app">
+      <aside data-modo="sidebar">
         <shell.Sidebar.Root>
           <SidebarNav />
         </shell.Sidebar.Root>
       </aside>
       {children}
-      <aside data-aui="panel">
+      <aside data-modo="panel">
         <shell.Panel>
           {panelItems.map((it) => (
             <PanelItem key={it.bundlePath} item={it} shell={shell} />
@@ -25,7 +25,7 @@ export function Shell({ children }: { children: ReactNode }) {
 function PanelItem({ item, shell: shellProp }: { item: (typeof panelItems)[number]; shell: typeof shell }) {
   const LabelComp = shellProp.primitives[item.label]
   return (
-    <section data-aui="panel-item">
+    <section data-modo="panel-item">
       {LabelComp ? <LabelComp>{item.label}</LabelComp> : <span>{item.label}</span>}
       <item.Component shell={shellProp} />
     </section>

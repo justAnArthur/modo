@@ -25,8 +25,8 @@ export function TokenGroupView({ group }: { group: string }) {
   if (!g) {
     return (
       <article>
-        <h1 data-aui="page-title">Tokens / {group}</h1>
-        <p data-aui="page-lead">No tokens found for group "{group}".</p>
+        <h1 data-modo="page-title">Tokens / {group}</h1>
+        <p data-modo="page-lead">No tokens found for group "{group}".</p>
       </article>
     )
   }
@@ -34,10 +34,10 @@ export function TokenGroupView({ group }: { group: string }) {
   return (
     <article>
       <header>
-        <h1 data-aui="page-title">Tokens / {g.name}</h1>
-        <p data-aui="page-lead">{g.vars.length} variables</p>
+        <h1 data-modo="page-title">Tokens / {g.name}</h1>
+        <p data-modo="page-lead">{g.vars.length} variables</p>
       </header>
-      <section data-aui="section" style={isColors ? grid : stack}>
+      <section data-modo="section" style={isColors ? grid : stack}>
         {g.vars.map((v) => <SwatchCard key={v.name} v={v} />)}
       </section>
     </article>
@@ -68,8 +68,8 @@ function Swatch({ sw }: { sw?: Swatch }): ReactElement | null {
     border: '1px solid var(--border, #e4e4e7)',
     borderRadius: 'var(--radius-sm, 4px)',
   }
-  const box = (style: CSSProperties) => <span data-aui="swatch" style={{ ...base, ...style }} />
-  const text = (style: CSSProperties) => <span data-aui="swatch" style={{ ...base, padding: '0 6px', ...style }}>Aa</span>
+  const box = (style: CSSProperties) => <span data-modo="swatch" style={{ ...base, ...style }} />
+  const text = (style: CSSProperties) => <span data-modo="swatch" style={{ ...base, padding: '0 6px', ...style }}>Aa</span>
   switch (sw.kind) {
     case 'color': return box({ width: 24, height: 24, background: sw.hex })
     case 'length': return box({ width: Math.min(sw.px, 80), height: 8, background: 'var(--accent, #3b82f6)' })

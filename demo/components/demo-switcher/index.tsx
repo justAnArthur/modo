@@ -22,7 +22,7 @@ export default function DemoSwitcher({ shell }: { shell: ResolvedShellExport }) 
     label: `${p.name}${p.url.startsWith(here) ? ' (current)' : ''}`,
   }))
   return (
-    <div data-aui="demo-switcher">
+    <div data-modo="demo-switcher">
       <shell.Select
         value={peers.find((p) => p.url.startsWith(here))?.url ?? peers[0]!.url}
         onChange={(url: string) => {

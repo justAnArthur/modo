@@ -1,5 +1,5 @@
 {
-  "name": "@modo-atomic-ui/demo",
+  "name": "@modo/demo",
   "type": "module",
   "private": true,
   "version": "0.1.0",
@@ -11,7 +11,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "modo-atomic-ui": "workspace:*",
+    "modo": "workspace:*",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"
   },

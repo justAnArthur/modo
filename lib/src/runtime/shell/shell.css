@@ -1,14 +1,14 @@
 /* Structural CSS only. No colors, no backgrounds, no component visuals.
-   The host owns all tokens and visual styling via the same data-aui attrs. */
+   The host owns all tokens and visual styling via the same data-modo attrs. */
 
-[data-aui="app"] {
+[data-modo="app"] {
   display: grid;
   grid-template-columns: 240px 1fr 280px;
   min-height: 100vh;
   font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
 }
 
-[data-aui="sidebar"] {
+[data-modo="sidebar"] {
   border-right: 1px solid var(--border);
   overflow-y: auto;
   position: sticky;
@@ -16,13 +16,13 @@
   height: 100vh;
 }
 
-[data-aui="content"] {
+[data-modo="content"] {
   padding: var(--space-5, 24px) var(--space-6, 32px);
   max-width: 100%;
   min-width: 0;
 }
 
-[data-aui="panel"] {
+[data-modo="panel"] {
   border-left: 1px solid var(--border);
   padding: var(--space-4, 16px);
   overflow-y: auto;
@@ -31,35 +31,35 @@
   height: 100vh;
 }
 
-[data-aui="page-title"] {
+[data-modo="page-title"] {
   font-size: var(--font-size-h1, 2rem);
   font-weight: 700;
   margin: 0 0 var(--space-2, 8px);
 }
 
-[data-aui="page-lead"] {
+[data-modo="page-lead"] {
   margin: 0 0 var(--space-5, 24px);
 }
 
-[data-aui="section"] {
+[data-modo="section"] {
   margin: 0 0 var(--space-6, 32px);
 }
 
-[data-aui="section-title"] {
+[data-modo="section-title"] {
   font-size: var(--font-size-h2, 1.25rem);
   font-weight: 600;
   margin: 0 0 var(--space-3, 12px);
   text-transform: capitalize;
 }
 
-[data-aui="example-card"] {
+[data-modo="example-card"] {
   border: 1px solid var(--border);
   border-radius: var(--radius-md, 6px);
   padding: var(--space-4, 16px);
   margin: 0 0 var(--space-3, 12px);
 }
 
-[data-aui="example-card-stage"] {
+[data-modo="example-card-stage"] {
   display: flex;
   align-items: center;
   gap: var(--space-3, 12px);
@@ -67,36 +67,36 @@
   min-height: 40px;
 }
 
-[data-aui="example-card-meta"] {
+[data-modo="example-card-meta"] {
   display: flex;
   align-items: center;
   gap: var(--space-2, 8px);
   margin: 0 0 var(--space-2, 8px);
 }
 
-[data-aui="example-code"] {
+[data-modo="example-code"] {
   margin: var(--space-2, 8px) 0 0;
 }
 
-[data-aui="prop-table"] {
+[data-modo="prop-table"] {
   border-collapse: collapse;
   width: 100%;
   font-size: 0.875rem;
 }
 
-[data-aui="prop-table"] th,
-[data-aui="prop-table"] td {
+[data-modo="prop-table"] th,
+[data-modo="prop-table"] td {
   border-bottom: 1px solid var(--border);
   padding: var(--space-2, 8px);
   text-align: left;
   vertical-align: top;
 }
 
-[data-aui="prop-table"] th {
+[data-modo="prop-table"] th {
   font-weight: 600;
 }
 
-[data-aui="swatch"] {
+[data-modo="swatch"] {
   display: inline-block;
   width: 1.25rem;
   height: 1.25rem;

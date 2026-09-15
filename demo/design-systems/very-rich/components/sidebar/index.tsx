@@ -28,7 +28,7 @@ import './sidebar.css'
  */
 function Sidebar({ children }: { children?: React.ReactNode }) {
   return (
-    <aside className="my-sidebar" data-aui="sidebar">
+    <aside className="my-sidebar" data-modo="sidebar">
       {children}
     </aside>
   )
@@ -50,7 +50,7 @@ function SidebarItem({
     <a
       href={href}
       className={active ? 'my-sidebar-item active' : 'my-sidebar-item'}
-      data-aui="sidebar-link"
+      data-modo="sidebar-link"
       aria-current={active ? 'page' : undefined}
     >
       {children}
@@ -68,7 +68,7 @@ function SidebarSection({
   children?: React.ReactNode
 }) {
   return (
-    <section className="my-sidebar-section" data-aui="sidebar-section">
+    <section className="my-sidebar-section" data-modo="sidebar-section">
       <h3 className="my-sidebar-section-title">{title}</h3>
       {children}
     </section>

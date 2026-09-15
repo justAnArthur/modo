@@ -1,9 +1,9 @@
-[data-aui="demo-switcher"] {
+[data-modo="demo-switcher"] {
   display: block;
   width: 100%;
 }
 
-[data-aui="demo-switcher"] select {
+[data-modo="demo-switcher"] select {
   width: 100%;
   font: inherit;
 }
