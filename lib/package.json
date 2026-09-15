@@ -3,6 +3,31 @@
   "type": "module",
   "version": "0.1.0",
   "description": "Atomic design system renderer — reads tokens/primitives/components/blocks and produces a docs site that uses the user's components in the chrome.",
+  "license": "MIT",
+  "keywords": [
+    "design-system",
+    "atomic-design",
+    "design-tokens",
+    "renderer",
+    "documentation",
+    "react",
+    "vite",
+    "primitives",
+    "components",
+    "blocks"
+  ],
+  "homepage": "https://github.com/justAnArthur/modo#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/justAnArthur/modo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/justAnArthur/modo/issues"
+  },
+  "author": {
+    "name": "justAnArthur",
+    "email": "kozubov.arthur@gmail.com"
+  },
   "properties": {
     "gitCommitScopeRelatedNames": "lib,modo,justanarthur,@justanarthur/modo,justanarthur/modo"
   },
