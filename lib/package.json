@@ -41,8 +41,7 @@
   "scripts": {
     "build": "bunup",
     "dev": "vite --config src/runtime/vite.config.ts",
-    "check": "tsc --noEmit",
-    "postpublish": "node ./scripts/publish-to-github-packages.mjs"
+    "check": "tsc --noEmit"
   },
   "dependencies": {
     "@babel/standalone": "^7.24.0",

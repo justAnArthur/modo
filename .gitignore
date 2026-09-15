@@ -20,4 +20,3 @@ dist
 .peers.json.d.ts
 lib/_archived/
 docs/
-.npmrc.bak
