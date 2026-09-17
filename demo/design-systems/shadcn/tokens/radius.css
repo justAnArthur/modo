@@ -1,0 +1,13 @@
+/*
+ * shadcn/ui radius token (neutral base color). Vendored from the `shadcn` CLI
+ * (v4.21.0) scaffold's src/index.css `:root` block. The stepped radii
+ * (--radius-sm … --radius-4xl) are derived in global.css's `@theme inline`.
+ *
+ * Note: modo's prefix-based grouping only files `--radius-*` (with a dash)
+ * under the "radius" group, so this var is listed under colors on the tokens
+ * page. The value itself is injected and applies regardless.
+ */
+
+:root {
+  --radius: 0.625rem;
+}
