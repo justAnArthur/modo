@@ -1,29 +1,7 @@
 /**
- * Extracts MUI's REAL default theme into modo token files.
- *
- *   bun scripts/extract-tokens.ts
- *
- * Sources (all from `createTheme({ cssVariables: true })`, i.e. the default
- * light scheme exactly as `@mui/material` ships it):
- *
- *   tokens/colors.css      — theme.vars.palette flattened; each entry is
- *                            `var(--mui-palette-<path>, <fallback>)`, so the
- *                            var name matches MUI's own CSS variable naming
- *                            and the fallback is the computed default value.
- *                            `*Channel` entries (raw "r g b" triplets MUI
- *                            keeps JS-side) are skipped.
- *   tokens/spacing.css     — theme.spacing(n) for n = 0..12 (plus half
- *                            steps). With cssVariables enabled, spacing(n)
- *                            returns `calc(n * var(--mui-spacing, 8px))`;
- *                            the 8px fallback is the unit, so each step is
- *                            n * 8px.
- *   tokens/radius.css      — derived from theme.shape.borderRadius (= 4):
- *                            sm = 1u (buttons, inputs), md = 2u (sheets),
- *                            lg = 4u (= the Chip default of 16px), full =
- *                            pill shape.
- *   tokens/typography.css  — theme.typography.fontFamily plus the type scale
- *                            (--text-h1..h6, body1, body2, caption) with
- *                            matching *-weight vars.
+ * Renders `createTheme({ cssVariables: true })` and writes MUI's real default
+ * theme into tokens/*.css. Run: `bun scripts/extract-tokens.ts`. The per-file
+ * breakdown (colors/spacing/radius/typography) is documented in README.md.
  */
 import { createTheme } from '@mui/material/styles'
 import { mkdir, writeFile } from 'node:fs/promises'
@@ -65,7 +43,6 @@ function flattenVars(obj: Record<string, unknown>, prefix = ''): Array<[string, 
 
 const VAR_RE = /^var\((--[a-zA-Z0-9-]+),\s*(.+)\)$/
 
-// --- colors ------------------------------------------------------------
 const paletteVars = flattenVars(theme.vars.palette)
 const colorLines: string[] = []
 for (const [path, raw] of paletteVars) {
@@ -78,7 +55,6 @@ for (const [path, raw] of paletteVars) {
   colorLines.push(`  ${name}: ${fallback};`)
 }
 
-// --- spacing -----------------------------------------------------------
 const spacingFallback = theme.spacing(1).match(/var\(--mui-spacing,\s*([\d.]+)px\)/)
 const spacingUnit = spacingFallback ? Number(spacingFallback[1]) : 8
 const spacingSteps = [...Array(13).keys(), 0.5, 1.5, 2.5, 3.5].sort((a, b) => a - b)
@@ -86,7 +62,6 @@ const spacingLines = spacingSteps.map(
   (n) => `  --space-${String(n).replace('.', '_')}: ${n * spacingUnit}px;`,
 )
 
-// --- radius ------------------------------------------------------------
 const unit = Number(theme.shape.borderRadius)
 const radiusLines = [
   `  --radius-sm: ${unit}px;`,
@@ -95,7 +70,6 @@ const radiusLines = [
   `  --radius-full: 9999px;`,
 ]
 
-// --- typography --------------------------------------------------------
 const t = theme.typography
 const variants: Array<[string, LooseVariant]> = [
   ['h1', t.h1!], ['h2', t.h2!], ['h3', t.h3!], ['h4', t.h4!], ['h5', t.h5!], ['h6', t.h6!],
@@ -107,7 +81,6 @@ for (const [name, v] of variants) {
   if (v.fontWeight !== undefined) typographyLines.push(`  --text-${name}-weight: ${v.fontWeight};`)
 }
 
-// --- write -------------------------------------------------------------
 await mkdir(tokensDir, { recursive: true })
 const files: Array<[string, string[]]> = [
   ['colors.css', colorLines],

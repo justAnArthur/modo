@@ -21,24 +21,20 @@ export function configPlugin(options: Options): Plugin {
       return null
     },
     async load(id) {
+      if (id !== RESOLVED_ID && id !== CSS_RESOLVED_ID) return null
+      const configPath =
+        process.env.MODO_CONFIG_PATH ?? resolve(options.userRoot, 'modo.config.ts')
+      const cfg = await loadModoConfig(configPath)
+
       if (id === RESOLVED_ID) {
-        const configPath =
-          process.env.MODO_CONFIG_PATH ?? resolve(options.userRoot, 'modo.config.ts')
-        const cfg = await loadModoConfig(configPath)
         return [
           `export const config = ${JSON.stringify(cfg)};`,
           `export default config;`,
         ].join('\n')
       }
-      if (id === CSS_RESOLVED_ID) {
-        const configPath =
-          process.env.MODO_CONFIG_PATH ?? resolve(options.userRoot, 'modo.config.ts')
-        const cfg = await loadModoConfig(configPath)
-        if (!cfg.css) return `export default '';`
-        const cssPath = resolve(options.userRoot, cfg.css)
-        return [`import ${JSON.stringify(cssPath)};`, `export default '';`].join('\n')
-      }
-      return null
+
+      if (!cfg.css) return `export default '';`
+      return [`import ${JSON.stringify(resolve(options.userRoot, cfg.css))};`, `export default '';`].join('\n')
     },
   }
 }

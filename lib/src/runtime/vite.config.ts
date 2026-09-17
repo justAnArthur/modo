@@ -21,14 +21,10 @@ type ViteExtension = (config: UserConfig) => UserConfig | Promise<UserConfig>
 // with native binaries like @tailwindcss/vite work unchanged.
 async function applyUserViteExtension(base: UserConfig): Promise<UserConfig> {
   const configPath = process.env.MODO_CONFIG_PATH ?? resolve(USER_ROOT, 'modo.config.ts')
-  let cfg
-  try {
-    cfg = await loadModoConfig(configPath)
-  } catch {
-    // configPlugin reports config errors with full detail once Vite starts.
-    return base
-  }
-  if (!cfg.vite) return base
+  // configPlugin reports config errors with full detail once Vite starts.
+  const cfg = await loadModoConfig(configPath).catch(() => null)
+  if (!cfg?.vite) return base
+
   const extPath = resolve(USER_ROOT, cfg.vite)
   const mod = (await import(pathToFileURL(extPath).href)) as { default?: unknown }
   if (typeof mod.default !== 'function') {
