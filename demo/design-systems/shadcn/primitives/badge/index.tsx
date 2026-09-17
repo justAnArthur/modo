@@ -2,8 +2,8 @@ import type { ReactNode } from 'react'
 import { Badge as ShadcnBadge } from './badge'
 
 /**
- * shadcn/ui Badge — small status descriptor for UI elements. Pulled via
- * `bunx shadcn@latest add badge` (radix-nova style, neutral base color).
+ * shadcn/ui Badge — small status descriptor for UI elements.
+ * Pulled via `bunx shadcn@latest add badge` (radix-nova style, neutral base color).
  *
  * @example # Variants
  * The six visual styles of the radix-nova badge.

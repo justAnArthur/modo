@@ -4,8 +4,8 @@ import { Badge as FluidBadge } from './badge'
 /**
  * Fluid Functionalism Badge — compact status label. The solid variant tints
  * the surface with a color-mix of the chosen color; the dot variant renders
- * an outlined pill with a leading color dot. Pulled via
- * `bunx shadcn@latest add @fluid/badge`.
+ * an outlined pill with a leading color dot.
+ * Pulled via `bunx shadcn@latest add @fluid/badge`.
  *
  * @example # Solid colors
  * ```tsx

@@ -2,8 +2,8 @@ import type { ReactNode } from 'react'
 import { Card as ShadcnCard, CardContent, CardDescription, CardHeader, CardTitle } from './card'
 
 /**
- * shadcn/ui Card — grouped content container with optional header. Pulled via
- * `bunx shadcn@latest add card` (radix-nova style, neutral base color).
+ * shadcn/ui Card — grouped content container with optional header.
+ * Pulled via `bunx shadcn@latest add card` (radix-nova style, neutral base color).
  * Doubles as the docs chrome's Panel slot (see modo.config.ts).
  *
  * @example # Basic

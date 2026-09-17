@@ -4,8 +4,8 @@ import { Button as FluidButton } from './button'
 /**
  * Fluid Functionalism Button — the system's primary action trigger, with a
  * 1px press-collapse (box-shadow spread, not scale), fluid hover states, and
- * Inter variable font-weight transitions on hover. Pulled via
- * `bunx shadcn@latest add @fluid/button`.
+ * Inter variable font-weight transitions on hover.
+ * Pulled via `bunx shadcn@latest add @fluid/button`.
  *
  * @example # Variants
  * The four @fluid styles: primary fill, secondary accent, tertiary outline, ghost.

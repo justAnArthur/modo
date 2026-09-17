@@ -7,8 +7,8 @@ import {
 } from './select'
 
 /**
- * shadcn/ui Select — single-choice dropdown backed by Radix. Pulled via
- * `bunx shadcn@latest add select` (radix-nova style, neutral base color).
+ * shadcn/ui Select — single-choice dropdown backed by Radix.
+ * Pulled via `bunx shadcn@latest add select` (radix-nova style, neutral base color).
  * This adapter implements modo's Select shell contract (value / onChange /
  * options), so the docs chrome and demo switcher render with it.
  *

@@ -2,8 +2,8 @@ import type { ReactNode } from 'react'
 import { Button as ShadcnButton } from './button'
 
 /**
- * shadcn/ui Button — primary action trigger. Pulled via
- * `bunx shadcn@latest add button` (radix-nova style, neutral base color).
+ * shadcn/ui Button — primary action trigger.
+ * Pulled via `bunx shadcn@latest add button` (radix-nova style, neutral base color).
  *
  * @example # Variants
  * The six visual styles of the radix-nova button.

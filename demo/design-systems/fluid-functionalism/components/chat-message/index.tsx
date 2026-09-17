@@ -5,8 +5,8 @@ import { ChatMessage as FluidChatMessage } from './chat-message'
  * Fluid Functionalism ChatMessage — a single transcript entry with baked-in
  * spring entrance and layout motion. User messages get a tinted bubble;
  * assistant replies render flush-left plain text; timestamps and actions sit
- * in a hover-revealed meta row. Pulled via
- * `bunx shadcn@latest add @fluid/chat-message`.
+ * in a hover-revealed meta row.
+ * Pulled via `bunx shadcn@latest add @fluid/chat-message`.
  *
  * @example # Conversation
  * The user bubble and the plain assistant reply.

@@ -11,13 +11,13 @@
  *   - `@import "shadcn/tailwind.css"` (shadcn npm package) replaced by the
  *     vendored `@custom-variant` block below — same definitions, MIT License
  *     © Vercel Inc., https://ui.shadcn.com.
- *   - `@import "@fontsource-variable/geist"` dropped (not a dependency of this
- *     workspace); `--font-sans` keeps the Geist family with a system fallback.
+ *   - `@import "@fontsource-variable/geist"` restored (dependency added).
  *   - `@source` lines added so Tailwind scans the modo item directories.
  */
 
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "@fontsource-variable/geist";
 
 @custom-variant dark (&:is(.dark *));
 

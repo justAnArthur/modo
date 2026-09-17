@@ -1,8 +1,8 @@
 import { Input as ShadcnInput } from './input'
 
 /**
- * shadcn/ui Input — native text field. Pulled via
- * `bunx shadcn@latest add input` (radix-nova style, neutral base color).
+ * shadcn/ui Input — native text field.
+ * Pulled via `bunx shadcn@latest add input` (radix-nova style, neutral base color).
  *
  * @example # Basic
  * ```tsx

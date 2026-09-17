@@ -1,8 +1,8 @@
 import { RadioGroup as ShadcnRadioGroup, RadioGroupItem } from './radio-group'
 
 /**
- * shadcn/ui RadioGroup — single-choice control backed by Radix. Pulled via
- * `bunx shadcn@latest add radio-group` (radix-nova style, neutral base color).
+ * shadcn/ui RadioGroup — single-choice control backed by Radix.
+ * Pulled via `bunx shadcn@latest add radio-group` (radix-nova style, neutral base color).
  *
  * @example # Basic
  * ```tsx
