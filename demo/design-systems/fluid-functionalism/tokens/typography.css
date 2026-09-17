@@ -1,0 +1,12 @@
+/*
+ * Fluid Functionalism type token. FF's own app renders Inter Variable
+ * (github.com/mickadesign/fluid-functionalism app/globals.css:
+ * `--font-sans: "Inter", system-ui, sans-serif`) and its font-weight ladder
+ * (`_fluid/font-weight.ts`) animates both the wght and opsz variation axes,
+ * so this workspace loads `@fontsource-variable/inter/opsz` in global.css.
+ * global.css's `@theme inline` binds the same family for Tailwind utilities.
+ */
+
+:root {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+}
