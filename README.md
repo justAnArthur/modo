@@ -54,3 +54,37 @@ bun run check
 ## license
 
 MIT
+
+## Release
+
+Published to **npmjs.com only** (the package name `modo` is taken on npmjs.com by another user; this repo publishes under the `@justanarthur/modo` scope).
+
+The bump + publish + release pipeline is driven by [`just-github-actions-n-workflows`](https://github.com/justAnArthur/just-github-actions-n-workflows) (`v1.0.1`, stock workflows installed via the toolkit CLI).
+
+### Required secret on the GitHub repo
+
+- `NPM_TOKEN` — npm automation token (publishes to npmjs.com).
+
+### Pipeline
+
+1. Conventional commit to `main` → `bump-version.yml` reads the scope (`lib` or `modo` or `justanarthur` or `@justanarthur/modo`), bumps `lib/package.json`, creates annotated tag `@justanarthur/modo@<version>` with JSON `{"deployTargets":["npm"]}`, pushes the tag.
+2. Tag push → `publish-npm-on-tag.yml` resolves metadata, installs deps, builds, runs `bun publish -p --access public --tag <dist-tag>` to npmjs.com.
+3. `publish-npm-on-tag.yml` creates the GitHub Release with conventional-commit notes.
+
+### First tag (manual)
+
+The toolkit's tag annotation must be a JSON object. The first tag has to be created manually because there is no prior commit for `bump-version.yml` to derive it from:
+
+```sh
+git tag -a @justanarthur/modo@0.1.0 -m '{"deployTargets":["npm"]}'
+git push origin @justanarthur/modo@0.1.0
+```
+
+From the second release onward, `bump-version.yml` generates the annotation automatically.
+
+### Local publish
+
+```sh
+cd lib
+NPM_TOKEN=… bun publish -p --access public
+```

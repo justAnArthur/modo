@@ -5,7 +5,7 @@
   "version": "0.1.0",
   "description": "simplest reference design system: tokens → primitives → components → blocks.",
   "dependencies": {
-    "modo": "workspace:*",
+    "@justanarthur/modo": "workspace:*",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"
   }

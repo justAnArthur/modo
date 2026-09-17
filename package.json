@@ -6,7 +6,7 @@
   "type": "module",
   "workspaces": ["lib", "demo", "demo/design-systems/*"],
   "scripts": {
-    "build": "bun --filter 'modo' build",
+    "build": "bun --filter '@justanarthur/modo' build",
     "dev": "bun --filter '@modo/demo' dev",
     "check": "bun --filter '*' check",
     "typecheck": "bun --filter '*' check"
