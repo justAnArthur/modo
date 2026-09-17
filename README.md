@@ -1,6 +1,6 @@
 # modo
 
-a lightweight CLI that renders a **docs site / playground for your design system**. zero config: the lib enforces a simple folder structure (`tokens/ → primitives/ → components/ → blocks/`), discovers it, and produces the site — including **shell inheritance**: when your components match the docs chrome's slots (Button, Link, Select, Sidebar, Panel…), the chrome itself renders with *your* components.
+a lightweight CLI that renders a **docs site / playground for your design system**. zero config: the lib enforces a simple folder structure (`tokens/ → primitives/ → components/ → blocks/`), discovers it, and produces the site — including **shell inheritance**: when your components match the docs chrome's slots (Button, Link, Select, Sidebar…), the chrome itself renders with *your* components. one Sidebar drives both the left nav and the right panel.
 
 proven against real-world design systems — see `demo/design-systems/`:
 

@@ -2,8 +2,7 @@ import { MuiProvider } from '../../theme'
 import Paper from '@mui/material/Paper'
 
 /**
- * Elevated surface. Paper-based; the lib's docs chrome inherits this for the
- * right-side panel.
+ * Elevated surface. Paper-based.
  *
  * @example
  * # Default

@@ -3,31 +3,24 @@ import { shell, panelItems } from 'virtual:modo-shell'
 import { SidebarNav } from '../nav'
 
 export function Shell({ children }: { children: ReactNode }) {
+  const { Root, Section } = shell.Sidebar
   return (
     <div data-modo="app">
       <aside data-modo="sidebar">
-        <shell.Sidebar.Root>
+        <Root>
           <SidebarNav />
-        </shell.Sidebar.Root>
+        </Root>
       </aside>
       {children}
       <aside data-modo="panel">
-        <shell.Panel>
+        <Root>
           {panelItems.map((it) => (
-            <PanelItem key={it.bundlePath} item={it} shell={shell} />
+            <Section key={it.bundlePath} title={it.label}>
+              <it.Component shell={shell} />
+            </Section>
           ))}
-        </shell.Panel>
+        </Root>
       </aside>
     </div>
-  )
-}
-
-function PanelItem({ item, shell: shellProp }: { item: (typeof panelItems)[number]; shell: typeof shell }) {
-  const LabelComp = shellProp.primitives[item.label]
-  return (
-    <section data-modo="panel-item">
-      {LabelComp ? <LabelComp>{item.label}</LabelComp> : <span>{item.label}</span>}
-      <item.Component shell={shellProp} />
-    </section>
   )
 }

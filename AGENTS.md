@@ -22,7 +22,7 @@
 - **user CSS via `modo.config.ts: css`**. injected right after the lib's structural CSS (before tokens). each DS's `global.css` is the canonical example.
 - **vite extension via `modo.config.ts: vite`**. path to a module default-exporting `(config: UserConfig) => UserConfig`, applied to the lib's Vite config — how Tailwind DSs add `@tailwindcss/vite`. the module is imported natively (never esbuild-bundled).
 - **atomic design tiers**: `primitives/`, `components/`, `blocks/`. the lib auto-discovers by directory and renders each. items are esbuild-bundled with `platform: 'browser'` (react/react-dom external) — bare imports incl. CJS transitive deps resolve.
-- **shell inheritance**: the docs chrome looks for user components per slot (Button, Link, Code in primitives; Select, Sidebar Root/Item/Section, Panel in components), matched by name + required props; unmatched slots fall back to the lib's Plain components. `modo.config.ts: shell` can pin slots explicitly.
+- **shell inheritance**: the docs chrome looks for user components per slot (Button, Link, Code in primitives; Select, Sidebar Root/Item/Section in components), matched by name + required props; unmatched slots fall back to the lib's Plain components. `modo.config.ts: shell` can pin slots explicitly. one Sidebar drives both sides: the right panel renders each `panel.items` entry as a `Sidebar.Section` inside `Sidebar.Root` (no separate Panel slot).
 - **no Next.js, no Vite config in user project** (beyond the `vite` hook): the lib owns its own Vite app. the user sees only the lib's output (the docs site).
 
 ## file naming
@@ -40,4 +40,4 @@
 
 ## chrome hooks (data-modo attrs)
 
-`data-modo="app"`, `"sidebar"`, `"content"`, `"header"`, `"section"`, `"section-title"`, `"page-title"`, `"page-lead"`, `"swatch"`, `"example-card"`, `"example-card-meta"`, `"example-card-stage"`, `"example-toggle"`, `"example-code"`, `"prop-table"`, `"raw-json"`. the lib sets structural styles for all of these; the user styles their own components via the same attrs.
+`data-modo="app"`, `"sidebar"`, `"sidebar-nav"`, `"sidebar-section"`, `"sidebar-section-title"`, `"sidebar-section-items"`, `"sidebar-item"`, `"content"`, `"panel"`, `"header"`, `"section"`, `"section-title"`, `"page-title"`, `"page-lead"`, `"swatch"`, `"example-card"`, `"example-card-meta"`, `"example-card-stage"`, `"example-toggle"`, `"example-code"`, `"prop-table"`, `"raw-json"`. the lib sets structural styles for all of these; the user styles their own components via the same attrs.

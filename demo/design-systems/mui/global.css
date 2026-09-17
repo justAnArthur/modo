@@ -4,3 +4,13 @@
 @import '@fontsource/roboto/400.css';
 @import '@fontsource/roboto/500.css';
 @import '@fontsource/roboto/700.css';
+
+/* Host-owned chrome visuals (the lib ships structure only): dividers on the
+   docs shell asides. */
+[data-modo='sidebar'] {
+  border-right: 1px solid var(--mui-palette-divider);
+}
+
+[data-modo='panel'] {
+  border-left: 1px solid var(--mui-palette-divider);
+}

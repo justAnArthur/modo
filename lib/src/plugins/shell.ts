@@ -160,7 +160,6 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
     ...resolved.Sidebar.Root.cssPaths,
     ...resolved.Sidebar.Item.cssPaths,
     ...resolved.Sidebar.Section.cssPaths,
-    ...resolved.Panel.cssPaths,
     ...panelItems.flatMap((it) => it.cssPaths),
   ]
   return {
@@ -170,7 +169,6 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
       Code: resolved.Code,
       Select: resolved.Select,
       Sidebar: { Root: resolved.Sidebar.Root, Item: resolved.Sidebar.Item, Section: resolved.Sidebar.Section },
-      Panel: resolved.Panel,
       cssFiles,
       panelItems,
     },
@@ -215,7 +213,6 @@ export function shellPlugin(options: Options): Plugin {
           { name: '__SidebarRoot', bundlePath: shell.Sidebar.Root.bundlePath, fallbackName: shell.Sidebar.Root.fallbackName },
           { name: '__SidebarItem', bundlePath: shell.Sidebar.Item.bundlePath, fallbackName: shell.Sidebar.Item.fallbackName },
           { name: '__SidebarSection', bundlePath: shell.Sidebar.Section.bundlePath, fallbackName: shell.Sidebar.Section.fallbackName },
-          { name: '__Panel', bundlePath: shell.Panel.bundlePath, fallbackName: shell.Panel.fallbackName },
         ]
         const panelItemBindings = shell.panelItems.map((it, idx) => ({
           name: `__PanelItem${idx}`,
@@ -258,7 +255,6 @@ export function shellPlugin(options: Options): Plugin {
           `  Code: __Code,`,
           `  Select: __Select,`,
           `  Sidebar: { Root: __SidebarRoot, Item: (__SidebarRoot && __SidebarRoot.Item) ?? __SidebarItem, Section: (__SidebarRoot && __SidebarRoot.Section) ?? __SidebarSection },`,
-          `  Panel: __Panel,`,
           `  primitives: __primitives,`,
           `};`,
           `export const panelItems = [${panelItemsJson}];`,
