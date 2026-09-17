@@ -1,0 +1,16 @@
+{
+  "name": "@modo/ds-mui",
+  "type": "module",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Material UI showcase: components used from @mui/material, default theme extracted into modo token groups.",
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@fontsource/roboto": "^5.3.0",
+    "@mui/material": "^9.4.0",
+    "modo": "workspace:*",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  }
+}
