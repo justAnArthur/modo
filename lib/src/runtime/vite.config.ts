@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { defineConfig, type UserConfig } from 'vite'
@@ -13,6 +14,18 @@ import { loadModoConfig } from '../lib/config.loader'
 const RUNTIME_DIR = resolve(import.meta.dirname)
 const LIB_DIR = resolve(RUNTIME_DIR, '..', '..')
 const USER_ROOT = process.env.MODO_USER_ROOT ?? process.cwd()
+
+// Bun hoists workspace deps into the monorepo root's node_modules/.bun store;
+// without that root in fs.allow, Vite 403s font URLs resolved into it.
+function workspaceRoot(dir: string): string {
+  for (let d = dir; ; ) {
+    const pkg = resolve(d, 'package.json')
+    if (existsSync(pkg) && 'workspaces' in JSON.parse(readFileSync(pkg, 'utf8'))) return d
+    const parent = resolve(d, '..')
+    if (parent === d) return dir
+    d = parent
+  }
+}
 
 type ViteExtension = (config: UserConfig) => UserConfig | Promise<UserConfig>
 
@@ -49,7 +62,13 @@ export default defineConfig(async () => {
       port: Number(process.env.MODO_PORT) || 5173,
       strictPort: true,
       fs: {
-        allow: [RUNTIME_DIR, LIB_DIR, USER_ROOT, resolve(USER_ROOT, '.modo-tmp')],
+        allow: [
+          workspaceRoot(USER_ROOT),
+          RUNTIME_DIR,
+          LIB_DIR,
+          USER_ROOT,
+          resolve(USER_ROOT, '.modo-tmp'),
+        ],
       },
     },
     optimizeDeps: {
