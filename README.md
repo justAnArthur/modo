@@ -1,59 +1,55 @@
 # modo
 
-atomic design system renderer. a library that **enforces the structure of an atomic design system** (tokens → primitives → components → blocks) and **auto-renders its docs site**, modeled on the [fluidfunctionalism](https://www.fluidfunctionalism.com/) aesthetic.
+a lightweight CLI that renders a **docs site / playground for your design system**. zero config: the lib enforces a simple folder structure (`tokens/ → primitives/ → components/ → blocks/`), discovers it, and produces the site — including **shell inheritance**: when your components match the docs chrome's slots (Button, Link, Select, Sidebar, Panel…), the chrome itself renders with *your* components.
+
+proven against real-world design systems — see `demo/design-systems/`:
+
+- **filled** — minimal reference DS
+- **shadcn/ui** — pulled with the real shadcn CLI (Tailwind v4), reorganized into modo structure
+- **fluid-functionalism** — the `@fluid` registry layer (motion springs, fluid hover) on its own shadcn foundation
+- **MUI** — adapters over `@mui/material`, default theme extracted into token files
 
 ## monorepo
 
 ```
 modo/
-├── packages/
-│   ├── lib/    — the npm package: `modo`
-│   └── demo/   — the example DS: `@modo/demo`
+├── lib/                          — the npm package: `modo`
+│   ├── src/runtime/              — internal renderer (plain Vite SPA) + vite plugins
+│   ├── src/lib/                  — schemas, TSDoc parser, token/css parsing, slot matching
+│   └── templates/                — `modo init` scaffold
+├── demo/                         — harness: multi-DS runner + demo-switcher
+│   └── design-systems/<name>/    — one workspace package per design system showcase
 ├── bun-workspace.toml
-├── tsconfig.base.json
 └── package.json
 ```
 
-## packages
+## what the lib ships
 
-### `modo` (the lib)
-
-ships:
-- the public API (`modo/config`, `/tokens`, `/surfaces`, `/define`)
-- zod-validated schemas for tokens, surfaces, items, props, examples
-- a lib-internal Vite + Vike renderer (no leakage to the user's project)
-- 3 Vite plugins: `tokens` (reads user tokens, generates `:root` CSS), `source` (discovers user primitives/components/blocks), `graph` (import analysis for "depends on" / "used in")
-- structural CSS (layout, grid, motion, focus, hover) — uses design tokens via CSS variables
-- the surfaces elevation model (`<Elevated>`, `<SurfaceProvider>`, `useSurface`)
-- 8-level shadow recipes for the surface ladder
-- the `init` scaffold template (`packages/lib/templates/default/`)
-
-ships **zero design tokens**. all colors, spacing values, font families, radii, shadows, and motion values come from the user's `tokens/`.
-
-### `@modo/demo` (the example)
-
-a real working design system project. the reference impl, the proof, the testing ground.
-
-ships tokens (colors, surfaces, typography, spacing, radius, shadows, motion), primitives (button, input, badge), components (popover, tooltip — both use `<Elevated>`), and a block (login-form).
+- discovery + parsing: `tokens/*.css` (file-per-group or var prefixes), `<tier>/<name>/index.tsx` items with TSDoc-extracted name/description/props/examples (in-browser compiled `@example` playground)
+- the docs site chrome (sidebar / content / panel / example cards / prop tables / swatches) as **structural CSS only** — zero design tokens, zero visuals, zero copy
+- shell inheritance with graceful Plain fallbacks for unmatched slots
+- user hooks: `modo.config.ts` → `css` (global stylesheet), `vite` (extend the internal Vite config — e.g. add `@tailwindcss/vite`), `shell` (pin slots explicitly), `panel`
 
 ## development
 
 ```bash
-# install (bun workspaces hoists)
 bun install
 
-# dev server (lib's CLI starts vite, renders the demo's tokens + primitives)
-bun run dev
+# run all design-system showcases (one modo dev server each + switcher)
+bun dev            # from repo root (or: cd demo && bun dev)
 
-# typecheck both packages
+# a single showcase
+cd demo && bun run samples:shadcn   # or samples:filled | samples:fluid-functionalism | samples:mui
+
+# typecheck
 bun run check
 ```
 
 ## how it works (user-facing)
 
-1. user runs `npx modo init my-ds` — `packages/lib/templates/default/*` is copied to a new `my-ds/` folder
-2. user `cd my-ds && bun install && bunx modo dev` — lib's CLI reads `modo.config.ts`, starts internal Vite, vite reads the user's tokens + primitives, renders the showcase
-3. the user's `my-ds/` has **zero lib files** (no vite.config, no pages/, no src/runtime). just the DS.
+1. `bunx modo init my-ds` — scaffolds the folder structure
+2. `cd my-ds && bun install && bunx modo dev` — modo reads `modo.config.ts`, starts its own internal Vite, renders your tokens + items in the docs site
+3. your project keeps **zero lib files** (no vite config, no pages) — just the design system
 
 ## license
 
