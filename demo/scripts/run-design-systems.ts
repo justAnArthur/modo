@@ -9,8 +9,7 @@ const PEERS_FILE = join(ROOT, 'components', 'demo-switcher', '.peers.json')
 const TEMP_CONFIG = '.modo.config.ts'
 
 const wanted = process.argv.slice(2)
-// Directory husks can outlive their tracked files (e.g. a merge deletes a
-// DS but leaves .modo-tmp/); only dirs with a config are design systems.
+// dir husks can outlive their tracked files (a merge-deleted DS leaves .modo-tmp/ behind)
 const all = readdirSync(DS_DIR, { withFileTypes: true })
   .filter((e) => e.isDirectory() && existsSync(join(DS_DIR, e.name, 'modo.config.ts')))
   .map((e) => e.name)
