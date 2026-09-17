@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { spawn, execSync, type ChildProcess } from 'node:child_process'
-import { readdirSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, writeFileSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = join(import.meta.dirname, '..')
@@ -9,8 +9,10 @@ const PEERS_FILE = join(ROOT, 'components', 'demo-switcher', '.peers.json')
 const TEMP_CONFIG = '.modo.config.ts'
 
 const wanted = process.argv.slice(2)
+// Directory husks can outlive their tracked files (e.g. a merge deletes a
+// DS but leaves .modo-tmp/); only dirs with a config are design systems.
 const all = readdirSync(DS_DIR, { withFileTypes: true })
-  .filter((e) => e.isDirectory())
+  .filter((e) => e.isDirectory() && existsSync(join(DS_DIR, e.name, 'modo.config.ts')))
   .map((e) => e.name)
 const targets = wanted.length > 0 ? all.filter((n) => wanted.includes(n)) : all
 if (targets.length === 0) {
