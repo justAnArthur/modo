@@ -1,6 +1,21 @@
 import './sidebar.css'
 
-function SidebarRoot({ children }: { children?: React.ReactNode }) {
+/**
+ * Navigation sidebar. Compound component: Root + `Sidebar.Item` + `Sidebar.Section`.
+ * The docs chrome inherits it — the nav on the left side of this site is this component.
+ *
+ * @example # Sections and items
+ * <Sidebar>
+ *   <Sidebar.Section title="Foundations">
+ *     <Sidebar.Item href="#colors">Colors</Sidebar.Item>
+ *     <Sidebar.Item href="#spacing" active>Spacing</Sidebar.Item>
+ *   </Sidebar.Section>
+ *   <Sidebar.Section title="Components">
+ *     <Sidebar.Item href="#button">Button</Sidebar.Item>
+ *   </Sidebar.Section>
+ * </Sidebar>
+ */
+export default function Sidebar({ children }: { children?: React.ReactNode }) {
   return <nav className="my-sidebar">{children}</nav>
 }
 
@@ -9,8 +24,11 @@ function SidebarItem({
   active,
   children,
 }: {
+  /** Target anchor. */
   href: string
+  /** Marks the current page. */
   active?: boolean
+  /** Link label. */
   children?: React.ReactNode
 }) {
   return (
@@ -29,9 +47,12 @@ function SidebarSection({ title, children }: { title: string; children?: React.R
   )
 }
 
-const Sidebar = Object.assign(SidebarRoot, {
-  Item: SidebarItem,
-  Section: SidebarSection,
-})
+interface Sidebar {
+  /** A nav link. */
+  Item: typeof SidebarItem
+  /** A titled group of links. */
+  Section: typeof SidebarSection
+}
 
-export default Sidebar
+Sidebar.Item = SidebarItem
+Sidebar.Section = SidebarSection

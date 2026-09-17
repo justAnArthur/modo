@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
 import { resolve, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { randomUUID } from 'node:crypto'
@@ -6,6 +6,10 @@ import esbuild from 'esbuild'
 import { siteConfigSchema, type SiteConfig } from './schema'
 
 const cacheDir = resolve(process.cwd(), '.modo-tmp')
+
+// vite.config.ts, configPlugin and shellPlugin all ask for the same config
+// during startup; cache by path + mtime so it is only bundled once per change.
+const cache = new Map<string, { mtime: number; config: SiteConfig }>()
 
 function ensureCacheDir() {
   mkdirSync(cacheDir, { recursive: true })
@@ -17,6 +21,9 @@ export async function loadModoConfig(configPath: string): Promise<SiteConfig> {
       `modo config not found at ${configPath}.\nRun \`modo init <name>\` to scaffold a project.`,
     )
   }
+  const mtime = statSync(configPath).mtimeMs
+  const hit = cache.get(configPath)
+  if (hit && hit.mtime === mtime) return hit.config
   ensureCacheDir()
   const outFile = join(cacheDir, `modo-config-${randomUUID()}.mjs`)
   try {
@@ -42,7 +49,9 @@ export async function loadModoConfig(configPath: string): Promise<SiteConfig> {
       }
       throw err
     }
-    return siteConfigSchema.parse(mod.default ?? mod)
+    const config = siteConfigSchema.parse(mod.default ?? mod)
+    cache.set(configPath, { mtime, config })
+    return config
   } finally {
     if (existsSync(outFile)) {
       try {

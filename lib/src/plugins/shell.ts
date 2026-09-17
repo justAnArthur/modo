@@ -43,7 +43,9 @@ async function bundleToFile(filePath: string, userRoot: string, prefix: string):
     bundle: true,
     format: 'esm',
     outfile: outFile,
-    platform: 'neutral',
+    // Bundles run in the browser (served via /@fs); 'browser' resolves
+    // CJS `main`-only and browser-conditional packages that 'neutral' cannot.
+    platform: 'browser',
     target: 'es2022',
     external: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
     loader: { '.ts': 'ts', '.tsx': 'tsx', '.css': 'empty', '.svg': 'dataurl' },

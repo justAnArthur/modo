@@ -1,7 +1,0 @@
-/* motion tokens — duration scale + standard easing. */
-:root {
-  --motion-fast: 120ms;
-  --motion-normal: 200ms;
-  --motion-slow: 320ms;
-  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
-}

@@ -1,0 +1,6 @@
+/* Roboto — MUI's default typeface. Weights 300/400/500/700 as used by the
+   default theme's type scale. */
+@import '@fontsource/roboto/300.css';
+@import '@fontsource/roboto/400.css';
+@import '@fontsource/roboto/500.css';
+@import '@fontsource/roboto/700.css';

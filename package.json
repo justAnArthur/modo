@@ -4,7 +4,7 @@
   "private": true,
   "description": "modo — atomic design system renderer. monorepo root.",
   "type": "module",
-  "workspaces": ["lib", "demo"],
+  "workspaces": ["lib", "demo", "demo/design-systems/*"],
   "scripts": {
     "build": "bun --filter '@justanarthur/modo' build",
     "dev": "bun --filter '@modo/demo' dev",

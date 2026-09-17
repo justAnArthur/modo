@@ -20,3 +20,6 @@ dist
 .peers.json.d.ts
 lib/_archived/
 docs/
+demo/.scratch/
+!demo/components/demo-switcher/.peers.json.d.ts
+.zcode

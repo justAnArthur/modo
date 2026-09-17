@@ -6,6 +6,7 @@ export const shellSchema = z
   .object({
     Button: componentRef.optional(),
     Link: componentRef.optional(),
+    Select: componentRef.optional(),
     Sidebar: componentRef.optional(),
     Panel: componentRef.optional(),
     Code: componentRef.optional(),
@@ -31,6 +32,10 @@ export const siteConfigSchema = z
       .strict()
       .optional(),
     css: z.string().optional(),
+    // Path (relative to the project root) to a module that default-exports
+    // `(config: UserConfig) => UserConfig | Promise<UserConfig>`. Applied to
+    // the lib's Vite config before dev/build — e.g. to add @tailwindcss/vite.
+    vite: z.string().optional(),
   })
   .strict()
 

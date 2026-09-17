@@ -55,6 +55,18 @@ const PREFIX_TO_GROUP: Record<string, GroupName> = {
   '--tracking-': 'typography',
 }
 
+// Single-token shorthands (e.g. shadcn's bare `--radius`) group with their
+// prefixed siblings instead of defaulting to colors.
+const EXACT_TO_GROUP: Record<string, GroupName> = {
+  '--space': 'spacing',
+  '--spacing': 'spacing',
+  '--radius': 'radius',
+  '--motion': 'motion',
+  '--duration': 'motion',
+  '--ease': 'motion',
+  '--font': 'typography',
+}
+
 export function parseCss(src: string): ParsedVar[] {
   const cleaned = stripComments(src)
   const out: ParsedVar[] = []
@@ -70,6 +82,8 @@ export function parseCss(src: string): ParsedVar[] {
 }
 
 export function groupForVar(name: string): GroupName | null {
+  const exact = EXACT_TO_GROUP[name]
+  if (exact) return exact
   for (const [prefix, group] of Object.entries(PREFIX_TO_GROUP)) {
     if (name.startsWith(prefix)) return group
   }
