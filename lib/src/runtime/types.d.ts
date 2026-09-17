@@ -4,6 +4,11 @@ declare module 'virtual:modo-config' {
   export default config
 }
 
+declare module 'virtual:modo-config-css' {
+  const css: string
+  export default css
+}
+
 declare module 'virtual:modo-tokens' {
   import type { ParsedVar, Swatch } from '../lib/css'
   export const tokens: Array<{ name: string; vars: Array<ParsedVar & { swatch?: Swatch }> }>
