@@ -35,7 +35,7 @@ import { useSize, useSizeVariant } from "../../_fluid/size-context";
 import { useIcon } from "../../_fluid/icon-context";
 import { useSurface, SurfaceProvider } from "../../_fluid/surface-context";
 import { surfaceClasses } from "../../_fluid/surface-classes";
-import { Button, type ButtonProps } from "../../primitives/button/button";
+import { Button, type ButtonProps } from "../../primitives/button";
 import { Tooltip } from "../../_fluid/tooltip";
 
 // ─── Constants ───────────────────────────────────────────────────────────────

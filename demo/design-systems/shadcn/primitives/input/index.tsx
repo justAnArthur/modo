@@ -1,4 +1,13 @@
-import { Input as ShadcnInput } from './input'
+/*
+ * Vendored from the shadcn/ui registry (style "radix-nova", base color
+ * "neutral"), pulled with `bunx shadcn@latest add input` (shadcn CLI 4.21.0).
+ * MIT License © Vercel Inc. — https://ui.shadcn.com
+ * Local modifications: modo item docs — TSDoc on Input, default export;
+ * component code untouched.
+ */
+
+import * as React from "react"
+import { cn } from "cn"
 
 /**
  * shadcn/ui Input — native text field.
@@ -19,22 +28,18 @@ import { Input as ShadcnInput } from './input'
  * <Input placeholder="Read only" disabled />
  * ```
  */
-export default function Input({ type = 'text', placeholder, defaultValue, disabled = false }: {
-  /** HTML input type. @values text, email, password, number, search */
-  type?: string
-  /** Placeholder text shown when empty. */
-  placeholder?: string
-  /** Initial value for the uncontrolled input. */
-  defaultValue?: string
-  /** Disables the input. */
-  disabled?: boolean
-}) {
+export default function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
-    <ShadcnInput
+    <input
       type={type}
-      placeholder={placeholder}
-      defaultValue={defaultValue}
-      disabled={disabled}
+      data-slot="input"
+      className={cn(
+        "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none file:inline-flex file:h-6 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40",
+        className
+      )}
+      {...props}
     />
   )
 }
+
+export { Input }

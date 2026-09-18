@@ -7,8 +7,8 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { ChatMessage } from '../../components/chat-message/chat-message'
-import { ThinkingIndicator } from '../../components/thinking-indicator/thinking-indicator'
+import { ChatMessage } from '../../components/chat-message'
+import { ThinkingIndicator } from '../../components/thinking-indicator'
 import { InputMessage } from './input-message'
 
 interface Entry {
