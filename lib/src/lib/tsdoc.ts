@@ -26,6 +26,9 @@ export function parseItemSource(src: string): ParsedItem {
   let name = ''
   let jsdocAnchor = 0
   let fnStart = -1
+  // Set when the item is `const X = forwardRef<HTML…, XProps>(…)` — the props
+  // type is the named second type argument, not a parameter list.
+  let forwardRefPropsType: string | null = null
 
   const fnDeclMatch = cleaned.match(/export\s+default\s+function\s+([A-Za-z_$][\w$]*)?\s*[(<]/)
   if (fnDeclMatch) {
@@ -38,8 +41,19 @@ export function parseItemSource(src: string): ParsedItem {
       return fail('No `export default` found')
     }
     name = identMatch[1]!
-    jsdocAnchor = identMatch.index ?? 0
     fnStart = cleaned.search(new RegExp(`function\\s+${name}\\s*\\(`))
+    // The doc block belongs to the component declaration, not to wherever the
+    // `export default` statement happens to sit (often the bottom of the file,
+    // below sub-components that may carry their own JSDoc).
+    const declStart =
+      fnStart !== -1 ? fnStart : cleaned.search(new RegExp(`(?:const|let|var)\\s+${name}\\s*=`))
+    jsdocAnchor = declStart !== -1 ? declStart : (identMatch.index ?? 0)
+    if (fnStart === -1) {
+      forwardRefPropsType =
+        cleaned.match(
+          new RegExp(`(?:const|let|var)\\s+${name}\\s*=\\s*forwardRef<[^,>]+,\\s*([A-Za-z_$][\\w$]*)>`),
+        )?.[1] ?? null
+    }
   }
 
   if (!name) return fail('Could not determine component name')
@@ -52,7 +66,13 @@ export function parseItemSource(src: string): ParsedItem {
 
   const result: ParsedItem = { name, description, props: [], examples, errors: [] }
   if (fnStart === -1) {
-    result.errors.push('Could not locate function body')
+    if (forwardRefPropsType) {
+      const props = extractForwardRefProps(cleaned, forwardRefPropsType)
+      result.props = props.props
+      result.errors.push(...props.errors)
+    } else {
+      result.errors.push('Could not locate function body')
+    }
     return result
   }
 
@@ -130,9 +150,32 @@ function extractProps(src: string, fnStart: number): ExtractPropsResult {
 
   if (!typeLiteral) return { props, errors: ['No type literal found on parameter'] }
 
-  const litText = extractTopObjectLiteral(typeLiteral)
+  let litText = extractTopObjectLiteral(typeLiteral)
+  if (!litText) {
+    // A bare identifier (e.g. `props: ButtonProps`) resolves to an interface
+    // or object type alias declared in the same file, if any.
+    const ident = typeLiteral.match(/^[A-Za-z_$][\w$]*$/)
+    if (ident) litText = resolveLocalTypeLiteral(src, ident[0])
+  }
   if (!litText) return { props, errors: ['Could not find object type literal'] }
 
+  return finishProps(litText, destructured, errors)
+}
+
+function extractForwardRefProps(src: string, typeName: string): ExtractPropsResult {
+  const litText = resolveLocalTypeLiteral(src, typeName)
+  if (!litText) {
+    return { props: [], errors: [`Could not find object type literal for ${typeName}`] }
+  }
+  return finishProps(litText, [], [])
+}
+
+function finishProps(
+  litText: string,
+  destructured: Array<{ name: string; default?: string }>,
+  errors: string[],
+): ExtractPropsResult {
+  const props: ParsedProp[] = []
   const litBody = litText.slice(1, -1)
   const members = splitTopLevel(litBody, ';\n').filter((s) => s.trim())
 
@@ -184,6 +227,21 @@ function extractTopObjectLiteral(text: string): string | null {
   const objEnd = matchClosing(s, objStart, '{', '}')
   if (objEnd === undefined) return null
   return s.slice(objStart, objEnd + 1)
+}
+
+function resolveLocalTypeLiteral(src: string, name: string): string | null {
+  for (const re of [
+    new RegExp(`interface\\s+${name}\\s*\\{`),
+    new RegExp(`interface\\s+${name}\\s+extends\\s+[^{;]+\\{`),
+    new RegExp(`type\\s+${name}\\s*=\\s*\\{`),
+  ]) {
+    const m = src.match(re)
+    if (!m) continue
+    const open = (m.index ?? 0) + m[0].length - 1
+    const close = matchClosing(src, open, '{', '}')
+    if (close !== undefined) return src.slice(open, close + 1)
+  }
+  return null
 }
 
 function extractExamples(jsdoc: string): ParsedExample[] {

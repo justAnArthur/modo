@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { shell, panelItems } from 'virtual:modo-shell'
+import { panelItems, shell } from 'virtual:modo-shell'
 import { SidebarNav } from '../nav'
 
 export function Shell({ children }: { children: ReactNode }) {
@@ -8,15 +8,19 @@ export function Shell({ children }: { children: ReactNode }) {
     <div data-modo="app">
       <aside data-modo="sidebar">
         <Root>
-          <SidebarNav />
+          <SidebarNav/>
         </Root>
       </aside>
-      {children}
+
+      <main data-modo="content">
+        {children}
+      </main>
+
       <aside data-modo="panel">
         <Root>
-          {panelItems.map((it) => (
-            <Section key={it.bundlePath} title={it.label}>
-              <it.Component shell={shell} />
+          {panelItems.map((itеm) => (
+            <Section key={itеm.bundlePath} title={itеm.label}>
+              <itеm.Component shell={shell}/>
             </Section>
           ))}
         </Root>
