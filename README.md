@@ -45,11 +45,113 @@ cd demo && bun run samples:shadcn   # or samples:filled | samples:fluid-function
 bun run check
 ```
 
-## how it works (user-facing)
+## getting started
 
-1. `bunx modo init my-ds` — scaffolds the folder structure
-2. `cd my-ds && bun install && bunx modo dev` — modo reads `modo.config.ts`, starts its own internal Vite, renders your tokens + items in the docs site
-3. your project keeps **zero lib files** (no vite config, no pages) — just the design system
+modo is published as [`@justanarthur/modo`](https://www.npmjs.com/package/@justanarthur/modo). scaffold a new design-system workspace and run it:
+
+```bash
+# with bun (recommended)
+bunx modo init my-ds
+cd my-ds && bun install
+bun dev          # docs site at a local port (modo dev / modo build / modo check)
+
+# with npm/pnpm it works the same
+npx modo init my-ds
+cd my-ds && npm install && npm run dev
+```
+
+`modo init` creates a self-contained workspace with **zero lib files you need to touch** — modo owns its own internal Vite app; your project only contains the design system:
+
+```
+my-ds/
+├── modo.config.ts          — site config (name, css, vite, shell, panel)
+├── package.json            — depends on @justanarthur/modo, react, react-dom
+├── tsconfig.json
+├── tokens/                 — design tokens as plain CSS custom properties
+│   └── colors.css
+├── primitives/             — tier 1: atoms (Button, Surface, …)
+│   └── button/
+│       ├── index.tsx       — the item: default export + TSDoc contract
+│       └── button.css      — co-located CSS is auto-injected
+├── components/             — tier 2: composites (Dialog, Select, …)
+└── blocks/                 — tier 3: page-level patterns
+```
+
+`tokens/`, `primitives/`, `components/`, `blocks/` are auto-discovered by directory. any of them can be omitted; tiers render in that order. add more items later with `bunx modo add <tier>/<name>` (scaffolds from `lib/templates/stubs`).
+
+## authoring items
+
+an item is a default-exported function in `<tier>/<name>/index.tsx` whose TSDoc is the docs contract:
+
+```tsx
+/**
+ * Button — the primary interaction primitive.
+ *
+ * @example Primary
+ * ```tsx
+ * <Button onClick={() => alert('hi')}>Click me</Button>
+ * ```
+ */
+export default function Button({ variant = 'primary', children }) { … }
+```
+
+- **name / description** — from the TSDoc block anchored to the default export (plain `function` or `forwardRef` const both work).
+- **props** — extracted from the destructured params + inline type literal (or a same-file interface/type alias). rendered as the item's prop table and used for shell slot matching.
+- **examples** — `@example` blocks with an optional `# Heading` line and a ` ```tsx ` fence. examples compile **in the browser** (babel standalone): every capitalized JSX tag auto-binds to your item registry, so examples are self-contained JSX with **no imports and no hooks**.
+- **compound items** — attach sub-components as static attributes on the default export (`Card.Header`), typed via interface merging; `<Card.Header>` auto-binds in examples too.
+- **CSS** — any `.css` file co-located in the item dir is injected automatically.
+
+tokens are plain CSS, one file per group (`colors.css`, `typography.css`, `spacing.css`, `radius.css`, `motion.css`) — or a single file using var prefixes (`--space-*`, `--motion-*`, …). the tokens page renders each group as swatches.
+
+## integrating into your project (`modo.config.ts`)
+
+```ts
+import { defineConfig } from '@justanarthur/modo/config'
+
+export default defineConfig({
+  name: 'my-ds',
+  description: 'My design system',
+
+  // global stylesheet, injected right after the lib's structural CSS
+  // (before your items' CSS) — the canonical place for resets, fonts, base rules
+  css: './global.css',
+
+  // extend modo's internal Vite config — e.g. Tailwind:
+  // vite: './vite.config.extend.ts'   // default export: (config) => newConfig
+  // (that module is imported natively, never bundled)
+
+  // pin docs-chrome slots to your components explicitly
+  // (otherwise slots are matched by name + required props, see below)
+  shell: {
+    Button: 'primitives/button',
+    Link: 'primitives/link',
+    Select: 'components/select',
+    Sidebar: 'components/sidebar',
+    Code: 'primitives/code',
+  },
+
+  // entries rendered in the right panel, each as a Sidebar.Section
+  panel: {
+    items: [
+      { label: 'Colors', component: 'blocks/color-palette' },
+    ],
+  },
+})
+```
+
+### shell inheritance
+
+the docs chrome looks for your components per slot (`Button`, `Link`, `Code` in primitives; `Select`, `Sidebar Root/Item/Section` in components) matched by parsed name + required props — `children` must be visible in the parsed type (`href` for `Link`). unmatched slots fall back to the lib's structural Plain components. to style the chrome itself, target the `data-modo` attributes (`data-modo="sidebar"`, `"example-card"`, `"swatch"`, …) from your `css` — the lib ships structure, you ship the look.
+
+## installing the lib locally (monorepo development)
+
+```bash
+git clone https://github.com/justAnArthur/modo && cd modo
+bun install
+cd lib && bun run build          # build dist/ before CLI tests
+bun dev                          # run every demo showcase (ports 5173+i)
+cd ../demo && bun run samples:shadcn   # a single showcase
+```
 
 ## license
 
