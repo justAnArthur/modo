@@ -85,17 +85,24 @@ scaffold's `theme-provider` (modo has no theme toggle of its own).
 - `_fluid/` — the shared @fluid system files listed above, imported
   relatively by the item dirs. Lives outside the `primitives/components/
   blocks` tiers so modo's item discovery ignores it.
-- `primitives/<name>/` — vendored `<name>.tsx` + `index.tsx` modo adapter.
-- `components/<name>/` — same shape. `select/index.tsx` implements modo's
-  Select shell contract (`value` / `onChange` / `options`); `sidebar/`
-  vendors the full @fluid sidebar compound (`sidebar.tsx`,
-  `sidebar-core.tsx`, `sidebar-menu.tsx`) and `index.tsx` composes modo's
-  Sidebar contract (Root + static `.Item` / `.Section`) over it:
+- `primitives/<name>/` — the compound single-file pattern: the vendored file
+  is renamed to `index.tsx` with TSDoc on the component and a default export
+  (`button`, `badge`; no adapter).
+- `components/<name>/` — mixed. `select/` vendors `select.tsx` with an
+  `index.tsx` adapter implementing modo's Select shell contract (`value` /
+  `onChange` / `options`); `sidebar/` vendors the full @fluid sidebar
+  compound (`sidebar.tsx`, `sidebar-core.tsx`, `sidebar-menu.tsx`) and
+  `index.tsx` composes modo's Sidebar contract (Root + static `.Item` /
+  `.Section`) over it:
   Root = `SidebarProvider` (persist off, shortcut off) + a
   non-collapsible `Sidebar` + `SidebarContent`; Item = `SidebarMenu` /
   `SidebarMenuItem` / `SidebarMenuButton asChild` anchor; Section =
   `SidebarGroup` + label. The registry ships the compound parts, not this
   Root/Item/Section API — the composition is ours.
+  `card/`, `chat-message/`, and `thinking-indicator/` use the compound
+  single-file pattern instead: the vendored file is renamed to `index.tsx`
+  with TSDoc on the component and parts attached as static attributes
+  (`Card.Group`, `Card.Header`, …, `ChatMessage.FileThumbnail`; no adapter).
 - `blocks/chat/` — FF's signature conversation, composed here (the registry
   ships the parts, not the block): `ChatMessage` transcript +
   `ThinkingIndicator` + the vendored `@fluid/input-message` composer
@@ -103,9 +110,9 @@ scaffold's `theme-provider` (modo has no theme toggle of its own).
   and a canned reply.
 - `vite.ts` — appends `@tailwindcss/vite` to the lib's Vite config via
   modo.config.ts's `vite` hook.
-- `modo.config.ts` — `css`, `vite`, and `shell: { Panel: './components/card' }`
-  (Button and Sidebar resolve by interface matching, Select by contract;
-  Link and Code intentionally fall back to the lib's Plain components).
+- `modo.config.ts` — `css` and `vite` (Button and Sidebar resolve by
+  interface matching, Select by contract; Link and Code intentionally fall
+  back to the lib's Plain components).
 
 ### Local modifications to vendored files
 

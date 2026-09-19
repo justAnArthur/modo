@@ -1,0 +1,22 @@
+.my-btn {
+  padding: var(--sm) var(--md);
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: inherit;
+  cursor: pointer;
+}
+.my-btn[data-variant="secondary"] {
+  background: var(--muted);
+  color: var(--bg);
+}
+.my-btn[data-variant="tertiary"] {
+  background: transparent;
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.my-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

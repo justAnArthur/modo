@@ -32,7 +32,7 @@ import { surfaceClasses } from "../../_fluid/surface-classes";
 import { SurfaceProvider } from "../../_fluid/surface-context";
 import { useFluidHover, useRegisterFluidHoverItem } from "../../_fluid/use-fluid-hover";
 import { FileThumbnail } from "../../components/chat-message/file-thumbnail";
-import { Button } from "../../primitives/button/button";
+import { Button } from "../../primitives/button";
 import { Tooltip } from "../../_fluid/tooltip";
 import { FluidHoverHighlight } from "../../_fluid/fluid-hover-highlight";
 

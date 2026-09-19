@@ -39,17 +39,24 @@ rewritten to relative paths for the modo layout.
 - `tokens/colors.css` — raw `:root` / `.dark` oklch variable blocks from the
   scaffold (the `--radius` line moved out).
 - `tokens/radius.css` — the raw `--radius` variable.
-- `primitives/<name>/` — vendored `<name>.tsx` + `index.tsx` modo adapter.
-- `components/<name>/` — same shape; `select/index.tsx` implements modo's
-  Select shell contract (`value` / `onChange` / `options`).
+- `primitives/<name>/` — the compound single-file pattern: the vendored file
+  is renamed to `index.tsx` with TSDoc on the component and a default export
+  (`button`, `badge`, `input`; no adapter).
+- `components/card/` — the compound single-file pattern: the vendored file is
+  renamed to `index.tsx` with TSDoc on Card and the parts attached as static
+  attributes (`Card.Header`, `Card.Title`, …; no adapter).
+- `components/select/`, `components/radio-group/` — vendored `<name>.tsx` +
+  `index.tsx` adapter; `select/index.tsx` implements modo's Select shell
+  contract (`value` / `onChange` / `options`), radio-group maps `options` to
+  generated items.
 - `blocks/login-form/` — the pulled `login-02` block (`login-form.tsx`) with
   its block-local dependencies (`field.tsx`, `label.tsx`, `separator.tsx`)
   and the modo adapter `index.tsx`.
 - `vite.ts` — appends `@tailwindcss/vite` to the lib's Vite config via
   modo.config.ts's `vite` hook.
-- `modo.config.ts` — `css`, `vite`, and `shell: { Panel: './components/card' }`
-  (Button, Link, Select resolve by interface matching; Code and Sidebar
-  intentionally fall back to the lib's Plain components).
+- `modo.config.ts` — `css` and `vite` (Button, Link, Select resolve by
+  interface matching; Code and Sidebar intentionally fall back to the lib's
+  Plain components).
 
 ## Run
 

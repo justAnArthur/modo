@@ -1,8 +1,7 @@
 import './panel.css'
 
 /**
- * Right-side panel wrapper. The lib's docs chrome renders this inside
- * `<aside data-modo="panel">`.
+ * Right-side panel wrapper surface.
  *
  * @example
  * # Default

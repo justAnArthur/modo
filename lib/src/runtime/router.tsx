@@ -1,6 +1,6 @@
-import { useEffect, useState, type ReactNode } from 'react'
-import { routes } from './routes'
+import { type ReactNode, useEffect, useState } from 'react'
 import { NotFoundPage } from './pages/NotFoundPage'
+import { routes } from './routes'
 
 export function Router(): ReactNode {
   const [path, setPath] = useState(() => window.location.pathname || '/')
@@ -30,5 +30,6 @@ export function Router(): ReactNode {
     const m = path.match(r.pattern)
     if (m) return r.render(m)
   }
-  return <NotFoundPage />
+
+  return <NotFoundPage/>
 }

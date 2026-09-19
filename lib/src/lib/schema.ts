@@ -8,7 +8,6 @@ export const shellSchema = z
     Link: componentRef.optional(),
     Select: componentRef.optional(),
     Sidebar: componentRef.optional(),
-    Panel: componentRef.optional(),
     Code: componentRef.optional(),
   })
   .strict()

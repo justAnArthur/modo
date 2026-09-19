@@ -5,11 +5,10 @@
   display: grid;
   grid-template-columns: 240px 1fr 280px;
   min-height: 100vh;
-  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif), serif;
 }
 
 [data-modo="sidebar"] {
-  border-right: 1px solid var(--border);
   overflow-y: auto;
   position: sticky;
   top: 0;
@@ -23,12 +22,35 @@
 }
 
 [data-modo="panel"] {
-  border-left: 1px solid var(--border);
-  padding: var(--space-4, 16px);
   overflow-y: auto;
   position: sticky;
   top: 0;
   height: 100vh;
+}
+
+/* Interior spacing of both asides belongs to the Sidebar Root component
+   (Plain fallback below, or the user's). The asides are pure grid cells. */
+
+[data-modo="sidebar-nav"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5, 24px);
+  padding: var(--space-4, 16px);
+}
+
+[data-modo="sidebar-section-title"] {
+  margin: 0 0 var(--space-2, 8px);
+}
+
+[data-modo="sidebar-section-items"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+}
+
+[data-modo="sidebar-item"] {
+  display: block;
+  padding: var(--space-1, 4px) var(--space-2, 8px);
 }
 
 [data-modo="page-title"] {

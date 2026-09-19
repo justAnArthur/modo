@@ -5,13 +5,13 @@ export type ExampleRenderer = (componentMap: Record<string, ComponentType<any>>)
 
 const cache = new Map<string, ExampleRenderer | string>()
 
-const BINDINGS = ['Button', 'Link', 'Code', 'Sidebar', 'Panel']
+const BINDINGS = ['Button', 'Link', 'Code', 'Sidebar']
   .map((n) => `var ${n} = Components.${n};`)
   .join('\n')
 
 function bindingsFor(code: string): string {
   const tags = [...code.matchAll(/<([A-Z]\w*)/g)].map((m) => m[1] ?? '')
-  const unique = [...new Set([...tags, 'Button', 'Link', 'Code', 'Sidebar', 'Panel'])]
+  const unique = [...new Set([...tags, 'Button', 'Link', 'Code', 'Sidebar'])]
   return unique.map((n) => `var ${n} = Components.${n};`).join('\n')
 }
 

@@ -9,7 +9,7 @@ import * as React from "react"
 import { type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 
-import { buttonVariants } from "../button/button"
+import { buttonVariants } from "../button"
 
 function Link({
   className,

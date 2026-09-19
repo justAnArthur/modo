@@ -9,7 +9,7 @@
 
 import { cn } from "cn"
 
-import { Button } from "../../primitives/button/button"
+import { Button } from "../../primitives/button"
 import {
   Field,
   FieldDescription,
@@ -17,7 +17,7 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "./field"
-import { Input } from "../../primitives/input/input"
+import { Input } from "../../primitives/input"
 
 export function LoginForm({
   className,

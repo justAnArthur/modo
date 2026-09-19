@@ -1,33 +1,30 @@
 import type { ReactNode } from 'react'
-import { shell, panelItems } from 'virtual:modo-shell'
+import { panelItems, shell } from 'virtual:modo-shell'
 import { SidebarNav } from '../nav'
 
 export function Shell({ children }: { children: ReactNode }) {
+  const { Root, Section } = shell.Sidebar
   return (
     <div data-modo="app">
       <aside data-modo="sidebar">
-        <shell.Sidebar.Root>
-          <SidebarNav />
-        </shell.Sidebar.Root>
+        <Root>
+          <SidebarNav/>
+        </Root>
       </aside>
-      {children}
+
+      <main data-modo="content">
+        {children}
+      </main>
+
       <aside data-modo="panel">
-        <shell.Panel>
-          {panelItems.map((it) => (
-            <PanelItem key={it.bundlePath} item={it} shell={shell} />
+        <Root>
+          {panelItems.map((itеm) => (
+            <Section key={itеm.bundlePath} title={itеm.label}>
+              <itеm.Component shell={shell}/>
+            </Section>
           ))}
-        </shell.Panel>
+        </Root>
       </aside>
     </div>
-  )
-}
-
-function PanelItem({ item, shell: shellProp }: { item: (typeof panelItems)[number]; shell: typeof shell }) {
-  const LabelComp = shellProp.primitives[item.label]
-  return (
-    <section data-modo="panel-item">
-      {LabelComp ? <LabelComp>{item.label}</LabelComp> : <span>{item.label}</span>}
-      <item.Component shell={shellProp} />
-    </section>
   )
 }

@@ -1,6 +1,6 @@
 import { items } from 'virtual:modo-items'
-import { tokens } from 'virtual:modo-tokens'
 import { shell } from 'virtual:modo-shell'
+import { tokens } from 'virtual:modo-tokens'
 
 const Link = shell.Link
 const TIERS = ['primitives', 'components', 'blocks'] as const
@@ -9,11 +9,12 @@ const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1)
 
 export function HomePage() {
   return (
-    <main data-modo="content">
+    <>
       <header>
         <h1 data-modo="page-title">Foundations</h1>
         <p data-modo="page-lead">Tokens, primitives, components, and blocks in this design system.</p>
       </header>
+
       {tokens.length > 0 && (
         <section data-modo="section">
           <h2 data-modo="section-title">Tokens</h2>
@@ -27,12 +28,13 @@ export function HomePage() {
           </ul>
         </section>
       )}
+
       {TIERS.map((tier) => {
         const list = items.filter((it) => it.tier === tier)
         if (!list.length) return null
-        return <TierSection key={tier} title={cap(tier)} tier={tier} list={list} />
+        return <TierSection key={tier} title={cap(tier)} tier={tier} list={list}/>
       })}
-    </main>
+    </>
   )
 }
 

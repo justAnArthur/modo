@@ -21,7 +21,7 @@ export interface SlotMember {
 }
 
 export interface ShellSlot {
-  name: 'Button' | 'Link' | 'Sidebar' | 'Panel' | 'Code' | 'Select'
+  name: 'Button' | 'Link' | 'Sidebar' | 'Code' | 'Select'
   type: 'atom' | 'organism'
   userTier: Tier
   requiredProps: string[]
@@ -79,13 +79,6 @@ export const SLOTS: ShellSlot[] = [
       },
     },
   },
-  {
-    name: 'Panel',
-    type: 'organism',
-    userTier: 'components',
-    requiredProps: ['children'],
-    fallback: 'components/panel',
-  },
 ]
 
 export interface UserConfigLite {
@@ -101,7 +94,7 @@ export interface LoadedComponent {
   /** Path to the bundled .mjs file (when the loader created one). */
   bundlePath?: string
   /** When source is 'fallback', the name of the plain-HTML component to import. */
-  fallbackName?: 'PlainButton' | 'PlainLink' | 'PlainCode' | 'PlainSelect' | 'PlainPanel' | 'PlainSidebarItem' | 'PlainSidebarSection' | 'PlainSidebarRoot'
+  fallbackName?: 'PlainButton' | 'PlainLink' | 'PlainCode' | 'PlainSelect' | 'PlainSidebarItem' | 'PlainSidebarSection' | 'PlainSidebarRoot'
 }
 
 export interface ResolvedSidebar {
@@ -116,7 +109,6 @@ export interface ResolvedShell {
   Code: LoadedComponent
   Select: LoadedComponent
   Sidebar: ResolvedSidebar
-  Panel: LoadedComponent
 }
 
 export type LoadUserPath = (path: string) => Promise<LoadedComponent | null>
@@ -125,9 +117,10 @@ export interface ResolveOptions {
   warnings?: string[]
 }
 
-/* Plain HTML fallbacks. No styling, no defaults — semantic tags only so the
-   chrome renders something usable when the user project ships no DS. The user's
-   primitives/components override these whenever they satisfy the slot contract. */
+/* Plain HTML fallbacks. Semantic tags only — structure comes from the lib's
+   structural CSS via data-modo attrs, all visuals from the user's project.
+   The user's primitives/components override these whenever they satisfy the
+   slot contract. */
 
 export function PlainButton({ children, disabled, onClick, type = 'button', ...rest }: any) {
   return (
@@ -169,17 +162,13 @@ export function PlainSelect({ value, onChange, options, ...rest }: any) {
   )
 }
 
-export function PlainPanel({ children }: { children?: ReactNode }) {
-  return <div>{children}</div>
-}
-
 export function PlainSidebarRoot({ children }: { children?: ReactNode }) {
-  return <nav>{children}</nav>
+  return <nav data-modo="sidebar-nav">{children}</nav>
 }
 
 export function PlainSidebarItem({ href, active, children }: { href: string; active?: boolean; children?: ReactNode }) {
   return (
-    <a href={href} aria-current={active ? 'page' : undefined}>
+    <a data-modo="sidebar-item" href={href} aria-current={active ? 'page' : undefined}>
       {children}
     </a>
   )
@@ -187,9 +176,9 @@ export function PlainSidebarItem({ href, active, children }: { href: string; act
 
 export function PlainSidebarSection({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div>
-      <h3>{title}</h3>
-      <div>{children}</div>
+    <div data-modo="sidebar-section">
+      <h3 data-modo="sidebar-section-title">{title}</h3>
+      <div data-modo="sidebar-section-items">{children}</div>
     </div>
   )
 }
@@ -200,20 +189,19 @@ const PlainSidebar = Object.assign(PlainSidebarRoot, {
 })
 
 function fallbackFor(
-  slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Panel' | 'SidebarRoot',
+  slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'SidebarRoot',
 ): ComponentType<any> {
   switch (slotName) {
     case 'Button': return PlainButton
     case 'Link': return PlainLink
     case 'Code': return PlainCode
     case 'Select': return PlainSelect
-    case 'Panel': return PlainPanel
     case 'SidebarRoot': return PlainSidebarRoot
   }
 }
 
 function omitted(
-  slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Panel' | 'Sidebar',
+  slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Sidebar',
 ): LoadedComponent {
   const fallbackName = slotName === 'Sidebar' ? 'SidebarRoot' : slotName
   return {
@@ -278,7 +266,6 @@ export async function resolveShellSlots(
     Code: await pick('Code'),
     Select: await pick('Select'),
     Sidebar: await pick('Sidebar'),
-    Panel: await pick('Panel'),
   }
 
   const sidebarRootComp = rootPicks.Sidebar.Component as unknown as
@@ -326,6 +313,5 @@ export async function resolveShellSlots(
       Item: sidebarItem ?? fallbackItem,
       Section: sidebarSection ?? fallbackSection,
     },
-    Panel: rootPicks.Panel,
   }
 }
