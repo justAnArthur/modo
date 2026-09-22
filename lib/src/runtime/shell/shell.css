@@ -128,6 +128,102 @@
   margin-right: var(--space-2, 8px);
 }
 
+[data-modo="tokens-header"] {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-5, 24px);
+}
+
+[data-modo="tokens-count"] {
+  margin-left: auto;
+}
+
+/* Color tokens: columns of horizontal rectangles, name top-left, values
+   running up the bottom-right edge. Fill, text, border and radius all come
+   from the host (its tokens, its -foreground pairs, its page colors) — never a
+   literal color. */
+
+[data-modo="color-grid"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  align-items: start;
+  gap: var(--space-3, 12px);
+}
+
+[data-modo="color-stack"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+}
+
+[data-modo="color-tile"] {
+  --modo-tile-pad: var(--space-3, 12px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  aspect-ratio: 2 / 1;
+  padding: var(--modo-tile-pad);
+  border-radius: var(--radius-lg, var(--radius, 12px));
+  font-size: 0.8125rem;
+}
+
+[data-modo="color-tile"][data-flush] {
+  box-shadow: inset 0 0 0 1px var(--border, color-mix(in oklab, currentColor 15%, transparent));
+}
+
+/* Name and pair keep clear of the value column on the right edge. */
+[data-modo="color-tile-name"],
+[data-modo="color-tile-pair"] {
+  padding-right: 2.25rem;
+  overflow-wrap: anywhere;
+}
+
+[data-modo="color-tile-name"] {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+[data-modo="color-tile-pair"] {
+  margin-top: auto;
+  font-size: 0.6875rem;
+  opacity: 0.8;
+}
+
+[data-modo="color-tile-value"] {
+  position: absolute;
+  top: var(--modo-tile-pad);
+  right: var(--modo-tile-pad);
+  bottom: var(--modo-tile-pad);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  font-size: 0.625rem;
+  line-height: 1.4;
+  opacity: 0.8;
+}
+
+[data-modo="color-tile-value"] > * {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-modo="token-row-value"],
+[data-modo="tokens-count"] {
+  color: var(--muted-foreground, color-mix(in oklab, currentColor 60%, transparent));
+  font-size: 0.75rem;
+}
+
+[data-modo="token-row"] {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  font-size: 0.8125rem;
+}
+
 *:focus-visible {
   outline: 2px solid var(--accent, currentColor);
   outline-offset: 2px;
