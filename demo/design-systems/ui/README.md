@@ -144,9 +144,9 @@ step) so the chrome runs on the design system's own Select. The
 `components/select` item keeps the upstream API untouched.
 
 `_shell/theme-switcher.tsx` is not an item either: it is the `Theme` entry in
-`modo.config.ts` `panel.items`, a compact `TabsSubtle` (Light / Dark / System,
-`activeLabel`) that reads and sets `window.__uiTheme` and re-reads it on
-`ui:themechange`. All switching logic lives in the pre-paint controller
+`modo.config.ts` `panel.items`, a `Select` of Light / Dark / System (each row
+with its icon, the trigger showing the active one) that reads and sets
+`window.__uiTheme` and re-reads it on `ui:themechange`. All switching logic lives in the pre-paint controller
 described under **Tailwind → UnoCSS**, so the control holds no theme state of
 its own. `demo/scripts/run-design-systems.ts` appends its own `Switcher` panel
 item to whatever a design system declares, so both show up under the runner.

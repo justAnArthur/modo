@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from 'react'
 import { Monitor, Moon, Sun } from 'lucide-react'
-import TabsSubtle from '../components/tabs-subtle'
+import Select from '../components/select'
 
 type ThemePreference = 'light' | 'dark' | 'system'
 
@@ -21,11 +21,10 @@ declare global {
   }
 }
 
-const ORDER: ThemePreference[] = ['light', 'dark', 'system']
-const TABS = [
-  { icon: Sun, label: 'Light' },
-  { icon: Moon, label: 'Dark' },
-  { icon: Monitor, label: 'System' },
+const OPTIONS = [
+  { value: 'light' as const, label: 'Light', icon: Sun },
+  { value: 'dark' as const, label: 'Dark', icon: Moon },
+  { value: 'system' as const, label: 'System', icon: Monitor },
 ]
 
 export default function ThemeSwitcher() {
@@ -40,17 +39,21 @@ export default function ThemeSwitcher() {
     return () => window.removeEventListener('ui:themechange', sync)
   }, [])
 
+  const active = OPTIONS.find((option) => option.value === preference) ?? OPTIONS[2]!
+
   return (
-    <TabsSubtle
-      size="compact"
-      activeLabel
-      aria-label="Color theme"
-      selectedIndex={Math.max(0, ORDER.indexOf(preference))}
-      onSelect={(index) => window.__uiTheme?.set(ORDER[index] ?? 'system')}
+    <Select
+      value={preference}
+      onValueChange={(next) => window.__uiTheme?.set(next as ThemePreference)}
     >
-      {TABS.map((tab, index) => (
-        <TabsSubtle.Item key={tab.label} index={index} icon={tab.icon} label={tab.label} />
-      ))}
-    </TabsSubtle>
+      <Select.Trigger aria-label="Color theme" icon={active.icon} />
+      <Select.Content>
+        {OPTIONS.map((option, index) => (
+          <Select.Item key={option.value} index={index} value={option.value} icon={option.icon}>
+            {option.label}
+          </Select.Item>
+        ))}
+      </Select.Content>
+    </Select>
   )
 }
