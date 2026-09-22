@@ -18,9 +18,9 @@ export function Shell({ children }: { children: ReactNode }) {
 
       <aside data-modo="panel">
         <Root>
-          {panelItems.map((itеm) => (
-            <Section key={itеm.bundlePath} title={itеm.label}>
-              <itеm.Component shell={shell}/>
+          {panelItems.map((item, i) => (
+            <Section key={`${i}-${item.label}`} title={item.label}>
+              <item.Component shell={shell}/>
             </Section>
           ))}
         </Root>

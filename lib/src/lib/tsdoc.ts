@@ -21,7 +21,9 @@ export interface ParsedItem {
 }
 
 export function parseItemSource(src: string): ParsedItem {
-  const cleaned = src.replace(/\/\/[^\n]*/g, '')
+  // Line comments only where `//` follows start/whitespace/punctuation, so
+  // `https://…` inside JSDoc and strings survives.
+  const cleaned = src.replace(/(^|[\s;,(){}[\]])\/\/[^\n]*/g, '$1')
 
   let name = ''
   let jsdocAnchor = 0
@@ -59,7 +61,9 @@ export function parseItemSource(src: string): ParsedItem {
   if (!name) return fail('Could not determine component name')
 
   const jsdoc = extractJsdocAbove(cleaned, jsdocAnchor) ?? ''
-  const exampleIdx = jsdoc.indexOf('@example')
+  // `@example` counts only at the start of a (`*`-stripped) line, so text like
+  // `you@example.com` in a description or example code is left alone.
+  const exampleIdx = jsdoc.search(/(?:^|\n)[ \t]*@example\b/)
   const description = exampleIdx === -1 ? jsdoc : jsdoc.slice(0, exampleIdx).trimEnd()
   const examplesRoot = exampleIdx === -1 ? '' : jsdoc.slice(exampleIdx)
   const examples = examplesRoot ? extractExamples(examplesRoot) : []
@@ -246,7 +250,7 @@ function resolveLocalTypeLiteral(src: string, name: string): string | null {
 
 function extractExamples(jsdoc: string): ParsedExample[] {
   const out: ParsedExample[] = []
-  const re = /@example\b([\s\S]*?)(?=@example\b|$)/g
+  const re = /(?:^|\n)[ \t]*@example\b([\s\S]*?)(?=\n[ \t]*@example\b|$)/g
   let m: RegExpExecArray | null
   while ((m = re.exec(jsdoc)) !== null) {
     const block = (m[1] ?? '').trim()

@@ -38,6 +38,8 @@ declare module 'virtual:modo-items' {
   export const primitives: Record<string, ComponentType<any>>
   export const examples: Record<string, Array<{ title?: string; description?: string; code: string }>>
   export const props: Record<string, ItemProp[]>
+  /** Named exports of the `examples` config module; `{}` when unset. */
+  export const exampleScope: Record<string, unknown>
 }
 
 declare module 'virtual:modo-items-css' {

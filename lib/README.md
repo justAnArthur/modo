@@ -33,12 +33,13 @@ The CLI reads `modo.config.ts` from your project root. See the [scaffolded confi
 import { defineConfig } from '@justanarthur/modo/config'
 
 export default defineConfig({
-  tokens: './tokens',
-  primitives: './primitives',
-  components: './components',
-  blocks: './blocks',
+  name: 'My DS',
+  css: './global.css',
+  examples: './examples.ts',
 })
 ```
+
+Tokens, primitives, components and blocks are discovered by directory (`tokens/`, `primitives/`, `components/`, `blocks/`). `examples` points at a module whose named exports (e.g. `export { Plus, Search } from 'lucide-react'`) are in scope in every `@example`, next to your items.
 
 The CLI accepts any user content — `modo` ships no design tokens, no React components, and no copy. You own the visual layer end-to-end.
 

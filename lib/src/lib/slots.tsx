@@ -9,7 +9,7 @@ export interface ParsedItemLite {
   props: Array<{ name: string; optional: boolean }>
   /** Live Component, populated by the shell plugin when it bundles the item. */
   Component?: ComponentType<any>
-  /** file:// URL of the bundled .mjs for this item. */
+  /** Absolute path of the item's entry in the shared build (.modo-tmp/build/items/<tier>/<id>.mjs). */
   bundleUrl?: string
 }
 
@@ -284,7 +284,10 @@ export async function resolveShellSlots(
     }
   }
 
-  const sidebarFromRoot = rootPicks.Sidebar.source === 'interface-match'
+  // Components are never imported node-side (the shared build is browser-only),
+  // so the root's Item/Section statics can't be inspected here. Any user-provided
+  // root owns its members; the shell resolves `Root.Item ?? Item` at runtime.
+  const sidebarFromRoot = rootPicks.Sidebar.source !== 'fallback'
   const sidebarItem = fromRoot('Item') ?? (sidebarFromRoot ? null : await pick('Sidebar', sidebarMembers.Item))
   const sidebarSection = fromRoot('Section') ?? (sidebarFromRoot ? null : await pick('Sidebar', sidebarMembers.Section))
 
