@@ -39,6 +39,7 @@
     "dist",
     "src/runtime",
     "src/lib",
+    "src/plugins",
     "src/exports",
     "templates",
     "README.md"
