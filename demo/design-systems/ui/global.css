@@ -1,11 +1,49 @@
+/*
+ * UI theme plumbing.
+ *
+ * Token declarations live in tokens/*.css and the surface/shadow elevation
+ * module lives in primitives/surface/surface.css (injected with its item);
+ * this file only sets the color scheme + page base and re-points the one
+ * token that cannot ride light-dark(): the --overlay RGB triplet (consumed
+ * as rgb(var(--overlay) / α) — an alpha contract, not a palette color).
+ *
+ * Source: mickadesign/fluid-functionalism `app/globals.css` §2 (THEME
+ * SWITCHING) at commit b3587bdbd83fc66c2a6aae3817ffb856cb09260b — MIT
+ * © 2026 Micka Touillaud — fluidfunctionalism.com.
+ *
+ * `color-scheme` is what flips every light-dark() token; the classes work
+ * on <html> and on any subtree (forced-theme previews).
+ *
+ * The switch blocks double their class selector (.light.light / .dark.dark)
+ * because user CSS is injected BEFORE tokens/*.css and item CSS — the
+ * doubled selector (0,2,0) must out-specify the shared `:root, .light,
+ * .dark` token blocks (0,1,0) so the re-pointed values win regardless of
+ * stylesheet order.
+ */
+
 :root {
-  --bg: #fff;
-  --fg: #111;
-  --accent: #3b82f6;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --radius: 4px;
-  --sm: 0.5rem;
-  --md: 1rem;
-  --lg: 1.5rem;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --overlay: 255 255 255;
+  }
+}
+
+.light.light {
+  color-scheme: light;
+  --overlay: 0 0 0;
+}
+
+.dark.dark {
+  color-scheme: dark;
+  --overlay: 255 255 255;
+}
+
+/* Base: the docs chrome itself follows the palette. */
+html,
+body {
+  background-color: var(--background);
+  color: var(--foreground);
 }

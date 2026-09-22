@@ -1,3 +1,84 @@
-:root {
-  /* color tokens */
+/*
+ * Fluid Functionalism color tokens.
+ *
+ * Source: mickadesign/fluid-functionalism `app/globals.css` §1 (DESIGN TOKENS)
+ * at commit b3587bdbd83fc66c2a6aae3817ffb856cb09260b — MIT License
+ * © 2026 Micka Touillaud — fluidfunctionalism.com.
+ *
+ * Migration from upstream: every HEX literal was converted to its exact oklch
+ * equivalent (sRGB → OKLab, round-trip verified to the original hex). The
+ * rgb()/rgba() alpha overlays (--overlay, --hover, --active, --shadow-color,
+ * --dm-*) are kept as-is — they are alpha contracts, not palette colors.
+ *
+ * Every color token is written ONCE, as light-dark(light, dark). Which side
+ * renders is driven by `color-scheme` (set in global.css): :root follows the
+ * OS, and a `.light` or `.dark` class pins it. The block is declared on
+ * `:root, .light, .dark` — not just `:root` — because light-dark() inside a
+ * custom property resolves against the color-scheme of the element the
+ * property is declared on, so a forced-scope subtree becomes its own
+ * resolution point.
+ *
+ * The surface ladder and its shadow recipes live with their primitive in
+ * primitives/surface/surface.css. The one token that cannot ride
+ * light-dark() here — the --overlay RGB triplet (consumed as
+ * rgb(var(--overlay) / α), an alpha contract) — is re-pointed per scheme in
+ * global.css.
+ */
+
+:root,
+.light,
+.dark {
+  /* The surface ladder (--surface-1..8) and the shadow recipes pair with it
+     in primitives/surface/surface.css. */
+
+  /* ── Semantic tokens ── */
+  /* Same color as --surface-1, inlined so the global token set never
+     depends on the surface primitive's CSS being loaded. */
+  --background: light-dark(oklch(0.985 0 0), oklch(0.205 0 0));
+  --foreground: light-dark(oklch(0.205 0 0), oklch(0.97 0 0));
+  /* Same color as --surface-3, inlined for the same reason. */
+  --card: light-dark(oklch(1 0 0), oklch(0.264 0 0));
+  --card-foreground: light-dark(oklch(0.205 0 0), oklch(0.97 0 0));
+  /* Light `muted` decouples from surface-2: the light surface ladder is so
+     compressed that a ladder value would read as near-white, making anything
+     sitting on it blend together. A slightly greyer value gives muted real
+     semantic presence. Dark keeps the ladder value (= surface-2). */
+  --muted: light-dark(oklch(0.967 0.001 286.375), oklch(0.235 0 0));
+  --muted-foreground: light-dark(oklch(0.556 0 0), oklch(0.7155 0 0));
+
+  /* ── Interactive states ── */
+  --accent: light-dark(oklch(0.922 0 0), oklch(0.439 0 0));
+  --accent-foreground: light-dark(oklch(0.205 0 0), oklch(0.97 0 0));
+  --selected: light-dark(oklch(0.87 0 0), oklch(0.439 0 0));
+
+  /* ── Borders ──
+     --border mixes from --foreground, so it tracks the theme automatically —
+     including inside nested forced scopes, where light-dark() re-resolves
+     --foreground before the mix happens. */
+  --border: color-mix(in oklab, var(--foreground) 12%, transparent);
+  --ring: light-dark(oklch(0.922 0 0), oklch(0.371 0 0));
+  --input: light-dark(oklch(0.922 0 0), oklch(0.371 0 0));
+
+  /* ── Error / Destructive ── */
+  --destructive: light-dark(oklch(0.6368 0.2078 25.33), oklch(0.7106 0.1661 22.22));
+  --destructive-light: light-dark(oklch(0.971 0.013 17.38), oklch(0.2575 0.0886 26.04));
+
+  /* ── Focus indicator ──
+     Every component focus ring reads var(--focus-ring, <value>), so this is
+     the single theming point. */
+  --focus-ring: oklch(0.693 0.16 265);
+
+  /* ── Alpha checkerboard (color-picker swatches) ── */
+  --checker-a: light-dark(oklch(0.792 0 0), oklch(0.239 0 0));
+  --checker-b: light-dark(oklch(1 0 0), oklch(0.285 0 0));
+
+  /* ── Surface-relative interactive overlays (work on any elevation) ──
+     --overlay is the tint-direction triplet — black for light surfaces,
+     white for dark. Components consume it as rgb(var(--overlay) / α), so it
+     stays an RGB triplet and switches per theme in global.css. --hover and
+     --active are the pre-mixed conveniences. */
+  --overlay: 0 0 0;
+  --hover: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.06));
+  --active: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.1));
+
 }

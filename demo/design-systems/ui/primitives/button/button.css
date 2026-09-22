@@ -1,20 +1,33 @@
 .my-btn {
   padding: var(--sm) var(--md);
-  background: var(--accent);
-  color: #fff;
-  border: 1px solid var(--border);
+  background: var(--foreground);
+  color: var(--background);
+  border: 1px solid transparent;
   border-radius: var(--radius);
   font: inherit;
   cursor: pointer;
 }
+.my-btn:hover:not(:disabled) {
+  background: color-mix(in oklab, var(--foreground) 88%, transparent);
+}
 .my-btn[data-variant="secondary"] {
   background: var(--muted);
-  color: var(--bg);
+  color: var(--foreground);
+}
+.my-btn[data-variant="secondary"]:hover:not(:disabled) {
+  background: var(--accent);
 }
 .my-btn[data-variant="tertiary"] {
   background: transparent;
-  color: var(--accent);
-  border-color: var(--accent);
+  color: var(--foreground);
+  border-color: var(--border);
+}
+.my-btn[data-variant="tertiary"]:hover:not(:disabled) {
+  background: var(--hover);
+}
+.my-btn:focus-visible {
+  outline: 1px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 .my-btn:disabled {
   opacity: 0.5;
