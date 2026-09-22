@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactElement } from 'react'
 import { tokens as groups } from 'virtual:modo-tokens'
 import type { Group, Swatch } from '../../lib/css'
+import { colorExpr, colorValue, resolved } from './host-colors'
 
 type Var = Group['vars'][number]
 
@@ -60,8 +61,8 @@ export function GroupPreview({ group }: { group: string }) {
   if (g.name === 'colors') {
     return (
       <div data-modo="token-preview">
-        {vars.slice(0, 12).map((v) => (
-          <span key={v.name} data-modo="token-chip" style={{ background: `var(${v.name})` }} title={`${v.name}: ${v.value}`} />
+        {vars.filter((v) => colorExpr(v.name) !== null).slice(0, 12).map((v) => (
+          <span key={v.name} data-modo="token-chip" style={{ background: colorExpr(v.name) ?? v.value }} title={`${v.name}: ${v.value}`} />
         ))}
       </div>
     )
@@ -82,10 +83,9 @@ interface Tile {
 }
 
 function ColorGroups({ vars }: { vars: Var[] }) {
-  const root = getComputedStyle(document.documentElement)
-  const resolved = (v: Var) => root.getPropertyValue(v.name).trim() || v.value
-  // Judge the resolved value: `CSS.supports` accepts anything holding a var().
-  const colors = vars.filter((v) => CSS.supports('color', resolved(v)))
+  // A token counts as a color when its resolved value is one, either on its
+  // own or wrapped the way the host wraps it (`hsl(var(--border))`).
+  const colors = vars.filter((v) => colorValue(v.name, resolved(v.name, v.value)) !== null)
   const byName = new Map(colors.map((v) => [v.name, v]))
   const partner = (name: string) => byName.get(name === '--background' ? '--foreground' : `${name}-foreground`)
   const partners = new Set(colors.map((v) => partner(v.name)?.name))
@@ -97,8 +97,8 @@ function ColorGroups({ vars }: { vars: Var[] }) {
   const page = pageColors()
   return (
     <>
-      <ColorSection title="Theme" stacks={theme} page={page} resolved={resolved} />
-      <ColorSection title="Custom" stacks={custom} page={page} resolved={resolved} />
+      <ColorSection title="Theme" stacks={theme} page={page} />
+      <ColorSection title="Custom" stacks={custom} page={page} />
       {other.length > 0 && (
         <section data-modo="section" style={stack}>
           <h2 data-modo="section-title">Other</h2>
@@ -130,10 +130,9 @@ interface SectionProps {
   title: string
   stacks: Tile[][]
   page: PageColors
-  resolved: (v: Var) => string
 }
 
-function ColorSection({ title, stacks, page, resolved }: SectionProps) {
+function ColorSection({ title, stacks, page }: SectionProps) {
   const filled = stacks.filter((s) => s.length > 0)
   if (filled.length === 0) return null
   return (
@@ -142,7 +141,7 @@ function ColorSection({ title, stacks, page, resolved }: SectionProps) {
       <div data-modo="color-grid">
         {filled.map((s) => (
           <div data-modo="color-stack" key={s[0]!.v.name}>
-            {s.map((t) => <ColorTile key={t.v.name} tile={t} page={page} value={resolved(t.v)} />)}
+            {s.map((t) => <ColorTile key={t.v.name} tile={t} page={page} />)}
           </div>
         ))}
       </div>
@@ -150,7 +149,8 @@ function ColorSection({ title, stacks, page, resolved }: SectionProps) {
   )
 }
 
-function ColorTile({ tile: { v, fg }, page, value }: { tile: Tile; page: PageColors; value: string }) {
+function ColorTile({ tile: { v, fg }, page }: { tile: Tile; page: PageColors }) {
+  const value = colorValue(v.name, resolved(v.name, v.value)) ?? v.value
   const own = paint(value)
   const seen = paint(value, page.bg)
   const hex = own[3] === 255 ? toHex(own) : null
@@ -161,7 +161,7 @@ function ColorTile({ tile: { v, fg }, page, value }: { tile: Tile; page: PageCol
     <div
       data-modo="color-tile"
       data-flush={contrast(seen, paint(page.bg)) < 1.15 || undefined}
-      style={{ background: `var(${v.name})`, color: fg ? `var(${fg.name})` : ink }}
+      style={{ background: colorExpr(v.name) ?? value, color: (fg && colorExpr(fg.name)) || ink }}
       title={[`${v.name}: ${v.value}`, hex, fg && `${fg.name}: ${fg.value}`].filter(Boolean).join('\n')}
     >
       <span data-modo="color-tile-name">{v.name}</span>
