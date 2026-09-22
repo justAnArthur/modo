@@ -1,0 +1,30 @@
+/*
+ * Fluid Functionalism motion tokens.
+ *
+ * Source: mickadesign/fluid-functionalism `registry/default/lib/springs.ts`
+ * at commit b3587bdbd83fc66c2a6aae3817ffb856cb09260b — MIT License © 2026
+ * Micka Touillaud — fluidfunctionalism.com.
+ *
+ * FF's motion is JS: the `spring` tiers in _fluid/lib/springs.ts feed
+ * `motion/react`, and components always reach for a tier rather than a
+ * hand-written duration. These properties mirror those tiers for CSS
+ * consumers and for the tokens page — keep the two in sync.
+ *
+ * Each tier's enter transition is a spring of the given duration; its exit is
+ * a plain tween one step quicker, so a dismissal reads as crisp and final.
+ *   fast      80ms enter, 60ms exit   — critically damped (bounce 0)
+ *   moderate  160ms enter, 120ms exit — critically damped (bounce 0): panels,
+ *             dropdowns, tabs, merged selection backgrounds
+ *   slow      240ms enter, 160ms exit — the one tier with a little bounce
+ *             (bounce 0.12)
+ * The bigger the thing that moves, the slower the tier.
+ */
+
+:root {
+  --duration-fast: 80ms;
+  --duration-fast-exit: 60ms;
+  --duration-moderate: 160ms;
+  --duration-moderate-exit: 120ms;
+  --duration-slow: 240ms;
+  --duration-slow-exit: 160ms;
+}

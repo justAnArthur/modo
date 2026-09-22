@@ -1,0 +1,101 @@
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { defineConfig, presetWind4 } from 'unocss'
+
+/*
+ * UnoCSS config — the UnoCSS stand-in for Fluid Functionalism's Tailwind v4
+ * setup (upstream `app/globals.css` §3 `@theme inline` + `@utility`,
+ * mickadesign/fluid-functionalism @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b,
+ * MIT © 2026 Micka Touillaud).
+ *
+ * - presetWind4 is UnoCSS's Tailwind v4 preset. `dark: 'class'` emits
+ *   `.dark .dark\:x`, the same "inside a .dark ancestor" contract as FF's
+ *   `@custom-variant dark (&:is(.dark *))`; vite.ts mirrors
+ *   prefers-color-scheme onto <html class="dark">.
+ * - Theme colors point straight at the CSS variables in tokens/colors.css and
+ *   primitives/surface/surface.css. wind4 applies an opacity modifier to a
+ *   var() color with color-mix(), so `bg-accent/12` works on the
+ *   light-dark() tokens.
+ * - The radius scale is wind4's default on purpose: shape-context pairs
+ *   `rounded-lg` (8px) with JS pixel radii, so it must not follow `--radius`.
+ * - `font.sans` repeats the literal from tokens/typography.css instead of
+ *   `var(--font-sans)`: wind4 emits theme keys as same-named variables
+ *   (`--font-sans`), and a self-reference would be a cycle.
+ * - Sources are scanned from disk (`content.filesystem`) because items reach
+ *   the browser pre-bundled by modo, and example code lives only in the raw
+ *   TSDoc of each index.tsx. The pipeline include covers `.ts` too (the
+ *   default pipeline skips it).
+ */
+
+const root = dirname(fileURLToPath(import.meta.url))
+const sources = resolve(root, '{_fluid,_shell,primitives,components}/**/*.{ts,tsx}')
+
+const TYPE_ROLES = ['display', 'title', 'subtitle', 'body', 'caption'] as const
+
+export default defineConfig({
+  presets: [
+    presetWind4({
+      dark: 'class',
+      preflights: { reset: true, theme: 'on-demand' },
+    }),
+  ],
+  outputToCssLayers: true,
+  content: {
+    filesystem: [sources],
+    pipeline: { include: [sources] },
+  },
+  theme: {
+    font: {
+      sans: "'Inter Variable', ui-sans-serif, system-ui, sans-serif",
+    },
+    colors: {
+      background: 'var(--background)',
+      foreground: 'var(--foreground)',
+      card: { DEFAULT: 'var(--card)', foreground: 'var(--card-foreground)' },
+      muted: { DEFAULT: 'var(--muted)', foreground: 'var(--muted-foreground)' },
+      accent: { DEFAULT: 'var(--accent)', foreground: 'var(--accent-foreground)' },
+      selected: 'var(--selected)',
+      border: 'var(--border)',
+      ring: 'var(--ring)',
+      input: 'var(--input)',
+      destructive: { DEFAULT: 'var(--destructive)', light: 'var(--destructive-light)' },
+      hover: 'var(--hover)',
+      active: 'var(--active)',
+      surface: {
+        1: 'var(--surface-1)',
+        2: 'var(--surface-2)',
+        3: 'var(--surface-3)',
+        4: 'var(--surface-4)',
+        5: 'var(--surface-5)',
+        6: 'var(--surface-6)',
+        7: 'var(--surface-7)',
+        8: 'var(--surface-8)',
+      },
+    },
+    // Arbitrary `transition-[a,b]` only accepts properties wind4 knows; FF
+    // also tweens these two (icon stroke on hover, the Inter weight ladder).
+    property: {
+      'stroke-width': 'stroke-width',
+      'font-variation-settings': 'font-variation-settings',
+    },
+    shadow: {
+      'surface-1': 'var(--shadow-1)',
+      'surface-2': 'var(--shadow-2)',
+      'surface-3': 'var(--shadow-3)',
+      'surface-4': 'var(--shadow-4)',
+      'surface-5': 'var(--shadow-5)',
+      'surface-6': 'var(--shadow-6)',
+      'surface-7': 'var(--shadow-7)',
+      'surface-8': 'var(--shadow-8)',
+    },
+  },
+  rules: [
+    // FF's type-scale role utilities (upstream `@utility text-display` …),
+    // riding the --text-* tokens in tokens/typography.css.
+    [
+      new RegExp(`^text-(${TYPE_ROLES.join('|')})$`),
+      ([, role]) => ({ 'font-size': `var(--text-${role})` }),
+      { autocomplete: `text-(${TYPE_ROLES.join('|')})` },
+    ],
+  ],
+})

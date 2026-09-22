@@ -1,3 +1,36 @@
+/*
+ * Fluid Functionalism type tokens.
+ *
+ * Source: mickadesign/fluid-functionalism `app/globals.css` §3–4 (`--font-sans`,
+ * the `--fs-*` type-scale roles and their `@utility text-*` classes) at commit
+ * b3587bdbd83fc66c2a6aae3817ffb856cb09260b — MIT License © 2026 Micka
+ * Touillaud — fluidfunctionalism.com.
+ *
+ * Local changes:
+ * - The family is Inter Variable from @fontsource-variable/inter/opsz
+ *   (imported in global.css) instead of upstream's self-hosted
+ *   InterVariable.ttf. The opsz build matters: _fluid/lib/font-weight.ts
+ *   animates both the wght and opsz axes.
+ * - The role sizes are renamed `--fs-*` → `--text-*` and read by the
+ *   `text-display|title|subtitle|body|caption` rule in uno.config.ts. They
+ *   hold the default column of `typeScale` in _fluid/lib/size-context.tsx
+ *   (keep the two in sync). Upstream's site-chrome extras — the 22px mobile
+ *   display step and the `html[data-size="compact"]` override set by the docs
+ *   site's SizeAttribute — are not carried over; SizeProvider's compact step
+ *   reaches components through `useTypeScale()` instead.
+ */
+
 :root {
-  /* typography tokens */
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+
+  /* Page titles. */
+  --text-display: 28px;
+  /* Section headings, dialog titles. */
+  --text-title: 16px;
+  /* Card titles, emphasized rows. */
+  --text-subtitle: 14px;
+  /* Control labels and body copy. */
+  --text-body: 13px;
+  /* Secondary text: descriptions, meta rows, errors, group labels. */
+  --text-caption: 12px;
 }
