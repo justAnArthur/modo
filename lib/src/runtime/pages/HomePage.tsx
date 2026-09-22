@@ -1,57 +1,51 @@
 import { items } from 'virtual:modo-items'
 import { tokens } from 'virtual:modo-tokens'
-import { shell } from 'virtual:modo-shell'
+import { config } from 'virtual:modo-config'
+import { Bento, BentoCard } from './bento'
+import { ExamplePreview } from '../items/preview'
+import { GroupPreview } from '../tokens/token-page'
+import type { Tier } from './TierPage'
 
-const Link = shell.Link
-const TIERS = ['primitives', 'components', 'blocks'] as const
-type Tier = (typeof TIERS)[number]
-const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1)
+const TIERS: Tier[] = ['primitives', 'components', 'blocks']
 
 export function HomePage() {
+  const vars = tokens.reduce((n, g) => n + g.vars.length, 0)
   return (
     <main data-modo="content">
-      <header>
-        <h1 data-modo="page-title">Foundations</h1>
-        <p data-modo="page-lead">Tokens, primitives, components, and blocks in this design system.</p>
+      <header data-modo="hero">
+        <h1 data-modo="page-title">{config.name}</h1>
+        <p data-modo="page-lead">
+          {config.description ?? 'Tokens, primitives, components, and blocks in this design system.'}
+        </p>
+        <p data-modo="hero-stats">
+          {vars} tokens · {items.length} items
+        </p>
       </header>
-      {tokens.length > 0 && (
-        <section data-modo="section">
-          <h2 data-modo="section-title">Tokens</h2>
-          <ul>
-            {tokens.map((g) => (
-              <li key={g.name}>
-                <Link href={`/docs/tokens/${g.name}`}>{g.name}</Link>{' '}
-                <small>({g.vars.length} vars)</small>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {TIERS.map((tier) => {
-        const list = items.filter((it) => it.tier === tier)
-        if (!list.length) return null
-        return <TierSection key={tier} title={cap(tier)} tier={tier} list={list} />
-      })}
+      <Bento>
+        {tokens.length > 0 && (
+          <BentoCard href="/docs/tokens" title="Foundations" meta={`${tokens.length} groups`} span="wide">
+            <GroupPreview group={tokens[0]!.name} />
+          </BentoCard>
+        )}
+        {TIERS.map((tier) => {
+          const list = items.filter((it) => it.tier === tier)
+          if (list.length === 0) return null
+          const first = list[0]!
+          return (
+            <BentoCard
+              key={tier}
+              href={`/docs/${tier}`}
+              title={tier}
+              meta={`${list.length} items`}
+              description={list.map((it) => it.name).join(', ')}
+              span={tier === 'blocks' ? 'full' : undefined}
+              zoom={tier === 'blocks' ? 0.7 : undefined}
+            >
+              <ExamplePreview itemId={`${tier}:${first.id}`} />
+            </BentoCard>
+          )
+        })}
+      </Bento>
     </main>
-  )
-}
-
-function TierSection({ title, tier, list }: {
-  title: string
-  tier: Tier
-  list: typeof items
-}) {
-  return (
-    <section data-modo="section">
-      <h2 data-modo="section-title">{title}</h2>
-      <ul>
-        {list.map((it) => (
-          <li key={it.id}>
-            <Link href={`/docs/${tier}/${it.id}`}>{it.name}</Link>
-            {it.description ? <> — <span>{it.description.split('\n')[0]}</span></> : null}
-          </li>
-        ))}
-      </ul>
-    </section>
   )
 }
