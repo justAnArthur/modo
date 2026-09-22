@@ -16,13 +16,44 @@ import type { Plugin, UserConfig } from 'vite'
 const CONFIG_CSS_ID = '\0virtual:modo-config-css'
 
 // FF's `dark:` variant needs a `.dark` ancestor (upstream ThemeProvider sets
-// it on <html>). modo has no theme toggle, so mirror the OS preference
-// before first paint and keep following it.
-const DARK_SYNC = `(() => {
+// it on <html>), and `color-scheme` drives every light-dark() token. modo has
+// no theme of its own, so this runs before first paint: it applies the stored
+// preference (or the OS one under 'system') and exposes `window.__uiTheme` for
+// the Theme panel item in `_shell/theme-switcher.tsx`. The 'ui:themechange'
+// event keeps that control in sync when the OS flips underneath 'system'.
+const THEME_CONTROLLER = `(() => {
+  const KEY = 'modo-ui-theme'
+  const root = document.documentElement
   const mq = window.matchMedia('(prefers-color-scheme: dark)')
-  const sync = () => document.documentElement.classList.toggle('dark', mq.matches)
-  sync()
-  mq.addEventListener('change', sync)
+  const read = () => {
+    try {
+      const stored = localStorage.getItem(KEY)
+      return stored === 'light' || stored === 'dark' ? stored : 'system'
+    } catch {
+      return 'system'
+    }
+  }
+  let preference = read()
+  const apply = () => {
+    const resolved = preference === 'system' ? (mq.matches ? 'dark' : 'light') : preference
+    root.classList.toggle('dark', resolved === 'dark')
+    root.classList.toggle('light', resolved === 'light')
+    root.dataset.theme = preference
+    window.dispatchEvent(new CustomEvent('ui:themechange', { detail: { preference, resolved } }))
+  }
+  window.__uiTheme = {
+    get: () => preference,
+    set: (next) => {
+      preference = next === 'light' || next === 'dark' ? next : 'system'
+      try {
+        if (preference === 'system') localStorage.removeItem(KEY)
+        else localStorage.setItem(KEY, preference)
+      } catch {}
+      apply()
+    },
+  }
+  mq.addEventListener('change', () => { if (preference === 'system') apply() })
+  apply()
 })()`
 
 function uiGlue(): Plugin {
@@ -36,7 +67,7 @@ function uiGlue(): Plugin {
       return { code: `import 'virtual:uno.css';\n${code}`, map: null }
     },
     transformIndexHtml() {
-      return [{ tag: 'script', children: DARK_SYNC, injectTo: 'head-prepend' }]
+      return [{ tag: 'script', children: THEME_CONTROLLER, injectTo: 'head-prepend' }]
     },
   }
 }

@@ -143,6 +143,14 @@ with a flat `value` / `onChange` / `options` contract
 step) so the chrome runs on the design system's own Select. The
 `components/select` item keeps the upstream API untouched.
 
+`_shell/theme-switcher.tsx` is not an item either: it is the `Theme` entry in
+`modo.config.ts` `panel.items`, a compact `TabsSubtle` (Light / Dark / System,
+`activeLabel`) that reads and sets `window.__uiTheme` and re-reads it on
+`ui:themechange`. All switching logic lives in the pre-paint controller
+described under **Tailwind → UnoCSS**, so the control holds no theme state of
+its own. `demo/scripts/run-design-systems.ts` appends its own `Switcher` panel
+item to whatever a design system declares, so both show up under the runner.
+
 ## Tier mapping
 
 The tiers mirror the FF docs navigation. FF's "System" pages become
@@ -199,10 +207,13 @@ config.
 
 - **Dark mode.** `dark: 'class'` produces `.dark .dark\:x`, the same "inside a
   `.dark` ancestor" contract as FF's `@custom-variant dark (&:is(.dark *))`.
-  modo has no theme toggle, so `vite.ts` injects a small script into
-  `index.html` (`transformIndexHtml`, `head-prepend`). The script mirrors
-  `prefers-color-scheme` onto `<html class="dark">` before first paint and
-  keeps following it.
+  modo ships no theme of its own, so `vite.ts` injects a small controller into
+  `index.html` (`transformIndexHtml`, `head-prepend`). Before first paint it
+  puts `light` or `dark` on `<html>` — the stored preference, or the OS one
+  under `system` — which is also what flips every `light-dark()` token through
+  `color-scheme`. It exposes `window.__uiTheme` (`get` / `set`), persists the
+  choice in `localStorage` under `modo-ui-theme`, and fires `ui:themechange`
+  on every apply, including when the OS flips underneath `system`.
 - **Load order.** The same plugin prepends `import 'virtual:uno.css'` to
   modo's `\0virtual:modo-config-css` module, so UnoCSS's
   `@layer properties, theme, base, default` statement lands before

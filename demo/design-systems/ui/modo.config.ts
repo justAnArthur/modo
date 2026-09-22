@@ -8,4 +8,5 @@ export default defineConfig({
   vite: './vite.ts',
   examples: './examples.ts',
   shell: { Button: './components/button', Select: './_shell/select.tsx' },
+  panel: { items: [{ label: 'Theme', component: './_shell/theme-switcher.tsx' }] },
 })
