@@ -1,7 +1,7 @@
 {
   "name": "@justanarthur/modo",
   "type": "module",
-  "version": "0.1.2",
+  "version": "0.2.0-beta.0",
   "description": "Atomic design system renderer — reads tokens/primitives/components/blocks and produces a docs site that uses the user's components in the chrome.",
   "license": "MIT",
   "keywords": [
