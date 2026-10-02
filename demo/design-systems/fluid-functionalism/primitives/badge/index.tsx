@@ -83,37 +83,17 @@ interface BadgeProps
  * Pulled via `bunx shadcn@latest add @fluid/badge`.
  *
  * @example # Solid colors
- * ```tsx
- * <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
- *   <Badge>Gray</Badge>
- *   <Badge color="blue">Blue</Badge>
- *   <Badge color="green">Green</Badge>
- *   <Badge color="amber">Amber</Badge>
- *   <Badge color="red">Red</Badge>
- *   <Badge color="violet">Violet</Badge>
- * </div>
- * ```
+ * {@includeCode ./examples/solid-colors.tsx}
  *
  * @example # Dot variant
  * An outlined pill with a leading color dot — for ambient statuses.
  *
- * ```tsx
- * <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
- *   <Badge variant="dot">Idle</Badge>
- *   <Badge variant="dot" color="green">Active</Badge>
- *   <Badge variant="dot" color="amber">Degraded</Badge>
- * </div>
- * ```
+ * {@includeCode ./examples/dot-variant.tsx}
  *
  * @example # Compact size
  * The 20px compact step for dense surfaces like tables and sidebars.
  *
- * ```tsx
- * <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
- *   <Badge size="compact">Default 24px</Badge>
- *   <Badge size="compact" color="teal">Compact 20px</Badge>
- * </div>
- * ```
+ * {@includeCode ./examples/compact-size.tsx}
  */
 const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
   (

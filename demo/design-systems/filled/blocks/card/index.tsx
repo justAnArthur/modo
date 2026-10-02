@@ -7,9 +7,7 @@ import Button from '../../primitives/button'
  * @example
  * # Default
  *
- * ```tsx
- * <Card title="Hello">Body text here.</Card>
- * ```
+ * {@includeCode ./examples/default.tsx}
  */
 export default function Card({ title, children }: {
   /** Card heading. */

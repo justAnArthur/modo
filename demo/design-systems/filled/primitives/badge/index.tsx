@@ -6,16 +6,12 @@ import './badge.css'
  * @example
  * # Default
  *
- * ```tsx
- * <Badge>New</Badge>
- * ```
+ * {@includeCode ./examples/default.tsx}
  *
  * @example
  * # Outline
  *
- * ```tsx
- * <Badge variant="outline">Beta</Badge>
- * ```
+ * {@includeCode ./examples/outline.tsx}
  */
 export default function Badge({
   variant = 'default',

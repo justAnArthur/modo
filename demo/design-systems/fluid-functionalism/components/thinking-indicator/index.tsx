@@ -37,23 +37,17 @@ interface ThinkingIndicatorProps extends HTMLAttributes<HTMLDivElement> {
  * Pulled via `bunx shadcn@latest add @fluid/thinking-indicator`.
  *
  * @example # Basic
- * ```tsx
- * <ThinkingIndicator />
- * ```
+ * {@includeCode ./examples/basic.tsx}
  *
  * @example # Text only
  * Drop the glyph for an inline indicator, e.g. before a streamed reply.
  *
- * ```tsx
- * <ThinkingIndicator showIcon={false} />
- * ```
+ * {@includeCode ./examples/text-only.tsx}
  *
  * @example # Compact
  * The compact ladder step for dense transcripts.
  *
- * ```tsx
- * <ThinkingIndicator size="compact" />
- * ```
+ * {@includeCode ./examples/compact.tsx}
  */
 const ThinkingIndicator = forwardRef<HTMLDivElement, ThinkingIndicatorProps>(
   ({ className, showIcon = true, size, ...props }, ref) => {

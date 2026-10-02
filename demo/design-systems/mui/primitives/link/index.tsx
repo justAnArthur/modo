@@ -8,16 +8,12 @@ import MuiLink from '@mui/material/Link'
  * @example
  * # Default
  *
- * ```tsx
- * <Link href="/docs/mui">Read the MUI docs</Link>
- * ```
+ * {@includeCode ./examples/default.tsx}
  *
  * @example
  * # Always underlined
  *
- * ```tsx
- * <Link href="https://mui.com" underline="always">mui.com</Link>
- * ```
+ * {@includeCode ./examples/always-underlined.tsx}
  */
 export default function Link({
   href,

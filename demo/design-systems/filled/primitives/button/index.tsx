@@ -6,16 +6,12 @@ import './button.css'
  * @example
  * # Default
  *
- * ```tsx
- * <Button>Save</Button>
- * ```
+ * {@includeCode ./examples/default.tsx}
  *
  * @example
  * # Secondary
  *
- * ```tsx
- * <Button variant="secondary">Cancel</Button>
- * ```
+ * {@includeCode ./examples/secondary.tsx}
  */
 export default function Button({
   variant = 'primary',

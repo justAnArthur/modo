@@ -14,19 +14,13 @@ import { cn } from "cn"
  * Pulled via `bunx shadcn@latest add input` (radix-nova style, neutral base color).
  *
  * @example # Basic
- * ```tsx
- * <Input placeholder="you@modo.dev" />
- * ```
+ * {@includeCode ./examples/basic.tsx}
  *
  * @example # Password
- * ```tsx
- * <Input type="password" placeholder="••••••••" />
- * ```
+ * {@includeCode ./examples/password.tsx}
  *
  * @example # Disabled
- * ```tsx
- * <Input placeholder="Read only" disabled />
- * ```
+ * {@includeCode ./examples/disabled.tsx}
  */
 export default function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (

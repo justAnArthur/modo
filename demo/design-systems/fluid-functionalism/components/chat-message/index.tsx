@@ -54,22 +54,12 @@ interface ChatMessageProps
  * @example # Conversation
  * The user bubble and the plain assistant reply.
  *
- * ```tsx
- * <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 380, maxWidth: '100%' }}>
- *   <ChatMessage from="user" time="Wednesday 6:08 PM">Summarize the spring tiers.</ChatMessage>
- *   <ChatMessage from="assistant">Fast 80ms for popups, moderate 160ms for panels, slow 240ms when overshoot reads as intent.</ChatMessage>
- * </div>
- * ```
+ * {@includeCode ./examples/conversation.tsx}
  *
  * @example # Compact size
  * The compact ladder step tightens bubble type and padding.
  *
- * ```tsx
- * <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 380, maxWidth: '100%' }}>
- *   <ChatMessage from="user" size="compact">Compact bubble</ChatMessage>
- *   <ChatMessage from="assistant" size="compact">A smaller sibling of the same hierarchy, not a squeezed copy.</ChatMessage>
- * </div>
- * ```
+ * {@includeCode ./examples/compact-size.tsx}
  */
 const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
   (

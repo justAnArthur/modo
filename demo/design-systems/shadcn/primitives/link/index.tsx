@@ -9,20 +9,12 @@ import { Link as ShadcnLink } from './link'
  * @example # Text link
  * The `link` variant renders a classic inline hyperlink.
  *
- * ```tsx
- * <Link href="https://ui.shadcn.com">ui.shadcn.com</Link>
- * ```
+ * {@includeCode ./examples/text-link.tsx}
  *
  * @example # As a button
  * Any button variant turns the anchor into a button-styled call to action.
  *
- * ```tsx
- * <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
- *   <Link href="https://ui.shadcn.com">ui.shadcn.com</Link>
- *   <Link href="#docs" variant="outline">Read the docs</Link>
- *   <Link href="#get-started" variant="secondary">Get started</Link>
- * </div>
- * ```
+ * {@includeCode ./examples/as-a-button.tsx}
  */
 export default function Link({ href, variant = 'link', children }: {
   /** Navigation target. */

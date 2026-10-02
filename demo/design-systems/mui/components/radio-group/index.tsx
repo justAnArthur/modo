@@ -13,31 +13,12 @@ import Radio from '@mui/material/Radio'
  * @example
  * # Stack
  *
- * ```tsx
- * <RadioGroup
- *   defaultValue="dark"
- *   options={[
- *     { value: 'light', label: 'Light' },
- *     { value: 'dark', label: 'Dark' },
- *     { value: 'system', label: 'System' },
- *   ]}
- * />
- * ```
+ * {@includeCode ./examples/stack.tsx}
  *
  * @example
  * # Row with label
  *
- * ```tsx
- * <RadioGroup
- *   label="Density"
- *   row
- *   defaultValue="comfortable"
- *   options={[
- *     { value: 'compact', label: 'Compact' },
- *     { value: 'comfortable', label: 'Comfortable' },
- *   ]}
- * />
- * ```
+ * {@includeCode ./examples/row-with-label.tsx}
  */
 export default function RadioGroup({
   options,

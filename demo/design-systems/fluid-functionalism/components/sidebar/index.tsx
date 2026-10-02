@@ -25,28 +25,10 @@ import {
  * @example # Sections and items
  * The modo nav shape: sections with titled groups and anchor items.
  *
- * ```tsx
- * <Sidebar className="!min-h-0" style={{ maxWidth: 220 }}>
- *   <Sidebar.Section title="Foundations">
- *     <Sidebar.Item href="#colors" active>Colors</Sidebar.Item>
- *     <Sidebar.Item href="#surfaces">Surfaces</Sidebar.Item>
- *   </Sidebar.Section>
- *   <Sidebar.Section title="Components">
- *     <Sidebar.Item href="#button">Button</Sidebar.Item>
- *     <Sidebar.Item href="#select">Select</Sidebar.Item>
- *   </Sidebar.Section>
- * </Sidebar>
- * ```
+ * {@includeCode ./examples/sections-and-items.tsx}
  *
  * @example # Single group
- * ```tsx
- * <Sidebar className="!min-h-0" style={{ maxWidth: 180 }}>
- *   <Sidebar.Section title="Project">
- *     <Sidebar.Item href="#overview" active>Overview</Sidebar.Item>
- *     <Sidebar.Item href="#settings">Settings</Sidebar.Item>
- *   </Sidebar.Section>
- * </Sidebar>
- * ```
+ * {@includeCode ./examples/single-group.tsx}
  */
 export default function Sidebar({ children, className, style }: {
   /** Nav sections and items (Sidebar.Section / Sidebar.Item). */

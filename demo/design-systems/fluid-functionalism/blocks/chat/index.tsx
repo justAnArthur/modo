@@ -33,23 +33,17 @@ const initialMessages: Entry[] = [
  * substrate. Send a message to watch the flow.
  *
  * @example # Conversation
- * ```tsx
- * <Chat />
- * ```
+ * {@includeCode ./examples/conversation.tsx}
  *
  * @example # Thinking
  * Pin the assistant's working state after the last reply.
  *
- * ```tsx
- * <Chat pending />
- * ```
+ * {@includeCode ./examples/thinking.tsx}
  *
  * @example # Compact transcript
  * The size ladder applies to bubbles, indicator and composer alike.
  *
- * ```tsx
- * <Chat size="compact" />
- * ```
+ * {@includeCode ./examples/compact-transcript.tsx}
  */
 export default function Chat({ pending = false, size = 'default', placeholder = 'Message Fluid…' }: {
   /** Show the thinking indicator under the last reply (also appears live while a sent message is pending). */

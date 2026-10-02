@@ -11,16 +11,12 @@ import Button from '@mui/material/Button'
  * @example
  * # Default
  *
- * ```tsx
- * <LoginForm />
- * ```
+ * {@includeCode ./examples/default.tsx}
  *
  * @example
  * # Custom copy
  *
- * ```tsx
- * <LoginForm title="Welcome back" submitLabel="Continue" />
- * ```
+ * {@includeCode ./examples/custom-copy.tsx}
  */
 export default function LoginForm({
   title = 'Sign in',

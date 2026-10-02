@@ -9,18 +9,12 @@ import FormControlLabel from '@mui/material/FormControlLabel'
  * @example
  * # Off / On
  *
- * ```tsx
- * <Switch />
- * <Switch checked />
- * ```
+ * {@includeCode ./examples/off-on.tsx}
  *
  * @example
  * # With label and size
  *
- * ```tsx
- * <Switch label="Email notifications" checked />
- * <Switch label="Compact" size="small" />
- * ```
+ * {@includeCode ./examples/with-label-and-size.tsx}
  */
 export default function Switch({
   checked = false,

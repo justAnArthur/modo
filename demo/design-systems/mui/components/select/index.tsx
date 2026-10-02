@@ -11,31 +11,12 @@ import MenuItem from '@mui/material/MenuItem'
  * @example
  * # Framework
  *
- * ```tsx
- * <Select
- *   value="mui"
- *   options={[
- *     { value: 'filled', label: 'filled' },
- *     { value: 'shadcn', label: 'shadcn/ui' },
- *     { value: 'mui', label: 'MUI' },
- *   ]}
- *   onChange={() => {}}
- * />
- * ```
+ * {@includeCode ./examples/framework.tsx}
  *
  * @example
  * # With label
  *
- * ```tsx
- * <Select
- *   label="Density"
- *   value="comfortable"
- *   options={[
- *     { value: 'compact', label: 'Compact' },
- *     { value: 'comfortable', label: 'Comfortable' },
- *   ]}
- * />
- * ```
+ * {@includeCode ./examples/with-label.tsx}
  */
 export default function Select({
   value,

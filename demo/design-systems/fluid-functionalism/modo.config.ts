@@ -6,4 +6,5 @@ export default defineConfig({
     'Fluid Functionalism (an independent shadcn registry layer by mickadesign) pulled with the shadcn CLI over a shadcn/ui radix-nova foundation, reorganized into modo structure.',
   css: './global.css',
   vite: './vite.ts',
+  shell: { Icon: './_shell/icon.tsx' },
 })

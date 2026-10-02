@@ -8,23 +8,17 @@ import MuiTextField from '@mui/material/TextField'
  * @example
  * # Email
  *
- * ```tsx
- * <TextField label="Email" placeholder="you@example.com" />
- * ```
+ * {@includeCode ./examples/email.tsx}
  *
  * @example
  * # Password with helper text
  *
- * ```tsx
- * <TextField label="Password" type="password" defaultValue="hunter2" helperText="At least 8 characters." />
- * ```
+ * {@includeCode ./examples/password-with-helper-text.tsx}
  *
  * @example
  * # Multiline
  *
- * ```tsx
- * <TextField label="Bio" defaultValue="Design systems enjoyer." multiline rows={3} />
- * ```
+ * {@includeCode ./examples/multiline.tsx}
  */
 export default function TextField({
   label,

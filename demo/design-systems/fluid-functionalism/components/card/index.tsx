@@ -14,9 +14,11 @@ import {
   useContext,
   useMemo,
   useRef,
+  type ForwardRefExoticComponent,
   type HTMLAttributes,
   type ReactElement,
   type ReactNode,
+  type RefAttributes,
 } from "react";
 import { cn } from "../../_fluid/utils";
 import { fontWeights } from "../../_fluid/font-weight";
@@ -226,6 +228,23 @@ CardGroup.displayName = "CardGroup";
 
 // ── Card ─────────────────────────────────────────────────
 
+// The statics are attached by Object.assign at the bottom; this cast is what
+// makes `<Card.Header>` typecheck.
+type CardComponent = ForwardRefExoticComponent<CardProps & RefAttributes<HTMLDivElement>> & {
+  Group: typeof CardGroup;
+  Header: typeof CardHeader;
+  Title: typeof CardTitle;
+  Description: typeof CardDescription;
+  Action: typeof CardAction;
+  Content: typeof CardContent;
+  Footer: typeof CardFooter;
+  Media: typeof CardMedia;
+  Image: typeof CardImage;
+  Eyebrow: typeof CardEyebrow;
+  Feature: typeof CardFeature;
+  Button: typeof CardButton;
+};
+
 interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, "onClick"> {
   /** Makes the whole card an interactive target; fluid hover previews it.
    *  Renders a stretched link when `href` is set, else a stretched button. */
@@ -261,44 +280,17 @@ interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, "onClick"> {
  * Pulled via `bunx shadcn@latest add @fluid/card`.
  *
  * @example # Basic
- * ```tsx
- * <Card>
- *   <Card.Header>
- *     <Card.Title>Create project</Card.Title>
- *     <Card.Description>You can scope deployments per project.</Card.Description>
- *   </Card.Header>
- *   <Card.Content>
- *     <p>Push, email, and digest settings live here.</p>
- *   </Card.Content>
- * </Card>
- * ```
+ * {@includeCode ./examples/basic.tsx}
  *
  * @example # Compact size
  * The compact ladder step tightens type and padding for dense layouts.
  *
- * ```tsx
- * <Card size="compact">
- *   <Card.Header>
- *     <Card.Title>Deploy</Card.Title>
- *     <Card.Description>Ship the current branch.</Card.Description>
- *   </Card.Header>
- *   <Card.Content>Builds run on merge.</Card.Content>
- * </Card>
- * ```
+ * {@includeCode ./examples/compact-size.tsx}
  *
  * @example # Composed
  * Cards compose with the other registry items, e.g. a call to action.
  *
- * ```tsx
- * <Card>
- *   <Card.Header>
- *     <Card.Title>Deploy</Card.Title>
- *     <Card.Description>Ship the current branch to production.</Card.Description>
- *   </Card.Header>
- *   <Card.Content>Build #1284 · vercel/prod</Card.Content>
- *   <Card.Footer><Button>Deploy now</Button></Card.Footer>
- * </Card>
- * ```
+ * {@includeCode ./examples/composed.tsx}
  */
 const Card = forwardRef<HTMLDivElement, CardProps>(
   (
@@ -564,7 +556,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
     // ladder step; the parts read the context.
     return size ? <SizeProvider size={size}>{card}</SizeProvider> : card;
   }
-);
+) as CardComponent;
 
 Card.displayName = "Card";
 

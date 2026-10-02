@@ -6,11 +6,7 @@ import './panel.css'
  * @example
  * # Default
  *
- * ```tsx
- * <Panel>
- *   <p>Make them yours.</p>
- * </Panel>
- * ```
+ * {@includeCode ./examples/default.tsx}
  */
 export default function Panel({ children }: {
   /** Panel body. */

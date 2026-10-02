@@ -6,9 +6,7 @@ import './link.css'
  * @example
  * # Default
  *
- * ```tsx
- * <Link href="/docs">Read the docs</Link>
- * ```
+ * {@includeCode ./examples/default.tsx}
  */
 export default function Link({ href, children }: {
   /** Target URL. */

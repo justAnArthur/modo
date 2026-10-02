@@ -15,32 +15,12 @@ import { cn } from "cn"
  * Pulled via `bunx shadcn@latest add card` (radix-nova style, neutral base color).
  *
  * @example # Basic
- * ```tsx
- * <Card>
- *   <Card.Header>
- *     <Card.Title>Create project</Card.Title>
- *     <Card.Description>You can scope deployments per project.</Card.Description>
- *   </Card.Header>
- *   <Card.Content>
- *     <p>Push, email, and digest settings live here.</p>
- *   </Card.Content>
- * </Card>
- * ```
+ * {@includeCode ./examples/basic.tsx}
  *
  * @example # Footer and action
  * Cards compose with the other registry items, e.g. a call to action.
  *
- * ```tsx
- * <Card>
- *   <Card.Header>
- *     <Card.Title>Deploy</Card.Title>
- *     <Card.Action><Button size="sm">Ship</Button></Card.Action>
- *     <Card.Description>Ship the current branch to production.</Card.Description>
- *   </Card.Header>
- *   <Card.Content>Build #1284 · vercel/prod</Card.Content>
- *   <Card.Footer>Last deployed 2 minutes ago</Card.Footer>
- * </Card>
- * ```
+ * {@includeCode ./examples/footer-and-action.tsx}
  */
 export default function Card({
   className,

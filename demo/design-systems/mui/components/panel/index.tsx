@@ -7,20 +7,12 @@ import Paper from '@mui/material/Paper'
  * @example
  * # Default
  *
- * ```tsx
- * <Panel>
- *   <p>Make them yours.</p>
- * </Panel>
- * ```
+ * {@includeCode ./examples/default.tsx}
  *
  * @example
  * # Elevation
  *
- * ```tsx
- * <Panel elevation={4}>
- *   <p>Higher up.</p>
- * </Panel>
- * ```
+ * {@includeCode ./examples/elevation.tsx}
  */
 export default function Panel({
   elevation = 1,

@@ -7,23 +7,17 @@ import MuiChip from '@mui/material/Chip'
  * @example
  * # Filled
  *
- * ```tsx
- * <Chip label="Material UI" />
- * ```
+ * {@includeCode ./examples/filled.tsx}
  *
  * @example
  * # Outlined
  *
- * ```tsx
- * <Chip label="v9" variant="outlined" color="primary" />
- * ```
+ * {@includeCode ./examples/outlined.tsx}
  *
  * @example
  * # Deletable
  *
- * ```tsx
- * <Chip label="modo" variant="outlined" color="secondary" onDelete={() => {}} />
- * ```
+ * {@includeCode ./examples/deletable.tsx}
  */
 export default function Chip({
   label,

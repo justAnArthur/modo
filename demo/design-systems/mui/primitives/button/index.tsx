@@ -9,31 +9,22 @@ import MuiButton from '@mui/material/Button'
  * @example
  * # Contained
  *
- * ```tsx
- * <Button>Save</Button>
- * ```
+ * {@includeCode ./examples/contained.tsx}
  *
  * @example
  * # Text
  *
- * ```tsx
- * <Button variant="text">Skip</Button>
- * ```
+ * {@includeCode ./examples/text.tsx}
  *
  * @example
  * # Outlined
  *
- * ```tsx
- * <Button variant="outlined" color="secondary">Cancel</Button>
- * ```
+ * {@includeCode ./examples/outlined.tsx}
  *
  * @example
  * # Sizes and disabled
  *
- * ```tsx
- * <Button size="small">Small</Button>
- * <Button size="large" color="error" disabled>Delete</Button>
- * ```
+ * {@includeCode ./examples/sizes-and-disabled.tsx}
  */
 export default function Button({
   variant = 'contained',
