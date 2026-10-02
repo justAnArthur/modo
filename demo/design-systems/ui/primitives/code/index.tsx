@@ -2,9 +2,9 @@ import { Fragment } from 'react'
 import { parse } from 'sugar-high/core'
 import { lang, languages, type Language } from 'sugar-high/lang'
 import type { TokenType } from 'sugar-high'
-import { cn } from '../../fluid/utils'
-import { SURFACE_BG } from '../../fluid/surface-classes'
-import { useSurface } from '../../fluid/surface-context'
+import { cn } from '../../lib/utils'
+import { SURFACE_BG } from '../../lib/surface-classes'
+import { useSurface } from '../../lib/surface-context'
 import ScrollArea from '../scroll-area'
 
 // Literal class names so UnoCSS's extractor sees every one (same reason as

@@ -47,18 +47,18 @@ import { motion, AnimatePresence } from "motion/react";
 import { Popover } from "@base-ui/react/popover";
 import { Menu } from "@base-ui/react/menu";
 import { NumberField } from "@base-ui/react/number-field";
-import { cn } from "../../fluid/utils";
-import { spring } from "../../fluid/springs";
-import { useShape, shapeMap } from "../../fluid/shape-context";
-import { SizeProvider, useSize, type SizeVariant } from "../../fluid/size-context";
-import { useSurface, SurfaceProvider } from "../../fluid/surface-context";
-import { surfaceClasses } from "../../fluid/surface-classes";
-import { useIcon } from "../../fluid/icon-context";
-import { useFluidHover, useRegisterFluidHoverItem } from "../../fluid/use-fluid-hover";
+import { cn } from "../../lib/utils";
+import { spring } from "../../lib/springs";
+import { useShape, shapeMap } from "../../lib/shape-context";
+import { SizeProvider, useSize, type SizeVariant } from "../../lib/size-context";
+import { useSurface, SurfaceProvider } from "../../lib/surface-context";
+import { surfaceClasses } from "../../lib/surface-classes";
+import { useIcon } from "../../lib/icon-context";
+import { useFluidHover, useRegisterFluidHoverItem } from "../../lib/use-fluid-hover";
 import { Elevated } from "../../primitives/surface";
 import { Slider } from "../slider";
 import { Tooltip } from "../tooltip";
-import { FluidHoverHighlight } from "../../fluid/fluid-hover-highlight";
+import { FluidHoverHighlight } from "../../lib/fluid-hover-highlight";
 
 // ---------------------------------------------------------------------------
 // Types

@@ -5,7 +5,7 @@
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here); the `@next/next/no-img-element`
  *   eslint-disable comment dropped (no Next.js).
- * - `@/lib/{utils,shape-context}` rewritten to `../../fluid/*`.
+ * - `@/lib/{utils,shape-context}` rewritten to `../../lib/*`.
  * - The lazy `import("pdfjs-dist")` is kept as-is: verified against modo's own
  *   esbuild settings (bundle, `platform: "browser"`, `target: "es2022"`, both
  *   with and without `splitting: true`) — it resolves cleanly and lands in a
@@ -15,8 +15,8 @@
  */
 
 import { useEffect, useState } from "react";
-import { cn } from "../../fluid/utils";
-import { useShape } from "../../fluid/shape-context";
+import { cn } from "../../lib/utils";
+import { useShape } from "../../lib/shape-context";
 
 // ─── Lazy pdfjs loader ────────────────────────────────────────────────────
 // Imports pdfjs-dist on first PDF, caches the module, and points the worker

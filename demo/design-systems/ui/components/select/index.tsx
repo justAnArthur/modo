@@ -7,7 +7,7 @@
  *   `@/hooks/*` → relative `_fluid` paths; `@/lib/elevated` →
  *   `../../primitives/surface`; `@/components/ui/scroll-area` →
  *   `../../primitives/scroll-area`; `@/components/ui/fluid-hover-highlight` →
- *   `../../fluid/fluid-hover-highlight`.
+ *   `../../lib/fluid-hover-highlight`.
  * - `SelectProps` members re-declared one per line with the FF docs API-table
  *   descriptions (modo's props table lists only members declared in the
  *   interface body, and drops members whose type spans lines).
@@ -42,22 +42,22 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Select as SelectPrimitive } from "@base-ui/react/select";
-import type { IconComponent } from "../../fluid/icon-context";
-import { cn } from "../../fluid/utils";
-import { spring, exitFallbackMs } from "../../fluid/springs";
-import { useFluidHover, useRegisterFluidHoverItem } from "../../fluid/use-fluid-hover";
-import { useShape, shapeMap } from "../../fluid/shape-context";
-import { SizeProvider, useSize, type SizeVariant } from "../../fluid/size-context";
+import type { IconComponent } from "../../lib/icon-context";
+import { cn } from "../../lib/utils";
+import { spring, exitFallbackMs } from "../../lib/springs";
+import { useFluidHover, useRegisterFluidHoverItem } from "../../lib/use-fluid-hover";
+import { useShape, shapeMap } from "../../lib/shape-context";
+import { SizeProvider, useSize, type SizeVariant } from "../../lib/size-context";
 import { Elevated } from "../../primitives/surface";
 import {
   popupMotionClass,
   popupScrollAreaClass,
   popupViewportClass,
   isDisabledRow,
-} from "../../fluid/popup";
-import { useKeyboardNavGate } from "../../fluid/use-keyboard-nav-gate";
+} from "../../lib/popup";
+import { useKeyboardNavGate } from "../../lib/use-keyboard-nav-gate";
 import { ScrollArea } from "../../primitives/scroll-area";
-import { FluidHoverHighlight } from "../../fluid/fluid-hover-highlight";
+import { FluidHoverHighlight } from "../../lib/fluid-hover-highlight";
 
 // ---------------------------------------------------------------------------
 // Select context

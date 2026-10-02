@@ -4,7 +4,7 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
- * - `@/lib/{utils,surface-context,surface-classes}` imports rewritten to `../../fluid/*`.
+ * - `@/lib/{utils,surface-context,surface-classes}` imports rewritten to `../../lib/*`.
  * - `className` / `children` re-declared on `ElevatedProps` with descriptions (modo's parser
  *   lists only members declared in the interface body); `children` doc added.
  * - modo item: TSDoc (from the FF "Surfaces" docs page) on the component, the forwardRef
@@ -25,9 +25,9 @@ import {
   type ReactNode,
   type RefAttributes,
 } from "react";
-import { cn } from "../../fluid/utils";
-import { useSurface, SurfaceProvider } from "../../fluid/surface-context";
-import { surfaceClasses } from "../../fluid/surface-classes";
+import { cn } from "../../lib/utils";
+import { useSurface, SurfaceProvider } from "../../lib/surface-context";
+import { surfaceClasses } from "../../lib/surface-classes";
 
 interface ElevatedProps extends ComponentPropsWithoutRef<"div"> {
   /**

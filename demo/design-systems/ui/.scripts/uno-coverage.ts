@@ -6,8 +6,8 @@
  *
  *   bun .scripts/uno-coverage.ts [path-prefix ...]
  *
- * Prefixes are relative to this package (`fluid`, `components/select`);
- * with none, `fluid primitives components modo.components.tsx` are scanned.
+ * Prefixes are relative to this package (`lib`, `components/select`);
+ * with none, `lib primitives components modo.components.tsx` are scanned.
  * Class strings are pulled with the TypeScript AST from:
  *   - `className` / `class` / `*ClassName` JSX attributes and properties
  *   - `cn` / `cva` / `clsx` / `twMerge` / `twJoin` calls (cva's variant values
@@ -33,7 +33,7 @@ import config from '../uno.config'
 import { mdxBlocks } from './mdx-blocks'
 
 const ROOT = resolve(import.meta.dirname, '..')
-const DEFAULT_PREFIXES = ['fluid', 'primitives', 'components', 'modo.components.tsx']
+const DEFAULT_PREFIXES = ['lib', 'primitives', 'components', 'modo.components.tsx']
 
 const CLASS_FNS = new Set(['cn', 'cva', 'clsx', 'twMerge', 'twJoin'])
 const CLASS_ATTR = /^(className|class)$|ClassName$/

@@ -3,7 +3,7 @@
  * `registry/base/tabs-subtle.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications: `"use client"` dropped; `@/lib/*` and `@/hooks/*`
- * imports rewritten to `../../_fluid/{lib,hooks}/*`, `framer-motion` to
+ * imports rewritten to `../../lib/{lib,hooks}/*`, `framer-motion` to
  * `motion/react`; uncontrolled mode added — `selectedIndex` and `onSelect` are
  * optional, with a `defaultSelectedIndex` twin backed by
  * `useControllableState`; panels may now be written inside `<TabsSubtle>` —
@@ -38,15 +38,15 @@ import {
   type HTMLAttributes,
   type RefAttributes,
 } from "react";
-import { useControllableState } from "../../fluid/use-controllable-state";
+import { useControllableState } from "../../lib/use-controllable-state";
 import { Tabs } from "@base-ui/react/tabs";
 import { motion, AnimatePresence } from "motion/react";
-import type { IconComponent } from "../../fluid/icon-context";
-import { cn } from "../../fluid/utils";
-import { spring } from "../../fluid/springs";
-import { useShape } from "../../fluid/shape-context";
-import { SizeProvider, useSize, type SizeVariant } from "../../fluid/size-context";
-import { useFluidHover } from "../../fluid/use-fluid-hover";
+import type { IconComponent } from "../../lib/icon-context";
+import { cn } from "../../lib/utils";
+import { spring } from "../../lib/springs";
+import { useShape } from "../../lib/shape-context";
+import { SizeProvider, useSize, type SizeVariant } from "../../lib/size-context";
+import { useFluidHover } from "../../lib/use-fluid-hover";
 
 interface TabsSubtleContextValue {
   registerTab: (index: number, element: HTMLElement | null) => void;

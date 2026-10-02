@@ -7,8 +7,8 @@
  *   docs page through local `FluidRow` / `CostRow` helpers. This item wraps that
  *   pair in one documented container (`FluidHover` + `FluidHover.Item`) so the modo
  *   examples can show all three axes without hooks. The mechanism is untouched and
- *   still lives in `fluid/use-fluid-hover.ts` and
- *   `fluid/fluid-hover-highlight.tsx`; both are re-exported here unchanged.
+ *   still lives in `lib/use-fluid-hover.ts` and
+ *   `lib/fluid-hover-highlight.tsx`; both are re-exported here unchanged.
  * - `items`, `renderItem`, `disabledIndices`, `columns` and `highlightClassName` are
  *   this container's own API; `axis` and `gapClick` are the hook's options, passed
  *   straight through.
@@ -38,13 +38,13 @@ import {
   type ReactNode,
   type RefAttributes,
 } from "react";
-import { cn } from "../../fluid/utils";
-import { useShape } from "../../fluid/shape-context";
+import { cn } from "../../lib/utils";
+import { useShape } from "../../lib/shape-context";
 import {
   useFluidHover,
   useRegisterFluidHoverItem,
-} from "../../fluid/use-fluid-hover";
-import { FluidHoverHighlight } from "../../fluid/fluid-hover-highlight";
+} from "../../lib/use-fluid-hover";
+import { FluidHoverHighlight } from "../../lib/fluid-hover-highlight";
 
 // ---------------------------------------------------------------------------
 // One list is one FluidHover: the container owns the mouse handlers, hands
@@ -339,13 +339,13 @@ export type { FluidHoverProps, FluidHoverItemProps, FluidHoverAxis };
 export {
   useFluidHover,
   useRegisterFluidHoverItem,
-} from "../../fluid/use-fluid-hover";
+} from "../../lib/use-fluid-hover";
 export type {
   ItemRect,
   UseFluidHoverOptions,
   UseFluidHoverReturn,
-} from "../../fluid/use-fluid-hover";
-export { FluidHoverHighlight } from "../../fluid/fluid-hover-highlight";
-export type { FluidHoverHighlightProps } from "../../fluid/fluid-hover-highlight";
+} from "../../lib/use-fluid-hover";
+export { FluidHoverHighlight } from "../../lib/fluid-hover-highlight";
+export type { FluidHoverHighlightProps } from "../../lib/fluid-hover-highlight";
 
 export default FluidHover;

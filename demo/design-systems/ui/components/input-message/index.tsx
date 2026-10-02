@@ -5,11 +5,11 @@
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react`; `@/lib/*` and `@/hooks/*` rewritten to
- *   `../../_fluid/*`; `@/components/ui/fluid-hover-highlight` →
- *   `../../fluid/fluid-hover-highlight`; `@/registry/radix/{button,tooltip}` →
+ *   `../../lib/*`; `@/components/ui/fluid-hover-highlight` →
+ *   `../../lib/fluid-hover-highlight`; `@/registry/radix/{button,tooltip}` →
  *   `../button` / `../tooltip`; `@/registry/default/file-thumbnail` → `./file-thumbnail`
  *   (vendored beside this file).
- * - Uncontrolled twins (Base UI shape, via `fluid/use-controllable-state`), so the
+ * - Uncontrolled twins (Base UI shape, via `lib/use-controllable-state`), so the
  *   composer works with no state in the caller. The controlled API is unchanged — every
  *   `value` / `files` / `queue` / `status` prop still wins and still reports through its
  *   callback:
@@ -58,19 +58,19 @@ import {
   type TextareaHTMLAttributes,
 } from "react";
 import { AnimatePresence, motion, Reorder, useReducedMotion } from "motion/react";
-import { cn } from "../../fluid/utils";
-import { spring } from "../../fluid/springs";
-import { useShape } from "../../fluid/shape-context";
-import { SizeProvider, useSize, type SizeVariant } from "../../fluid/size-context";
-import { useIcon } from "../../fluid/icon-context";
-import { surfaceClasses } from "../../fluid/surface-classes";
-import { SurfaceProvider } from "../../fluid/surface-context";
-import { useFluidHover, useRegisterFluidHoverItem } from "../../fluid/use-fluid-hover";
-import { useControllableState } from "../../fluid/use-controllable-state";
+import { cn } from "../../lib/utils";
+import { spring } from "../../lib/springs";
+import { useShape } from "../../lib/shape-context";
+import { SizeProvider, useSize, type SizeVariant } from "../../lib/size-context";
+import { useIcon } from "../../lib/icon-context";
+import { surfaceClasses } from "../../lib/surface-classes";
+import { SurfaceProvider } from "../../lib/surface-context";
+import { useFluidHover, useRegisterFluidHoverItem } from "../../lib/use-fluid-hover";
+import { useControllableState } from "../../lib/use-controllable-state";
 import { FileThumbnail } from "./file-thumbnail";
 import { Button } from "../button";
 import { Tooltip } from "../tooltip";
-import { FluidHoverHighlight } from "../../fluid/fluid-hover-highlight";
+import { FluidHoverHighlight } from "../../lib/fluid-hover-highlight";
 
 const useIsoLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
