@@ -64,6 +64,8 @@ interface SizeProviderProps {
  * `useSizeContext()` (`{ size, setSize }` inside a provider), `useTypeScale(override?)`,
  * the `sizeMap` and `typeScale` tables, and the `SizeVariant`, `SizeClasses`,
  * `TypeScaleRole`, `TypeScaleStep` types.
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function SizeProvider({ size, defaultSize = 'default', children }: SizeProviderProps) {
   return (

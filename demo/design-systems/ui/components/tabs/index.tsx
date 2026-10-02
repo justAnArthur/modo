@@ -113,6 +113,8 @@ type TabsComponent = ForwardRefExoticComponent<
  * - `Tabs.List` — the segmented track holding the tabs.
  * - `Tabs.Item` — one tab: `value`, `label`, optional `icon`.
  * - `Tabs.Panel` — content shown while the tab with the same `value` is active.
+ *
+ * @example {@include ./examples.mdx}
  */
 const Tabs = forwardRef<HTMLDivElement, TabsProps>(
   (

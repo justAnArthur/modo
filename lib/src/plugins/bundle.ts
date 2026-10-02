@@ -26,8 +26,8 @@ export interface BundledItem {
   description: string
   props: ParsedItem['props']
   examples: ParsedExample[]
-  /** Built co-located examples.mdx (.modo-tmp/build/examples/<tier>/<id>.mjs). */
-  examplesDoc?: string
+  /** Built `@example {@include ./x.mdx}` files (.modo-tmp/build/examples/<tier>/<id>.mjs). */
+  exampleDocs: string[]
   cssFiles: string[]
   /** Source `index.tsx`. */
   file: string
@@ -98,7 +98,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     })
 
     // ── items ────────────────────────────────────────────────────────────
-    const parsed: Array<Omit<BundledItem, 'bundlePath' | 'examplesDoc'> & { key: string; mdx?: string }> = []
+    const parsed: Array<Omit<BundledItem, 'bundlePath'> & { key: string }> = []
     for (const tier of TIERS) {
       const tierDir = resolve(userRoot, tier)
       if (!existsSync(tierDir)) continue
@@ -107,7 +107,6 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
         if (!statSync(itemDir).isDirectory()) continue
         const file = resolve(itemDir, 'index.tsx')
         if (!existsSync(file)) continue
-        const mdx = resolve(itemDir, 'examples.mdx')
         const p = parseItemSource(readFileSync(file, 'utf8'), {
           readFile: (path) => {
             try {
@@ -126,7 +125,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
           description: p.description,
           props: p.props,
           examples: p.examples,
-          mdx: existsSync(mdx) ? mdx : undefined,
+          exampleDocs: p.exampleDocs.map((path) => resolve(itemDir, path)),
           cssFiles: discoverCssForFile(file),
           file,
         })
@@ -147,7 +146,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
       return key
     }
 
-    for (const it of parsed) if (it.mdx) keyFor(it.mdx, `examples/${it.tier}/${it.id}`)
+    for (const it of parsed) for (const doc of it.exampleDocs) keyFor(doc, `examples/${it.tier}/${it.id}`)
 
     const extraPaths = [
       ...Object.values(config?.shell ?? {}),
@@ -181,14 +180,14 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     const exportsOf = (key: string) => built.exports.get(out(key)) ?? []
 
     const items: BundledItem[] = []
-    for (const { key, mdx, ...it } of parsed) {
+    for (const { key, exampleDocs, ...it } of parsed) {
       if (!ok(key)) continue
       if (!exportsOf(key).includes('default')) {
         errors.push(`${it.tier}/${it.id}: index.tsx has no default export`)
         continue
       }
-      const mdxKey = mdx && keyByFile.get(mdx)
-      items.push({ ...it, examplesDoc: mdxKey && ok(mdxKey) ? out(mdxKey) : undefined, bundlePath: out(key) })
+      const docKeys = exampleDocs.map((doc) => keyByFile.get(doc)!).filter(ok)
+      items.push({ ...it, exampleDocs: docKeys.map(out), bundlePath: out(key) })
     }
 
     const extras = new Map<string, BundledExtra>()

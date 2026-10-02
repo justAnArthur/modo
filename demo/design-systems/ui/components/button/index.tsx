@@ -164,6 +164,8 @@ const activeBgVariants: Record<string, string> = {
  * on hover, and `loading` swaps the label for a spinner while keeping the
  * button's width. Built on Base UI's Button; `asChild` renders your own
  * element (e.g. a link) with the button's styling instead.
+ *
+ * @example {@include ./examples.mdx}
  */
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (

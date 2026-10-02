@@ -82,11 +82,11 @@ Rules:
 - An item is `<tier>/<name>/index.tsx`: a default-exported component plus a JSDoc block.
   - The block anchors to the default export's declaration (function or const), wherever `export default` sits.
   - The parser extracts `name`, `description`, `props` and `examples`.
-- **One place per kind:** the TSDoc comment is the item's only prose (summary paragraph = page lead, the rest = body). Examples live in a co-located `examples.mdx`. Reserve `@example` for a few short inline cases.
-- **Includes** are TypeDoc inline tags. Paths are relative to `index.tsx`; they are not recursive; a missing file prints `[modo:bundle] warning:`; `.md`/`.mdx` edits reload dev.
+- **One place per kind:** the TSDoc comment is the item's only prose (summary paragraph = page lead, the rest = body). Examples live in a co-located `examples.mdx`, included with `@example {@include ./examples.mdx}`. Reserve inline `@example` code for a few short cases.
+- **Includes** are TypeDoc inline tags. Paths are relative to `index.tsx`; they are not recursive; a missing file prints `[modo:bundle] warning:`; `.md`/`.mdx` edits reload dev. A `.mdx` include belongs under `@example` (below).
   - `{@include ./x.md}` inlines the file into the description as Markdown (for prose too long for the comment).
   - `{@includeCode ./x}` inlines a file as a fenced block.
-- **`examples.mdx`** (found next to `index.tsx`, no tag needed) holds examples only:
+- **`@example {@include ./x.mdx}`** (the whole `@example` is the tag) compiles the file into live examples instead of inlining it. The file holds examples only:
   - Each example is a `# Title`, an optional one-line caption, and a JSX block (a live demo) or a fenced code block (code to read; it renders through the shell's Code). Never wrap code in `<Code>{`…`}</Code>`: fence it. It renders in the Examples section, after any `@example` cards.
   - It is an entry of the shared build (`@mdx-js/esbuild` + `remark-gfm`). Every top-level JSX block is a live example: `lib/src/plugins/mdx-examples.ts` wraps it in `ModoExample`, the example card, and keeps its source for Show code / Copy.
   - Imports are real: the item is `./index`, other items are `../../<tier>/<id>`, packages are imported by name. Items and `examples` scope exports also resolve as JSX tags without an import, but an identifier used in an expression (`icon={Plus}`) needs one.
@@ -147,7 +147,7 @@ Rules:
 - `<tier>/<name>/index.tsx` — the item. Tiers are `primitives/`, `components/` and `blocks/`, auto-discovered.
   - Compound parts hang off the default export (`Card.Header`). Type them with interface merging, or with `Object.assign` for forwardRef consts.
   - Examples may use compound JSX.
-- `<tier>/<name>/examples.mdx` — the item's examples (auto-discovered); `<name>.md` for prose `{@include}`d into the TSDoc.
+- `<tier>/<name>/examples.mdx` — the item's examples; `<name>.md` for prose. Both are `{@include}`d from the TSDoc.
 - `<tier>/<name>/<name>.tsx` — vendored upstream source, imported by an adapter.
   - When the upstream component is the item, rename it to `index.tsx` instead (with a local-modifications header).
   - Adapters only for real API transforms: shell contracts, options→children, prop narrowing.

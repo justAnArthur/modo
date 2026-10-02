@@ -5,6 +5,8 @@ import MuiButton from '@mui/material/Button'
  * Triggers an action. Thin modo adapter over MUI's Button; the docs chrome
  * inherits it for example cards, so it also accepts modo's `ghost` variant
  * and short sizes, normalizing them to the nearest MUI equivalents.
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function Button({
   variant = 'contained',

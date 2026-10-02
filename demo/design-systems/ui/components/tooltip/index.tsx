@@ -159,6 +159,8 @@ function getSlideOffset(side: TooltipSide) {
  *   one trigger to an adjacent one skips the hover delay.
  * - `Tooltip.PortalContainer` — `TooltipPortalContainer`: portal every
  *   descendant tooltip into a given element instead of the body.
+ *
+ * @example {@include ./examples.mdx}
  */
 function Tooltip({
   content,

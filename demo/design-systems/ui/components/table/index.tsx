@@ -80,6 +80,8 @@ type TableComponent = ForwardRefExoticComponent<TableProps & RefAttributes<HTMLT
  * (`<tr>` — give body rows an `index`, starting at 0, so they join the hover
  * highlight; omit it on header rows), `Table.Head` (`<th>`) and `Table.Cell`
  * (`<td>`). Each forwards its ref and native attributes.
+ *
+ * @example {@include ./examples.mdx}
  */
 const Table = forwardRef<HTMLTableElement, TableProps>(
   ({ children, size, className, ...props }, ref) => {

@@ -76,6 +76,8 @@ interface InputCopyProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"
  * switches between the icon-only affordance (with a tooltip) and a labelled
  * Copy button, `align` moves that action to the leading edge, and the field
  * follows the surrounding SizeProvider unless `size` pins it.
+ *
+ * @example {@include ./examples.mdx}
  */
 const InputCopy = forwardRef<HTMLDivElement, InputCopyProps>(
   ({ value, label, onCopy, disabled, variant = "icon", align = "right", size, className, ...props }, ref) => {

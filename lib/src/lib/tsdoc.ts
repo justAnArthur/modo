@@ -17,6 +17,8 @@ export interface ParsedItem {
   description: string
   props: ParsedProp[]
   examples: ParsedExample[]
+  /** `@example {@include ./x.mdx}` paths, relative to the item source. */
+  exampleDocs: string[]
   errors: string[]
 }
 
@@ -75,9 +77,10 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
   const include = (text: string) => expandIncludes(text, opts.readFile, errors)
   const description = include(exampleIdx === -1 ? jsdoc : jsdoc.slice(0, exampleIdx)).trim()
   const examplesRoot = exampleIdx === -1 ? '' : jsdoc.slice(exampleIdx)
-  const examples = examplesRoot ? extractExamples(examplesRoot, include) : []
+  const exampleDocs: string[] = []
+  const examples = examplesRoot ? extractExamples(examplesRoot, include, exampleDocs) : []
 
-  const result: ParsedItem = { name, description, props: [], examples, errors }
+  const result: ParsedItem = { name, description, props: [], examples, exampleDocs, errors }
   if (fnStart === -1) {
     if (forwardRefPropsType) {
       const props = extractForwardRefProps(cleaned, forwardRefPropsType)
@@ -96,7 +99,7 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
 }
 
 function fail(msg: string): ParsedItem {
-  return { name: '', description: '', props: [], examples: [], errors: [msg] }
+  return { name: '', description: '', props: [], examples: [], exampleDocs: [], errors: [msg] }
 }
 
 function extractJsdocAbove(src: string, exportIndex: number): string | null {
@@ -259,9 +262,10 @@ function resolveLocalTypeLiteral(src: string, name: string): string | null {
 
 // TypeDoc's inline tags: `{@include ./doc.md}` inlines the file as Markdown,
 // `{@includeCode ./x.ts}` as a fenced block (the example's code inside an
-// `@example`). Not recursive. Examples in MDX aren't included: they live in a
-// co-located examples.mdx.
+// `@example`). Not recursive. An `@example` that is only `{@include ./x.mdx}`
+// isn't inlined: the bundle compiles the file into live examples.
 const INCLUDE = /\{@include(Code)?\s+([^\s}]+)\s*\}/g
+const MDX_INCLUDE = /^\{@include\s+([^\s}]+\.mdx)\s*\}$/
 
 function expandIncludes(text: string, readFile: ParseOptions['readFile'], errors: string[]): string {
   return text.replace(INCLUDE, (tag, code: string | undefined, path: string) => {
@@ -275,12 +279,19 @@ function expandIncludes(text: string, readFile: ParseOptions['readFile'], errors
   })
 }
 
-function extractExamples(jsdoc: string, include: (text: string) => string): ParsedExample[] {
+function extractExamples(jsdoc: string, include: (text: string) => string, docs: string[]): ParsedExample[] {
   const out: ParsedExample[] = []
   const re = /(?:^|\n)[ \t]*@example\b([\s\S]*?)(?=\n[ \t]*@example\b|$)/g
   let m: RegExpExecArray | null
   while ((m = re.exec(jsdoc)) !== null) {
-    const block = include((m[1] ?? '').trim())
+    const raw = (m[1] ?? '').trim()
+    const doc = raw.match(MDX_INCLUDE)?.[1]
+    if (doc) {
+      docs.push(doc)
+      continue
+    }
+
+    const block = include(raw)
     if (!block) continue
     const parsed = parseExampleBlock(block)
     if (parsed) out.push(parsed)

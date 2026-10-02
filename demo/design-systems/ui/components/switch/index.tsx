@@ -96,6 +96,8 @@ const DRAG_DEAD_ZONE = 2;
  * uncontrolled (`defaultChecked`, with `onCheckedChange` reporting each
  * change). `size` pins it to one step of the size ladder; otherwise it
  * follows the surrounding SizeProvider.
+ *
+ * @example {@include ./examples.mdx}
  */
 const Switch = forwardRef<HTMLDivElement, SwitchProps>(
   (

@@ -308,6 +308,8 @@ type CardComponent = ForwardRefExoticComponent<
  * Card.Eyebrow (small uppercase label), Card.Feature (icon + title +
  * description row) and Card.Button (primary | secondary | ghost | link
  * action; an anchor when given `href`).
+ *
+ * @example {@include ./examples.mdx}
  */
 const Card = forwardRef<HTMLDivElement, CardProps>(
   (

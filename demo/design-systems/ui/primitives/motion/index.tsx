@@ -96,6 +96,8 @@ interface MotionProps {
  * children with one tier's enter spring and exit tween (fade + scale + a short
  * rise), with a built-in Show/Hide trigger and a readout of the token it plays.
  * Hidden children keep their space and leave the accessibility tree.
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function Motion({
   tier = 'moderate',

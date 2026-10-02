@@ -495,6 +495,8 @@ function SuggestionRow({
  * Every controlled prop has an uncontrolled twin — `defaultValue`,
  * `defaultFiles`, `defaultQueue`, `defaultStatus` — so a composer can hold
  * its own draft, attachments and queue with no state in the caller.
+ *
+ * @example {@include ./examples.mdx}
  */
 const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
   (

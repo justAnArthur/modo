@@ -7,6 +7,8 @@ import MenuItem from '@mui/material/MenuItem'
  * from the `options` prop, with `onChange` adapted to modo's
  * `(value: string) => void`. The docs chrome and the demo switcher render
  * with this component.
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function Select({
   value,

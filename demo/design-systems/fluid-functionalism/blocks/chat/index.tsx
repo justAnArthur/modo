@@ -31,6 +31,8 @@ const initialMessages: Entry[] = [
  * animate each message in, the thinking indicator shimmers while the reply is
  * "generated", and the composer is the @fluid InputMessage on its elevated
  * substrate. Send a message to watch the flow.
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function Chat({ pending = false, size = 'default', placeholder = 'Message Fluid…' }: {
   /** Show the thinking indicator under the last reply (also appears live while a sent message is pending). */

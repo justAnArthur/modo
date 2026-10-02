@@ -1632,6 +1632,8 @@ type ColorPickerComponent = ForwardRefExoticComponent<
  * checkerboard tile), `ColorPickerPortalContainer` (portal the format menu
  * into a given element — e.g. inside a CSS-scaled ancestor), and the
  * `parseColor` / `buildParsed` color helpers.
+ *
+ * @example {@include ./examples.mdx}
  */
 const ColorPicker = forwardRef<HTMLDivElement, ColorPickerProps>(
   (

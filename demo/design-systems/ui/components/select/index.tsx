@@ -173,6 +173,8 @@ interface SelectProps {
  * Statics: Select.Trigger (variant, icon, placeholder, error),
  * Select.Content (the popover), Select.Item (index, value, icon, disabled),
  * Select.Group, Select.Label and Select.Separator.
+ *
+ * @example {@include ./examples.mdx}
  */
 function Select({
   children,

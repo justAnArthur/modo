@@ -81,6 +81,8 @@ interface BadgeProps
  * the surface with a color-mix of the chosen color; the dot variant renders
  * an outlined pill with a leading color dot.
  * Pulled via `bunx shadcn@latest add @fluid/badge`.
+ *
+ * @example {@include ./examples.mdx}
  */
 const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
   (

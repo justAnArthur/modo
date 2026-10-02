@@ -2,6 +2,8 @@ import './link.css'
 
 /**
  * Inline anchor.
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function Link({ href, children }: {
   /** Target URL. */

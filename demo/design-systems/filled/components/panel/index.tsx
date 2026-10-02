@@ -2,6 +2,8 @@ import './panel.css'
 
 /**
  * Right-side panel wrapper surface.
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function Panel({ children }: {
   /** Panel body. */

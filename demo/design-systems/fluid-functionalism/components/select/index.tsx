@@ -7,6 +7,8 @@ import { Select as FluidSelect, SelectContent, SelectItem, SelectTrigger } from 
  * the menu exits). Pulled via `bunx shadcn@latest add @fluid/select`.
  * This adapter implements modo's Select shell contract (value / onChange /
  * options), so the docs chrome and demo switcher render with it.
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function Select({ value, onChange, options, placeholder = 'Select…', size = 'default' }: {
   /** Currently selected value. */

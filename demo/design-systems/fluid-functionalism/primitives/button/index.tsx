@@ -143,6 +143,8 @@ const activeBgVariants: Record<string, string> = {
  * 1px press-collapse (box-shadow spread, not scale), fluid hover states, and
  * Inter variable font-weight transitions on hover.
  * Pulled via `bunx shadcn@latest add @fluid/button`.
+ *
+ * @example {@include ./examples.mdx}
  */
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (

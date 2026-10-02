@@ -35,6 +35,8 @@ interface ThinkingIndicatorProps extends HTMLAttributes<HTMLDivElement> {
  * morphing circle-to-infinity glyph plus a shimmering label that cycles
  * Thinking, Moonwalking, Planning, Refining with spring word swaps.
  * Pulled via `bunx shadcn@latest add @fluid/thinking-indicator`.
+ *
+ * @example {@include ./examples.mdx}
  */
 const ThinkingIndicator = forwardRef<HTMLDivElement, ThinkingIndicatorProps>(
   ({ className, showIcon = true, size, ...props }, ref) => {

@@ -3,6 +3,8 @@ import MuiChip from '@mui/material/Chip'
 
 /**
  * Compact tag for entities or filtering. Thin modo adapter over MUI's Chip.
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function Chip({
   label,

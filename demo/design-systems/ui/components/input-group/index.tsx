@@ -75,6 +75,8 @@ type InputGroupComponent = ForwardRefExoticComponent<
  * - `InputGroup.Field` — one labelled input: `index`, `label`, `labelHidden`,
  *   `placeholder`, `icon`, `value` / `defaultValue`, `onChange`, `error`,
  *   `disabled`.
+ *
+ * @example {@include ./examples.mdx}
  */
 const InputGroup = forwardRef<HTMLDivElement, InputGroupProps>(
   ({ children, size, className, ...props }, ref) => {

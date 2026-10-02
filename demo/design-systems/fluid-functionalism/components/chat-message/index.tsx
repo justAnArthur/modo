@@ -50,6 +50,8 @@ interface ChatMessageProps
  * in a hover-revealed meta row. Compound: the attachment renderer hangs off
  * ChatMessage as `ChatMessage.FileThumbnail`.
  * Pulled via `bunx shadcn@latest add @fluid/chat-message`.
+ *
+ * @example {@include ./examples.mdx}
  */
 const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
   (

@@ -44,6 +44,8 @@ function highlight(source: string, language: Language['id']) {
  * Long lines scroll sideways under a fading edge instead of wrapping. It is
  * also the docs chrome's Code slot: every example's source and every fenced
  * block on these pages renders through it.
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function Code({ children, language = 'tsx', className }: {
   /** The source to show; surrounding blank lines are trimmed. */

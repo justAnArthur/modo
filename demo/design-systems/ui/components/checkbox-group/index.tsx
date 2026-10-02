@@ -95,6 +95,8 @@ type CheckboxGroupComponent = ForwardRefExoticComponent<
  * Statics:
  * - `CheckboxGroup.Item` — one checkbox row: `label`, `index`, and optional
  *   `checked` / `onToggle`.
+ *
+ * @example {@include ./examples.mdx}
  */
 const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
   (
