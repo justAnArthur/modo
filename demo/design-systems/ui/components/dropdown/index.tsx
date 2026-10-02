@@ -7,7 +7,7 @@
  *   `@/hooks/*` → relative `_fluid` paths; `@/lib/elevated` →
  *   `../../primitives/surface`; `@/components/ui/scroll-area` →
  *   `../../primitives/scroll-area`; `@/components/ui/fluid-hover-highlight` →
- *   `../../_fluid/ui/fluid-hover-highlight`; `@/components/ui/menu-item` and
+ *   `../../fluid/fluid-hover-highlight`; `@/components/ui/menu-item` and
  *   `@/components/ui/dropdown-search` → `./menu-item`, `./dropdown-search`
  *   (both vendored into this folder).
  * - Uncontrolled selection (Base UI's contract) on `Dropdown` and
@@ -70,24 +70,24 @@ import {
   type DropdownContextValue,
   type MenuItemRenderOptions,
 } from "./menu-item";
-import { cn } from "../../_fluid/lib/utils";
-import { spring, exitFallbackMs } from "../../_fluid/lib/springs";
-import { useFluidHover, type ItemRect } from "../../_fluid/hooks/use-fluid-hover";
-import { useControllableState } from "../../_fluid/hooks/use-controllable-state";
+import { cn } from "../../fluid/utils";
+import { spring, exitFallbackMs } from "../../fluid/springs";
+import { useFluidHover, type ItemRect } from "../../fluid/use-fluid-hover";
+import { useControllableState } from "../../fluid/use-controllable-state";
 import {
   useMergeSplitBlocks,
   useSelectionRuns,
   SelectionBackgrounds,
-} from "../../_fluid/hooks/use-merge-split";
-import { shapeMap } from "../../_fluid/lib/shape-context";
-import { SizeProvider, useSize, type SizeVariant } from "../../_fluid/lib/size-context";
+} from "../../fluid/use-merge-split";
+import { shapeMap } from "../../fluid/shape-context";
+import { SizeProvider, useSize, type SizeVariant } from "../../fluid/size-context";
 import { Elevated } from "../../primitives/surface";
 import {
   popupMotionClass,
   popupScrollAreaClass,
   popupViewportClass,
   isDisabledRow,
-} from "../../_fluid/lib/popup";
+} from "../../fluid/popup";
 import { ScrollArea } from "../../primitives/scroll-area";
 import {
   DropdownSearch,
@@ -98,7 +98,7 @@ import {
   type DropdownFilterContextValue,
   type DropdownSearchProps,
 } from "./dropdown-search";
-import { FluidHoverHighlight } from "../../_fluid/ui/fluid-hover-highlight";
+import { FluidHoverHighlight } from "../../fluid/fluid-hover-highlight";
 
 // Dropdown opts out of the global pill/rounded shape context — popover surfaces
 // look cleaner with the smaller "rounded" radii regardless of how the rest of

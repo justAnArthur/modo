@@ -28,7 +28,8 @@ import { defineConfig, presetWind4 } from 'unocss'
  */
 
 const root = dirname(fileURLToPath(import.meta.url))
-const sources = resolve(root, '{_fluid,_shell,primitives,components}/**/*.{ts,tsx,mdx}')
+const sources = resolve(root, '{fluid,primitives,components}/**/*.{ts,tsx,mdx}')
+const chrome = resolve(root, 'modo.components.tsx')
 
 const TYPE_ROLES = ['display', 'title', 'subtitle', 'body', 'caption', 'micro'] as const
 const WEIGHTS = ['normal', 'medium', 'semibold', 'bold'] as const
@@ -44,8 +45,8 @@ export default defineConfig({
   ],
   outputToCssLayers: true,
   content: {
-    filesystem: [sources],
-    pipeline: { include: [sources] },
+    filesystem: [sources, chrome],
+    pipeline: { include: [sources, chrome] },
   },
   theme: {
     font: {

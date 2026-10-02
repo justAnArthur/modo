@@ -2,28 +2,30 @@
 /*
  * Item contract check — what modo needs from every `<tier>/<id>/index.tsx`.
  *
- *   bun scripts/check-items.ts [path-prefix ...]
+ *   bun .scripts/check-items.ts [path-prefix ...]
  *
  * Prefixes are relative to this package (`components/select`, `primitives`);
  * with none, every item is checked. Names are always collected from ALL items
  * so uniqueness holds package-wide. Per item:
  *   - modo's own parser (`parseItemSource`, lib/src/lib/tsdoc.ts) reports no
- *     errors, finds ≥1 `@example`, and every prop has a description;
- *   - the item name is unique among items and not an `examples.ts` export;
- *   - every example compiles with modo's compiler (`compileExampleBody`,
- *     lib/src/lib/example.ts — Babel, as in the browser), every free
- *     identifier resolves (item names, examples.ts exports, JS/DOM globals,
- *     or bindings the example declares itself), and every `Item.Part` static
- *     it uses is attached to that item (`Object.assign(Item, { Part })` or
- *     `Item.Part = …`);
- *   - the item bundles with esbuild the way modo bundles it.
+ *     errors and every prop has a description;
+ *   - it has examples: an examples.mdx next to index.tsx, or `@example` blocks;
+ *   - the item name is unique among items;
+ *   - every example parses, every free identifier resolves (an examples.mdx
+ *     import, an item name, a JS/DOM global, or a binding the example
+ *     declares itself), and every `Item.Part` static it uses is attached to
+ *     that item (`Object.assign(Item, { Part })` or `Item.Part = …`); inline
+ *     `@example` code also compiles with modo's Babel compiler;
+ *   - the item and its examples.mdx bundle with esbuild the way modo bundles
+ *     them (examples.mdx through @mdx-js/esbuild and modo's remark plugin).
  * Exit code 1 on any problem.
  */
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
-import { join, relative, resolve } from 'node:path'
+import { dirname, join, relative, resolve } from 'node:path'
 import esbuild from 'esbuild'
 import ts from 'typescript'
+import { mdxBlocks, mdxImports } from './mdx-blocks'
 
 const ROOT = resolve(import.meta.dirname, '..')
 const LIB = resolve(ROOT, '../../../lib/src/lib')
@@ -42,6 +44,11 @@ const tsdocPath = join(LIB, 'tsdoc.ts')
 const examplePath = join(LIB, 'example.ts')
 const { parseItemSource } = (await import(tsdocPath)) as { parseItemSource: (src: string) => ParsedItem }
 const { compileExampleBody } = (await import(examplePath)) as { compileExampleBody?: (code: string) => unknown }
+// The MDX pipeline modo builds examples.mdx with (lib deps, loaded by path).
+const LIB_MODULES = resolve(LIB, '../../node_modules')
+const { default: mdx } = (await import(join(LIB_MODULES, '@mdx-js/esbuild/index.js'))) as { default: (options: object) => esbuild.Plugin }
+const { default: remarkGfm } = (await import(join(LIB_MODULES, 'remark-gfm/index.js'))) as { default: unknown }
+const { remarkModoExamples } = (await import(resolve(LIB, '../plugins/mdx-examples.ts'))) as { remarkModoExamples: unknown }
 
 // ── Discovery ────────────────────────────────────────────────────────────
 
@@ -71,8 +78,6 @@ for (const tier of TIERS) {
 const prefixes = process.argv.slice(2).map((p) => p.replace(/\/+$/, ''))
 const selected = prefixes.length === 0 ? items : items.filter((it) => prefixes.some((p) => `${it.tier}/${it.id}/`.startsWith(`${p}/`) || it.rel.startsWith(p)))
 
-const scopePath = join(ROOT, 'examples.ts')
-const scopeNames = new Set(existsSync(scopePath) ? Object.keys(await import(scopePath)).filter((k) => k !== 'default') : [])
 const itemByName = new Map<string, Item[]>()
 for (const it of items) itemByName.set(it.name, [...(itemByName.get(it.name) ?? []), it])
 
@@ -225,37 +230,48 @@ for (const it of selected) {
   const { parsed } = it
   for (const e of parsed.errors) report(it, `parser: ${e}`)
   if (!parsed.name) report(it, 'parser found no default-exported component name')
-  if (parsed.examples.length === 0) report(it, 'no @example')
+  const mdxPath = join(dirname(it.file), 'examples.mdx')
+  const mdxSource = existsSync(mdxPath) ? readFileSync(mdxPath, 'utf8') : null
+  if (parsed.examples.length === 0 && !mdxSource) report(it, 'no examples (examples.mdx or @example)')
   for (const p of parsed.props) {
     if (!p.description?.trim()) report(it, `prop \`${p.name}\` has no description`)
   }
   if ((itemByName.get(it.name)?.length ?? 0) > 1) {
     report(it, `name \`${it.name}\` is also used by ${itemByName.get(it.name)!.filter((o) => o !== it).map((o) => `${o.tier}/${o.id}`).join(', ')}`)
   }
-  if (scopeNames.has(it.name)) report(it, `name \`${it.name}\` collides with an examples.ts export`)
 
-  parsed.examples.forEach((ex, i) => {
+  const checkRefs = (label: string, code: string, bound: Set<string>) => {
     exampleCount++
-    const label = `example ${i + 1}${ex.title ? ` "${ex.title}"` : ''}`
-    if (compileExampleBody) {
-      const compiled = compileExampleBody(ex.code)
-      if (typeof compiled !== 'function') report(it, `${label}: does not compile (modo's Babel compiler)`)
-    }
-    const refs = analyze(ex.code)
+    const refs = analyze(code)
     for (const s of refs.syntax) report(it, `${label}: ${s}`)
     for (const id of refs.free) {
-      if (itemByName.has(id) || scopeNames.has(id) || GLOBALS.has(id)) continue
+      if (bound.has(id) || itemByName.has(id) || GLOBALS.has(id)) continue
       report(it, `${label}: unresolved identifier \`${id}\``)
     }
     for (const [root, part] of refs.statics) {
       if (!itemByName.has(root)) continue
       if (!staticsFor(root).has(part)) report(it, `${label}: \`${root}.${part}\` is not a static of ${root}`)
     }
+  }
+
+  parsed.examples.forEach((ex, i) => {
+    const label = `example ${i + 1}${ex.title ? ` "${ex.title}"` : ''}`
+    if (compileExampleBody && typeof compileExampleBody(ex.code) !== 'function') {
+      report(it, `${label}: does not compile (modo's Babel compiler)`)
+    }
+    checkRefs(label, ex.code, new Set())
   })
+
+  if (mdxSource) {
+    const imports = mdxImports(mdxSource)
+    for (const block of mdxBlocks(mdxSource)) checkRefs(`examples.mdx:${block.line}`, block.code, imports)
+  }
 
   const built = await esbuild
     .build({
-      entryPoints: [it.file],
+      entryPoints: mdxSource ? [it.file, mdxPath] : [it.file],
+      outdir: join(ROOT, '.modo-tmp/check-items'), // write: false; required for two entries
+      plugins: [mdx({ remarkPlugins: [remarkGfm, remarkModoExamples], jsxImportSource: 'react' })],
       bundle: true,
       write: false,
       format: 'esm',

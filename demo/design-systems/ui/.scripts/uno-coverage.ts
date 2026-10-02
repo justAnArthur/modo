@@ -4,17 +4,18 @@
  * UnoCSS's extractor must find it in the file it lives in (that is how the
  * dev server's filesystem scan sees it).
  *
- *   bun scripts/uno-coverage.ts [path-prefix ...]
+ *   bun .scripts/uno-coverage.ts [path-prefix ...]
  *
- * Prefixes are relative to this package (`_fluid`, `components/select`);
- * with none, `_fluid _shell primitives components` are scanned. Class strings
- * are pulled with the TypeScript AST from:
+ * Prefixes are relative to this package (`fluid`, `components/select`);
+ * with none, `fluid primitives components modo.components.tsx` are scanned.
+ * Class strings are pulled with the TypeScript AST from:
  *   - `className` / `class` / `*ClassName` JSX attributes and properties
  *   - `cn` / `cva` / `clsx` / `twMerge` / `twJoin` calls (cva's variant values
  *     and compoundVariants `class`; clsx-style object keys)
  *   - values of variables and properties named `*Class`, `*Classes`,
  *     `*Variants`, `SURFACE_*` and `*Map`
- *   - the code fences of `@example` blocks, parsed as TSX with the same rules
+ *   - the code fences of `@example` blocks and the JSX blocks of
+ *     examples.mdx, parsed as TSX with the same rules
  * Tokens next to a `${}` interpolation are partial and skipped. Classes that
  * global.css defines (`.scroll-fade`, `.shimmer-text`, …), `group`/`peer`
  * markers and `is-*` state markers are not utilities and are allowed.
@@ -29,9 +30,10 @@ import { join, relative, resolve } from 'node:path'
 import ts from 'typescript'
 import { createGenerator } from 'unocss'
 import config from '../uno.config'
+import { mdxBlocks } from './mdx-blocks'
 
 const ROOT = resolve(import.meta.dirname, '..')
-const DEFAULT_PREFIXES = ['_fluid', '_shell', 'primitives', 'components']
+const DEFAULT_PREFIXES = ['fluid', 'primitives', 'components', 'modo.components.tsx']
 
 const CLASS_FNS = new Set(['cn', 'cva', 'clsx', 'twMerge', 'twJoin'])
 const CLASS_ATTR = /^(className|class)$|ClassName$/
@@ -56,7 +58,7 @@ function walk(dir: string, out: string[]): void {
     if (entry === 'node_modules' || entry.startsWith('.')) continue
     const p = join(dir, entry)
     if (statSync(p).isDirectory()) walk(p, out)
-    else if (/\.(ts|tsx)$/.test(entry) && !entry.endsWith('.d.ts')) out.push(p)
+    else if (/\.(ts|tsx|mdx)$/.test(entry) && !entry.endsWith('.d.ts')) out.push(p)
   }
 }
 
@@ -268,6 +270,14 @@ function collectExamples(text: string, file: string, hits: Hit[]): void {
   }
 }
 
+// The JSX blocks of an examples.mdx, parsed as TSX.
+function collectMdx(text: string, file: string, hits: Hit[]): void {
+  for (const { code, line } of mdxBlocks(text)) {
+    const sf = ts.createSourceFile('example.tsx', `const __example = <>\n${code}\n</>`, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
+    collect(sf, file, line - 2, hits)
+  }
+}
+
 // ── Built-in assertions ──────────────────────────────────────────────────
 
 const ASSERTIONS: Array<[token: string, expect: string[]]> = [
@@ -320,11 +330,13 @@ let tokenCount = 0
 for (const file of files) {
   const text = readFileSync(file, 'utf8')
   const rel = relative(ROOT, file).startsWith('..') ? file : relative(ROOT, file)
-  const kind = file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
-  const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, kind)
   const hits: Hit[] = []
-  collect(sf, rel, 0, hits)
-  collectExamples(text, rel, hits)
+  if (file.endsWith('.mdx')) collectMdx(text, rel, hits)
+  else {
+    const kind = file.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+    collect(ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, kind), rel, 0, hits)
+    collectExamples(text, rel, hits)
+  }
   if (hits.length === 0) continue
   const extracted = await uno.applyExtractors(text, file)
   for (const { token, line } of hits) {

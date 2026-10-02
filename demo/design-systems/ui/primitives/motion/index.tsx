@@ -3,7 +3,7 @@
  * `registry/default/lib/springs.ts` + docs `app/docs/motion/page.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - The spring tokens stay in `_fluid/lib/springs.ts` (vendored, shared by every
+ * - The spring tokens stay in `fluid/springs.ts` (vendored, shared by every
  *   animated component) and are re-exported here as `spring` / `exitFallbackMs`.
  * - `Motion` is new, local code: a small docs demo component (FF has none) that
  *   plays one tier's enter spring and exit tween on its children, so the docs
@@ -22,9 +22,9 @@
 
 import type { ReactNode } from 'react'
 import { MotionConfig, motion } from 'motion/react'
-import { cn } from '../../_fluid/lib/utils'
-import { spring } from '../../_fluid/lib/springs'
-import { useControllableState } from '../../_fluid/hooks/use-controllable-state'
+import { cn } from '../../fluid/utils'
+import { spring } from '../../fluid/springs'
+import { useControllableState } from '../../fluid/use-controllable-state'
 
 type SpringTier = keyof typeof spring
 
@@ -52,7 +52,7 @@ interface MotionProps {
  * hover shared by every list. Pick a speed, wire it in — every component
  * follows the same pattern.
  *
- * All animation comes from one of three springs in `_fluid/lib/springs`
+ * All animation comes from one of three springs in `fluid/springs`
  * (re-exported here as `spring`). Hover states and small toggles use `fast`,
  * dropdowns and tabs use `moderate`, dialogs and drawers use `slow`. No
  * component invents its own timing, so things you've never thought about
@@ -145,5 +145,5 @@ export default function Motion({
 }
 
 export { Motion }
-export { spring, exitFallbackMs } from '../../_fluid/lib/springs'
+export { spring, exitFallbackMs } from '../../fluid/springs'
 export type { MotionProps, SpringTier }

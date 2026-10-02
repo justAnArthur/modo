@@ -33,10 +33,10 @@ import {
   type TdHTMLAttributes,
   type ThHTMLAttributes,
 } from "react";
-import { cn } from "../../_fluid/lib/utils";
-import { SizeProvider, useSize, type SizeVariant } from "../../_fluid/lib/size-context";
-import { useFluidHover, useRegisterFluidHoverItem } from "../../_fluid/hooks/use-fluid-hover";
-import { FluidHoverHighlight } from "../../_fluid/ui/fluid-hover-highlight";
+import { cn } from "../../fluid/utils";
+import { SizeProvider, useSize, type SizeVariant } from "../../fluid/size-context";
+import { useFluidHover, useRegisterFluidHoverItem } from "../../fluid/use-fluid-hover";
+import { FluidHoverHighlight } from "../../fluid/fluid-hover-highlight";
 
 // ── Context ──────────────────────────────────────────────
 

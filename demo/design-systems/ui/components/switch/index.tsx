@@ -5,7 +5,7 @@
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react`; `@/lib/*` imports rewritten to relative
- *   `../../_fluid/lib/*` paths.
+ *   `../../fluid/*` paths.
  * - Uncontrolled support (local addition, Base UI style): `checked` and
  *   `onToggle` are optional; new `defaultChecked` seeds internal state and new
  *   `onCheckedChange(checked)` reports every change, via the shared
@@ -34,10 +34,10 @@ import {
 } from "react";
 import { motion, useMotionValue, animate, type Transition } from "motion/react";
 import { Switch as SwitchPrimitive } from "@base-ui/react/switch";
-import { cn } from "../../_fluid/lib/utils";
-import { spring } from "../../_fluid/lib/springs";
-import { useSize, type SizeVariant } from "../../_fluid/lib/size-context";
-import { useControllableState } from "../../_fluid/hooks/use-controllable-state";
+import { cn } from "../../fluid/utils";
+import { spring } from "../../fluid/springs";
+import { useSize, type SizeVariant } from "../../fluid/size-context";
+import { useControllableState } from "../../fluid/use-controllable-state";
 
 interface SwitchProps extends HTMLAttributes<HTMLDivElement> {
   /** Text label displayed next to the switch. */

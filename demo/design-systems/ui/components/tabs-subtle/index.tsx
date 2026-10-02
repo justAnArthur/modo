@@ -38,15 +38,15 @@ import {
   type HTMLAttributes,
   type RefAttributes,
 } from "react";
-import { useControllableState } from "../../_fluid/hooks/use-controllable-state";
+import { useControllableState } from "../../fluid/use-controllable-state";
 import { Tabs } from "@base-ui/react/tabs";
 import { motion, AnimatePresence } from "motion/react";
-import type { IconComponent } from "../../_fluid/lib/icon-context";
-import { cn } from "../../_fluid/lib/utils";
-import { spring } from "../../_fluid/lib/springs";
-import { useShape } from "../../_fluid/lib/shape-context";
-import { SizeProvider, useSize, type SizeVariant } from "../../_fluid/lib/size-context";
-import { useFluidHover } from "../../_fluid/hooks/use-fluid-hover";
+import type { IconComponent } from "../../fluid/icon-context";
+import { cn } from "../../fluid/utils";
+import { spring } from "../../fluid/springs";
+import { useShape } from "../../fluid/shape-context";
+import { SizeProvider, useSize, type SizeVariant } from "../../fluid/size-context";
+import { useFluidHover } from "../../fluid/use-fluid-hover";
 
 interface TabsSubtleContextValue {
   registerTab: (index: number, element: HTMLElement | null) => void;

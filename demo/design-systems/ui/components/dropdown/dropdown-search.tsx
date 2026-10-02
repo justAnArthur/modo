@@ -27,11 +27,11 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
   type RefObject,
 } from "react";
-import { cn } from "../../_fluid/lib/utils";
-import { useIcon } from "../../_fluid/lib/icon-context";
-import { useSize } from "../../_fluid/lib/size-context";
-import { useSurface } from "../../_fluid/lib/surface-context";
-import { SURFACE_BG } from "../../_fluid/lib/surface-classes";
+import { cn } from "../../fluid/utils";
+import { useIcon } from "../../fluid/icon-context";
+import { useSize } from "../../fluid/size-context";
+import { useSurface } from "../../fluid/surface-context";
+import { SURFACE_BG } from "../../fluid/surface-classes";
 
 // ---------------------------------------------------------------------------
 // Search inside a dropdown menu.

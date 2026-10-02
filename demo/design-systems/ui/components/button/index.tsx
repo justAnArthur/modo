@@ -4,7 +4,7 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
- * - `@/lib/{icon-context,utils,shape-context,size-context}` imports rewritten to `../../_fluid/lib/*`.
+ * - `@/lib/{icon-context,utils,shape-context,size-context}` imports rewritten to `../../fluid/*`.
  * - `ButtonProps`: `variant`, `disabled` and `children` re-declared in the interface body (modo's
  *   parser lists only members declared there); member docs replaced by the FF docs API-table text
  *   (upstream's size-alias and `active` notes folded in).
@@ -28,10 +28,10 @@ import {
 } from "react";
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
-import type { IconComponent } from "../../_fluid/lib/icon-context";
-import { cn } from "../../_fluid/lib/utils";
-import { useShape } from "../../_fluid/lib/shape-context";
-import { useSizeVariant } from "../../_fluid/lib/size-context";
+import type { IconComponent } from "../../fluid/icon-context";
+import { cn } from "../../fluid/utils";
+import { useShape } from "../../fluid/shape-context";
+import { useSizeVariant } from "../../fluid/size-context";
 
 const buttonVariants = cva(
   [
