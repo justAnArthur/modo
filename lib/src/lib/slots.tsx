@@ -100,6 +100,8 @@ export interface LoadedComponent {
   resolvedPath: string
   /** Path to the bundled .mjs file (when the loader created one). */
   bundlePath?: string
+  /** The module export holding the component; `default` when unset. */
+  exportName?: string
   /** When source is 'fallback', the name of the plain-HTML component to import. */
   fallbackName?: 'PlainButton' | 'PlainLink' | 'PlainCode' | 'PlainSelect' | 'PlainIcon' | 'PlainSidebarItem' | 'PlainSidebarSection' | 'PlainSidebarRoot'
 }

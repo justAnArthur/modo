@@ -23,6 +23,7 @@ const SHELL_CSS_RESOLVED = '\0virtual:modo-shell-css'
 type PanelItemExport = {
   label: string
   bundlePath: string
+  exportName?: string
   cssPaths: string[]
 }
 
@@ -49,13 +50,14 @@ async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
 
   async function loadUserPath(p: string): Promise<LoadedComponent | null> {
     const extra = result.extras.get(p)
-    if (!extra?.hasDefault) return null
+    if (!extra?.exported) return null
     return {
       Component: null as unknown as ComponentType<any>,
       cssPaths: extra.cssFiles,
       source: 'config',
       resolvedPath: p,
       bundlePath: extra.bundlePath,
+      exportName: extra.exportName,
     }
   }
 
@@ -75,6 +77,7 @@ async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
     panelItems.push({
       label: item.label,
       bundlePath: lc.bundlePath,
+      exportName: lc.exportName,
       cssPaths: lc.cssPaths,
     })
   }
@@ -127,20 +130,19 @@ export function shellPlugin(options: Options): Plugin {
         if (warnings.length > 0) {
           process.stderr.write(`[modo:shell] warnings:\n${warnings.map((w) => '  • ' + w).join('\n')}\n`)
         }
-        const slotBindings: Array<{ name: string; bundlePath?: string; fallbackName?: string }> = [
-          { name: '__Button', bundlePath: shell.Button.bundlePath, fallbackName: shell.Button.fallbackName },
-          { name: '__Link', bundlePath: shell.Link.bundlePath, fallbackName: shell.Link.fallbackName },
-          { name: '__Code', bundlePath: shell.Code.bundlePath, fallbackName: shell.Code.fallbackName },
-          { name: '__Select', bundlePath: shell.Select.bundlePath, fallbackName: shell.Select.fallbackName },
-          { name: '__Icon', bundlePath: shell.Icon.bundlePath, fallbackName: shell.Icon.fallbackName },
-          { name: '__SidebarRoot', bundlePath: shell.Sidebar.Root.bundlePath, fallbackName: shell.Sidebar.Root.fallbackName },
-          { name: '__SidebarItem', bundlePath: shell.Sidebar.Item.bundlePath, fallbackName: shell.Sidebar.Item.fallbackName },
-          { name: '__SidebarSection', bundlePath: shell.Sidebar.Section.bundlePath, fallbackName: shell.Sidebar.Section.fallbackName },
-        ]
-        const panelItemBindings = shell.panelItems.map((it, idx) => ({
-          name: `__PanelItem${idx}`,
-          bundlePath: it.bundlePath,
-        }))
+        const slotBindings = Object.entries({
+          __Button: shell.Button,
+          __Link: shell.Link,
+          __Code: shell.Code,
+          __Select: shell.Select,
+          __Icon: shell.Icon,
+          __SidebarRoot: shell.Sidebar.Root,
+          __SidebarItem: shell.Sidebar.Item,
+          __SidebarSection: shell.Sidebar.Section,
+        }).map(([name, s]) => ({ name, ...s }))
+        const panelItemBindings = shell.panelItems.map((it, idx) => ({ name: `__PanelItem${idx}`, ...it }))
+        const exportOf = (s: { name: string; exportName?: string }) =>
+          `__mod_${s.name}[${JSON.stringify(s.exportName ?? 'default')}]`
         const fallbackImports = slotBindings
           .filter((s) => s.fallbackName && !s.bundlePath)
           .map((s) => `import { ${s.fallbackName} as __fb_${s.name} } from '../lib/slots';`)
@@ -148,20 +150,17 @@ export function shellPlugin(options: Options): Plugin {
         const imports = [
           `import { primitives as __primitives } from 'virtual:modo-items';`,
           fallbackImports,
-          ...slotBindings
-            .filter((s) => s.bundlePath)
-            .map((s) => `import __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`),
-          ...panelItemBindings.map((s) => `import __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`),
+          ...[...slotBindings.filter((s) => s.bundlePath), ...panelItemBindings].map(
+            (s) => `import * as __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`,
+          ),
         ].join('\n')
         const bindings = [
           ...slotBindings.map((s) => {
-            if (s.bundlePath) return `const ${s.name} = (__mod_${s.name}.default ?? __mod_${s.name});`
+            if (s.bundlePath) return `const ${s.name} = ${exportOf(s)};`
             if (s.fallbackName) return `const ${s.name} = __fb_${s.name};`
             return `const ${s.name} = null;`
           }),
-          ...panelItemBindings.map(
-            (s) => `const ${s.name}_Comp = (__mod_${s.name}.default ?? __mod_${s.name});`,
-          ),
+          ...panelItemBindings.map((s) => `const ${s.name}_Comp = ${exportOf(s)};`),
         ].join('\n')
         const panelItemsJson = shell.panelItems
           .map(

@@ -29,9 +29,9 @@ flavor pulled with the shadcn CLI, still on Tailwind.
 Every vendored file opens with a plain `/* */` header. The header names the
 upstream path and commit, carries the MIT notice, and lists every local
 modification. The vendored code below the header keeps upstream's formatting.
-Files written for this port (`uno.config.ts`, `vite.ts`, `examples.ts`,
-`scripts/*`, `_fluid/hooks/use-controllable-state.ts`, `_shell/*`) use this
-repo's style: single quotes and no semicolons.
+Files written for this port (`uno.config.ts`, `vite.ts`, `modo.components.tsx`,
+`.scripts/*`, `fluid/use-controllable-state.ts`) use this repo's style: single
+quotes and no semicolons.
 
 ## Layout
 
@@ -40,34 +40,33 @@ repo's style: single quotes and no semicolons.
 | `tokens/*.css` | Colors, typography (`--font-sans`, `--text-*`), motion (`--duration-*`), radius and spacing. |
 | `global.css` | Theme switching, base styles, focus fallback, scrollbars, shimmer/spinner keyframes and `.scroll-fade`. |
 | `uno.config.ts`, `vite.ts` | The UnoCSS setup (see below). |
-| `_fluid/lib`, `_fluid/hooks`, `_fluid/ui` | FF's shared system files, imported relatively by items. The leading `_` keeps modo's item discovery away. |
-| `_shell/` | Adapters that fit FF components to modo's shell-slot contracts. |
-| `primitives/<id>/index.tsx` | FF's "System" pages. |
-| `components/<id>/index.tsx` | FF's "Components" pages. |
-| `examples.ts` | The example scope: curated lucide icons that every `@example` can use. |
-| `scripts/` | `uno-coverage.ts` and `check-items.ts` (see [How to verify](#how-to-verify)). |
+| `fluid/` | FF's shared system files (upstream `lib/`, `hooks/` and the fluid-hover highlight, flat, upstream names), imported relatively by items. modo only scans the tier folders, so it never mistakes them for items. |
+| `modo.components.tsx` | Components only the docs site uses: the `Icon` and `Select` shell-slot adapters and the `ThemeSwitcher` panel item, picked in `modo.config.ts` by export name (`./modo.components.tsx#Select`). |
+| `primitives/<id>/` | FF's "System" pages: `index.tsx` (component + TSDoc prose) and `examples.mdx`. |
+| `components/<id>/` | FF's "Components" pages, same shape. |
+| `.scripts/` | `uno-coverage.ts`, `check-items.ts` and their shared `mdx-blocks.ts` (see [How to verify](#how-to-verify)). |
 
 ## Upstream → local file map
 
-### Shared system (`_fluid/`)
+### Shared system (`fluid/`)
 
 | Upstream (`registry/default/…`) | Local | Modifications |
 |---|---|---|
-| `lib/utils.ts` | `_fluid/lib/utils.ts` | `extendTailwindMerge` → `createCn` from `cn/config`, with the same font-size group extension |
-| `lib/springs.ts` | `_fluid/lib/springs.ts` | none |
-| `lib/font-weight.ts` | `_fluid/lib/font-weight.ts` | none |
-| `lib/popup.ts` | `_fluid/lib/popup.ts` | none |
-| `lib/shape-context.tsx` | `_fluid/lib/shape-context.tsx` | `"use client"` dropped |
-| `lib/size-context.tsx` | `_fluid/lib/size-context.tsx` | `"use client"` dropped |
-| `lib/icon-context.tsx` | `_fluid/lib/icon-context.tsx` | `"use client"` dropped; `size`/`strokeWidth` widened to `number \| string` for lucide v1 + React 18 types |
-| `lib/surface-context.tsx` | `_fluid/lib/surface-context.tsx` | `"use client"` dropped |
-| `lib/surface-classes.ts` | `_fluid/lib/surface-classes.ts` | `SURFACE_HOVER_*` and `surfaceHoverClasses` dropped (only Sidebar used them) |
-| `hooks/use-fluid-hover.ts` | `_fluid/hooks/use-fluid-hover.ts` | `"use client"` dropped; `sessionRef` typed `MutableRefObject<number>` (React 18) |
-| `hooks/use-merge-split.tsx` | `_fluid/hooks/use-merge-split.tsx` | `"use client"` dropped; `framer-motion` → `motion/react`; relative imports; `bridgePair` asserts its length-checked pair (`noUncheckedIndexedAccess`) |
-| `hooks/use-keyboard-nav-gate.ts` | `_fluid/hooks/use-keyboard-nav-gate.ts` | `"use client"` dropped; relative imports |
-| `hooks/use-touch-primary.tsx` | `_fluid/hooks/use-touch-primary.tsx` | `"use client"` dropped |
-| `fluid-hover-highlight.tsx` | `_fluid/ui/fluid-hover-highlight.tsx` | `"use client"` dropped; `framer-motion` → `motion/react`; relative imports |
-| — (new) | `_fluid/hooks/use-controllable-state.ts` | Local addition: controlled + uncontrolled state, Base UI style |
+| `lib/utils.ts` | `fluid/utils.ts` | `extendTailwindMerge` → `createCn` from `cn/config`, with the same font-size group extension |
+| `lib/springs.ts` | `fluid/springs.ts` | none |
+| `lib/font-weight.ts` | `fluid/font-weight.ts` | none |
+| `lib/popup.ts` | `fluid/popup.ts` | none |
+| `lib/shape-context.tsx` | `fluid/shape-context.tsx` | `"use client"` dropped |
+| `lib/size-context.tsx` | `fluid/size-context.tsx` | `"use client"` dropped |
+| `lib/icon-context.tsx` | `fluid/icon-context.tsx` | `"use client"` dropped; `size`/`strokeWidth` widened to `number \| string` for lucide v1 + React 18 types |
+| `lib/surface-context.tsx` | `fluid/surface-context.tsx` | `"use client"` dropped |
+| `lib/surface-classes.ts` | `fluid/surface-classes.ts` | `SURFACE_HOVER_*` and `surfaceHoverClasses` dropped (only Sidebar used them) |
+| `hooks/use-fluid-hover.ts` | `fluid/use-fluid-hover.ts` | `"use client"` dropped; `sessionRef` typed `MutableRefObject<number>` (React 18) |
+| `hooks/use-merge-split.tsx` | `fluid/use-merge-split.tsx` | `"use client"` dropped; `framer-motion` → `motion/react`; relative imports; `bridgePair` asserts its length-checked pair (`noUncheckedIndexedAccess`) |
+| `hooks/use-keyboard-nav-gate.ts` | `fluid/use-keyboard-nav-gate.ts` | `"use client"` dropped; relative imports |
+| `hooks/use-touch-primary.tsx` | `fluid/use-touch-primary.tsx` | `"use client"` dropped |
+| `fluid-hover-highlight.tsx` | `fluid/fluid-hover-highlight.tsx` | `"use client"` dropped; `framer-motion` → `motion/react`; relative imports |
+| — (new) | `fluid/use-controllable-state.ts` | Local addition: controlled + uncontrolled state, Base UI style |
 
 ### Styles
 
@@ -86,10 +85,10 @@ Every item goes through the same mechanical pass, so the tables below list
 only what is specific to it:
 
 - `"use client"` dropped (no RSC here).
-- Imports rewritten: `@/lib/*` → `../../_fluid/lib/*`, `@/hooks/*` →
-  `../../_fluid/hooks/*`, `@/lib/elevated` → `../../primitives/surface`,
+- Imports rewritten: `@/lib/*` → `../../fluid/*`, `@/hooks/*` →
+  `../../fluid/*`, `@/lib/elevated` → `../../primitives/surface`,
   `@/components/ui/scroll-area` → `../../primitives/scroll-area`,
-  `@/components/ui/fluid-hover-highlight` → `../../_fluid/ui/fluid-hover-highlight`,
+  `@/components/ui/fluid-hover-highlight` → `../../fluid/fluid-hover-highlight`,
   `@/registry/radix/*` → the Base-flavor sibling, `framer-motion` →
   `motion/react`, `next/link` → a plain anchor.
 - A local `interface <Item>Props` whose members are each declared on one line
@@ -136,14 +135,14 @@ only what is specific to it:
 | `ThinkingIndicator` | `registry/default/thinking-indicator.tsx` | `components/thinking-indicator/index.tsx` | upstream prop JSDoc kept (it already matches the FF API table); the `.shimmer-text` rule it rides lives in `global.css` |
 | `Tooltip` | `registry/base/tooltip.tsx` | `components/tooltip/index.tsx` | `className`/`children` docs filled in; statics `.Provider` / `.PortalContainer` |
 
-`_shell/select.tsx` is not an item: modo's docs chrome renders its Select slot
+`Select` in `modo.components.tsx` is not an item: modo's docs chrome renders its Select slot
 with a flat `value` / `onChange` / `options` contract
 (`lib/src/lib/slots.tsx`), and this adapter maps it onto
 `Select.Trigger` / `Select.Content` / `Select.Item` (with `sm` → the compact
 step) so the chrome runs on the design system's own Select. The
 `components/select` item keeps the upstream API untouched.
 
-`_shell/theme-switcher.tsx` is not an item either: it is the `Theme` entry in
+`ThemeSwitcher` in `modo.components.tsx` is not an item either: it is the `Theme` entry in
 `modo.config.ts` `panel.items`, a `Select` of Light / Dark / System (each row
 with its icon, the trigger showing the active one) that reads and sets
 `window.__uiTheme` and re-reads it on `ui:themechange`. All switching logic lives in the pre-paint controller
@@ -242,13 +241,13 @@ config.
   puts its reset in `base`. `global.css`'s `@layer base` rules join that layer
   after the reset, so utilities (in `default`) still win. This is the same
   arrangement as Tailwind's base/utilities split.
-- **Content.** UnoCSS scans `{_fluid,_shell,primitives,components}/**/*.{ts,tsx}`
-  from disk (`content.filesystem`, and the same glob in
-  `content.pipeline.include`, since the default pipeline skips `.ts`). Two
-  reasons:
+- **Content.** UnoCSS scans `{fluid,primitives,components}/**/*.{ts,tsx,mdx}`
+  and `modo.components.tsx` from disk (`content.filesystem`, and the same
+  globs in `content.pipeline.include`, since the default pipeline skips
+  `.ts`). Two reasons:
   - modo serves items pre-bundled, so the sources never pass through Vite's
     transform pipeline;
-  - example code exists only in the raw TSDoc.
+  - example code exists only in each item's `examples.mdx`.
 
   The class-name literal tables (`SURFACE_BG`, `sizeMap`, …) do the same job
   for UnoCSS's extractor that they do for Tailwind's scanner.
@@ -258,7 +257,7 @@ config.
   and the utilities, so FF's ring (1px `--focus-ring`) is the only one drawn.
 
 Every Tailwind idiom FF uses has a wind4 equivalent, and
-`scripts/uno-coverage.ts` asserts each one — 22 built-in assertions, among
+`.scripts/uno-coverage.ts` asserts each one — 22 built-in assertions, among
 them:
 - named groups (`group-[.is-active]/row:`)
 - `has-data-[…]:`
@@ -276,7 +275,7 @@ No upstream class string had to change. The current run covers 45 files and
 
 ## `cn`
 
-`_fluid/lib/utils.ts` exports `cn = createCn({ extend: { classGroups: {
+`fluid/utils.ts` exports `cn = createCn({ extend: { classGroups: {
 'font-size': ['text-display', …] } } })` from `cn/config`. `cn` is a compiled
 drop-in for clsx + tailwind-merge with the same `extend` shape.
 
@@ -288,7 +287,7 @@ would drop the size.
 
 Base UI components work both controlled and uncontrolled. The FF wrappers
 that were controlled-only gain a `default*` prop, backed by
-`_fluid/hooks/use-controllable-state.ts`: a component is controlled while its
+`fluid/use-controllable-state.ts`: a component is controlled while its
 value prop is not `undefined`, and it reports every change through its
 callback either way. Where FF only had per-item callbacks, a group-level one
 was added and the item's own state props became optional.
@@ -362,26 +361,23 @@ What modo's parser (`lib/src/lib/tsdoc.ts`) and example compiler
   type spans several lines is dropped. Every member needs a description, and
   defaults are read from that prose (`Defaults to \`false\`.`), not from the
   destructuring. Hence the FF API-table text re-declared on every prop.
-- **`@example` counts only at the start of a line**, and `*/` may not appear
-  inside an example — which also rules out JSX `{/* … */}` comments.
-- **Examples are hook-free JSX.** The body is compiled as one JSX expression
-  (sibling elements get a fragment) and evaluated with a scope object; leading
-  `import` lines are stripped for copy-paste. Nothing runs a component body,
-  so interactivity in the docs comes from the `default*` props above instead
-  of `useState`.
-- **Free identifiers must resolve** to an item name, an `examples.ts` export
-  or a JS/DOM global, and every `Item.Part` used must really be attached to
-  that item. `scripts/check-items.ts` enforces both.
-- **Icons come from `examples.ts`**, a curated `export { … } from 'lucide-react'`
-  covering the icons the FF docs pages use. It never exports a name an item
-  uses (Badge, Card, Table, Switch, …) or a shell slot (Link, Code, Sidebar) —
-  items win on a collision, which would make the icon unreachable — and never
-  a JS/DOM global (Map, Set, Image, File, Text, Option, History). Lucide's own
-  aliases cover the clashes (`LinkIcon`, `ImageIcon`).
+- **Examples live in `examples.mdx`** next to the item: a `# <FF section title>`,
+  an optional caption, then one JSX block (or a fenced code block for code to
+  read). Expressions are plain JS (no `as const`), and multi-line JSX text
+  stays inline (modo unwraps MDX's paragraphs inside examples).
+- **Examples are hook-free JSX.** Nothing runs a component body, so
+  interactivity in the docs comes from the `default*` props above instead of
+  `useState`.
+- **Imports are real**: the item is `./index`, other items are
+  `../../<tier>/<id>`, icons come from `lucide-react`. Every free identifier
+  must be imported (or be an item name or a JS/DOM global), and every
+  `Item.Part` used must really be attached to that item.
+  `.scripts/check-items.ts` enforces both and bundles each `examples.mdx` the
+  way modo does.
 
-Each item's TSDoc follows its FF docs page: the one-liner, a concept
-paragraph, the list of statics, then one `@example # <FF section title>` per
-docs section. Playground and API Reference sections are never ported (the API
+Each item follows its FF docs page: the TSDoc holds the one-liner, a concept
+paragraph and the list of statics; `examples.mdx` holds one `# <FF section
+title>` example per docs section. Playground and API Reference sections are never ported (the API
 tables become the prop docs instead). Other per-item deviations:
 
 | Item | Docs deviation |
@@ -437,13 +433,13 @@ cd demo/design-systems/ui && MODO_PORT=5180 bunx modo dev
 ```sh
 cd demo/design-systems/ui
 bunx tsc -p . --noEmit                  # types
-bun scripts/uno-coverage.ts [prefix…]   # every class string generates + is extracted
-bun scripts/check-items.ts [prefix…]    # modo item contract (parser, examples, statics, bundle)
+bun .scripts/uno-coverage.ts [prefix…]  # every class string generates + is extracted
+bun .scripts/check-items.ts [prefix…]   # modo item contract (parser, examples, statics, bundle)
 ```
 
 Current status — all green:
 
 ```
-check-items (all items): 26 item(s), 127 example(s) — ok
-uno-coverage (_fluid _shell primitives components): 45 files, 3299 class tokens (561 unique), 22 assertions — all generate
+check-items (all items): 27 item(s), 127 example(s) — ok
+uno-coverage (fluid primitives components modo.components.tsx): 73 files, 3387 class tokens (580 unique), 22 assertions — all generate
 ```

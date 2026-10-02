@@ -3,7 +3,7 @@
  * `registry/default/lib/size-context.tsx` + docs `app/docs/sizes/page.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - The implementation stays in `_fluid/lib/size-context.tsx` (vendored, shared by
+ * - The implementation stays in `fluid/size-context.tsx` (vendored, shared by
  *   every sized component); this item is a thin documented `SizeProvider` wrapper
  *   around it so modo can list its props, plus re-exports of the hooks, maps and types.
  * - The docs page's live demos (toolbar ladder, compact-region callout, token
@@ -17,7 +17,7 @@
  */
 
 import type { ReactNode } from 'react'
-import { SizeProvider as FluidSizeProvider } from '../../_fluid/lib/size-context'
+import { SizeProvider as FluidSizeProvider } from '../../fluid/size-context'
 
 interface SizeProviderProps {
   /** Controlled variant — pins every control in the subtree to one step. `'default'` is 36px controls, `'compact'` is 28px. */
@@ -81,6 +81,6 @@ export {
   useTypeScale,
   sizeMap,
   typeScale,
-} from '../../_fluid/lib/size-context'
-export type { SizeVariant, SizeClasses, TypeScaleRole, TypeScaleStep } from '../../_fluid/lib/size-context'
+} from '../../fluid/size-context'
+export type { SizeVariant, SizeClasses, TypeScaleRole, TypeScaleStep } from '../../fluid/size-context'
 export type { SizeProviderProps }

@@ -10,7 +10,7 @@
  */
 
 import { useCallback, useEffect, useRef, type KeyboardEvent } from "react";
-import { POPUP_NAV_KEYS } from "../lib/popup";
+import { POPUP_NAV_KEYS } from "./popup";
 
 /**
  * Gates a popup's keyboard focus ring on keyboard use.

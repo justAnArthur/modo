@@ -5,7 +5,7 @@
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react`; `@/lib/{utils,springs,font-weight,shape-context}` imports
- *   rewritten to `../../_fluid/lib/*`.
+ *   rewritten to `../../fluid/*`.
  * - `TooltipProps`: `className` / `children` docs filled in from the FF docs API table (modo's
  *   parser needs a description on every member).
  * - modo item: TSDoc (from the FF "Tooltip" docs page), the `Tooltip.Provider` /
@@ -23,9 +23,9 @@ import {
 } from "react";
 import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
 import { motion, useMotionValue } from "motion/react";
-import { cn } from "../../_fluid/lib/utils";
-import { spring } from "../../_fluid/lib/springs";
-import { useShape } from "../../_fluid/lib/shape-context";
+import { cn } from "../../fluid/utils";
+import { spring } from "../../fluid/springs";
+import { useShape } from "../../fluid/shape-context";
 
 // ---------------------------------------------------------------------------
 // Portal container context

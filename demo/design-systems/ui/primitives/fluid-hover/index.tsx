@@ -7,8 +7,8 @@
  *   docs page through local `FluidRow` / `CostRow` helpers. This item wraps that
  *   pair in one documented container (`FluidHover` + `FluidHover.Item`) so the modo
  *   examples can show all three axes without hooks. The mechanism is untouched and
- *   still lives in `_fluid/hooks/use-fluid-hover.ts` and
- *   `_fluid/ui/fluid-hover-highlight.tsx`; both are re-exported here unchanged.
+ *   still lives in `fluid/use-fluid-hover.ts` and
+ *   `fluid/fluid-hover-highlight.tsx`; both are re-exported here unchanged.
  * - `items`, `renderItem`, `disabledIndices`, `columns` and `highlightClassName` are
  *   this container's own API; `axis` and `gapClick` are the hook's options, passed
  *   straight through.
@@ -38,13 +38,13 @@ import {
   type ReactNode,
   type RefAttributes,
 } from "react";
-import { cn } from "../../_fluid/lib/utils";
-import { useShape } from "../../_fluid/lib/shape-context";
+import { cn } from "../../fluid/utils";
+import { useShape } from "../../fluid/shape-context";
 import {
   useFluidHover,
   useRegisterFluidHoverItem,
-} from "../../_fluid/hooks/use-fluid-hover";
-import { FluidHoverHighlight } from "../../_fluid/ui/fluid-hover-highlight";
+} from "../../fluid/use-fluid-hover";
+import { FluidHoverHighlight } from "../../fluid/fluid-hover-highlight";
 
 // ---------------------------------------------------------------------------
 // One list is one FluidHover: the container owns the mouse handlers, hands
@@ -339,13 +339,13 @@ export type { FluidHoverProps, FluidHoverItemProps, FluidHoverAxis };
 export {
   useFluidHover,
   useRegisterFluidHoverItem,
-} from "../../_fluid/hooks/use-fluid-hover";
+} from "../../fluid/use-fluid-hover";
 export type {
   ItemRect,
   UseFluidHoverOptions,
   UseFluidHoverReturn,
-} from "../../_fluid/hooks/use-fluid-hover";
-export { FluidHoverHighlight } from "../../_fluid/ui/fluid-hover-highlight";
-export type { FluidHoverHighlightProps } from "../../_fluid/ui/fluid-hover-highlight";
+} from "../../fluid/use-fluid-hover";
+export { FluidHoverHighlight } from "../../fluid/fluid-hover-highlight";
+export type { FluidHoverHighlightProps } from "../../fluid/fluid-hover-highlight";
 
 export default FluidHover;

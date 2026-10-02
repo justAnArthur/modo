@@ -35,12 +35,12 @@ import {
   type ReactNode,
   type RefAttributes,
 } from "react";
-import { cn } from "../../_fluid/lib/utils";
-import { useShape } from "../../_fluid/lib/shape-context";
-import { SizeProvider, useSize, type SizeVariant } from "../../_fluid/lib/size-context";
-import { useIcon, type IconComponent } from "../../_fluid/lib/icon-context";
-import { useFluidHover, useRegisterFluidHoverItem } from "../../_fluid/hooks/use-fluid-hover";
-import { FluidHoverHighlight } from "../../_fluid/ui/fluid-hover-highlight";
+import { cn } from "../../fluid/utils";
+import { useShape } from "../../fluid/shape-context";
+import { SizeProvider, useSize, type SizeVariant } from "../../fluid/size-context";
+import { useIcon, type IconComponent } from "../../fluid/icon-context";
+import { useFluidHover, useRegisterFluidHoverItem } from "../../fluid/use-fluid-hover";
+import { FluidHoverHighlight } from "../../fluid/fluid-hover-highlight";
 
 // ---------------------------------------------------------------------------
 // Card is shadcn/ui's compositional card — the same parts and `data-slot`

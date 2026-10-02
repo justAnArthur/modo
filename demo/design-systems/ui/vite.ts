@@ -19,7 +19,7 @@ const CONFIG_CSS_ID = '\0virtual:modo-config-css'
 // it on <html>), and `color-scheme` drives every light-dark() token. modo has
 // no theme of its own, so this runs before first paint: it applies the stored
 // preference (or the OS one under 'system') and exposes `window.__uiTheme` for
-// the Theme panel item in `_shell/theme-switcher.tsx`. The 'ui:themechange'
+// the Theme panel item (`ThemeSwitcher` in modo.components.tsx). The 'ui:themechange'
 // event keeps that control in sync when the OS flips underneath 'system'.
 const THEME_CONTROLLER = `(() => {
   const KEY = 'modo-ui-theme'

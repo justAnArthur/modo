@@ -16,9 +16,9 @@ import {
   useReducedMotion,
   type Transition,
 } from "motion/react";
-import { cn } from "../lib/utils";
-import { spring } from "../lib/springs";
-import type { ItemRect, UseFluidHoverReturn } from "../hooks/use-fluid-hover";
+import { cn } from "./utils";
+import { spring } from "./springs";
+import type { ItemRect, UseFluidHoverReturn } from "./use-fluid-hover";
 
 // ---------------------------------------------------------------------------
 // The one hover highlight every fluid hover list renders: an absolutely

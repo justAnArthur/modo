@@ -46,14 +46,14 @@ import { Accordion as AccordionPrimitive } from "@base-ui/react/accordion";
 // SSR-safe layout effect (client components still server-render in Next).
 const useIsoLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
-import { cn } from "../../_fluid/lib/utils";
-import { useIcon } from "../../_fluid/lib/icon-context";
-import { spring } from "../../_fluid/lib/springs";
-import { useFluidHover, useRegisterFluidHoverItem } from "../../_fluid/hooks/use-fluid-hover";
-import { useControllableState } from "../../_fluid/hooks/use-controllable-state";
-import { useShape } from "../../_fluid/lib/shape-context";
-import { SizeProvider, useSize, type SizeVariant } from "../../_fluid/lib/size-context";
-import { FluidHoverHighlight } from "../../_fluid/ui/fluid-hover-highlight";
+import { cn } from "../../fluid/utils";
+import { useIcon } from "../../fluid/icon-context";
+import { spring } from "../../fluid/springs";
+import { useFluidHover, useRegisterFluidHoverItem } from "../../fluid/use-fluid-hover";
+import { useControllableState } from "../../fluid/use-controllable-state";
+import { useShape } from "../../fluid/shape-context";
+import { SizeProvider, useSize, type SizeVariant } from "../../fluid/size-context";
+import { FluidHoverHighlight } from "../../fluid/fluid-hover-highlight";
 
 // ─── Contexts ────────────────────────────────────────────────────────────────
 

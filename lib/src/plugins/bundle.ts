@@ -40,7 +40,10 @@ export interface BundledExtra {
   file: string
   bundlePath: string
   cssFiles: string[]
-  hasDefault: boolean
+  /** The export a reference names: `./file.tsx#Name`, else `default`. */
+  exportName: string
+  /** Whether the built module has that export. */
+  exported: boolean
 }
 
 export interface BundleResult {
@@ -150,11 +153,14 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
       ...Object.values(config?.shell ?? {}),
       ...(config?.panel?.items ?? []).map((it) => it.component),
     ].filter((p): p is string => typeof p === 'string')
-    const extraKeys = new Map<string, { file: string; key: string }>()
+    // `./modo.components.tsx#Select` names an export; several refs into one
+    // file share its entry.
+    const extraKeys = new Map<string, { file: string; key: string; exportName: string }>()
     for (const p of new Set(extraPaths)) {
-      const file = resolveUserFile(userRoot, p)
+      const [path = p, exportName = 'default'] = p.split('#')
+      const file = resolveUserFile(userRoot, path)
       if (!file) continue // reported by the shell plugin as an unresolved slot/panel item
-      extraKeys.set(p, { file, key: keyFor(file, `usr/${sanitize(p)}`) })
+      extraKeys.set(p, { file, exportName, key: keyFor(file, `usr/${sanitize(path)}`) })
     }
 
     let scopeEntry: { file: string; key: string } | null = null
@@ -186,13 +192,14 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     }
 
     const extras = new Map<string, BundledExtra>()
-    for (const [p, { file, key }] of extraKeys) {
+    for (const [p, { file, key, exportName }] of extraKeys) {
       if (!ok(key)) continue
       extras.set(p, {
         file,
         bundlePath: out(key),
         cssFiles: discoverCssForFile(file),
-        hasDefault: exportsOf(key).includes('default'),
+        exportName,
+        exported: exportsOf(key).includes(exportName),
       })
     }
 

@@ -29,12 +29,12 @@ import {
   type RefAttributes,
 } from "react";
 import { Field } from "@base-ui/react/field";
-import type { IconComponent } from "../../_fluid/lib/icon-context";
-import { cn } from "../../_fluid/lib/utils";
-import { useShape } from "../../_fluid/lib/shape-context";
-import { SizeProvider, useSize, type SizeVariant } from "../../_fluid/lib/size-context";
-import { useFluidHover, useRegisterFluidHoverItem } from "../../_fluid/hooks/use-fluid-hover";
-import { useControllableState } from "../../_fluid/hooks/use-controllable-state";
+import type { IconComponent } from "../../fluid/icon-context";
+import { cn } from "../../fluid/utils";
+import { useShape } from "../../fluid/shape-context";
+import { SizeProvider, useSize, type SizeVariant } from "../../fluid/size-context";
+import { useFluidHover, useRegisterFluidHoverItem } from "../../fluid/use-fluid-hover";
+import { useControllableState } from "../../fluid/use-controllable-state";
 
 interface InputGroupContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void;
