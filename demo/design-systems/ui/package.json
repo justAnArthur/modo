@@ -7,9 +7,7 @@
   "scripts": {
     "dev": "modo dev",
     "build": "modo build",
-    "check": "tsc --noEmit",
-    "check:uno": "bun .scripts/uno-coverage.ts",
-    "check:items": "bun .scripts/check-items.ts"
+    "check": "tsc --noEmit"
   },
   "dependencies": {
     "@base-ui/react": "1.4.1",

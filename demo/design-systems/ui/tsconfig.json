@@ -1,6 +1,6 @@
 {
   "extends": "../../../tsconfig.base.json",
   "compilerOptions": { "noEmit": true, "types": ["node"] },
-  "include": ["**/*.ts", "**/*.tsx", ".scripts/*.ts"],
+  "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", ".modo-tmp"]
 }
