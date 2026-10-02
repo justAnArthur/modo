@@ -278,8 +278,6 @@ interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, "onClick"> {
  * weight-animated title, and (via Card.Group) magnetic fluid hover. Compound:
  * sub-parts hang off Card as attributes.
  * Pulled via `bunx shadcn@latest add @fluid/card`.
- *
- * {@include ./card.mdx}
  */
 const Card = forwardRef<HTMLDivElement, CardProps>(
   (

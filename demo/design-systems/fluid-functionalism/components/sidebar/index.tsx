@@ -21,8 +21,6 @@ import {
  * modo-shaped composition (the registry ships the compound parts, not this
  * Root/Item/Section API). Resolves the docs chrome's Sidebar slot by
  * interface matching.
- *
- * {@include ./sidebar.mdx}
  */
 export default function Sidebar({ children, className, style }: {
   /** Nav sections and items (Sidebar.Section / Sidebar.Item). */

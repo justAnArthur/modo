@@ -12,8 +12,6 @@ import { cn } from "cn"
 /**
  * shadcn/ui Input — native text field.
  * Pulled via `bunx shadcn@latest add input` (radix-nova style, neutral base color).
- *
- * {@include ./input.mdx}
  */
 export default function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (

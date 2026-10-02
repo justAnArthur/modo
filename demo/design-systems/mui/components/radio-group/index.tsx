@@ -9,8 +9,6 @@ import Radio from '@mui/material/Radio'
  * Exclusive choice between named options. Modo contract over MUI: RadioGroup
  * plus FormControlLabel-wrapped Radios generated from `options`; pass
  * children instead for full control.
- *
- * {@include ./radio-group.mdx}
  */
 export default function RadioGroup({
   options,

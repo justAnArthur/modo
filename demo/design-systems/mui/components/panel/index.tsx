@@ -3,8 +3,6 @@ import Paper from '@mui/material/Paper'
 
 /**
  * Elevated surface. Paper-based.
- *
- * {@include ./panel.mdx}
  */
 export default function Panel({
   elevation = 1,

@@ -2,8 +2,6 @@ import './button.css'
 
 /**
  * Triggers an action.
- *
- * {@include ./button.mdx}
  */
 export default function Button({
   variant = 'primary',

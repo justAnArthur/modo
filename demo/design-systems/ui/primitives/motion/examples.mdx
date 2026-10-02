@@ -1,0 +1,100 @@
+import { Check } from 'lucide-react'
+import Motion from './index'
+
+# Three speeds
+
+All animations come from one of three springs. Hover states and small toggles use `fast`, dropdowns and tabs use `moderate`, dialogs and drawers use `slow`. Toggle each to feel the pace grow with the size of the thing that moves.
+
+<div className="flex w-full flex-wrap items-start justify-center gap-8">
+  <Motion tier="fast">
+    <div className="flex h-9 items-center gap-2 rounded-lg bg-hover px-3 text-body text-foreground">
+      <Check size={16} /> Hover, fades
+    </div>
+  </Motion>
+  <Motion tier="moderate">
+    <div className="flex w-40 flex-col gap-1 rounded-xl bg-surface-3 p-1 text-body text-foreground shadow-surface-3">
+      <span className="rounded-lg bg-active px-2 py-1.5">Last updated</span>
+      <span className="px-2 py-1.5 text-muted-foreground">Created</span>
+      <span className="px-2 py-1.5 text-muted-foreground">Name</span>
+    </div>
+  </Motion>
+  <Motion tier="slow">
+    <div className="flex w-48 flex-col gap-2 rounded-2xl bg-surface-5 p-4 shadow-surface-5">
+      <span className="text-subtitle font-semibold text-foreground">Create teamspace</span>
+      <span className="text-caption text-muted-foreground">Dialogs and drawers land on the slow spring.</span>
+    </div>
+  </Motion>
+</div>
+
+# Slow in, faster out
+
+Both panels open on `spring.slow`. The only difference is the close: the left leaves on the same `spring.slow`, the right on `spring.slow.exit` — one tier faster. Hide the left one first. That slight drag on the way out is exactly what you're trying to avoid.
+
+<div className="flex w-full flex-wrap items-start justify-center gap-8">
+  <div className="flex flex-col items-center gap-3">
+    <Motion tier="slow" sameExit>
+      <div className="flex w-56 flex-col gap-2.5 rounded-xl border border-border bg-card p-4 shadow-xl">
+        <div className="h-3 w-1/2 rounded-full bg-foreground/10" />
+        <div className="mt-1 h-2 w-full rounded-full bg-foreground/6" />
+        <div className="h-2 w-2/5 rounded-full bg-foreground/6" />
+        <div className="mt-3 flex justify-end gap-2">
+          <div className="h-6 w-16 rounded-md bg-foreground/10" />
+          <div className="h-6 w-16 rounded-md bg-foreground/10" />
+        </div>
+      </div>
+    </Motion>
+    <span className="text-caption text-muted-foreground">Same exit time — drags on the way out</span>
+  </div>
+  <div className="flex flex-col items-center gap-3">
+    <Motion tier="slow">
+      <div className="flex w-56 flex-col gap-2.5 rounded-xl border border-border bg-card p-4 shadow-xl">
+        <div className="h-3 w-1/2 rounded-full bg-foreground/10" />
+        <div className="mt-1 h-2 w-full rounded-full bg-foreground/6" />
+        <div className="h-2 w-2/5 rounded-full bg-foreground/6" />
+        <div className="mt-3 flex justify-end gap-2">
+          <div className="h-6 w-16 rounded-md bg-foreground/10" />
+          <div className="h-6 w-16 rounded-md bg-foreground/10" />
+        </div>
+      </div>
+    </Motion>
+    <span className="text-caption text-muted-foreground">Faster exit — gone a tier quicker</span>
+  </div>
+</div>
+
+# All tokens
+
+Each tier enters on its spring and leaves on its exit tween. Everything lives in `springs` — duration values belong there, not scattered through component code. Under each tier, the components that animate with it.
+
+<div className="flex w-full flex-col divide-y divide-border">
+  {[
+    ['fast', 'Fluid hover · Focus rings · Checkbox · Radio · Tooltip · Table rows · Card grid · Input copy · Slider · Select · Combobox · Color picker · Accordion'],
+    ['moderate', 'Dropdown · Tabs indicator · Switch thumb · Selection merge / split'],
+    ['slow', 'Dialog'],
+  ].map(([tier, uses]) => (
+    <div key={tier} className="flex flex-col items-start gap-3 py-5 sm:flex-row sm:items-center sm:gap-6">
+      <Motion tier={tier} className="shrink-0 sm:w-56">
+        <div className="h-8 w-40 rounded-full bg-foreground" />
+      </Motion>
+      <span className="text-body text-muted-foreground">{uses}</span>
+    </div>
+  ))}
+</div>
+
+# Reduced motion preview
+
+All springs respect the OS setting. Wrap the app tree in `<MotionConfig reducedMotion="user">`, and when the user turns on reduced motion the position changes drop out and only the opacity fades remain. The right side forces that setting on to preview it.
+
+<div className="flex w-full flex-wrap items-start justify-center gap-8">
+  <div className="flex flex-col items-center gap-3">
+    <Motion tier="slow" reducedMotion="never">
+      <div className="h-20 w-40 rounded-xl bg-surface-5 shadow-surface-5" />
+    </Motion>
+    <span className="text-caption text-muted-foreground">Full motion</span>
+  </div>
+  <div className="flex flex-col items-center gap-3">
+    <Motion tier="slow" reducedMotion="always">
+      <div className="h-20 w-40 rounded-xl bg-surface-5 shadow-surface-5" />
+    </Motion>
+    <span className="text-caption text-muted-foreground">Reduced motion — opacity only</span>
+  </div>
+</div>
