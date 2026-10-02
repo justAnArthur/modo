@@ -5,20 +5,7 @@ import MuiTextField from '@mui/material/TextField'
  * Text input with label and helper text. Thin modo adapter over MUI's
  * TextField; examples use `defaultValue` since modo examples carry no hooks.
  *
- * @example
- * # Email
- *
- * {@includeCode ./examples/email.tsx}
- *
- * @example
- * # Password with helper text
- *
- * {@includeCode ./examples/password-with-helper-text.tsx}
- *
- * @example
- * # Multiline
- *
- * {@includeCode ./examples/multiline.tsx}
+ * {@include ./text-field.mdx}
  */
 export default function TextField({
   label,

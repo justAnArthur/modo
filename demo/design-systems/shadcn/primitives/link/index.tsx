@@ -6,15 +6,7 @@ import { Link as ShadcnLink } from './link'
  * the pattern documented in the shadcn/ui Link docs (ui.shadcn.com).
  * Authored for this showcase (shadcn ships no Link component).
  *
- * @example # Text link
- * The `link` variant renders a classic inline hyperlink.
- *
- * {@includeCode ./examples/text-link.tsx}
- *
- * @example # As a button
- * Any button variant turns the anchor into a button-styled call to action.
- *
- * {@includeCode ./examples/as-a-button.tsx}
+ * {@include ./link.mdx}
  */
 export default function Link({ href, variant = 'link', children }: {
   /** Navigation target. */

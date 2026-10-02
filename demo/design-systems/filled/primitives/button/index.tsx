@@ -3,15 +3,7 @@ import './button.css'
 /**
  * Triggers an action.
  *
- * @example
- * # Default
- *
- * {@includeCode ./examples/default.tsx}
- *
- * @example
- * # Secondary
- *
- * {@includeCode ./examples/secondary.tsx}
+ * {@include ./button.mdx}
  */
 export default function Button({
   variant = 'primary',

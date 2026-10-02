@@ -36,18 +36,7 @@ interface ThinkingIndicatorProps extends HTMLAttributes<HTMLDivElement> {
  * Thinking, Moonwalking, Planning, Refining with spring word swaps.
  * Pulled via `bunx shadcn@latest add @fluid/thinking-indicator`.
  *
- * @example # Basic
- * {@includeCode ./examples/basic.tsx}
- *
- * @example # Text only
- * Drop the glyph for an inline indicator, e.g. before a streamed reply.
- *
- * {@includeCode ./examples/text-only.tsx}
- *
- * @example # Compact
- * The compact ladder step for dense transcripts.
- *
- * {@includeCode ./examples/compact.tsx}
+ * {@include ./thinking-indicator.mdx}
  */
 const ThinkingIndicator = forwardRef<HTMLDivElement, ThinkingIndicatorProps>(
   ({ className, showIcon = true, size, ...props }, ref) => {

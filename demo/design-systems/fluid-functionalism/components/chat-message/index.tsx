@@ -51,15 +51,7 @@ interface ChatMessageProps
  * ChatMessage as `ChatMessage.FileThumbnail`.
  * Pulled via `bunx shadcn@latest add @fluid/chat-message`.
  *
- * @example # Conversation
- * The user bubble and the plain assistant reply.
- *
- * {@includeCode ./examples/conversation.tsx}
- *
- * @example # Compact size
- * The compact ladder step tightens bubble type and padding.
- *
- * {@includeCode ./examples/compact-size.tsx}
+ * {@include ./chat-message.mdx}
  */
 const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
   (

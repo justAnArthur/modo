@@ -14,13 +14,7 @@ import { cn } from "cn"
  * Card as attributes.
  * Pulled via `bunx shadcn@latest add card` (radix-nova style, neutral base color).
  *
- * @example # Basic
- * {@includeCode ./examples/basic.tsx}
- *
- * @example # Footer and action
- * Cards compose with the other registry items, e.g. a call to action.
- *
- * {@includeCode ./examples/footer-and-action.tsx}
+ * {@include ./card.mdx}
  */
 export default function Card({
   className,

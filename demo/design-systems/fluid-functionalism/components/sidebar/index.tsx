@@ -22,13 +22,7 @@ import {
  * Root/Item/Section API). Resolves the docs chrome's Sidebar slot by
  * interface matching.
  *
- * @example # Sections and items
- * The modo nav shape: sections with titled groups and anchor items.
- *
- * {@includeCode ./examples/sections-and-items.tsx}
- *
- * @example # Single group
- * {@includeCode ./examples/single-group.tsx}
+ * {@include ./sidebar.mdx}
  */
 export default function Sidebar({ children, className, style }: {
   /** Nav sections and items (Sidebar.Section / Sidebar.Item). */

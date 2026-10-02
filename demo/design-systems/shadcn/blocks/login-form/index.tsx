@@ -5,13 +5,7 @@ import { LoginForm as ShadcnLoginForm } from './login-form'
  * Pulled via `bunx shadcn@latest add login-02` (radix-nova style, neutral
  * base color). The lightest of the registry's login blocks.
  *
- * @example # Default
- * {@includeCode ./examples/default.tsx}
- *
- * @example # On a card
- * Composed with the Card item for a centered auth layout.
- *
- * {@includeCode ./examples/on-a-card.tsx}
+ * {@include ./login-form.mdx}
  */
 export default function LoginForm({ className }: {
   /** Additional classes for the form root, merged by the vendored cn helper. */

@@ -8,15 +8,7 @@ import MenuItem from '@mui/material/MenuItem'
  * `(value: string) => void`. The docs chrome and the demo switcher render
  * with this component.
  *
- * @example
- * # Framework
- *
- * {@includeCode ./examples/framework.tsx}
- *
- * @example
- * # With label
- *
- * {@includeCode ./examples/with-label.tsx}
+ * {@include ./select.mdx}
  */
 export default function Select({
   value,

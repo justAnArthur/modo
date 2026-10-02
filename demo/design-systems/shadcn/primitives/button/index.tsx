@@ -52,23 +52,7 @@ const buttonVariants = cva(
  * shadcn/ui Button — primary action trigger.
  * Pulled via `bunx shadcn@latest add button` (radix-nova style, neutral base color).
  *
- * @example # Variants
- * The six visual styles of the radix-nova button.
- *
- * {@includeCode ./examples/variants.tsx}
- *
- * @example # Sizes
- * Height presets from xs to lg.
- *
- * {@includeCode ./examples/sizes.tsx}
- *
- * @example # Icon sizes
- * Square icon buttons; any child svg is sized automatically.
- *
- * {@includeCode ./examples/icon-sizes.tsx}
- *
- * @example # Disabled
- * {@includeCode ./examples/disabled.tsx}
+ * {@include ./button.mdx}
  */
 export default function Button({
   className,

@@ -12,13 +12,7 @@ import {
  * This adapter implements modo's Select shell contract (value / onChange /
  * options), so the docs chrome and demo switcher render with it.
  *
- * @example # Basic
- * {@includeCode ./examples/basic.tsx}
- *
- * @example # Small trigger
- * The sm trigger fits dense chrome like toolbars and sidebars.
- *
- * {@includeCode ./examples/small-trigger.tsx}
+ * {@include ./select.mdx}
  */
 export default function Select({ value, onChange, options, placeholder = 'Select an option', size = 'default' }: {
   /** Currently selected value. */

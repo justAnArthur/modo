@@ -10,15 +10,7 @@ import Radio from '@mui/material/Radio'
  * plus FormControlLabel-wrapped Radios generated from `options`; pass
  * children instead for full control.
  *
- * @example
- * # Stack
- *
- * {@includeCode ./examples/stack.tsx}
- *
- * @example
- * # Row with label
- *
- * {@includeCode ./examples/row-with-label.tsx}
+ * {@include ./radio-group.mdx}
  */
 export default function RadioGroup({
   options,

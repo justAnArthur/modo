@@ -38,15 +38,7 @@ const badgeVariants = cva(
  * shadcn/ui Badge — small status descriptor for UI elements.
  * Pulled via `bunx shadcn@latest add badge` (radix-nova style, neutral base color).
  *
- * @example # Variants
- * The six visual styles of the radix-nova badge.
- *
- * {@includeCode ./examples/variants.tsx}
- *
- * @example # Statuses
- * Typical usage labeling outcomes.
- *
- * {@includeCode ./examples/statuses.tsx}
+ * {@include ./badge.mdx}
  */
 export default function Badge({
   className,

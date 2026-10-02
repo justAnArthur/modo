@@ -8,7 +8,7 @@
  * - `Motion` is new, local code: a small docs demo component (FF has none) that
  *   plays one tier's enter spring and exit tween on its children, so the docs
  *   page's demos (spring tracks, modal exit comparison, token reference) can be
- *   written as static TSDoc examples. It adds `sameExit` (the comparison's
+ *   written as static examples (motion.mdx). It adds `sameExit` (the comparison's
  *   "same exit" side) and `reducedMotion` (a preview of the reduced-motion rule).
  * - The ball-on-track and fake-modal visuals are replaced by the demo's
  *   show/hide of arbitrary children; the component-chip links are plain text.
@@ -47,46 +47,7 @@ interface MotionProps {
  * hover shared by every list. Pick a speed, wire it in — every component
  * follows the same pattern.
  *
- * {@include ./motion.md}
- *
- * @example
- * # Three speeds
- *
- * All animations come from one of three springs. Hover states and small
- * toggles use `fast`, dropdowns and tabs use `moderate`, dialogs and drawers
- * use `slow`. Toggle each to feel the pace grow with the size of the thing
- * that moves.
- *
- * {@includeCode ./examples/three-speeds.tsx}
- *
- * @example
- * # Slow in, faster out
- *
- * Both panels open on `spring.slow`. The only difference is the close: the
- * left leaves on the same `spring.slow`, the right on `spring.slow.exit` — one
- * tier faster. Hide the left one first. That slight drag on the way out is
- * exactly what you're trying to avoid.
- *
- * {@includeCode ./examples/slow-in-faster-out.tsx}
- *
- * @example
- * # All tokens
- *
- * Each tier enters on its spring and leaves on its exit tween. Everything
- * lives in `springs` — duration values belong there, not scattered through
- * component code. Under each tier, the components that animate with it.
- *
- * {@includeCode ./examples/all-tokens.tsx}
- *
- * @example
- * # Reduced motion
- *
- * All springs respect the OS setting. Wrap the app tree in
- * `<MotionConfig reducedMotion="user">`, and when the user turns on reduced
- * motion the position changes drop out and only the opacity fades remain. The
- * right side forces that setting on to preview it.
- *
- * {@includeCode ./examples/reduced-motion.tsx}
+ * {@include ./motion.mdx}
  */
 export default function Motion({
   tier = 'moderate',

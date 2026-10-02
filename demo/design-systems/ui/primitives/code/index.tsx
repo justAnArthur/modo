@@ -45,21 +45,7 @@ function highlight(source: string, language: Language['id']) {
  * also the docs chrome's Code slot: every example's source and every fenced
  * block on these pages renders through it.
  *
- * @example
- * # TSX
- *
- * The default language. Components, props, strings and comments each take
- * their own syntax token.
- *
- * {@includeCode ./examples/tsx.tsx}
- *
- * @example
- * # Other languages
- *
- * Any sugar-high language by fence name, alias or extension. Anything else
- * renders as plain text.
- *
- * {@includeCode ./examples/languages.tsx}
+ * {@include ./code.mdx}
  */
 export default function Code({ children, language = 'tsx', className }: {
   /** The source to show; surrounding blank lines are trimmed. */

@@ -144,25 +144,7 @@ const activeBgVariants: Record<string, string> = {
  * Inter variable font-weight transitions on hover.
  * Pulled via `bunx shadcn@latest add @fluid/button`.
  *
- * @example # Variants
- * The four @fluid styles: primary fill, secondary accent, tertiary outline, ghost.
- *
- * {@includeCode ./examples/variants.tsx}
- *
- * @example # Sizes
- * The two-step size ladder: default 36px, compact 28px for dense surfaces. The sm/md/lg aliases resolve onto it.
- *
- * {@includeCode ./examples/sizes.tsx}
- *
- * @example # Icon buttons
- * Square icon sizes; any child svg is sized automatically.
- *
- * {@includeCode ./examples/icon-buttons.tsx}
- *
- * @example # Loading and disabled
- * The loading spinner replaces the label while keeping the button's width stable.
- *
- * {@includeCode ./examples/loading-and-disabled.tsx}
+ * {@include ./button.mdx}
  */
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (

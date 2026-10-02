@@ -4,10 +4,7 @@ import Button from '../../primitives/button'
 /**
  * Composed card with title, body, and a primary action.
  *
- * @example
- * # Default
- *
- * {@includeCode ./examples/default.tsx}
+ * {@include ./card.mdx}
  */
 export default function Card({ title, children }: {
   /** Card heading. */

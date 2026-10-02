@@ -279,18 +279,7 @@ interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, "onClick"> {
  * sub-parts hang off Card as attributes.
  * Pulled via `bunx shadcn@latest add @fluid/card`.
  *
- * @example # Basic
- * {@includeCode ./examples/basic.tsx}
- *
- * @example # Compact size
- * The compact ladder step tightens type and padding for dense layouts.
- *
- * {@includeCode ./examples/compact-size.tsx}
- *
- * @example # Composed
- * Cards compose with the other registry items, e.g. a call to action.
- *
- * {@includeCode ./examples/composed.tsx}
+ * {@include ./card.mdx}
  */
 const Card = forwardRef<HTMLDivElement, CardProps>(
   (

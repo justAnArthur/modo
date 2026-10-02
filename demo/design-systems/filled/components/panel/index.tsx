@@ -3,10 +3,7 @@ import './panel.css'
 /**
  * Right-side panel wrapper surface.
  *
- * @example
- * # Default
- *
- * {@includeCode ./examples/default.tsx}
+ * {@include ./panel.mdx}
  */
 export default function Panel({ children }: {
   /** Panel body. */

@@ -82,18 +82,7 @@ interface BadgeProps
  * an outlined pill with a leading color dot.
  * Pulled via `bunx shadcn@latest add @fluid/badge`.
  *
- * @example # Solid colors
- * {@includeCode ./examples/solid-colors.tsx}
- *
- * @example # Dot variant
- * An outlined pill with a leading color dot — for ambient statuses.
- *
- * {@includeCode ./examples/dot-variant.tsx}
- *
- * @example # Compact size
- * The 20px compact step for dense surfaces like tables and sidebars.
- *
- * {@includeCode ./examples/compact-size.tsx}
+ * {@include ./badge.mdx}
  */
 const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
   (

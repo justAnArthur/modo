@@ -6,15 +6,7 @@ import FormControlLabel from '@mui/material/FormControlLabel'
  * Two-state toggle. Thin modo adapter over MUI's Switch; examples show
  * static states since modo examples carry no hooks.
  *
- * @example
- * # Off / On
- *
- * {@includeCode ./examples/off-on.tsx}
- *
- * @example
- * # With label and size
- *
- * {@includeCode ./examples/with-label-and-size.tsx}
+ * {@include ./switch.mdx}
  */
 export default function Switch({
   checked = false,

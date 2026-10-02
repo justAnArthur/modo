@@ -6,25 +6,7 @@ import MuiButton from '@mui/material/Button'
  * inherits it for example cards, so it also accepts modo's `ghost` variant
  * and short sizes, normalizing them to the nearest MUI equivalents.
  *
- * @example
- * # Contained
- *
- * {@includeCode ./examples/contained.tsx}
- *
- * @example
- * # Text
- *
- * {@includeCode ./examples/text.tsx}
- *
- * @example
- * # Outlined
- *
- * {@includeCode ./examples/outlined.tsx}
- *
- * @example
- * # Sizes and disabled
- *
- * {@includeCode ./examples/sizes-and-disabled.tsx}
+ * {@include ./button.mdx}
  */
 export default function Button({
   variant = 'contained',

@@ -3,10 +3,7 @@ import './link.css'
 /**
  * Inline anchor.
  *
- * @example
- * # Default
- *
- * {@includeCode ./examples/default.tsx}
+ * {@include ./link.mdx}
  */
 export default function Link({ href, children }: {
   /** Target URL. */
