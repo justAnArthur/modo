@@ -29,13 +29,13 @@ import {
   type ReactElement,
   type ReactNode,
 } from "react";
-import type { IconComponent } from "../../fluid/icon-context";
+import type { IconComponent } from "../../lib/icon-context";
 import { motion, AnimatePresence } from "motion/react";
-import { cn } from "../../fluid/utils";
-import { spring } from "../../fluid/springs";
-import { shapeMap } from "../../fluid/shape-context";
-import { useSize } from "../../fluid/size-context";
-import { useRegisterFluidHoverItem } from "../../fluid/use-fluid-hover";
+import { cn } from "../../lib/utils";
+import { spring } from "../../lib/springs";
+import { shapeMap } from "../../lib/shape-context";
+import { useSize } from "../../lib/size-context";
+import { useRegisterFluidHoverItem } from "../../lib/use-fluid-hover";
 
 // MenuItem is only used inside Dropdown, which opts out of the global pill
 // shape — see index.tsx for the rationale.

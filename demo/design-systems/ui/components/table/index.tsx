@@ -5,7 +5,7 @@
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
  * - `@/lib/*`, `@/hooks/*` and `@/components/ui/fluid-hover-highlight`
- *   imports rewritten to relative `../../_fluid/*` paths.
+ *   imports rewritten to relative `../../lib/*` paths.
  * - Compound API: the parts hang off the root as statics (`Table.Header`,
  *   `Table.Body`, `Table.Row`, `Table.Head`, `Table.Cell`) via
  *   `Object.assign`; the root is cast to `TableComponent` so TS consumers see
@@ -33,10 +33,10 @@ import {
   type TdHTMLAttributes,
   type ThHTMLAttributes,
 } from "react";
-import { cn } from "../../fluid/utils";
-import { SizeProvider, useSize, type SizeVariant } from "../../fluid/size-context";
-import { useFluidHover, useRegisterFluidHoverItem } from "../../fluid/use-fluid-hover";
-import { FluidHoverHighlight } from "../../fluid/fluid-hover-highlight";
+import { cn } from "../../lib/utils";
+import { SizeProvider, useSize, type SizeVariant } from "../../lib/size-context";
+import { useFluidHover, useRegisterFluidHoverItem } from "../../lib/use-fluid-hover";
+import { FluidHoverHighlight } from "../../lib/fluid-hover-highlight";
 
 // ── Context ──────────────────────────────────────────────
 

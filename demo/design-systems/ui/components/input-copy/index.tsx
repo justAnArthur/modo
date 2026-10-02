@@ -5,7 +5,7 @@
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react`; `@/lib/{utils,icon-context,font-weight,shape-context,
- *   size-context,springs}` rewritten to `../../fluid/*`; `@/registry/radix/tooltip`
+ *   size-context,springs}` rewritten to `../../lib/*`; `@/registry/radix/tooltip`
  *   → `../tooltip`.
  * - React 18 types: `useRef<ReturnType<typeof setTimeout>>(null)` →
  *   `useRef<ReturnType<typeof setTimeout> | null>(null)` (React 19 allows the
@@ -33,11 +33,11 @@ import {
   type HTMLAttributes,
 } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { cn } from "../../fluid/utils";
-import { useIcon } from "../../fluid/icon-context";
-import { useShape } from "../../fluid/shape-context";
-import { useSize, type SizeVariant } from "../../fluid/size-context";
-import { spring } from "../../fluid/springs";
+import { cn } from "../../lib/utils";
+import { useIcon } from "../../lib/icon-context";
+import { useShape } from "../../lib/shape-context";
+import { useSize, type SizeVariant } from "../../lib/size-context";
+import { spring } from "../../lib/springs";
 import { Tooltip } from "../tooltip";
 
 type InputCopyVariant = "icon" | "button";

@@ -5,7 +5,7 @@
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react`; `@/lib/{utils,icon-context,springs,shape-context,
- *   size-context,surface-context,surface-classes}` rewritten to `../../fluid/*`;
+ *   size-context,surface-context,surface-classes}` rewritten to `../../lib/*`;
  *   `@/components/ui/button` → `../button`.
  * - `DialogProps`: every member re-declared with the FF docs API-table text (modo's parser
  *   lists only members declared in the interface body and needs a description on each);
@@ -32,13 +32,13 @@ import {
 } from "react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
 import { motion } from "motion/react";
-import { cn } from "../../fluid/utils";
-import { useIcon } from "../../fluid/icon-context";
-import { spring } from "../../fluid/springs";
-import { useShape } from "../../fluid/shape-context";
-import { useSize, useSizeVariant } from "../../fluid/size-context";
-import { SurfaceProvider, useSurface } from "../../fluid/surface-context";
-import { surfaceClasses } from "../../fluid/surface-classes";
+import { cn } from "../../lib/utils";
+import { useIcon } from "../../lib/icon-context";
+import { spring } from "../../lib/springs";
+import { useShape } from "../../lib/shape-context";
+import { useSize, useSizeVariant } from "../../lib/size-context";
+import { SurfaceProvider, useSurface } from "../../lib/surface-context";
+import { surfaceClasses } from "../../lib/surface-classes";
 import { Button } from "../button";
 
 const DIALOG_OFFSET = 4;

@@ -4,10 +4,10 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` dropped (no RSC here).
- * - Imports rewritten: `@/lib/*` → `../../fluid/*`, `@/hooks/*` → `../../fluid/*`,
+ * - Imports rewritten: `@/lib/*` → `../../lib/*`, `@/hooks/*` → `../../lib/*`,
  *   `@/lib/elevated` → `../../primitives/surface`, `@/components/ui/scroll-area` →
  *   `../../primitives/scroll-area`, `@/components/ui/fluid-hover-highlight` →
- *   `../../fluid/fluid-hover-highlight`, `framer-motion` → `motion/react`.
+ *   `../../lib/fluid-hover-highlight`, `framer-motion` → `motion/react`.
  * - `React.*` type references replaced with named type imports (no React namespace import).
  * - The root's generics (`<T extends ComboboxItemData, Multiple extends boolean>`) dropped:
  *   modo's parser needs a plain (non-generic) function declaration for the root plus a
@@ -47,26 +47,26 @@ import {
 import { motion, AnimatePresence, animate, useMotionValue } from "motion/react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { Combobox as ComboboxPrimitive } from "@base-ui/react/combobox";
-import { useIcon, type IconComponent } from "../../fluid/icon-context";
-import { cn } from "../../fluid/utils";
-import { spring, exitFallbackMs } from "../../fluid/springs";
-import { useFluidHover, useRegisterFluidHoverItem } from "../../fluid/use-fluid-hover";
+import { useIcon, type IconComponent } from "../../lib/icon-context";
+import { cn } from "../../lib/utils";
+import { spring, exitFallbackMs } from "../../lib/springs";
+import { useFluidHover, useRegisterFluidHoverItem } from "../../lib/use-fluid-hover";
 import {
   useMergeSplitBlocks,
   useSelectionRuns,
   SelectionBackgrounds,
-} from "../../fluid/use-merge-split";
-import { useShape, shapeMap } from "../../fluid/shape-context";
-import { SizeProvider, useSize, type SizeVariant } from "../../fluid/size-context";
+} from "../../lib/use-merge-split";
+import { useShape, shapeMap } from "../../lib/shape-context";
+import { SizeProvider, useSize, type SizeVariant } from "../../lib/size-context";
 import { Elevated } from "../../primitives/surface";
 import {
   popupMotionClass,
   popupScrollAreaClass,
   popupViewportClass,
   isDisabledRow,
-} from "../../fluid/popup";
+} from "../../lib/popup";
 import { ScrollArea } from "../../primitives/scroll-area";
-import { FluidHoverHighlight } from "../../fluid/fluid-hover-highlight";
+import { FluidHoverHighlight } from "../../lib/fluid-hover-highlight";
 
 // ---------------------------------------------------------------------------
 // Combobox

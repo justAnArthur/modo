@@ -5,7 +5,7 @@
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react`; `@/lib/*` imports rewritten to relative
- *   `../../fluid/*` paths.
+ *   `../../lib/*` paths.
  * - `var(--color-accent)` → `var(--accent)` (the hover-preview fill of both
  *   designs; this package's tokens have no `--color-*` aliases).
  * - `noUncheckedIndexedAccess` guards: non-null assertions on indexed reads
@@ -53,11 +53,11 @@ import {
   type MotionValue,
 } from "motion/react";
 import { Slider as SliderPrimitive } from "@base-ui/react/slider";
-import { cn } from "../../fluid/utils";
-import { useSizeVariant, type SizeVariant } from "../../fluid/size-context";
-import { spring } from "../../fluid/springs";
-import { useShape } from "../../fluid/shape-context";
-import { useControllableState } from "../../fluid/use-controllable-state";
+import { cn } from "../../lib/utils";
+import { useSizeVariant, type SizeVariant } from "../../lib/size-context";
+import { spring } from "../../lib/springs";
+import { useShape } from "../../lib/shape-context";
+import { useControllableState } from "../../lib/use-controllable-state";
 
 // ---------------------------------------------------------------------------
 // Types

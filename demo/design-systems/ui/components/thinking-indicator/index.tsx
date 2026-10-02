@@ -16,9 +16,9 @@
 
 import { forwardRef, useState, useEffect, type HTMLAttributes } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import { cn } from "../../fluid/utils";
-import { spring } from "../../fluid/springs";
-import { useSize, type SizeVariant } from "../../fluid/size-context";
+import { cn } from "../../lib/utils";
+import { spring } from "../../lib/springs";
+import { useSize, type SizeVariant } from "../../lib/size-context";
 
 const circleA =
   "M 12 8 C 14.21 8 16 9.79 16 12 C 16 14.21 14.21 16 12 16 C 9.79 16 8 14.21 8 12 C 8 9.79 9.79 8 12 8 Z";

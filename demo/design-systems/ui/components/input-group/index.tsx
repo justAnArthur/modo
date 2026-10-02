@@ -3,7 +3,7 @@
  * `registry/default/input-group.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications: `"use client"` dropped; `@/lib/*` and `@/hooks/*` imports
- * rewritten to `../../_fluid/{lib,hooks}/*`; uncontrolled mode added —
+ * rewritten to `../../lib/{lib,hooks}/*`; uncontrolled mode added —
  * `InputField` `value` and `onChange` are optional, with a `defaultValue`
  * twin (`InputHTMLAttributes`' own `defaultValue` omitted in its favour)
  * backed by `useControllableState`; modo docs — TSDoc with FF's docs/API
@@ -29,12 +29,12 @@ import {
   type RefAttributes,
 } from "react";
 import { Field } from "@base-ui/react/field";
-import type { IconComponent } from "../../fluid/icon-context";
-import { cn } from "../../fluid/utils";
-import { useShape } from "../../fluid/shape-context";
-import { SizeProvider, useSize, type SizeVariant } from "../../fluid/size-context";
-import { useFluidHover, useRegisterFluidHoverItem } from "../../fluid/use-fluid-hover";
-import { useControllableState } from "../../fluid/use-controllable-state";
+import type { IconComponent } from "../../lib/icon-context";
+import { cn } from "../../lib/utils";
+import { useShape } from "../../lib/shape-context";
+import { SizeProvider, useSize, type SizeVariant } from "../../lib/size-context";
+import { useFluidHover, useRegisterFluidHoverItem } from "../../lib/use-fluid-hover";
+import { useControllableState } from "../../lib/use-controllable-state";
 
 interface InputGroupContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void;

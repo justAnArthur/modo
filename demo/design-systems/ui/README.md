@@ -30,7 +30,7 @@ Every vendored file opens with a plain `/* */` header. The header names the
 upstream path and commit, carries the MIT notice, and lists every local
 modification. The vendored code below the header keeps upstream's formatting.
 Files written for this port (`uno.config.ts`, `vite.ts`, `modo.components.tsx`,
-`.scripts/*`, `fluid/use-controllable-state.ts`) use this repo's style: single
+`.scripts/*`, `lib/use-controllable-state.ts`) use this repo's style: single
 quotes and no semicolons.
 
 ## Layout
@@ -40,7 +40,7 @@ quotes and no semicolons.
 | `tokens/*.css` | Colors, typography (`--font-sans`, `--text-*`), motion (`--duration-*`), radius and spacing. |
 | `global.css` | Theme switching, base styles, focus fallback, scrollbars, shimmer/spinner keyframes and `.scroll-fade`. |
 | `uno.config.ts`, `vite.ts` | The UnoCSS setup (see below). |
-| `fluid/` | FF's shared system files (upstream `lib/`, `hooks/` and the fluid-hover highlight, flat, upstream names), imported relatively by items. modo only scans the tier folders, so it never mistakes them for items. |
+| `lib/` | FF's shared system files (upstream `lib/`, `hooks/` and the fluid-hover highlight, flat, upstream names), imported relatively by items. modo only scans the tier folders, so it never mistakes them for items. |
 | `modo.components.tsx` | Components only the docs site uses: the `Icon` and `Select` shell-slot adapters and the `ThemeSwitcher` panel item, picked in `modo.config.ts` by export name (`./modo.components.tsx#Select`). |
 | `primitives/<id>/` | FF's "System" pages: `index.tsx` (component + TSDoc prose) and `examples.mdx`. |
 | `components/<id>/` | FF's "Components" pages, same shape. |
@@ -48,25 +48,25 @@ quotes and no semicolons.
 
 ## Upstream → local file map
 
-### Shared system (`fluid/`)
+### Shared system (`lib/`)
 
 | Upstream (`registry/default/…`) | Local | Modifications |
 |---|---|---|
-| `lib/utils.ts` | `fluid/utils.ts` | `extendTailwindMerge` → `createCn` from `cn/config`, with the same font-size group extension |
-| `lib/springs.ts` | `fluid/springs.ts` | none |
-| `lib/font-weight.ts` | `fluid/font-weight.ts` | none |
-| `lib/popup.ts` | `fluid/popup.ts` | none |
-| `lib/shape-context.tsx` | `fluid/shape-context.tsx` | `"use client"` dropped |
-| `lib/size-context.tsx` | `fluid/size-context.tsx` | `"use client"` dropped |
-| `lib/icon-context.tsx` | `fluid/icon-context.tsx` | `"use client"` dropped; `size`/`strokeWidth` widened to `number \| string` for lucide v1 + React 18 types |
-| `lib/surface-context.tsx` | `fluid/surface-context.tsx` | `"use client"` dropped |
-| `lib/surface-classes.ts` | `fluid/surface-classes.ts` | `SURFACE_HOVER_*` and `surfaceHoverClasses` dropped (only Sidebar used them) |
-| `hooks/use-fluid-hover.ts` | `fluid/use-fluid-hover.ts` | `"use client"` dropped; `sessionRef` typed `MutableRefObject<number>` (React 18) |
-| `hooks/use-merge-split.tsx` | `fluid/use-merge-split.tsx` | `"use client"` dropped; `framer-motion` → `motion/react`; relative imports; `bridgePair` asserts its length-checked pair (`noUncheckedIndexedAccess`) |
-| `hooks/use-keyboard-nav-gate.ts` | `fluid/use-keyboard-nav-gate.ts` | `"use client"` dropped; relative imports |
-| `hooks/use-touch-primary.tsx` | `fluid/use-touch-primary.tsx` | `"use client"` dropped |
-| `fluid-hover-highlight.tsx` | `fluid/fluid-hover-highlight.tsx` | `"use client"` dropped; `framer-motion` → `motion/react`; relative imports |
-| — (new) | `fluid/use-controllable-state.ts` | Local addition: controlled + uncontrolled state, Base UI style |
+| `lib/utils.ts` | `lib/utils.ts` | `extendTailwindMerge` → `createCn` from `cn/config`, with the same font-size group extension |
+| `lib/springs.ts` | `lib/springs.ts` | none |
+| `lib/font-weight.ts` | `lib/font-weight.ts` | none |
+| `lib/popup.ts` | `lib/popup.ts` | none |
+| `lib/shape-context.tsx` | `lib/shape-context.tsx` | `"use client"` dropped |
+| `lib/size-context.tsx` | `lib/size-context.tsx` | `"use client"` dropped |
+| `lib/icon-context.tsx` | `lib/icon-context.tsx` | `"use client"` dropped; `size`/`strokeWidth` widened to `number \| string` for lucide v1 + React 18 types |
+| `lib/surface-context.tsx` | `lib/surface-context.tsx` | `"use client"` dropped |
+| `lib/surface-classes.ts` | `lib/surface-classes.ts` | `SURFACE_HOVER_*` and `surfaceHoverClasses` dropped (only Sidebar used them) |
+| `hooks/use-fluid-hover.ts` | `lib/use-fluid-hover.ts` | `"use client"` dropped; `sessionRef` typed `MutableRefObject<number>` (React 18) |
+| `hooks/use-merge-split.tsx` | `lib/use-merge-split.tsx` | `"use client"` dropped; `framer-motion` → `motion/react`; relative imports; `bridgePair` asserts its length-checked pair (`noUncheckedIndexedAccess`) |
+| `hooks/use-keyboard-nav-gate.ts` | `lib/use-keyboard-nav-gate.ts` | `"use client"` dropped; relative imports |
+| `hooks/use-touch-primary.tsx` | `lib/use-touch-primary.tsx` | `"use client"` dropped |
+| `fluid-hover-highlight.tsx` | `lib/fluid-hover-highlight.tsx` | `"use client"` dropped; `framer-motion` → `motion/react`; relative imports |
+| — (new) | `lib/use-controllable-state.ts` | Local addition: controlled + uncontrolled state, Base UI style |
 
 ### Styles
 
@@ -85,10 +85,10 @@ Every item goes through the same mechanical pass, so the tables below list
 only what is specific to it:
 
 - `"use client"` dropped (no RSC here).
-- Imports rewritten: `@/lib/*` → `../../fluid/*`, `@/hooks/*` →
-  `../../fluid/*`, `@/lib/elevated` → `../../primitives/surface`,
+- Imports rewritten: `@/lib/*` → `../../lib/*`, `@/hooks/*` →
+  `../../lib/*`, `@/lib/elevated` → `../../primitives/surface`,
   `@/components/ui/scroll-area` → `../../primitives/scroll-area`,
-  `@/components/ui/fluid-hover-highlight` → `../../fluid/fluid-hover-highlight`,
+  `@/components/ui/fluid-hover-highlight` → `../../lib/fluid-hover-highlight`,
   `@/registry/radix/*` → the Base-flavor sibling, `framer-motion` →
   `motion/react`, `next/link` → a plain anchor.
 - A local `interface <Item>Props` whose members are each declared on one line
@@ -241,7 +241,7 @@ config.
   puts its reset in `base`. `global.css`'s `@layer base` rules join that layer
   after the reset, so utilities (in `default`) still win. This is the same
   arrangement as Tailwind's base/utilities split.
-- **Content.** UnoCSS scans `{fluid,primitives,components}/**/*.{ts,tsx,mdx}`
+- **Content.** UnoCSS scans `{lib,primitives,components}/**/*.{ts,tsx,mdx}`
   and `modo.components.tsx` from disk (`content.filesystem`, and the same
   globs in `content.pipeline.include`, since the default pipeline skips
   `.ts`). Two reasons:
@@ -275,7 +275,7 @@ No upstream class string had to change. The current run covers 45 files and
 
 ## `cn`
 
-`fluid/utils.ts` exports `cn = createCn({ extend: { classGroups: {
+`lib/utils.ts` exports `cn = createCn({ extend: { classGroups: {
 'font-size': ['text-display', …] } } })` from `cn/config`. `cn` is a compiled
 drop-in for clsx + tailwind-merge with the same `extend` shape.
 
@@ -287,7 +287,7 @@ would drop the size.
 
 Base UI components work both controlled and uncontrolled. The FF wrappers
 that were controlled-only gain a `default*` prop, backed by
-`fluid/use-controllable-state.ts`: a component is controlled while its
+`lib/use-controllable-state.ts`: a component is controlled while its
 value prop is not `undefined`, and it reports every change through its
 callback either way. Where FF only had per-item callbacks, a group-level one
 was added and the item's own state props became optional.
@@ -441,5 +441,5 @@ Current status — all green:
 
 ```
 check-items (all items): 27 item(s), 127 example(s) — ok
-uno-coverage (fluid primitives components modo.components.tsx): 73 files, 3387 class tokens (580 unique), 22 assertions — all generate
+uno-coverage (lib primitives components modo.components.tsx): 73 files, 3387 class tokens (580 unique), 22 assertions — all generate
 ```

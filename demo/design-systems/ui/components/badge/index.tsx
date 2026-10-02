@@ -4,7 +4,7 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
- * - `@/lib/*` imports rewritten to relative `../../fluid/*` paths.
+ * - `@/lib/*` imports rewritten to relative `../../lib/*` paths.
  * - `BadgeProps` re-declares `variant` (inherited from cva's VariantProps
  *   upstream) and carries the FF docs API-table descriptions on every prop,
  *   so modo's parser lists them; types are unchanged for callers.
@@ -16,9 +16,9 @@
 
 import { forwardRef, type HTMLAttributes } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "../../fluid/utils";
-import { useShape } from "../../fluid/shape-context";
-import { useSizeVariant } from "../../fluid/size-context";
+import { cn } from "../../lib/utils";
+import { useShape } from "../../lib/shape-context";
+import { useSizeVariant } from "../../lib/size-context";
 
 const badgeColors = {
   gray: "var(--badge-gray)",

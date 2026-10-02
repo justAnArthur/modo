@@ -5,7 +5,7 @@
  * at commit b3587bdbd83fc66c2a6aae3817ffb856cb09260b — MIT License © 2026
  * Micka Touillaud — fluidfunctionalism.com.
  *
- * FF's motion is JS: the `spring` tiers in _fluid/lib/springs.ts feed
+ * FF's motion is JS: the `spring` tiers in lib/springs.ts feed
  * `motion/react`, and components always reach for a tier rather than a
  * hand-written duration. These properties mirror those tiers for CSS
  * consumers and for the tokens page — keep the two in sync.

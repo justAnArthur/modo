@@ -4,7 +4,7 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
- * - `@/lib/{utils,shape-context}` / `@/hooks/use-touch-primary` imports rewritten to `../../_fluid/*`.
+ * - `@/lib/{utils,shape-context}` / `@/hooks/use-touch-primary` imports rewritten to `../../lib/*`.
  * - The root's forwardRef element type `ComponentRef<typeof ScrollAreaPrimitive.Root>` written out
  *   as `HTMLDivElement` (what Base UI's Root forwards): modo's parser needs a first type argument
  *   without `<`/`,`. Same type, no behavior change.
@@ -28,9 +28,9 @@ import {
   type RefAttributes,
 } from "react";
 import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area";
-import { cn } from "../../fluid/utils";
-import { useShape } from "../../fluid/shape-context";
-import { useTouchPrimary } from "../../fluid/use-touch-primary";
+import { cn } from "../../lib/utils";
+import { useShape } from "../../lib/shape-context";
+import { useTouchPrimary } from "../../lib/use-touch-primary";
 
 // On touch-primary devices the Base UI machinery is skipped entirely in
 // favour of native overflow scrolling (better physics, momentum,
