@@ -2,8 +2,6 @@ import './badge.css'
 
 /**
  * Inline status pill.
- *
- * {@include ./badge.mdx}
  */
 export default function Badge({
   variant = 'default',

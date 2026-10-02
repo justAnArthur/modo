@@ -82,16 +82,16 @@ Rules:
 - An item is `<tier>/<name>/index.tsx`: a default-exported component plus a JSDoc block.
   - The block anchors to the default export's declaration (function or const), wherever `export default` sits.
   - The parser extracts `name`, `description`, `props` and `examples`.
-- **Keep the block short:** one summary paragraph (the page lead), then `{@include ./<name>.mdx}` for everything else. Reserve `@example` for a few short inline cases.
+- **One place per kind:** the TSDoc comment is the item's only prose (summary paragraph = page lead, the rest = body). Examples live in a co-located `examples.mdx`. Reserve `@example` for a few short inline cases.
 - **Includes** are TypeDoc inline tags. Paths are relative to `index.tsx`; they are not recursive; a missing file prints `[modo:bundle] warning:`; `.md`/`.mdx` edits reload dev.
-  - `{@include ./x.md}` inlines the file into the description as Markdown.
-  - `{@include ./x.mdx}` is compiled, not inlined: it is an entry of the shared build (`@mdx-js/esbuild` + `remark-gfm`) and renders after the description, inside `data-modo="prose"`.
+  - `{@include ./x.md}` inlines the file into the description as Markdown (for prose too long for the comment).
   - `{@includeCode ./x}` inlines a file as a fenced block.
-- **MDX docs:**
-  - Every top-level JSX block is a live example. `lib/src/plugins/mdx-examples.ts` wraps it in `ModoExample`, the example card, and keeps its source for Show code / Copy.
+- **`examples.mdx`** (found next to `index.tsx`, no tag needed) holds examples only:
+  - Each example is a `# Title`, an optional one-line caption, and a JSX block. It renders in the Examples section, after any `@example` cards.
+  - It is an entry of the shared build (`@mdx-js/esbuild` + `remark-gfm`). Every top-level JSX block is a live example: `lib/src/plugins/mdx-examples.ts` wraps it in `ModoExample`, the example card, and keeps its source for Show code / Copy.
   - Imports are real: the item is `./index`, other items are `../../<tier>/<id>`, packages are imported by name. Items and `examples` scope exports also resolve as JSX tags without an import, but an identifier used in an expression (`icon={Plus}`) needs one.
   - Expressions are plain JS (acorn): no TS syntax such as `as const`. MDX isn't typechecked.
-  - Headings get ids and anchors and feed the TOC. Keep heading text unique per page.
+  - `#`/`##` become example titles (`example-<slug>` ids); `###` is a sub-heading. All get anchors and feed the TOC.
   - Prose typography is `@scope`d down to the example cards, so it never leaks into a live example.
   - A CSS scanner (UnoCSS `content`, Tailwind `@source`) must include `.mdx`, since example classes live there.
 - **Markdown** renders everywhere: item, example and prop descriptions.
@@ -104,7 +104,7 @@ Rules:
 - **Parser rules:**
   - `@example` counts only at the start of a JSDoc line.
   - `//` is a comment only after start-of-line, whitespace or punctuation, so `https://` survives.
-  - Inline example code can't contain `*/` (no JSX `{/* … */}`). Move it to the item's `.mdx` instead.
+  - Inline example code can't contain `*/` (no JSX `{/* … */}`). Move it to `examples.mdx` instead.
 - **Examples compile in-browser** (babel standalone) as `return (<>…</>)` inside `new Function`.
   - One JSX expression or several siblings; no hooks.
   - Leading imports and a trailing `;` are stripped.
@@ -146,7 +146,7 @@ Rules:
 - `<tier>/<name>/index.tsx` — the item. Tiers are `primitives/`, `components/` and `blocks/`, auto-discovered.
   - Compound parts hang off the default export (`Card.Header`). Type them with interface merging, or with `Object.assign` for forwardRef consts.
   - Examples may use compound JSX.
-- `<tier>/<name>/<name>.mdx` — the item's docs and examples (`{@include}`d from its TSDoc); `<name>.md` for plain Markdown.
+- `<tier>/<name>/examples.mdx` — the item's examples (auto-discovered); `<name>.md` for prose `{@include}`d into the TSDoc.
 - `<tier>/<name>/<name>.tsx` — vendored upstream source, imported by an adapter.
   - When the upstream component is the item, rename it to `index.tsx` instead (with a local-modifications header).
   - Adapters only for real API transforms: shell contracts, options→children, prop narrowing.

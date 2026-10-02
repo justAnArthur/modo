@@ -51,8 +51,6 @@ const buttonVariants = cva(
 /**
  * shadcn/ui Button — primary action trigger.
  * Pulled via `bunx shadcn@latest add button` (radix-nova style, neutral base color).
- *
- * {@include ./button.mdx}
  */
 export default function Button({
   className,

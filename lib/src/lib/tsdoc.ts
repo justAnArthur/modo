@@ -17,8 +17,6 @@ export interface ParsedItem {
   description: string
   props: ParsedProp[]
   examples: ParsedExample[]
-  /** `{@include ./x.mdx}` paths, as written; compiled MDX renders after the description. */
-  docs: string[]
   errors: string[]
 }
 
@@ -72,15 +70,14 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
   // `you@example.com` in a description or example code is left alone.
   const exampleIdx = jsdoc.search(/(?:^|\n)[ \t]*@example\b/)
   const errors: string[] = []
-  const docs: string[] = []
   // Includes expand per section, after the tag split, so an included file
   // can't start a new `@example`.
-  const include = (text: string) => expandIncludes(text, opts.readFile, errors, docs)
+  const include = (text: string) => expandIncludes(text, opts.readFile, errors)
   const description = include(exampleIdx === -1 ? jsdoc : jsdoc.slice(0, exampleIdx)).trim()
   const examplesRoot = exampleIdx === -1 ? '' : jsdoc.slice(exampleIdx)
   const examples = examplesRoot ? extractExamples(examplesRoot, include) : []
 
-  const result: ParsedItem = { name, description, props: [], examples, docs, errors }
+  const result: ParsedItem = { name, description, props: [], examples, errors }
   if (fnStart === -1) {
     if (forwardRefPropsType) {
       const props = extractForwardRefProps(cleaned, forwardRefPropsType)
@@ -99,7 +96,7 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
 }
 
 function fail(msg: string): ParsedItem {
-  return { name: '', description: '', props: [], examples: [], docs: [], errors: [msg] }
+  return { name: '', description: '', props: [], examples: [], errors: [msg] }
 }
 
 function extractJsdocAbove(src: string, exportIndex: number): string | null {
@@ -262,24 +259,15 @@ function resolveLocalTypeLiteral(src: string, name: string): string | null {
 
 // TypeDoc's inline tags: `{@include ./doc.md}` inlines the file as Markdown,
 // `{@includeCode ./x.ts}` as a fenced block (the example's code inside an
-// `@example`). An `.mdx` include is compiled, not inlined: it is collected
-// into `docs`. Not recursive.
+// `@example`). Not recursive. Examples in MDX aren't included: they live in a
+// co-located examples.mdx.
 const INCLUDE = /\{@include(Code)?\s+([^\s}]+)\s*\}/g
 
-function expandIncludes(
-  text: string,
-  readFile: ParseOptions['readFile'],
-  errors: string[],
-  docs: string[],
-): string {
+function expandIncludes(text: string, readFile: ParseOptions['readFile'], errors: string[]): string {
   return text.replace(INCLUDE, (tag, code: string | undefined, path: string) => {
     const content = readFile?.(path)
     if (content == null) {
       errors.push(`${tag}: file not found`)
-      return ''
-    }
-    if (!code && path.endsWith('.mdx')) {
-      docs.push(path)
       return ''
     }
     if (!code) return content.trim()

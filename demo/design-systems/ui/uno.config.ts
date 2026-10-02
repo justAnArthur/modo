@@ -23,7 +23,7 @@ import { defineConfig, presetWind4 } from 'unocss'
  *   variables (`--font-sans`), and a self-reference would be a cycle.
  * - Sources are scanned from disk (`content.filesystem`) because items reach
  *   the browser pre-bundled by modo, and example code lives only in the raw
- *   TSDoc of each index.tsx or in its included .mdx. The pipeline include
+ *   TSDoc of each index.tsx or in its examples.mdx. The pipeline include
  *   covers `.ts` too (the default pipeline skips it).
  */
 

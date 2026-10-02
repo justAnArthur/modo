@@ -4,8 +4,6 @@ import MuiLink from '@mui/material/Link'
 /**
  * Inline anchor. Thin modo adapter over MUI's Link; the docs chrome
  * inherits it for item links in the content area.
- *
- * {@include ./link.mdx}
  */
 export default function Link({
   href,

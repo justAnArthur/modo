@@ -13,8 +13,6 @@ import { cn } from "cn"
  * shadcn/ui Card — grouped content container. Compound: sub-parts hang off
  * Card as attributes.
  * Pulled via `bunx shadcn@latest add card` (radix-nova style, neutral base color).
- *
- * {@include ./card.mdx}
  */
 export default function Card({
   className,

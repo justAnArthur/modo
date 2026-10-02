@@ -1,0 +1,21 @@
+import Code from './index'
+
+# TSX
+
+<Code>{`import { Button } from '@/components/button'
+
+// Every token type has its own color.
+export function Save({ busy }: { busy: boolean }) {
+  return <Button loading={busy}>Save changes</Button>
+}`}</Code>
+
+# Other languages
+
+<div className="flex w-full flex-col gap-3">
+  <Code language="css">{`.card {
+  background: var(--surface-3);
+  border-radius: 12px;
+}`}</Code>
+  <Code language="sh">{`bun add sugar-high # one dependency`}</Code>
+  <Code language="text">{`Plain text keeps its own line breaks.`}</Code>
+</div>

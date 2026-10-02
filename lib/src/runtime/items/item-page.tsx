@@ -1,4 +1,4 @@
-import { byId, docs as docsMap, examples as examplesMap } from 'virtual:modo-items'
+import { byId, exampleDocs, examples as examplesMap } from 'virtual:modo-items'
 import { ItemExamples } from './examples'
 import { PropTable } from './prop-table'
 import { Blocks, Inlines, splitLead } from '../markdown'
@@ -16,8 +16,8 @@ export function ItemPage({ tier, id }: { tier: 'primitives' | 'components' | 'bl
     )
   }
   const { lead, body } = splitLead(entry.description)
-  const docs = docsMap[`${tier}:${id}`] ?? []
   const examples = examplesMap[`${tier}:${id}`] ?? []
+  const ExamplesDoc = exampleDocs[`${tier}:${id}`]
   return (
     <article>
       <header>
@@ -25,13 +25,16 @@ export function ItemPage({ tier, id }: { tier: 'primitives' | 'components' | 'bl
         <h1 data-modo="page-title">{entry.name}</h1>
         {lead ? <p data-modo="page-lead"><Inlines tokens={lead.tokens} /></p> : null}
       </header>
-      {body.length > 0 || docs.length > 0 ? (
+      {body.length > 0 ? (
         <div data-modo="prose">
           <Blocks tokens={body} />
-          {docs.map((Doc, i) => <Doc key={i} components={mdxComponents} />)}
         </div>
       ) : null}
-      {examples.length > 0 ? <ItemExamples examples={examples} /> : null}
+      {examples.length > 0 || ExamplesDoc ? (
+        <ItemExamples examples={examples}>
+          {ExamplesDoc ? <ExamplesDoc components={mdxComponents} /> : null}
+        </ItemExamples>
+      ) : null}
       <section data-modo="section">
         <h2 data-modo="section-title" id="props">Props<Anchor id="props" label="Props" /></h2>
         <PropTable itemId={`${tier}:${id}`} />
