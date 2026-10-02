@@ -25,6 +25,15 @@ function stripImports(code: string): string {
   return rest.trim().replace(/;+$/, '').trimEnd()
 }
 
+// Relative imports only make example files typecheck; package imports are
+// worth copying. `[^'"]` keeps a match from running across an earlier import.
+const RELATIVE_IMPORT = /^[ \t]*import\s+(?:[^'"]*?\s+from\s+)?['"]\.[^'"\n]*['"][ \t]*;?[ \t]*(?:\n|$)/gm
+
+/** An example's code as shown and copied. */
+export function displayCode(code: string): string {
+  return code.replace(RELATIVE_IMPORT, '').trim()
+}
+
 /**
  * Compiles an `@example` body (one JSX expression, or several sibling
  * elements) into a renderer. The body runs as `return (<>…</>)` inside

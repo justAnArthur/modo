@@ -99,7 +99,15 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
         if (!statSync(itemDir).isDirectory()) continue
         const file = resolve(itemDir, 'index.tsx')
         if (!existsSync(file)) continue
-        const p = parseItemSource(readFileSync(file, 'utf8'))
+        const p = parseItemSource(readFileSync(file, 'utf8'), {
+          readFile: (path) => {
+            try {
+              return readFileSync(resolve(itemDir, path), 'utf8')
+            } catch {
+              return null
+            }
+          },
+        })
         if (p.errors.length > 0) warnings.push(`${tier}/${id}: ${p.errors.join('; ')}`)
         parsed.push({
           key: `items/${tier}/${id}`,

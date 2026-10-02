@@ -1,24 +1,21 @@
 import { Component, useState, type ReactNode } from 'react'
 import { shell } from 'virtual:modo-shell'
 import { byName, exampleScope } from 'virtual:modo-items'
-import { compileExampleBody, isCompiledExample } from '../../lib/example'
+import { compileExampleBody, displayCode, isCompiledExample } from '../../lib/example'
 import type { ParsedExample } from '../../lib/tsdoc'
+import { Markdown } from '../markdown'
+import { Anchor, slug } from '../anchor'
+import { CopyButton } from '../code-block'
 
 // Identifiers available to every example: the `examples` config module's
 // exports, then the items by name (items win on collision). Module-level so
 // compiled examples cache their bindings per this one object.
 const bindings: Record<string, unknown> = { ...exampleScope, ...byName }
 
-export function ItemExamples({
-  examples,
-  componentName,
-}: {
-  examples: ParsedExample[]
-  componentName: string
-}) {
+export function ItemExamples({ examples }: { examples: ParsedExample[] }) {
   return (
     <section data-modo="section">
-      <h2 data-modo="section-title">Examples</h2>
+      <h2 data-modo="section-title" id="examples">Examples<Anchor id="examples" label="Examples" /></h2>
       {examples.length === 0 ? (
         <p>No examples documented.</p>
       ) : (
@@ -43,27 +40,42 @@ class ExampleBoundary extends Component<{ children: ReactNode }, { failed: boole
 }
 
 function ExampleCard({ example }: { example: ParsedExample }) {
-  const { Code, Button } = shell
+  const { Code, Button, Icon } = shell
   const [open, setOpen] = useState(false)
   const compiled = compileExampleBody(example.code)
   const rendered = isCompiledExample(compiled) ? compiled(bindings) : null
+  const code = displayCode(example.code)
+  const id = example.title ? `example-${slug(example.title)}` : undefined
+  const codeLabel = open ? 'Hide code' : 'Show code'
   return (
     <div data-modo="example-card">
-      <div data-modo="example-card-meta">
-        {example.title ? <strong>{example.title}</strong> : <em>Example</em>}
-      </div>
-      {example.description ? <p>{example.description}</p> : null}
-      <div data-modo="example-card-stage">
-        <ExampleBoundary key={example.code}>{rendered}</ExampleBoundary>
-      </div>
-      <Button variant="ghost" size="sm" onClick={() => setOpen((o) => !o)}>
-        {open ? 'Hide source' : 'Show source'}
-      </Button>
-      {open && (
-        <div data-modo="example-code">
-          <Code language="tsx">{example.code}</Code>
+      {example.title && id ? (
+        <h3 data-modo="example-card-title" id={id}>
+          {example.title}
+          <Anchor id={id} label={example.title} />
+        </h3>
+      ) : null}
+      {example.description ? (
+        <div data-modo="prose">
+          <Markdown source={example.description} />
         </div>
-      )}
+      ) : null}
+      <div data-modo="example-card-frame">
+        <div data-modo="example-card-stage">
+          <ExampleBoundary key={example.code}>{rendered}</ExampleBoundary>
+        </div>
+        <div data-modo="example-actions">
+          <CopyButton text={code} />
+          <Button variant="ghost" size="icon-sm" aria-label={codeLabel} aria-pressed={open} onClick={() => setOpen((o) => !o)}>
+            <Icon name="code" label={codeLabel} />
+          </Button>
+        </div>
+        {open && (
+          <div data-modo="example-code">
+            <Code language="tsx">{code}</Code>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

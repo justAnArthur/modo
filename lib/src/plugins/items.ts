@@ -12,7 +12,8 @@ const ITEMS_RESOLVED = '\0virtual:modo-items'
 const ITEMS_CSS_VIRTUAL = 'virtual:modo-items-css'
 const ITEMS_CSS_RESOLVED = '\0virtual:modo-items-css'
 
-const SOURCE_EXT = /\.(?:[cm]?[jt]sx?)$/
+// Markdown too: items `{@include}` docs from .md files.
+const SOURCE_EXT = /\.(?:[cm]?[jt]sx?|md)$/
 
 export function itemsPlugin(options: Options): Plugin {
   const { bundler } = options

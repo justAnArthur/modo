@@ -8,8 +8,13 @@ import { siteConfigSchema, type SiteConfig } from './schema'
 const cacheDir = resolve(process.cwd(), '.modo-tmp')
 
 // vite.config.ts, configPlugin and shellPlugin all ask for the same config
-// during startup; cache by path + mtime so it is only bundled once per change.
-const cache = new Map<string, { mtime: number; config: SiteConfig }>()
+// during startup; cache it until any bundled input changes (not just the entry:
+// the demo runner's entry is a wrapper re-exporting the real modo.config.ts).
+const cache = new Map<string, { inputs: string[]; stamp: string; config: SiteConfig }>()
+
+function stampOf(files: string[]): string {
+  return files.map((f) => (existsSync(f) ? statSync(f).mtimeMs : 0)).join(':')
+}
 
 function ensureCacheDir() {
   mkdirSync(cacheDir, { recursive: true })
@@ -21,14 +26,14 @@ export async function loadModoConfig(configPath: string): Promise<SiteConfig> {
       `modo config not found at ${configPath}.\nRun \`modo init <name>\` to scaffold a project.`,
     )
   }
-  const mtime = statSync(configPath).mtimeMs
   const hit = cache.get(configPath)
-  if (hit && hit.mtime === mtime) return hit.config
+  if (hit && hit.stamp === stampOf(hit.inputs)) return hit.config
   ensureCacheDir()
   const outFile = join(cacheDir, `modo-config-${randomUUID()}.mjs`)
   try {
-    await esbuild.build({
+    const { metafile } = await esbuild.build({
       entryPoints: [configPath],
+      metafile: true,
       bundle: true,
       format: 'esm',
       outfile: outFile,
@@ -50,7 +55,8 @@ export async function loadModoConfig(configPath: string): Promise<SiteConfig> {
       throw err
     }
     const config = siteConfigSchema.parse(mod.default ?? mod)
-    cache.set(configPath, { mtime, config })
+    const inputs = Object.keys(metafile.inputs).map((p) => resolve(p))
+    cache.set(configPath, { inputs, stamp: stampOf(inputs), config })
     return config
   } finally {
     if (existsSync(outFile)) {

@@ -47,6 +47,30 @@ The CLI accepts any user content — `modo` ships no design tokens, no React com
 
 `modo` discovers your design system files at the configured paths, parses each via a TSDoc-aware extractor, and renders an interactive docs site where the chrome (sidebar, page headers, prop tables, example cards) is structural-only. The example content is your components — `modo` doesn't generate fake components to fill the chrome.
 
+## Writing docs
+
+An item's JSDoc is Markdown: the first paragraph is the page lead, the rest renders below it; prop and example descriptions are Markdown too. Links and fenced code go through your shell `Link` / `Code`.
+
+Keep the comment short by pulling content from files, with TypeDoc's inline tags (paths relative to the item's `index.tsx`):
+
+```tsx
+/**
+ * Three spring speeds, exits a little faster than entrances.
+ *
+ * {@include ./motion.md}
+ *
+ * @example
+ * # Three speeds
+ *
+ * Toggle each to feel the pace.
+ *
+ * {@includeCode ./examples/three-speeds.tsx}
+ */
+export default function Motion(/* … */) {}
+```
+
+`{@include}` inlines a Markdown file; `{@includeCode}` inlines a file as a fenced block — inside an `@example`, it is the example's code. An example file is real TSX (leading imports for typechecking are stripped, then the JSX), so it typechecks and may use comments. Includes are not recursive; a missing file is a build warning.
+
 ## Compatibility
 
 - React 18+

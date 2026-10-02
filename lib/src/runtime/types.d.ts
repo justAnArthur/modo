@@ -60,6 +60,7 @@ declare module 'virtual:modo-shell' {
     Link: ComponentType<any>
     Code: ComponentType<any>
     Select: ComponentType<any>
+    Icon: ComponentType<{ name: 'code' | 'copy' | 'check' | 'link'; label: string }>
     Sidebar: { Root: ComponentType<any>; Item: ComponentType<any>; Section: ComponentType<any> }
     primitives: Record<string, ComponentType<any>>
   }

@@ -78,7 +78,7 @@ export default defineConfig(async () => {
       },
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react-dom/client'],
+      include: ['react', 'react-dom', 'react-dom/client', 'marked'],
     },
     build: {
       outDir: resolve(RUNTIME_DIR, 'dist'),
