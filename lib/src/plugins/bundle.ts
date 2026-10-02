@@ -104,6 +104,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
         if (!statSync(itemDir).isDirectory()) continue
         const file = resolve(itemDir, 'index.tsx')
         if (!existsSync(file)) continue
+        const mdx = resolve(itemDir, 'examples.mdx')
         const p = parseItemSource(readFileSync(file, 'utf8'), {
           readFile: (path) => {
             try {
@@ -122,7 +123,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
           description: p.description,
           props: p.props,
           examples: p.examples,
-          mdx: existsSync(resolve(itemDir, 'examples.mdx')) ? resolve(itemDir, 'examples.mdx') : undefined,
+          mdx: existsSync(mdx) ? mdx : undefined,
           cssFiles: discoverCssForFile(file),
           file,
         })

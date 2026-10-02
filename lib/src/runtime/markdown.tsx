@@ -9,7 +9,7 @@ const lexed = new Map<string, Token[]>()
 
 function lex(source: string): Token[] {
   let tokens = lexed.get(source)
-  if (!tokens) lexed.set(source, (tokens = Lexer.lex(source)))
+  if (!tokens) lexed.set(source, (tokens = Lexer.lex(source).filter((t) => t.type !== 'space')))
   return tokens
 }
 
@@ -19,7 +19,7 @@ function lex(source: string): Token[] {
  * paragraph (table cells, list rows).
  */
 export function Markdown({ source, inline }: { source: string; inline?: boolean }) {
-  const tokens = lex(source).filter((t) => t.type !== 'space')
+  const tokens = lex(source)
   const only = tokens[0]
   if (inline && tokens.length === 1 && only?.type === 'paragraph') return <Inlines tokens={(only as Tokens.Paragraph).tokens} />
   return <Blocks tokens={tokens} />
@@ -27,7 +27,7 @@ export function Markdown({ source, inline }: { source: string; inline?: boolean 
 
 /** The first paragraph (the TSDoc summary) and everything after it. */
 export function splitLead(source: string): { lead: Tokens.Paragraph | null; body: Token[] } {
-  const tokens = lex(source).filter((t) => t.type !== 'space')
+  const tokens = lex(source)
   const first = tokens[0]
   if (first?.type !== 'paragraph') return { lead: null, body: tokens }
   return { lead: first as Tokens.Paragraph, body: tokens.slice(1) }
@@ -85,15 +85,9 @@ function block(t: MarkedToken, key: number): ReactNode {
     case 'html':
       return <p key={key}>{t.text}</p>
 
-    // A tight list item's line.
-    case 'text':
-      return t.tokens ? <Inlines key={key} tokens={t.tokens} /> : t.text
-
-    case 'checkbox':
-      return <Fragment key={key}><input type="checkbox" checked={t.checked} disabled />{' '}</Fragment>
-
+    // A tight list item holds phrasing directly (text, a task checkbox).
     default:
-      return null
+      return inline(t, key)
   }
 }
 

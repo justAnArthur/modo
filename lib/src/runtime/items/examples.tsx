@@ -1,7 +1,7 @@
 import { Component, useState, type ReactNode } from 'react'
 import { shell } from 'virtual:modo-shell'
 import { byName, exampleScope } from 'virtual:modo-items'
-import { compileExampleBody, displayCode, isCompiledExample } from '../../lib/example'
+import { compileExampleBody, isCompiledExample } from '../../lib/example'
 import type { ParsedExample } from '../../lib/tsdoc'
 import { Markdown } from '../markdown'
 import { Anchor, slug } from '../anchor'
@@ -37,23 +37,22 @@ class ExampleBoundary extends Component<{ children: ReactNode }, { failed: boole
   }
 }
 
-function ExampleCard({ example }: { example: ParsedExample }) {
-  const compiled = compileExampleBody(example.code)
-  const id = example.title ? `example-${slug(example.title)}` : undefined
+function ExampleCard({ example: { title, description, code } }: { example: ParsedExample }) {
+  const compiled = compileExampleBody(code)
   return (
     <div data-modo="example-card">
-      {example.title && id ? (
-        <h3 data-modo="example-card-title" id={id}>
-          {example.title}
-          <Anchor id={id} label={example.title} />
+      {title ? (
+        <h3 data-modo="example-card-title" id={`example-${slug(title)}`}>
+          {title}
+          <Anchor id={`example-${slug(title)}`} label={title} />
         </h3>
       ) : null}
-      {example.description ? (
+      {description ? (
         <div data-modo="prose">
-          <Markdown source={example.description} />
+          <Markdown source={description} />
         </div>
       ) : null}
-      <ExampleFrame code={displayCode(example.code)}>
+      <ExampleFrame code={code}>
         {isCompiledExample(compiled) ? compiled(bindings) : null}
       </ExampleFrame>
     </div>

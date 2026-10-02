@@ -47,11 +47,10 @@ export function itemsPlugin(options: Options): Plugin {
           })
           .join('\n')
         const docImports = items
-          .map((it, idx) => (it.examplesDoc ? `import __x${idx} from ${JSON.stringify(it.examplesDoc)};` : ''))
+          .flatMap((it, idx) => (it.examplesDoc ? [`import __x${idx} from ${JSON.stringify(it.examplesDoc)};`] : []))
           .join('\n')
         const docsJson = items
-          .map((it, idx) => (it.examplesDoc ? `${JSON.stringify(`${it.tier}:${it.id}`)}: __x${idx}` : ''))
-          .filter(Boolean)
+          .flatMap((it, idx) => (it.examplesDoc ? [`${JSON.stringify(`${it.tier}:${it.id}`)}: __x${idx}`] : []))
           .join(',')
         const itemsJson = items.map((it) => `${JSON.stringify(it.id)}: ${safeId(it)}`).join(',')
         const byIdJson = items
