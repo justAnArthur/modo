@@ -18,9 +18,9 @@ import { defineConfig, presetWind4 } from 'unocss'
  *   light-dark() tokens.
  * - The radius scale is wind4's default on purpose: shape-context pairs
  *   `rounded-lg` (8px) with JS pixel radii, so it must not follow `--radius`.
- * - `font.sans` repeats the literal from tokens/typography.css instead of
- *   `var(--font-sans)`: wind4 emits theme keys as same-named variables
- *   (`--font-sans`), and a self-reference would be a cycle.
+ * - `font.sans` / `font.mono` repeat the literals from tokens/typography.css
+ *   instead of `var(--font-*)`: wind4 emits theme keys as same-named
+ *   variables (`--font-sans`), and a self-reference would be a cycle.
  * - Sources are scanned from disk (`content.filesystem`) because items reach
  *   the browser pre-bundled by modo, and example code lives only in the raw
  *   TSDoc of each index.tsx. The pipeline include covers `.ts` too (the
@@ -47,6 +47,7 @@ export default defineConfig({
   theme: {
     font: {
       sans: "'Inter Variable', ui-sans-serif, system-ui, sans-serif",
+      mono: "ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace",
     },
     colors: {
       background: 'var(--background)',
@@ -61,6 +62,17 @@ export default defineConfig({
       destructive: { DEFAULT: 'var(--destructive)', light: 'var(--destructive-light)' },
       hover: 'var(--hover)',
       active: 'var(--active)',
+      syntax: {
+        keyword: 'var(--syntax-keyword)',
+        string: 'var(--syntax-string)',
+        class: 'var(--syntax-class)',
+        entity: 'var(--syntax-entity)',
+        property: 'var(--syntax-property)',
+        comment: 'var(--syntax-comment)',
+        identifier: 'var(--syntax-identifier)',
+        jsx: 'var(--syntax-jsx)',
+        sign: 'var(--syntax-sign)',
+      },
       surface: {
         1: 'var(--surface-1)',
         2: 'var(--surface-2)',

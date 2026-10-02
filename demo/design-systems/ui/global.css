@@ -395,3 +395,39 @@ html.transitioning *::after {
     animation-range-end: var(--scroll-fade-size), 100%;
   }
 }
+
+/* ── modo docs chrome ──
+   The lib ships structure only and falls back to plain sidebar markup here
+   (no Sidebar item yet); these give its hooks the design system's look,
+   tokens only. */
+
+[data-modo="sidebar-section-title"] {
+  font-size: var(--text-caption);
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+[data-modo="sidebar-item"] {
+  border-radius: var(--shape-input-radius, 8px);
+  font-size: var(--text-body);
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast),
+    color var(--duration-fast);
+}
+
+[data-modo="sidebar-item"]:hover {
+  background-color: var(--hover);
+  color: var(--foreground);
+}
+
+[data-modo="sidebar-item"][aria-current="page"] {
+  background-color: var(--active);
+  color: var(--foreground);
+}
+
+/* The code panel under an example is flush with the frame, not a card in a card. */
+[data-modo="example-code"] > * {
+  border-radius: 0;
+}

@@ -81,4 +81,16 @@
   --hover: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.06));
   --active: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.1));
 
+  /* ── Syntax (primitives/code) ──
+     Low-chroma hues so code reads as text first; identifiers, JSX text and
+     punctuation ride the existing foreground pair. */
+  --syntax-keyword: light-dark(oklch(0.52 0.16 300), oklch(0.76 0.12 300));
+  --syntax-string: light-dark(oklch(0.52 0.12 150), oklch(0.79 0.11 150));
+  --syntax-class: light-dark(oklch(0.56 0.12 65), oklch(0.81 0.1 75));
+  --syntax-entity: light-dark(oklch(0.52 0.15 255), oklch(0.77 0.11 250));
+  --syntax-property: light-dark(oklch(0.52 0.1 205), oklch(0.79 0.08 200));
+  --syntax-comment: light-dark(oklch(0.62 0 0), oklch(0.56 0 0));
+  --syntax-identifier: var(--foreground);
+  --syntax-jsx: var(--foreground);
+  --syntax-sign: var(--muted-foreground);
 }
