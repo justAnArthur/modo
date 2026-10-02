@@ -51,13 +51,15 @@ The CLI accepts any user content — `modo` ships no design tokens, no React com
 
 An item's JSDoc is Markdown: the first paragraph is the page lead, the rest renders below it; prop and example descriptions are Markdown too. Links and fenced code go through your shell `Link` / `Code`.
 
-Prose lives in the comment; examples live next to it in `examples.mdx`, which is picked up automatically:
+Prose lives in the comment; examples live in an `.mdx` file the comment includes:
 
 ```tsx
 /**
  * Three spring speeds, exits a little faster than entrances.
  *
  * Every component picks one of three springs…
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function Motion(/* … */) {}
 ```
@@ -72,7 +74,7 @@ Toggle each to feel the pace.
 <Motion tier="fast">…</Motion>
 ```
 
-`examples.mdx` is compiled into the same build as your items (real imports, shared contexts). Each `# Title` names an example and the JSX block below it becomes a live example with Show code / Copy. For prose too long for the comment, `{@include ./x.md}` inlines a Markdown file; `{@includeCode ./x}` inlines a file as a code block. Includes are not recursive; a missing file is a build warning.
+An `@example` that is only `{@include ./x.mdx}` is compiled into the same build as your items (real imports, shared contexts). Each `# Title` names an example and the JSX block below it becomes a live example with Show code / Copy. For prose too long for the comment, `{@include ./x.md}` inlines a Markdown file; `{@includeCode ./x}` inlines a file as a code block. Includes are not recursive; a missing file is a build warning.
 
 ## Compatibility
 

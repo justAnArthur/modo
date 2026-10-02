@@ -540,6 +540,8 @@ type AccordionComponent = ForwardRefExoticComponent<
  * defaultValue, value, onValueChange, highlight, size), Accordion.Item (value,
  * index, disabled), Accordion.Trigger (the row that toggles its item) and
  * Accordion.Content (the collapsible panel).
+ *
+ * @example {@include ./examples.mdx}
  */
 const Accordion = forwardRef<HTMLDivElement, AccordionProps>(
   (

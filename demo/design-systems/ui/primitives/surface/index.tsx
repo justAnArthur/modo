@@ -85,6 +85,8 @@ interface ElevatedStatics {
  * level, 1 when no provider is present) and `surfaceClasses(bgLevel,
  * shadowLevel = bgLevel)` for components that paint a level without
  * `Elevated`.
+ *
+ * @example {@include ./examples.mdx}
  */
 const Elevated = forwardRef<HTMLDivElement, ElevatedProps>(
   ({ offset, shadowLevel, className, children, ...props }, ref) => {

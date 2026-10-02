@@ -17,7 +17,7 @@ export function ItemPage({ tier, id }: { tier: 'primitives' | 'components' | 'bl
   }
   const { lead, body } = splitLead(entry.description)
   const examples = examplesMap[`${tier}:${id}`] ?? []
-  const ExamplesDoc = exampleDocs[`${tier}:${id}`]
+  const docs = exampleDocs[`${tier}:${id}`] ?? []
   return (
     <article>
       <header>
@@ -30,9 +30,13 @@ export function ItemPage({ tier, id }: { tier: 'primitives' | 'components' | 'bl
           <Blocks tokens={body} />
         </div>
       ) : null}
-      {examples.length > 0 || ExamplesDoc ? (
+      {examples.length > 0 || docs.length > 0 ? (
         <ItemExamples examples={examples}>
-          {ExamplesDoc ? <ExamplesDoc components={mdxComponents} /> : null}
+          {docs.map((Doc, i) => (
+            <div data-modo="prose" key={i}>
+              <Doc components={mdxComponents} />
+            </div>
+          ))}
         </ItemExamples>
       ) : null}
       <section data-modo="section">

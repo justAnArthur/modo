@@ -43,7 +43,7 @@ function Pre({ children }: { children?: ReactNode }) {
 }
 
 /**
- * What an item's examples.mdx renders with, inside the Examples section.
+ * What an item's included .mdx examples render with, inside the Examples section.
  * Items and the `examples` scope resolve as JSX tags without imports, like in
  * inline examples; an identifier used in an expression (`icon={Plus}`) still
  * needs a real import. Each top-level JSX block arrives wrapped in ModoExample

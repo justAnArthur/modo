@@ -104,6 +104,8 @@ type TabsSubtleComponent = ForwardRefExoticComponent<
  * Statics:
  * - `TabsSubtle.Item` — one tab: `index`, `label`, optional `icon`.
  * - `TabsSubtle.Panel` — content for the tab with the same `index`.
+ *
+ * @example {@include ./examples.mdx}
  */
 const TabsSubtle = forwardRef<HTMLDivElement, TabsSubtleProps>(
   (

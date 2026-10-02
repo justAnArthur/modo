@@ -97,6 +97,8 @@ interface BadgeProps
  * ladder — `size` pins it, otherwise it follows the surrounding SizeProvider
  * — and takes its corner radius from the shape context. The palette is also
  * exported as `badgeColors`, the class recipe as `badgeVariants`.
+ *
+ * @example {@include ./examples.mdx}
  */
 const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
   (

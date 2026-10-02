@@ -11,6 +11,8 @@ import {
  * Pulled via `bunx shadcn@latest add select` (radix-nova style, neutral base color).
  * This adapter implements modo's Select shell contract (value / onChange /
  * options), so the docs chrome and demo switcher render with it.
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function Select({ value, onChange, options, placeholder = 'Select an option', size = 'default' }: {
   /** Currently selected value. */

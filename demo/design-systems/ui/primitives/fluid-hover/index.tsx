@@ -232,6 +232,8 @@ type FluidHoverComponent = ForwardRefExoticComponent<
  * entry fades in (a dropdown passes its checked row), `className` carries
  * radius and z-index, and `transition` is the travel — `false` snaps into
  * place after a reflow instead of sliding.
+ *
+ * @example {@include ./examples.mdx}
  */
 const FluidHover = forwardRef<HTMLDivElement, FluidHoverProps>(
   (

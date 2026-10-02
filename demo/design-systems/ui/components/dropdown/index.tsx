@@ -351,6 +351,8 @@ type DropdownComponent = ForwardRefExoticComponent<
  * disabled), Dropdown.Trigger (render), Dropdown.Content (the popup panel),
  * Dropdown.Item (a row: index, label, icon, checked, onSelect, disabled),
  * Dropdown.Label, Dropdown.Separator, Dropdown.Search and Dropdown.Empty.
+ *
+ * @example {@include ./examples.mdx}
  */
 const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
   (

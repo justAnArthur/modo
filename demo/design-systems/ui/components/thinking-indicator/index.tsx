@@ -49,6 +49,8 @@ interface ThinkingIndicatorProps extends HTMLAttributes<HTMLDivElement> {
  * announced to screen readers instead of a re-announcement every four
  * seconds, and reduced motion drops both the morph and the cycling for a
  * still glyph and label.
+ *
+ * @example {@include ./examples.mdx}
  */
 const ThinkingIndicator = forwardRef<HTMLDivElement, ThinkingIndicatorProps>(
   ({ className, showIcon = true, size, ...props }, ref) => {

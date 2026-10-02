@@ -235,6 +235,8 @@ function toValues(v: string | readonly string[] | undefined): string[] {
  * - `Combobox.List` — a row per match, from a `(item, index) => ReactNode` child.
  * - `Combobox.Item` — one row: `value`, optional `icon` and `disabled`.
  * - `Combobox.Empty` — what shows when nothing matches.
+ *
+ * @example {@include ./examples.mdx}
  */
 function Combobox({
   children,

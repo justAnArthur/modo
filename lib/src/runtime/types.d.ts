@@ -38,8 +38,8 @@ declare module 'virtual:modo-items' {
   export const primitives: Record<string, ComponentType<any>>
   export const examples: Record<string, Array<{ title?: string; description?: string; code: string }>>
   export const props: Record<string, ItemProp[]>
-  /** Compiled co-located examples.mdx per `tier:id`. */
-  export const exampleDocs: Record<string, ComponentType<{ components?: Record<string, unknown> }>>
+  /** Compiled `@example {@include ./x.mdx}` files per `tier:id`. */
+  export const exampleDocs: Record<string, ComponentType<{ components?: Record<string, unknown> }>[]>
   /** Named exports of the `examples` config module; `{}` when unset. */
   export const exampleScope: Record<string, unknown>
 }

@@ -107,6 +107,8 @@ type RadioGroupComponent = ForwardRefExoticComponent<
  * Statics:
  * - `RadioGroup.Item` — one radio row: `label`, `index`, and optional `value`,
  *   `selected`, `onSelect`.
+ *
+ * @example {@include ./examples.mdx}
  */
 const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
   (

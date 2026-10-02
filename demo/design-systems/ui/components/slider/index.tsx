@@ -1740,6 +1740,8 @@ interface SliderProps extends Omit<SliderEngineProps, "value" | "onChange"> {
  * `trackClassName`, `trackStyle`, `fillClassName`, `fillStyle`, `hideFill`,
  * `thumbColor` and `thumbBorderColor` — each one also forces the dense
  * design.
+ *
+ * @example {@include ./examples.mdx}
  */
 const Slider = forwardRef<HTMLDivElement, SliderProps>(
   ({ size, variant = "pips", value: valueProp, defaultValue, onChange: onChangeProp, ...rest }, ref) => {

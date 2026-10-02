@@ -12,7 +12,7 @@ const ITEMS_RESOLVED = '\0virtual:modo-items'
 const ITEMS_CSS_VIRTUAL = 'virtual:modo-items-css'
 const ITEMS_CSS_RESOLVED = '\0virtual:modo-items-css'
 
-// Markdown too: `{@include}`d .md docs and examples.mdx.
+// Markdown too: `{@include}`d .md and .mdx.
 const SOURCE_EXT = /\.(?:[cm]?[jt]sx?|mdx?)$/
 
 export function itemsPlugin(options: Options): Plugin {
@@ -47,10 +47,10 @@ export function itemsPlugin(options: Options): Plugin {
           })
           .join('\n')
         const docImports = items
-          .flatMap((it, idx) => (it.examplesDoc ? [`import __x${idx} from ${JSON.stringify(it.examplesDoc)};`] : []))
+          .flatMap((it, i) => it.exampleDocs.map((doc, j) => `import __x${i}_${j} from ${JSON.stringify(doc)};`))
           .join('\n')
         const docsJson = items
-          .flatMap((it, idx) => (it.examplesDoc ? [`${JSON.stringify(`${it.tier}:${it.id}`)}: __x${idx}`] : []))
+          .map((it, i) => `${JSON.stringify(`${it.tier}:${it.id}`)}: [${it.exampleDocs.map((_, j) => `__x${i}_${j}`).join(',')}]`)
           .join(',')
         const itemsJson = items.map((it) => `${JSON.stringify(it.id)}: ${safeId(it)}`).join(',')
         const byIdJson = items

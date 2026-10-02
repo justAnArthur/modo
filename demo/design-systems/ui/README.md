@@ -30,7 +30,7 @@ Every vendored file opens with a plain `/* */` header. The header names the
 upstream path and commit, carries the MIT notice, and lists every local
 modification. The vendored code below the header keeps upstream's formatting.
 Files written for this port (`uno.config.ts`, `vite.ts`, `modo.components.tsx`,
-`.scripts/*`, `lib/use-controllable-state.ts`) use this repo's style: single
+`lib/use-controllable-state.ts`) use this repo's style: single
 quotes and no semicolons.
 
 ## Layout
@@ -42,9 +42,8 @@ quotes and no semicolons.
 | `uno.config.ts`, `vite.ts` | The UnoCSS setup (see below). |
 | `lib/` | FF's shared system files (upstream `lib/`, `hooks/` and the fluid-hover highlight, flat, upstream names), imported relatively by items. modo only scans the tier folders, so it never mistakes them for items. |
 | `modo.components.tsx` | Components only the docs site uses: the `Icon` and `Select` shell-slot adapters and the `ThemeSwitcher` panel item, picked in `modo.config.ts` by export name (`./modo.components.tsx#Select`). |
-| `primitives/<id>/` | FF's "System" pages: `index.tsx` (component + TSDoc prose) and `examples.mdx`. |
+| `primitives/<id>/` | FF's "System" pages: `index.tsx` (component + TSDoc prose) and `examples.mdx`, pulled in by `@example {@include ./examples.mdx}`. |
 | `components/<id>/` | FF's "Components" pages, same shape. |
-| `.scripts/` | `uno-coverage.ts`, `check-items.ts` and their shared `mdx-blocks.ts` (see [How to verify](#how-to-verify)). |
 
 ## Upstream → local file map
 
@@ -256,9 +255,7 @@ config.
   `outline-offset: revert-layer`), handing focus styling back to `@layer base`
   and the utilities, so FF's ring (1px `--focus-ring`) is the only one drawn.
 
-Every Tailwind idiom FF uses has a wind4 equivalent, and
-`.scripts/uno-coverage.ts` asserts each one — 22 built-in assertions, among
-them:
+Every Tailwind idiom FF uses has a wind4 equivalent, among them:
 - named groups (`group-[.is-active]/row:`)
 - `has-data-[…]:`
 - arbitrary variants (`[[data-side=top]_&]:`, `[&>div[style]]:!block`)
@@ -361,7 +358,8 @@ What modo's parser (`lib/src/lib/tsdoc.ts`) and example compiler
   type spans several lines is dropped. Every member needs a description, and
   defaults are read from that prose (`Defaults to \`false\`.`), not from the
   destructuring. Hence the FF API-table text re-declared on every prop.
-- **Examples live in `examples.mdx`** next to the item: a `# <FF section title>`,
+- **Examples live in `examples.mdx`** next to the item, included by the
+  TSDoc's `@example {@include ./examples.mdx}`: a `# <FF section title>`,
   an optional caption, then one JSX block (or a fenced code block for code to
   read). Expressions are plain JS (no `as const`), and multi-line JSX text
   stays inline (modo unwraps MDX's paragraphs inside examples).
@@ -372,8 +370,6 @@ What modo's parser (`lib/src/lib/tsdoc.ts`) and example compiler
   `../../<tier>/<id>`, icons come from `lucide-react`. Every free identifier
   must be imported (or be an item name or a JS/DOM global), and every
   `Item.Part` used must really be attached to that item.
-  `.scripts/check-items.ts` enforces both and bundles each `examples.mdx` the
-  way modo does.
 
 Each item follows its FF docs page: the TSDoc holds the one-liner, a concept
 paragraph and the list of statics; `examples.mdx` holds one `# <FF section
@@ -400,8 +396,7 @@ tables become the prop docs instead). Other per-item deviations:
   `.light` / `.dark` class on a subtree still forces that scheme, which is
   what the forced-theme previews use.
 - `transition-[…]` with a CSS property outside wind4's list needs a
-  `theme.property` entry in `uno.config.ts`. `uno-coverage` reports any it
-  finds.
+  `theme.property` entry in `uno.config.ts`.
 - Cross-item context (a `SizeProvider` example shrinking a Button, a surface
   level crossing from Dialog into Dropdown) depends on modo bundling the whole
   design system in **one** esbuild build with `splitting: true`, so a shared
@@ -431,15 +426,8 @@ cd demo/design-systems/ui && MODO_PORT=5180 bunx modo dev
 ## How to verify
 
 ```sh
-cd demo/design-systems/ui
-bunx tsc -p . --noEmit                  # types
-bun .scripts/uno-coverage.ts [prefix…]  # every class string generates + is extracted
-bun .scripts/check-items.ts [prefix…]   # modo item contract (parser, examples, statics, bundle)
+cd demo/design-systems/ui && bunx tsc -p . --noEmit
 ```
 
-Current status — all green:
-
-```
-check-items (all items): 27 item(s), 127 example(s) — ok
-uno-coverage (lib primitives components modo.components.tsx): 73 files, 3387 class tokens (580 unique), 22 assertions — all generate
-```
+modo reports parser and build problems itself, as `[modo:bundle]` lines in
+the dev server's output.

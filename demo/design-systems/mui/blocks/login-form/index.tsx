@@ -7,6 +7,8 @@ import Button from '@mui/material/Button'
 /**
  * Sign-in block: Paper + Stack with email and password TextFields and a
  * contained submit Button. All MUI, no custom CSS.
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function LoginForm({
   title = 'Sign in',

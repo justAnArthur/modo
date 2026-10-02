@@ -338,6 +338,8 @@ interface DialogProps {
  * - `Dialog.Close` — dismisses it; same `render` / `asChild` shape as the
  *   trigger. `Dialog.Content` renders its own ✕ unless
  *   `showCloseButton={false}`.
+ *
+ * @example {@include ./examples.mdx}
  */
 function Dialog({
   children,

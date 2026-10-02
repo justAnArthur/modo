@@ -5,6 +5,8 @@ import { Link as ShadcnLink } from './link'
  * shadcn/ui-style Link — an anchor styled with the Button's `buttonVariants()`,
  * the pattern documented in the shadcn/ui Link docs (ui.shadcn.com).
  * Authored for this showcase (shadcn ships no Link component).
+ *
+ * @example {@include ./examples.mdx}
  */
 export default function Link({ href, variant = 'link', children }: {
   /** Navigation target. */

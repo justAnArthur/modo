@@ -73,6 +73,8 @@ interface ScrollAreaStatics {
  * Statics:
  * - `ScrollArea.Bar` — the standalone `ScrollBar`, for hand-composed scroll
  *   areas.
+ *
+ * @example {@include ./examples.mdx}
  */
 const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
   (
