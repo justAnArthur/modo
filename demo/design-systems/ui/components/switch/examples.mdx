@@ -1,0 +1,24 @@
+import Switch from './index'
+
+# Basic
+
+A labelled switch. Uncontrolled here — it keeps its own state; pass
+`checked` and `onToggle` to control it.
+
+<Switch label="Notifications" />
+
+# Disabled
+
+`disabled` dims the row and ignores pointer and keyboard input.
+
+<Switch label="Disabled option" disabled />
+
+# Compact
+
+`size="compact"` shrinks the track, thumb and label one step down the
+size ladder. `defaultChecked` starts it on.
+
+<div className="flex flex-col">
+  <Switch size="compact" label="Auto-save" defaultChecked />
+  <Switch size="compact" label="Show hidden files" />
+</div>

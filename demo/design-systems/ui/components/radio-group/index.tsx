@@ -107,46 +107,6 @@ type RadioGroupComponent = ForwardRefExoticComponent<
  * Statics:
  * - `RadioGroup.Item` — one radio row: `label`, `index`, and optional `value`,
  *   `selected`, `onSelect`.
- *
- * @example
- * # Basic
- *
- * One option at a time; the selected background follows the pick.
- *
- * ```tsx
- * <RadioGroup defaultSelectedIndex={0}>
- *   {['Option A', 'Option B', 'Option C'].map((label, i) => (
- *     <RadioGroup.Item key={label} index={i} label={label} />
- *   ))}
- * </RadioGroup>
- * ```
- *
- * @example
- * # Compact
- *
- * `size="compact"` pins every row to the 28px step of the size ladder.
- *
- * ```tsx
- * <RadioGroup size="compact" defaultSelectedIndex={1}>
- *   {['Option A', 'Option B', 'Option C'].map((label, i) => (
- *     <RadioGroup.Item key={label} index={i} label={label} />
- *   ))}
- * </RadioGroup>
- * ```
- *
- * @example
- * # By value
- *
- * Give items a `value` and select by it; the group then renders Base UI radios
- * for form integration.
- *
- * ```tsx
- * <RadioGroup defaultValue="weekly">
- *   <RadioGroup.Item index={0} value="daily" label="Daily digest" />
- *   <RadioGroup.Item index={1} value="weekly" label="Weekly summary" />
- *   <RadioGroup.Item index={2} value="never" label="Never" />
- * </RadioGroup>
- * ```
  */
 const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
   (

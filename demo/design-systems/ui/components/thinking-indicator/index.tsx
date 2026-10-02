@@ -49,25 +49,6 @@ interface ThinkingIndicatorProps extends HTMLAttributes<HTMLDivElement> {
  * announced to screen readers instead of a re-announcement every four
  * seconds, and reduced motion drops both the morph and the cycling for a
  * still glyph and label.
- *
- * @example # Basic
- * ```tsx
- * <ThinkingIndicator />
- * ```
- *
- * @example # Text only
- * Drop the glyph for an inline indicator, e.g. before a streamed reply.
- *
- * ```tsx
- * <ThinkingIndicator showIcon={false} />
- * ```
- *
- * @example # Compact
- * The compact step of the size ladder, for dense transcripts.
- *
- * ```tsx
- * <ThinkingIndicator size="compact" />
- * ```
  */
 const ThinkingIndicator = forwardRef<HTMLDivElement, ThinkingIndicatorProps>(
   ({ className, showIcon = true, size, ...props }, ref) => {

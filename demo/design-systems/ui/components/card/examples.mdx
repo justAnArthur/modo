@@ -1,0 +1,160 @@
+import Card from './index'
+import { Circle, Moon, Paintbrush, Palette, Shield, SquareLibrary } from 'lucide-react'
+
+# Basic
+
+Borderless inline list: icon + a ghost action, divided by hairlines.
+
+<div className="w-full max-w-[520px]">
+  <Card.Group orientation="inline">
+    {[
+      { icon: Circle, title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
+      { icon: Shield, title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
+      { icon: Palette, title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
+      { icon: Moon, title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
+    ].map((f) => (
+      <Card key={f.title} onClick={() => {}}>
+        <Card.Media icon={f.icon} />
+        <Card.Header>
+          <Card.Title>{f.title}</Card.Title>
+          <Card.Description>{f.description}</Card.Description>
+        </Card.Header>
+        <Card.Footer>
+          <Card.Button>Connect</Card.Button>
+        </Card.Footer>
+      </Card>
+    ))}
+  </Card.Group>
+</div>
+
+# Grid: 2-D fluid hover
+
+Two-column grid of image tiles — `columns` above 1 turns on 2-D fluid
+hover: the highlight springs to the nearest card across rows and columns.
+
+<div className="w-full max-w-[560px]">
+  <Card.Group columns={2} border="outlined" separated>
+    {[
+      { title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
+      { title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
+      { title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
+      { title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
+    ].map((f) => (
+      <Card key={f.title} onClick={() => {}}>
+        <Card.Image src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
+        <Card.Header>
+          <Card.Title>{f.title}</Card.Title>
+          <Card.Description>{f.description}</Card.Description>
+        </Card.Header>
+        <Card.Footer>
+          <Card.Button variant="primary">Get started</Card.Button>
+          <Card.Button variant="secondary">Learn more</Card.Button>
+        </Card.Footer>
+      </Card>
+    ))}
+  </Card.Group>
+</div>
+
+# Outlined group
+
+One shared outlined frame, rows split by dividers: logo + primary.
+Card.Media also accepts a [logoA, logoB] tuple for a connected pair.
+
+<div className="w-full max-w-[520px]">
+  <Card.Group orientation="inline" border="outlined">
+    {[
+      { title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
+      { title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
+      { title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
+      { title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
+    ].map((f) => (
+      <Card key={f.title} onClick={() => {}}>
+        <Card.Media logo="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
+        <Card.Header>
+          <Card.Title>{f.title}</Card.Title>
+          <Card.Description>{f.description}</Card.Description>
+        </Card.Header>
+        <Card.Footer>
+          <Card.Button variant="primary">Get started</Card.Button>
+        </Card.Footer>
+      </Card>
+    ))}
+  </Card.Group>
+</div>
+
+# Separated tiles
+
+Separated inline tiles with a full-height image; the action row drops
+below the text (primary, secondary, ghost).
+
+<div className="w-full max-w-[560px]">
+  <Card.Group orientation="inline" separated>
+    {[
+      { title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
+      { title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
+      { title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
+      { title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
+    ].map((f) => (
+      <Card key={f.title} onClick={() => {}}>
+        <Card.Image src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
+        <Card.Header>
+          <Card.Title>{f.title}</Card.Title>
+          <Card.Description>{f.description}</Card.Description>
+        </Card.Header>
+        <Card.Footer>
+          <Card.Button variant="primary">Get started</Card.Button>
+          <Card.Button variant="secondary">Learn more</Card.Button>
+          <Card.Button>Connect</Card.Button>
+        </Card.Footer>
+      </Card>
+    ))}
+  </Card.Group>
+</div>
+
+# Fully yours — compose anything
+
+A standalone promo card tuned to a narrow 300px column: banner, features,
+actions and a dismiss control revealed on hover or focus. (Upstream's demo
+hides the card on dismiss; here `onDismiss` is a no-op.)
+
+<div className="w-full max-w-[300px]">
+  <Card dismissible onDismiss={() => {}} className="border border-border/60 overflow-hidden rounded-xl">
+    <Card.Image src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
+    <Card.Header>
+      <Card.Title>Meet the new Card component</Card.Title>
+    </Card.Header>
+    <Card.Content className="flex flex-col gap-3">
+      <Card.Feature icon={Paintbrush} title="Always pixel-perfect" description="Renders your design exactly — token-driven and crisp in light and dark, at any radius" />
+      <Card.Feature icon={SquareLibrary} title="Stacked, inline, or grid" description="One compositional API — borderless by default, with separated tiles or a shared frame" />
+    </Card.Content>
+    <Card.Footer>
+      <Card.Button variant="primary">Get started</Card.Button>
+      <Card.Button variant="ghost">Learn more</Card.Button>
+    </Card.Footer>
+  </Card>
+</div>
+
+# Selected
+
+Clickable selection — one active card carries the fill, its title bolds,
+and the group drops the dividers around it. The selection here is fixed on
+the second card; drive `selected` from your own state to follow clicks.
+
+<div className="w-full max-w-[520px]">
+  <Card.Group orientation="inline">
+    {[
+      { icon: Circle, title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
+      { icon: Shield, title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
+      { icon: Palette, title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
+      { icon: Moon, title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
+    ].map((f, i) => (
+      <Card key={f.title} label={f.title} selected={i === 1} onClick={() => {}}>
+        <Card.Media icon={f.icon} />
+        <Card.Header>
+          <Card.Title>{f.title}</Card.Title>
+          <Card.Description>{f.description}</Card.Description>
+        </Card.Header>
+      </Card>
+    ))}
+  </Card.Group>
+</div>

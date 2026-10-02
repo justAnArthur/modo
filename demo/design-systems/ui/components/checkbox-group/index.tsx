@@ -95,32 +95,6 @@ type CheckboxGroupComponent = ForwardRefExoticComponent<
  * Statics:
  * - `CheckboxGroup.Item` — one checkbox row: `label`, `index`, and optional
  *   `checked` / `onToggle`.
- *
- * @example
- * # Basic
- *
- * Items toggle independently; contiguous picks share one merged background.
- *
- * ```tsx
- * <CheckboxGroup defaultCheckedIndices={[0]}>
- *   {['Apples', 'Bananas', 'Cherries', 'Dates'].map((label, i) => (
- *     <CheckboxGroup.Item key={label} index={i} label={label} />
- *   ))}
- * </CheckboxGroup>
- * ```
- *
- * @example
- * # Compact
- *
- * `size="compact"` pins every row to the 28px step of the size ladder.
- *
- * ```tsx
- * <CheckboxGroup size="compact" defaultCheckedIndices={[1, 2]}>
- *   {['Apples', 'Bananas', 'Cherries', 'Dates'].map((label, i) => (
- *     <CheckboxGroup.Item key={label} index={i} label={label} />
- *   ))}
- * </CheckboxGroup>
- * ```
  */
 const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
   (

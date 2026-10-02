@@ -1,0 +1,21 @@
+import CheckboxGroup from './index'
+
+# Basic
+
+Items toggle independently; contiguous picks share one merged background.
+
+<CheckboxGroup defaultCheckedIndices={[0]}>
+  {['Apples', 'Bananas', 'Cherries', 'Dates'].map((label, i) => (
+    <CheckboxGroup.Item key={label} index={i} label={label} />
+  ))}
+</CheckboxGroup>
+
+# Compact
+
+`size="compact"` pins every row to the 28px step of the size ladder.
+
+<CheckboxGroup size="compact" defaultCheckedIndices={[1, 2]}>
+  {['Apples', 'Bananas', 'Cherries', 'Dates'].map((label, i) => (
+    <CheckboxGroup.Item key={label} index={i} label={label} />
+  ))}
+</CheckboxGroup>

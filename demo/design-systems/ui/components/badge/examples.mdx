@@ -1,0 +1,58 @@
+import Badge from './index'
+
+# Solid
+
+The default variant: a tinted background in the badge's color.
+
+<div className="flex flex-wrap items-center gap-2">
+  <Badge color="violet">Fiction</Badge>
+  <Badge color="amber">Science</Badge>
+  <Badge color="green">Philosophy</Badge>
+  <Badge color="blue">History</Badge>
+  <Badge color="rose">Poetry</Badge>
+</div>
+
+# Dot
+
+`variant="dot"` keeps a neutral bordered badge and shows the color as an
+indicator dot.
+
+<div className="flex flex-wrap items-center gap-2">
+  <Badge variant="dot" color="violet">Fiction</Badge>
+  <Badge variant="dot" color="amber">Science</Badge>
+  <Badge variant="dot" color="green">Philosophy</Badge>
+  <Badge variant="dot" color="blue">History</Badge>
+  <Badge variant="dot" color="rose">Poetry</Badge>
+</div>
+
+# Colors
+
+All seventeen palette colors, solid and dot.
+
+<div className="flex flex-col gap-3">
+  <div className="flex flex-wrap items-center gap-2">
+    {['gray', 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map((c) => (
+      <Badge key={c} color={c}>
+        {c.charAt(0).toUpperCase() + c.slice(1)}
+      </Badge>
+    ))}
+  </div>
+  <div className="flex flex-wrap items-center gap-2">
+    {['gray', 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map((c) => (
+      <Badge key={c} variant="dot" color={c}>
+        {c.charAt(0).toUpperCase() + c.slice(1)}
+      </Badge>
+    ))}
+  </div>
+</div>
+
+# Compact
+
+`size="compact"` steps the badge down the size ladder (20px tall, 11px
+text) for dense rows and table cells.
+
+<div className="flex flex-wrap items-center gap-2">
+  <Badge size="compact" color="blue">History</Badge>
+  <Badge size="compact" variant="dot" color="green">Philosophy</Badge>
+  <Badge size="compact">Draft</Badge>
+</div>

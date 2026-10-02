@@ -96,38 +96,6 @@ const DRAG_DEAD_ZONE = 2;
  * uncontrolled (`defaultChecked`, with `onCheckedChange` reporting each
  * change). `size` pins it to one step of the size ladder; otherwise it
  * follows the surrounding SizeProvider.
- *
- * @example
- * # Basic
- *
- * A labelled switch. Uncontrolled here — it keeps its own state; pass
- * `checked` and `onToggle` to control it.
- *
- * ```tsx
- * <Switch label="Notifications" />
- * ```
- *
- * @example
- * # Disabled
- *
- * `disabled` dims the row and ignores pointer and keyboard input.
- *
- * ```tsx
- * <Switch label="Disabled option" disabled />
- * ```
- *
- * @example
- * # Compact
- *
- * `size="compact"` shrinks the track, thumb and label one step down the
- * size ladder. `defaultChecked` starts it on.
- *
- * ```tsx
- * <div className="flex flex-col">
- *   <Switch size="compact" label="Auto-save" defaultChecked />
- *   <Switch size="compact" label="Show hidden files" />
- * </div>
- * ```
  */
 const Switch = forwardRef<HTMLDivElement, SwitchProps>(
   (

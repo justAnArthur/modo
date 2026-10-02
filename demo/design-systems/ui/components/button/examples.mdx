@@ -1,0 +1,96 @@
+import Button from './index'
+import { ArrowRight, ChevronDown, Loader, Plus, Search, Settings } from 'lucide-react'
+
+# Variants
+
+4 variants, inline or full width: add `className="w-full"` to stretch one
+to its container.
+
+<div className="flex w-fit max-w-full flex-col gap-8">
+  <div className="flex items-center gap-2">
+    <Button variant="primary">Primary</Button>
+    <Button variant="secondary">Secondary</Button>
+    <Button variant="tertiary">Tertiary</Button>
+    <Button variant="ghost">Ghost</Button>
+  </div>
+  <div className="flex flex-col gap-2">
+    <Button variant="primary" className="w-full">Primary</Button>
+    <Button variant="secondary" className="w-full">Secondary</Button>
+    <Button variant="tertiary" className="w-full">Tertiary</Button>
+    <Button variant="ghost" className="w-full">Ghost</Button>
+  </div>
+</div>
+
+# With Icons
+
+`leadingIcon` and `trailingIcon` take an icon component; it sits 4px
+closer to its edge than the label would.
+
+<div className="flex flex-wrap items-center gap-2">
+  <Button leadingIcon={Plus}>Create</Button>
+  <Button variant="secondary" trailingIcon={ArrowRight}>Next</Button>
+  <Button variant="tertiary" leadingIcon={Search} trailingIcon={ArrowRight}>
+    Search
+  </Button>
+</div>
+
+# Loading & Disabled
+
+`loading` shows a spinner and disables the button; the hidden label keeps
+its width.
+
+<div className="flex flex-wrap items-center gap-2">
+  <Button loading>Loading</Button>
+  <Button variant="secondary" loading leadingIcon={Loader}>Saving</Button>
+  <Button disabled>Disabled</Button>
+</div>
+
+# Sizes
+
+The size ladder: `default` (36px) and `compact` (28px), plus square
+icon-only steps. Icon-only buttons take the icon as their child and need
+an `aria-label`.
+
+<div className="flex flex-col gap-3">
+  <div className="flex flex-wrap items-center gap-2">
+    <Button leadingIcon={Plus}>Default</Button>
+    <Button variant="secondary" size="icon" aria-label="Add">
+      <Plus />
+    </Button>
+    <Button variant="ghost" size="icon" aria-label="Settings">
+      <Settings />
+    </Button>
+  </div>
+  <div className="flex flex-wrap items-center gap-2">
+    <Button size="compact" leadingIcon={Plus}>Compact</Button>
+    <Button variant="secondary" size="icon-compact" aria-label="Add">
+      <Plus />
+    </Button>
+    <Button variant="ghost" size="icon-compact" aria-label="Settings">
+      <Settings />
+    </Button>
+  </div>
+</div>
+
+# Active
+
+`active` forces the pressed visual — for a button whose dropdown or
+popover is currently open.
+
+<div className="flex flex-wrap items-center gap-2">
+  <Button active>Primary</Button>
+  <Button variant="secondary" active>Secondary</Button>
+  <Button variant="tertiary" active trailingIcon={ChevronDown}>Tertiary</Button>
+  <Button variant="ghost" active>Ghost</Button>
+</div>
+
+# As child
+
+`asChild` merges the button's styling onto its single child element —
+here a link — instead of rendering a `<button>`.
+
+<Button asChild variant="tertiary" trailingIcon={ArrowRight}>
+  <a href="https://www.fluidfunctionalism.com" target="_blank" rel="noreferrer">
+    Fluid Functionalism
+  </a>
+</Button>

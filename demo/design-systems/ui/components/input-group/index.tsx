@@ -75,47 +75,6 @@ type InputGroupComponent = ForwardRefExoticComponent<
  * - `InputGroup.Field` — one labelled input: `index`, `label`, `labelHidden`,
  *   `placeholder`, `icon`, `value` / `defaultValue`, `onChange`, `error`,
  *   `disabled`.
- *
- * @example
- * # Basic
- *
- * A single field with a leading icon.
- *
- * ```tsx
- * <InputGroup>
- *   <InputGroup.Field index={0} label="Search" placeholder="Search teamspaces..." icon={Search} />
- * </InputGroup>
- * ```
- *
- * @example
- * # Multiple Fields
- *
- * The hover highlight follows the pointer from field to field.
- *
- * ```tsx
- * <InputGroup>
- *   <InputGroup.Field index={0} label="Name" placeholder="Your name" />
- *   <InputGroup.Field index={1} label="Email" placeholder="you@example.com" icon={Mail} />
- * </InputGroup>
- * ```
- *
- * @example
- * # Error State
- *
- * An `error` message renders below the field and marks it invalid.
- *
- * ```tsx
- * <InputGroup>
- *   <InputGroup.Field
- *     index={0}
- *     label="Email"
- *     placeholder="you@example.com"
- *     icon={Mail}
- *     defaultValue="bad@"
- *     error="Please enter a valid email address."
- *   />
- * </InputGroup>
- * ```
  */
 const InputGroup = forwardRef<HTMLDivElement, InputGroupProps>(
   ({ children, size, className, ...props }, ref) => {
