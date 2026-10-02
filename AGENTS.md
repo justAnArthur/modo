@@ -68,7 +68,7 @@ Rules:
   - Structure only (layout, grid, spacing rhythm, measure). Every visual reads a generic token.
   - No literal colors and no color fallbacks. Leave the fallback off so an undefined token inherits (`color: var(--muted-foreground)`), or derive it from `currentColor`.
   - Size fallbacks may be literal (`var(--space-2, 8px)`).
-- **DS code** (items, examples, `_shell/` chrome components):
+- **DS code** (items, examples, `modo.components.tsx`):
   - Use theme tokens through the DS's utilities.
   - No arbitrary values for color, type, radius, shadow or motion (`text-[15px]`, `bg-[#…]`, `rounded-[10px]`, `duration-[…]`).
   - No inline `style` for them, and no raw hex/oklch outside `tokens/*.css`.
@@ -126,6 +126,7 @@ Rules:
 - **Shell inheritance:**
   - The chrome looks for user components per slot, matched by name plus required props. Primitives: Button, Link, Code, Icon. Components: Select, Sidebar Root/Item/Section.
   - Unmatched slots fall back to the lib's Plain components; `modo.config.ts: shell` pins slots.
+  - A `shell` / `panel.items[].component` reference may name an export: `./modo.components.tsx#Select` (else the default export). Several refs into one file share its build entry, so a DS can keep all its docs-only components in one `modo.components.tsx`.
   - Contracts beyond the matched props:
     - Button gets `variant="ghost"`, `size="sm" | "icon-sm"`, `aria-label`, `aria-pressed`.
     - Code gets `language` and a string child.
