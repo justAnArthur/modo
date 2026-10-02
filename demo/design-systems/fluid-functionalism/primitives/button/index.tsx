@@ -144,49 +144,7 @@ const activeBgVariants: Record<string, string> = {
  * Inter variable font-weight transitions on hover.
  * Pulled via `bunx shadcn@latest add @fluid/button`.
  *
- * @example # Variants
- * The four @fluid styles: primary fill, secondary accent, tertiary outline, ghost.
- *
- * ```tsx
- * <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
- *   <Button>Primary</Button>
- *   <Button variant="secondary">Secondary</Button>
- *   <Button variant="tertiary">Tertiary</Button>
- *   <Button variant="ghost">Ghost</Button>
- * </div>
- * ```
- *
- * @example # Sizes
- * The two-step size ladder: default 36px, compact 28px for dense surfaces. The sm/md/lg aliases resolve onto it.
- *
- * ```tsx
- * <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
- *   <Button size="compact">Compact</Button>
- *   <Button>Default</Button>
- *   <Button size="sm">Small (alias)</Button>
- *   <Button size="lg">Large (alias)</Button>
- * </div>
- * ```
- *
- * @example # Icon buttons
- * Square icon sizes; any child svg is sized automatically.
- *
- * ```tsx
- * <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
- *   <Button size="icon-compact" aria-label="Compact icon">+</Button>
- *   <Button size="icon" aria-label="Icon">+</Button>
- * </div>
- * ```
- *
- * @example # Loading and disabled
- * The loading spinner replaces the label while keeping the button's width stable.
- *
- * ```tsx
- * <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
- *   <Button loading>Sending</Button>
- *   <Button disabled>Cannot click</Button>
- * </div>
- * ```
+ * {@include ./button.mdx}
  */
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (

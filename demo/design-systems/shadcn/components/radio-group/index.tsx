@@ -4,22 +4,7 @@ import { RadioGroup as ShadcnRadioGroup, RadioGroupItem } from './radio-group'
  * shadcn/ui RadioGroup — single-choice control backed by Radix.
  * Pulled via `bunx shadcn@latest add radio-group` (radix-nova style, neutral base color).
  *
- * @example # Basic
- * ```tsx
- * <RadioGroup value="standard" options={[
- *   { value: 'standard', label: 'Standard' },
- *   { value: 'priority', label: 'Priority' },
- *   { value: 'express', label: 'Express' },
- * ]} />
- * ```
- *
- * @example # Disabled
- * ```tsx
- * <RadioGroup value="standard" disabled options={[
- *   { value: 'standard', label: 'Standard (only option)' },
- *   { value: 'express', label: 'Express' },
- * ]} />
- * ```
+ * {@include ./radio-group.mdx}
  */
 export default function RadioGroup({ options, value, onChange, disabled = false }: {
   /** Radio options to render, in order. */

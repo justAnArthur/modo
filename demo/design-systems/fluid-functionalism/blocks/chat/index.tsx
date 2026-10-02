@@ -32,24 +32,7 @@ const initialMessages: Entry[] = [
  * "generated", and the composer is the @fluid InputMessage on its elevated
  * substrate. Send a message to watch the flow.
  *
- * @example # Conversation
- * ```tsx
- * <Chat />
- * ```
- *
- * @example # Thinking
- * Pin the assistant's working state after the last reply.
- *
- * ```tsx
- * <Chat pending />
- * ```
- *
- * @example # Compact transcript
- * The size ladder applies to bubbles, indicator and composer alike.
- *
- * ```tsx
- * <Chat size="compact" />
- * ```
+ * {@include ./chat.mdx}
  */
 export default function Chat({ pending = false, size = 'default', placeholder = 'Message Fluid…' }: {
   /** Show the thinking indicator under the last reply (also appears live while a sent message is pending). */

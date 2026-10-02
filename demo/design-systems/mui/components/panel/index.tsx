@@ -4,23 +4,7 @@ import Paper from '@mui/material/Paper'
 /**
  * Elevated surface. Paper-based.
  *
- * @example
- * # Default
- *
- * ```tsx
- * <Panel>
- *   <p>Make them yours.</p>
- * </Panel>
- * ```
- *
- * @example
- * # Elevation
- *
- * ```tsx
- * <Panel elevation={4}>
- *   <p>Higher up.</p>
- * </Panel>
- * ```
+ * {@include ./panel.mdx}
  */
 export default function Panel({
   elevation = 1,

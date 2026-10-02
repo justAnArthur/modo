@@ -33,18 +33,48 @@ The CLI reads `modo.config.ts` from your project root. See the [scaffolded confi
 import { defineConfig } from '@justanarthur/modo/config'
 
 export default defineConfig({
-  tokens: './tokens',
-  primitives: './primitives',
-  components: './components',
-  blocks: './blocks',
+  name: 'My DS',
+  css: './global.css',
+  examples: './examples.ts',
 })
 ```
+
+Tokens, primitives, components and blocks are discovered by directory (`tokens/`, `primitives/`, `components/`, `blocks/`). `examples` points at a module whose named exports (e.g. `export { Plus, Search } from 'lucide-react'`) are in scope in every `@example`, next to your items.
 
 The CLI accepts any user content — `modo` ships no design tokens, no React components, and no copy. You own the visual layer end-to-end.
 
 ## How it works
 
 `modo` discovers your design system files at the configured paths, parses each via a TSDoc-aware extractor, and renders an interactive docs site where the chrome (sidebar, page headers, prop tables, example cards) is structural-only. The example content is your components — `modo` doesn't generate fake components to fill the chrome.
+
+## Writing docs
+
+An item's JSDoc is Markdown: the first paragraph is the page lead, the rest renders below it; prop and example descriptions are Markdown too. Links and fenced code go through your shell `Link` / `Code`.
+
+Keep the comment short and put the rest in MDX, with TypeDoc's inline tags (paths relative to the item's `index.tsx`):
+
+```tsx
+/**
+ * Three spring speeds, exits a little faster than entrances.
+ *
+ * {@include ./motion.mdx}
+ */
+export default function Motion(/* … */) {}
+```
+
+```mdx
+import Motion from './index'
+
+## Examples
+
+### Three speeds
+
+Toggle each to feel the pace.
+
+<Motion tier="fast">…</Motion>
+```
+
+The MDX is compiled into the same build as your items (real imports, shared contexts) and renders after the description. Every top-level JSX block becomes a live example with Show code / Copy. `{@include ./x.md}` inlines plain Markdown instead; `{@includeCode ./x}` inlines a file as a code block. Includes are not recursive; a missing file is a build warning.
 
 ## Compatibility
 

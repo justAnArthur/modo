@@ -9,7 +9,7 @@ export interface ParsedItemLite {
   props: Array<{ name: string; optional: boolean }>
   /** Live Component, populated by the shell plugin when it bundles the item. */
   Component?: ComponentType<any>
-  /** file:// URL of the bundled .mjs for this item. */
+  /** Absolute path of the item's entry in the shared build (.modo-tmp/build/items/<tier>/<id>.mjs). */
   bundleUrl?: string
 }
 
@@ -21,7 +21,7 @@ export interface SlotMember {
 }
 
 export interface ShellSlot {
-  name: 'Button' | 'Link' | 'Sidebar' | 'Code' | 'Select'
+  name: 'Button' | 'Link' | 'Sidebar' | 'Code' | 'Select' | 'Icon'
   type: 'atom' | 'organism'
   userTier: Tier
   requiredProps: string[]
@@ -50,6 +50,13 @@ export const SLOTS: ShellSlot[] = [
     userTier: 'primitives',
     requiredProps: ['children'],
     fallback: 'primitives/code',
+  },
+  {
+    name: 'Icon',
+    type: 'atom',
+    userTier: 'primitives',
+    requiredProps: ['name'],
+    fallback: 'primitives/icon',
   },
   {
     name: 'Select',
@@ -94,7 +101,7 @@ export interface LoadedComponent {
   /** Path to the bundled .mjs file (when the loader created one). */
   bundlePath?: string
   /** When source is 'fallback', the name of the plain-HTML component to import. */
-  fallbackName?: 'PlainButton' | 'PlainLink' | 'PlainCode' | 'PlainSelect' | 'PlainSidebarItem' | 'PlainSidebarSection' | 'PlainSidebarRoot'
+  fallbackName?: 'PlainButton' | 'PlainLink' | 'PlainCode' | 'PlainSelect' | 'PlainIcon' | 'PlainSidebarItem' | 'PlainSidebarSection' | 'PlainSidebarRoot'
 }
 
 export interface ResolvedSidebar {
@@ -108,6 +115,7 @@ export interface ResolvedShell {
   Link: LoadedComponent
   Code: LoadedComponent
   Select: LoadedComponent
+  Icon: LoadedComponent
   Sidebar: ResolvedSidebar
 }
 
@@ -162,6 +170,11 @@ export function PlainSelect({ value, onChange, options, ...rest }: any) {
   )
 }
 
+/** Hosts without an Icon slot get the label as text. */
+export function PlainIcon({ label }: { name: string; label: string }) {
+  return <span data-modo="icon-label">{label}</span>
+}
+
 export function PlainSidebarRoot({ children }: { children?: ReactNode }) {
   return <nav data-modo="sidebar-nav">{children}</nav>
 }
@@ -189,19 +202,20 @@ const PlainSidebar = Object.assign(PlainSidebarRoot, {
 })
 
 function fallbackFor(
-  slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'SidebarRoot',
+  slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Icon' | 'SidebarRoot',
 ): ComponentType<any> {
   switch (slotName) {
     case 'Button': return PlainButton
     case 'Link': return PlainLink
     case 'Code': return PlainCode
     case 'Select': return PlainSelect
+    case 'Icon': return PlainIcon
     case 'SidebarRoot': return PlainSidebarRoot
   }
 }
 
 function omitted(
-  slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Sidebar',
+  slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Icon' | 'Sidebar',
 ): LoadedComponent {
   const fallbackName = slotName === 'Sidebar' ? 'SidebarRoot' : slotName
   return {
@@ -265,6 +279,7 @@ export async function resolveShellSlots(
     Link: await pick('Link'),
     Code: await pick('Code'),
     Select: await pick('Select'),
+    Icon: await pick('Icon'),
     Sidebar: await pick('Sidebar'),
   }
 
@@ -284,7 +299,10 @@ export async function resolveShellSlots(
     }
   }
 
-  const sidebarFromRoot = rootPicks.Sidebar.source === 'interface-match'
+  // Components are never imported node-side (the shared build is browser-only),
+  // so the root's Item/Section statics can't be inspected here. Any user-provided
+  // root owns its members; the shell resolves `Root.Item ?? Item` at runtime.
+  const sidebarFromRoot = rootPicks.Sidebar.source !== 'fallback'
   const sidebarItem = fromRoot('Item') ?? (sidebarFromRoot ? null : await pick('Sidebar', sidebarMembers.Item))
   const sidebarSection = fromRoot('Section') ?? (sidebarFromRoot ? null : await pick('Sidebar', sidebarMembers.Section))
 
@@ -308,6 +326,7 @@ export async function resolveShellSlots(
     Link: rootPicks.Link,
     Code: rootPicks.Code,
     Select: rootPicks.Select,
+    Icon: rootPicks.Icon,
     Sidebar: {
       Root: rootPicks.Sidebar,
       Item: sidebarItem ?? fallbackItem,

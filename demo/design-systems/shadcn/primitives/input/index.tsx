@@ -13,20 +13,7 @@ import { cn } from "cn"
  * shadcn/ui Input — native text field.
  * Pulled via `bunx shadcn@latest add input` (radix-nova style, neutral base color).
  *
- * @example # Basic
- * ```tsx
- * <Input placeholder="you@modo.dev" />
- * ```
- *
- * @example # Password
- * ```tsx
- * <Input type="password" placeholder="••••••••" />
- * ```
- *
- * @example # Disabled
- * ```tsx
- * <Input placeholder="Read only" disabled />
- * ```
+ * {@include ./input.mdx}
  */
 export default function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (

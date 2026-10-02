@@ -4,26 +4,7 @@ import MuiChip from '@mui/material/Chip'
 /**
  * Compact tag for entities or filtering. Thin modo adapter over MUI's Chip.
  *
- * @example
- * # Filled
- *
- * ```tsx
- * <Chip label="Material UI" />
- * ```
- *
- * @example
- * # Outlined
- *
- * ```tsx
- * <Chip label="v9" variant="outlined" color="primary" />
- * ```
- *
- * @example
- * # Deletable
- *
- * ```tsx
- * <Chip label="modo" variant="outlined" color="secondary" onDelete={() => {}} />
- * ```
+ * {@include ./chip.mdx}
  */
 export default function Chip({
   label,

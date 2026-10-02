@@ -1,23 +1,18 @@
 import type { Plugin } from 'vite'
 import type { ComponentType } from 'react'
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs'
-import { resolve, join } from 'node:path'
-import { pathToFileURL } from 'node:url'
-import { randomUUID } from 'node:crypto'
-import { parseItemSource } from '../lib/tsdoc'
 import {
   resolveShellSlots,
   type LoadedComponent,
   type ParsedItemLite,
   type ResolvedShell,
 } from '../lib/slots'
-import { loadModoConfig } from '../lib/config.loader'
-import { discoverCssForFile } from '../lib/discover-css'
-import esbuild from 'esbuild'
+import type { SiteConfig } from '../lib/schema'
+import type { Bundler, BundleResult } from './bundle'
 
 interface Options {
   userRoot: string
   libDir: string
+  bundler: Bundler
 }
 
 const SHELL_VIRTUAL = 'virtual:modo-shell'
@@ -25,80 +20,9 @@ const SHELL_RESOLVED = '\0virtual:modo-shell'
 const SHELL_CSS_VIRTUAL = 'virtual:modo-shell-css'
 const SHELL_CSS_RESOLVED = '\0virtual:modo-shell-css'
 
-function tmpDir(root: string): string {
-  return resolve(root, '.modo-tmp')
-}
-
-function ensureTmpDir(root: string): string {
-  const dir = tmpDir(root)
-  mkdirSync(dir, { recursive: true })
-  return dir
-}
-
-async function bundleToFile(filePath: string, userRoot: string, prefix: string): Promise<{ path: string }> {
-  const dir = ensureTmpDir(userRoot)
-  const outFile = join(dir, `${prefix}-${randomUUID()}.mjs`)
-  await esbuild.build({
-    entryPoints: [filePath],
-    bundle: true,
-    format: 'esm',
-    outfile: outFile,
-    // Bundles run in the browser (served via /@fs); 'browser' resolves
-    // CJS `main`-only and browser-conditional packages that 'neutral' cannot.
-    platform: 'browser',
-    target: 'es2022',
-    external: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
-    loader: { '.ts': 'ts', '.tsx': 'tsx', '.css': 'empty', '.svg': 'dataurl' },
-    jsx: 'automatic',
-    jsxImportSource: 'react',
-    logLevel: 'silent',
-  })
-  return { path: '/@fs' + outFile }
-}
-
-async function bundle(filePath: string, userRoot: string, prefix: string): Promise<{ path: string; Component: unknown }> {
-  const { path } = await bundleToFile(filePath, userRoot, prefix)
-  const absPath = path.startsWith('/@fs') ? path.slice('/@fs'.length) : path
-  const mod = (await import(pathToFileURL(absPath).href + `?p=${prefix}&t=${Date.now()}`)) as {
-    default?: unknown
-  }
-  return { path, Component: (mod.default ?? mod) as unknown }
-}
-
-async function discoverUserItems(userRoot: string): Promise<ParsedItemLite[]> {
-  const tiers = ['primitives', 'components', 'blocks'] as const
-  const items: ParsedItemLite[] = []
-  for (const tier of tiers) {
-    const tierDir = resolve(userRoot, tier)
-    if (!existsSync(tierDir)) continue
-    for (const entry of readdirSync(tierDir)) {
-      const itemDir = resolve(tierDir, entry)
-      if (!statSync(itemDir).isDirectory()) continue
-      const tsx = resolve(itemDir, 'index.tsx')
-      if (!existsSync(tsx)) continue
-      const parsed = parseItemSource(readFileSync(tsx, 'utf8'))
-      const item: ParsedItemLite = {
-        name: parsed.name || entry,
-        id: entry,
-        tier,
-        props: parsed.props.map((p) => ({ name: p.name, optional: p.optional })),
-      }
-      try {
-        const { path } = await bundleToFile(tsx, userRoot, `${tier}-${entry}`)
-        item.bundleUrl = path
-      } catch (err) {
-        console.warn(`[shell] failed to bundle ${tier}/${entry}:`, (err as Error).message)
-      }
-      items.push(item)
-    }
-  }
-  return items
-}
-
 type PanelItemExport = {
   label: string
   bundlePath: string
-  Component: unknown
   cssPaths: string[]
 }
 
@@ -107,29 +31,31 @@ type ResolvedShellExport = ResolvedShell & {
   panelItems: PanelItemExport[]
 }
 
-async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShellExport; warnings: string[] }> {
+type ShellResult = { shell: ResolvedShellExport; warnings: string[] }
+
+// Everything comes from the shared build (./bundle): items for interface
+// matching, config.shell / panel modules from its `extras`. Components are
+// only ever imported in the browser, never in node.
+async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
   const warnings: string[] = []
-  const configPath = process.env.MODO_CONFIG_PATH ?? resolve(opts.userRoot, 'modo.config.ts')
-  const config = await loadModoConfig(configPath)
-  const userItems = await discoverUserItems(opts.userRoot)
+  const config: Pick<SiteConfig, 'name' | 'shell' | 'panel'> = result.config ?? { name: '' }
+  const userItems: ParsedItemLite[] = result.items.map((it) => ({
+    name: it.name,
+    id: it.id,
+    tier: it.tier,
+    props: it.props.map((p) => ({ name: p.name, optional: p.optional })),
+    bundleUrl: it.bundlePath,
+  }))
 
   async function loadUserPath(p: string): Promise<LoadedComponent | null> {
-    const abs = resolve(opts.userRoot, p)
-    if (!existsSync(abs)) return null
-    const stat = statSync(abs)
-    let file = abs
-    if (stat.isDirectory()) {
-      const candidate = resolve(abs, 'index.tsx')
-      if (!existsSync(candidate)) return null
-      file = candidate
-    }
-    const { path, Component } = await bundle(file, opts.userRoot, `usr-${p.replace(/[^a-zA-Z0-9]+/g, '-')}`)
+    const extra = result.extras.get(p)
+    if (!extra?.hasDefault) return null
     return {
-      Component: Component as React.ComponentType<any>,
-      cssPaths: discoverCssForFile(file),
+      Component: null as unknown as ComponentType<any>,
+      cssPaths: extra.cssFiles,
       source: 'config',
       resolvedPath: p,
-      bundlePath: path,
+      bundlePath: extra.bundlePath,
     }
   }
 
@@ -149,7 +75,6 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
     panelItems.push({
       label: item.label,
       bundlePath: lc.bundlePath,
-      Component: lc.Component,
       cssPaths: lc.cssPaths,
     })
   }
@@ -157,6 +82,7 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
     ...resolved.Button.cssPaths,
     ...resolved.Link.cssPaths,
     ...resolved.Code.cssPaths,
+    ...resolved.Icon.cssPaths,
     ...resolved.Sidebar.Root.cssPaths,
     ...resolved.Sidebar.Item.cssPaths,
     ...resolved.Sidebar.Section.cssPaths,
@@ -168,6 +94,7 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
       Link: resolved.Link,
       Code: resolved.Code,
       Select: resolved.Select,
+      Icon: resolved.Icon,
       Sidebar: { Root: resolved.Sidebar.Root, Item: resolved.Sidebar.Item, Section: resolved.Sidebar.Section },
       cssFiles,
       panelItems,
@@ -177,18 +104,13 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
 }
 
 export function shellPlugin(options: Options): Plugin {
-  let cache: { shell: ResolvedShellExport; warnings: string[] } | null = null
-  let cachePromise: Promise<{ shell: ResolvedShellExport; warnings: string[] }> | null = null
+  // Cached per build result: a rebuild (bundler.invalidate) yields a new one.
+  let cache: { result: BundleResult; value: Promise<ShellResult> } | null = null
 
-  function getCache(): Promise<{ shell: ResolvedShellExport; warnings: string[] }> {
-    if (cache) return Promise.resolve(cache)
-    if (cachePromise) return cachePromise
-    cachePromise = resolveShellForUser(options).then((result) => {
-      cache = result
-      cachePromise = null
-      return result
-    })
-    return cachePromise
+  async function getCache(): Promise<ShellResult> {
+    const result = await options.bundler.get()
+    if (cache?.result !== result) cache = { result, value: resolveShellForUser(result) }
+    return cache.value
   }
 
   return {
@@ -210,6 +132,7 @@ export function shellPlugin(options: Options): Plugin {
           { name: '__Link', bundlePath: shell.Link.bundlePath, fallbackName: shell.Link.fallbackName },
           { name: '__Code', bundlePath: shell.Code.bundlePath, fallbackName: shell.Code.fallbackName },
           { name: '__Select', bundlePath: shell.Select.bundlePath, fallbackName: shell.Select.fallbackName },
+          { name: '__Icon', bundlePath: shell.Icon.bundlePath, fallbackName: shell.Icon.fallbackName },
           { name: '__SidebarRoot', bundlePath: shell.Sidebar.Root.bundlePath, fallbackName: shell.Sidebar.Root.fallbackName },
           { name: '__SidebarItem', bundlePath: shell.Sidebar.Item.bundlePath, fallbackName: shell.Sidebar.Item.fallbackName },
           { name: '__SidebarSection', bundlePath: shell.Sidebar.Section.bundlePath, fallbackName: shell.Sidebar.Section.fallbackName },
@@ -254,6 +177,7 @@ export function shellPlugin(options: Options): Plugin {
           `  Link: __Link,`,
           `  Code: __Code,`,
           `  Select: __Select,`,
+          `  Icon: __Icon,`,
           `  Sidebar: { Root: __SidebarRoot, Item: (__SidebarRoot && __SidebarRoot.Item) ?? __SidebarItem, Section: (__SidebarRoot && __SidebarRoot.Section) ?? __SidebarSection },`,
           `  primitives: __primitives,`,
           `};`,

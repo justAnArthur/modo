@@ -8,34 +8,7 @@ import MenuItem from '@mui/material/MenuItem'
  * `(value: string) => void`. The docs chrome and the demo switcher render
  * with this component.
  *
- * @example
- * # Framework
- *
- * ```tsx
- * <Select
- *   value="mui"
- *   options={[
- *     { value: 'filled', label: 'filled' },
- *     { value: 'shadcn', label: 'shadcn/ui' },
- *     { value: 'mui', label: 'MUI' },
- *   ]}
- *   onChange={() => {}}
- * />
- * ```
- *
- * @example
- * # With label
- *
- * ```tsx
- * <Select
- *   label="Density"
- *   value="comfortable"
- *   options={[
- *     { value: 'compact', label: 'Compact' },
- *     { value: 'comfortable', label: 'Comfortable' },
- *   ]}
- * />
- * ```
+ * {@include ./select.mdx}
  */
 export default function Select({
   value,

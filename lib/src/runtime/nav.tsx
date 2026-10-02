@@ -1,12 +1,13 @@
 import { items } from 'virtual:modo-items'
 import { tokens } from 'virtual:modo-tokens'
 import { shell } from 'virtual:modo-shell'
+import { usePath } from './router'
 
 const TIERS = ['primitives', 'components', 'blocks'] as const
 const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1)
 
 export function SidebarNav() {
-  const path = typeof window !== 'undefined' ? window.location.pathname : '/'
+  const path = usePath()
   const isActive = (href: string) => path === href || (href !== '/' && path.startsWith(href))
   return (
     <>

@@ -3,12 +3,7 @@ import './link.css'
 /**
  * Inline anchor.
  *
- * @example
- * # Default
- *
- * ```tsx
- * <Link href="/docs">Read the docs</Link>
- * ```
+ * {@include ./link.mdx}
  */
 export default function Link({ href, children }: {
   /** Target URL. */

@@ -1,3 +1,4 @@
 :root {
-  /* radius tokens */
+  /* Fluid Functionalism's corner token (upstream tokens/radius.css). */
+  --radius: 0.625rem;
 }

@@ -39,6 +39,7 @@
     "dist",
     "src/runtime",
     "src/lib",
+    "src/plugins",
     "src/exports",
     "templates",
     "README.md"
@@ -70,9 +71,12 @@
   },
   "dependencies": {
     "@babel/standalone": "^7.24.0",
+    "@mdx-js/esbuild": "^3.1.1",
     "esbuild": "^0.20.0",
+    "marked": "^18.0.14",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
+    "remark-gfm": "^4.0.1",
     "zod": "^3.23.0"
   },
   "devDependencies": {

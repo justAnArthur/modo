@@ -6,4 +6,5 @@ export default defineConfig({
     'shadcn/ui (Radix flavor, neutral) pulled with the shadcn CLI, reorganized into modo structure.',
   css: './global.css',
   vite: './vite.ts',
+  shell: { Icon: './_shell/icon.tsx' },
 })

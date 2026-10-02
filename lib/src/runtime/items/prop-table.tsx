@@ -1,4 +1,5 @@
 import { props as propsMap } from 'virtual:modo-items'
+import { Markdown } from '../markdown'
 
 export function PropTable({ itemId }: { itemId: string }) {
   const list = propsMap[itemId] ?? []
@@ -24,7 +25,7 @@ export function PropTable({ itemId }: { itemId: string }) {
               <code>{p.type}</code>
             </td>
             <td>{p.default ? <code>{p.default}</code> : <small>—</small>}</td>
-            <td>{p.description ?? ''}</td>
+            <td>{p.description ? <Markdown source={p.description} inline /> : null}</td>
           </tr>
         ))}
       </tbody>

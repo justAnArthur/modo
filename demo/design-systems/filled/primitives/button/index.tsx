@@ -3,19 +3,7 @@ import './button.css'
 /**
  * Triggers an action.
  *
- * @example
- * # Default
- *
- * ```tsx
- * <Button>Save</Button>
- * ```
- *
- * @example
- * # Secondary
- *
- * ```tsx
- * <Button variant="secondary">Cancel</Button>
- * ```
+ * {@include ./button.mdx}
  */
 export default function Button({
   variant = 'primary',

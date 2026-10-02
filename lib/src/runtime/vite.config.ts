@@ -7,6 +7,7 @@ import { configPlugin } from '../plugins/config'
 import { tokensPlugin } from '../plugins/tokens'
 import { itemsPlugin } from '../plugins/items'
 import { shellPlugin } from '../plugins/shell'
+import { createBundler } from '../plugins/bundle'
 import { loadModoConfig } from '../lib/config.loader'
 
 // The CLI sets MODO_USER_ROOT before spawning Vite and chdirs to the runtime
@@ -14,6 +15,7 @@ import { loadModoConfig } from '../lib/config.loader'
 const RUNTIME_DIR = resolve(import.meta.dirname)
 const LIB_DIR = resolve(RUNTIME_DIR, '..', '..')
 const USER_ROOT = process.env.MODO_USER_ROOT ?? process.cwd()
+const CONFIG_PATH = process.env.MODO_CONFIG_PATH ?? resolve(USER_ROOT, 'modo.config.ts')
 
 // Bun hoists workspace deps into the monorepo root's node_modules/.bun store;
 // without that root in fs.allow, Vite 403s font URLs resolved into it.
@@ -33,9 +35,8 @@ type ViteExtension = (config: UserConfig) => UserConfig | Promise<UserConfig>
 // The extension module is imported natively (never esbuild-bundled) so plugins
 // with native binaries like @tailwindcss/vite work unchanged.
 async function applyUserViteExtension(base: UserConfig): Promise<UserConfig> {
-  const configPath = process.env.MODO_CONFIG_PATH ?? resolve(USER_ROOT, 'modo.config.ts')
   // configPlugin reports config errors with full detail once Vite starts.
-  const cfg = await loadModoConfig(configPath).catch(() => null)
+  const cfg = await loadModoConfig(CONFIG_PATH).catch(() => null)
   if (!cfg?.vite) return base
 
   const extPath = resolve(USER_ROOT, cfg.vite)
@@ -48,19 +49,24 @@ async function applyUserViteExtension(base: UserConfig): Promise<UserConfig> {
 }
 
 export default defineConfig(async () => {
+  // One esbuild build shared by the items and shell plugins (see plugins/bundle.ts).
+  const bundler = createBundler({ userRoot: USER_ROOT, configPath: CONFIG_PATH })
   const base: UserConfig = {
     root: RUNTIME_DIR,
     plugins: [
       configPlugin({ userRoot: USER_ROOT }),
       tokensPlugin({ userRoot: USER_ROOT }),
-      itemsPlugin({ userRoot: USER_ROOT }),
-      shellPlugin({ userRoot: USER_ROOT, libDir: LIB_DIR }),
+      itemsPlugin({ userRoot: USER_ROOT, bundler }),
+      shellPlugin({ userRoot: USER_ROOT, libDir: LIB_DIR, bundler }),
       react(),
     ],
     server: {
       host: '127.0.0.1',
       port: Number(process.env.MODO_PORT) || 5173,
       strictPort: true,
+      // Build output is rewritten on every rebuild; the items plugin reloads
+      // on *source* changes and invalidates the outputs itself.
+      watch: { ignored: ['**/.modo-tmp/**'] },
       fs: {
         allow: [
           workspaceRoot(USER_ROOT),
@@ -72,7 +78,7 @@ export default defineConfig(async () => {
       },
     },
     optimizeDeps: {
-      include: ['react', 'react-dom', 'react-dom/client'],
+      include: ['react', 'react-dom', 'react-dom/client', 'marked'],
     },
     build: {
       outDir: resolve(RUNTIME_DIR, 'dist'),

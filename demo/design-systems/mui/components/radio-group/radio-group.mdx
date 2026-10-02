@@ -1,0 +1,26 @@
+import RadioGroup from './index'
+
+## Examples
+
+### Stack
+
+<RadioGroup
+  defaultValue="dark"
+  options={[
+    { value: 'light', label: 'Light' },
+    { value: 'dark', label: 'Dark' },
+    { value: 'system', label: 'System' },
+  ]}
+/>
+
+### Row with label
+
+<RadioGroup
+  label="Density"
+  row
+  defaultValue="comfortable"
+  options={[
+    { value: 'compact', label: 'Compact' },
+    { value: 'comfortable', label: 'Comfortable' },
+  ]}
+/>

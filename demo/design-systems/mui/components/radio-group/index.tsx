@@ -10,34 +10,7 @@ import Radio from '@mui/material/Radio'
  * plus FormControlLabel-wrapped Radios generated from `options`; pass
  * children instead for full control.
  *
- * @example
- * # Stack
- *
- * ```tsx
- * <RadioGroup
- *   defaultValue="dark"
- *   options={[
- *     { value: 'light', label: 'Light' },
- *     { value: 'dark', label: 'Dark' },
- *     { value: 'system', label: 'System' },
- *   ]}
- * />
- * ```
- *
- * @example
- * # Row with label
- *
- * ```tsx
- * <RadioGroup
- *   label="Density"
- *   row
- *   defaultValue="comfortable"
- *   options={[
- *     { value: 'compact', label: 'Compact' },
- *     { value: 'comfortable', label: 'Comfortable' },
- *   ]}
- * />
- * ```
+ * {@include ./radio-group.mdx}
  */
 export default function RadioGroup({
   options,

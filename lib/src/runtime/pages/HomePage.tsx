@@ -1,6 +1,7 @@
 import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
+import { Inlines, splitLead } from '../markdown'
 
 const Link = shell.Link
 const TIERS = ['primitives', 'components', 'blocks'] as const
@@ -47,12 +48,15 @@ function TierSection({ title, tier, list }: {
     <section data-modo="section">
       <h2 data-modo="section-title">{title}</h2>
       <ul>
-        {list.map((it) => (
-          <li key={it.id}>
-            <Link href={`/docs/${tier}/${it.id}`}>{it.name}</Link>
-            {it.description ? <> — <span>{it.description.split('\n')[0]}</span></> : null}
-          </li>
-        ))}
+        {list.map((it) => {
+          const { lead } = splitLead(it.description)
+          return (
+            <li key={it.id}>
+              <Link href={`/docs/${tier}/${it.id}`}>{it.name}</Link>
+              {lead ? <> — <span><Inlines tokens={lead.tokens}/></span></> : null}
+            </li>
+          )
+        })}
       </ul>
     </section>
   )

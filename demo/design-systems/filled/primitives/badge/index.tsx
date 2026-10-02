@@ -3,19 +3,7 @@ import './badge.css'
 /**
  * Inline status pill.
  *
- * @example
- * # Default
- *
- * ```tsx
- * <Badge>New</Badge>
- * ```
- *
- * @example
- * # Outline
- *
- * ```tsx
- * <Badge variant="outline">Beta</Badge>
- * ```
+ * {@include ./badge.mdx}
  */
 export default function Badge({
   variant = 'default',
