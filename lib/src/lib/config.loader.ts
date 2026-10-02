@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
-import { resolve, join } from 'node:path'
+import { dirname, resolve, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { randomUUID } from 'node:crypto'
 import esbuild from 'esbuild'
@@ -31,8 +31,12 @@ export async function loadModoConfig(configPath: string): Promise<SiteConfig> {
   ensureCacheDir()
   const outFile = join(cacheDir, `modo-config-${randomUUID()}.mjs`)
   try {
+    // Metafile input paths are relative to absWorkingDir; pin it rather than
+    // trust the process cwd (the CLI chdirs to the runtime after esbuild starts).
+    const workDir = dirname(configPath)
     const { metafile } = await esbuild.build({
       entryPoints: [configPath],
+      absWorkingDir: workDir,
       metafile: true,
       bundle: true,
       format: 'esm',
@@ -55,7 +59,7 @@ export async function loadModoConfig(configPath: string): Promise<SiteConfig> {
       throw err
     }
     const config = siteConfigSchema.parse(mod.default ?? mod)
-    const inputs = Object.keys(metafile.inputs).map((p) => resolve(p))
+    const inputs = Object.keys(metafile.inputs).map((p) => resolve(workDir, p))
     cache.set(configPath, { inputs, stamp: stampOf(inputs), config })
     return config
   } finally {
