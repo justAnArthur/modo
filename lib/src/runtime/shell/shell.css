@@ -130,78 +130,106 @@
   margin: 0 0 var(--space-5, 24px);
 }
 
-/* Rendered TSDoc Markdown. Unlayered on purpose: a host reset in a cascade
-   layer (Tailwind / UnoCSS preflight) would otherwise strip list markers and
-   heading sizes. Restyle through the same attr. */
+/* Rendered TSDoc Markdown and MDX. Unlayered on purpose: a host reset in a
+   cascade layer (Tailwind / UnoCSS preflight) would otherwise strip list
+   markers and heading sizes. Scoped down to example cards, so a live example
+   never picks up prose typography. Restyle through the same attr. */
 [data-modo="prose"] {
-  max-width: var(--modo-measure, 72ch);
-  line-height: 1.65;
   margin: 0 0 var(--space-6, 32px);
 }
 
-[data-modo="prose"] > *,
-[data-modo="prose"] li > * {
-  margin: 0;
+[data-modo="prose"] > [data-modo="example-card"] {
+  margin-top: var(--space-3, 12px);
 }
 
-[data-modo="prose"] > * + *,
-[data-modo="prose"] li > * + * {
-  margin-top: 0.75em;
+@scope ([data-modo="prose"]) to ([data-modo="example-card"]) {
+  /* Measure and leading per block (not on the container, where they would
+     reach the example cards): cards keep the full content width. */
+  :scope > * {
+    max-width: var(--modo-measure, 72ch);
+    line-height: 1.65;
+    margin: 0;
+  }
+
+  li > * {
+    margin: 0;
+  }
+
+  :scope > * + *,
+  li > * + * {
+    margin-top: 0.75em;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  :is(h2, h3, h4, h5, h6) {
+    font-weight: 600;
+    line-height: 1.3;
+    text-wrap: balance;
+  }
+
+  :scope > :is(h2, h3, h4, h5, h6) {
+    margin-top: 1.75em;
+  }
+
+  :scope > :is(h2, h3, h4, h5, h6) + * {
+    margin-top: 0.5em;
+  }
+
+  h2 { font-size: 1.25em; }
+  h3 { font-size: 1.1em; }
+  :is(h4, h5, h6) { font-size: 1em; }
+
+  :is(ul, ol) {
+    padding-inline-start: 1.25em;
+  }
+
+  ul { list-style: disc; }
+  ol { list-style: decimal; }
+
+  li + li {
+    margin-top: 0.35em;
+  }
+
+  a {
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  blockquote {
+    border-inline-start: 2px solid var(--border);
+    padding-inline-start: 1em;
+    color: var(--muted-foreground);
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.875rem;
+  }
+
+  :is(th, td) {
+    border-bottom: 1px solid var(--border);
+    padding: var(--space-2, 8px);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    font-weight: 600;
+  }
 }
-
-[data-modo="prose"] p {
-  text-wrap: pretty;
-}
-
-[data-modo="prose"] :is(h2, h3, h4, h5, h6) {
-  font-weight: 600;
-  line-height: 1.3;
-  text-wrap: balance;
-}
-
-[data-modo="prose"] > :is(h2, h3, h4, h5, h6) {
-  margin-top: 1.75em;
-}
-
-[data-modo="prose"] > :is(h2, h3, h4, h5, h6) + * {
-  margin-top: 0.5em;
-}
-
-[data-modo="prose"] h2 { font-size: 1.25em; }
-[data-modo="prose"] h3 { font-size: 1.1em; }
-[data-modo="prose"] :is(h4, h5, h6) { font-size: 1em; }
-
-[data-modo="prose"] :is(ul, ol) {
-  padding-inline-start: 1.25em;
-}
-
-[data-modo="prose"] ul { list-style: disc; }
-[data-modo="prose"] ol { list-style: decimal; }
-
-[data-modo="prose"] li + li {
-  margin-top: 0.35em;
-}
-
-[data-modo="prose"] a {
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
-}
-
-[data-modo="prose"] blockquote {
-  border-inline-start: 2px solid var(--border);
-  padding-inline-start: 1em;
-  color: var(--muted-foreground);
-}
-
-[data-modo="prose"] hr {
-  border: 0;
-  border-top: 1px solid var(--border);
-}
-
-[data-modo="prose"] img {
-  max-width: 100%;
-}
-
 
 [data-modo="section"] {
   margin: 0 0 var(--space-6, 32px);
@@ -331,23 +359,20 @@
   padding-inline-start: var(--space-3, 12px);
 }
 
-[data-modo="prop-table"],
-[data-modo="prose"] table {
+[data-modo="prop-table"] {
   border-collapse: collapse;
   width: 100%;
   font-size: 0.875rem;
 }
 
-[data-modo="prop-table"] :is(th, td),
-[data-modo="prose"] :is(th, td) {
+[data-modo="prop-table"] :is(th, td) {
   border-bottom: 1px solid var(--border);
   padding: var(--space-2, 8px);
   text-align: left;
   vertical-align: top;
 }
 
-[data-modo="prop-table"] th,
-[data-modo="prose"] th {
+[data-modo="prop-table"] th {
   font-weight: 600;
 }
 

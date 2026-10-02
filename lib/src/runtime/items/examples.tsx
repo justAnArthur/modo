@@ -16,11 +16,7 @@ export function ItemExamples({ examples }: { examples: ParsedExample[] }) {
   return (
     <section data-modo="section">
       <h2 data-modo="section-title" id="examples">Examples<Anchor id="examples" label="Examples" /></h2>
-      {examples.length === 0 ? (
-        <p>No examples documented.</p>
-      ) : (
-        examples.map((ex, i) => <ExampleCard key={i} example={ex} />)
-      )}
+      {examples.map((ex, i) => <ExampleCard key={i} example={ex} />)}
     </section>
   )
 }
@@ -40,13 +36,8 @@ class ExampleBoundary extends Component<{ children: ReactNode }, { failed: boole
 }
 
 function ExampleCard({ example }: { example: ParsedExample }) {
-  const { Code, Button, Icon } = shell
-  const [open, setOpen] = useState(false)
   const compiled = compileExampleBody(example.code)
-  const rendered = isCompiledExample(compiled) ? compiled(bindings) : null
-  const code = displayCode(example.code)
   const id = example.title ? `example-${slug(example.title)}` : undefined
-  const codeLabel = open ? 'Hide code' : 'Show code'
   return (
     <div data-modo="example-card">
       {example.title && id ? (
@@ -60,22 +51,34 @@ function ExampleCard({ example }: { example: ParsedExample }) {
           <Markdown source={example.description} />
         </div>
       ) : null}
-      <div data-modo="example-card-frame">
-        <div data-modo="example-card-stage">
-          <ExampleBoundary key={example.code}>{rendered}</ExampleBoundary>
-        </div>
-        <div data-modo="example-actions">
-          <CopyButton text={code} />
-          <Button variant="ghost" size="icon-sm" aria-label={codeLabel} aria-pressed={open} onClick={() => setOpen((o) => !o)}>
-            <Icon name="code" label={codeLabel} />
-          </Button>
-        </div>
-        {open && (
-          <div data-modo="example-code">
-            <Code language="tsx">{code}</Code>
-          </div>
-        )}
+      <ExampleFrame code={displayCode(example.code)}>
+        {isCompiledExample(compiled) ? compiled(bindings) : null}
+      </ExampleFrame>
+    </div>
+  )
+}
+
+/** The live stage, its hover-revealed Copy / Code corner and the code panel. */
+export function ExampleFrame({ code, children }: { code: string; children: ReactNode }) {
+  const { Code, Button, Icon } = shell
+  const [open, setOpen] = useState(false)
+  const codeLabel = open ? 'Hide code' : 'Show code'
+  return (
+    <div data-modo="example-card-frame">
+      <div data-modo="example-card-stage">
+        <ExampleBoundary key={code}>{children}</ExampleBoundary>
       </div>
+      <div data-modo="example-actions">
+        <CopyButton text={code} />
+        <Button variant="ghost" size="icon-sm" aria-label={codeLabel} aria-pressed={open} onClick={() => setOpen((o) => !o)}>
+          <Icon name="code" label={codeLabel} />
+        </Button>
+      </div>
+      {open && (
+        <div data-modo="example-code">
+          <Code language="tsx">{code}</Code>
+        </div>
+      )}
     </div>
   )
 }

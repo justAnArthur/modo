@@ -51,25 +51,30 @@ The CLI accepts any user content — `modo` ships no design tokens, no React com
 
 An item's JSDoc is Markdown: the first paragraph is the page lead, the rest renders below it; prop and example descriptions are Markdown too. Links and fenced code go through your shell `Link` / `Code`.
 
-Keep the comment short by pulling content from files, with TypeDoc's inline tags (paths relative to the item's `index.tsx`):
+Keep the comment short and put the rest in MDX, with TypeDoc's inline tags (paths relative to the item's `index.tsx`):
 
 ```tsx
 /**
  * Three spring speeds, exits a little faster than entrances.
  *
- * {@include ./motion.md}
- *
- * @example
- * # Three speeds
- *
- * Toggle each to feel the pace.
- *
- * {@includeCode ./examples/three-speeds.tsx}
+ * {@include ./motion.mdx}
  */
 export default function Motion(/* … */) {}
 ```
 
-`{@include}` inlines a Markdown file; `{@includeCode}` inlines a file as a fenced block — inside an `@example`, it is the example's code. An example file is real TSX (leading imports for typechecking are stripped, then the JSX), so it typechecks and may use comments. Includes are not recursive; a missing file is a build warning.
+```mdx
+import Motion from './index'
+
+## Examples
+
+### Three speeds
+
+Toggle each to feel the pace.
+
+<Motion tier="fast">…</Motion>
+```
+
+The MDX is compiled into the same build as your items (real imports, shared contexts) and renders after the description. Every top-level JSX block becomes a live example with Show code / Copy. `{@include ./x.md}` inlines plain Markdown instead; `{@includeCode ./x}` inlines a file as a code block. Includes are not recursive; a missing file is a build warning.
 
 ## Compatibility
 
