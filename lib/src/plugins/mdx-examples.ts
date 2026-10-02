@@ -9,6 +9,14 @@ interface Node {
   position?: { start: { offset?: number }; end: { offset?: number } }
 }
 
+// MDX parses multi-line text inside JSX as Markdown paragraphs; an example is
+// TSX, so its text stays inline (a <p> inside a <p> would be invalid DOM).
+function unwrapParagraphs(node: Node): Node[] {
+  if (!node.children) return [node]
+  const children = node.children.flatMap(unwrapParagraphs)
+  return node.type === 'paragraph' ? children : [{ ...node, children }]
+}
+
 export function remarkModoExamples() {
   return (tree: Node, file: { value: unknown }) => {
     const source = String(file.value)
@@ -19,7 +27,7 @@ export function remarkModoExamples() {
         type: 'mdxJsxFlowElement',
         name: 'ModoExample',
         attributes: [{ type: 'mdxJsxAttribute', name: 'code', value: code }],
-        children: [node],
+        children: unwrapParagraphs(node),
       }
     })
   }
