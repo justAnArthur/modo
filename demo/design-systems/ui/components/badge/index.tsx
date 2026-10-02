@@ -14,77 +14,74 @@
  *   `text-<role>[-compact]`; literal colors → color tokens.
  */
 
-import { forwardRef, type HTMLAttributes } from "react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { cn } from "../../lib/utils";
-import { useShape } from "../../lib/shape-context";
-import { useSizeVariant } from "../../lib/size-context";
+import { forwardRef, type HTMLAttributes } from 'react'
+import { cva, type VariantProps } from 'class-variance-authority'
+import { cn } from '../../lib/utils'
+import { useShape } from '../../lib/shape-context'
+import { useSizeVariant } from '../../lib/size-context'
 
 const badgeColors = {
-  gray: "var(--badge-gray)",
-  red: "var(--badge-red)",
-  orange: "var(--badge-orange)",
-  amber: "var(--badge-amber)",
-  yellow: "var(--badge-yellow)",
-  lime: "var(--badge-lime)",
-  green: "var(--badge-green)",
-  emerald: "var(--badge-emerald)",
-  teal: "var(--badge-teal)",
-  cyan: "var(--badge-cyan)",
-  blue: "var(--badge-blue)",
-  indigo: "var(--badge-indigo)",
-  violet: "var(--badge-violet)",
-  purple: "var(--badge-purple)",
-  fuchsia: "var(--badge-fuchsia)",
-  pink: "var(--badge-pink)",
-  rose: "var(--badge-rose)",
-} as const;
+  gray: 'var(--badge-gray)',
+  red: 'var(--badge-red)',
+  orange: 'var(--badge-orange)',
+  amber: 'var(--badge-amber)',
+  yellow: 'var(--badge-yellow)',
+  lime: 'var(--badge-lime)',
+  green: 'var(--badge-green)',
+  emerald: 'var(--badge-emerald)',
+  teal: 'var(--badge-teal)',
+  cyan: 'var(--badge-cyan)',
+  blue: 'var(--badge-blue)',
+  indigo: 'var(--badge-indigo)',
+  violet: 'var(--badge-violet)',
+  purple: 'var(--badge-purple)',
+  fuchsia: 'var(--badge-fuchsia)',
+  pink: 'var(--badge-pink)',
+  rose: 'var(--badge-rose)',
+} as const
 
-type BadgeColor = keyof typeof badgeColors;
+type BadgeColor = keyof typeof badgeColors
 
-const badgeVariants = cva(
-  "inline-flex items-center font-medium whitespace-nowrap",
-  {
-    variants: {
-      variant: {
-        solid: "",
-        dot: "border border-border text-foreground",
-      },
-      // The two-step size ladder shared by every control — see /docs/sizes.
-      size: {
-        default: "h-6 px-2.5 text-caption gap-1.5",
-        compact: "h-5 px-2 text-caption-compact gap-1",
-      },
+const badgeVariants = cva('inline-flex items-center font-medium whitespace-nowrap', {
+  variants: {
+    variant: {
+      solid: '',
+      dot: 'border border-border text-foreground',
     },
-    defaultVariants: {
-      variant: "solid",
-      size: "default",
+    // The two-step size ladder shared by every control — see /docs/sizes.
+    size: {
+      default: 'h-6 px-2.5 text-caption gap-1.5',
+      compact: 'h-5 px-2 text-caption-compact gap-1',
     },
-  }
-);
+  },
+  defaultVariants: {
+    variant: 'solid',
+    size: 'default',
+  },
+})
 
-type BadgeSizeCanonical = "default" | "compact";
+type BadgeSizeCanonical = 'default' | 'compact'
 
 /** Public size values: the canonical two-size scale plus the pre-sizes-system
  *  aliases, kept so existing call sites keep compiling. Aliases resolve onto
  *  the canonical ladder (sm → compact; md/lg → default). */
-type BadgeSize = BadgeSizeCanonical | "sm" | "md" | "lg";
+type BadgeSize = BadgeSizeCanonical | 'sm' | 'md' | 'lg'
 
 const legacySizeAliases: Partial<Record<BadgeSize, BadgeSizeCanonical>> = {
-  sm: "compact",
-  md: "default",
-  lg: "default",
-};
+  sm: 'compact',
+  md: 'default',
+  lg: 'default',
+}
 
 interface BadgeProps
-  extends Omit<HTMLAttributes<HTMLSpanElement>, "color">,
-    Omit<VariantProps<typeof badgeVariants>, "size"> {
+  extends Omit<HTMLAttributes<HTMLSpanElement>, 'color'>,
+    Omit<VariantProps<typeof badgeVariants>, 'size'> {
   /** Visual style. Solid uses a tinted background; dot shows a colored indicator. Defaults to `"solid"`. */
-  variant?: "solid" | "dot";
+  variant?: 'solid' | 'dot'
   /** Step on the size ladder (see Sizes). Legacy sm/md/lg values resolve as aliases (sm → compact; md/lg → default). Defaults to the surrounding SizeProvider, else `"default"`. */
-  size?: BadgeSize;
+  size?: BadgeSize
   /** Color from the Tailwind palette: gray, red, orange, amber, yellow, lime, green, emerald, teal, cyan, blue, indigo, violet, purple, fuchsia, pink, rose. Defaults to `"gray"`. */
-  color?: BadgeColor;
+  color?: BadgeColor
 }
 
 /**
@@ -101,41 +98,30 @@ interface BadgeProps
  * @example {@include ./examples.mdx}
  */
 const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
-  (
-    {
-      className,
-      variant = "solid",
-      size: sizeProp,
-      color = "gray",
-      children,
-      style,
-      ...props
-    },
-    ref
-  ) => {
-    const shape = useShape();
+  ({ className, variant = 'solid', size: sizeProp, color = 'gray', children, style, ...props }, ref) => {
+    const shape = useShape()
     // Resolve the size: explicit prop (legacy aliases mapped onto the
     // canonical ladder) > surrounding SizeProvider > default.
-    const contextSize = useSizeVariant();
+    const contextSize = useSizeVariant()
     const size: BadgeSizeCanonical = sizeProp
-      ? legacySizeAliases[sizeProp] ?? (sizeProp as BadgeSizeCanonical)
-      : contextSize === "compact"
-        ? "compact"
-        : "default";
-    const colorValue = badgeColors[color];
-    const isSolid = variant === "solid";
-    const dotSize = size === "compact" ? 6 : 7;
+      ? (legacySizeAliases[sizeProp] ?? (sizeProp as BadgeSizeCanonical))
+      : contextSize === 'compact'
+        ? 'compact'
+        : 'default'
+    const colorValue = badgeColors[color]
+    const isSolid = variant === 'solid'
+    const dotSize = size === 'compact' ? 6 : 7
 
     const colorStyle = isSolid
-      ? color === "gray"
-        ? { backgroundColor: "var(--accent)", color: "var(--foreground)" }
+      ? color === 'gray'
+        ? { backgroundColor: 'var(--accent)', color: 'var(--foreground)' }
         : {
-            color: "var(--foreground)",
+            color: 'var(--foreground)',
             backgroundColor: `color-mix(in srgb, ${colorValue} 15%, var(--background))`,
           }
-      : {};
+      : {}
 
-    const dotColor = color === "gray" ? "var(--muted-foreground)" : colorValue;
+    const dotColor = color === 'gray' ? 'var(--muted-foreground)' : colorValue
 
     return (
       <span
@@ -159,13 +145,13 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
             so trimming only recenters the letterforms. */}
         <span className="[text-box:trim-both_cap_alphabetic]">{children}</span>
       </span>
-    );
-  }
-);
+    )
+  },
+)
 
-Badge.displayName = "Badge";
+Badge.displayName = 'Badge'
 
-export { Badge, badgeVariants, badgeColors };
-export type { BadgeProps, BadgeColor, BadgeSize };
+export { Badge, badgeVariants, badgeColors }
+export type { BadgeProps, BadgeColor, BadgeSize }
 
 export default Badge

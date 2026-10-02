@@ -6,7 +6,10 @@ import Button from '../../primitives/button'
  *
  * @example {@include ./examples.mdx}
  */
-export default function Card({ title, children }: {
+export default function Card({
+  title,
+  children,
+}: {
   /** Card heading. */
   title: string
   /** Card body. */

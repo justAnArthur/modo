@@ -9,20 +9,18 @@ export function Shell({ children }: { children: ReactNode }) {
     <div data-modo="app">
       <aside data-modo="sidebar">
         <Root>
-          <SidebarNav/>
+          <SidebarNav />
         </Root>
       </aside>
 
-      <main data-modo="content">
-        {children}
-      </main>
+      <main data-modo="content">{children}</main>
 
       <aside data-modo="panel">
         <Root>
-          <Toc/>
+          <Toc />
           {panelItems.map((item, i) => (
             <Section key={`${i}-${item.label}`} title={item.label}>
-              <item.Component shell={shell}/>
+              <item.Component shell={shell} />
             </Section>
           ))}
         </Root>

@@ -1,10 +1,4 @@
-import {
-  Select as ShadcnSelect,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './select'
+import { Select as ShadcnSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 
 /**
  * shadcn/ui Select — single-choice dropdown backed by Radix.
@@ -14,7 +8,13 @@ import {
  *
  * @example {@include ./examples.mdx}
  */
-export default function Select({ value, onChange, options, placeholder = 'Select an option', size = 'default' }: {
+export default function Select({
+  value,
+  onChange,
+  options,
+  placeholder = 'Select an option',
+  size = 'default',
+}: {
   /** Currently selected value. */
   value: string
   /** Called with the newly selected value. */
@@ -32,7 +32,7 @@ export default function Select({ value, onChange, options, placeholder = 'Select
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {options.map((option) => (
+        {options.map(option => (
           <SelectItem key={option.value} value={option.value}>
             {option.label}
           </SelectItem>

@@ -8,7 +8,11 @@ import { Link as ShadcnLink } from './link'
  *
  * @example {@include ./examples.mdx}
  */
-export default function Link({ href, variant = 'link', children }: {
+export default function Link({
+  href,
+  variant = 'link',
+  children,
+}: {
   /** Navigation target. */
   href: string
   /** Visual style, reused from the Button variants. @values link, default, destructive, outline, secondary, ghost */

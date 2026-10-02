@@ -25,8 +25,8 @@
  */
 
 :root {
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 
   /* Page titles. */
   --text-display: 28px;
@@ -51,8 +51,8 @@
 
   /* Inter variable weights, each paired with the opsz that keeps a label's
      advance width steady as it changes weight. */
-  --weight-normal: 'wght' 400, 'opsz' 14;
-  --weight-medium: 'wght' 450, 'opsz' 15;
-  --weight-semibold: 'wght' 550, 'opsz' 18;
-  --weight-bold: 'wght' 700, 'opsz' 25;
+  --weight-normal: "wght" 400, "opsz" 14;
+  --weight-medium: "wght" 450, "opsz" 15;
+  --weight-semibold: "wght" 550, "opsz" 18;
+  --weight-bold: "wght" 700, "opsz" 25;
 }

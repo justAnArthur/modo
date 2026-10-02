@@ -64,8 +64,8 @@ export function compileExampleBody(code: string): ExampleRenderer | string {
       let fn = fns.get(scope)
       if (!fn) {
         const decls = identifiers
-          .filter((n) => !RESERVED.has(n) && Object.prototype.hasOwnProperty.call(scope, n))
-          .map((n) => `var ${n} = __scope[${JSON.stringify(n)}];`)
+          .filter(n => !RESERVED.has(n) && Object.prototype.hasOwnProperty.call(scope, n))
+          .map(n => `var ${n} = __scope[${JSON.stringify(n)}];`)
           .join('\n')
         fn = new Function('React', '__scope', `${decls}\n${js}`) as (
           react: typeof REACT_STUB,

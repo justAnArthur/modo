@@ -33,13 +33,8 @@ export default function RadioGroup({
   const group = (
     <MuiRadioGroup defaultValue={defaultValue} row={row}>
       {children ??
-        (options ?? []).map((option) => (
-          <FormControlLabel
-            key={option.value}
-            value={option.value}
-            control={<Radio />}
-            label={option.label}
-          />
+        (options ?? []).map(option => (
+          <FormControlLabel key={option.value} value={option.value} control={<Radio />} label={option.label} />
         ))}
     </MuiRadioGroup>
   )

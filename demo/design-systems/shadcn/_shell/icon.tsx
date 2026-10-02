@@ -9,7 +9,9 @@ import { Check, CodeXml, Copy, Link2 } from 'lucide-react'
 
 const icons = { code: CodeXml, copy: Copy, check: Check, link: Link2 }
 
-export default function Icon({ name }: {
+export default function Icon({
+  name,
+}: {
   /** Which chrome icon to draw. */
   name: keyof typeof icons
   /** Accessible text; the button around the icon carries it. */

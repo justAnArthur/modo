@@ -93,7 +93,7 @@ export function groupForVar(name: string): GroupName | null {
 export function buildGroup(name: GroupName, vars: ParsedVar[]): Group {
   return {
     name,
-    vars: vars.map((v) => ({ ...v, swatch: buildSwatch(name, v.value) })),
+    vars: vars.map(v => ({ ...v, swatch: buildSwatch(name, v.value) })),
   }
 }
 
@@ -113,7 +113,13 @@ function colorSwatch(value: string): ColorSwatch | undefined {
   const hex = v.match(/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i)
   if (hex) {
     const h = hex[1]!
-    const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h.slice(0, 6)
+    const full =
+      h.length === 3
+        ? h
+            .split('')
+            .map(c => c + c)
+            .join('')
+        : h.slice(0, 6)
     const r = parseInt(full.slice(0, 2), 16)
     const g = parseInt(full.slice(2, 4), 16)
     const b = parseInt(full.slice(4, 6), 16)
@@ -121,7 +127,7 @@ function colorSwatch(value: string): ColorSwatch | undefined {
   }
   const rgb = v.match(/^rgba?\(([^)]+)\)$/i)
   if (rgb) {
-    const parts = rgb[1]!.split(',').map((s) => s.trim())
+    const parts = rgb[1]!.split(',').map(s => s.trim())
     const r = parseChannel(parts[0])
     const g = parseChannel(parts[1])
     const b = parseChannel(parts[2])
@@ -131,7 +137,7 @@ function colorSwatch(value: string): ColorSwatch | undefined {
   }
   const hsl = v.match(/^hsla?\(([^)]+)\)$/i)
   if (hsl) {
-    const parts = hsl[1]!.split(',').map((s) => s.trim())
+    const parts = hsl[1]!.split(',').map(s => s.trim())
     const h = parseFloat(parts[0] ?? '')
     const sPct = parseFloat((parts[1] ?? '').replace('%', ''))
     const lPct = parseFloat((parts[2] ?? '').replace('%', ''))
@@ -156,10 +162,12 @@ function rgbToHex(r: number, g: number, b: number): string {
 }
 
 function hslToRgb(h: number, s: number, l: number): [number, number, number] {
-  const hh = ((h % 360) + 360) % 360 / 60
+  const hh = (((h % 360) + 360) % 360) / 60
   const c = (1 - Math.abs(2 * l - 1)) * s
   const x = c * (1 - Math.abs((hh % 2) - 1))
-  let r1 = 0, g1 = 0, b1 = 0
+  let r1 = 0,
+    g1 = 0,
+    b1 = 0
   if (hh < 1) [r1, g1, b1] = [c, x, 0]
   else if (hh < 2) [r1, g1, b1] = [x, c, 0]
   else if (hh < 3) [r1, g1, b1] = [0, c, x]

@@ -1,7 +1,10 @@
 import { shell } from 'virtual:modo-shell'
 
 export function slug(text: string): string {
-  return text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '')
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-|-$/g, '')
 }
 
 /**

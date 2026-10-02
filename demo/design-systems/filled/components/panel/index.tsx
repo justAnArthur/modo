@@ -5,7 +5,9 @@ import './panel.css'
  *
  * @example {@include ./examples.mdx}
  */
-export default function Panel({ children }: {
+export default function Panel({
+  children,
+}: {
   /** Panel body. */
   children?: React.ReactNode
 }) {

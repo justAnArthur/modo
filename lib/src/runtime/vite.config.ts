@@ -68,13 +68,7 @@ export default defineConfig(async () => {
       // on *source* changes and invalidates the outputs itself.
       watch: { ignored: ['**/.modo-tmp/**'] },
       fs: {
-        allow: [
-          workspaceRoot(USER_ROOT),
-          RUNTIME_DIR,
-          LIB_DIR,
-          USER_ROOT,
-          resolve(USER_ROOT, '.modo-tmp'),
-        ],
+        allow: [workspaceRoot(USER_ROOT), RUNTIME_DIR, LIB_DIR, USER_ROOT, resolve(USER_ROOT, '.modo-tmp')],
       },
     },
     optimizeDeps: {

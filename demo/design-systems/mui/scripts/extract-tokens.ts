@@ -58,9 +58,7 @@ for (const [path, raw] of paletteVars) {
 const spacingFallback = theme.spacing(1).match(/var\(--mui-spacing,\s*([\d.]+)px\)/)
 const spacingUnit = spacingFallback ? Number(spacingFallback[1]) : 8
 const spacingSteps = [...Array(13).keys(), 0.5, 1.5, 2.5, 3.5].sort((a, b) => a - b)
-const spacingLines = spacingSteps.map(
-  (n) => `  --space-${String(n).replace('.', '_')}: ${n * spacingUnit}px;`,
-)
+const spacingLines = spacingSteps.map(n => `  --space-${String(n).replace('.', '_')}: ${n * spacingUnit}px;`)
 
 const unit = Number(theme.shape.borderRadius)
 const radiusLines = [
@@ -72,8 +70,15 @@ const radiusLines = [
 
 const t = theme.typography
 const variants: Array<[string, LooseVariant]> = [
-  ['h1', t.h1!], ['h2', t.h2!], ['h3', t.h3!], ['h4', t.h4!], ['h5', t.h5!], ['h6', t.h6!],
-  ['body1', t.body1!], ['body2', t.body2!], ['caption', t.caption!],
+  ['h1', t.h1!],
+  ['h2', t.h2!],
+  ['h3', t.h3!],
+  ['h4', t.h4!],
+  ['h5', t.h5!],
+  ['h6', t.h6!],
+  ['body1', t.body1!],
+  ['body2', t.body2!],
+  ['caption', t.caption!],
 ]
 const typographyLines = [`  --font-family: ${t.fontFamily};`]
 for (const [name, v] of variants) {

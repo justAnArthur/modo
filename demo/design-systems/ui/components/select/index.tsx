@@ -38,26 +38,21 @@ import {
   useContext,
   type ReactNode,
   type HTMLAttributes,
-} from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { cva, type VariantProps } from "class-variance-authority";
-import { Select as SelectPrimitive } from "@base-ui/react/select";
-import type { IconComponent } from "../../lib/icon-context";
-import { cn } from "../../lib/utils";
-import { spring, exitFallbackMs } from "../../lib/springs";
-import { useFluidHover, useRegisterFluidHoverItem } from "../../lib/use-fluid-hover";
-import { useShape, shapeMap } from "../../lib/shape-context";
-import { SizeProvider, useSize, type SizeVariant } from "../../lib/size-context";
-import { Elevated } from "../../primitives/surface";
-import {
-  popupMotionClass,
-  popupScrollAreaClass,
-  popupViewportClass,
-  isDisabledRow,
-} from "../../lib/popup";
-import { useKeyboardNavGate } from "../../lib/use-keyboard-nav-gate";
-import { ScrollArea } from "../../primitives/scroll-area";
-import { FluidHoverHighlight } from "../../lib/fluid-hover-highlight";
+} from 'react'
+import { motion, AnimatePresence } from 'motion/react'
+import { cva, type VariantProps } from 'class-variance-authority'
+import { Select as SelectPrimitive } from '@base-ui/react/select'
+import type { IconComponent } from '../../lib/icon-context'
+import { cn } from '../../lib/utils'
+import { spring, exitFallbackMs } from '../../lib/springs'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { useShape, shapeMap } from '../../lib/shape-context'
+import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
+import { Elevated } from '../../primitives/surface'
+import { popupMotionClass, popupScrollAreaClass, popupViewportClass, isDisabledRow } from '../../lib/popup'
+import { useKeyboardNavGate } from '../../lib/use-keyboard-nav-gate'
+import { ScrollArea } from '../../primitives/scroll-area'
+import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 
 // ---------------------------------------------------------------------------
 // Select context
@@ -74,31 +69,30 @@ import { FluidHoverHighlight } from "../../lib/fluid-hover-highlight";
 // acknowledgment — the checkmark drawing in and the selected background
 // springing to the picked row — is visible instead of being cut off by the
 // ~60ms close fade. Escape and outside presses still close immediately.
-const selectionAckMs = 300;
+const selectionAckMs = 300
 
 interface SelectContextValue {
-  value: string;
-  open: boolean;
-  actionsRef: React.RefObject<{ unmount: () => void } | null>;
+  value: string
+  open: boolean
+  actionsRef: React.RefObject<{ unmount: () => void } | null>
 }
 
-const SelectContext = createContext<SelectContextValue | null>(null);
+const SelectContext = createContext<SelectContextValue | null>(null)
 
 function useSelectContext() {
-  const ctx = useContext(SelectContext);
-  if (!ctx) throw new Error("Select compound components must be inside <Select>");
-  return ctx;
+  const ctx = useContext(SelectContext)
+  if (!ctx) throw new Error('Select compound components must be inside <Select>')
+  return ctx
 }
 
 // Content context for fluid hover
 interface SelectContentContextValue {
-  registerItem: (index: number, element: HTMLElement | null) => void;
-  activeIndex: number | null;
-  checkedIndex?: number;
+  registerItem: (index: number, element: HTMLElement | null) => void
+  activeIndex: number | null
+  checkedIndex?: number
 }
 
-const SelectContentContext =
-  createContext<SelectContentContextValue | null>(null);
+const SelectContentContext = createContext<SelectContentContextValue | null>(null)
 
 // ---------------------------------------------------------------------------
 // Select (root)
@@ -109,7 +103,7 @@ const SelectContentContext =
 // whatever the rest of the UI is shaped: pill corners on a popover distort
 // its padding and break the concentric fit of the rows' hover and selection
 // backgrounds inside it.
-const popupShape = shapeMap.rounded;
+const popupShape = shapeMap.rounded
 
 /**
  * Walk the children tree collecting `{ value, label }` pairs from SelectItem
@@ -118,43 +112,39 @@ const popupShape = shapeMap.rounded;
  * render while open). Non-string labels fall back to the raw value, matching
  * the previous labelMap behaviour.
  */
-function collectSelectItems(
-  node: ReactNode,
-  out: { value: string; label: ReactNode }[] = []
-) {
-  Children.forEach(node, (child) => {
-    if (!isValidElement(child)) return;
-    const props = child.props as { value?: unknown; children?: ReactNode };
-    if (typeof props.value === "string") {
+function collectSelectItems(node: ReactNode, out: { value: string; label: ReactNode }[] = []) {
+  Children.forEach(node, child => {
+    if (!isValidElement(child)) return
+    const props = child.props as { value?: unknown; children?: ReactNode }
+    if (typeof props.value === 'string') {
       out.push({
         value: props.value,
-        label:
-          typeof props.children === "string" ? props.children : props.value,
-      });
+        label: typeof props.children === 'string' ? props.children : props.value,
+      })
     } else if (props.children) {
-      collectSelectItems(props.children, out);
+      collectSelectItems(props.children, out)
     }
-  });
-  return out;
+  })
+  return out
 }
 
 interface SelectProps {
   /** `Select.Trigger` and `Select.Content`. */
-  children: ReactNode;
+  children: ReactNode
   /** Controlled selected value. Pair with `onValueChange`. */
-  value?: string;
+  value?: string
   /** Uncontrolled default value — the select then keeps the selection itself. */
-  defaultValue?: string;
+  defaultValue?: string
   /** Called when the selected value changes. */
-  onValueChange?: (value: string) => void;
+  onValueChange?: (value: string) => void
   /** Disables the entire select. Defaults to `false`. */
-  disabled?: boolean;
+  disabled?: boolean
   /** Name for form submission (renders a hidden native input). */
-  name?: string;
+  name?: string
   /** Marks the select as required in forms. Defaults to `false`. */
-  required?: boolean;
+  required?: boolean
   /** Pins trigger and popup to one step of the size ladder (default 36px, compact 28px — see Sizes). Omitted, both follow the surrounding SizeProvider. */
-  size?: SizeVariant;
+  size?: SizeVariant
 }
 
 /**
@@ -176,40 +166,31 @@ interface SelectProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Select({
-  children,
-  value,
-  defaultValue,
-  onValueChange,
-  disabled = false,
-  name,
-  required,
-  size,
-}: SelectProps) {
-  const [internalValue, setInternalValue] = useState(defaultValue ?? "");
-  const [open, setOpen] = useState(false);
-  const actionsRef = useRef<{ unmount: () => void } | null>(null);
-  const currentValue = value !== undefined ? value : internalValue;
+function Select({ children, value, defaultValue, onValueChange, disabled = false, name, required, size }: SelectProps) {
+  const [internalValue, setInternalValue] = useState(defaultValue ?? '')
+  const [open, setOpen] = useState(false)
+  const actionsRef = useRef<{ unmount: () => void } | null>(null)
+  const currentValue = value !== undefined ? value : internalValue
 
-  const items = useMemo(() => collectSelectItems(children), [children]);
+  const items = useMemo(() => collectSelectItems(children), [children])
 
   const handleValueChange = useCallback(
     (next: string | null) => {
-      const v = next ?? "";
-      if (value === undefined) setInternalValue(v);
-      onValueChange?.(v);
+      const v = next ?? ''
+      if (value === undefined) setInternalValue(v)
+      onValueChange?.(v)
     },
-    [value, onValueChange]
-  );
+    [value, onValueChange],
+  )
 
-  const ackTimeoutRef = useRef<number | null>(null);
+  const ackTimeoutRef = useRef<number | null>(null)
   const cancelAckClose = useCallback(() => {
     if (ackTimeoutRef.current !== null) {
-      clearTimeout(ackTimeoutRef.current);
-      ackTimeoutRef.current = null;
+      clearTimeout(ackTimeoutRef.current)
+      ackTimeoutRef.current = null
     }
-  }, []);
-  useEffect(() => cancelAckClose, [cancelAckClose]);
+  }, [])
+  useEffect(() => cancelAckClose, [cancelAckClose])
 
   // Picking an item acknowledges before closing: the close is deferred by
   // selectionAckMs so the checkmark draw and the selected background's spring
@@ -218,24 +199,21 @@ function Select({
   // pending acknowledgment; re-picking within the window restarts it.
   const handleOpenChange = useCallback(
     (nextOpen: boolean, eventDetails: { reason: string }) => {
-      if (!nextOpen && eventDetails.reason === "item-press") {
-        cancelAckClose();
+      if (!nextOpen && eventDetails.reason === 'item-press') {
+        cancelAckClose()
         ackTimeoutRef.current = window.setTimeout(() => {
-          ackTimeoutRef.current = null;
-          setOpen(false);
-        }, selectionAckMs);
-        return;
+          ackTimeoutRef.current = null
+          setOpen(false)
+        }, selectionAckMs)
+        return
       }
-      cancelAckClose();
-      setOpen(nextOpen);
+      cancelAckClose()
+      setOpen(nextOpen)
     },
-    [cancelAckClose]
-  );
+    [cancelAckClose],
+  )
 
-  const ctx = useMemo(
-    () => ({ value: currentValue, open, actionsRef }),
-    [currentValue, open]
-  );
+  const ctx = useMemo(() => ({ value: currentValue, open, actionsRef }), [currentValue, open])
 
   // A size prop pins the whole compound (trigger + portalled popup — React
   // context crosses portals) to one step of the ladder.
@@ -243,7 +221,7 @@ function Select({
     <SelectContext.Provider value={ctx}>
       <SelectPrimitive.Root
         // Always controlled; "" (no selection) maps to Base UI's null.
-        value={currentValue === "" ? null : currentValue}
+        value={currentValue === '' ? null : currentValue}
         onValueChange={handleValueChange}
         open={open}
         onOpenChange={handleOpenChange}
@@ -259,12 +237,12 @@ function Select({
         {children}
       </SelectPrimitive.Root>
     </SelectContext.Provider>
-  );
+  )
 
-  return size ? <SizeProvider size={size}>{root}</SizeProvider> : root;
+  return size ? <SizeProvider size={size}>{root}</SizeProvider> : root
 }
 
-Select.displayName = "Select";
+Select.displayName = 'Select'
 
 // ---------------------------------------------------------------------------
 // SelectTrigger
@@ -272,59 +250,46 @@ Select.displayName = "Select";
 
 const triggerVariants = cva(
   [
-    "group inline-flex items-center justify-between outline-none cursor-pointer",
-    "transition-all duration-fast",
-    "disabled:opacity-50 disabled:pointer-events-none",
-    "focus-visible:ring-1 focus-visible:ring-focus-ring",
+    'group inline-flex items-center justify-between outline-none cursor-pointer',
+    'transition-all duration-fast',
+    'disabled:opacity-50 disabled:pointer-events-none',
+    'focus-visible:ring-1 focus-visible:ring-focus-ring',
   ],
   {
     variants: {
       variant: {
-        bordered:
-          "border border-border bg-transparent text-foreground hover:bg-hover",
-        borderless:
-          "border border-transparent bg-transparent text-foreground hover:bg-hover",
+        bordered: 'border border-border bg-transparent text-foreground hover:bg-hover',
+        borderless: 'border border-transparent bg-transparent text-foreground hover:bg-hover',
       },
     },
     defaultVariants: {
-      variant: "bordered",
+      variant: 'bordered',
     },
-  }
-);
+  },
+)
 
 interface SelectTriggerProps
-  extends Omit<HTMLAttributes<HTMLButtonElement>, "children">,
+  extends Omit<HTMLAttributes<HTMLButtonElement>, 'children'>,
     VariantProps<typeof triggerVariants> {
   /** Visual style of the trigger. Defaults to `"bordered"`. */
-  variant?: "bordered" | "borderless";
+  variant?: 'bordered' | 'borderless'
   /** Optional icon displayed before the value. */
-  icon?: IconComponent;
+  icon?: IconComponent
   /** Text shown when no value is selected. Defaults to `"Select…"`. */
-  placeholder?: string;
+  placeholder?: string
   /** Error message shown below the trigger; also tints the border and sets `aria-invalid`. */
-  error?: string;
+  error?: string
   /** Size override for the trigger alone. Prefer the `size` prop on `<Select>` (or a surrounding SizeProvider) so the popup matches. */
-  size?: SizeVariant;
+  size?: SizeVariant
   /** Extra classes for the trigger button. */
-  className?: string;
+  className?: string
 }
 
 const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
-  (
-    {
-      className,
-      variant,
-      icon: Icon,
-      placeholder = "Select…",
-      error,
-      size,
-      ...props
-    },
-    ref
-  ) => {
-    const shape = useShape();
-    const sizeClasses = useSize(size);
-    const compact = sizeClasses.variant === "compact";
+  ({ className, variant, icon: Icon, placeholder = 'Select…', error, size, ...props }, ref) => {
+    const shape = useShape()
+    const sizeClasses = useSize(size)
+    const compact = sizeClasses.variant === 'compact'
 
     return (
       <div className="flex flex-col gap-1">
@@ -337,14 +302,14 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
             sizeClasses.text,
             sizeClasses.px,
             sizeClasses.gap,
-            compact ? "min-w-[128px]" : "min-w-[160px]",
+            compact ? 'min-w-[128px]' : 'min-w-[160px]',
             shape.input,
-            error && "border-destructive/50 hover:border-destructive/50",
-            className
+            error && 'border-destructive/50 hover:border-destructive/50',
+            className,
           )}
           {...props}
         >
-          <span className={cn("flex items-center min-w-0 flex-1", sizeClasses.gap)}>
+          <span className={cn('flex items-center min-w-0 flex-1', sizeClasses.gap)}>
             {Icon && (
               <Icon
                 size={sizeClasses.icon}
@@ -376,15 +341,13 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
             <path d="M6 9l6 6 6-6" />
           </svg>
         </SelectPrimitive.Trigger>
-        {error && (
-          <span className="text-caption text-destructive pl-3">{error}</span>
-        )}
+        {error && <span className="text-caption text-destructive pl-3">{error}</span>}
       </div>
-    );
-  }
-);
+    )
+  },
+)
 
-SelectTrigger.displayName = "SelectTrigger";
+SelectTrigger.displayName = 'SelectTrigger'
 
 // ---------------------------------------------------------------------------
 // SelectContent
@@ -392,276 +355,234 @@ SelectTrigger.displayName = "SelectTrigger";
 
 interface SelectContentProps {
   /** Additional classes for the menu container. */
-  className?: string;
+  className?: string
   /** `Select.Item`, `Select.Group`, `Select.Label`, `Select.Separator`. */
-  children: ReactNode;
+  children: ReactNode
 }
 
-const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
-  ({ className, children }, ref) => {
-    const { open, value, actionsRef } = useSelectContext();
-    const shape = popupShape;
-    const containerRef = useRef<HTMLDivElement>(null);
+const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(({ className, children }, ref) => {
+  const { open, value, actionsRef } = useSelectContext()
+  const shape = popupShape
+  const containerRef = useRef<HTMLDivElement>(null)
 
-    const hover = useFluidHover(containerRef, { isItemDisabled: isDisabledRow });
-    const {
-      activeIndex,
-      setActiveIndex,
-      itemRects,
-      isMeasured,
-      handlers,
-      registerItem,
-      remeasure,
-    } = hover;
+  const hover = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
+  const { activeIndex, setActiveIndex, itemRects, isMeasured, handlers, registerItem, remeasure } = hover
 
-    const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
 
-    // Keyboard focus ring gate: seeded from the trigger's :focus-visible at
-    // open, earned by navigation keys inside the popup.
-    const { keyboardNavRef, trackKeyboardNav } = useKeyboardNavGate(open);
-    const [checkedIndex, setCheckedIndex] = useState<number | undefined>(
-      undefined
-    );
+  // Keyboard focus ring gate: seeded from the trigger's :focus-visible at
+  // open, earned by navigation keys inside the popup.
+  const { keyboardNavRef, trackKeyboardNav } = useKeyboardNavGate(open)
+  const [checkedIndex, setCheckedIndex] = useState<number | undefined>(undefined)
 
-    // Release Base UI's deferred unmount once the exit tween has played.
-    // onAnimationComplete on the motion.div is the primary signal; this
-    // timeout is a fallback for throttled/background tabs where rAF-driven
-    // animation callbacks can stall. The popup exits with spring.fast, so the
-    // fallback tracks that tier's exit duration plus a safety buffer.
-    useEffect(() => {
-      if (open) return;
-      const id = setTimeout(
-        () => actionsRef.current?.unmount(),
-        exitFallbackMs(spring.fast)
-      );
-      return () => clearTimeout(id);
-    }, [open, actionsRef]);
+  // Release Base UI's deferred unmount once the exit tween has played.
+  // onAnimationComplete on the motion.div is the primary signal; this
+  // timeout is a fallback for throttled/background tabs where rAF-driven
+  // animation callbacks can stall. The popup exits with spring.fast, so the
+  // fallback tracks that tier's exit duration plus a safety buffer.
+  useEffect(() => {
+    if (open) return
+    const id = setTimeout(() => actionsRef.current?.unmount(), exitFallbackMs(spring.fast))
+    return () => clearTimeout(id)
+  }, [open, actionsRef])
 
-    // Fresh rects once per open. Measuring is the hook's job — it owns the
-    // one coalesced pass that item registration and container resizes both
-    // feed into, and a second pass from elsewhere is what used to land a
-    // corrected rect on an already-mounted overlay. The popup keeps its items
-    // registered while it sits hidden between opens, so registration alone
-    // would never trigger a fresh pass on reopen.
-    useEffect(() => {
-      if (!open) return;
-      remeasure();
-    }, [open, remeasure]);
+  // Fresh rects once per open. Measuring is the hook's job — it owns the
+  // one coalesced pass that item registration and container resizes both
+  // feed into, and a second pass from elsewhere is what used to land a
+  // corrected rect on an already-mounted overlay. The popup keeps its items
+  // registered while it sits hidden between opens, so registration alone
+  // would never trigger a fresh pass on reopen.
+  useEffect(() => {
+    if (!open) return
+    remeasure()
+  }, [open, remeasure])
 
-    // Detect the checked row. Deliberately does NOT remeasure on a value
-    // change while open: the rows haven't moved, so the published rects stay
-    // trustworthy and only checkedIndex switches — which lets the selected
-    // marker spring from the old row to the picked one (the selection
-    // acknowledgment) instead of unmounting and snapping.
-    useEffect(() => {
-      if (!open) return;
-      // Double rAF: first waits for React commit, second for layout
-      let inner: number;
-      const outer = requestAnimationFrame(() => {
-        inner = requestAnimationFrame(() => {
-          const container = containerRef.current;
-          if (container) {
-            const items = Array.from(
-              container.querySelectorAll("[data-fluid-hover-index]")
-            ) as HTMLElement[];
-            const idx = items.findIndex(
-              (el) => el.getAttribute("data-value") === value
-            );
-            setCheckedIndex(idx !== -1 ? idx : undefined);
-          }
-        });
-      });
-      return () => {
-        cancelAnimationFrame(outer);
-        cancelAnimationFrame(inner);
-      };
-    }, [open, value]);
+  // Detect the checked row. Deliberately does NOT remeasure on a value
+  // change while open: the rows haven't moved, so the published rects stay
+  // trustworthy and only checkedIndex switches — which lets the selected
+  // marker spring from the old row to the picked one (the selection
+  // acknowledgment) instead of unmounting and snapping.
+  useEffect(() => {
+    if (!open) return
+    // Double rAF: first waits for React commit, second for layout
+    let inner: number
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => {
+        const container = containerRef.current
+        if (container) {
+          const items = Array.from(container.querySelectorAll('[data-fluid-hover-index]')) as HTMLElement[]
+          const idx = items.findIndex(el => el.getAttribute('data-value') === value)
+          setCheckedIndex(idx !== -1 ? idx : undefined)
+        }
+      })
+    })
+    return () => {
+      cancelAnimationFrame(outer)
+      cancelAnimationFrame(inner)
+    }
+  }, [open, value])
 
-    // Reset every overlay index as the close begins. checkedIndex otherwise
-    // lags one open behind value (picking an item closes the popup before the
-    // effect above re-syncs it), and a leftover activeIndex is worse: Base UI
-    // keeps the popup mounted through the exit tween, so on reopen the hover
-    // pill would still be sitting on the previously active row and spring from
-    // there to the row that auto-focus lands on.
-    useEffect(() => {
-      if (open) return;
-      setCheckedIndex(undefined);
-      setActiveIndex(null);
-      setFocusedIndex(null);
-    }, [open, setActiveIndex]);
+  // Reset every overlay index as the close begins. checkedIndex otherwise
+  // lags one open behind value (picking an item closes the popup before the
+  // effect above re-syncs it), and a leftover activeIndex is worse: Base UI
+  // keeps the popup mounted through the exit tween, so on reopen the hover
+  // pill would still be sitting on the previously active row and spring from
+  // there to the row that auto-focus lands on.
+  useEffect(() => {
+    if (open) return
+    setCheckedIndex(undefined)
+    setActiveIndex(null)
+    setFocusedIndex(null)
+  }, [open, setActiveIndex])
 
-    // Overlays read rects only once the hook reports the item set fully
-    // measured. Positioning one from an incomplete pass mounts it at the wrong
-    // row, and the correcting pass then springs it across the list.
-    const checkedRect =
-      isMeasured && checkedIndex != null ? itemRects[checkedIndex] : null;
-    const focusRect =
-      isMeasured && focusedIndex !== null ? itemRects[focusedIndex] : null;
+  // Overlays read rects only once the hook reports the item set fully
+  // measured. Positioning one from an incomplete pass mounts it at the wrong
+  // row, and the correcting pass then springs it across the list.
+  const checkedRect = isMeasured && checkedIndex != null ? itemRects[checkedIndex] : null
+  const focusRect = isMeasured && focusedIndex !== null ? itemRects[focusedIndex] : null
 
-    const contentCtx = useMemo(
-      () => ({ registerItem, activeIndex, checkedIndex }),
-      [registerItem, activeIndex, checkedIndex]
-    );
+  const contentCtx = useMemo(
+    () => ({ registerItem, activeIndex, checkedIndex }),
+    [registerItem, activeIndex, checkedIndex],
+  )
 
-    return (
-      <SelectPrimitive.Portal>
-        <SelectPrimitive.Positioner
-          side="bottom"
-          align="start"
-          sideOffset={6}
-          alignItemWithTrigger={false}
-          className="z-50 outline-none"
+  return (
+    <SelectPrimitive.Portal>
+      <SelectPrimitive.Positioner
+        side="bottom"
+        align="start"
+        sideOffset={6}
+        alignItemWithTrigger={false}
+        className="z-50 outline-none"
+      >
+        <motion.div
+          className={popupMotionClass}
+          initial={{ opacity: 0, y: 'var(--popup-enter-y)', scaleY: 0.96 }}
+          animate={open ? { opacity: 1, y: 0, scaleY: 1 } : { opacity: 0, y: 'var(--popup-enter-y)', scaleY: 0.96 }}
+          transition={open ? spring.fast : spring.fast.exit}
+          // Base UI defers unmount while actionsRef is set; release it once
+          // the exit spring has finished so the close animation fully plays.
+          onAnimationComplete={() => {
+            if (!open) actionsRef.current?.unmount()
+          }}
         >
-          <motion.div
-            className={popupMotionClass}
-            initial={{ opacity: 0, y: "var(--popup-enter-y)", scaleY: 0.96 }}
-            animate={
-              open
-                ? { opacity: 1, y: 0, scaleY: 1 }
-                : { opacity: 0, y: "var(--popup-enter-y)", scaleY: 0.96 }
-            }
-            transition={open ? spring.fast : spring.fast.exit}
-            // Base UI defers unmount while actionsRef is set; release it once
-            // the exit spring has finished so the close animation fully plays.
-            onAnimationComplete={() => {
-              if (!open) actionsRef.current?.unmount();
-            }}
-          >
-            <SelectContentContext.Provider value={contentCtx}>
-              <SelectPrimitive.Popup
-                render={
-                  <Elevated
-                    offset={2}
-                    shadowLevel={3}
-                    ref={ref}
-                  />
+          <SelectContentContext.Provider value={contentCtx}>
+            <SelectPrimitive.Popup
+              render={<Elevated offset={2} shadowLevel={3} ref={ref} />}
+              // Capture phase: the primitive moves focus during its own keydown
+              // handling, so the nav flag must be set before then.
+              onKeyDownCapture={trackKeyboardNav}
+              onMouseEnter={() => {
+                handlers.onMouseEnter()
+                setFocusedIndex(null)
+              }}
+              onMouseMove={handlers.onMouseMove}
+              onMouseLeave={handlers.onMouseLeave}
+              onClick={handlers.onClick}
+              onFocus={e => {
+                const indexAttr = (e.target as HTMLElement)
+                  .closest('[data-fluid-hover-index]')
+                  ?.getAttribute('data-fluid-hover-index')
+                if (indexAttr != null) {
+                  const idx = Number(indexAttr)
+                  setActiveIndex(idx)
+                  setFocusedIndex(
+                    keyboardNavRef.current && (e.target as HTMLElement).matches(':focus-visible') ? idx : null,
+                  )
                 }
-                // Capture phase: the primitive moves focus during its own keydown
-                // handling, so the nav flag must be set before then.
-                onKeyDownCapture={trackKeyboardNav}
-                onMouseEnter={() => {
-                  handlers.onMouseEnter();
-                  setFocusedIndex(null);
-                }}
-                onMouseMove={handlers.onMouseMove}
-                onMouseLeave={handlers.onMouseLeave}
-                onClick={handlers.onClick}
-                onFocus={(e) => {
-                  const indexAttr = (e.target as HTMLElement)
-                    .closest("[data-fluid-hover-index]")
-                    ?.getAttribute("data-fluid-hover-index");
-                  if (indexAttr != null) {
-                    const idx = Number(indexAttr);
-                    setActiveIndex(idx);
-                    setFocusedIndex(
-                      keyboardNavRef.current &&
-                        (e.target as HTMLElement).matches(":focus-visible")
-                        ? idx
-                        : null
-                    );
-                  }
-                }}
-                onBlur={(e) => {
-                  // The popup itself takes focus when the pointer leaves a row; only a
-                  // departure from the whole popup ends the hover session.
-                  if (e.currentTarget.contains(e.relatedTarget as Node))
-                    return;
-                  setFocusedIndex(null);
-                  setActiveIndex(null);
-                }}
-                className={cn(
-                  // min-w tracks the trigger via the Positioner's --anchor-width
-                  // var, matching the pre-migration minWidth: triggerRect.width.
-                  `flex flex-col min-w-[var(--anchor-width)] max-h-[min(300px,var(--available-height))] overflow-hidden ${shape.container} select-none outline-none`,
-                  className
-                )}
-              >
-                {/* The list scrolls inside a ScrollArea; this wrapper is the rows'
+              }}
+              onBlur={e => {
+                // The popup itself takes focus when the pointer leaves a row; only a
+                // departure from the whole popup ends the hover session.
+                if (e.currentTarget.contains(e.relatedTarget as Node)) return
+                setFocusedIndex(null)
+                setActiveIndex(null)
+              }}
+              className={cn(
+                // min-w tracks the trigger via the Positioner's --anchor-width
+                // var, matching the pre-migration minWidth: triggerRect.width.
+                `flex flex-col min-w-[var(--anchor-width)] max-h-[min(300px,var(--available-height))] overflow-hidden ${shape.container} select-none outline-none`,
+                className,
+              )}
+            >
+              {/* The list scrolls inside a ScrollArea; this wrapper is the rows'
                     offsetParent, so the overlays scroll with them. */}
-                <ScrollArea className={popupScrollAreaClass} viewportClassName={cn(popupViewportClass, "scroll-fade")}>
-                  <div
-                    ref={containerRef}
-                    className="relative flex flex-col p-1"
-                  >
-                {/* The three overlays are torn down as the close begins rather
+              <ScrollArea className={popupScrollAreaClass} viewportClassName={cn(popupViewportClass, 'scroll-fade')}>
+                <div ref={containerRef} className="relative flex flex-col p-1">
+                  {/* The three overlays are torn down as the close begins rather
                     than exit-animated, because an overlay still mounted when the
                     popup reopens is one AnimatePresence re-adopts under its old
                     key: `initial` never runs again, so it keeps the position of the
                     row it had before and animates from there to the new one. The
                     popup's own fade covers their disappearance. */}
-                {/* Selected background */}
-                {open && (
-                  <AnimatePresence>
-                    {checkedRect && (
-                      <motion.div
-                        className={`absolute ${shape.bg} bg-active pointer-events-none`}
-                        // Position lives in `animate` so an in-session value
-                        // change springs the marker to the picked row (the
-                        // selection acknowledgment). Safe against the reopen
-                        // slide: the `open &&` teardown means no marker
-                        // survives a close, and a fresh mount with
-                        // initial={false} renders snapped at these values.
-                        initial={false}
-                        animate={{
-                          top: checkedRect.top,
-                          left: checkedRect.left,
-                          width: checkedRect.width,
-                          height: checkedRect.height,
-                          opacity: 1,
-                        }}
-                        exit={{ opacity: 0, transition: spring.moderate.exit }}
-                        transition={{
-                          ...spring.moderate,
-                          opacity: { duration: spring.fast.duration },
-                        }}
-                      />
-                    )}
-                  </AnimatePresence>
-                )}
+                  {/* Selected background */}
+                  {open && (
+                    <AnimatePresence>
+                      {checkedRect && (
+                        <motion.div
+                          className={`absolute ${shape.bg} bg-active pointer-events-none`}
+                          // Position lives in `animate` so an in-session value
+                          // change springs the marker to the picked row (the
+                          // selection acknowledgment). Safe against the reopen
+                          // slide: the `open &&` teardown means no marker
+                          // survives a close, and a fresh mount with
+                          // initial={false} renders snapped at these values.
+                          initial={false}
+                          animate={{
+                            top: checkedRect.top,
+                            left: checkedRect.left,
+                            width: checkedRect.width,
+                            height: checkedRect.height,
+                            opacity: 1,
+                          }}
+                          exit={{ opacity: 0, transition: spring.moderate.exit }}
+                          transition={{
+                            ...spring.moderate,
+                            opacity: { duration: spring.fast.duration },
+                          }}
+                        />
+                      )}
+                    </AnimatePresence>
+                  )}
 
-                {/* Hover background */}
-                <FluidHoverHighlight
-                  hover={hover}
-                  hidden={!open}
-                  className={shape.bg}
-                />
+                  {/* Hover background */}
+                  <FluidHoverHighlight hover={hover} hidden={!open} className={shape.bg} />
 
-                {/* Focus ring */}
-                {open && (
-                  <AnimatePresence>
-                    {focusRect && (
-                      <motion.div
-                        className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
-                        initial={false}
-                        animate={{
-                          left: focusRect.left - 2,
-                          top: focusRect.top - 2,
-                          width: focusRect.width + 4,
-                          height: focusRect.height + 4,
-                        }}
-                        exit={{ opacity: 0, transition: spring.fast.exit }}
-                        transition={{
-                          ...spring.fast,
-                          opacity: { duration: spring.fast.duration },
-                        }}
-                      />
-                    )}
-                  </AnimatePresence>
-                )}
+                  {/* Focus ring */}
+                  {open && (
+                    <AnimatePresence>
+                      {focusRect && (
+                        <motion.div
+                          className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
+                          initial={false}
+                          animate={{
+                            left: focusRect.left - 2,
+                            top: focusRect.top - 2,
+                            width: focusRect.width + 4,
+                            height: focusRect.height + 4,
+                          }}
+                          exit={{ opacity: 0, transition: spring.fast.exit }}
+                          transition={{
+                            ...spring.fast,
+                            opacity: { duration: spring.fast.duration },
+                          }}
+                        />
+                      )}
+                    </AnimatePresence>
+                  )}
 
-                {children}
-                  </div>
-                </ScrollArea>
-              </SelectPrimitive.Popup>
-            </SelectContentContext.Provider>
-          </motion.div>
-        </SelectPrimitive.Positioner>
-      </SelectPrimitive.Portal>
-    );
-  }
-);
+                  {children}
+                </div>
+              </ScrollArea>
+            </SelectPrimitive.Popup>
+          </SelectContentContext.Provider>
+        </motion.div>
+      </SelectPrimitive.Positioner>
+    </SelectPrimitive.Portal>
+  )
+})
 
-SelectContent.displayName = "SelectContent";
+SelectContent.displayName = 'SelectContent'
 
 // ---------------------------------------------------------------------------
 // SelectItem
@@ -669,69 +590,54 @@ SelectContent.displayName = "SelectContent";
 
 interface SelectItemProps extends HTMLAttributes<HTMLDivElement> {
   /** Optional icon displayed before the label. */
-  icon?: IconComponent;
+  icon?: IconComponent
   /** Position index within the content — what fluid hover measures rows by. */
-  index: number;
+  index: number
   /** Unique value for this option. */
-  value: string;
+  value: string
   /** Disables this individual item. Defaults to `false`. */
-  disabled?: boolean;
+  disabled?: boolean
   /** The row label. A string label is also what the trigger shows for this value. */
-  children?: ReactNode;
+  children?: ReactNode
 }
 
 const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
-  (
-    {
-      className,
-      children,
-      icon: Icon,
-      value,
-      index,
-      disabled = false,
-      ...props
-    },
-    ref
-  ) => {
-    const selectCtx = useSelectContext();
-    const contentCtx = useContext(SelectContentContext);
-    const internalRef = useRef<HTMLDivElement>(null);
-    const shape = popupShape;
-    const sizeClasses = useSize();
-    const compact = sizeClasses.variant === "compact";
-    const hasMounted = useRef(false);
+  ({ className, children, icon: Icon, value, index, disabled = false, ...props }, ref) => {
+    const selectCtx = useSelectContext()
+    const contentCtx = useContext(SelectContentContext)
+    const internalRef = useRef<HTMLDivElement>(null)
+    const shape = popupShape
+    const sizeClasses = useSize()
+    const compact = sizeClasses.variant === 'compact'
+    const hasMounted = useRef(false)
 
     useEffect(() => {
-      hasMounted.current = true;
-    }, []);
+      hasMounted.current = true
+    }, [])
 
     // Register with fluid hover. Depends on the (stable) registerItem
     // rather than the content context, which is rebuilt on every activeIndex
     // change: keying the effect to the whole context re-ran it per mousemove,
     // unregistering and re-registering every row and so keeping the hook's
     // measurement permanently unsettled while the pointer moved.
-    const registerItem = contentCtx?.registerItem;
-    useRegisterFluidHoverItem(registerItem, index, internalRef);
+    const registerItem = contentCtx?.registerItem
+    useRegisterFluidHoverItem(registerItem, index, internalRef)
 
-    const isActive = contentCtx?.activeIndex === index;
-    const isChecked = selectCtx.value === value;
-    const skipAnimation = !hasMounted.current;
+    const isActive = contentCtx?.activeIndex === index
+    const isChecked = selectCtx.value === value
+    const skipAnimation = !hasMounted.current
 
     return (
       <SelectPrimitive.Item
         value={value}
         disabled={disabled}
-        label={typeof children === "string" ? children : undefined}
+        label={typeof children === 'string' ? children : undefined}
         render={
           <div
             ref={(node: HTMLDivElement | null) => {
-              (
-                internalRef as React.MutableRefObject<HTMLDivElement | null>
-              ).current = node;
-              if (typeof ref === "function") ref(node);
-              else if (ref)
-                (ref as React.MutableRefObject<HTMLDivElement | null>).current =
-                  node;
+              ;(internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+              if (typeof ref === 'function') ref(node)
+              else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
             }}
             data-fluid-hover-index={index}
             data-value={value}
@@ -741,12 +647,10 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
               // shrink-0: the popup is a max-height flex column, so without it
               // a long list compresses rows to fit instead of scrolling.
               `relative z-10 flex ${sizeClasses.control} shrink-0 items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.itemPx} ${sizeClasses.text} cursor-pointer outline-none select-none`,
-              "transition-[color] duration-fast",
-              isActive || isChecked
-                ? "text-foreground"
-                : "text-muted-foreground",
-              disabled && "opacity-50 pointer-events-none",
-              className
+              'transition-[color] duration-fast',
+              isActive || isChecked ? 'text-foreground' : 'text-muted-foreground',
+              disabled && 'opacity-50 pointer-events-none',
+              className,
             )}
             {...props}
           />
@@ -771,10 +675,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
         {/* Always-rendered fixed slot so the check appearing/disappearing
             never changes the row's intrinsic width — without it the whole
             popup resizes when a selection lands. */}
-        <span
-          aria-hidden
-          className={cn("shrink-0", compact ? "w-3.5 h-3.5" : "w-4 h-4")}
-        >
+        <span aria-hidden className={cn('shrink-0', compact ? 'w-3.5 h-3.5' : 'w-4 h-4')}>
           <AnimatePresence>
             {isChecked && (
               <motion.svg
@@ -797,11 +698,11 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
                   initial={{ pathLength: skipAnimation ? 1 : 0 }}
                   animate={{
                     pathLength: 1,
-                    transition: { duration: spring.fast.duration, ease: "easeOut" },
+                    transition: { duration: spring.fast.duration, ease: 'easeOut' },
                   }}
                   exit={{
                     pathLength: 0,
-                    transition: { duration: 0.04, ease: "easeIn" },
+                    transition: { duration: 0.04, ease: 'easeIn' },
                   }}
                 />
               </motion.svg>
@@ -809,89 +710,66 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
           </AnimatePresence>
         </span>
       </SelectPrimitive.Item>
-    );
-  }
-);
+    )
+  },
+)
 
-SelectItem.displayName = "SelectItem";
+SelectItem.displayName = 'SelectItem'
 
 // ---------------------------------------------------------------------------
 // SelectGroup + SelectLabel + SelectSeparator
 // ---------------------------------------------------------------------------
 
-function SelectGroup({
-  children,
-  className,
-  ...props
-}: HTMLAttributes<HTMLDivElement>) {
+function SelectGroup({ children, className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div role="group" className={className} {...props}>
       {children}
     </div>
-  );
+  )
 }
 
-SelectGroup.displayName = "SelectGroup";
+SelectGroup.displayName = 'SelectGroup'
 
-const SelectLabel = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => {
-    // Group labels are the caption role of the type scale — see /docs/sizes.
-    const compact = useSize().variant === "compact";
-    return (
-      <div
-        ref={ref}
-        className={cn(
-          "px-2 py-1.5 shrink-0 text-muted-foreground",
-          compact ? "text-caption-compact" : "text-caption",
-          className
-        )}
-        {...props}
-      />
-    );
-  }
-);
+const SelectLabel = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => {
+  // Group labels are the caption role of the type scale — see /docs/sizes.
+  const compact = useSize().variant === 'compact'
+  return (
+    <div
+      ref={ref}
+      className={cn(
+        'px-2 py-1.5 shrink-0 text-muted-foreground',
+        compact ? 'text-caption-compact' : 'text-caption',
+        className,
+      )}
+      {...props}
+    />
+  )
+})
 
-SelectLabel.displayName = "SelectLabel";
+SelectLabel.displayName = 'SelectLabel'
 
-const SelectSeparator = forwardRef<
-  HTMLDivElement,
-  HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    role="separator"
-    className={cn("my-1 -mx-1 h-px shrink-0 bg-border/60", className)}
-    {...props}
-  />
-));
+const SelectSeparator = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
+  <div ref={ref} role="separator" className={cn('my-1 -mx-1 h-px shrink-0 bg-border/60', className)} {...props} />
+))
 
-SelectSeparator.displayName = "SelectSeparator";
+SelectSeparator.displayName = 'SelectSeparator'
 
 // Compound statics: `<Select.Trigger>`, `<Select.Item>`, … Assigned directly
 // (not through Object.assign) so TypeScript's expando inference types them
 // onto the root function declaration.
-Select.Trigger = SelectTrigger;
-Select.Content = SelectContent;
-Select.Item = SelectItem;
-Select.Group = SelectGroup;
-Select.Label = SelectLabel;
-Select.Separator = SelectSeparator;
+Select.Trigger = SelectTrigger
+Select.Content = SelectContent
+Select.Item = SelectItem
+Select.Group = SelectGroup
+Select.Label = SelectLabel
+Select.Separator = SelectSeparator
 
 // ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
 
-export {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectGroup,
-  SelectLabel,
-  SelectSeparator,
-  triggerVariants,
-};
+export { Select, SelectTrigger, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator, triggerVariants }
 
-export type { SelectProps, SelectTriggerProps, SelectContentProps, SelectItemProps };
+export type { SelectProps, SelectTriggerProps, SelectContentProps, SelectItemProps }
 
-export default Select;
+export default Select

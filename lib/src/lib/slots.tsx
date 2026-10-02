@@ -103,7 +103,15 @@ export interface LoadedComponent {
   /** The module export holding the component; `default` when unset. */
   exportName?: string
   /** When source is 'fallback', the name of the plain-HTML component to import. */
-  fallbackName?: 'PlainButton' | 'PlainLink' | 'PlainCode' | 'PlainSelect' | 'PlainIcon' | 'PlainSidebarItem' | 'PlainSidebarSection' | 'PlainSidebarRoot'
+  fallbackName?:
+    | 'PlainButton'
+    | 'PlainLink'
+    | 'PlainCode'
+    | 'PlainSelect'
+    | 'PlainIcon'
+    | 'PlainSidebarItem'
+    | 'PlainSidebarSection'
+    | 'PlainSidebarRoot'
 }
 
 export interface ResolvedSidebar {
@@ -158,11 +166,7 @@ export function PlainCode({ children, ...rest }: any) {
 
 export function PlainSelect({ value, onChange, options, ...rest }: any) {
   return (
-    <select
-      value={value}
-      onChange={(e: any) => onChange?.(e.target.value)}
-      {...rest}
-    >
+    <select value={value} onChange={(e: any) => onChange?.(e.target.value)} {...rest}>
       {(options ?? []).map((o: any) => (
         <option key={o.value} value={o.value}>
           {o.label}
@@ -203,22 +207,24 @@ const PlainSidebar = Object.assign(PlainSidebarRoot, {
   Section: PlainSidebarSection,
 })
 
-function fallbackFor(
-  slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Icon' | 'SidebarRoot',
-): ComponentType<any> {
+function fallbackFor(slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Icon' | 'SidebarRoot'): ComponentType<any> {
   switch (slotName) {
-    case 'Button': return PlainButton
-    case 'Link': return PlainLink
-    case 'Code': return PlainCode
-    case 'Select': return PlainSelect
-    case 'Icon': return PlainIcon
-    case 'SidebarRoot': return PlainSidebarRoot
+    case 'Button':
+      return PlainButton
+    case 'Link':
+      return PlainLink
+    case 'Code':
+      return PlainCode
+    case 'Select':
+      return PlainSelect
+    case 'Icon':
+      return PlainIcon
+    case 'SidebarRoot':
+      return PlainSidebarRoot
   }
 }
 
-function omitted(
-  slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Icon' | 'Sidebar',
-): LoadedComponent {
+function omitted(slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Icon' | 'Sidebar'): LoadedComponent {
   const fallbackName = slotName === 'Sidebar' ? 'SidebarRoot' : slotName
   return {
     Component: fallbackFor(fallbackName),
@@ -241,7 +247,7 @@ export async function resolveShellSlots(
   const silence = userItems.length === 0 && Object.keys(config.shell ?? {}).length === 0
 
   async function pick(slotName: ShellSlot['name'], member?: SlotMember): Promise<LoadedComponent> {
-    const base = member ?? SLOTS.find((s) => s.name === slotName)!
+    const base = member ?? SLOTS.find(s => s.name === slotName)!
     const { requiredProps: required, userTier: tier } = base
 
     const explicit = config.shell?.[slotName]
@@ -252,8 +258,8 @@ export async function resolveShellSlots(
 
     const expectedName = (member?.name ?? slotName).toLowerCase()
     const candidates = userItems
-      .filter((it) => it.tier === tier && it.name.toLowerCase() === expectedName)
-      .filter((it) => required.every((rp) => it.props.some((p) => p.name === rp)))
+      .filter(it => it.tier === tier && it.name.toLowerCase() === expectedName)
+      .filter(it => required.every(rp => it.props.some(p => p.name === rp)))
       .sort((a, b) => a.id.localeCompare(b.id))
     if (candidates.length > 0) {
       const c = candidates[0]!
@@ -285,10 +291,11 @@ export async function resolveShellSlots(
     Sidebar: await pick('Sidebar'),
   }
 
-  const sidebarRootComp = rootPicks.Sidebar.Component as unknown as
-    | { Item?: any; Section?: any }
-    | null
-  const sidebarMembers = SLOTS.find((s) => s.name === 'Sidebar')!.members!
+  const sidebarRootComp = rootPicks.Sidebar.Component as unknown as {
+    Item?: any
+    Section?: any
+  } | null
+  const sidebarMembers = SLOTS.find(s => s.name === 'Sidebar')!.members!
 
   function fromRoot(name: 'Item' | 'Section'): LoadedComponent | null {
     const fn = sidebarRootComp?.[name]

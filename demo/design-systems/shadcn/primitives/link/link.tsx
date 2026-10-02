@@ -5,24 +5,14 @@
  * MIT License © Vercel Inc. for the referenced pattern.
  */
 
-import * as React from "react"
-import { type VariantProps } from "class-variance-authority"
-import { cn } from "cn"
+import * as React from 'react'
+import { type VariantProps } from 'class-variance-authority'
+import { cn } from 'cn'
 
-import { buttonVariants } from "../button"
+import { buttonVariants } from '../button'
 
-function Link({
-  className,
-  variant,
-  ...props
-}: React.ComponentProps<"a"> & VariantProps<typeof buttonVariants>) {
-  return (
-    <a
-      data-slot="link"
-      className={cn(buttonVariants({ variant }), className)}
-      {...props}
-    />
-  )
+function Link({ className, variant, ...props }: React.ComponentProps<'a'> & VariantProps<typeof buttonVariants>) {
+  return <a data-slot="link" className={cn(buttonVariants({ variant }), className)} {...props} />
 }
 
 export { Link }

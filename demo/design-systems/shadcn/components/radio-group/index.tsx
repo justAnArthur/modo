@@ -6,7 +6,12 @@ import { RadioGroup as ShadcnRadioGroup, RadioGroupItem } from './radio-group'
  *
  * @example {@include ./examples.mdx}
  */
-export default function RadioGroup({ options, value, onChange, disabled = false }: {
+export default function RadioGroup({
+  options,
+  value,
+  onChange,
+  disabled = false,
+}: {
   /** Radio options to render, in order. */
   options: { value: string; label: string }[]
   /** Currently selected value. */
@@ -18,7 +23,7 @@ export default function RadioGroup({ options, value, onChange, disabled = false 
 }) {
   return (
     <ShadcnRadioGroup value={value} onValueChange={onChange} disabled={disabled}>
-      {options.map((option) => (
+      {options.map(option => (
         <label key={option.value} className="flex items-center gap-2 text-sm">
           <RadioGroupItem value={option.value} />
           {option.label}

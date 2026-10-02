@@ -37,14 +37,11 @@ import {
   type ReactElement,
   type ReactNode,
   type RefAttributes,
-} from "react";
-import { cn } from "../../lib/utils";
-import { useShape } from "../../lib/shape-context";
-import {
-  useFluidHover,
-  useRegisterFluidHoverItem,
-} from "../../lib/use-fluid-hover";
-import { FluidHoverHighlight } from "../../lib/fluid-hover-highlight";
+} from 'react'
+import { cn } from '../../lib/utils'
+import { useShape } from '../../lib/shape-context'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 
 // ---------------------------------------------------------------------------
 // One list is one FluidHover: the container owns the mouse handlers, hands
@@ -58,14 +55,14 @@ import { FluidHoverHighlight } from "../../lib/fluid-hover-highlight";
 // `useFluidHover` + `FluidHoverHighlight` by hand exactly as upstream does.
 // ---------------------------------------------------------------------------
 
-type FluidHoverAxis = "x" | "y" | "xy";
+type FluidHoverAxis = 'x' | 'y' | 'xy'
 
 interface FluidHoverContextValue {
-  registerItem: (index: number, element: HTMLElement | null) => void;
-  axis: FluidHoverAxis;
+  registerItem: (index: number, element: HTMLElement | null) => void
+  axis: FluidHoverAxis
 }
 
-const FluidHoverContext = createContext<FluidHoverContextValue | null>(null);
+const FluidHoverContext = createContext<FluidHoverContextValue | null>(null)
 
 /**
  * Skips a row without unregistering it, so the rows around it keep their
@@ -73,38 +70,38 @@ const FluidHoverContext = createContext<FluidHoverContextValue | null>(null);
  * row and `disabledIndices` on the list set the same attribute.
  */
 function isItemDisabled(element: HTMLElement) {
-  return element.hasAttribute("data-disabled");
+  return element.hasAttribute('data-disabled')
 }
 
 // Upstream's `rowClass` (demos.tsx), split into the shared part and the three
 // axis shapes: a full-width row, a strip cell that keeps its content's width,
 // and a grid tile that stacks a title over a description.
 const itemBaseClass =
-  "relative z-10 flex shrink-0 cursor-pointer items-center text-left text-body text-foreground outline-none focus-visible:ring-1 focus-visible:ring-focus-ring";
+  'relative z-10 flex shrink-0 cursor-pointer items-center text-left text-body text-foreground outline-none focus-visible:ring-1 focus-visible:ring-focus-ring'
 
 const itemAxisClass: Record<FluidHoverAxis, string> = {
-  y: "h-9 w-full px-3",
-  x: "h-9 justify-center whitespace-nowrap px-3",
-  xy: "min-h-20 w-full flex-col items-start justify-center gap-0.5 p-3",
-};
+  y: 'h-9 w-full px-3',
+  x: 'h-9 justify-center whitespace-nowrap px-3',
+  xy: 'min-h-20 w-full flex-col items-start justify-center gap-0.5 p-3',
+}
 
 const containerAxisClass: Record<FluidHoverAxis, string> = {
-  y: "flex flex-col gap-1",
-  x: "flex flex-row gap-1",
-  xy: "grid gap-1",
-};
+  y: 'flex flex-col gap-1',
+  x: 'flex flex-row gap-1',
+  xy: 'grid gap-1',
+}
 
 // ── FluidHover.Item ──────────────────────────────────────
 
 interface FluidHoverItemProps extends HTMLAttributes<HTMLButtonElement> {
   /** Position in the list. Assigned automatically to direct children of `FluidHover`; pass it by hand for rows rendered inside a wrapper of your own. */
-  index?: number;
+  index?: number
   /** Skips the row: never lit, never the target of a gap click. It stays registered, so its neighbours keep their indices. Defaults to `false`. */
-  disabled?: boolean;
+  disabled?: boolean
   /** The row's content — a label, or an icon plus text, or (on `xy`) a title over a description. */
-  children?: ReactNode;
+  children?: ReactNode
   /** Classes for the row, merged over the per-axis defaults. */
-  className?: string;
+  className?: string
 }
 
 /**
@@ -115,18 +112,17 @@ interface FluidHoverItemProps extends HTMLAttributes<HTMLButtonElement> {
  */
 const FluidHoverItem = forwardRef<HTMLButtonElement, FluidHoverItemProps>(
   ({ index, disabled = false, className, children, ...props }, ref) => {
-    const list = useContext(FluidHoverContext);
-    const shape = useShape();
-    const innerRef = useRef<HTMLButtonElement | null>(null);
-    useRegisterFluidHoverItem(list?.registerItem, index, innerRef);
-    const axis = list?.axis ?? "y";
+    const list = useContext(FluidHoverContext)
+    const shape = useShape()
+    const innerRef = useRef<HTMLButtonElement | null>(null)
+    useRegisterFluidHoverItem(list?.registerItem, index, innerRef)
+    const axis = list?.axis ?? 'y'
     return (
       <button
-        ref={(node) => {
-          innerRef.current = node;
-          if (typeof ref === "function") ref(node);
-          else if (ref)
-            (ref as MutableRefObject<HTMLButtonElement | null>).current = node;
+        ref={node => {
+          innerRef.current = node
+          if (typeof ref === 'function') ref(node)
+          else if (ref) (ref as MutableRefObject<HTMLButtonElement | null>).current = node
         }}
         type="button"
         data-slot="fluid-hover-item"
@@ -139,46 +135,44 @@ const FluidHoverItem = forwardRef<HTMLButtonElement, FluidHoverItemProps>(
           itemBaseClass,
           itemAxisClass[axis],
           shape.item,
-          disabled && "cursor-default text-muted-foreground opacity-55",
-          className
+          disabled && 'cursor-default text-muted-foreground opacity-55',
+          className,
         )}
       >
         {children}
       </button>
-    );
-  }
-);
+    )
+  },
+)
 
-FluidHoverItem.displayName = "FluidHoverItem";
+FluidHoverItem.displayName = 'FluidHoverItem'
 
 // ── FluidHover ───────────────────────────────────────────
 
 interface FluidHoverProps extends HTMLAttributes<HTMLDivElement> {
   /** Which way the list runs: `'y'` for lists, `'x'` for strips, `'xy'` for grids. Defaults to `'y'`, or `'xy'` when `columns` is above 1. */
-  axis?: FluidHoverAxis;
+  axis?: FluidHoverAxis
   /** Grid columns. Above 1 the container becomes a grid and resolves the nearest item across rows and columns. Defaults to `1`, or `2` when `axis` is `'xy'`. */
-  columns?: number;
+  columns?: number
   /** Shorthand rows: one `FluidHover.Item` per string, indexed in order. Omit it and pass `FluidHover.Item` children instead. */
-  items?: string[];
+  items?: string[]
   /** Renders the content of a shorthand row. Defaults to the string itself. */
-  renderItem?: (item: string, index: number) => ReactNode;
+  renderItem?: (item: string, index: number) => ReactNode
   /** Rows to skip: never lit, never the target of a gap click. They stay registered, so their neighbours keep their indices. */
-  disabledIndices?: number[];
+  disabledIndices?: number[]
   /** Whether a click that lands between rows goes to the lit one, so what is lit is what a click hits. `false` leaves empty space inert; `{ maxDistance }` routes only clicks within that many pixels of the lit row. Defaults to `true`. */
-  gapClick?: boolean | { maxDistance?: number };
+  gapClick?: boolean | { maxDistance?: number }
   /** Classes for the highlight itself — radius and z-index. Merged over `absolute bg-hover` and the shape system's radius. */
-  highlightClassName?: string;
+  highlightClassName?: string
   /** Classes for the list container. Padding here is part of the list: a click in it still lands on the lit row. */
-  className?: string;
+  className?: string
   /** `FluidHover.Item` rows, when `items` is not enough. Direct Item children are indexed in order. */
-  children?: ReactNode;
+  children?: ReactNode
 }
 
-type FluidHoverComponent = ForwardRefExoticComponent<
-  FluidHoverProps & RefAttributes<HTMLDivElement>
-> & {
-  Item: typeof FluidHoverItem;
-};
+type FluidHoverComponent = ForwardRefExoticComponent<FluidHoverProps & RefAttributes<HTMLDivElement>> & {
+  Item: typeof FluidHoverItem
+}
 
 /**
  * Hover that never blinks and always follows your cursor to the nearest item.
@@ -250,31 +244,29 @@ const FluidHover = forwardRef<HTMLDivElement, FluidHoverProps>(
       style,
       ...props
     },
-    ref
+    ref,
   ) => {
-    const containerRef = useRef<HTMLDivElement | null>(null);
-    const shape = useShape();
+    const containerRef = useRef<HTMLDivElement | null>(null)
+    const shape = useShape()
 
     // `columns` is the grid: asking for more than one column is asking for the
     // 2-D pick, and asking for `xy` without a column count means two.
-    const resolvedAxis: FluidHoverAxis =
-      axis ?? (columns !== undefined && columns > 1 ? "xy" : "y");
-    const resolvedColumns =
-      resolvedAxis === "xy" ? Math.max(1, columns ?? 2) : 1;
+    const resolvedAxis: FluidHoverAxis = axis ?? (columns !== undefined && columns > 1 ? 'xy' : 'y')
+    const resolvedColumns = resolvedAxis === 'xy' ? Math.max(1, columns ?? 2) : 1
 
     const hover = useFluidHover(containerRef, {
       axis: resolvedAxis,
       isItemDisabled,
       gapClick,
-    });
-    const { handlers, registerItem } = hover;
+    })
+    const { handlers, registerItem } = hover
 
     const contextValue = useMemo<FluidHoverContextValue>(
       () => ({ registerItem, axis: resolvedAxis }),
-      [registerItem, resolvedAxis]
-    );
+      [registerItem, resolvedAxis],
+    )
 
-    const disabled = new Set(disabledIndices);
+    const disabled = new Set(disabledIndices)
     // Rows come either from `items` (the container renders them) or from
     // Item children (the container only hands them their index). A child that
     // is not an Item keeps its slot but never registers, and the hit test
@@ -286,30 +278,29 @@ const FluidHover = forwardRef<HTMLDivElement, FluidHoverProps>(
           </FluidHoverItem>
         ))
       : Children.toArray(children).map((child, i) => {
-          if (!isValidElement(child) || child.type !== FluidHoverItem) return child;
-          const row = child as ReactElement<FluidHoverItemProps>;
+          if (!isValidElement(child) || child.type !== FluidHoverItem) return child
+          const row = child as ReactElement<FluidHoverItemProps>
           return cloneElement(row, {
             index: row.props.index ?? i,
             disabled: row.props.disabled ?? disabled.has(i),
-          });
-        });
+          })
+        })
 
     return (
       <FluidHoverContext.Provider value={contextValue}>
         <div
-          ref={(node) => {
-            containerRef.current = node;
-            if (typeof ref === "function") ref(node);
-            else if (ref)
-              (ref as MutableRefObject<HTMLDivElement | null>).current = node;
+          ref={node => {
+            containerRef.current = node
+            if (typeof ref === 'function') ref(node)
+            else if (ref) (ref as MutableRefObject<HTMLDivElement | null>).current = node
           }}
           {...props}
           {...handlers}
           data-slot="fluid-hover"
           data-axis={resolvedAxis}
-          className={cn("relative", containerAxisClass[resolvedAxis], className)}
+          className={cn('relative', containerAxisClass[resolvedAxis], className)}
           style={
-            resolvedAxis === "xy"
+            resolvedAxis === 'xy'
               ? {
                   gridTemplateColumns: `repeat(${resolvedColumns}, minmax(0, 1fr))`,
                   ...style,
@@ -317,37 +308,34 @@ const FluidHover = forwardRef<HTMLDivElement, FluidHoverProps>(
               : style
           }
         >
-          <FluidHoverHighlight
-            hover={hover}
-            className={cn("z-0", shape.bg, highlightClassName)}
-          />
+          <FluidHoverHighlight hover={hover} className={cn('z-0', shape.bg, highlightClassName)} />
           {rows}
         </div>
       </FluidHoverContext.Provider>
-    );
-  }
-) as FluidHoverComponent;
+    )
+  },
+) as FluidHoverComponent
 
-FluidHover.displayName = "FluidHover";
+FluidHover.displayName = 'FluidHover'
 
 // Compound static: `<FluidHover.Item>` (typed by the FluidHoverComponent cast
 // on the forwardRef above).
-Object.assign(FluidHover, { Item: FluidHoverItem });
+Object.assign(FluidHover, { Item: FluidHoverItem })
 
-export { FluidHover, FluidHoverItem };
-export type { FluidHoverProps, FluidHoverItemProps, FluidHoverAxis };
+export { FluidHover, FluidHoverItem }
+export type { FluidHoverProps, FluidHoverItemProps, FluidHoverAxis }
 
 // The mechanism itself, unchanged — for lists this container cannot express.
 export {
   useFluidHover,
   useRegisterFluidHoverItem,
-} from "../../lib/use-fluid-hover";
+} from '../../lib/use-fluid-hover'
 export type {
   ItemRect,
   UseFluidHoverOptions,
   UseFluidHoverReturn,
-} from "../../lib/use-fluid-hover";
-export { FluidHoverHighlight } from "../../lib/fluid-hover-highlight";
-export type { FluidHoverHighlightProps } from "../../lib/fluid-hover-highlight";
+} from '../../lib/use-fluid-hover'
+export { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+export type { FluidHoverHighlightProps } from '../../lib/fluid-hover-highlight'
 
-export default FluidHover;
+export default FluidHover

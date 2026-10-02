@@ -25,12 +25,6 @@ export default function Switch({
 }) {
   const control = <MuiSwitch checked={checked} size={size} disabled={disabled} />
   return (
-    <MuiProvider>
-      {label !== undefined ? (
-        <FormControlLabel control={control} label={label} />
-      ) : (
-        control
-      )}
-    </MuiProvider>
+    <MuiProvider>{label !== undefined ? <FormControlLabel control={control} label={label} /> : control}</MuiProvider>
   )
 }

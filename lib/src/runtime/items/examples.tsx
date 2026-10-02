@@ -16,8 +16,13 @@ const bindings: Record<string, unknown> = { ...exampleScope, ...byName }
 export function ItemExamples({ examples, children }: { examples: ParsedExample[]; children?: ReactNode }) {
   return (
     <section data-modo="section">
-      <h2 data-modo="section-title" id="examples">Examples<Anchor id="examples" label="Examples" /></h2>
-      {examples.map((ex, i) => <ExampleCard key={i} example={ex} />)}
+      <h2 data-modo="section-title" id="examples">
+        Examples
+        <Anchor id="examples" label="Examples" />
+      </h2>
+      {examples.map((ex, i) => (
+        <ExampleCard key={i} example={ex} />
+      ))}
       {children}
     </section>
   )
@@ -52,9 +57,7 @@ function ExampleCard({ example: { title, description, code } }: { example: Parse
           <Markdown source={description} />
         </div>
       ) : null}
-      <ExampleFrame code={code}>
-        {isCompiledExample(compiled) ? compiled(bindings) : null}
-      </ExampleFrame>
+      <ExampleFrame code={code}>{isCompiledExample(compiled) ? compiled(bindings) : null}</ExampleFrame>
     </div>
   )
 }
@@ -71,7 +74,13 @@ export function ExampleFrame({ code, children }: { code: string; children: React
       </div>
       <div data-modo="example-actions">
         <CopyButton text={code} />
-        <Button variant="ghost" size="icon-sm" aria-label={codeLabel} aria-pressed={open} onClick={() => setOpen((o) => !o)}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={codeLabel}
+          aria-pressed={open}
+          onClick={() => setOpen(o => !o)}
+        >
           <Icon name="code" label={codeLabel} />
         </Button>
       </div>

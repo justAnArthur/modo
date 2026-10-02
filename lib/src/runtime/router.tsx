@@ -53,5 +53,5 @@ export function Router(): ReactNode {
     if (m) return <Fragment key={path}>{r.render(m)}</Fragment>
   }
 
-  return <NotFoundPage/>
+  return <NotFoundPage />
 }

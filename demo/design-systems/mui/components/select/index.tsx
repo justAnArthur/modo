@@ -36,13 +36,13 @@ export default function Select({
       <TextField
         select
         value={value}
-        onChange={(event) => onChange(event.target.value as string)}
+        onChange={event => onChange(event.target.value as string)}
         label={label}
         size={size}
         disabled={disabled}
         sx={{ minWidth: 160 }}
       >
-        {options.map((option) => (
+        {options.map(option => (
           <MenuItem key={option.value} value={option.value}>
             {option.label}
           </MenuItem>

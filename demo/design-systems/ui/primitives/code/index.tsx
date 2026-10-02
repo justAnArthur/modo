@@ -24,12 +24,14 @@ const TOKEN_CLASS: Record<TokenType, string> = {
 }
 
 function highlight(source: string, language: Language['id']) {
-  const config = languages.find((l) => l.id === language)?.config
-  return parse(source, config).lines.map((line) => (
+  const config = languages.find(l => l.id === language)?.config
+  return parse(source, config).lines.map(line => (
     <Fragment key={line.index}>
       {line.index > 0 && '\n'}
       {line.tokens.map((t, i) => (
-        <span key={i} className={TOKEN_CLASS[t.type]}>{t.value}</span>
+        <span key={i} className={TOKEN_CLASS[t.type]}>
+          {t.value}
+        </span>
       ))}
     </Fragment>
   ))
@@ -47,7 +49,11 @@ function highlight(source: string, language: Language['id']) {
  *
  * @example {@include ./examples.mdx}
  */
-export default function Code({ children, language = 'tsx', className }: {
+export default function Code({
+  children,
+  language = 'tsx',
+  className,
+}: {
   /** The source to show; surrounding blank lines are trimmed. */
   children: string
   /** Fence name, alias or extension (`tsx`, `css`, `sh`, …). Unknown names render as plain text. Defaults to `'tsx'`. */
@@ -59,7 +65,11 @@ export default function Code({ children, language = 'tsx', className }: {
   const source = children.trim()
   const id = lang(language)
   return (
-    <ScrollArea orientation="horizontal" viewportClassName="scroll-fade-x" className={cn('rounded-xl', SURFACE_BG[level], className)}>
+    <ScrollArea
+      orientation="horizontal"
+      viewportClassName="scroll-fade-x"
+      className={cn('rounded-xl', SURFACE_BG[level], className)}
+    >
       <pre className="m-0 w-max min-w-full p-4 font-mono text-caption leading-relaxed text-foreground">
         <code>{id && id !== 'plaintext' ? highlight(source, id) : source}</code>
       </pre>

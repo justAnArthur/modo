@@ -24,7 +24,11 @@ import {
  *
  * @example {@include ./examples.mdx}
  */
-export default function Sidebar({ children, className, style }: {
+export default function Sidebar({
+  children,
+  className,
+  style,
+}: {
   /** Nav sections and items (Sidebar.Section / Sidebar.Item). */
   children?: ReactNode
   /** Class on the sidebar wrapper; pass a min-height override when embedding outside a full-height column. */
@@ -52,7 +56,11 @@ interface Sidebar {
   Section: typeof SidebarSection
 }
 
-function SidebarItem({ href, active = false, children }: {
+function SidebarItem({
+  href,
+  active = false,
+  children,
+}: {
   /** Navigation target. */
   href: string
   /** Marks the current page. */
@@ -71,7 +79,10 @@ function SidebarItem({ href, active = false, children }: {
   )
 }
 
-function SidebarSection({ title, children }: {
+function SidebarSection({
+  title,
+  children,
+}: {
   /** Group label. */
   title: string
   /** Sidebar.Item entries. */

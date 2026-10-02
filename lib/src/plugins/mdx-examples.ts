@@ -20,7 +20,7 @@ function unwrapParagraphs(node: Node): Node[] {
 export function remarkModoExamples() {
   return (tree: Node, file: { value: unknown }) => {
     const source = String(file.value)
-    tree.children = tree.children?.map((node) => {
+    tree.children = tree.children?.map(node => {
       if (node.type !== 'mdxJsxFlowElement' || !node.position) return node
       const code = source.slice(node.position.start.offset, node.position.end.offset)
       return {

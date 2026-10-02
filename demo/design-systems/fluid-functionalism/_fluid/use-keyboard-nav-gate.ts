@@ -5,8 +5,8 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC).
  */
 
-import { useCallback, useEffect, useRef, type KeyboardEvent } from "react";
-import { POPUP_NAV_KEYS } from "./popup";
+import { useCallback, useEffect, useRef, type KeyboardEvent } from 'react'
+import { POPUP_NAV_KEYS } from './popup'
 
 /**
  * Gates a popup's keyboard focus ring on keyboard use.
@@ -22,21 +22,20 @@ import { POPUP_NAV_KEYS } from "./popup";
  * must be set before then.
  */
 export function useKeyboardNavGate(open: boolean) {
-  const keyboardNavRef = useRef(false);
+  const keyboardNavRef = useRef(false)
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) return
     // Script focus inherits :focus-visible from the previously focused
     // element, so this reads the same whether the trigger still has focus
     // or the primitive has already moved it into the popup.
-    const active = document.activeElement;
-    keyboardNavRef.current =
-      active instanceof HTMLElement && active.matches(":focus-visible");
-  }, [open]);
+    const active = document.activeElement
+    keyboardNavRef.current = active instanceof HTMLElement && active.matches(':focus-visible')
+  }, [open])
 
   const trackKeyboardNav = useCallback((e: KeyboardEvent) => {
-    if (POPUP_NAV_KEYS.includes(e.key)) keyboardNavRef.current = true;
-  }, []);
+    if (POPUP_NAV_KEYS.includes(e.key)) keyboardNavRef.current = true
+  }, [])
 
-  return { keyboardNavRef, trackKeyboardNav };
+  return { keyboardNavRef, trackKeyboardNav }
 }

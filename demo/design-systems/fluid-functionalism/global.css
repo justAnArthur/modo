@@ -101,7 +101,7 @@
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -198,7 +198,7 @@
     @apply font-sans;
   }
   :focus-visible {
-    outline: 1px solid var(--focus-ring, #6B97FF);
+    outline: 1px solid var(--focus-ring, #6b97ff);
     outline-offset: 2px;
     border-radius: var(--shape-input-radius, 8px);
   }
@@ -223,14 +223,7 @@ html.transitioning *::after {
 
 .shimmer-text {
   color: transparent;
-  background: linear-gradient(
-    90deg,
-    #a3a3a3 0%,
-    #a3a3a3 35%,
-    #525252 50%,
-    #a3a3a3 65%,
-    #a3a3a3 100%
-  );
+  background: linear-gradient(90deg, #a3a3a3 0%, #a3a3a3 35%, #525252 50%, #a3a3a3 65%, #a3a3a3 100%);
   background-size: 300% 100%;
   background-clip: text;
   -webkit-background-clip: text;
@@ -342,15 +335,9 @@ html.transitioning *::after {
     animation:
       sf-reveal-start both linear,
       sf-reveal-end both linear;
-    animation-timeline:
-      scroll(self),
-      scroll(self);
-    animation-range-start:
-      0,
-      calc(100% - var(--scroll-fade-size));
-    animation-range-end:
-      var(--scroll-fade-size),
-      100%;
+    animation-timeline: scroll(self), scroll(self);
+    animation-range-start: 0, calc(100% - var(--scroll-fade-size));
+    animation-range-end: var(--scroll-fade-size), 100%;
   }
   .scroll-fade-x {
     mask-image: linear-gradient(
@@ -370,15 +357,9 @@ html.transitioning *::after {
     animation:
       sf-reveal-start both linear,
       sf-reveal-end both linear;
-    animation-timeline:
-      scroll(self inline),
-      scroll(self inline);
-    animation-range-start:
-      0,
-      calc(100% - var(--scroll-fade-size));
-    animation-range-end:
-      var(--scroll-fade-size),
-      100%;
+    animation-timeline: scroll(self inline), scroll(self inline);
+    animation-range-start: 0, calc(100% - var(--scroll-fade-size));
+    animation-range-end: var(--scroll-fade-size), 100%;
   }
 }
 
@@ -482,10 +463,10 @@ html.transitioning *::after {
 
 /* Host-owned chrome visuals (the lib ships structure only): dividers on the
    docs shell asides. */
-[data-modo='sidebar'] {
+[data-modo="sidebar"] {
   border-right: 1px solid var(--border);
 }
 
-[data-modo='panel'] {
+[data-modo="panel"] {
   border-left: 1px solid var(--border);
 }

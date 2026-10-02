@@ -29,19 +29,11 @@ export default function Button({
   /** Button label. */
   children?: React.ReactNode
 }) {
-  const muiVariant =
-    variant === 'ghost' ? 'text' : variant === 'default' ? 'contained' : variant
-  const muiSize =
-    size === 'sm' ? 'small' : size === 'md' ? 'medium' : size === 'lg' ? 'large' : size
+  const muiVariant = variant === 'ghost' ? 'text' : variant === 'default' ? 'contained' : variant
+  const muiSize = size === 'sm' ? 'small' : size === 'md' ? 'medium' : size === 'lg' ? 'large' : size
   return (
     <MuiProvider>
-      <MuiButton
-        variant={muiVariant}
-        color={color}
-        size={muiSize}
-        disabled={disabled}
-        onClick={onClick}
-      >
+      <MuiButton variant={muiVariant} color={color} size={muiSize} disabled={disabled} onClick={onClick}>
         {children}
       </MuiButton>
     </MuiProvider>

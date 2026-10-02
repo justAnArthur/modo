@@ -5,7 +5,10 @@ import './link.css'
  *
  * @example {@include ./examples.mdx}
  */
-export default function Link({ href, children }: {
+export default function Link({
+  href,
+  children,
+}: {
   /** Target URL. */
   href: string
   /** Link text. */

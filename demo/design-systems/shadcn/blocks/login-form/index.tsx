@@ -7,7 +7,9 @@ import { LoginForm as ShadcnLoginForm } from './login-form'
  *
  * @example {@include ./examples.mdx}
  */
-export default function LoginForm({ className }: {
+export default function LoginForm({
+  className,
+}: {
   /** Additional classes for the form root, merged by the vendored cn helper. */
   className?: string
 }) {

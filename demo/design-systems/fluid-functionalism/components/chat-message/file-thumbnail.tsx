@@ -5,9 +5,9 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). Type-skew fixes for this workspace's pinned deps: pdfjs-dist is not a workspace dep — its import is kept lazy via a variable specifier and typed structurally (image thumbnails never load it).
  */
 
-import { useEffect, useState } from "react";
-import { cn } from "../../_fluid/utils";
-import { useShape } from "../../_fluid/shape-context";
+import { useEffect, useState } from 'react'
+import { cn } from '../../_fluid/utils'
+import { useShape } from '../../_fluid/shape-context'
 
 // ─── Lazy pdfjs loader ────────────────────────────────────────────────────
 // Imports pdfjs-dist on first PDF, caches the module, and points the worker
@@ -18,52 +18,52 @@ import { useShape } from "../../_fluid/shape-context";
 // it), and the pdfjs surface is declared structurally below instead of via
 // `typeof import("pdfjs-dist")`.
 interface PdfjsViewport {
-  width: number;
-  height: number;
+  width: number
+  height: number
 }
 interface PdfjsPage {
-  getViewport(options: { scale: number }): PdfjsViewport;
+  getViewport(options: { scale: number }): PdfjsViewport
   render(options: { canvas: HTMLCanvasElement; viewport: PdfjsViewport }): {
-    promise: Promise<unknown>;
-  };
+    promise: Promise<unknown>
+  }
 }
 interface PdfjsDocument {
-  getPage(pageNumber: number): Promise<PdfjsPage>;
+  getPage(pageNumber: number): Promise<PdfjsPage>
 }
 interface PdfjsModule {
-  version: string;
-  GlobalWorkerOptions: { workerSrc: string };
-  getDocument(options: { data: ArrayBuffer }): { promise: Promise<PdfjsDocument> };
+  version: string
+  GlobalWorkerOptions: { workerSrc: string }
+  getDocument(options: { data: ArrayBuffer }): { promise: Promise<PdfjsDocument> }
 }
-const pdfjsSpecifier = "pdfjs-dist";
-let pdfjsPromise: Promise<PdfjsModule> | null = null;
+const pdfjsSpecifier = 'pdfjs-dist'
+let pdfjsPromise: Promise<PdfjsModule> | null = null
 
 async function loadPdfjs(): Promise<PdfjsModule> {
   if (!pdfjsPromise) {
-    pdfjsPromise = import(/* @vite-ignore */ pdfjsSpecifier).then((mod) => {
-      const pdfjs = mod as unknown as PdfjsModule;
+    pdfjsPromise = import(/* @vite-ignore */ pdfjsSpecifier).then(mod => {
+      const pdfjs = mod as unknown as PdfjsModule
       if (!pdfjs.GlobalWorkerOptions.workerSrc) {
-        pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
+        pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
       }
-      return pdfjs;
-    });
+      return pdfjs
+    })
   }
-  return pdfjsPromise;
+  return pdfjsPromise
 }
 
 async function renderPdfFirstPage(file: File, targetWidth: number): Promise<string> {
-  const pdfjs = await loadPdfjs();
-  const buffer = await file.arrayBuffer();
-  const pdf = await pdfjs.getDocument({ data: buffer }).promise;
-  const page = await pdf.getPage(1);
-  const baseViewport = page.getViewport({ scale: 1 });
-  const scale = (targetWidth * 2) / baseViewport.width; // 2× for retina
-  const viewport = page.getViewport({ scale });
-  const canvas = document.createElement("canvas");
-  canvas.width = viewport.width;
-  canvas.height = viewport.height;
-  await page.render({ canvas, viewport }).promise;
-  return canvas.toDataURL("image/png");
+  const pdfjs = await loadPdfjs()
+  const buffer = await file.arrayBuffer()
+  const pdf = await pdfjs.getDocument({ data: buffer }).promise
+  const page = await pdf.getPage(1)
+  const baseViewport = page.getViewport({ scale: 1 })
+  const scale = (targetWidth * 2) / baseViewport.width // 2× for retina
+  const viewport = page.getViewport({ scale })
+  const canvas = document.createElement('canvas')
+  canvas.width = viewport.width
+  canvas.height = viewport.height
+  await page.render({ canvas, viewport }).promise
+  return canvas.toDataURL('image/png')
 }
 
 // ─── File thumbnail ───────────────────────────────────────────────────────
@@ -73,16 +73,16 @@ async function renderPdfFirstPage(file: File, targetWidth: number): Promise<stri
 // it can be reused both inside the composer's preview row and to render
 // already-sent attachments in a chat transcript.
 interface FileThumbnailProps {
-  file: File;
+  file: File
   /** Side length of the square thumbnail in pixels. */
-  size: number;
-  className?: string;
+  size: number
+  className?: string
 }
 
 function FileThumbnail({ file, size, className }: FileThumbnailProps) {
-  const shape = useShape();
-  const isImage = file.type.startsWith("image/");
-  const isPdf = file.type === "application/pdf";
+  const shape = useShape()
+  const isImage = file.type.startsWith('image/')
+  const isPdf = file.type === 'application/pdf'
 
   // Create blob URL inside an effect (NOT useMemo) so the cleanup-revoke
   // and the URL-creation stay in sync. In React 18 StrictMode dev, a
@@ -93,64 +93,56 @@ function FileThumbnail({ file, size, className }: FileThumbnailProps) {
   // fresh URL and updates state. The one-frame "before URL" state is
   // covered by the bg-accent (no fallback icon shown for images), so the
   // transition is visually clean.
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
   useEffect(() => {
     if (!isImage) {
       // Clear stale state if the `file` prop swaps type on the same mount —
       // otherwise a revoked blob URL would keep winning over the new preview.
-      setImageUrl(null);
-      return;
+      setImageUrl(null)
+      return
     }
-    const url = URL.createObjectURL(file);
-    setImageUrl(url);
-    return () => URL.revokeObjectURL(url);
-  }, [isImage, file]);
+    const url = URL.createObjectURL(file)
+    setImageUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [isImage, file])
 
   // PDFs need async rendering — loading flash is unavoidable for the first
   // ~100–300ms while pdfjs loads. Falls back to the generic icon on error
   // (corrupt/password-protected file, CDN worker blocked).
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [pdfError, setPdfError] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [pdfError, setPdfError] = useState(false)
   useEffect(() => {
-    setPdfError(false);
+    setPdfError(false)
     if (!isPdf) {
-      setPdfUrl(null);
-      return;
+      setPdfUrl(null)
+      return
     }
-    let cancelled = false;
+    let cancelled = false
     renderPdfFirstPage(file, size)
-      .then((url) => {
-        if (!cancelled) setPdfUrl(url);
+      .then(url => {
+        if (!cancelled) setPdfUrl(url)
       })
       .catch(() => {
-        if (!cancelled) setPdfError(true);
-      });
+        if (!cancelled) setPdfError(true)
+      })
     return () => {
-      cancelled = true;
-    };
-  }, [file, isPdf, size]);
+      cancelled = true
+    }
+  }, [file, isPdf, size])
 
-  const previewUrl = imageUrl ?? pdfUrl;
+  const previewUrl = imageUrl ?? pdfUrl
   // Spinner only while a preview is genuinely pending; anything that can't
   // produce one (failed PDF, unsupported type) gets the generic icon instead.
-  const isPending = (isImage && !imageUrl) || (isPdf && !pdfUrl && !pdfError);
+  const isPending = (isImage && !imageUrl) || (isPdf && !pdfUrl && !pdfError)
 
   return (
     <div
-      className={cn(
-        "relative shrink-0 overflow-hidden bg-accent border border-border",
-        shape.bg,
-        className
-      )}
+      className={cn('relative shrink-0 overflow-hidden bg-accent border border-border', shape.bg, className)}
       style={{ width: size, height: size }}
     >
       {previewUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={previewUrl}
-          alt={file.name}
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        <img src={previewUrl} alt={file.name} className="absolute inset-0 w-full h-full object-cover" />
       ) : isPending ? (
         // Circular spinner while we wait for the preview to be ready.
         // Used for both images (brief URL-creation gap) and PDFs (longer
@@ -190,8 +182,8 @@ function FileThumbnail({ file, size, className }: FileThumbnailProps) {
         </div>
       )}
     </div>
-  );
+  )
 }
 
-export { FileThumbnail, loadPdfjs, renderPdfFirstPage };
-export type { FileThumbnailProps };
+export { FileThumbnail, loadPdfjs, renderPdfFirstPage }
+export type { FileThumbnailProps }

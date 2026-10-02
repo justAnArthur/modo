@@ -26,33 +26,33 @@ import {
   type ForwardRefExoticComponent,
   type ReactNode,
   type RefAttributes,
-} from "react";
-import { ScrollArea as ScrollAreaPrimitive } from "@base-ui/react/scroll-area";
-import { cn } from "../../lib/utils";
-import { useShape } from "../../lib/shape-context";
-import { useTouchPrimary } from "../../lib/use-touch-primary";
+} from 'react'
+import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area'
+import { cn } from '../../lib/utils'
+import { useShape } from '../../lib/shape-context'
+import { useTouchPrimary } from '../../lib/use-touch-primary'
 
 // On touch-primary devices the Base UI machinery is skipped entirely in
 // favour of native overflow scrolling (better physics, momentum,
 // rubber-banding); the context lets the exported ScrollBar no-op there.
-const ScrollAreaContext = createContext<boolean>(false);
+const ScrollAreaContext = createContext<boolean>(false)
 
-type Orientation = "vertical" | "horizontal" | "both";
+type Orientation = 'vertical' | 'horizontal' | 'both'
 
-interface ScrollAreaProps extends ComponentPropsWithoutRef<"div"> {
+interface ScrollAreaProps extends ComponentPropsWithoutRef<'div'> {
   /** Classes for the inner scrolling viewport — where the `scroll-fade` / `scroll-fade-x` utility goes. */
-  viewportClassName?: string;
+  viewportClassName?: string
   /** Which axes get scrollbars. Defaults to `"vertical"`. */
-  orientation?: Orientation;
+  orientation?: Orientation
   /** Classes for the outer container — set the height/width constraint here. */
-  className?: string;
+  className?: string
   /** The scrolling content. Give it an intrinsic size (`w-max`, `whitespace-nowrap`) to overflow horizontally. */
-  children?: ReactNode;
+  children?: ReactNode
 }
 
 interface ScrollAreaStatics {
   /** `ScrollBar` — one scrollbar, for composing a Base UI scroll area by hand. */
-  Bar: typeof ScrollBar;
+  Bar: typeof ScrollBar
 }
 
 /**
@@ -77,17 +77,8 @@ interface ScrollAreaStatics {
  * @example {@include ./examples.mdx}
  */
 const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
-  (
-    {
-      className,
-      children,
-      viewportClassName,
-      orientation = "vertical",
-      ...props
-    },
-    ref
-  ) => {
-    const isTouch = useTouchPrimary();
+  ({ className, children, viewportClassName, orientation = 'vertical', ...props }, ref) => {
+    const isTouch = useTouchPrimary()
 
     return (
       <ScrollAreaContext.Provider value={isTouch}>
@@ -97,17 +88,17 @@ const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
             role="group"
             data-slot="scroll-area"
             aria-roledescription="scroll area"
-            className={cn("relative overflow-hidden", className)}
+            className={cn('relative overflow-hidden', className)}
             {...props}
           >
             <div
               data-slot="scroll-area-viewport"
               className={cn(
-                "size-full rounded-[inherit]",
-                orientation === "vertical" && "overflow-y-auto",
-                orientation === "horizontal" && "overflow-x-auto",
-                orientation === "both" && "overflow-auto",
-                viewportClassName
+                'size-full rounded-[inherit]',
+                orientation === 'vertical' && 'overflow-y-auto',
+                orientation === 'horizontal' && 'overflow-x-auto',
+                orientation === 'both' && 'overflow-auto',
+                viewportClassName,
               )}
               tabIndex={0}
             >
@@ -118,40 +109,37 @@ const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
           <ScrollAreaPrimitive.Root
             ref={ref}
             data-slot="scroll-area"
-            className={cn("relative overflow-hidden", className)}
+            className={cn('relative overflow-hidden', className)}
             {...props}
           >
             <ScrollAreaPrimitive.Viewport
               data-slot="scroll-area-viewport"
-              className={cn("size-full rounded-[inherit]", viewportClassName)}
+              className={cn('size-full rounded-[inherit]', viewportClassName)}
             >
               {/* Content gives Base UI an intrinsic size to measure
                   horizontal overflow against. */}
-              <ScrollAreaPrimitive.Content>
-                {children}
-              </ScrollAreaPrimitive.Content>
+              <ScrollAreaPrimitive.Content>{children}</ScrollAreaPrimitive.Content>
             </ScrollAreaPrimitive.Viewport>
-            {orientation !== "horizontal" && <ScrollBar orientation="vertical" />}
-            {orientation !== "vertical" && <ScrollBar orientation="horizontal" />}
-            {orientation === "both" && <ScrollAreaPrimitive.Corner />}
+            {orientation !== 'horizontal' && <ScrollBar orientation="vertical" />}
+            {orientation !== 'vertical' && <ScrollBar orientation="horizontal" />}
+            {orientation === 'both' && <ScrollAreaPrimitive.Corner />}
           </ScrollAreaPrimitive.Root>
         )}
       </ScrollAreaContext.Provider>
-    );
-  }
-) as ForwardRefExoticComponent<ScrollAreaProps & RefAttributes<HTMLDivElement>> &
-  ScrollAreaStatics;
+    )
+  },
+) as ForwardRefExoticComponent<ScrollAreaProps & RefAttributes<HTMLDivElement>> & ScrollAreaStatics
 
-ScrollArea.displayName = "ScrollArea";
+ScrollArea.displayName = 'ScrollArea'
 
 const ScrollBar = forwardRef<
   ComponentRef<typeof ScrollAreaPrimitive.Scrollbar>,
   ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Scrollbar>
->(({ className, orientation = "vertical", ...props }, ref) => {
-  const isTouch = useContext(ScrollAreaContext);
-  const shape = useShape();
+>(({ className, orientation = 'vertical', ...props }, ref) => {
+  const isTouch = useContext(ScrollAreaContext)
+  const shape = useShape()
 
-  if (isTouch) return null;
+  if (isTouch) return null
 
   return (
     <ScrollAreaPrimitive.Scrollbar
@@ -167,17 +155,17 @@ const ScrollBar = forwardRef<
         // The 10px track stays as a comfortable hit target; the thumb inside
         // it rests narrow and low-contrast, then widens + darkens on hover so
         // it gets out of the way until you reach for it.
-        "group/scrollbar absolute z-20 flex touch-none select-none",
+        'group/scrollbar absolute z-20 flex touch-none select-none',
         // Show immediately; on hide, wait out the 150ms thumb shrink before
         // fading so the thumb visibly narrows back first instead of the fade
         // masking it.
-        "opacity-0 transition-opacity duration-moderate-exit ease-out delay-moderate",
-        "data-[hovering]:duration-moderate data-[scrolling]:duration-moderate",
-        "data-[hovering]:opacity-100 data-[scrolling]:opacity-100",
-        "data-[hovering]:delay-0 data-[scrolling]:delay-0",
-        orientation === "vertical" && "top-0 right-0 h-full w-2.5",
-        orientation === "horizontal" && "bottom-0 left-0 h-2.5 w-full flex-col",
-        className
+        'opacity-0 transition-opacity duration-moderate-exit ease-out delay-moderate',
+        'data-[hovering]:duration-moderate data-[scrolling]:duration-moderate',
+        'data-[hovering]:opacity-100 data-[scrolling]:opacity-100',
+        'data-[hovering]:delay-0 data-[scrolling]:delay-0',
+        orientation === 'vertical' && 'top-0 right-0 h-full w-2.5',
+        orientation === 'horizontal' && 'bottom-0 left-0 h-2.5 w-full flex-col',
+        className,
       )}
       {...props}
     >
@@ -186,26 +174,26 @@ const ScrollBar = forwardRef<
         className={cn(
           // Fixed surface-relative overlay ramp (8 → 12 → 16%) — same tint
           // direction as the menu hover/active tokens, one notch stronger.
-          "relative bg-overlay/8 transition-[background-color,width,height] duration-moderate ease-in-out",
-          "group-hover/scrollbar:bg-overlay/12 active:!bg-overlay/16",
+          'relative bg-overlay/8 transition-[background-color,width,height] duration-moderate ease-in-out',
+          'group-hover/scrollbar:bg-overlay/12 active:!bg-overlay/16',
           shape.bg,
           // -translate nudges the thumb 2px off the container edge; the track
           // (and its 10px hit target) stays flush so edge-throws still land.
-          orientation === "vertical" &&
-            "mx-auto my-1 w-1 -translate-x-0.5 h-[var(--scroll-area-thumb-height)] group-hover/scrollbar:w-1.5",
-          orientation === "horizontal" &&
-            "my-auto mx-1 h-1 -translate-y-0.5 w-[var(--scroll-area-thumb-width)] group-hover/scrollbar:h-1.5"
+          orientation === 'vertical' &&
+            'mx-auto my-1 w-1 -translate-x-0.5 h-[var(--scroll-area-thumb-height)] group-hover/scrollbar:w-1.5',
+          orientation === 'horizontal' &&
+            'my-auto mx-1 h-1 -translate-y-0.5 w-[var(--scroll-area-thumb-width)] group-hover/scrollbar:h-1.5',
         )}
       />
     </ScrollAreaPrimitive.Scrollbar>
-  );
-});
+  )
+})
 
-ScrollBar.displayName = "ScrollBar";
+ScrollBar.displayName = 'ScrollBar'
 
 Object.assign(ScrollArea, { Bar: ScrollBar })
 
-export { ScrollArea, ScrollBar };
-export type { ScrollAreaProps };
+export { ScrollArea, ScrollBar }
+export type { ScrollAreaProps }
 
 export default ScrollArea

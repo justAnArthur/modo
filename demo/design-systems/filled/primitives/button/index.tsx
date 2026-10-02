@@ -21,12 +21,7 @@ export default function Button({
   children?: React.ReactNode
 }) {
   return (
-    <button
-      data-variant={variant}
-      className="my-btn"
-      disabled={disabled}
-      onClick={onClick}
-    >
+    <button data-variant={variant} className="my-btn" disabled={disabled} onClick={onClick}>
       {children}
     </button>
   )

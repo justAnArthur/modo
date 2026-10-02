@@ -14,18 +14,18 @@ export const routes: Route[] = [
   { pattern: /^\/$/, render: () => <HomePage /> },
   {
     pattern: /^\/docs\/tokens\/([^/]+)$/,
-    render: (m) => <TokenGroupPage group={m[1] ?? ''} />,
+    render: m => <TokenGroupPage group={m[1] ?? ''} />,
   },
   {
     pattern: /^\/docs\/primitives\/([^/]+)$/,
-    render: (m) => <PrimitivePage id={m[1] ?? ''} />,
+    render: m => <PrimitivePage id={m[1] ?? ''} />,
   },
   {
     pattern: /^\/docs\/components\/([^/]+)$/,
-    render: (m) => <ComponentPage id={m[1] ?? ''} />,
+    render: m => <ComponentPage id={m[1] ?? ''} />,
   },
   {
     pattern: /^\/docs\/blocks\/([^/]+)$/,
-    render: (m) => <BlockPage id={m[1] ?? ''} />,
+    render: m => <BlockPage id={m[1] ?? ''} />,
   },
 ]

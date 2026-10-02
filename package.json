@@ -4,15 +4,22 @@
   "private": true,
   "description": "modo — atomic design system renderer. monorepo root.",
   "type": "module",
-  "workspaces": ["lib", "demo", "demo/design-systems/*"],
+  "workspaces": [
+    "lib",
+    "demo",
+    "demo/design-systems/*"
+  ],
   "scripts": {
     "build": "bun --filter '@justanarthur/modo' build",
     "dev": "bun --filter '@modo/demo' dev",
     "check": "bun --filter '*' check",
-    "typecheck": "bun --filter '*' check"
+    "typecheck": "bun --filter '*' check",
+    "lint": "biome check",
+    "format": "biome check --write"
   },
   "devDependencies": {
-    "typescript": "^5.7.2",
-    "@types/node": "^22.10.0"
+    "@biomejs/biome": "2.5.15",
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.2"
   }
 }

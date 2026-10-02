@@ -178,16 +178,26 @@
     margin-top: 0.5em;
   }
 
-  h2 { font-size: 1.25em; }
-  h3 { font-size: 1.1em; }
-  :is(h4, h5, h6) { font-size: 1em; }
+  h2 {
+    font-size: 1.25em;
+  }
+  h3 {
+    font-size: 1.1em;
+  }
+  :is(h4, h5, h6) {
+    font-size: 1em;
+  }
 
   :is(ul, ol) {
     padding-inline-start: 1.25em;
   }
 
-  ul { list-style: disc; }
-  ol { list-style: decimal; }
+  ul {
+    list-style: disc;
+  }
+  ol {
+    list-style: decimal;
+  }
 
   li + li {
     margin-top: 0.35em;
