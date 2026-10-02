@@ -32,6 +32,12 @@
  * - modo item: TSDoc from the FF "InputMessage" docs page (its Playground section is
  *   skipped, and the transcript around the Attachments / Send Handler demos is dropped —
  *   `ChatMessage` is not part of this port).
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; `leading-[18px]` → `leading-4.5`; inline
+ *   `fontVariationSettings` → `weight-*`; the hex focus-ring fallback →
+ *   `ring-focus-ring` / `border-focus-ring`; literal colors → color tokens;
+ *   `rounded-[Npx]` → radius tokens; `duration-80|120|160` and tier-length JS
+ *   durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -53,7 +59,6 @@ import {
 } from "react";
 import { AnimatePresence, motion, Reorder, useReducedMotion } from "motion/react";
 import { cn } from "../../_fluid/lib/utils";
-import { fontWeights } from "../../_fluid/lib/font-weight";
 import { spring } from "../../_fluid/lib/springs";
 import { useShape } from "../../_fluid/lib/shape-context";
 import { SizeProvider, useSize, type SizeVariant } from "../../_fluid/lib/size-context";
@@ -268,7 +273,7 @@ const FilePreviewTile = forwardRef<HTMLDivElement, FilePreviewTileProps>(functio
           // of theme — the close badge needs to read as a "delete affordance"
           // over arbitrary image/PDF content, so it sits at a fixed contrast
           // instead of flipping with the surrounding surface.
-          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-neutral-900 text-white opacity-0 group-hover/tile:opacity-100 transition-opacity duration-80 flex items-center justify-center cursor-pointer outline-none focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]"
+          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-neutral-900 text-white opacity-0 group-hover/tile:opacity-100 transition-opacity duration-fast flex items-center justify-center cursor-pointer outline-none focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-focus-ring"
         >
           <XIcon size={12} strokeWidth={2.5} />
         </button>
@@ -344,13 +349,13 @@ function QueuedRow({
         // text-box trim on the label doesn't shrink the row.
         "group/qrow flex items-center gap-2 rounded-lg bg-muted",
         compactStep
-          ? "h-7 px-2 text-[12px]"
-          : "h-8 px-2.5 text-[13px]",
+          ? "h-7 px-2 text-body-compact"
+          : "h-8 px-2.5 text-body",
         "text-foreground/85 select-none outline-none",
         "cursor-grab active:cursor-grabbing",
-        "focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]"
+        "focus-visible:ring-1 focus-visible:ring-focus-ring",
+        "weight-normal"
       )}
-      style={{ fontVariationSettings: fontWeights.normal }}
     >
       {fileCount > 0 && (
         <span className="flex shrink-0 items-center gap-0.5 text-muted-foreground">
@@ -380,8 +385,8 @@ function QueuedRow({
             isTouch
               ? "opacity-100"
               : "opacity-0 group-hover/qrow:opacity-100 focus-visible:opacity-100",
-            "transition-opacity duration-80 cursor-pointer outline-none",
-            "focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]"
+            "transition-opacity duration-fast cursor-pointer outline-none",
+            "focus-visible:ring-1 focus-visible:ring-focus-ring"
           )}
         >
           <XIcon size={13} strokeWidth={2.5} />
@@ -437,11 +442,11 @@ function SuggestionRow({
         // Text size mirrors the composer's textarea/placeholder (the rows
         // read as prompt candidates, not metadata); heights follow the
         // QueuedRow step ladder.
-        compactStep ? "h-7 px-2 text-[13px]" : "h-8 px-2.5 text-[14px]",
-        "text-muted-foreground transition-colors duration-80",
-        active && "text-foreground"
+        compactStep ? "h-7 px-2 text-subtitle-compact" : "h-8 px-2.5 text-subtitle",
+        "text-muted-foreground transition-colors duration-fast",
+        active && "text-foreground",
+        "weight-normal"
       )}
-      style={{ fontVariationSettings: fontWeights.normal }}
     >
       <span className="min-w-0 flex-1 truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1">
         {text}
@@ -452,13 +457,13 @@ function SuggestionRow({
       {!active && keyHint ? (
         <ArrowDownIcon
           size={13}
-          className="shrink-0 text-muted-foreground/70 transition-opacity duration-80"
+          className="shrink-0 text-muted-foreground/70 transition-opacity duration-fast"
         />
       ) : (
         <EnterIcon
           size={13}
           className={cn(
-            "shrink-0 transition-opacity duration-80",
+            "shrink-0 transition-opacity duration-fast",
             active ? "opacity-100" : "opacity-0"
           )}
         />
@@ -490,151 +495,6 @@ function SuggestionRow({
  * Every controlled prop has an uncontrolled twin — `defaultValue`,
  * `defaultFiles`, `defaultQueue`, `defaultStatus` — so a composer can hold
  * its own draft, attachments and queue with no state in the caller.
- *
- * @example
- * # Basic
- *
- * No props at all: the composer keeps its own draft, grows as you type and
- * clears itself on Enter.
- *
- * ```tsx
- * <div className="w-full max-w-xl">
- *   <InputMessage />
- * </div>
- * ```
- *
- * @example
- * # Suggestions
- *
- * The ghost placeholder renders with a Tab keycap — Tab fills it into the
- * composer. ArrowDown/ArrowUp walk the list below (focus stays in the
- * textarea) and Enter or click fills the highlighted prompt; the first row
- * shows a ↓ hint until a row is highlighted. Typing collapses the list.
- *
- * ```tsx
- * <div className="w-full max-w-xl">
- *   <InputMessage
- *     placeholderSuggestion="Why is every other input box so stiff?"
- *     suggestions={[
- *       'What is Fluid Functionalism about?',
- *       'How does Micka tune the springs behind these animations?',
- *       'Install the InputMessage component in my project',
- *       'Draft a short thank-you note to Micka for the library',
- *     ]}
- *   />
- * </div>
- * ```
- *
- * @example
- * # Attachments
- *
- * `defaultFiles` seeds the composer and turns attachment behavior on: drop a
- * PNG, JPEG or PDF anywhere on the panel, or use the render-fn slot's
- * `openFilePicker`. Images preview with object-cover, PDFs render their
- * first page, anything else falls back to a document glyph — hover a tile
- * for its × button.
- *
- * ```tsx
- * <div className="w-full max-w-xl">
- *   <InputMessage
- *     defaultFiles={[
- *       new File(['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#6B97FF" /></svg>'], 'swatch.svg', { type: 'image/svg+xml' }),
- *       new File(['Quarterly notes'], 'notes.txt', { type: 'text/plain' }),
- *     ]}
- *     leftSlot={({ openFilePicker }) => (
- *       <Button variant="ghost" size="icon-sm" aria-label="Attach" onClick={() => openFilePicker()}>
- *         <Plus />
- *       </Button>
- *     )}
- *   />
- * </div>
- * ```
- *
- * @example
- * # Queued messages
- *
- * `defaultStatus="streaming"` plus `defaultQueue` runs the composer as if a
- * response were in flight: the send button is a Queue action, so a typed
- * message joins the rows above instead of sending. Drag a row (or Alt+↑/↓)
- * to reorder, double-click to pull it back into the composer, × to drop it.
- * Clear the draft and the button becomes Stop — pressing it ends the
- * response, and that streaming→idle edge dispatches the row at the top.
- *
- * ```tsx
- * <div className="w-full max-w-xl">
- *   <InputMessage
- *     defaultStatus="streaming"
- *     defaultQueue={[
- *       { id: 'q1', text: 'Also add a dark-mode screenshot', files: [] },
- *       { id: 'q2', text: 'And link the changelog entry', files: [] },
- *     ]}
- *   />
- * </div>
- * ```
- *
- * @example
- * # Left Slot Only
- *
- * `leftSlot` takes the bottom-left action area — an attach button, a model
- * switcher, a mode toggle.
- *
- * ```tsx
- * <div className="w-full max-w-xl">
- *   <InputMessage
- *     leftSlot={
- *       <Button variant="ghost" size="icon-sm" aria-label="Attach">
- *         <Plus />
- *       </Button>
- *     }
- *   />
- * </div>
- * ```
- *
- * @example
- * # Right Slot Only
- *
- * `rightSlot` sits in the bottom-right, just before the built-in send
- * button.
- *
- * ```tsx
- * <div className="w-full max-w-xl">
- *   <InputMessage
- *     rightSlot={
- *       <Button variant="ghost" size="sm" trailingIcon={ChevronDown}>
- *         Sonnet 4.6
- *       </Button>
- *     }
- *   />
- * </div>
- * ```
- *
- * @example
- * # Send Handler
- *
- * `onSend` receives the trimmed text and the attached files; an uncontrolled
- * composer clears its own draft afterwards. The handler here is an empty
- * arrow — in an app it is where the message joins the transcript.
- *
- * ```tsx
- * <div className="w-full max-w-xl">
- *   <InputMessage
- *     onSend={() => {}}
- *     placeholder="Press Enter to send. Shift+Enter for newline."
- *   />
- * </div>
- * ```
- *
- * @example
- * # Disabled
- *
- * Dims the panel to 50% and drops pointer events — textarea, send button and
- * drag-and-drop all go inert.
- *
- * ```tsx
- * <div className="w-full max-w-xl">
- *   <InputMessage defaultValue="This composer is disabled" disabled />
- * </div>
- * ```
  */
 const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
   (
@@ -857,7 +717,7 @@ const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
     // `shadow-surface-2` supplies the resting edge.
     const EDGE_DROP = "0 1px 1px -0.5px var(--shadow-color)";
     const edgeShadow = dragOver
-      ? `0 0 0 1px #6B97FF, ${EDGE_DROP}`
+      ? `0 0 0 1px var(--brand), ${EDGE_DROP}`
       : focusVisible
         ? `0 0 0 1px color-mix(in oklab, var(--foreground) 20%, transparent), ${EDGE_DROP}`
         : hovered && clickToFocus && !disabled
@@ -1276,7 +1136,7 @@ const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
           // border. State changes recolor that same 1px ring in place rather
           // than layering a second colored border beside it — so hover / focus
           // bump *contrast* without ever appearing to thicken the stroke.
-          "flex flex-col gap-1 p-2 transition-[box-shadow,color] duration-80",
+          "flex flex-col gap-1 p-2 transition-[box-shadow,color] duration-fast",
           surfaceClasses(2, 2),
           shape.container,
           clickToFocus && !disabled && "cursor-text",
@@ -1429,10 +1289,10 @@ const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
                 "w-full resize-none rounded-none bg-transparent outline-none",
                 "text-foreground placeholder:text-muted-foreground",
                 compactStep
-                  ? "text-[13px] leading-[18px] px-1.5 py-1.5"
-                  : "text-[14px] leading-5 px-2 py-2"
+                  ? "text-subtitle-compact leading-4.5 px-1.5 py-1.5"
+                  : "text-subtitle leading-5 px-2 py-2",
+                "weight-normal"
               )}
-              style={{ fontVariationSettings: fontWeights.normal }}
               {...restTextareaProps}
             />
             {/* Ghost placeholder: the suggested prompt with a Tab keycap. A
@@ -1447,10 +1307,10 @@ const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
                   // Mirror the textarea's step typography exactly so the ghost
                   // sits where typed text will.
                   compactStep
-                    ? "text-[13px] leading-[18px] px-1.5 py-1.5"
-                    : "text-[14px] leading-5 px-2 py-2"
+                    ? "text-subtitle-compact leading-4.5 px-1.5 py-1.5"
+                    : "text-subtitle leading-5 px-2 py-2",
+                  "weight-normal"
                 )}
-                style={{ fontVariationSettings: fontWeights.normal }}
               >
                 {/* One flex line: a suggestion longer than the field truncates
                     with an ellipsis instead of wrapping into the clip (the
@@ -1460,8 +1320,8 @@ const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
                   <span className="min-w-0 truncate">{placeholderSuggestion}</span>
                   <kbd
                     className={cn(
-                      "inline-flex shrink-0 -translate-y-px items-center rounded-[5px] border border-border bg-background px-1 font-sans text-muted-foreground",
-                      compactStep ? "h-4 text-[10px]" : "h-[18px] text-[11px]"
+                      "inline-flex shrink-0 -translate-y-px items-center rounded-box border border-border bg-background px-1 font-sans text-muted-foreground",
+                      compactStep ? "h-4 text-micro-compact" : "h-[18px] text-micro"
                     )}
                   >
                     Tab
@@ -1484,7 +1344,7 @@ const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
               // Buttons), so the compact step scales any button in the row —
               // send button included — down to 24px via a scoped override.
               compactStep
-                ? "gap-1.5 [&_button]:h-6 [&_button.w-7]:w-6 [&_button]:text-[11px]"
+                ? "gap-1.5 [&_button]:h-6 [&_button.w-7]:w-6 [&_button]:text-caption-compact"
                 : "gap-2"
             )}
           >
@@ -1517,7 +1377,7 @@ const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
                     className="flex items-center justify-center leading-none"
                   >
                     {buttonMode === "stop" ? (
-                      <span className="h-3 w-3 rounded-[3px] bg-current" />
+                      <span className="h-3 w-3 rounded-glyph bg-current" />
                     ) : (
                       // Override icon-sm's small 14px svg — the send glyph reads
                       // better a touch larger. `size` matches the attribute to

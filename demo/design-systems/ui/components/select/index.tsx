@@ -19,6 +19,10 @@
  *   `<Select.Item>` typechecks); upstream's named exports are kept.
  * - modo item: TSDoc + examples from the FF "Select" docs page, and a default
  *   export.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; the hex focus-ring fallback →
+ *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and
+ *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -169,155 +173,6 @@ interface SelectProps {
  * Statics: Select.Trigger (variant, icon, placeholder, error),
  * Select.Content (the popover), Select.Item (index, value, icon, disabled),
  * Select.Group, Select.Label and Select.Separator.
- *
- * @example # Basic
- * A trigger, a popover, four options. Give every item its `index` — that is
- * what the fluid hover measures rows by.
- *
- * ```tsx
- * <Select defaultValue="banana">
- *   <Select.Trigger placeholder="Select a fruit…" />
- *   <Select.Content>
- *     <Select.Item index={0} value="apple">Apple</Select.Item>
- *     <Select.Item index={1} value="banana">Banana</Select.Item>
- *     <Select.Item index={2} value="cherry">Cherry</Select.Item>
- *     <Select.Item index={3} value="mango">Mango</Select.Item>
- *   </Select.Content>
- * </Select>
- * ```
- *
- * @example # Variants
- * Bordered is the default; borderless drops the resting border and keeps the
- * hover fill, for toolbars and dense headers.
- *
- * ```tsx
- * <div className="flex flex-wrap items-center gap-3">
- *   <Select>
- *     <Select.Trigger variant="bordered" placeholder="Bordered" />
- *     <Select.Content>
- *       <Select.Item index={0} value="apple">Apple</Select.Item>
- *       <Select.Item index={1} value="banana">Banana</Select.Item>
- *       <Select.Item index={2} value="cherry">Cherry</Select.Item>
- *     </Select.Content>
- *   </Select>
- *   <Select>
- *     <Select.Trigger variant="borderless" placeholder="Borderless" />
- *     <Select.Content>
- *       <Select.Item index={0} value="apple">Apple</Select.Item>
- *       <Select.Item index={1} value="banana">Banana</Select.Item>
- *       <Select.Item index={2} value="cherry">Cherry</Select.Item>
- *     </Select.Content>
- *   </Select>
- * </div>
- * ```
- *
- * @example # With Icons
- * A leading icon on the trigger and on every row. Row icons thicken to a 2
- * stroke while their row is hovered or checked.
- *
- * ```tsx
- * <Select defaultValue="system">
- *   <Select.Trigger icon={Monitor} placeholder="Theme" />
- *   <Select.Content>
- *     <Select.Item index={0} value="system" icon={Monitor}>System</Select.Item>
- *     <Select.Item index={1} value="light" icon={Sun}>Light</Select.Item>
- *     <Select.Item index={2} value="dark" icon={Moon}>Dark</Select.Item>
- *   </Select.Content>
- * </Select>
- * ```
- *
- * @example # Groups
- * Select.Group + Select.Label caption a run of rows, Select.Separator rules
- * between them. Indices keep counting across the groups.
- *
- * ```tsx
- * <Select>
- *   <Select.Trigger placeholder="Settings…" />
- *   <Select.Content>
- *     <Select.Group>
- *       <Select.Label>Account</Select.Label>
- *       <Select.Item index={0} value="profile" icon={User}>Profile</Select.Item>
- *       <Select.Item index={1} value="email" icon={Mail}>Email</Select.Item>
- *     </Select.Group>
- *     <Select.Separator />
- *     <Select.Group>
- *       <Select.Label>Preferences</Select.Label>
- *       <Select.Item index={2} value="notifications" icon={Bell}>Notifications</Select.Item>
- *       <Select.Item index={3} value="privacy" icon={Shield}>Privacy</Select.Item>
- *     </Select.Group>
- *   </Select.Content>
- * </Select>
- * ```
- *
- * @example # Scrollable List
- * Past 300px the list scrolls inside a ScrollArea: hover-revealed thumb, a
- * fade at both edges, and the overlays scrolling with the rows.
- *
- * ```tsx
- * <Select defaultValue="utc+1">
- *   <Select.Trigger icon={Globe} placeholder="Select timezone…" />
- *   <Select.Content>
- *     {[
- *       ['utc-8', '(UTC-8) Pacific Time'],
- *       ['utc-7', '(UTC-7) Mountain Time'],
- *       ['utc-6', '(UTC-6) Central Time'],
- *       ['utc-5', '(UTC-5) Eastern Time'],
- *       ['utc-4', '(UTC-4) Atlantic Time'],
- *       ['utc-3', '(UTC-3) Buenos Aires'],
- *       ['utc-1', '(UTC-1) Azores'],
- *       ['utc+0', '(UTC+0) London'],
- *       ['utc+1', '(UTC+1) Paris'],
- *       ['utc+2', '(UTC+2) Helsinki'],
- *       ['utc+3', '(UTC+3) Moscow'],
- *       ['utc+5:30', '(UTC+5:30) Mumbai'],
- *       ['utc+8', '(UTC+8) Singapore'],
- *       ['utc+9', '(UTC+9) Tokyo'],
- *       ['utc+10', '(UTC+10) Sydney'],
- *       ['utc+12', '(UTC+12) Auckland'],
- *     ].map(([value, label], i) => (
- *       <Select.Item key={value} index={i} value={value}>{label}</Select.Item>
- *     ))}
- *   </Select.Content>
- * </Select>
- * ```
- *
- * @example # Error State
- * `error` on the trigger tints its border, sets `aria-invalid`, and prints
- * the message underneath.
- *
- * ```tsx
- * <Select>
- *   <Select.Trigger placeholder="Select a role…" error="Please select a role to continue." />
- *   <Select.Content>
- *     <Select.Item index={0} value="admin">Admin</Select.Item>
- *     <Select.Item index={1} value="editor">Editor</Select.Item>
- *     <Select.Item index={2} value="viewer">Viewer</Select.Item>
- *   </Select.Content>
- * </Select>
- * ```
- *
- * @example # Disabled
- * `disabled` on the root takes the whole control out; on a single item it
- * dims the row and makes it invisible to the hover highlight.
- *
- * ```tsx
- * <div className="flex flex-wrap items-center gap-3">
- *   <Select disabled>
- *     <Select.Trigger placeholder="Disabled" />
- *     <Select.Content>
- *       <Select.Item index={0} value="a">Option A</Select.Item>
- *     </Select.Content>
- *   </Select>
- *   <Select>
- *     <Select.Trigger placeholder="Some disabled…" />
- *     <Select.Content>
- *       <Select.Item index={0} value="a">Available</Select.Item>
- *       <Select.Item index={1} value="b" disabled>Unavailable</Select.Item>
- *       <Select.Item index={2} value="c">Available</Select.Item>
- *     </Select.Content>
- *   </Select>
- * </div>
- * ```
  */
 function Select({
   children,
@@ -416,9 +271,9 @@ Select.displayName = "Select";
 const triggerVariants = cva(
   [
     "group inline-flex items-center justify-between outline-none cursor-pointer",
-    "transition-all duration-80",
+    "transition-all duration-fast",
     "disabled:opacity-50 disabled:pointer-events-none",
-    "focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]",
+    "focus-visible:ring-1 focus-visible:ring-focus-ring",
   ],
   {
     variants: {
@@ -492,7 +347,7 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
               <Icon
                 size={sizeClasses.icon}
                 strokeWidth={1.5}
-                className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-80 group-hover:text-foreground group-hover:stroke-[2]"
+                className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-fast group-hover:text-foreground group-hover:stroke-[2]"
               />
             )}
             <SelectPrimitive.Value
@@ -514,13 +369,13 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="shrink-0 text-muted-foreground transition-colors duration-80 group-hover:text-foreground"
+            className="shrink-0 text-muted-foreground transition-colors duration-fast group-hover:text-foreground"
           >
             <path d="M6 9l6 6 6-6" />
           </svg>
         </SelectPrimitive.Trigger>
         {error && (
-          <span className="text-[12px] text-destructive pl-3">{error}</span>
+          <span className="text-caption text-destructive pl-3">{error}</span>
         )}
       </div>
     );
@@ -755,7 +610,7 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
                         exit={{ opacity: 0, transition: spring.moderate.exit }}
                         transition={{
                           ...spring.moderate,
-                          opacity: { duration: 0.08 },
+                          opacity: { duration: spring.fast.duration },
                         }}
                       />
                     )}
@@ -774,7 +629,7 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
                   <AnimatePresence>
                     {focusRect && (
                       <motion.div
-                        className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-[color:var(--focus-ring,#6B97FF)]`}
+                        className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
                         initial={false}
                         animate={{
                           left: focusRect.left - 2,
@@ -785,7 +640,7 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
                         exit={{ opacity: 0, transition: spring.fast.exit }}
                         transition={{
                           ...spring.fast,
-                          opacity: { duration: 0.08 },
+                          opacity: { duration: spring.fast.duration },
                         }}
                       />
                     )}
@@ -884,7 +739,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
               // shrink-0: the popup is a max-height flex column, so without it
               // a long list compresses rows to fit instead of scrolling.
               `relative z-10 flex ${sizeClasses.control} shrink-0 items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.itemPx} ${sizeClasses.text} cursor-pointer outline-none select-none`,
-              "transition-[color] duration-80",
+              "transition-[color] duration-fast",
               isActive || isChecked
                 ? "text-foreground"
                 : "text-muted-foreground",
@@ -899,7 +754,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
           <Icon
             size={sizeClasses.icon}
             strokeWidth={isActive || isChecked ? 2 : 1.5}
-            className="shrink-0 transition-[color,stroke-width] duration-80"
+            className="shrink-0 transition-[color,stroke-width] duration-fast"
           />
         )}
 
@@ -940,7 +795,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
                   initial={{ pathLength: skipAnimation ? 1 : 0 }}
                   animate={{
                     pathLength: 1,
-                    transition: { duration: 0.08, ease: "easeOut" },
+                    transition: { duration: spring.fast.duration, ease: "easeOut" },
                   }}
                   exit={{
                     pathLength: 0,
@@ -985,7 +840,7 @@ const SelectLabel = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
         ref={ref}
         className={cn(
           "px-2 py-1.5 shrink-0 text-muted-foreground",
-          compact ? "text-[11px]" : "text-[12px]",
+          compact ? "text-caption-compact" : "text-caption",
           className
         )}
         {...props}

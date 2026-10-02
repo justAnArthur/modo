@@ -12,6 +12,9 @@
  *   lists only members declared in the interface body).
  * - modo item: TSDoc (from the FF "Scrollbars" docs page), `ScrollArea.Bar` static (= `ScrollBar`,
  *   still exported by name) and a default export.
+ * - Styling reads DS tokens (AGENTS.md styling): literal colors → color
+ *   tokens; `duration-80|120|160` and tier-length JS durations →
+ *   `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -70,72 +73,6 @@ interface ScrollAreaStatics {
  * Statics:
  * - `ScrollArea.Bar` — the standalone `ScrollBar`, for hand-composed scroll
  *   areas.
- *
- * @example
- * # The scrollbar
- *
- * A clipped list with the fade and the hover-revealed scrollbar. The thumb
- * widens and darkens as you reach for it; the fade keeps the true start and
- * end edges crisp.
- *
- * ```tsx
- * <ScrollArea viewportClassName="scroll-fade" className="h-56 w-64 border border-border rounded-xl">
- *   <div className="flex flex-col p-3">
- *     {[23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0].map((n) => (
- *       <div key={n} className="px-3 py-2 text-body text-foreground whitespace-nowrap">
- *         v1.{n}.0 — maintenance release
- *       </div>
- *     ))}
- *   </div>
- * </ScrollArea>
- * ```
- *
- * @example
- * # Horizontal
- *
- * A row wider than its container, faded with the x variant: `w-max` lets the
- * content keep its natural width instead of squeezing in.
- *
- * ```tsx
- * <ScrollArea orientation="horizontal" viewportClassName="scroll-fade-x" className="w-full">
- *   <div className="flex gap-2 p-3 w-max">
- *     {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month) => (
- *       <div key={month} className="flex items-center justify-center h-20 w-28 shrink-0 border border-border rounded-lg text-body text-foreground">
- *         {month}
- *       </div>
- *     ))}
- *   </div>
- * </ScrollArea>
- * ```
- *
- * @example
- * # Double overflow
- *
- * A grid taller and wider than its box. `orientation="both"` adds both
- * scrollbars and the corner.
- *
- * ```tsx
- * <ScrollArea orientation="both" className="h-80 w-full border border-border rounded-xl">
- *   <div className="w-max p-3 text-body">
- *     <div className="flex">
- *       <div className="w-32 shrink-0 px-3 py-2 text-caption text-muted-foreground">City</div>
- *       {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m) => (
- *         <div key={m} className="w-28 shrink-0 px-3 py-2 text-right text-caption text-muted-foreground">{m}</div>
- *       ))}
- *     </div>
- *     {['Amsterdam', 'Berlin', 'Copenhagen', 'Dublin', 'Helsinki', 'Lisbon', 'London', 'Madrid', 'Oslo', 'Paris', 'Prague', 'Stockholm', 'Vienna', 'Warsaw', 'Zurich'].map((city, r) => (
- *       <div key={city} className="flex border-t border-border">
- *         <div className="w-32 shrink-0 px-3 py-2 text-foreground">{city}</div>
- *         {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((c) => (
- *           <div key={c} className="w-28 shrink-0 px-3 py-2 text-right tabular-nums text-muted-foreground">
- *             {(((r + 3) * (c + 7) * 37) % 900) + 100}
- *           </div>
- *         ))}
- *       </div>
- *     ))}
- *   </div>
- * </ScrollArea>
- * ```
  */
 const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
   (
@@ -232,8 +169,8 @@ const ScrollBar = forwardRef<
         // Show immediately; on hide, wait out the 150ms thumb shrink before
         // fading so the thumb visibly narrows back first instead of the fade
         // masking it.
-        "opacity-0 transition-opacity duration-120 ease-out delay-160",
-        "data-[hovering]:duration-160 data-[scrolling]:duration-160",
+        "opacity-0 transition-opacity duration-moderate-exit ease-out delay-moderate",
+        "data-[hovering]:duration-moderate data-[scrolling]:duration-moderate",
         "data-[hovering]:opacity-100 data-[scrolling]:opacity-100",
         "data-[hovering]:delay-0 data-[scrolling]:delay-0",
         orientation === "vertical" && "top-0 right-0 h-full w-2.5",
@@ -247,8 +184,8 @@ const ScrollBar = forwardRef<
         className={cn(
           // Fixed surface-relative overlay ramp (8 → 12 → 16%) — same tint
           // direction as the menu hover/active tokens, one notch stronger.
-          "relative bg-[rgb(var(--overlay)/0.08)] transition-[background-color,width,height] duration-160 ease-in-out",
-          "group-hover/scrollbar:bg-[rgb(var(--overlay)/0.12)] active:!bg-[rgb(var(--overlay)/0.16)]",
+          "relative bg-overlay/8 transition-[background-color,width,height] duration-moderate ease-in-out",
+          "group-hover/scrollbar:bg-overlay/12 active:!bg-overlay/16",
           shape.bg,
           // -translate nudges the thumb 2px off the container edge; the track
           // (and its 10px hit target) stays flush so edge-throws still land.

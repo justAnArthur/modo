@@ -19,6 +19,10 @@
  * - Compound statics `Accordion.Group/.Item/.Trigger/.Content` attached with
  *   `Object.assign`, typed through an `AccordionComponent` cast on the
  *   forwardRef. Upstream's named exports are kept.
+ * - Styling reads DS tokens (AGENTS.md styling): inline
+ *   `fontVariationSettings` → `weight-*`; the hex focus-ring fallback →
+ *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and
+ *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -45,7 +49,6 @@ const useIsoLayoutEffect =
 import { cn } from "../../_fluid/lib/utils";
 import { useIcon } from "../../_fluid/lib/icon-context";
 import { spring } from "../../_fluid/lib/springs";
-import { fontWeights } from "../../_fluid/lib/font-weight";
 import { useFluidHover, useRegisterFluidHoverItem } from "../../_fluid/hooks/use-fluid-hover";
 import { useControllableState } from "../../_fluid/hooks/use-controllable-state";
 import { useShape } from "../../_fluid/lib/shape-context";
@@ -444,7 +447,7 @@ const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>(
                         left: { duration: 0 },
                         width: { duration: 0 },
                         height: { duration: 0 },
-                        opacity: { duration: 0.12 },
+                        opacity: { duration: spring.moderate.exit.duration },
                       }}
                     />
                   ))}
@@ -460,7 +463,7 @@ const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>(
                 <AnimatePresence>
                   {focusRect && (
                     <motion.div
-                      className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-[color:var(--focus-ring,#6B97FF)]`}
+                      className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
                       initial={false}
                       animate={{
                         left: focusRect.left - 2,
@@ -471,7 +474,7 @@ const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>(
                       exit={{ opacity: 0, transition: spring.fast.exit }}
                       transition={{
                         ...spring.fast,
-                        opacity: { duration: 0.08 },
+                        opacity: { duration: spring.fast.duration },
                       }}
                     />
                   )}
@@ -537,110 +540,6 @@ type AccordionComponent = ForwardRefExoticComponent<
  * defaultValue, value, onValueChange, highlight, size), Accordion.Item (value,
  * index, disabled), Accordion.Trigger (the row that toggles its item) and
  * Accordion.Content (the collapsible panel).
- *
- * @example # Standalone
- * A single collapsible item with its own hover state.
- *
- * ```tsx
- * <Accordion type="single" collapsible defaultValue="item-1">
- *   <Accordion.Item value="item-1">
- *     <Accordion.Trigger>What is this component?</Accordion.Trigger>
- *     <Accordion.Content>
- *       A collapsible accordion with animated expand/collapse and spring-animated chevron.
- *     </Accordion.Content>
- *   </Accordion.Item>
- * </Accordion>
- * ```
- *
- * @example # Single Expand
- * Multiple items with fluid hover — only one can be expanded at a time.
- *
- * ```tsx
- * <Accordion.Group type="single" collapsible defaultValue="item-1">
- *   <Accordion.Item value="item-1" index={0}>
- *     <Accordion.Trigger>Getting Started</Accordion.Trigger>
- *     <Accordion.Content>
- *       Install the component and import it into your project. The accordion
- *       supports both single and multiple expand modes.
- *     </Accordion.Content>
- *   </Accordion.Item>
- *   <Accordion.Item value="item-2" index={1}>
- *     <Accordion.Trigger>Styling</Accordion.Trigger>
- *     <Accordion.Content>
- *       The component integrates with the shape system for pill or rounded
- *       border-radius variants. All animations use spring physics.
- *     </Accordion.Content>
- *   </Accordion.Item>
- *   <Accordion.Item value="item-3" index={2}>
- *     <Accordion.Trigger>Accessibility</Accordion.Trigger>
- *     <Accordion.Content>
- *       Built on Base UI Accordion with WAI-ARIA attributes, keyboard
- *       navigation, and focus management.
- *     </Accordion.Content>
- *   </Accordion.Item>
- *   <Accordion.Item value="item-4" index={3}>
- *     <Accordion.Trigger>Animation</Accordion.Trigger>
- *     <Accordion.Content>
- *       Smooth height transitions and spring-animated chevron rotation.
- *       The fluid hover background tracks your cursor.
- *     </Accordion.Content>
- *   </Accordion.Item>
- * </Accordion.Group>
- * ```
- *
- * @example # Multi Expand
- * Multiple items with fluid hover — several can be expanded at once.
- *
- * ```tsx
- * <Accordion.Group type="multiple" defaultValue={['item-1', 'item-3']}>
- *   <Accordion.Item value="item-1" index={0}>
- *     <Accordion.Trigger>First Section</Accordion.Trigger>
- *     <Accordion.Content>
- *       Multiple items can be expanded at the same time.
- *     </Accordion.Content>
- *   </Accordion.Item>
- *   <Accordion.Item value="item-2" index={1}>
- *     <Accordion.Trigger>Second Section</Accordion.Trigger>
- *     <Accordion.Content>
- *       Click any trigger to expand or collapse independently.
- *     </Accordion.Content>
- *   </Accordion.Item>
- *   <Accordion.Item value="item-3" index={2}>
- *     <Accordion.Trigger>Third Section</Accordion.Trigger>
- *     <Accordion.Content>
- *       Each item operates independently in multiple mode.
- *     </Accordion.Content>
- *   </Accordion.Item>
- * </Accordion.Group>
- * ```
- *
- * @example # Row highlight
- * With `highlight="trigger"` an expanded item holds no tint — the fill
- * scopes to the row and waits for hover. Suits dense panels, where a block
- * per open item reads as a second layer.
- *
- * ```tsx
- * <Accordion.Group type="single" collapsible defaultValue="item-1" highlight="trigger">
- *   <Accordion.Item value="item-1" index={0}>
- *     <Accordion.Trigger>Expanded, but not tinted</Accordion.Trigger>
- *     <Accordion.Content>
- *       The panel reads as part of the page rather than a filled block.
- *     </Accordion.Content>
- *   </Accordion.Item>
- *   <Accordion.Item value="item-2" index={1}>
- *     <Accordion.Trigger>Hover any row</Accordion.Trigger>
- *     <Accordion.Content>
- *       The fill follows your cursor instead of marking a state.
- *     </Accordion.Content>
- *   </Accordion.Item>
- *   <Accordion.Item value="item-3" index={2}>
- *     <Accordion.Trigger>Compare with the sections above</Accordion.Trigger>
- *     <Accordion.Content>
- *       Those hold a block across the row and its panel while open.
- *     </Accordion.Content>
- *   </Accordion.Item>
- * </Accordion.Group>
- * ```
  */
 const Accordion = forwardRef<HTMLDivElement, AccordionProps>(
   (
@@ -819,7 +718,7 @@ const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0, transition: spring.moderate.exit }}
-                        transition={{ duration: 0.12 }}
+                        transition={{ duration: spring.moderate.exit.duration }}
                       />
                     )}
                   </AnimatePresence>
@@ -867,7 +766,7 @@ const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
           className={cn(
             `relative z-10 flex items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.px} ${sizeClasses.variant === "compact" ? "py-1" : "py-2"} w-full cursor-pointer outline-none select-none`,
             !groupCtx?.grouped &&
-              "focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] focus-visible:ring-offset-0",
+              "focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-0",
             className
           )}
           {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
@@ -875,23 +774,19 @@ const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
           {/* Label with dual-layer text */}
           <span className={cn("inline-grid flex-1 text-left", sizeClasses.text)}>
             <span
-              className="col-start-1 row-start-1 invisible"
-              style={{ fontVariationSettings: fontWeights.semibold }}
+              className="col-start-1 row-start-1 invisible weight-semibold"
               aria-hidden="true"
             >
               {children}
             </span>
             <span
               className={cn(
-                "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-80",
+                "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast",
                 isOpen || isActive
                   ? "text-foreground"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground",
+                isOpen ? "weight-semibold" : "weight-normal"
               )}
-              style={{
-                fontVariationSettings:
-                  isOpen ? fontWeights.semibold : fontWeights.normal,
-              }}
             >
               {children}
             </span>
@@ -907,7 +802,7 @@ const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
               size={sizeClasses.icon}
               strokeWidth={isOpen || isActive ? 2 : 1.5}
               className={cn(
-                "transition-[color,stroke-width] duration-80",
+                "transition-[color,stroke-width] duration-fast",
                 isOpen || isActive
                   ? "text-foreground"
                   : "text-muted-foreground"
@@ -941,7 +836,7 @@ const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
               // one — it marks a state, where the hover fill below tracks the
               // pointer and stays fast.
               exit={{ opacity: 0, transition: spring.moderate.exit }}
-              transition={{ duration: 0.12 }}
+              transition={{ duration: spring.moderate.exit.duration }}
             />
           )}
         </AnimatePresence>
@@ -952,7 +847,7 @@ const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, transition: spring.fast.exit }}
-              transition={{ duration: 0.08 }}
+              transition={{ duration: spring.fast.duration }}
             />
           )}
         </AnimatePresence>
@@ -1091,7 +986,7 @@ const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps>(
                   needsSnap.current || reduceMotion || !togglingRef.current
                     ? { duration: 0 }
                     : isOpen
-                      ? { ...spring.fast, opacity: { duration: 0.06 } }
+                      ? { ...spring.fast, opacity: { duration: spring.fast.exit.duration } }
                       : { ...spring.fast.exit, opacity: { duration: 0.04 } }
                 }
                 onUpdate={() => {

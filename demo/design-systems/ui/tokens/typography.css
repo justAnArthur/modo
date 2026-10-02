@@ -12,12 +12,16 @@
  *   InterVariable.ttf. The opsz build matters: _fluid/lib/font-weight.ts
  *   animates both the wght and opsz axes.
  * - The role sizes are renamed `--fs-*` → `--text-*` and read by the
- *   `text-display|title|subtitle|body|caption` rule in uno.config.ts. They
- *   hold the default column of `typeScale` in _fluid/lib/size-context.tsx
- *   (keep the two in sync). Upstream's site-chrome extras — the 22px mobile
- *   display step and the `html[data-size="compact"]` override set by the docs
- *   site's SizeAttribute — are not carried over; SizeProvider's compact step
- *   reaches components through `useTypeScale()` instead.
+ *   `text-<role>[-compact]` rule in uno.config.ts. They hold both columns of
+ *   `typeScale` in _fluid/lib/size-context.tsx (keep the two in sync), so a
+ *   component's `compact ? … : …` picks a token on either side. Upstream's
+ *   site-chrome extras — the 22px mobile display step and the
+ *   `html[data-size="compact"]` override set by the docs site's
+ *   SizeAttribute — are not carried over.
+ * - `micro` (keycaps, one notch below caption) is a local role.
+ * - The `--weight-*` variation settings mirror `fontWeights` in
+ *   _fluid/lib/font-weight.ts (keep the two in sync; motion still animates
+ *   the JS values) and are read by the `weight-*` rule in uno.config.ts.
  */
 
 :root {
@@ -34,4 +38,21 @@
   --text-body: 13px;
   /* Secondary text: descriptions, meta rows, errors, group labels. */
   --text-caption: 12px;
+  /* Keycaps and chips. */
+  --text-micro: 11px;
+
+  /* The compact step: each role one notch down. */
+  --text-display-compact: 24px;
+  --text-title-compact: 15px;
+  --text-subtitle-compact: 13px;
+  --text-body-compact: 12px;
+  --text-caption-compact: 11px;
+  --text-micro-compact: 10px;
+
+  /* Inter variable weights, each paired with the opsz that keeps a label's
+     advance width steady as it changes weight. */
+  --weight-normal: 'wght' 400, 'opsz' 14;
+  --weight-medium: 'wght' 450, 'opsz' 15;
+  --weight-semibold: 'wght' 550, 'opsz' 18;
+  --weight-bold: 'wght' 700, 'opsz' 25;
 }

@@ -17,6 +17,10 @@
  *   new props), so modo's parser lists them.
  * - TSDoc with the FF docs page's examples added above the component;
  *   `export default Switch` added.
+ * - Styling reads DS tokens (AGENTS.md styling): the hex focus-ring
+ *   fallback → `ring-focus-ring` / `border-focus-ring`; literal colors →
+ *   color tokens; `duration-80|120|160` and tier-length JS durations →
+ *   `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -92,38 +96,6 @@ const DRAG_DEAD_ZONE = 2;
  * uncontrolled (`defaultChecked`, with `onCheckedChange` reporting each
  * change). `size` pins it to one step of the size ladder; otherwise it
  * follows the surrounding SizeProvider.
- *
- * @example
- * # Basic
- *
- * A labelled switch. Uncontrolled here — it keeps its own state; pass
- * `checked` and `onToggle` to control it.
- *
- * ```tsx
- * <Switch label="Notifications" />
- * ```
- *
- * @example
- * # Disabled
- *
- * `disabled` dims the row and ignores pointer and keyboard input.
- *
- * ```tsx
- * <Switch label="Disabled option" disabled />
- * ```
- *
- * @example
- * # Compact
- *
- * `size="compact"` shrinks the track, thumb and label one step down the
- * size ladder. `defaultChecked` starts it on.
- *
- * ```tsx
- * <div className="flex flex-col">
- *   <Switch size="compact" label="Auto-save" defaultChecked />
- *   <Switch size="compact" label="Show hidden files" />
- * </div>
- * ```
  */
 const Switch = forwardRef<HTMLDivElement, SwitchProps>(
   (
@@ -317,17 +289,15 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
           tabIndex={0}
           className={cn(
             "relative shrink-0 rounded-full outline-none cursor-pointer",
-            "transition-colors duration-80",
-            "focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            "transition-colors duration-fast",
+            "focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+            isChecked
+              ? hovered ? "bg-brand-hover" : "bg-brand"
+              : hovered ? "bg-accent-hover" : "bg-accent"
           )}
           style={{
             width: m.trackWidth,
             height: m.trackHeight,
-            backgroundColor: isChecked
-              ? hovered ? "#5C89F2" : "#6B97FF"
-              : hovered
-                ? "color-mix(in oklab, var(--accent), rgb(var(--overlay)) 10%)"
-                : "var(--accent)",
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -370,7 +340,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
           className={cn(
             // text-box trim recenters the letterforms against the track; the
             // track is taller than the label, so layout doesn't change.
-            "[text-box:trim-both_cap_alphabetic] transition-[color] duration-80",
+            "[text-box:trim-both_cap_alphabetic] transition-[color] duration-fast",
             sizeClasses.text,
             isChecked ? "text-foreground" : "text-muted-foreground"
           )}

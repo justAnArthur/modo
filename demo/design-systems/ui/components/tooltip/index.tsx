@@ -10,6 +10,8 @@
  *   parser needs a description on every member).
  * - modo item: TSDoc (from the FF "Tooltip" docs page), the `Tooltip.Provider` /
  *   `Tooltip.PortalContainer` statics (both still exported by name) and a default export.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
  */
 
 import {
@@ -23,7 +25,6 @@ import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
 import { motion, useMotionValue } from "motion/react";
 import { cn } from "../../_fluid/lib/utils";
 import { spring } from "../../_fluid/lib/springs";
-import { fontWeights } from "../../_fluid/lib/font-weight";
 import { useShape } from "../../_fluid/lib/shape-context";
 
 // ---------------------------------------------------------------------------
@@ -158,98 +159,6 @@ function getSlideOffset(side: TooltipSide) {
  *   one trigger to an adjacent one skips the hover delay.
  * - `Tooltip.PortalContainer` — `TooltipPortalContainer`: portal every
  *   descendant tooltip into a given element instead of the body.
- *
- * @example
- * # Basic
- *
- * One `content` prop and a trigger child. The tooltip opens after the hover
- * delay and closes on pointer-out, blur or Escape.
- *
- * ```tsx
- * <Tooltip content="Save your changes">
- *   <Button>Hover me</Button>
- * </Tooltip>
- * ```
- *
- * @example
- * # Placement
- *
- * `side` picks the preferred side; `sideOffset` is the gap in pixels. A
- * tooltip that would collide with the viewport edge flips to the opposite
- * side and animates from there.
- *
- * ```tsx
- * <div className="flex flex-wrap gap-3">
- *   {['top', 'right', 'bottom', 'left'].map((side) => (
- *     <Tooltip key={side} content={side} side={side}>
- *       <Button variant="secondary" className="capitalize">{side}</Button>
- *     </Tooltip>
- *   ))}
- * </div>
- * ```
- *
- * @example
- * # Rich Content
- *
- * `content` takes any node, not just a string — a shortcut hint, a label
- * with a description, a small stack of rows.
- *
- * ```tsx
- * <Tooltip
- *   content={
- *     <div className="flex flex-col gap-1">
- *       <span style={{ fontVariationSettings: "'wght' 550" }}>Keyboard shortcut</span>
- *       <span className="opacity-70">⌘ + S</span>
- *     </div>
- *   }
- * >
- *   <Button leadingIcon={Plus}>Save</Button>
- * </Tooltip>
- * ```
- *
- * @example
- * # Follow cursor
- *
- * For tall or wide triggers, a centered tooltip sits far from the pointer —
- * `followCursor` tracks it along one axis while the other stays anchored by
- * `side`.
- *
- * ```tsx
- * <div className="flex flex-wrap items-center justify-center gap-6">
- *   <Tooltip content="Following x" side="top" followCursor="x">
- *     <div className="flex h-12 w-64 cursor-default items-center justify-center rounded-lg border border-border text-[12px] text-muted-foreground">
- *       Move along me
- *     </div>
- *   </Tooltip>
- *   <Tooltip content="Following y" side="right" followCursor="y">
- *     <div className="flex h-40 w-12 cursor-default items-center justify-center rounded-lg border border-border text-[12px] text-muted-foreground">
- *       <span className="rotate-90 whitespace-nowrap">Move along me</span>
- *     </div>
- *   </Tooltip>
- * </div>
- * ```
- *
- * @example
- * # Delay
- *
- * `delayDuration` overrides the hover delay per tooltip. Wrap a region in
- * `Tooltip.Provider` to share one delay and let adjacent tooltips skip it.
- *
- * ```tsx
- * <Tooltip.Provider delayDuration={300} skipDelayDuration={500}>
- *   <div className="flex flex-wrap gap-3">
- *     <Tooltip content="Instant" delayDuration={0}>
- *       <Button variant="secondary">No delay</Button>
- *     </Tooltip>
- *     <Tooltip content="Grouped: 300ms, then instant between neighbours">
- *       <Button variant="secondary">Grouped</Button>
- *     </Tooltip>
- *     <Tooltip content="Slow" delayDuration={500}>
- *       <Button variant="secondary">500ms delay</Button>
- *     </Tooltip>
- *   </div>
- * </Tooltip.Provider>
- * ```
  */
 function Tooltip({
   content,
@@ -346,12 +255,12 @@ function Tooltip({
                       // Trim recenters the label; the padding bump only applies
                       // where text-box is supported, keeping the same overall
                       // height (~26px) as untrimmed browsers.
-                      "bg-foreground text-background text-[12px] px-2 py-1",
+                      "bg-foreground text-background text-caption px-2 py-1",
                       "[text-box:trim-both_cap_alphabetic] supports-[text-box:trim-both]:py-2",
                       shape.bg,
+                      "weight-medium",
                       className
                     )}
-                    style={{ fontVariationSettings: fontWeights.medium }}
                     initial={{ opacity: 0, ...slideOffset }}
                     animate={
                       exiting

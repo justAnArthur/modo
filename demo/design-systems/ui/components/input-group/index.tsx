@@ -9,6 +9,10 @@
  * backed by `useControllableState`; modo docs — TSDoc with FF's docs/API
  * text, `InputGroup.Field` static (typed via a cast on the root), default
  * export.
+ * Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ * `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`;
+ * `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
+ * `spring.*`.
  */
 
 import {
@@ -27,7 +31,6 @@ import {
 import { Field } from "@base-ui/react/field";
 import type { IconComponent } from "../../_fluid/lib/icon-context";
 import { cn } from "../../_fluid/lib/utils";
-import { fontWeights } from "../../_fluid/lib/font-weight";
 import { useShape } from "../../_fluid/lib/shape-context";
 import { SizeProvider, useSize, type SizeVariant } from "../../_fluid/lib/size-context";
 import { useFluidHover, useRegisterFluidHoverItem } from "../../_fluid/hooks/use-fluid-hover";
@@ -72,47 +75,6 @@ type InputGroupComponent = ForwardRefExoticComponent<
  * - `InputGroup.Field` — one labelled input: `index`, `label`, `labelHidden`,
  *   `placeholder`, `icon`, `value` / `defaultValue`, `onChange`, `error`,
  *   `disabled`.
- *
- * @example
- * # Basic
- *
- * A single field with a leading icon.
- *
- * ```tsx
- * <InputGroup>
- *   <InputGroup.Field index={0} label="Search" placeholder="Search teamspaces..." icon={Search} />
- * </InputGroup>
- * ```
- *
- * @example
- * # Multiple Fields
- *
- * The hover highlight follows the pointer from field to field.
- *
- * ```tsx
- * <InputGroup>
- *   <InputGroup.Field index={0} label="Name" placeholder="Your name" />
- *   <InputGroup.Field index={1} label="Email" placeholder="you@example.com" icon={Mail} />
- * </InputGroup>
- * ```
- *
- * @example
- * # Error State
- *
- * An `error` message renders below the field and marks it invalid.
- *
- * ```tsx
- * <InputGroup>
- *   <InputGroup.Field
- *     index={0}
- *     label="Email"
- *     placeholder="you@example.com"
- *     icon={Mail}
- *     defaultValue="bad@"
- *     error="Please enter a valid email address."
- *   />
- * </InputGroup>
- * ```
  */
 const InputGroup = forwardRef<HTMLDivElement, InputGroupProps>(
   ({ children, size, className, ...props }, ref) => {
@@ -274,8 +236,7 @@ const InputField = forwardRef<HTMLDivElement, InputFieldProps>(
           )}
         >
           <span
-            className="col-start-1 row-start-1 invisible"
-            style={{ fontVariationSettings: fontWeights.semibold }}
+            className="col-start-1 row-start-1 invisible weight-semibold"
             aria-hidden="true"
           >
             {label}
@@ -283,11 +244,9 @@ const InputField = forwardRef<HTMLDivElement, InputFieldProps>(
           <span
             className={cn(
               "col-start-1 row-start-1",
-              error ? "text-destructive" : "text-muted-foreground"
+              error ? "text-destructive" : "text-muted-foreground",
+              "weight-normal"
             )}
-            style={{
-              fontVariationSettings: fontWeights.normal,
-            }}
           >
             {label}
           </span>
@@ -308,7 +267,7 @@ const InputField = forwardRef<HTMLDivElement, InputFieldProps>(
             // exactly on the ladder's control height.
             `flex items-center ${sizeClasses.gap} ${shape.input} ${
               compact ? "px-2" : "px-2.5"
-            } ${sizeClasses.control} ring-1 transition-all duration-80`,
+            } ${sizeClasses.control} ring-1 transition-all duration-fast`,
             bgClass,
             ringClass
           )}
@@ -318,7 +277,7 @@ const InputField = forwardRef<HTMLDivElement, InputFieldProps>(
               size={sizeClasses.icon}
               strokeWidth={labelActive ? 2 : 1.5}
               className={cn(
-                "shrink-0 transition-[color,stroke-width] duration-80",
+                "shrink-0 transition-[color,stroke-width] duration-fast",
                 labelActive
                   ? "text-foreground"
                   : "text-muted-foreground"
@@ -335,9 +294,9 @@ const InputField = forwardRef<HTMLDivElement, InputFieldProps>(
             placeholder={placeholder}
             className={cn(
               "w-full rounded-none bg-transparent text-foreground placeholder:text-muted-foreground outline-none font-[inherit]",
-              sizeClasses.text
+              sizeClasses.text,
+              "weight-normal"
             )}
-            style={{ fontVariationSettings: fontWeights.normal }}
             {...props}
           />
         </div>
@@ -349,9 +308,9 @@ const InputField = forwardRef<HTMLDivElement, InputFieldProps>(
             match
             className={cn(
               "text-destructive",
-              compact ? "text-[11px] pl-2" : "text-[12px] pl-2.5"
+              compact ? "text-caption-compact pl-2" : "text-caption pl-2.5",
+              "weight-medium"
             )}
-            style={{ fontVariationSettings: fontWeights.medium }}
           >
             {error}
           </Field.Error>

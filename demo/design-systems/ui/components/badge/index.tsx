@@ -10,6 +10,8 @@
  *   so modo's parser lists them; types are unchanged for callers.
  * - TSDoc with the FF docs page's examples added above the component;
  *   `export default Badge` added.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; literal colors → color tokens.
  */
 
 import { forwardRef, type HTMLAttributes } from "react";
@@ -19,23 +21,23 @@ import { useShape } from "../../_fluid/lib/shape-context";
 import { useSizeVariant } from "../../_fluid/lib/size-context";
 
 const badgeColors = {
-  gray: "#a3a3a3",
-  red: "#ef4444",
-  orange: "#f97316",
-  amber: "#f59e0b",
-  yellow: "#eab308",
-  lime: "#84cc16",
-  green: "#22c55e",
-  emerald: "#10b981",
-  teal: "#14b8a6",
-  cyan: "#06b6d4",
-  blue: "#3b82f6",
-  indigo: "#6366f1",
-  violet: "#8b5cf6",
-  purple: "#a855f7",
-  fuchsia: "#d946ef",
-  pink: "#ec4899",
-  rose: "#f43f5e",
+  gray: "var(--badge-gray)",
+  red: "var(--badge-red)",
+  orange: "var(--badge-orange)",
+  amber: "var(--badge-amber)",
+  yellow: "var(--badge-yellow)",
+  lime: "var(--badge-lime)",
+  green: "var(--badge-green)",
+  emerald: "var(--badge-emerald)",
+  teal: "var(--badge-teal)",
+  cyan: "var(--badge-cyan)",
+  blue: "var(--badge-blue)",
+  indigo: "var(--badge-indigo)",
+  violet: "var(--badge-violet)",
+  purple: "var(--badge-purple)",
+  fuchsia: "var(--badge-fuchsia)",
+  pink: "var(--badge-pink)",
+  rose: "var(--badge-rose)",
 } as const;
 
 type BadgeColor = keyof typeof badgeColors;
@@ -50,8 +52,8 @@ const badgeVariants = cva(
       },
       // The two-step size ladder shared by every control — see /docs/sizes.
       size: {
-        default: "h-6 px-2.5 text-[12px] gap-1.5",
-        compact: "h-5 px-2 text-[11px] gap-1",
+        default: "h-6 px-2.5 text-caption gap-1.5",
+        compact: "h-5 px-2 text-caption-compact gap-1",
       },
     },
     defaultVariants: {
@@ -95,75 +97,6 @@ interface BadgeProps
  * ladder — `size` pins it, otherwise it follows the surrounding SizeProvider
  * — and takes its corner radius from the shape context. The palette is also
  * exported as `badgeColors`, the class recipe as `badgeVariants`.
- *
- * @example
- * # Solid
- *
- * The default variant: a tinted background in the badge's color.
- *
- * ```tsx
- * <div className="flex flex-wrap items-center gap-2">
- *   <Badge color="violet">Fiction</Badge>
- *   <Badge color="amber">Science</Badge>
- *   <Badge color="green">Philosophy</Badge>
- *   <Badge color="blue">History</Badge>
- *   <Badge color="rose">Poetry</Badge>
- * </div>
- * ```
- *
- * @example
- * # Dot
- *
- * `variant="dot"` keeps a neutral bordered badge and shows the color as an
- * indicator dot.
- *
- * ```tsx
- * <div className="flex flex-wrap items-center gap-2">
- *   <Badge variant="dot" color="violet">Fiction</Badge>
- *   <Badge variant="dot" color="amber">Science</Badge>
- *   <Badge variant="dot" color="green">Philosophy</Badge>
- *   <Badge variant="dot" color="blue">History</Badge>
- *   <Badge variant="dot" color="rose">Poetry</Badge>
- * </div>
- * ```
- *
- * @example
- * # Colors
- *
- * All seventeen palette colors, solid and dot.
- *
- * ```tsx
- * <div className="flex flex-col gap-3">
- *   <div className="flex flex-wrap items-center gap-2">
- *     {['gray', 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map((c) => (
- *       <Badge key={c} color={c}>
- *         {c.charAt(0).toUpperCase() + c.slice(1)}
- *       </Badge>
- *     ))}
- *   </div>
- *   <div className="flex flex-wrap items-center gap-2">
- *     {['gray', 'red', 'orange', 'amber', 'yellow', 'lime', 'green', 'emerald', 'teal', 'cyan', 'blue', 'indigo', 'violet', 'purple', 'fuchsia', 'pink', 'rose'].map((c) => (
- *       <Badge key={c} variant="dot" color={c}>
- *         {c.charAt(0).toUpperCase() + c.slice(1)}
- *       </Badge>
- *     ))}
- *   </div>
- * </div>
- * ```
- *
- * @example
- * # Compact
- *
- * `size="compact"` steps the badge down the size ladder (20px tall, 11px
- * text) for dense rows and table cells.
- *
- * ```tsx
- * <div className="flex flex-wrap items-center gap-2">
- *   <Badge size="compact" color="blue">History</Badge>
- *   <Badge size="compact" variant="dot" color="green">Philosophy</Badge>
- *   <Badge size="compact">Draft</Badge>
- * </div>
- * ```
  */
 const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
   (

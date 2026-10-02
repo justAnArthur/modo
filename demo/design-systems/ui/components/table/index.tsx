@@ -15,6 +15,9 @@
  * - `TableProps` / `TableRowProps` type exports added.
  * - TSDoc with the FF docs page's examples added above the root;
  *   `export default Table` added.
+ * - Styling reads DS tokens (AGENTS.md styling): inline
+ *   `fontVariationSettings` → `weight-*`; `duration-80|120|160` and
+ *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -31,7 +34,6 @@ import {
   type ThHTMLAttributes,
 } from "react";
 import { cn } from "../../_fluid/lib/utils";
-import { fontWeights } from "../../_fluid/lib/font-weight";
 import { SizeProvider, useSize, type SizeVariant } from "../../_fluid/lib/size-context";
 import { useFluidHover, useRegisterFluidHoverItem } from "../../_fluid/hooks/use-fluid-hover";
 import { FluidHoverHighlight } from "../../_fluid/ui/fluid-hover-highlight";
@@ -78,72 +80,6 @@ type TableComponent = ForwardRefExoticComponent<TableProps & RefAttributes<HTMLT
  * (`<tr>` — give body rows an `index`, starting at 0, so they join the hover
  * highlight; omit it on header rows), `Table.Head` (`<th>`) and `Table.Cell`
  * (`<td>`). Each forwards its ref and native attributes.
- *
- * @example
- * # Basic
- *
- * Header row without an index, body rows indexed from 0 for the fluid hover
- * highlight.
- *
- * ```tsx
- * <div className="w-full">
- *   <Table>
- *     <Table.Header>
- *       <Table.Row>
- *         <Table.Head>Name</Table.Head>
- *         <Table.Head>Role</Table.Head>
- *         <Table.Head>Status</Table.Head>
- *       </Table.Row>
- *     </Table.Header>
- *     <Table.Body>
- *       <Table.Row index={0}>
- *         <Table.Cell>Alice</Table.Cell>
- *         <Table.Cell>Engineer</Table.Cell>
- *         <Table.Cell>Active</Table.Cell>
- *       </Table.Row>
- *       <Table.Row index={1}>
- *         <Table.Cell>Bob</Table.Cell>
- *         <Table.Cell>Designer</Table.Cell>
- *         <Table.Cell>Away</Table.Cell>
- *       </Table.Row>
- *       <Table.Row index={2}>
- *         <Table.Cell>Carol</Table.Cell>
- *         <Table.Cell>Manager</Table.Cell>
- *         <Table.Cell>Active</Table.Cell>
- *       </Table.Row>
- *     </Table.Body>
- *   </Table>
- * </div>
- * ```
- *
- * @example
- * # Compact
- *
- * `size="compact"` lands every row on the 28px step with 12px text, for
- * dense data.
- *
- * ```tsx
- * <div className="w-full">
- *   <Table size="compact">
- *     <Table.Header>
- *       <Table.Row>
- *         <Table.Head>Name</Table.Head>
- *         <Table.Head>Role</Table.Head>
- *         <Table.Head>Status</Table.Head>
- *       </Table.Row>
- *     </Table.Header>
- *     <Table.Body>
- *       {[['Alice', 'Engineer', 'Active'], ['Bob', 'Designer', 'Away'], ['Carol', 'Manager', 'Active'], ['Dan', 'Researcher', 'Offline']].map((row, i) => (
- *         <Table.Row key={row[0]} index={i}>
- *           {row.map((cell) => (
- *             <Table.Cell key={cell}>{cell}</Table.Cell>
- *           ))}
- *         </Table.Row>
- *       ))}
- *     </Table.Body>
- *   </Table>
- * </div>
- * ```
  */
 const Table = forwardRef<HTMLTableElement, TableProps>(
   ({ children, size, className, ...props }, ref) => {
@@ -245,17 +181,13 @@ const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(
         }}
         data-fluid-hover-index={index}
         className={cn(
-          "group/row relative z-10 border-b transition-[border-color] duration-80",
+          "group/row relative z-10 border-b transition-[border-color] duration-fast",
           hideBorder ? "border-transparent" : "border-accent/40",
           isBodyRow && activeIdx === index && "is-active",
+          isBodyRow ? "weight-normal" : "weight-semibold",
           className
         )}
-        style={{
-          ...style,
-          fontVariationSettings: isBodyRow
-            ? fontWeights.normal
-            : fontWeights.semibold,
-        }}
+        style={style}
         {...props}
       />
     );
@@ -298,7 +230,7 @@ const TableCell = forwardRef<
     <td
       ref={ref}
       className={cn(
-        "text-muted-foreground transition-colors duration-80 group-[.is-active]/row:text-foreground",
+        "text-muted-foreground transition-colors duration-fast group-[.is-active]/row:text-foreground",
         sizeClasses.variant === "compact" ? "px-2.5 py-[5px]" : "px-3 py-2",
         className
       )}

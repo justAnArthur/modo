@@ -34,6 +34,10 @@
  *   "Create from the query" section is skipped — adding a row to the list is
  *   real consumer state, not something an uncontrolled panel can stand in
  *   for), and a default export.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; the hex focus-ring fallback →
+ *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and
+ *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -347,105 +351,6 @@ type DropdownComponent = ForwardRefExoticComponent<
  * disabled), Dropdown.Trigger (render), Dropdown.Content (the popup panel),
  * Dropdown.Item (a row: index, label, icon, checked, onSelect, disabled),
  * Dropdown.Label, Dropdown.Separator, Dropdown.Search and Dropdown.Empty.
- *
- * @example # Basic
- * The inline panel, running its own selection: `defaultCheckedIndex` makes
- * the rows radio options and the panel moves the marker itself.
- *
- * ```tsx
- * <Dropdown defaultCheckedIndex={0}>
- *   <Dropdown.Item index={0} icon={SquareLibrary} label="Teamspaces" />
- *   <Dropdown.Item index={1} icon={Clock} label="Recents" />
- *   <Dropdown.Item index={2} icon={Star} label="Favorites" />
- *   <Dropdown.Item index={3} icon={Users} label="Shared" />
- *   <Dropdown.Item index={4} icon={Lock} label="Private" />
- * </Dropdown>
- * ```
- *
- * @example # Groups
- * Without any checked state the rows are plain actions. Dropdown.Label
- * captions a run of them, Dropdown.Separator rules between the runs, and the
- * indices keep counting across both.
- *
- * ```tsx
- * <Dropdown>
- *   <Dropdown.Label>Account</Dropdown.Label>
- *   <Dropdown.Item index={0} icon={Mail} label="Email" />
- *   <Dropdown.Item index={1} icon={Bell} label="Notifications" />
- *   <Dropdown.Item index={2} icon={Shield} label="Privacy" />
- *   <Dropdown.Separator />
- *   <Dropdown.Label>Appearance</Dropdown.Label>
- *   <Dropdown.Item index={3} icon={Settings} label="General" />
- *   <Dropdown.Item index={4} icon={Palette} label="Theme" />
- *   <Dropdown.Item index={5} icon={Monitor} label="Display" />
- * </Dropdown>
- * ```
- *
- * @example # Triggered menu
- * 3 parts: Dropdown.Menu, Dropdown.Trigger, Dropdown.Content. Any element
- * goes in `render`, and picking a row closes the menu.
- *
- * ```tsx
- * <Dropdown.Menu>
- *   <Dropdown.Trigger render={<Button variant="ghost">Open menu</Button>} />
- *   <Dropdown.Content defaultCheckedIndex={0}>
- *     <Dropdown.Item index={0} icon={SquareLibrary} label="Teamspaces" />
- *     <Dropdown.Item index={1} icon={Clock} label="Recents" />
- *     <Dropdown.Item index={2} icon={Star} label="Favorites" />
- *     <Dropdown.Item index={3} icon={Users} label="Shared" />
- *     <Dropdown.Item index={4} icon={Lock} label="Private" />
- *   </Dropdown.Content>
- * </Dropdown.Menu>
- * ```
- *
- * @example # Multiple selection
- * `defaultCheckedIndices` (or `checkedIndices`): rows become checkboxes, the
- * menu stays open as you toggle, and touching picks share one background.
- *
- * ```tsx
- * <Dropdown.Menu>
- *   <Dropdown.Trigger render={<Button variant="ghost">Status</Button>} />
- *   <Dropdown.Content defaultCheckedIndices={[0, 1, 2]}>
- *     {['Open', 'In progress', 'In review', 'Blocked', 'Done', 'Archived'].map((status, i) => (
- *       <Dropdown.Item key={status} index={i} label={status} />
- *     ))}
- *   </Dropdown.Content>
- * </Dropdown.Menu>
- * ```
- *
- * @example # Searchable menu
- * Put a Dropdown.Search marked `filter` first and the panel filters its own
- * rows by `label`. Type to filter, press Enter to pick the first match.
- *
- * ```tsx
- * <Dropdown.Menu>
- *   <Dropdown.Trigger render={<Button variant="ghost" trailingIcon={ChevronDown}>Language</Button>} />
- *   <Dropdown.Content defaultCheckedIndex={0}>
- *     <Dropdown.Search filter placeholder="Search languages" />
- *     {['Auto detect', 'Arabic', 'Bengali', 'Chinese (Simplified)', 'Czech', 'Danish', 'Dutch', 'English (UK)', 'English (US)', 'Finnish', 'French', 'German', 'Greek', 'Hebrew', 'Hindi', 'Hungarian', 'Indonesian', 'Italian', 'Japanese', 'Korean', 'Norwegian', 'Polish', 'Portuguese (Brazil)', 'Romanian', 'Russian', 'Spanish', 'Swedish', 'Thai', 'Turkish', 'Ukrainian', 'Vietnamese'].map((language, i) => (
- *       <Dropdown.Item key={language} index={i} label={language} />
- *     ))}
- *     <Dropdown.Empty>No languages found</Dropdown.Empty>
- *   </Dropdown.Content>
- * </Dropdown.Menu>
- * ```
- *
- * @example # Searchable multiple selection
- * Both at once. The panel filters the rows and keeps the picks on the rows
- * themselves, so a filtered-away pick is still checked when it comes back.
- *
- * ```tsx
- * <Dropdown.Menu>
- *   <Dropdown.Trigger render={<Button variant="ghost">Labels</Button>} />
- *   <Dropdown.Content defaultCheckedIndices={[0, 3]}>
- *     <Dropdown.Search filter placeholder="Search labels" />
- *     {['Bug', 'Feature', 'Docs', 'Design', 'Performance', 'Accessibility', 'Refactor', 'Testing', 'Infrastructure', 'Security', 'Good first issue', 'Help wanted'].map((label, i) => (
- *       <Dropdown.Item key={label} index={i} label={label} />
- *     ))}
- *     <Dropdown.Empty>No labels found</Dropdown.Empty>
- *   </Dropdown.Content>
- * </Dropdown.Menu>
- * ```
  */
 const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
   (
@@ -599,7 +504,7 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
                 exit={{ opacity: 0, transition: spring.moderate.exit }}
                 transition={{
                   ...spring.moderate,
-                  opacity: { duration: 0.08 },
+                  opacity: { duration: spring.fast.duration },
                 }}
               />
             )}
@@ -616,7 +521,7 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
           <AnimatePresence>
             {focusRect && (
               <motion.div
-                className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-[color:var(--focus-ring,#6B97FF)]`}
+                className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
                 initial={false}
                 animate={{
                   left: focusRect.left - 2,
@@ -627,7 +532,7 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
                 exit={{ opacity: 0, transition: spring.fast.exit }}
                 transition={{
                   ...spring.fast,
-                  opacity: { duration: 0.08 },
+                  opacity: { duration: spring.fast.duration },
                 }}
               />
             )}
@@ -1078,7 +983,7 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
                       exit={{ opacity: 0, transition: spring.moderate.exit }}
                       transition={{
                         ...spring.moderate,
-                        opacity: { duration: 0.08 },
+                        opacity: { duration: spring.fast.duration },
                       }}
                     />
                   )}
@@ -1128,7 +1033,7 @@ const DropdownLabel = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>
       ref={ref}
       className={cn(
         "px-2 py-1.5 shrink-0 text-muted-foreground",
-        compact ? "text-[11px]" : "text-[12px]",
+        compact ? "text-caption-compact" : "text-caption",
         className
       )}
       {...props}

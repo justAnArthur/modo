@@ -1,0 +1,127 @@
+import Slider from './index'
+
+# Compact
+
+The dense design: a thin track with a fill, a draggable thumb and the
+value on the left.
+
+<div className="w-72">
+  <Slider size="compact" defaultValue={25} />
+</div>
+
+# Range
+
+An array value gives two thumbs that cannot cross. The dense design
+renders it whatever the ladder step.
+
+<div className="w-72">
+  <Slider defaultValue={[25, 75]} />
+</div>
+
+# Steps
+
+`step` quantizes the value; `showSteps` marks each stop on the track, and
+the marks on the filled side are masked out.
+
+<div className="w-72">
+  <Slider defaultValue={50} step={25} showSteps />
+  <Slider defaultValue={50} step={10} showSteps />
+</div>
+
+# Non-uniform Steps
+
+`steps` takes a discrete list of allowed values — positioned
+proportionally, walked by the arrow keys, with min and max taken from the
+list.
+
+<div className="w-72">
+  <Slider
+    defaultValue={0.7}
+    steps={[0.1, 0.5, 0.7, 1.1, 1.3]}
+    showSteps
+    label="Rating"
+    formatValue={(v) => `${v} A`}
+  />
+</div>
+
+# Value Display
+
+`valuePosition` moves the label: beside the track on either side, above or
+below it, or as a tooltip that rides the thumb while you interact.
+
+<div className="flex flex-col gap-6 w-72">
+  <Slider defaultValue={40} valuePosition="left" label="Volume" />
+  <Slider defaultValue={60} valuePosition="right" label="Volume" />
+  <Slider defaultValue={50} valuePosition="tooltip" />
+</div>
+
+# Format
+
+`formatValue` renders the number: units, percentages, anything.
+
+<div className="w-72">
+  <Slider
+    size="compact"
+    defaultValue={75}
+    formatValue={(v) => `${v}%`}
+    label="Opacity"
+  />
+</div>
+
+# Disabled
+
+`disabled` dims the slider and ignores pointer and keyboard input.
+
+<div className="w-72">
+  <Slider size="compact" defaultValue={50} disabled />
+</div>
+
+# Default
+
+The default step: an edge-to-edge row with a pip per step, the label on
+the left and the value on the right.
+
+<div className="w-72">
+  <Slider size="default" label="Roundness" defaultValue={2} min={0} max={4} />
+</div>
+
+# Default — Scrubber
+
+`variant="scrubber"` drops the pips for a continuous fill you can drag
+anywhere in the row, with a resize handle at the fill edge.
+
+<div className="w-72">
+  <Slider
+    size="default"
+    variant="scrubber"
+    label="Volume"
+    defaultValue={50}
+    min={0}
+    max={100}
+    formatValue={(v) => `${v}%`}
+  />
+</div>
+
+# Default — Format
+
+`formatValue` turns the steps into names, so a numeric slider reads as a
+set of choices.
+
+<div className="w-72">
+  <Slider
+    size="default"
+    label="Quality"
+    defaultValue={2}
+    min={0}
+    max={4}
+    formatValue={(v) => ['Off', 'Low', 'Medium', 'High', 'Ultra'][v]}
+  />
+</div>
+
+# Default — Disabled
+
+The same dimming and inert behaviour on the default step.
+
+<div className="w-72">
+  <Slider size="default" label="Roundness" defaultValue={2} min={0} max={4} disabled />
+</div>

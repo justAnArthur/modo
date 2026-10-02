@@ -1,0 +1,101 @@
+import Accordion from './index'
+
+# Standalone
+
+A single collapsible item with its own hover state.
+
+<Accordion type="single" collapsible defaultValue="item-1">
+  <Accordion.Item value="item-1">
+    <Accordion.Trigger>What is this component?</Accordion.Trigger>
+    <Accordion.Content>
+      A collapsible accordion with animated expand/collapse and spring-animated chevron.
+    </Accordion.Content>
+  </Accordion.Item>
+</Accordion>
+
+# Single Expand
+
+Multiple items with fluid hover — only one can be expanded at a time.
+
+<Accordion.Group type="single" collapsible defaultValue="item-1">
+  <Accordion.Item value="item-1" index={0}>
+    <Accordion.Trigger>Getting Started</Accordion.Trigger>
+    <Accordion.Content>
+      Install the component and import it into your project. The accordion
+      supports both single and multiple expand modes.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="item-2" index={1}>
+    <Accordion.Trigger>Styling</Accordion.Trigger>
+    <Accordion.Content>
+      The component integrates with the shape system for pill or rounded
+      border-radius variants. All animations use spring physics.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="item-3" index={2}>
+    <Accordion.Trigger>Accessibility</Accordion.Trigger>
+    <Accordion.Content>
+      Built on Base UI Accordion with WAI-ARIA attributes, keyboard
+      navigation, and focus management.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="item-4" index={3}>
+    <Accordion.Trigger>Animation</Accordion.Trigger>
+    <Accordion.Content>
+      Smooth height transitions and spring-animated chevron rotation.
+      The fluid hover background tracks your cursor.
+    </Accordion.Content>
+  </Accordion.Item>
+</Accordion.Group>
+
+# Multi Expand
+
+Multiple items with fluid hover — several can be expanded at once.
+
+<Accordion.Group type="multiple" defaultValue={['item-1', 'item-3']}>
+  <Accordion.Item value="item-1" index={0}>
+    <Accordion.Trigger>First Section</Accordion.Trigger>
+    <Accordion.Content>
+      Multiple items can be expanded at the same time.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="item-2" index={1}>
+    <Accordion.Trigger>Second Section</Accordion.Trigger>
+    <Accordion.Content>
+      Click any trigger to expand or collapse independently.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="item-3" index={2}>
+    <Accordion.Trigger>Third Section</Accordion.Trigger>
+    <Accordion.Content>
+      Each item operates independently in multiple mode.
+    </Accordion.Content>
+  </Accordion.Item>
+</Accordion.Group>
+
+# Row highlight
+
+With `highlight="trigger"` an expanded item holds no tint — the fill
+scopes to the row and waits for hover. Suits dense panels, where a block
+per open item reads as a second layer.
+
+<Accordion.Group type="single" collapsible defaultValue="item-1" highlight="trigger">
+  <Accordion.Item value="item-1" index={0}>
+    <Accordion.Trigger>Expanded, but not tinted</Accordion.Trigger>
+    <Accordion.Content>
+      The panel reads as part of the page rather than a filled block.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="item-2" index={1}>
+    <Accordion.Trigger>Hover any row</Accordion.Trigger>
+    <Accordion.Content>
+      The fill follows your cursor instead of marking a state.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="item-3" index={2}>
+    <Accordion.Trigger>Compare with the sections above</Accordion.Trigger>
+    <Accordion.Content>
+      Those hold a block across the row and its panel while open.
+    </Accordion.Content>
+  </Accordion.Item>
+</Accordion.Group>

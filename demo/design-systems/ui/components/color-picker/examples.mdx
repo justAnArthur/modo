@@ -1,0 +1,65 @@
+import ColorPicker from './index'
+
+# Default
+
+The inline panel: saturation square, hue and alpha sliders, the format menu
+and eyedropper, then the per-channel inputs. `defaultValue` takes any CSS
+color string.
+
+<ColorPicker defaultValue="#6B97FF" />
+
+# Popover
+
+`ColorPicker.Popover` puts the same panel behind a trigger that shows a
+color tile, an optional `triggerLabel` and the hex value. The panel springs
+open under the trigger and follows it on scroll.
+
+<ColorPicker.Popover triggerLabel="Fill" defaultValue="#6B97FF" />
+
+# With Swatches
+
+`swatches` adds a preset strip under the inputs. The entry matching the
+current color takes a ring, and entries may carry their own alpha.
+
+<ColorPicker
+  defaultValue="#6B97FF"
+  swatches={['#000000', '#FFFFFF', '#FF3B30', '#F0F0F0', '#E5E5E5', '#D0D0D0', 'rgba(0,0,0,0.5)']}
+/>
+
+# OKLCH Format
+
+`defaultFormat` opens the picker on one of the four formats; the menu
+switches between them and re-emits the value. Out-of-gamut OKLCH is clamped
+into sRGB silently.
+
+<ColorPicker defaultFormat="oklch" defaultValue="#6B97FF" />
+
+# Uncontrolled
+
+The FF docs show this section controlled, with `value` and `onValueChange`
+driven by a state hook. This is its uncontrolled twin: `defaultValue` seeds
+the picker, which keeps its own state from there, while `onValueChange`
+still reports every edit with the formatted string and the parsed color.
+Pass `value` instead to drive it from outside.
+
+<ColorPicker defaultValue="rgba(107, 151, 255, 0.6)" defaultFormat="rgb" />
+
+# Removable Trigger
+
+`triggerShowRemove` adds an X to the trigger, and `onTriggerRemove` fires
+when it is pressed — the FF docs swap the whole trigger for an "Add fill"
+button there. The handler is left out here because clearing the color needs
+state of its own.
+
+<ColorPicker.Popover triggerLabel="Fill" triggerShowRemove defaultValue="#6B97FF" />
+
+# Eyedropper Support
+
+The eyedropper uses the native `window.EyeDropper` API, which only
+Chromium-based browsers ship; everywhere else the button hides itself. Pass
+`hideEyedropper` to drop it unconditionally — the right-hand panel below.
+
+<div className="flex flex-wrap gap-4">
+  <ColorPicker defaultValue="#6B97FF" />
+  <ColorPicker defaultValue="#6B97FF" hideEyedropper />
+</div>

@@ -13,6 +13,10 @@
  * reports to the group as well); arrow-key focus guarded for
  * `noUncheckedIndexedAccess`; modo docs — TSDoc with FF's docs/API text,
  * `CheckboxGroup.Item` static (typed via a cast on the root), default export.
+ * Styling reads DS tokens (AGENTS.md styling): inline `fontVariationSettings`
+ * → `weight-*`; the hex focus-ring fallback → `ring-focus-ring` /
+ * `border-focus-ring`; `rounded-[Npx]` → radius tokens; `duration-80|120|160`
+ * and tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -32,7 +36,6 @@ import { motion, AnimatePresence } from "motion/react";
 import { Checkbox as CheckboxPrimitive } from "@base-ui/react/checkbox";
 import { cn } from "../../_fluid/lib/utils";
 import { spring } from "../../_fluid/lib/springs";
-import { fontWeights } from "../../_fluid/lib/font-weight";
 import { useFluidHover, useRegisterFluidHoverItem } from "../../_fluid/hooks/use-fluid-hover";
 import { useMergeSplitBlocks, SelectionBackgrounds } from "../../_fluid/hooks/use-merge-split";
 import { useControllableState } from "../../_fluid/hooks/use-controllable-state";
@@ -92,32 +95,6 @@ type CheckboxGroupComponent = ForwardRefExoticComponent<
  * Statics:
  * - `CheckboxGroup.Item` — one checkbox row: `label`, `index`, and optional
  *   `checked` / `onToggle`.
- *
- * @example
- * # Basic
- *
- * Items toggle independently; contiguous picks share one merged background.
- *
- * ```tsx
- * <CheckboxGroup defaultCheckedIndices={[0]}>
- *   {['Apples', 'Bananas', 'Cherries', 'Dates'].map((label, i) => (
- *     <CheckboxGroup.Item key={label} index={i} label={label} />
- *   ))}
- * </CheckboxGroup>
- * ```
- *
- * @example
- * # Compact
- *
- * `size="compact"` pins every row to the 28px step of the size ladder.
- *
- * ```tsx
- * <CheckboxGroup size="compact" defaultCheckedIndices={[1, 2]}>
- *   {['Apples', 'Bananas', 'Cherries', 'Dates'].map((label, i) => (
- *     <CheckboxGroup.Item key={label} index={i} label={label} />
- *   ))}
- * </CheckboxGroup>
- * ```
  */
 const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
   (
@@ -285,7 +262,7 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
           <AnimatePresence>
             {focusRect && (
               <motion.div
-                className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-[color:var(--focus-ring,#6B97FF)]`}
+                className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
                 initial={false}
                 animate={{
                   left: focusRect.left - 2,
@@ -296,7 +273,7 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
                 exit={{ opacity: 0, transition: spring.fast.exit }}
                 transition={{
                   ...spring.fast,
-                  opacity: { duration: 0.08 },
+                  opacity: { duration: spring.fast.duration },
                 }}
               />
             )}
@@ -407,8 +384,8 @@ const CheckboxItem = forwardRef<HTMLDivElement, CheckboxItemProps>(
           {/* Border */}
           <div
             className={cn(
-              "absolute inset-0 border-solid transition-all duration-80",
-              compact ? "rounded-[4px]" : "rounded-[5px]",
+              "absolute inset-0 border-solid transition-all duration-fast",
+              compact ? "rounded-sm" : "rounded-box",
               checked
                 ? "border-[1.5px] border-transparent"
                 : isActive
@@ -453,7 +430,7 @@ const CheckboxItem = forwardRef<HTMLDivElement, CheckboxItemProps>(
                         initial={{ pathLength: skipAnimation ? 1 : 0 }}
                         animate={{
                           pathLength: 1,
-                          transition: { duration: 0.08, ease: "easeOut" },
+                          transition: { duration: spring.fast.duration, ease: "easeOut" },
                         }}
                         exit={{
                           pathLength: 0,
@@ -473,24 +450,19 @@ const CheckboxItem = forwardRef<HTMLDivElement, CheckboxItemProps>(
             sizer and the visible label keep identical boxes. */}
         <span className={cn("inline-grid", sizeClasses.text)}>
           <span
-            className="col-start-1 row-start-1 invisible [text-box:trim-both_cap_alphabetic]"
-            style={{ fontVariationSettings: fontWeights.semibold }}
+            className="col-start-1 row-start-1 invisible [text-box:trim-both_cap_alphabetic] weight-semibold"
             aria-hidden="true"
           >
             {label}
           </span>
           <span
             className={cn(
-              "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-80 [text-box:trim-both_cap_alphabetic]",
+              "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast [text-box:trim-both_cap_alphabetic]",
               checked || isActive
                 ? "text-foreground"
-                : "text-muted-foreground"
+                : "text-muted-foreground",
+              checked ? "weight-semibold" : "weight-normal"
             )}
-            style={{
-              fontVariationSettings: checked
-                ? fontWeights.semibold
-                : fontWeights.normal,
-            }}
           >
             {label}
           </span>

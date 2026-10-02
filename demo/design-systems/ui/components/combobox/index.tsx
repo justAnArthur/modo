@@ -23,6 +23,10 @@
  * - modo item: TSDoc (FF docs page + API tables), statics `Combobox.Input` / `.Chips` /
  *   `.Content` / `.List` / `.Item` / `.Empty` assigned on the root, upstream named exports
  *   kept, `export default Combobox`.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; the hex focus-ring fallback →
+ *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and
+ *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -231,200 +235,6 @@ function toValues(v: string | readonly string[] | undefined): string[] {
  * - `Combobox.List` — a row per match, from a `(item, index) => ReactNode` child.
  * - `Combobox.Item` — one row: `value`, optional `icon` and `disabled`.
  * - `Combobox.Empty` — what shows when nothing matches.
- *
- * @example
- * # Basic
- *
- * Items are data on the root, `Combobox.List` renders a row per match. Type,
- * then press Enter to pick the highlighted row.
- *
- * ```tsx
- * <Combobox items={[{ value: 'next', label: 'Next.js' }, { value: 'sveltekit', label: 'SvelteKit' }, { value: 'nuxt', label: 'Nuxt' }, { value: 'remix', label: 'Remix' }, { value: 'astro', label: 'Astro' }]}>
- *   <Combobox.Input placeholder="Select a framework…" />
- *   <Combobox.Content>
- *     <Combobox.Empty>No framework found.</Combobox.Empty>
- *     <Combobox.List>
- *       {(item) => (
- *         <Combobox.Item key={item.value} value={item.value}>
- *           {item.label}
- *         </Combobox.Item>
- *       )}
- *     </Combobox.List>
- *   </Combobox.Content>
- * </Combobox>
- * ```
- *
- * @example
- * # With icons
- *
- * An object item carries anything the rows need — here a lucide component the
- * function child hands to `Combobox.Item`.
- *
- * ```tsx
- * <Combobox items={[{ value: 'shared', label: 'Shared with me', icon: Users }, { value: 'starred', label: 'Starred', icon: Star }, { value: 'recent', label: 'Recent', icon: Clock }, { value: 'private', label: 'Private', icon: Lock }, { value: 'inbox', label: 'Inbox', icon: Mail }]}>
- *   <Combobox.Input icon={Search} placeholder="Jump to view…" />
- *   <Combobox.Content>
- *     <Combobox.Empty>No view matches.</Combobox.Empty>
- *     <Combobox.List>
- *       {(item) => (
- *         <Combobox.Item key={item.value} value={item.value} icon={item.icon}>
- *           {item.label}
- *         </Combobox.Item>
- *       )}
- *     </Combobox.List>
- *   </Combobox.Content>
- * </Combobox>
- * ```
- *
- * @example
- * # Multiple selection
- *
- * `multiple` plus `Combobox.Chips`: 1 chip per pick, touching picks share one
- * background. Press Backspace in an empty field to drop the last chip.
- *
- * ```tsx
- * <Combobox multiple defaultValue={['next', 'astro']} items={[{ value: 'next', label: 'Next.js' }, { value: 'sveltekit', label: 'SvelteKit' }, { value: 'nuxt', label: 'Nuxt' }, { value: 'remix', label: 'Remix' }, { value: 'astro', label: 'Astro' }]}>
- *   <Combobox.Chips placeholder="Add frameworks…" className="w-[360px] max-w-full" />
- *   <Combobox.Content>
- *     <Combobox.Empty>No framework found.</Combobox.Empty>
- *     <Combobox.List>
- *       {(item) => (
- *         <Combobox.Item key={item.value} value={item.value}>
- *           {item.label}
- *         </Combobox.Item>
- *       )}
- *     </Combobox.List>
- *   </Combobox.Content>
- * </Combobox>
- * ```
- *
- * @example
- * # Create from the query
- *
- * A last row creates what was typed whenever no label matches it exactly.
- * `creatable` keeps the new items here; `onCreate` hands the query to a list
- * you own instead. Type a component that is not there, then press Enter.
- *
- * ```tsx
- * <Combobox multiple creatable defaultValue={['button', 'combobox']} items={[{ value: 'accordion', label: 'Accordion' }, { value: 'badge', label: 'Badge' }, { value: 'button', label: 'Button' }, { value: 'card', label: 'Card' }, { value: 'combobox', label: 'Combobox' }, { value: 'dialog', label: 'Dialog' }, { value: 'switch', label: 'Switch' }]}>
- *   <Combobox.Chips placeholder="Add components…" className="w-[360px] max-w-full" />
- *   <Combobox.Content>
- *     <Combobox.Empty>No component found.</Combobox.Empty>
- *     <Combobox.List>
- *       {(item) => (
- *         <Combobox.Item key={item.value} value={item.value}>
- *           {item.label}
- *         </Combobox.Item>
- *       )}
- *     </Combobox.List>
- *   </Combobox.Content>
- * </Combobox>
- * ```
- *
- * @example
- * # Hide picked rows
- *
- * `hideSelected` takes a pick out of the list, so it reads as what is left to
- * add. Remove a chip to bring its row back.
- *
- * ```tsx
- * <Combobox multiple hideSelected defaultValue={['button']} items={[{ value: 'accordion', label: 'Accordion' }, { value: 'badge', label: 'Badge' }, { value: 'button', label: 'Button' }, { value: 'card', label: 'Card' }]}>
- *   <Combobox.Chips placeholder="Add components…" className="w-[360px] max-w-full" />
- *   <Combobox.Content>
- *     <Combobox.Empty allSelected="Every component is added.">No component found.</Combobox.Empty>
- *     <Combobox.List>
- *       {(item) => (
- *         <Combobox.Item key={item.value} value={item.value}>
- *           {item.label}
- *         </Combobox.Item>
- *       )}
- *     </Combobox.List>
- *   </Combobox.Content>
- * </Combobox>
- * ```
- *
- * @example
- * # Variants
- *
- * `bordered` is framed at rest; `borderless` is invisible until hovered or
- * focused — the same field ladder as InputGroup.
- *
- * ```tsx
- * <div className="flex flex-wrap items-center gap-3">
- *   {['bordered', 'borderless'].map((variant) => (
- *     <Combobox key={variant} items={[{ value: 'next', label: 'Next.js' }, { value: 'nuxt', label: 'Nuxt' }, { value: 'remix', label: 'Remix' }, { value: 'astro', label: 'Astro' }]}>
- *       <Combobox.Input variant={variant} placeholder={variant === 'bordered' ? 'Bordered' : 'Borderless'} />
- *       <Combobox.Content>
- *         <Combobox.Empty>No framework found.</Combobox.Empty>
- *         <Combobox.List>
- *           {(item) => (
- *             <Combobox.Item key={item.value} value={item.value}>
- *               {item.label}
- *             </Combobox.Item>
- *           )}
- *         </Combobox.List>
- *       </Combobox.Content>
- *     </Combobox>
- *   ))}
- * </div>
- * ```
- *
- * @example
- * # Long list
- *
- * String items are their own value and label. The list scrolls past 300px.
- *
- * ```tsx
- * <Combobox items={['(UTC−10) Honolulu', '(UTC−8) Los Angeles', '(UTC−7) Denver', '(UTC−6) Mexico City', '(UTC−5) New York', '(UTC−3) São Paulo', '(UTC−1) Azores', '(UTC+0) London', '(UTC+1) Paris', '(UTC+2) Cairo', '(UTC+3) Moscow', '(UTC+4) Dubai', '(UTC+5:30) Mumbai', '(UTC+7) Bangkok', '(UTC+8) Singapore', '(UTC+9) Tokyo', '(UTC+10) Sydney', '(UTC+12) Auckland']}>
- *   <Combobox.Input icon={Globe} placeholder="Search timezones…" className="w-[280px]" />
- *   <Combobox.Content>
- *     <Combobox.Empty>No timezone matches.</Combobox.Empty>
- *     <Combobox.List>
- *       {(item) => (
- *         <Combobox.Item key={item} value={item}>
- *           {item}
- *         </Combobox.Item>
- *       )}
- *     </Combobox.List>
- *   </Combobox.Content>
- * </Combobox>
- * ```
- *
- * @example
- * # Error & disabled
- *
- * `error` tints the field's ring and prints the message under it; `disabled`
- * fades the whole thing and stops the popup opening.
- *
- * ```tsx
- * <div className="flex flex-wrap items-start gap-3">
- *   <Combobox items={[{ value: 'next', label: 'Next.js' }, { value: 'nuxt', label: 'Nuxt' }, { value: 'astro', label: 'Astro' }]}>
- *     <Combobox.Input placeholder="Select a framework…" error="Pick a framework to continue." />
- *     <Combobox.Content>
- *       <Combobox.Empty>No framework found.</Combobox.Empty>
- *       <Combobox.List>
- *         {(item) => (
- *           <Combobox.Item key={item.value} value={item.value}>
- *             {item.label}
- *           </Combobox.Item>
- *         )}
- *       </Combobox.List>
- *     </Combobox.Content>
- *   </Combobox>
- *   <Combobox disabled items={[{ value: 'next', label: 'Next.js' }]}>
- *     <Combobox.Input placeholder="Disabled" />
- *     <Combobox.Content>
- *       <Combobox.List>
- *         {(item) => (
- *           <Combobox.Item key={item.value} value={item.value}>
- *             {item.label}
- *           </Combobox.Item>
- *         )}
- *       </Combobox.List>
- *     </Combobox.Content>
- *   </Combobox>
- * </div>
- * ```
  */
 function Combobox({
   children,
@@ -639,7 +449,7 @@ const ALWAYS_HIGHLIGHT = "always" as unknown as boolean;
 const fieldVariants = cva(
   [
     "group flex items-center ring-1 cursor-text",
-    "transition-all duration-80",
+    "transition-all duration-fast",
     "data-[disabled]:opacity-50 data-[disabled]:pointer-events-none",
   ],
   {
@@ -664,7 +474,7 @@ const fieldVariants = cva(
 // The clear and chevron buttons share one quiet style; they sit inside the
 // field's ring so they need no frame of their own.
 const fieldButtonClass =
-  "flex shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors duration-80 hover:text-foreground focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] data-[disabled]:pointer-events-none";
+  "flex shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors duration-fast hover:text-foreground focus-visible:ring-1 focus-visible:ring-focus-ring data-[disabled]:pointer-events-none";
 // The clear ✕ is a real icon button: the hover fill says "press me", where
 // the chevron beside it only decorates the field it belongs to.
 const clearButtonClass = cn(
@@ -739,7 +549,7 @@ function FieldControls({
           strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="transition-colors duration-80"
+          className="transition-colors duration-fast"
         >
           <path d="M6 9l6 6 6-6" />
         </svg>
@@ -788,7 +598,7 @@ const ComboboxInput = forwardRef<HTMLInputElement, ComboboxInputProps>(
             <Icon
               size={sizeClasses.icon}
               strokeWidth={1.5}
-              className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-80 group-focus-within:text-foreground group-focus-within:stroke-[2]"
+              className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-fast group-focus-within:text-foreground group-focus-within:stroke-[2]"
             />
           )}
           <ComboboxPrimitive.Input
@@ -807,7 +617,7 @@ const ComboboxInput = forwardRef<HTMLInputElement, ComboboxInputProps>(
           <FieldControls clearable={clearable} compact={compact} iconSize={sizeClasses.icon} />
         </ComboboxPrimitive.InputGroup>
         {error && (
-          <span className="text-[12px] text-destructive pl-3">{error}</span>
+          <span className="text-caption text-destructive pl-3">{error}</span>
         )}
       </div>
     );
@@ -918,7 +728,7 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
               <Icon
                 size={sizeClasses.icon}
                 strokeWidth={1.5}
-                className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-80 group-focus-within:text-foreground group-focus-within:stroke-[2]"
+                className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-fast group-focus-within:text-foreground group-focus-within:stroke-[2]"
               />
             </span>
           )}
@@ -966,8 +776,8 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
                             className={cn(
                               "inline-flex max-w-full shrink-0 items-center gap-0.5 bg-hover pl-2 pr-0.5 text-foreground outline-none",
                               shape.variant === "pill" ? "rounded-full" : "rounded-md",
-                              "focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]",
-                              compact ? "h-5 text-[11px]" : "h-6 text-[12px]"
+                              "focus-visible:ring-1 focus-visible:ring-focus-ring",
+                              compact ? "h-5 text-caption-compact" : "h-6 text-caption"
                             )}
                           >
                             <span className="truncate">{label}</span>
@@ -1011,7 +821,7 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
           <FieldControls clearable={clearable} compact={compact} iconSize={sizeClasses.icon} />
         </ComboboxPrimitive.Chips>
         {error && (
-          <span className="text-[12px] text-destructive pl-3">{error}</span>
+          <span className="text-caption text-destructive pl-3">{error}</span>
         )}
       </div>
     );
@@ -1287,7 +1097,7 @@ const ComboboxList = forwardRef<HTMLDivElement, ComboboxListProps>(
                   transition={
                     reflowSnap
                       ? { duration: 0 }
-                      : { ...spring.moderate, opacity: { duration: 0.08 } }
+                      : { ...spring.moderate, opacity: { duration: spring.fast.duration } }
                   }
                 />
               )}
@@ -1395,7 +1205,7 @@ const ComboboxItem = forwardRef<HTMLDivElement, ComboboxItemProps>(
               // shrink the row; shrink-0 because the list is a max-height
               // flex column.
               `relative z-10 flex ${sizeClasses.control} shrink-0 items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.itemPx} ${sizeClasses.text} cursor-pointer outline-none select-none`,
-              "transition-[color] duration-80",
+              "transition-[color] duration-fast",
               isActive || isChecked ? "text-foreground" : "text-muted-foreground",
               disabled && "opacity-50 pointer-events-none",
               className
@@ -1408,7 +1218,7 @@ const ComboboxItem = forwardRef<HTMLDivElement, ComboboxItemProps>(
           <Icon
             size={sizeClasses.icon}
             strokeWidth={isActive || isChecked ? 2 : 1.5}
-            className="shrink-0 transition-[color,stroke-width] duration-80"
+            className="shrink-0 transition-[color,stroke-width] duration-fast"
           />
         )}
 
@@ -1446,7 +1256,7 @@ const ComboboxItem = forwardRef<HTMLDivElement, ComboboxItemProps>(
                   initial={{ pathLength: skipAnimation ? 1 : 0 }}
                   animate={{
                     pathLength: 1,
-                    transition: { duration: 0.08, ease: "easeOut" },
+                    transition: { duration: spring.fast.duration, ease: "easeOut" },
                   }}
                   exit={{
                     pathLength: 0,

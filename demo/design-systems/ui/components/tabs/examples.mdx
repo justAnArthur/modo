@@ -1,0 +1,59 @@
+import Tabs from './index'
+import { Clock, Settings, SquareLibrary, Star } from 'lucide-react'
+
+# Basic
+
+The indicator slides to the clicked tab; the hover pill previews the next one.
+
+<div className="flex flex-col gap-4 w-full">
+  <Tabs defaultValue="library">
+    <Tabs.List>
+      <Tabs.Item value="library" label="Library" />
+      <Tabs.Item value="recents" label="Recents" />
+      <Tabs.Item value="favorites" label="Favorites" />
+      <Tabs.Item value="settings" label="Settings" />
+    </Tabs.List>
+    <Tabs.Panel value="library"><p className="text-body text-muted-foreground pt-3">Library content.</p></Tabs.Panel>
+    <Tabs.Panel value="recents"><p className="text-body text-muted-foreground pt-3">Recents content.</p></Tabs.Panel>
+    <Tabs.Panel value="favorites"><p className="text-body text-muted-foreground pt-3">Favorites content.</p></Tabs.Panel>
+    <Tabs.Panel value="settings"><p className="text-body text-muted-foreground pt-3">Settings content.</p></Tabs.Panel>
+  </Tabs>
+</div>
+
+# With Icons
+
+A leading `icon` thickens its stroke while its tab is hovered or active.
+
+<div className="flex flex-col gap-4 w-full">
+  <Tabs defaultValue="library">
+    <Tabs.List>
+      <Tabs.Item value="library" icon={SquareLibrary} label="Library" />
+      <Tabs.Item value="recents" icon={Clock} label="Recents" />
+      <Tabs.Item value="favorites" icon={Star} label="Favorites" />
+      <Tabs.Item value="settings" icon={Settings} label="Settings" />
+    </Tabs.List>
+    <Tabs.Panel value="library"><p className="text-body text-muted-foreground pt-3">Library content.</p></Tabs.Panel>
+    <Tabs.Panel value="recents"><p className="text-body text-muted-foreground pt-3">Recents content.</p></Tabs.Panel>
+    <Tabs.Panel value="favorites"><p className="text-body text-muted-foreground pt-3">Favorites content.</p></Tabs.Panel>
+    <Tabs.Panel value="settings"><p className="text-body text-muted-foreground pt-3">Settings content.</p></Tabs.Panel>
+  </Tabs>
+</div>
+
+# Uncontrolled
+
+FF's Controlled section, without the state: `defaultValue` picks the first
+active tab and the tabs keep their own state. To control them, pass `value`
++ `onValueChange` (or `selectedIndex` + `onSelect`) instead.
+
+<div className="flex flex-col gap-4 w-full">
+  <Tabs defaultValue="recents">
+    <Tabs.List>
+      <Tabs.Item value="library" label="Library" />
+      <Tabs.Item value="recents" label="Recents" />
+      <Tabs.Item value="favorites" label="Favorites" />
+    </Tabs.List>
+    <Tabs.Panel value="library"><p className="text-body text-muted-foreground pt-3">Library content.</p></Tabs.Panel>
+    <Tabs.Panel value="recents"><p className="text-body text-muted-foreground pt-3">Recents content.</p></Tabs.Panel>
+    <Tabs.Panel value="favorites"><p className="text-body text-muted-foreground pt-3">Favorites content.</p></Tabs.Panel>
+  </Tabs>
+</div>

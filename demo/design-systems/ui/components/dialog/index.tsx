@@ -18,6 +18,8 @@
  *   A "Surfaces inside a dialog" example (a Select popover lifting off the dialog's own
  *   level) stands in for it — it makes the same point the sidebar dialog made about
  *   composing inside an `xl` panel, using only items this port ships.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
  */
 
 import {
@@ -269,11 +271,10 @@ const DialogTitle = forwardRef<
     <DialogPrimitive.Title
       ref={ref}
       className={cn(
-        compact ? "text-[15px]" : "text-[16px]",
-        "text-foreground leading-tight",
+        compact ? "text-title-compact" : "text-title",
+        "font-bold text-foreground leading-tight",
         className
       )}
-      style={{ fontVariationSettings: "'wght' 700" }}
       {...props}
     />
   );
@@ -289,7 +290,7 @@ const DialogDescription = forwardRef<
     <DialogPrimitive.Description
       ref={ref}
       className={cn(
-        compact ? "text-[12px]" : "text-[13px]",
+        compact ? "text-body-compact" : "text-body",
         "text-muted-foreground",
         className
       )}
@@ -337,94 +338,6 @@ interface DialogProps {
  * - `Dialog.Close` — dismisses it; same `render` / `asChild` shape as the
  *   trigger. `Dialog.Content` renders its own ✕ unless
  *   `showCloseButton={false}`.
- *
- * @example
- * # Basic
- *
- * A trigger, a header, and a footer whose Cancel is a `Dialog.Close`. The ✕
- * in the corner comes with `Dialog.Content`.
- *
- * ```tsx
- * <Dialog>
- *   <Dialog.Trigger render={<Button variant="tertiary">Open dialog</Button>} />
- *   <Dialog.Content>
- *     <Dialog.Header>
- *       <Dialog.Title>Create teamspace</Dialog.Title>
- *       <Dialog.Description>
- *         Add a new teamspace to organize your projects and collaborate with your team.
- *       </Dialog.Description>
- *     </Dialog.Header>
- *     <Dialog.Footer>
- *       <Dialog.Close render={<Button variant="ghost">Cancel</Button>} />
- *       <Button>Create</Button>
- *     </Dialog.Footer>
- *   </Dialog.Content>
- * </Dialog>
- * ```
- *
- * @example
- * # Sizes
- *
- * 3 widths: `sm` for a confirmation, `lg` for a short form, `xl` for a
- * layout of its own. Each is one notch narrower inside a compact region.
- *
- * ```tsx
- * <div className="flex flex-wrap items-center gap-2">
- *   {[
- *     { size: 'sm', label: 'Small', copy: '400px: a confirmation, 1 field, a short message.' },
- *     { size: 'lg', label: 'Large', copy: '540px: a short form, or a longer confirmation.' },
- *     { size: 'xl', label: 'Extra large', copy: '880px: 2 columns, a table, or a sidebar beside a panel.' },
- *   ].map(({ size, label, copy }) => (
- *     <Dialog key={label}>
- *       <Dialog.Trigger render={<Button variant="secondary">{label}</Button>} />
- *       <Dialog.Content size={size}>
- *         <Dialog.Header>
- *           <Dialog.Title>{label} dialog</Dialog.Title>
- *           <Dialog.Description>{copy}</Dialog.Description>
- *         </Dialog.Header>
- *         <Dialog.Footer>
- *           <Dialog.Close render={<Button variant="ghost">Close</Button>} />
- *         </Dialog.Footer>
- *       </Dialog.Content>
- *     </Dialog>
- *   ))}
- * </div>
- * ```
- *
- * @example
- * # Surfaces inside a dialog
- *
- * Not an FF docs section — a modo addition standing in for FF's "With a
- * sidebar" example, which this port omits along with Sidebar. The dialog
- * settles at `substrate + 4` and re-provides that level, so the Select's
- * popover lifts 2 more from there instead of painting the dialog's own
- * background. Nothing is passed between them.
- *
- * ```tsx
- * <Dialog>
- *   <Dialog.Trigger render={<Button variant="secondary">Invite people</Button>} />
- *   <Dialog.Content>
- *     <Dialog.Header>
- *       <Dialog.Title>Invite to your workspace</Dialog.Title>
- *       <Dialog.Description>
- *         The panel sits 4 levels above the page; the role menu lifts 2 more from there.
- *       </Dialog.Description>
- *     </Dialog.Header>
- *     <Select defaultValue="member">
- *       <Select.Trigger placeholder="Select role" />
- *       <Select.Content>
- *         <Select.Item index={0} value="owner">Workspace owner</Select.Item>
- *         <Select.Item index={1} value="member">Member</Select.Item>
- *         <Select.Item index={2} value="restricted">Restricted member</Select.Item>
- *       </Select.Content>
- *     </Select>
- *     <Dialog.Footer>
- *       <Dialog.Close render={<Button variant="ghost">Cancel</Button>} />
- *       <Button>Send invites</Button>
- *     </Dialog.Footer>
- *   </Dialog.Content>
- * </Dialog>
- * ```
  */
 function Dialog({
   children,

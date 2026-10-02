@@ -27,6 +27,10 @@
  *   `hideFill`, `thumbColor`, `thumbBorderColor`) are still inherited.
  * - TSDoc with the FF docs page's examples added above `Slider`;
  *   `export default Slider` added.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`; the
+ *   hex focus-ring fallback → `ring-focus-ring` / `border-focus-ring`;
+ *   literal colors → color tokens.
  */
 
 import {
@@ -52,7 +56,6 @@ import { Slider as SliderPrimitive } from "@base-ui/react/slider";
 import { cn } from "../../_fluid/lib/utils";
 import { useSizeVariant, type SizeVariant } from "../../_fluid/lib/size-context";
 import { spring } from "../../_fluid/lib/springs";
-import { fontWeights } from "../../_fluid/lib/font-weight";
 import { useShape } from "../../_fluid/lib/shape-context";
 import { useControllableState } from "../../_fluid/hooks/use-controllable-state";
 
@@ -216,11 +219,10 @@ function ValueDisplay({
   const renderValue = (index: number) => {
     if (editingIndex === index) {
       return (
-        <span className="inline-grid text-[13px]">
+        <span className="inline-grid text-body">
           {/* Ghost for layout stability — widest possible value */}
           <span
-            className="col-start-1 row-start-1 invisible"
-            style={{ fontVariationSettings: fontWeights.medium }}
+            className="col-start-1 row-start-1 invisible weight-medium"
             aria-hidden="true"
           >
             {label ? `${label}: ` : ""}
@@ -246,9 +248,9 @@ function ValueDisplay({
               aria-label={`Edit slider value${isRange ? (index === 0 ? " (start)" : " (end)") : ""}`}
               className={cn(
                 "w-[5ch] bg-transparent text-foreground outline-none border-b border-border text-center",
-                shape.input
+                shape.input,
+                "weight-medium"
               )}
-              style={{ fontVariationSettings: fontWeights.medium }}
             />
           </span>
         </span>
@@ -273,19 +275,14 @@ function ValueDisplay({
   return (
     <span
       className={cn(
-        "inline-grid shrink-0 text-[13px] leading-none text-muted-foreground transition-[font-variation-settings] duration-100",
-        "tabular-nums"
+        "inline-grid shrink-0 text-body leading-none text-muted-foreground transition-[font-variation-settings] duration-100",
+        "tabular-nums",
+        isInteracting ? "weight-medium" : "weight-normal"
       )}
-      style={{
-        fontVariationSettings: isInteracting
-          ? fontWeights.medium
-          : fontWeights.normal,
-      }}
     >
       {/* Invisible ghost — reserves width of widest possible value */}
       <span
-        className="col-start-1 row-start-1 invisible whitespace-nowrap"
-        style={{ fontVariationSettings: fontWeights.medium }}
+        className="col-start-1 row-start-1 invisible whitespace-nowrap weight-medium"
         aria-hidden="true"
       >
         {widestValue}
@@ -334,8 +331,7 @@ function TooltipValue({ value, formatValue, motionX }: TooltipValueProps) {
       transition={spring.fast}
     >
       <span
-        className={cn("text-[12px] text-background tabular-nums whitespace-nowrap bg-foreground px-2 py-1", shape.bg)}
-        style={{ fontVariationSettings: fontWeights.medium }}
+        className={cn("text-caption text-background tabular-nums whitespace-nowrap bg-foreground px-2 py-1", shape.bg, "weight-medium")}
       >
         {formatValue(value)}
       </span>
@@ -827,7 +823,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
           initial={false}
         >
           <motion.span
-            className="block rounded-full"
+            className={cn("block rounded-full shadow-thumb", !thumbColor && "bg-white")}
             initial={false}
             animate={{
               width: THUMB_SIZE_REST,
@@ -835,14 +831,13 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
             }}
             transition={spring.fast}
             style={{
-              backgroundColor: thumbColor ?? "white",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+              backgroundColor: thumbColor,
               border: thumbBorderColor ? `1px solid ${thumbBorderColor}` : undefined,
             }}
           />
           {/* Focus ring */}
           <motion.span
-            className="absolute rounded-full border border-[color:var(--focus-ring,#6B97FF)] pointer-events-none"
+            className="absolute rounded-full border border-focus-ring pointer-events-none"
             initial={false}
             animate={{
               opacity: focusedThumb === index ? 1 : 0,
@@ -1004,8 +999,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
                   }}
                 >
                   <span
-                    className={cn("text-[12px] text-background tabular-nums whitespace-nowrap bg-foreground px-2 py-1", shape.bg)}
-                    style={{ fontVariationSettings: fontWeights.medium }}
+                    className={cn("text-caption text-background tabular-nums whitespace-nowrap bg-foreground px-2 py-1", shape.bg, "weight-medium")}
                   >
                     {formatValue(hoverPreview.snappedValue)}
                   </span>
@@ -1015,7 +1009,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
 
             {/* Track background */}
             <motion.div
-              className={cn("absolute border border-border overflow-hidden rounded-full", trackClassName)}
+              className={cn("absolute bg-transparent border border-border overflow-hidden rounded-full", trackClassName)}
               initial={false}
               animate={{
                 height: TRACK_BG_HEIGHT,
@@ -1025,7 +1019,6 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
               style={{
                 left: TRACK_INSET,
                 right: TRACK_INSET,
-                backgroundColor: "transparent",
                 ...trackStyle,
               }}
             >
@@ -1043,7 +1036,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
 
               {/* Hover preview */}
               <motion.div
-                className="absolute h-full pointer-events-none z-[2]"
+                className="absolute h-full bg-accent/40 pointer-events-none z-[2]"
                 initial={false}
                 animate={{
                   opacity: hoverPreview && !isPressed ? 1 : 0,
@@ -1057,7 +1050,6 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
                   borderRadius: hoverPreview && hoverPreview.cursorX > hoverPreview.left
                     ? "0 9999px 9999px 0"
                     : "9999px 0 0 9999px",
-                  backgroundColor: "color-mix(in srgb, var(--accent) 40%, transparent)",
                 }}
               />
 
@@ -1086,17 +1078,13 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
                     }}
                   >
                     <motion.div
-                      className="rounded-full flex-shrink-0"
+                      className="rounded-full flex-shrink-0 bg-muted-foreground opacity-30"
                       initial={false}
                       animate={{
                         width: isHovered ? DOT_SIZE * 1.25 : DOT_SIZE,
                         height: isHovered ? DOT_SIZE * 1.25 : DOT_SIZE,
                       }}
                       transition={spring.moderate}
-                      style={{
-                        backgroundColor: "var(--muted-foreground)",
-                        opacity: 0.3,
-                      }}
                     />
                   </div>
                 ))}
@@ -1435,8 +1423,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
               }}
             >
               <span
-                className={cn("text-[12px] text-background tabular-nums whitespace-nowrap bg-foreground px-2 py-1", shape.bg)}
-                style={{ fontVariationSettings: fontWeights.medium }}
+                className={cn("text-caption text-background tabular-nums whitespace-nowrap bg-foreground px-2 py-1", shape.bg, "weight-medium")}
               >
                 {formatValue(hoverPreview.snappedValue)}
               </span>
@@ -1457,7 +1444,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
         )}
         initial={false}
         animate={{
-          outline: isFocused ? "1px solid var(--focus-ring, #6B97FF)" : "1px solid transparent",
+          outline: isFocused ? "1px solid var(--focus-ring)" : "1px solid transparent",
         }}
         transition={spring.fast}
         onPointerDown={handlePointerDown}
@@ -1494,7 +1481,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
 
         {/* Hover preview */}
         <motion.div
-          className="absolute inset-y-0 pointer-events-none z-[3]"
+          className="absolute inset-y-0 bg-accent/40 pointer-events-none z-[3]"
           initial={false}
           animate={{
             opacity: hoverPreview && !isPressed ? 1 : 0,
@@ -1503,7 +1490,6 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
           style={{
             left: hoverPreview ? hoverPreview.left : 0,
             width: hoverPreview ? hoverPreview.width : 0,
-            backgroundColor: "color-mix(in srgb, var(--accent) 40%, transparent)",
           }}
         />
 
@@ -1541,12 +1527,12 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
         {variant === "pips" && (
           <div className="absolute inset-0 flex items-center px-2 z-[2] pointer-events-none" aria-hidden>
             {label && (
-              <span className="text-[13px] px-2 bg-background text-transparent select-none">
+              <span className="text-body px-2 bg-background text-transparent select-none">
                 {label}
               </span>
             )}
             <span
-              className="text-[13px] tabular-nums ml-auto px-2 bg-background text-transparent select-none"
+              className="text-body tabular-nums ml-auto px-2 bg-background text-transparent select-none"
               style={{ minWidth: `${String(formatValue(max)).length}ch` }}
             >
               {formatValue(value)}
@@ -1557,10 +1543,9 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
         {/* Pips: fill — z-[3] */}
         {variant === "pips" && (
           <motion.div
-            className="absolute left-0 top-0 bottom-0 pointer-events-none z-[3]"
+            className="absolute left-0 top-0 bottom-0 bg-active pointer-events-none z-[3]"
             style={{
               width: pipsFillWidthStyle,
-              backgroundColor: "var(--active)",
             }}
           />
         )}
@@ -1592,7 +1577,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
           <div className="absolute inset-0 flex items-center px-2 z-[4] pointer-events-none">
             {label && (
               <motion.span
-                className="text-[13px] px-2"
+                className="text-body px-2"
                 initial={false}
                 animate={{ color: isActive ? "var(--foreground)" : "var(--muted-foreground)" }}
                 transition={spring.fast}
@@ -1601,7 +1586,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
               </motion.span>
             )}
             <motion.span
-              className="text-[13px] tabular-nums ml-auto px-2"
+              className="text-body tabular-nums ml-auto px-2"
               initial={false}
               animate={{ color: isActive ? "var(--foreground)" : "var(--muted-foreground)" }}
               transition={spring.fast}
@@ -1615,10 +1600,9 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
         {/* Scrubber: fill */}
         {variant === "scrubber" && (
           <motion.div
-            className="absolute left-0 top-0 bottom-0 pointer-events-none"
+            className="absolute left-0 top-0 bottom-0 bg-active pointer-events-none"
             style={{
               width: fillWidthStyle,
-              backgroundColor: "var(--active)",
             }}
           />
         )}
@@ -1648,7 +1632,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
         {/* Scrubber: label */}
         {variant === "scrubber" && label && (
           <motion.span
-            className="text-[13px] shrink-0 z-10"
+            className="text-body shrink-0 z-10"
             initial={false}
             animate={{ color: isActive ? "var(--foreground)" : "var(--muted-foreground)" }}
             transition={spring.fast}
@@ -1662,7 +1646,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
           <>
             <div className="flex-1" />
             <motion.span
-              className="text-[13px] shrink-0 tabular-nums text-right z-10"
+              className="text-body shrink-0 tabular-nums text-right z-10"
               initial={false}
               animate={{ color: isActive ? "var(--foreground)" : "var(--muted-foreground)" }}
               transition={spring.fast}
@@ -1756,165 +1740,6 @@ interface SliderProps extends Omit<SliderEngineProps, "value" | "onChange"> {
  * `trackClassName`, `trackStyle`, `fillClassName`, `fillStyle`, `hideFill`,
  * `thumbColor` and `thumbBorderColor` — each one also forces the dense
  * design.
- *
- * @example
- * # Compact
- *
- * The dense design: a thin track with a fill, a draggable thumb and the
- * value on the left.
- *
- * ```tsx
- * <div className="w-72">
- *   <Slider size="compact" defaultValue={25} />
- * </div>
- * ```
- *
- * @example
- * # Range
- *
- * An array value gives two thumbs that cannot cross. The dense design
- * renders it whatever the ladder step.
- *
- * ```tsx
- * <div className="w-72">
- *   <Slider defaultValue={[25, 75]} />
- * </div>
- * ```
- *
- * @example
- * # Steps
- *
- * `step` quantizes the value; `showSteps` marks each stop on the track, and
- * the marks on the filled side are masked out.
- *
- * ```tsx
- * <div className="w-72">
- *   <Slider defaultValue={50} step={25} showSteps />
- *   <Slider defaultValue={50} step={10} showSteps />
- * </div>
- * ```
- *
- * @example
- * # Non-uniform Steps
- *
- * `steps` takes a discrete list of allowed values — positioned
- * proportionally, walked by the arrow keys, with min and max taken from the
- * list.
- *
- * ```tsx
- * <div className="w-72">
- *   <Slider
- *     defaultValue={0.7}
- *     steps={[0.1, 0.5, 0.7, 1.1, 1.3]}
- *     showSteps
- *     label="Rating"
- *     formatValue={(v) => `${v} A`}
- *   />
- * </div>
- * ```
- *
- * @example
- * # Value Display
- *
- * `valuePosition` moves the label: beside the track on either side, above or
- * below it, or as a tooltip that rides the thumb while you interact.
- *
- * ```tsx
- * <div className="flex flex-col gap-6 w-72">
- *   <Slider defaultValue={40} valuePosition="left" label="Volume" />
- *   <Slider defaultValue={60} valuePosition="right" label="Volume" />
- *   <Slider defaultValue={50} valuePosition="tooltip" />
- * </div>
- * ```
- *
- * @example
- * # Format
- *
- * `formatValue` renders the number: units, percentages, anything.
- *
- * ```tsx
- * <div className="w-72">
- *   <Slider
- *     size="compact"
- *     defaultValue={75}
- *     formatValue={(v) => `${v}%`}
- *     label="Opacity"
- *   />
- * </div>
- * ```
- *
- * @example
- * # Disabled
- *
- * `disabled` dims the slider and ignores pointer and keyboard input.
- *
- * ```tsx
- * <div className="w-72">
- *   <Slider size="compact" defaultValue={50} disabled />
- * </div>
- * ```
- *
- * @example
- * # Default
- *
- * The default step: an edge-to-edge row with a pip per step, the label on
- * the left and the value on the right.
- *
- * ```tsx
- * <div className="w-72">
- *   <Slider size="default" label="Roundness" defaultValue={2} min={0} max={4} />
- * </div>
- * ```
- *
- * @example
- * # Default — Scrubber
- *
- * `variant="scrubber"` drops the pips for a continuous fill you can drag
- * anywhere in the row, with a resize handle at the fill edge.
- *
- * ```tsx
- * <div className="w-72">
- *   <Slider
- *     size="default"
- *     variant="scrubber"
- *     label="Volume"
- *     defaultValue={50}
- *     min={0}
- *     max={100}
- *     formatValue={(v) => `${v}%`}
- *   />
- * </div>
- * ```
- *
- * @example
- * # Default — Format
- *
- * `formatValue` turns the steps into names, so a numeric slider reads as a
- * set of choices.
- *
- * ```tsx
- * <div className="w-72">
- *   <Slider
- *     size="default"
- *     label="Quality"
- *     defaultValue={2}
- *     min={0}
- *     max={4}
- *     formatValue={(v) => ['Off', 'Low', 'Medium', 'High', 'Ultra'][v]}
- *   />
- * </div>
- * ```
- *
- * @example
- * # Default — Disabled
- *
- * The same dimming and inert behaviour on the default step.
- *
- * ```tsx
- * <div className="w-72">
- *   <Slider size="default" label="Roundness" defaultValue={2} min={0} max={4} disabled />
- * </div>
- * ```
  */
 const Slider = forwardRef<HTMLDivElement, SliderProps>(
   ({ size, variant = "pips", value: valueProp, defaultValue, onChange: onChangeProp, ...rest }, ref) => {

@@ -14,6 +14,9 @@
  * - `sourceIndex`: the row's authored index, stamped by a filtering panel
  *   (`Dropdown.Search filter`) that re-indexed the visible rows. Selection is
  *   keyed on it, fluid hover on the re-indexed `index`.
+ * - Styling reads DS tokens (AGENTS.md styling): inline
+ *   `fontVariationSettings` → `weight-*`; `duration-80|120|160` and
+ *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -29,7 +32,7 @@ import {
 import type { IconComponent } from "../../_fluid/lib/icon-context";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../../_fluid/lib/utils";
-import { fontWeights } from "../../_fluid/lib/font-weight";
+import { spring } from "../../_fluid/lib/springs";
 import { shapeMap } from "../../_fluid/lib/shape-context";
 import { useSize } from "../../_fluid/lib/size-context";
 import { useRegisterFluidHoverItem } from "../../_fluid/hooks/use-fluid-hover";
@@ -222,7 +225,7 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
               size={sizeClasses.icon}
               strokeWidth={isActive || isChecked ? 2 : 1.5}
               className={cn(
-                "col-start-1 row-start-1 transition-[color,stroke-width] duration-80",
+                "col-start-1 row-start-1 transition-[color,stroke-width] duration-fast",
                 isActive || isChecked
                   ? "text-foreground"
                   : "text-muted-foreground"
@@ -234,24 +237,19 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
             sizer and the visible label keep identical boxes. */}
         <span className={cn("inline-grid flex-1", sizeClasses.text)}>
           <span
-            className="col-start-1 row-start-1 invisible [text-box:trim-both_cap_alphabetic]"
-            style={{ fontVariationSettings: fontWeights.semibold }}
+            className="col-start-1 row-start-1 invisible [text-box:trim-both_cap_alphabetic] weight-semibold"
             aria-hidden="true"
           >
             {label}
           </span>
           <span
             className={cn(
-              "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-80 [text-box:trim-both_cap_alphabetic]",
+              "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast [text-box:trim-both_cap_alphabetic]",
               isActive || isChecked
                 ? "text-foreground"
-                : "text-muted-foreground"
+                : "text-muted-foreground",
+              isChecked ? "weight-semibold" : "weight-normal"
             )}
-            style={{
-              fontVariationSettings: isChecked
-                ? fontWeights.semibold
-                : fontWeights.normal,
-            }}
           >
             {label}
           </span>
@@ -278,7 +276,7 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
                 initial={{ pathLength: skipAnimation ? 1 : 0 }}
                 animate={{
                   pathLength: 1,
-                  transition: { duration: 0.08, ease: "easeOut" },
+                  transition: { duration: spring.fast.duration, ease: "easeOut" },
                 }}
                 exit={{
                   pathLength: 0,

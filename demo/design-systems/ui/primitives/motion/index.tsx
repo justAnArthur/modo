@@ -13,6 +13,11 @@
  * - The ball-on-track and fake-modal visuals are replaced by the demo's
  *   show/hide of arbitrary children; the component-chip links are plain text.
  * - framer-motion → motion/react.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; the hex focus-ring fallback →
+ *   `ring-focus-ring` / `border-focus-ring`; literal colors → color tokens;
+ *   `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
+ *   `spring.*`.
  */
 
 import type { ReactNode } from 'react'
@@ -126,11 +131,11 @@ export default function Motion({
             aria-pressed={shown}
             aria-label={`${shown ? 'Hide' : 'Show'} (spring.${tier})`}
             onClick={() => setShown((v) => !v)}
-            className="inline-flex h-7 cursor-pointer items-center rounded-lg px-3 text-[12px] text-foreground shadow-[0_0_0_1px_var(--border)] outline-none transition-colors duration-80 hover:bg-hover active:bg-active focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]"
+            className="inline-flex h-7 cursor-pointer items-center rounded-lg px-3 text-caption text-foreground shadow-[0_0_0_1px_var(--border)] outline-none transition-colors duration-fast hover:bg-hover active:bg-active focus-visible:ring-1 focus-visible:ring-focus-ring"
           >
             {shown ? 'Hide' : 'Show'}
           </button>
-          <span className="font-mono text-[11px] text-muted-foreground">
+          <span className="font-mono text-caption-compact text-muted-foreground">
             spring.{tier} {enter.duration}s{enter.bounce ? ` bounce ${enter.bounce}` : ''} · exit {leave.duration}s
           </span>
         </div>

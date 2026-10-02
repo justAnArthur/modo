@@ -1,0 +1,49 @@
+import TabsSubtle from './index'
+import { Clock, SquareLibrary, Star, Users } from 'lucide-react'
+
+# Basic
+
+The pill follows the selected tab; panels swap with it.
+
+<div className="flex flex-col gap-4 w-full">
+  <TabsSubtle defaultSelectedIndex={0}>
+    {['Teamspaces', 'Recents', 'Favorites', 'Shared'].map((label, i) => (
+      <TabsSubtle.Item key={label} index={i} label={label} />
+    ))}
+    {['Teamspaces', 'Recents', 'Favorites', 'Shared'].map((label, i) => (
+      <TabsSubtle.Panel key={label} index={i}>
+        <p className="text-body text-muted-foreground px-3">{label} content goes here.</p>
+      </TabsSubtle.Panel>
+    ))}
+  </TabsSubtle>
+</div>
+
+# With Icons
+
+An `icon` sits ahead of the label and thickens its stroke while its tab is
+hovered or selected.
+
+<div className="flex flex-col gap-4 w-full">
+  <TabsSubtle defaultSelectedIndex={0}>
+    <TabsSubtle.Item index={0} icon={SquareLibrary} label="Teamspaces" />
+    <TabsSubtle.Item index={1} icon={Clock} label="Recents" />
+    <TabsSubtle.Item index={2} icon={Star} label="Favorites" />
+    <TabsSubtle.Item index={3} icon={Users} label="Shared" />
+    <TabsSubtle.Panel index={0}><p className="text-body text-muted-foreground px-3">Teamspaces content goes here.</p></TabsSubtle.Panel>
+    <TabsSubtle.Panel index={1}><p className="text-body text-muted-foreground px-3">Recents content goes here.</p></TabsSubtle.Panel>
+    <TabsSubtle.Panel index={2}><p className="text-body text-muted-foreground px-3">Favorites content goes here.</p></TabsSubtle.Panel>
+    <TabsSubtle.Panel index={3}><p className="text-body text-muted-foreground px-3">Shared content goes here.</p></TabsSubtle.Panel>
+  </TabsSubtle>
+</div>
+
+# Active Label
+
+With `activeLabel`, every tab shrinks to its icon and only the selected one
+spells itself out.
+
+<TabsSubtle activeLabel defaultSelectedIndex={0}>
+  <TabsSubtle.Item index={0} icon={SquareLibrary} label="Teamspaces" />
+  <TabsSubtle.Item index={1} icon={Clock} label="Recents" />
+  <TabsSubtle.Item index={2} icon={Star} label="Favorites" />
+  <TabsSubtle.Item index={3} icon={Users} label="Shared" />
+</TabsSubtle>

@@ -21,6 +21,11 @@
  *   `ColorPicker.Popover` attached with `Object.assign` and typed through a
  *   `ColorPickerComponent` cast on the forwardRef, plus a default export.
  *   Upstream's named exports and exported types are kept.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`; the
+ *   hex focus-ring fallback → `ring-focus-ring` / `border-focus-ring`;
+ *   literal colors → color tokens; `duration-80|120|160` and tier-length JS
+ *   durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -44,7 +49,6 @@ import { Menu } from "@base-ui/react/menu";
 import { NumberField } from "@base-ui/react/number-field";
 import { cn } from "../../_fluid/lib/utils";
 import { spring } from "../../_fluid/lib/springs";
-import { fontWeights } from "../../_fluid/lib/font-weight";
 import { useShape, shapeMap } from "../../_fluid/lib/shape-context";
 import { SizeProvider, useSize, type SizeVariant } from "../../_fluid/lib/size-context";
 import { useSurface, SurfaceProvider } from "../../_fluid/lib/surface-context";
@@ -567,11 +571,11 @@ function SaturationSquare({ h, s, v, onChange }: SaturationSquareProps) {
       onKeyDown={onKeyDown}
       className={cn(
         "relative w-full select-none touch-none cursor-none outline-none",
+        focused && "ring-2 ring-focus-ring",
         shape.bg
       )}
       style={{
         height: SQUARE_HEIGHT,
-        boxShadow: focused ? "0 0 0 2px var(--focus-ring, #6B97FF)" : undefined,
       }}
     >
       <div
@@ -762,22 +766,17 @@ function FormatItem({
     >
       <span className="inline-grid">
         <span
-          className="col-start-1 row-start-1 invisible"
-          style={{ fontVariationSettings: fontWeights.semibold }}
+          className="col-start-1 row-start-1 invisible weight-semibold"
           aria-hidden="true"
         >
           {label}
         </span>
         <span
           className={cn(
-            "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-80",
-            isActive || checked ? "text-foreground" : "text-muted-foreground"
+            "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast",
+            isActive || checked ? "text-foreground" : "text-muted-foreground",
+            checked ? "weight-semibold" : "weight-normal"
           )}
-          style={{
-            fontVariationSettings: checked
-              ? fontWeights.semibold
-              : fontWeights.normal,
-          }}
         >
           {label}
         </span>
@@ -858,15 +857,15 @@ function FormatDropdown({
     >
       <Menu.Trigger
         className={cn(
-          "flex items-center justify-between bg-transparent hover:bg-hover hover:text-foreground transition-colors duration-80 outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] cursor-pointer",
+          "flex items-center justify-between bg-transparent hover:bg-hover hover:text-foreground transition-colors duration-fast outline-none focus-visible:ring-1 focus-visible:ring-focus-ring cursor-pointer",
           sizeClasses.gap,
           sizeClasses.control,
           sizeClasses.px,
           sizeClasses.text,
           open ? "bg-active text-foreground" : "text-muted-foreground active:bg-active",
-          shape.input
+          shape.input,
+          "weight-medium"
         )}
-        style={{ fontVariationSettings: fontWeights.medium }}
       >
         <span>{FORMAT_LABELS[value]}</span>
         <ChevronDownIcon
@@ -960,7 +959,7 @@ function FormatDropdown({
                       exit={{ opacity: 0, transition: spring.moderate.exit }}
                       transition={{
                         ...spring.moderate,
-                        opacity: { duration: 0.08 },
+                        opacity: { duration: spring.fast.duration },
                       }}
                     />
                   )}
@@ -977,7 +976,7 @@ function FormatDropdown({
                 <AnimatePresence>
                   {focusRect && (
                     <motion.div
-                      className={`absolute ${menuShape.focusRing} pointer-events-none z-20 border border-[color:var(--focus-ring,#6B97FF)]`}
+                      className={`absolute ${menuShape.focusRing} pointer-events-none z-20 border border-focus-ring`}
                       initial={false}
                       animate={{
                         left: focusRect.left - 2,
@@ -988,7 +987,7 @@ function FormatDropdown({
                       exit={{ opacity: 0, transition: spring.fast.exit }}
                       transition={{
                         ...spring.fast,
-                        opacity: { duration: 0.08 },
+                        opacity: { duration: spring.fast.duration },
                       }}
                     />
                   )}
@@ -1112,7 +1111,7 @@ const TextColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
     return (
       <div
         className={cn(
-          "flex items-center px-2 bg-transparent hover:bg-hover active:bg-active transition-colors duration-80 focus-within:ring-1 focus-within:ring-[color:var(--focus-ring,#6B97FF)] select-none",
+          "flex items-center px-2 bg-transparent hover:bg-hover active:bg-active transition-colors duration-fast focus-within:ring-1 focus-within:ring-focus-ring select-none",
           sizeClasses.control,
           shape.input,
           className
@@ -1123,7 +1122,7 @@ const TextColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
           <span
             className={cn(
               "text-muted-foreground mr-1 select-none",
-              compact ? "text-[11px]" : "text-[12px]"
+              compact ? "text-caption-compact" : "text-caption"
             )}
           >
             {prefix}
@@ -1169,9 +1168,9 @@ const TextColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
             sizeClasses.text,
             align === "center" && "text-center",
             align === "right" && "text-right",
+            "weight-medium",
             inputClassName
           )}
-          style={{ fontVariationSettings: fontWeights.medium }}
         />
       </div>
     );
@@ -1296,7 +1295,7 @@ const ScrubColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
         largeStep={nudgeShiftStep ?? 10}
         format={format}
         className={cn(
-          "flex items-center bg-transparent hover:bg-hover active:bg-active transition-colors duration-80 focus-within:ring-1 focus-within:ring-[color:var(--focus-ring,#6B97FF)] select-none",
+          "flex items-center bg-transparent hover:bg-hover active:bg-active transition-colors duration-fast focus-within:ring-1 focus-within:ring-focus-ring select-none",
           sizeClasses.control,
           shape.input,
           className
@@ -1340,7 +1339,7 @@ const ScrubColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
             <span
               className={cn(
                 "text-muted-foreground mr-1 select-none",
-                compact ? "text-[11px]" : "text-[12px]"
+                compact ? "text-caption-compact" : "text-caption"
               )}
             >
               {prefix}
@@ -1392,9 +1391,9 @@ const ScrubColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
               align === "center" && "text-center",
               align === "right" && "text-right",
               !editing && "pointer-events-none",
+              "weight-medium",
               inputClassName
             )}
-            style={{ fontVariationSettings: fontWeights.medium }}
           />
         </NumberField.ScrubArea>
       </NumberField.Root>
@@ -1456,7 +1455,7 @@ function EyeDropperButton({ onPick }: { onPick: (hex: string) => void }) {
       onClick={handleClick}
       aria-label="Pick color from screen"
       className={cn(
-        "flex items-center justify-center text-muted-foreground bg-transparent hover:bg-hover hover:text-foreground active:bg-active transition-colors duration-80 outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] cursor-pointer",
+        "flex items-center justify-center text-muted-foreground bg-transparent hover:bg-hover hover:text-foreground active:bg-active transition-colors duration-fast outline-none focus-visible:ring-1 focus-visible:ring-focus-ring cursor-pointer",
         sizeClasses.control,
         sizeClasses.px,
         shape.input
@@ -1482,12 +1481,11 @@ function ColorTile({ color, size = 24, className, style }: ColorTileProps) {
   const shape = useShape();
   return (
     <span
-      className={cn("inline-block relative shrink-0 overflow-hidden", shape.bg, className)}
+      className={cn("inline-block relative shrink-0 overflow-hidden shadow-swatch", shape.bg, className)}
       style={{
         width: size,
         height: size,
         ...CHECKER_BG,
-        boxShadow: "inset 0 0 0 1px rgba(127,127,127,0.25)",
         ...style,
       }}
     >
@@ -1508,10 +1506,10 @@ const ColorSwatch = forwardRef<HTMLButtonElement, ColorSwatchProps>(
     const shape = useShape();
     const [hovered, setHovered] = useState(false);
     const ring = selected
-      ? "inset 0 0 0 1px rgba(127,127,127,0.25), 0 0 0 2px var(--background), 0 0 0 4px #6B97FF"
+      ? "shadow-swatch-selected"
       : hovered
-        ? "inset 0 0 0 1px rgba(127,127,127,0.25), 0 0 0 2px var(--background), 0 0 0 4px rgba(127,127,127,0.4)"
-        : "inset 0 0 0 1px rgba(127,127,127,0.25)";
+        ? "shadow-swatch-hover"
+        : "shadow-swatch";
     return (
       <button
         ref={ref}
@@ -1520,13 +1518,13 @@ const ColorSwatch = forwardRef<HTMLButtonElement, ColorSwatchProps>(
         className={cn(
           "relative shrink-0 overflow-hidden cursor-pointer outline-none transition-shadow duration-100",
           shape.bg,
+          ring,
           className
         )}
         style={{
           width: size,
           height: size,
           ...CHECKER_BG,
-          boxShadow: ring,
         }}
         onMouseEnter={(e) => { setHovered(true); onMouseEnter?.(e); }}
         onMouseLeave={(e) => { setHovered(false); onMouseLeave?.(e); }}
@@ -1634,91 +1632,6 @@ type ColorPickerComponent = ForwardRefExoticComponent<
  * checkerboard tile), `ColorPickerPortalContainer` (portal the format menu
  * into a given element — e.g. inside a CSS-scaled ancestor), and the
  * `parseColor` / `buildParsed` color helpers.
- *
- * @example
- * # Default
- *
- * The inline panel: saturation square, hue and alpha sliders, the format menu
- * and eyedropper, then the per-channel inputs. `defaultValue` takes any CSS
- * color string.
- *
- * ```tsx
- * <ColorPicker defaultValue="#6B97FF" />
- * ```
- *
- * @example
- * # Popover
- *
- * `ColorPicker.Popover` puts the same panel behind a trigger that shows a
- * color tile, an optional `triggerLabel` and the hex value. The panel springs
- * open under the trigger and follows it on scroll.
- *
- * ```tsx
- * <ColorPicker.Popover triggerLabel="Fill" defaultValue="#6B97FF" />
- * ```
- *
- * @example
- * # With Swatches
- *
- * `swatches` adds a preset strip under the inputs. The entry matching the
- * current color takes a ring, and entries may carry their own alpha.
- *
- * ```tsx
- * <ColorPicker
- *   defaultValue="#6B97FF"
- *   swatches={['#000000', '#FFFFFF', '#FF3B30', '#F0F0F0', '#E5E5E5', '#D0D0D0', 'rgba(0,0,0,0.5)']}
- * />
- * ```
- *
- * @example
- * # OKLCH Format
- *
- * `defaultFormat` opens the picker on one of the four formats; the menu
- * switches between them and re-emits the value. Out-of-gamut OKLCH is clamped
- * into sRGB silently.
- *
- * ```tsx
- * <ColorPicker defaultFormat="oklch" defaultValue="#6B97FF" />
- * ```
- *
- * @example
- * # Uncontrolled
- *
- * The FF docs show this section controlled, with `value` and `onValueChange`
- * driven by a state hook. This is its uncontrolled twin: `defaultValue` seeds
- * the picker, which keeps its own state from there, while `onValueChange`
- * still reports every edit with the formatted string and the parsed color.
- * Pass `value` instead to drive it from outside.
- *
- * ```tsx
- * <ColorPicker defaultValue="rgba(107, 151, 255, 0.6)" defaultFormat="rgb" />
- * ```
- *
- * @example
- * # Removable Trigger
- *
- * `triggerShowRemove` adds an X to the trigger, and `onTriggerRemove` fires
- * when it is pressed — the FF docs swap the whole trigger for an "Add fill"
- * button there. The handler is left out here because clearing the color needs
- * state of its own.
- *
- * ```tsx
- * <ColorPicker.Popover triggerLabel="Fill" triggerShowRemove defaultValue="#6B97FF" />
- * ```
- *
- * @example
- * # Eyedropper Support
- *
- * The eyedropper uses the native `window.EyeDropper` API, which only
- * Chromium-based browsers ship; everywhere else the button hides itself. Pass
- * `hideEyedropper` to drop it unconditionally — the right-hand panel below.
- *
- * ```tsx
- * <div className="flex flex-wrap gap-4">
- *   <ColorPicker defaultValue="#6B97FF" />
- *   <ColorPicker defaultValue="#6B97FF" hideEyedropper />
- * </div>
- * ```
  */
 const ColorPicker = forwardRef<HTMLDivElement, ColorPickerProps>(
   (
@@ -2195,14 +2108,14 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
         <div ref={ref} className="inline-flex">
           <Popover.Trigger
             className={cn(
-              "flex items-center border border-border bg-transparent hover:bg-hover transition-colors duration-80 outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] cursor-pointer",
+              "flex items-center border border-border bg-transparent hover:bg-hover transition-colors duration-fast outline-none focus-visible:ring-1 focus-visible:ring-focus-ring cursor-pointer",
               sizeClasses.gap,
               sizeClasses.control,
               compact ? "px-1.5" : "px-2",
               shape.input,
+              "weight-medium",
               triggerClassName
             )}
-            style={{ fontVariationSettings: fontWeights.medium }}
           >
             {triggerLabel && triggerLabelPosition === "left" && (
               <span className={cn("text-muted-foreground px-1 select-none", sizeClasses.text)}>

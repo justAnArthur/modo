@@ -13,6 +13,11 @@
  *   .Content/.Footer/.Media/.Image/.Eyebrow/.Feature/.Button` attached with
  *   `Object.assign`, typed through a `CardComponent` cast on the forwardRef.
  *   Upstream's named exports are kept.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`; the
+ *   hex focus-ring fallback → `ring-focus-ring` / `border-focus-ring`;
+ *   `rounded-[Npx]` → radius tokens; `duration-80|120|160` and tier-length JS
+ *   durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -31,7 +36,6 @@ import {
   type RefAttributes,
 } from "react";
 import { cn } from "../../_fluid/lib/utils";
-import { fontWeights } from "../../_fluid/lib/font-weight";
 import { useShape } from "../../_fluid/lib/shape-context";
 import { SizeProvider, useSize, type SizeVariant } from "../../_fluid/lib/size-context";
 import { useIcon, type IconComponent } from "../../_fluid/lib/icon-context";
@@ -304,170 +308,6 @@ type CardComponent = ForwardRefExoticComponent<
  * Card.Eyebrow (small uppercase label), Card.Feature (icon + title +
  * description row) and Card.Button (primary | secondary | ghost | link
  * action; an anchor when given `href`).
- *
- * @example # Basic
- * Borderless inline list: icon + a ghost action, divided by hairlines.
- *
- * ```tsx
- * <div className="w-full max-w-[520px]">
- *   <Card.Group orientation="inline">
- *     {[
- *       { icon: Circle, title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
- *       { icon: Shield, title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
- *       { icon: Palette, title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
- *       { icon: Moon, title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
- *     ].map((f) => (
- *       <Card key={f.title} onClick={() => {}}>
- *         <Card.Media icon={f.icon} />
- *         <Card.Header>
- *           <Card.Title>{f.title}</Card.Title>
- *           <Card.Description>{f.description}</Card.Description>
- *         </Card.Header>
- *         <Card.Footer>
- *           <Card.Button>Connect</Card.Button>
- *         </Card.Footer>
- *       </Card>
- *     ))}
- *   </Card.Group>
- * </div>
- * ```
- *
- * @example # Grid: 2-D fluid hover
- * Two-column grid of image tiles — `columns` above 1 turns on 2-D fluid
- * hover: the highlight springs to the nearest card across rows and columns.
- *
- * ```tsx
- * <div className="w-full max-w-[560px]">
- *   <Card.Group columns={2} border="outlined" separated>
- *     {[
- *       { title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
- *       { title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
- *       { title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
- *       { title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
- *     ].map((f) => (
- *       <Card key={f.title} onClick={() => {}}>
- *         <Card.Image src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
- *         <Card.Header>
- *           <Card.Title>{f.title}</Card.Title>
- *           <Card.Description>{f.description}</Card.Description>
- *         </Card.Header>
- *         <Card.Footer>
- *           <Card.Button variant="primary">Get started</Card.Button>
- *           <Card.Button variant="secondary">Learn more</Card.Button>
- *         </Card.Footer>
- *       </Card>
- *     ))}
- *   </Card.Group>
- * </div>
- * ```
- *
- * @example # Outlined group
- * One shared outlined frame, rows split by dividers: logo + primary.
- * Card.Media also accepts a [logoA, logoB] tuple for a connected pair.
- *
- * ```tsx
- * <div className="w-full max-w-[520px]">
- *   <Card.Group orientation="inline" border="outlined">
- *     {[
- *       { title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
- *       { title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
- *       { title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
- *       { title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
- *     ].map((f) => (
- *       <Card key={f.title} onClick={() => {}}>
- *         <Card.Media logo="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
- *         <Card.Header>
- *           <Card.Title>{f.title}</Card.Title>
- *           <Card.Description>{f.description}</Card.Description>
- *         </Card.Header>
- *         <Card.Footer>
- *           <Card.Button variant="primary">Get started</Card.Button>
- *         </Card.Footer>
- *       </Card>
- *     ))}
- *   </Card.Group>
- * </div>
- * ```
- *
- * @example # Separated tiles
- * Separated inline tiles with a full-height image; the action row drops
- * below the text (primary, secondary, ghost).
- *
- * ```tsx
- * <div className="w-full max-w-[560px]">
- *   <Card.Group orientation="inline" separated>
- *     {[
- *       { title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
- *       { title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
- *       { title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
- *       { title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
- *     ].map((f) => (
- *       <Card key={f.title} onClick={() => {}}>
- *         <Card.Image src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
- *         <Card.Header>
- *           <Card.Title>{f.title}</Card.Title>
- *           <Card.Description>{f.description}</Card.Description>
- *         </Card.Header>
- *         <Card.Footer>
- *           <Card.Button variant="primary">Get started</Card.Button>
- *           <Card.Button variant="secondary">Learn more</Card.Button>
- *           <Card.Button>Connect</Card.Button>
- *         </Card.Footer>
- *       </Card>
- *     ))}
- *   </Card.Group>
- * </div>
- * ```
- *
- * @example # Fully yours — compose anything
- * A standalone promo card tuned to a narrow 300px column: banner, features,
- * actions and a dismiss control revealed on hover or focus. (Upstream's demo
- * hides the card on dismiss; here `onDismiss` is a no-op.)
- *
- * ```tsx
- * <div className="w-full max-w-[300px]">
- *   <Card dismissible onDismiss={() => {}} className="border border-border/60 overflow-hidden rounded-xl">
- *     <Card.Image src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
- *     <Card.Header>
- *       <Card.Title>Meet the new Card component</Card.Title>
- *     </Card.Header>
- *     <Card.Content className="flex flex-col gap-3">
- *       <Card.Feature icon={Paintbrush} title="Always pixel-perfect" description="Renders your design exactly — token-driven and crisp in light and dark, at any radius" />
- *       <Card.Feature icon={SquareLibrary} title="Stacked, inline, or grid" description="One compositional API — borderless by default, with separated tiles or a shared frame" />
- *     </Card.Content>
- *     <Card.Footer>
- *       <Card.Button variant="primary">Get started</Card.Button>
- *       <Card.Button variant="ghost">Learn more</Card.Button>
- *     </Card.Footer>
- *   </Card>
- * </div>
- * ```
- *
- * @example # Selected
- * Clickable selection — one active card carries the fill, its title bolds,
- * and the group drops the dividers around it. The selection here is fixed on
- * the second card; drive `selected` from your own state to follow clicks.
- *
- * ```tsx
- * <div className="w-full max-w-[520px]">
- *   <Card.Group orientation="inline">
- *     {[
- *       { icon: Circle, title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
- *       { icon: Shield, title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
- *       { icon: Palette, title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
- *       { icon: Moon, title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
- *     ].map((f, i) => (
- *       <Card key={f.title} label={f.title} selected={i === 1} onClick={() => {}}>
- *         <Card.Media icon={f.icon} />
- *         <Card.Header>
- *           <Card.Title>{f.title}</Card.Title>
- *           <Card.Description>{f.description}</Card.Description>
- *         </Card.Header>
- *       </Card>
- *     ))}
- *   </Card.Group>
- * </div>
- * ```
  */
 const Card = forwardRef<HTMLDivElement, CardProps>(
   (
@@ -574,7 +414,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
           target={external ? "_blank" : undefined}
           rel={external ? "noopener noreferrer" : undefined}
           aria-label={label}
-          className="absolute inset-0 z-20 outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] rounded-[inherit]"
+          className="absolute inset-0 z-20 outline-none focus-visible:ring-1 focus-visible:ring-focus-ring rounded-[inherit]"
         />
       ) : (
         <button
@@ -582,7 +422,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
           onClick={onClick}
           aria-label={label}
           aria-pressed={selected || undefined}
-          className="absolute inset-0 z-20 outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] rounded-[inherit]"
+          className="absolute inset-0 z-20 outline-none focus-visible:ring-1 focus-visible:ring-focus-ring rounded-[inherit]"
         />
       )
     ) : null;
@@ -644,7 +484,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
                 : cn("flex flex-col", compact ? "pb-3" : "pb-4"),
             // Standalone (no group) cards can't lean on the group highlight, so
             // they carry their own hover tint when interactive.
-            !group && clickable && !disabled && "transition-colors duration-80 hover:bg-hover",
+            !group && clickable && !disabled && "transition-colors duration-fast hover:bg-hover",
             // Inline rows are single-line, so the corner dismiss would sit on
             // the title's tail: the header yields right padding whenever the
             // control is present — only while it's revealed in the on-hover
@@ -703,7 +543,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
               onClick={onDismiss}
               aria-label="Dismiss"
               className={cn(
-                "absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer outline-none transition-colors duration-80 focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]",
+                "absolute right-2 top-2 z-30 flex h-7 w-7 items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer outline-none transition-colors duration-fast focus-visible:ring-1 focus-visible:ring-focus-ring",
                 // Over media the control needs its own ground, or the icon
                 // reads against whatever the image happens to be. Elsewhere
                 // the usual hover fill is enough. The chip takes the button
@@ -718,7 +558,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
                 // no hover to reveal it). Keyboard focus still reaches it —
                 // pointer-events never blocks tabbing.
                 dismissOnHover &&
-                  "pointer-events-none opacity-0 transition-opacity duration-80 group-hover/card:pointer-events-auto group-hover/card:opacity-100 group-focus-within/card:pointer-events-auto group-focus-within/card:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100",
+                  "pointer-events-none opacity-0 transition-opacity duration-fast group-hover/card:pointer-events-auto group-hover/card:opacity-100 group-focus-within/card:pointer-events-auto group-focus-within/card:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100",
                 shape.button
               )}
             >
@@ -798,30 +638,25 @@ const CardTitle = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>(
         data-slot="card-title"
         className={cn(
           "inline-grid grid-cols-[minmax(0,1fr)] leading-snug",
-          compact ? "text-[13px]" : "text-[14px]",
+          compact ? "text-subtitle-compact" : "text-subtitle",
           className
         )}
         {...props}
       >
         <span
-          className={cn("col-start-1 row-start-1 invisible min-w-0 overflow-hidden text-ellipsis", trim)}
-          style={{ fontVariationSettings: fontWeights.semibold }}
+          className={cn("col-start-1 row-start-1 invisible min-w-0 overflow-hidden text-ellipsis", trim, "weight-semibold")}
           aria-hidden="true"
         >
           {children}
         </span>
         <span
           className={cn(
-            "col-start-1 row-start-1 min-w-0 overflow-hidden text-ellipsis text-foreground transition-[font-variation-settings] duration-80",
-            trim
-          )}
-          style={{
+            "col-start-1 row-start-1 min-w-0 overflow-hidden text-ellipsis text-foreground transition-[font-variation-settings] duration-fast",
+            trim,
             // normal → semibold on emphasis, matching nav-item / menu-item /
             // table (the opsz-paired tokens keep the advance width ~constant).
-            fontVariationSettings: emphasized
-              ? fontWeights.semibold
-              : fontWeights.normal,
-          }}
+            emphasized ? "weight-semibold" : "weight-normal"
+          )}
         >
           {children}
         </span>
@@ -846,7 +681,7 @@ const CardDescription = forwardRef<
       data-slot="card-description"
       className={cn(
         "leading-normal text-muted-foreground",
-        compact ? "text-[13px]" : "text-[14px]",
+        compact ? "text-subtitle-compact" : "text-subtitle",
         className
       )}
       {...props}
@@ -1024,7 +859,7 @@ function CardImage({ src, alt, className }: CardImageProps) {
       // inline, framed or borderless — rather than inheriting a frame's larger
       // clip. (A framed tile still clips the surrounding surface as before.)
       className={cn(
-        "object-cover rounded-[2px]",
+        "object-cover rounded-xs",
         orientation === "inline"
           ? "size-40 shrink-0"
           : "w-full aspect-[16/9]",
@@ -1050,11 +885,11 @@ const CardEyebrow = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>
         ref={ref}
         data-slot="card-eyebrow"
         className={cn(
-          compact ? "text-[11px]" : "text-[12px]",
+          compact ? "text-caption-compact" : "text-caption",
           "uppercase tracking-wide text-muted-foreground",
+          "weight-semibold",
           className
         )}
-        style={{ fontVariationSettings: fontWeights.semibold }}
         {...props}
       />
     );
@@ -1092,9 +927,9 @@ function CardFeature({ icon: Icon, title, description }: CardFeatureProps) {
         <span
           className={cn(
             "text-foreground [text-box:trim-both_cap_alphabetic]",
-            sizeClasses.text
+            sizeClasses.text,
+            "weight-medium"
           )}
-          style={{ fontVariationSettings: fontWeights.medium }}
         >
           {title}
         </span>
@@ -1102,7 +937,7 @@ function CardFeature({ icon: Icon, title, description }: CardFeatureProps) {
           <span
             className={cn(
               "leading-relaxed text-muted-foreground",
-              compact ? "text-[11px]" : "text-[12px]"
+              compact ? "text-caption-compact" : "text-caption"
             )}
           >
             {description}
@@ -1158,14 +993,14 @@ function CardButton({
     <Icon
       size={compact ? 12 : 14}
       strokeWidth={1.5}
-      className="shrink-0 transition-[stroke-width] duration-80 group-hover/action:stroke-[2]"
+      className="shrink-0 transition-[stroke-width] duration-fast group-hover/action:stroke-[2]"
     />
   ) : null;
   const externalGlyph = external ? (
     <ArrowRight
       size={13}
       strokeWidth={1.5}
-      className="shrink-0 -rotate-45 transition-[stroke-width] duration-80 group-hover/action:stroke-[2]"
+      className="shrink-0 -rotate-45 transition-[stroke-width] duration-fast group-hover/action:stroke-[2]"
     />
   ) : null;
 
@@ -1180,9 +1015,10 @@ function CardButton({
 
   const classes = cn(
     "group/action relative z-30 inline-flex items-center justify-center gap-1.5 h-7 px-2.5 cursor-pointer outline-none",
-    compact ? "text-[11px]" : "text-[12px]",
-    "transition-colors duration-80",
-    "focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]",
+    compact ? "text-caption-compact" : "text-caption",
+    "weight-medium",
+    "transition-colors duration-fast",
+    "focus-visible:ring-1 focus-visible:ring-focus-ring",
     "disabled:opacity-50 disabled:pointer-events-none",
     shape.button,
     CARD_BUTTON_VARIANTS[variant]
@@ -1196,7 +1032,6 @@ function CardButton({
         target={external ? "_blank" : undefined}
         rel={external ? "noopener noreferrer" : undefined}
         className={classes}
-        style={{ fontVariationSettings: fontWeights.medium }}
       >
         {inner}
       </a>
@@ -1209,7 +1044,6 @@ function CardButton({
       onClick={onClick}
       disabled={disabled}
       className={classes}
-      style={{ fontVariationSettings: fontWeights.medium }}
     >
       {inner}
     </button>
