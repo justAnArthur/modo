@@ -10,6 +10,8 @@
  *   so modo's parser lists them; types are unchanged for callers.
  * - TSDoc with the FF docs page's examples added above the component;
  *   `export default Badge` added.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; literal colors → color tokens.
  */
 
 import { forwardRef, type HTMLAttributes } from "react";
@@ -19,23 +21,23 @@ import { useShape } from "../../_fluid/lib/shape-context";
 import { useSizeVariant } from "../../_fluid/lib/size-context";
 
 const badgeColors = {
-  gray: "#a3a3a3",
-  red: "#ef4444",
-  orange: "#f97316",
-  amber: "#f59e0b",
-  yellow: "#eab308",
-  lime: "#84cc16",
-  green: "#22c55e",
-  emerald: "#10b981",
-  teal: "#14b8a6",
-  cyan: "#06b6d4",
-  blue: "#3b82f6",
-  indigo: "#6366f1",
-  violet: "#8b5cf6",
-  purple: "#a855f7",
-  fuchsia: "#d946ef",
-  pink: "#ec4899",
-  rose: "#f43f5e",
+  gray: "var(--badge-gray)",
+  red: "var(--badge-red)",
+  orange: "var(--badge-orange)",
+  amber: "var(--badge-amber)",
+  yellow: "var(--badge-yellow)",
+  lime: "var(--badge-lime)",
+  green: "var(--badge-green)",
+  emerald: "var(--badge-emerald)",
+  teal: "var(--badge-teal)",
+  cyan: "var(--badge-cyan)",
+  blue: "var(--badge-blue)",
+  indigo: "var(--badge-indigo)",
+  violet: "var(--badge-violet)",
+  purple: "var(--badge-purple)",
+  fuchsia: "var(--badge-fuchsia)",
+  pink: "var(--badge-pink)",
+  rose: "var(--badge-rose)",
 } as const;
 
 type BadgeColor = keyof typeof badgeColors;
@@ -50,8 +52,8 @@ const badgeVariants = cva(
       },
       // The two-step size ladder shared by every control — see /docs/sizes.
       size: {
-        default: "h-6 px-2.5 text-[12px] gap-1.5",
-        compact: "h-5 px-2 text-[11px] gap-1",
+        default: "h-6 px-2.5 text-caption gap-1.5",
+        compact: "h-5 px-2 text-caption-compact gap-1",
       },
     },
     defaultVariants: {

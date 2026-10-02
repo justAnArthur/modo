@@ -16,6 +16,10 @@
  * React 18 types: the tab list's ref write goes through `MutableRefObject`; modo
  * docs — TSDoc with FF's docs/API text, `TabsSubtle.Item` / `TabsSubtle.Panel`
  * statics (typed via a cast on the root), default export.
+ * Styling reads DS tokens (AGENTS.md styling): inline `fontVariationSettings`
+ * → `weight-*`; the hex focus-ring fallback → `ring-focus-ring` /
+ * `border-focus-ring`; `duration-80|120|160` and tier-length JS durations →
+ * `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -40,7 +44,6 @@ import { motion, AnimatePresence } from "motion/react";
 import type { IconComponent } from "../../_fluid/lib/icon-context";
 import { cn } from "../../_fluid/lib/utils";
 import { spring } from "../../_fluid/lib/springs";
-import { fontWeights } from "../../_fluid/lib/font-weight";
 import { useShape } from "../../_fluid/lib/shape-context";
 import { SizeProvider, useSize, type SizeVariant } from "../../_fluid/lib/size-context";
 import { useFluidHover } from "../../_fluid/hooks/use-fluid-hover";
@@ -321,7 +324,7 @@ const TabsSubtle = forwardRef<HTMLDivElement, TabsSubtleProps>(
                   }}
                   transition={{
                     ...spring.moderate,
-                    opacity: { duration: 0.08 },
+                    opacity: { duration: spring.fast.duration },
                   }}
                 />
               )}
@@ -353,13 +356,13 @@ const TabsSubtle = forwardRef<HTMLDivElement, TabsSubtleProps>(
                             top: selectedRect.top,
                             height: selectedRect.height,
                             opacity: 0,
-                            transition: { ...spring.moderate, opacity: { duration: 0.06 } },
+                            transition: { ...spring.moderate, opacity: { duration: spring.fast.exit.duration } },
                           }
                         : { opacity: 0, transition: spring.fast.exit }
                     }
                     transition={{
                       ...spring.fast,
-                      opacity: { duration: 0.08 },
+                      opacity: { duration: spring.fast.duration },
                     }}
                   />
                 )}
@@ -369,7 +372,7 @@ const TabsSubtle = forwardRef<HTMLDivElement, TabsSubtleProps>(
               <AnimatePresence>
                 {focusRect && (
                   <motion.div
-                    className={cn("absolute pointer-events-none z-20 border border-[color:var(--focus-ring,#6B97FF)]", shape.focusRing)}
+                    className={cn("absolute pointer-events-none z-20 border border-focus-ring", shape.focusRing)}
                     initial={false}
                     animate={{
                       left: focusRect.left - 2,
@@ -380,7 +383,7 @@ const TabsSubtle = forwardRef<HTMLDivElement, TabsSubtleProps>(
                     exit={{ opacity: 0, transition: spring.fast.exit }}
                     transition={{
                       ...spring.fast,
-                      opacity: { duration: 0.08 },
+                      opacity: { duration: spring.fast.duration },
                     }}
                   />
                 )}
@@ -453,22 +456,17 @@ const TabsSubtleItem = forwardRef<HTMLButtonElement, TabsSubtleItemProps>(
         className={cn("inline-grid whitespace-nowrap", sizeClasses.text)}
       >
         <span
-          className="col-start-1 row-start-1 invisible [text-box:trim-both_cap_alphabetic]"
-          style={{ fontVariationSettings: fontWeights.semibold }}
+          className="col-start-1 row-start-1 invisible [text-box:trim-both_cap_alphabetic] weight-semibold"
           aria-hidden="true"
         >
           {label}
         </span>
         <span
           className={cn(
-            "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-80 [text-box:trim-both_cap_alphabetic]",
-            isActive ? "text-foreground" : "text-muted-foreground"
+            "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast [text-box:trim-both_cap_alphabetic]",
+            isActive ? "text-foreground" : "text-muted-foreground",
+            isSelected ? "weight-semibold" : "weight-normal"
           )}
-          style={{
-            fontVariationSettings: isSelected
-              ? fontWeights.semibold
-              : fontWeights.normal,
-          }}
         >
           {label}
         </span>
@@ -510,7 +508,7 @@ const TabsSubtleItem = forwardRef<HTMLButtonElement, TabsSubtleItemProps>(
             size={sizeClasses.icon}
             strokeWidth={isActive ? 2 : 1.5}
             className={cn(
-              "shrink-0 transition-[color,stroke-width] duration-80",
+              "shrink-0 transition-[color,stroke-width] duration-fast",
               isActive ? "text-foreground" : "text-muted-foreground"
             )}
           />
@@ -540,7 +538,7 @@ const TabsSubtleItem = forwardRef<HTMLButtonElement, TabsSubtleItemProps>(
                 exit={{ width: 0, opacity: 0, marginLeft: 0 }}
                 transition={{
                   ...spring.fast,
-                  opacity: { duration: 0.06 },
+                  opacity: { duration: spring.fast.exit.duration },
                 }}
               >
                 {labelContent}

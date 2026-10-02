@@ -9,9 +9,15 @@
  *   `cn/config` (github.com/shadcn-ui/cn — a compiled drop-in with the same
  *   `{ extend: { classGroups } }` extension shape and the same output). The
  *   font-size class-group extension is kept 1:1.
+ * - The local token utilities from uno.config.ts join their groups: the
+ *   compact and `micro` type roles (font-size), `weight-*` (a group of its
+ *   own), the motion tiers (duration, delay) and `rounded-box|glyph`.
  */
 
 import { createCn } from "cn/config";
+
+const TYPE_ROLES = ["display", "title", "subtitle", "body", "caption", "micro"];
+const TIERS = ["fast", "fast-exit", "moderate", "moderate-exit", "slow", "slow-exit"];
 
 // The type-scale role utilities (see /docs/sizes) are font sizes, but
 // tailwind-merge can't know that for custom classes — by default anything
@@ -20,13 +26,11 @@ import { createCn } from "cn/config";
 export const cn = createCn({
   extend: {
     classGroups: {
-      "font-size": [
-        "text-display",
-        "text-title",
-        "text-subtitle",
-        "text-body",
-        "text-caption",
-      ],
+      "font-size": [{ text: TYPE_ROLES.flatMap((role) => [role, `${role}-compact`]) }],
+      "font-variation": [{ weight: ["normal", "medium", "semibold", "bold"] }],
+      duration: [{ duration: TIERS }],
+      delay: [{ delay: TIERS }],
+      rounded: [{ rounded: ["box", "glyph"] }],
     },
   },
 });

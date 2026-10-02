@@ -19,6 +19,10 @@
  *   `<Select.Item>` typechecks); upstream's named exports are kept.
  * - modo item: TSDoc + examples from the FF "Select" docs page, and a default
  *   export.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; the hex focus-ring fallback →
+ *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and
+ *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -416,9 +420,9 @@ Select.displayName = "Select";
 const triggerVariants = cva(
   [
     "group inline-flex items-center justify-between outline-none cursor-pointer",
-    "transition-all duration-80",
+    "transition-all duration-fast",
     "disabled:opacity-50 disabled:pointer-events-none",
-    "focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]",
+    "focus-visible:ring-1 focus-visible:ring-focus-ring",
   ],
   {
     variants: {
@@ -492,7 +496,7 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
               <Icon
                 size={sizeClasses.icon}
                 strokeWidth={1.5}
-                className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-80 group-hover:text-foreground group-hover:stroke-[2]"
+                className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-fast group-hover:text-foreground group-hover:stroke-[2]"
               />
             )}
             <SelectPrimitive.Value
@@ -514,13 +518,13 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="shrink-0 text-muted-foreground transition-colors duration-80 group-hover:text-foreground"
+            className="shrink-0 text-muted-foreground transition-colors duration-fast group-hover:text-foreground"
           >
             <path d="M6 9l6 6 6-6" />
           </svg>
         </SelectPrimitive.Trigger>
         {error && (
-          <span className="text-[12px] text-destructive pl-3">{error}</span>
+          <span className="text-caption text-destructive pl-3">{error}</span>
         )}
       </div>
     );
@@ -755,7 +759,7 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
                         exit={{ opacity: 0, transition: spring.moderate.exit }}
                         transition={{
                           ...spring.moderate,
-                          opacity: { duration: 0.08 },
+                          opacity: { duration: spring.fast.duration },
                         }}
                       />
                     )}
@@ -774,7 +778,7 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
                   <AnimatePresence>
                     {focusRect && (
                       <motion.div
-                        className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-[color:var(--focus-ring,#6B97FF)]`}
+                        className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
                         initial={false}
                         animate={{
                           left: focusRect.left - 2,
@@ -785,7 +789,7 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
                         exit={{ opacity: 0, transition: spring.fast.exit }}
                         transition={{
                           ...spring.fast,
-                          opacity: { duration: 0.08 },
+                          opacity: { duration: spring.fast.duration },
                         }}
                       />
                     )}
@@ -884,7 +888,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
               // shrink-0: the popup is a max-height flex column, so without it
               // a long list compresses rows to fit instead of scrolling.
               `relative z-10 flex ${sizeClasses.control} shrink-0 items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.itemPx} ${sizeClasses.text} cursor-pointer outline-none select-none`,
-              "transition-[color] duration-80",
+              "transition-[color] duration-fast",
               isActive || isChecked
                 ? "text-foreground"
                 : "text-muted-foreground",
@@ -899,7 +903,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
           <Icon
             size={sizeClasses.icon}
             strokeWidth={isActive || isChecked ? 2 : 1.5}
-            className="shrink-0 transition-[color,stroke-width] duration-80"
+            className="shrink-0 transition-[color,stroke-width] duration-fast"
           />
         )}
 
@@ -940,7 +944,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
                   initial={{ pathLength: skipAnimation ? 1 : 0 }}
                   animate={{
                     pathLength: 1,
-                    transition: { duration: 0.08, ease: "easeOut" },
+                    transition: { duration: spring.fast.duration, ease: "easeOut" },
                   }}
                   exit={{
                     pathLength: 0,
@@ -985,7 +989,7 @@ const SelectLabel = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
         ref={ref}
         className={cn(
           "px-2 py-1.5 shrink-0 text-muted-foreground",
-          compact ? "text-[11px]" : "text-[12px]",
+          compact ? "text-caption-compact" : "text-caption",
           className
         )}
         {...props}

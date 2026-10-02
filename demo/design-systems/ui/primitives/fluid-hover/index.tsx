@@ -17,6 +17,9 @@
  *   as in upstream's `FluidHoverList`.
  * - Prose and examples follow the FF `/docs/fluid-hover` page (its five sections,
  *   minus the two scripted-cursor demos that only exist to film the mechanism).
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; the hex focus-ring fallback →
+ *   `ring-focus-ring` / `border-focus-ring`.
  */
 
 import {
@@ -77,7 +80,7 @@ function isItemDisabled(element: HTMLElement) {
 // axis shapes: a full-width row, a strip cell that keeps its content's width,
 // and a grid tile that stacks a title over a description.
 const itemBaseClass =
-  "relative z-10 flex shrink-0 cursor-pointer items-center text-left text-body text-foreground outline-none focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]";
+  "relative z-10 flex shrink-0 cursor-pointer items-center text-left text-body text-foreground outline-none focus-visible:ring-1 focus-visible:ring-focus-ring";
 
 const itemAxisClass: Record<FluidHoverAxis, string> = {
   y: "h-9 w-full px-3",

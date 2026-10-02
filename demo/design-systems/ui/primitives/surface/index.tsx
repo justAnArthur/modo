@@ -11,6 +11,10 @@
  *   result typed with its `Provider` static, `Object.assign(Elevated, { Provider: SurfaceProvider })`,
  *   `SurfaceProvider` / `useSurface` / `surfaceClasses` re-exported, and a default export.
  * - Imports `./surface.css` (the 8-level ladder tokens; modo also auto-injects it).
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`;
+ *   `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
+ *   `spring.*`.
  */
 
 import './surface.css'
@@ -97,11 +101,11 @@ interface ElevatedStatics {
  *   <Elevated.Provider value={1}>
  *     <Elevated offset={4} className="w-[320px] max-w-full rounded-2xl p-6 flex flex-col gap-5">
  *       <div className="flex items-start justify-between gap-3">
- *         <span className="text-[15px]" style={{ fontVariationSettings: "'wght' 550, 'opsz' 18" }}>Invite to your workspace</span>
+ *         <span className="text-title-compact weight-semibold">Invite to your workspace</span>
  *         <X size={16} strokeWidth={1.5} className="text-muted-foreground" />
  *       </div>
  *       <div className="flex flex-col gap-2">
- *         <span className="text-body" style={{ fontVariationSettings: "'wght' 450, 'opsz' 15" }}>Select role</span>
+ *         <span className="text-body weight-medium">Select role</span>
  *         <div className="flex items-center justify-between gap-2 h-10 px-3 rounded-xl bg-active text-body border border-border">
  *           <span>Member</span>
  *           <ChevronDown size={14} strokeWidth={1.5} className="text-muted-foreground rotate-180" />
@@ -134,13 +138,13 @@ interface ElevatedStatics {
  *   <div className="dark bg-background text-foreground rounded-2xl p-4 flex flex-col gap-4 w-full">
  *     {['dark', 'light'].map((scheme) => (
  *       <div key={scheme} className={scheme === 'dark' ? 'dark flex flex-col gap-2' : 'light flex flex-col gap-2'}>
- *         <span className="text-[11px] text-muted-foreground tracking-wider capitalize" style={{ fontVariationSettings: "'wght' 550, 'opsz' 18" }}>{scheme}</span>
+ *         <span className="text-caption-compact weight-semibold text-muted-foreground tracking-wider capitalize">{scheme}</span>
  *         <ScrollArea orientation="horizontal" viewportClassName="scroll-fade-x" className="rounded-2xl bg-background">
  *           <div className="flex gap-3 p-4 w-max">
  *             {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
  *               <div key={n} className="flex flex-col items-center gap-2 shrink-0">
  *                 <Elevated offset={n - 1} aria-hidden className="size-14 rounded-xl" />
- *                 <span className="text-[11px] text-muted-foreground font-mono">{n}</span>
+ *                 <span className="text-caption-compact text-muted-foreground font-mono">{n}</span>
  *               </div>
  *             ))}
  *           </div>
@@ -161,9 +165,9 @@ interface ElevatedStatics {
  *
  * ```tsx
  * <div className="dark bg-background text-foreground rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
- *   {[{ substrate: 1, label: 'On the page' }, { substrate: 3, label: 'Inside a popover' }, { substrate: 5, label: 'Inside a dialog' }].map(({ substrate, label }) => (
- *     <div key={substrate} className="flex flex-col gap-3 rounded-2xl p-4 border border-border/40" style={{ backgroundColor: `var(--surface-${substrate})` }}>
- *       <span className="text-caption text-foreground" style={{ fontVariationSettings: "'wght' 550, 'opsz' 18" }}>{label}</span>
+ *   {[{ substrate: 1, bg: 'bg-surface-1', label: 'On the page' }, { substrate: 3, bg: 'bg-surface-3', label: 'Inside a popover' }, { substrate: 5, bg: 'bg-surface-5', label: 'Inside a dialog' }].map(({ substrate, bg, label }) => (
+ *     <div key={substrate} className={`flex flex-col gap-3 rounded-2xl p-4 border border-border/40 ${bg}`}>
+ *       <span className="text-caption weight-semibold text-foreground">{label}</span>
  *       <Elevated.Provider value={substrate}>
  *         <Elevated offset={2} className="rounded-xl p-1 flex flex-col">
  *           {[{ Icon: Star, name: 'Favorites' }, { Icon: Clock, name: 'Recents' }, { Icon: Lock, name: 'Private' }].map(({ Icon, name }, i) => (
@@ -174,7 +178,7 @@ interface ElevatedStatics {
  *           ))}
  *         </Elevated>
  *       </Elevated.Provider>
- *       <span className="text-[11px] font-mono text-muted-foreground">substrate {substrate} → menu surface {substrate + 2}</span>
+ *       <span className="text-caption-compact font-mono text-muted-foreground">substrate {substrate} → menu surface {substrate + 2}</span>
  *     </div>
  *   ))}
  * </div>
@@ -218,10 +222,10 @@ interface ElevatedStatics {
  * <div className="dark bg-background text-foreground rounded-2xl p-4 w-full flex justify-center">
  *   <Elevated.Provider value={1}>
  *     <div data-surface className="relative rounded-2xl p-6 flex items-center justify-center bg-surface-1 shadow-surface-1 [&:hover>span]:opacity-100 [&:has([data-surface]:hover)>span]:opacity-0">
- *       <span className="absolute top-2 left-2.5 text-caption text-muted-foreground opacity-0 transition-opacity duration-150">surface-1</span>
+ *       <span className="absolute top-2 left-2.5 text-caption text-muted-foreground opacity-0 transition-opacity duration-moderate">surface-1</span>
  *       {[2, 3, 4, 5, 6, 7, 8].reduceRight((inner, level) => (
  *         <Elevated offset={1} data-surface className={inner ? 'relative rounded-2xl p-6 flex items-center justify-center [&:hover>span]:opacity-100 [&:has([data-surface]:hover)>span]:opacity-0' : 'relative rounded-2xl p-6 flex items-center justify-center size-24 [&:hover>span]:opacity-100 [&:has([data-surface]:hover)>span]:opacity-0'}>
- *           <span className="absolute top-2 left-2.5 text-caption text-muted-foreground opacity-0 transition-opacity duration-150">surface-{level}</span>
+ *           <span className="absolute top-2 left-2.5 text-caption text-muted-foreground opacity-0 transition-opacity duration-moderate">surface-{level}</span>
  *           {inner}
  *         </Elevated>
  *       ), null)}
@@ -242,11 +246,11 @@ interface ElevatedStatics {
  *   <Elevated.Provider value={1}>
  *     <Elevated offset={4} className="w-[320px] max-w-full rounded-2xl p-6 flex flex-col gap-5">
  *       <div className="flex items-start justify-between gap-3">
- *         <span className="text-[15px]" style={{ fontVariationSettings: "'wght' 550, 'opsz' 18" }}>Invite to your workspace</span>
+ *         <span className="text-title-compact weight-semibold">Invite to your workspace</span>
  *         <X size={16} strokeWidth={1.5} className="text-muted-foreground" />
  *       </div>
  *       <div className="flex flex-col gap-2">
- *         <span className="text-body" style={{ fontVariationSettings: "'wght' 450, 'opsz' 15" }}>Select role</span>
+ *         <span className="text-body weight-medium">Select role</span>
  *         <div className="flex items-center justify-between gap-2 h-10 px-3 rounded-xl bg-active text-body border border-border">
  *           <span>Member</span>
  *           <ChevronDown size={14} strokeWidth={1.5} className="text-muted-foreground rotate-180" />

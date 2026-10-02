@@ -15,6 +15,9 @@
  * - `TableProps` / `TableRowProps` type exports added.
  * - TSDoc with the FF docs page's examples added above the root;
  *   `export default Table` added.
+ * - Styling reads DS tokens (AGENTS.md styling): inline
+ *   `fontVariationSettings` → `weight-*`; `duration-80|120|160` and
+ *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -31,7 +34,6 @@ import {
   type ThHTMLAttributes,
 } from "react";
 import { cn } from "../../_fluid/lib/utils";
-import { fontWeights } from "../../_fluid/lib/font-weight";
 import { SizeProvider, useSize, type SizeVariant } from "../../_fluid/lib/size-context";
 import { useFluidHover, useRegisterFluidHoverItem } from "../../_fluid/hooks/use-fluid-hover";
 import { FluidHoverHighlight } from "../../_fluid/ui/fluid-hover-highlight";
@@ -245,17 +247,13 @@ const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(
         }}
         data-fluid-hover-index={index}
         className={cn(
-          "group/row relative z-10 border-b transition-[border-color] duration-80",
+          "group/row relative z-10 border-b transition-[border-color] duration-fast",
           hideBorder ? "border-transparent" : "border-accent/40",
           isBodyRow && activeIdx === index && "is-active",
+          isBodyRow ? "weight-normal" : "weight-semibold",
           className
         )}
-        style={{
-          ...style,
-          fontVariationSettings: isBodyRow
-            ? fontWeights.normal
-            : fontWeights.semibold,
-        }}
+        style={style}
         {...props}
       />
     );
@@ -298,7 +296,7 @@ const TableCell = forwardRef<
     <td
       ref={ref}
       className={cn(
-        "text-muted-foreground transition-colors duration-80 group-[.is-active]/row:text-foreground",
+        "text-muted-foreground transition-colors duration-fast group-[.is-active]/row:text-foreground",
         sizeClasses.variant === "compact" ? "px-2.5 py-[5px]" : "px-3 py-2",
         className
       )}

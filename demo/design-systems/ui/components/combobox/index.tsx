@@ -23,6 +23,10 @@
  * - modo item: TSDoc (FF docs page + API tables), statics `Combobox.Input` / `.Chips` /
  *   `.Content` / `.List` / `.Item` / `.Empty` assigned on the root, upstream named exports
  *   kept, `export default Combobox`.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; the hex focus-ring fallback →
+ *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and
+ *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -639,7 +643,7 @@ const ALWAYS_HIGHLIGHT = "always" as unknown as boolean;
 const fieldVariants = cva(
   [
     "group flex items-center ring-1 cursor-text",
-    "transition-all duration-80",
+    "transition-all duration-fast",
     "data-[disabled]:opacity-50 data-[disabled]:pointer-events-none",
   ],
   {
@@ -664,7 +668,7 @@ const fieldVariants = cva(
 // The clear and chevron buttons share one quiet style; they sit inside the
 // field's ring so they need no frame of their own.
 const fieldButtonClass =
-  "flex shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors duration-80 hover:text-foreground focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)] data-[disabled]:pointer-events-none";
+  "flex shrink-0 items-center justify-center rounded-md text-muted-foreground outline-none transition-colors duration-fast hover:text-foreground focus-visible:ring-1 focus-visible:ring-focus-ring data-[disabled]:pointer-events-none";
 // The clear ✕ is a real icon button: the hover fill says "press me", where
 // the chevron beside it only decorates the field it belongs to.
 const clearButtonClass = cn(
@@ -739,7 +743,7 @@ function FieldControls({
           strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="transition-colors duration-80"
+          className="transition-colors duration-fast"
         >
           <path d="M6 9l6 6 6-6" />
         </svg>
@@ -788,7 +792,7 @@ const ComboboxInput = forwardRef<HTMLInputElement, ComboboxInputProps>(
             <Icon
               size={sizeClasses.icon}
               strokeWidth={1.5}
-              className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-80 group-focus-within:text-foreground group-focus-within:stroke-[2]"
+              className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-fast group-focus-within:text-foreground group-focus-within:stroke-[2]"
             />
           )}
           <ComboboxPrimitive.Input
@@ -807,7 +811,7 @@ const ComboboxInput = forwardRef<HTMLInputElement, ComboboxInputProps>(
           <FieldControls clearable={clearable} compact={compact} iconSize={sizeClasses.icon} />
         </ComboboxPrimitive.InputGroup>
         {error && (
-          <span className="text-[12px] text-destructive pl-3">{error}</span>
+          <span className="text-caption text-destructive pl-3">{error}</span>
         )}
       </div>
     );
@@ -918,7 +922,7 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
               <Icon
                 size={sizeClasses.icon}
                 strokeWidth={1.5}
-                className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-80 group-focus-within:text-foreground group-focus-within:stroke-[2]"
+                className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-fast group-focus-within:text-foreground group-focus-within:stroke-[2]"
               />
             </span>
           )}
@@ -966,8 +970,8 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
                             className={cn(
                               "inline-flex max-w-full shrink-0 items-center gap-0.5 bg-hover pl-2 pr-0.5 text-foreground outline-none",
                               shape.variant === "pill" ? "rounded-full" : "rounded-md",
-                              "focus-visible:ring-1 focus-visible:ring-[color:var(--focus-ring,#6B97FF)]",
-                              compact ? "h-5 text-[11px]" : "h-6 text-[12px]"
+                              "focus-visible:ring-1 focus-visible:ring-focus-ring",
+                              compact ? "h-5 text-caption-compact" : "h-6 text-caption"
                             )}
                           >
                             <span className="truncate">{label}</span>
@@ -1011,7 +1015,7 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
           <FieldControls clearable={clearable} compact={compact} iconSize={sizeClasses.icon} />
         </ComboboxPrimitive.Chips>
         {error && (
-          <span className="text-[12px] text-destructive pl-3">{error}</span>
+          <span className="text-caption text-destructive pl-3">{error}</span>
         )}
       </div>
     );
@@ -1287,7 +1291,7 @@ const ComboboxList = forwardRef<HTMLDivElement, ComboboxListProps>(
                   transition={
                     reflowSnap
                       ? { duration: 0 }
-                      : { ...spring.moderate, opacity: { duration: 0.08 } }
+                      : { ...spring.moderate, opacity: { duration: spring.fast.duration } }
                   }
                 />
               )}
@@ -1395,7 +1399,7 @@ const ComboboxItem = forwardRef<HTMLDivElement, ComboboxItemProps>(
               // shrink the row; shrink-0 because the list is a max-height
               // flex column.
               `relative z-10 flex ${sizeClasses.control} shrink-0 items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.itemPx} ${sizeClasses.text} cursor-pointer outline-none select-none`,
-              "transition-[color] duration-80",
+              "transition-[color] duration-fast",
               isActive || isChecked ? "text-foreground" : "text-muted-foreground",
               disabled && "opacity-50 pointer-events-none",
               className
@@ -1408,7 +1412,7 @@ const ComboboxItem = forwardRef<HTMLDivElement, ComboboxItemProps>(
           <Icon
             size={sizeClasses.icon}
             strokeWidth={isActive || isChecked ? 2 : 1.5}
-            className="shrink-0 transition-[color,stroke-width] duration-80"
+            className="shrink-0 transition-[color,stroke-width] duration-fast"
           />
         )}
 
@@ -1446,7 +1450,7 @@ const ComboboxItem = forwardRef<HTMLDivElement, ComboboxItemProps>(
                   initial={{ pathLength: skipAnimation ? 1 : 0 }}
                   animate={{
                     pathLength: 1,
-                    transition: { duration: 0.08, ease: "easeOut" },
+                    transition: { duration: spring.fast.duration, ease: "easeOut" },
                   }}
                   exit={{
                     pathLength: 0,

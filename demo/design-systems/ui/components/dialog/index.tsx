@@ -18,6 +18,8 @@
  *   A "Surfaces inside a dialog" example (a Select popover lifting off the dialog's own
  *   level) stands in for it — it makes the same point the sidebar dialog made about
  *   composing inside an `xl` panel, using only items this port ships.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
  */
 
 import {
@@ -269,11 +271,10 @@ const DialogTitle = forwardRef<
     <DialogPrimitive.Title
       ref={ref}
       className={cn(
-        compact ? "text-[15px]" : "text-[16px]",
-        "text-foreground leading-tight",
+        compact ? "text-title-compact" : "text-title",
+        "font-bold text-foreground leading-tight",
         className
       )}
-      style={{ fontVariationSettings: "'wght' 700" }}
       {...props}
     />
   );
@@ -289,7 +290,7 @@ const DialogDescription = forwardRef<
     <DialogPrimitive.Description
       ref={ref}
       className={cn(
-        compact ? "text-[12px]" : "text-[13px]",
+        compact ? "text-body-compact" : "text-body",
         "text-muted-foreground",
         className
       )}

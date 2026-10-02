@@ -8,12 +8,16 @@
  * - Prop JSDoc kept from upstream (it matches the FF docs API table);
  *   modo TSDoc and examples on `ThinkingIndicator`.
  * The `.shimmer-text` rule the label rides lives in global.css.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`;
+ *   `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
+ *   `spring.*`.
  */
 
 import { forwardRef, useState, useEffect, type HTMLAttributes } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { cn } from "../../_fluid/lib/utils";
-import { fontWeights } from "../../_fluid/lib/font-weight";
+import { spring } from "../../_fluid/lib/springs";
 import { useSize, type SizeVariant } from "../../_fluid/lib/size-context";
 
 const circleA =
@@ -130,9 +134,9 @@ const ThinkingIndicator = forwardRef<HTMLDivElement, ThinkingIndicatorProps>(
         aria-hidden="true"
         className={cn(
           "inline-grid overflow-hidden",
-          compactStep ? "text-[12px]" : "text-[13px]"
+          compactStep ? "text-body-compact" : "text-body",
+          "weight-medium"
         )}
-        style={{ fontVariationSettings: fontWeights.medium }}
       >
         <span className="col-start-1 row-start-1 invisible shimmer-text">
           {words.reduce((a, b) => (a.length >= b.length ? a : b))}
@@ -147,8 +151,8 @@ const ThinkingIndicator = forwardRef<HTMLDivElement, ThinkingIndicatorProps>(
               key={words[index]}
               className="col-start-1 row-start-1 shimmer-text"
               initial={{ y: "80%", opacity: 0 }}
-              animate={{ y: 0, opacity: 1, transition: { duration: 0.24, ease: [0.4, 0, 0.2, 1] } }}
-              exit={{ y: "-80%", opacity: 0, transition: { duration: 0.16, ease: [0.4, 0, 0.2, 1] } }}
+              animate={{ y: 0, opacity: 1, transition: { duration: spring.slow.duration, ease: [0.4, 0, 0.2, 1] } }}
+              exit={{ y: "-80%", opacity: 0, transition: { duration: spring.slow.exit.duration, ease: [0.4, 0, 0.2, 1] } }}
             >
               {words[index]}
             </motion.span>

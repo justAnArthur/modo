@@ -34,6 +34,10 @@
  *   "Create from the query" section is skipped — adding a row to the list is
  *   real consumer state, not something an uncontrolled panel can stand in
  *   for), and a default export.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; the hex focus-ring fallback →
+ *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and
+ *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -599,7 +603,7 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
                 exit={{ opacity: 0, transition: spring.moderate.exit }}
                 transition={{
                   ...spring.moderate,
-                  opacity: { duration: 0.08 },
+                  opacity: { duration: spring.fast.duration },
                 }}
               />
             )}
@@ -616,7 +620,7 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
           <AnimatePresence>
             {focusRect && (
               <motion.div
-                className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-[color:var(--focus-ring,#6B97FF)]`}
+                className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
                 initial={false}
                 animate={{
                   left: focusRect.left - 2,
@@ -627,7 +631,7 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
                 exit={{ opacity: 0, transition: spring.fast.exit }}
                 transition={{
                   ...spring.fast,
-                  opacity: { duration: 0.08 },
+                  opacity: { duration: spring.fast.duration },
                 }}
               />
             )}
@@ -1078,7 +1082,7 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
                       exit={{ opacity: 0, transition: spring.moderate.exit }}
                       transition={{
                         ...spring.moderate,
-                        opacity: { duration: 0.08 },
+                        opacity: { duration: spring.fast.duration },
                       }}
                     />
                   )}
@@ -1128,7 +1132,7 @@ const DropdownLabel = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>
       ref={ref}
       className={cn(
         "px-2 py-1.5 shrink-0 text-muted-foreground",
-        compact ? "text-[11px]" : "text-[12px]",
+        compact ? "text-caption-compact" : "text-caption",
         className
       )}
       {...props}

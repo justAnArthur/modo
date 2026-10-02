@@ -10,6 +10,8 @@
  *   parser needs a description on every member).
  * - modo item: TSDoc (from the FF "Tooltip" docs page), the `Tooltip.Provider` /
  *   `Tooltip.PortalContainer` statics (both still exported by name) and a default export.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
  */
 
 import {
@@ -23,7 +25,6 @@ import { Tooltip as TooltipPrimitive } from "@base-ui/react/tooltip";
 import { motion, useMotionValue } from "motion/react";
 import { cn } from "../../_fluid/lib/utils";
 import { spring } from "../../_fluid/lib/springs";
-import { fontWeights } from "../../_fluid/lib/font-weight";
 import { useShape } from "../../_fluid/lib/shape-context";
 
 // ---------------------------------------------------------------------------
@@ -198,7 +199,7 @@ function getSlideOffset(side: TooltipSide) {
  * <Tooltip
  *   content={
  *     <div className="flex flex-col gap-1">
- *       <span style={{ fontVariationSettings: "'wght' 550" }}>Keyboard shortcut</span>
+ *       <span className="weight-semibold">Keyboard shortcut</span>
  *       <span className="opacity-70">⌘ + S</span>
  *     </div>
  *   }
@@ -217,12 +218,12 @@ function getSlideOffset(side: TooltipSide) {
  * ```tsx
  * <div className="flex flex-wrap items-center justify-center gap-6">
  *   <Tooltip content="Following x" side="top" followCursor="x">
- *     <div className="flex h-12 w-64 cursor-default items-center justify-center rounded-lg border border-border text-[12px] text-muted-foreground">
+ *     <div className="flex h-12 w-64 cursor-default items-center justify-center rounded-lg border border-border text-caption text-muted-foreground">
  *       Move along me
  *     </div>
  *   </Tooltip>
  *   <Tooltip content="Following y" side="right" followCursor="y">
- *     <div className="flex h-40 w-12 cursor-default items-center justify-center rounded-lg border border-border text-[12px] text-muted-foreground">
+ *     <div className="flex h-40 w-12 cursor-default items-center justify-center rounded-lg border border-border text-caption text-muted-foreground">
  *       <span className="rotate-90 whitespace-nowrap">Move along me</span>
  *     </div>
  *   </Tooltip>
@@ -346,12 +347,12 @@ function Tooltip({
                       // Trim recenters the label; the padding bump only applies
                       // where text-box is supported, keeping the same overall
                       // height (~26px) as untrimmed browsers.
-                      "bg-foreground text-background text-[12px] px-2 py-1",
+                      "bg-foreground text-background text-caption px-2 py-1",
                       "[text-box:trim-both_cap_alphabetic] supports-[text-box:trim-both]:py-2",
                       shape.bg,
+                      "weight-medium",
                       className
                     )}
-                    style={{ fontVariationSettings: fontWeights.medium }}
                     initial={{ opacity: 0, ...slideOffset }}
                     animate={
                       exiting

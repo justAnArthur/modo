@@ -14,6 +14,10 @@
  * focus guarded for `noUncheckedIndexedAccess`; modo docs — TSDoc with FF's
  * docs/API text, `RadioGroup.Item` static (typed via a cast on the root),
  * default export.
+ * Styling reads DS tokens (AGENTS.md styling): inline `fontVariationSettings`
+ * → `weight-*`; the hex focus-ring fallback → `ring-focus-ring` /
+ * `border-focus-ring`; `duration-80|120|160` and tier-length JS durations →
+ * `duration-<tier>` / `spring.*`.
  */
 
 import {
@@ -35,7 +39,6 @@ import { RadioGroup as RadioGroupPrimitive } from "@base-ui/react/radio-group";
 import { Radio as RadioPrimitive } from "@base-ui/react/radio";
 import { cn } from "../../_fluid/lib/utils";
 import { spring } from "../../_fluid/lib/springs";
-import { fontWeights } from "../../_fluid/lib/font-weight";
 import { useFluidHover, useRegisterFluidHoverItem } from "../../_fluid/hooks/use-fluid-hover";
 import { useControllableState } from "../../_fluid/hooks/use-controllable-state";
 import { useShape } from "../../_fluid/lib/shape-context";
@@ -289,7 +292,7 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
             }}
             transition={{
               ...spring.moderate,
-              opacity: { duration: 0.08 },
+              opacity: { duration: spring.fast.duration },
             }}
           />
         )}
@@ -304,7 +307,7 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
         <AnimatePresence>
           {focusRect && (
             <motion.div
-              className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-[color:var(--focus-ring,#6B97FF)]`}
+              className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
               initial={false}
               animate={{
                 left: focusRect.left - 2,
@@ -315,7 +318,7 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
               exit={{ opacity: 0, transition: spring.fast.exit }}
               transition={{
                 ...spring.fast,
-                opacity: { duration: 0.08 },
+                opacity: { duration: spring.fast.duration },
               }}
             />
           )}
@@ -479,7 +482,7 @@ const RadioItem = forwardRef<HTMLDivElement, RadioItemProps>(
           {/* Border */}
           <div
             className={cn(
-              "absolute inset-0 rounded-full border-solid transition-all duration-80",
+              "absolute inset-0 rounded-full border-solid transition-all duration-fast",
               isSelected
                 ? "border-[1.5px] border-transparent"
                 : isActive
@@ -516,24 +519,19 @@ const RadioItem = forwardRef<HTMLDivElement, RadioItemProps>(
             sizer and the visible label keep identical boxes. */}
         <span className={cn("inline-grid", sizeClasses.text)}>
           <span
-            className="col-start-1 row-start-1 invisible [text-box:trim-both_cap_alphabetic]"
-            style={{ fontVariationSettings: fontWeights.semibold }}
+            className="col-start-1 row-start-1 invisible [text-box:trim-both_cap_alphabetic] weight-semibold"
             aria-hidden="true"
           >
             {label}
           </span>
           <span
             className={cn(
-              "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-80 [text-box:trim-both_cap_alphabetic]",
+              "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast [text-box:trim-both_cap_alphabetic]",
               isSelected || isActive
                 ? "text-foreground"
-                : "text-muted-foreground"
+                : "text-muted-foreground",
+              isSelected ? "weight-semibold" : "weight-normal"
             )}
-            style={{
-              fontVariationSettings: isSelected
-                ? fontWeights.semibold
-                : fontWeights.normal,
-            }}
           >
             {label}
           </span>

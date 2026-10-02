@@ -12,6 +12,8 @@
  *   are swapped for Button, Badge, Switch and Tabs; the inspector overlay is dropped.
  * - The token table and type scale are written out in the examples (values
  *   mirror `sizeMap` / `typeScale`) instead of being rendered from them.
+ * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
+ *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
  */
 
 import type { ReactNode } from 'react'
@@ -149,15 +151,15 @@ interface SizeProviderProps {
  *     <div key={step} className="flex min-w-0 flex-col gap-2">
  *       <span className="text-body font-semibold text-foreground">{step}</span>
  *       {[
- *         { role: 'display', px: [28, 24], weight: 'font-bold', sample: 'Fluid Functionalism' },
- *         { role: 'title', px: [16, 15], weight: 'font-semibold', sample: 'Create teamspace' },
- *         { role: 'subtitle', px: [14, 13], weight: 'font-medium', sample: 'Weekly design review' },
- *         { role: 'body', px: [13, 12], weight: 'font-normal', sample: 'The quick brown fox jumps over the lazy dog' },
- *         { role: 'caption', px: [12, 11], weight: 'font-normal text-muted-foreground', sample: 'Last updated 4 minutes ago' },
- *       ].map(({ role, px, weight, sample }) => (
+ *         { role: 'display', px: [28, 24], size: ['text-display', 'text-display-compact'], weight: 'font-bold', sample: 'Fluid Functionalism' },
+ *         { role: 'title', px: [16, 15], size: ['text-title', 'text-title-compact'], weight: 'font-semibold', sample: 'Create teamspace' },
+ *         { role: 'subtitle', px: [14, 13], size: ['text-subtitle', 'text-subtitle-compact'], weight: 'font-medium', sample: 'Weekly design review' },
+ *         { role: 'body', px: [13, 12], size: ['text-body', 'text-body-compact'], weight: 'font-normal', sample: 'The quick brown fox jumps over the lazy dog' },
+ *         { role: 'caption', px: [12, 11], size: ['text-caption', 'text-caption-compact'], weight: 'font-normal text-muted-foreground', sample: 'Last updated 4 minutes ago' },
+ *       ].map(({ role, px, size, weight, sample }) => (
  *         <div key={role} className="flex items-baseline gap-3 border-b border-border/50 py-2.5">
  *           <span className="w-9 shrink-0 text-body tabular-nums text-muted-foreground">{px[col]}px</span>
- *           <span className={`min-w-0 flex-1 truncate leading-snug text-foreground ${weight}`} style={{ fontSize: px[col] }}>{sample}</span>
+ *           <span className={`min-w-0 flex-1 truncate leading-snug text-foreground ${size[col]} ${weight}`}>{sample}</span>
  *           <code className="shrink-0 text-caption">{role}</code>
  *         </div>
  *       ))}

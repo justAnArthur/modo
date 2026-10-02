@@ -49,6 +49,8 @@
   /* ── Interactive states ── */
   --accent: light-dark(oklch(0.922 0 0), oklch(0.439 0 0));
   --accent-foreground: light-dark(oklch(0.205 0 0), oklch(0.97 0 0));
+  /* --accent nudged toward the overlay direction (the switch track's hover). */
+  --accent-hover: color-mix(in oklab, var(--accent), rgb(var(--overlay)) 10%);
   --selected: light-dark(oklch(0.87 0 0), oklch(0.439 0 0));
 
   /* ── Borders ──
@@ -63,14 +65,31 @@
   --destructive: light-dark(oklch(0.6368 0.2078 25.33), oklch(0.7106 0.1661 22.22));
   --destructive-light: light-dark(oklch(0.971 0.013 17.38), oklch(0.2575 0.0886 26.04));
 
+  /* ── Brand blue ──
+     FF's one chromatic accent: the switch's on-track, the copy field's hover
+     highlight, drop-target and selected-swatch rings. */
+  --brand: oklch(0.693 0.16 265);
+  --brand-hover: oklch(0.649 0.164 264.76);
+
   /* ── Focus indicator ──
-     Every component focus ring reads var(--focus-ring, <value>), so this is
-     the single theming point. */
-  --focus-ring: oklch(0.693 0.16 265);
+     Every component focus ring reads it (`ring-focus-ring`,
+     `border-focus-ring`), so this is the single theming point. */
+  --focus-ring: var(--brand);
 
   /* ── Alpha checkerboard (color-picker swatches) ── */
   --checker-a: light-dark(oklch(0.792 0 0), oklch(0.239 0 0));
   --checker-b: light-dark(oklch(1 0 0), oklch(0.285 0 0));
+  /* Swatch edges: a mid-grey hairline that reads on any swatch color in
+     either scheme, plus the hover / selected rings, set off by a
+     --background gap. */
+  --swatch-edge: rgb(127 127 127 / 0.25);
+  --swatch-edge-hover: rgb(127 127 127 / 0.4);
+  --shadow-swatch: inset 0 0 0 1px var(--swatch-edge);
+  --shadow-swatch-hover: var(--shadow-swatch), 0 0 0 2px var(--background), 0 0 0 4px var(--swatch-edge-hover);
+  --shadow-swatch-selected: var(--shadow-swatch), 0 0 0 2px var(--background), 0 0 0 4px var(--brand);
+
+  /* ── Slider thumb drop ── */
+  --shadow-thumb: 0 1px 2px rgb(0 0 0 / 0.1);
 
   /* ── Surface-relative interactive overlays (work on any elevation) ──
      --overlay is the tint-direction triplet — black for light surfaces,
@@ -93,4 +112,27 @@
   --syntax-identifier: var(--foreground);
   --syntax-jsx: var(--foreground);
   --syntax-sign: var(--muted-foreground);
+}
+
+/* ── Badge palette ──
+   Badge's `color` hues (upstream hex, as exact oklch). Constant across
+   schemes; the solid variant mixes each 15% into --background. */
+:root {
+  --badge-gray: oklch(0.715 0 0);
+  --badge-red: oklch(0.637 0.208 25.33);
+  --badge-orange: oklch(0.7049 0.1867 47.6);
+  --badge-amber: oklch(0.7686 0.1647 70.08);
+  --badge-yellow: oklch(0.7952 0.1617 86.05);
+  --badge-lime: oklch(0.7681 0.2044 130.85);
+  --badge-green: oklch(0.723 0.192 149.58);
+  --badge-emerald: oklch(0.6959 0.1491 162.48);
+  --badge-teal: oklch(0.704 0.123 182.5);
+  --badge-cyan: oklch(0.7148 0.1257 215.22);
+  --badge-blue: oklch(0.623 0.188 259.81);
+  --badge-indigo: oklch(0.585 0.204 277.12);
+  --badge-violet: oklch(0.606 0.219 292.72);
+  --badge-purple: oklch(0.627 0.233 303.9);
+  --badge-fuchsia: oklch(0.667 0.259 322.15);
+  --badge-pink: oklch(0.656 0.212 354.31);
+  --badge-rose: oklch(0.645 0.215 16.44);
 }
