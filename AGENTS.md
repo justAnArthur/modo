@@ -87,7 +87,7 @@ Rules:
   - `{@include ./x.md}` inlines the file into the description as Markdown (for prose too long for the comment).
   - `{@includeCode ./x}` inlines a file as a fenced block.
 - **`examples.mdx`** (found next to `index.tsx`, no tag needed) holds examples only:
-  - Each example is a `# Title`, an optional one-line caption, and a JSX block. It renders in the Examples section, after any `@example` cards.
+  - Each example is a `# Title`, an optional one-line caption, and a JSX block (a live demo) or a fenced code block (code to read; it renders through the shell's Code). Never wrap code in `<Code>{`…`}</Code>`: fence it. It renders in the Examples section, after any `@example` cards.
   - It is an entry of the shared build (`@mdx-js/esbuild` + `remark-gfm`). Every top-level JSX block is a live example: `lib/src/plugins/mdx-examples.ts` wraps it in `ModoExample`, the example card, and keeps its source for Show code / Copy.
   - Imports are real: the item is `./index`, other items are `../../<tier>/<id>`, packages are imported by name. Items and `examples` scope exports also resolve as JSX tags without an import, but an identifier used in an expression (`icon={Plus}`) needs one.
   - Expressions are plain JS (acorn): no TS syntax such as `as const`. MDX isn't typechecked.
