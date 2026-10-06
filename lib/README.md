@@ -17,20 +17,18 @@ npm install --save-dev @justanarthur/modo
 ## CLI
 
 ```sh
-# scaffold a starter design system in the current directory
-modo init
+# scaffold a design system in ./my-ds (or `init <dir> my-ds`)
+npx @justanarthur/modo init my-ds
 
-# build the docs site for production into ./dist (every route is a static page)
-modo build
-
-# …served under a sub-path, e.g. a GitHub Pages project site
-modo build --base /my-ds/
-
-# run the dev server
-modo dev
+# inside the project
+modo dev                    # dev server
+modo add primitive badge    # primitives/badge/index.tsx + examples.mdx (also component, block, token)
+modo check                  # validate modo.config.ts
+modo build                  # static site in ./dist, every route its own page
+modo build --base /my-ds/   # …served under a sub-path, e.g. a GitHub Pages project site
 ```
 
-The CLI reads `modo.config.ts` from your project root. See the [scaffolded config reference](https://github.com/justAnArthur/modo/blob/main/lib/templates/default/modo.config.ts) for the full schema.
+Run `npx @justanarthur/modo`, not `npx modo`: the unscoped `modo` on npm is someone else's package. The CLI reads `modo.config.ts` from the project root (`--config <file>` for another); the [scaffolded config](https://github.com/justAnArthur/modo/blob/main/lib/templates/default/modo.config.ts) is a starting point.
 
 ## Programmatic API
 
@@ -83,8 +81,8 @@ An `@example` that is only `{@include ./x.mdx}` is compiled into the same build 
 
 ## Compatibility
 
-- React 18+
-- Vite 5+ (bundled as a peer via the CLI's dev runtime)
+- React 18+, as a peer: modo renders with your project's own React.
+- Vite comes with modo, which runs its own Vite app; you don't install or configure it.
 - Bun 1.x recommended for development; npm-compatible for publishing
 
 ## License

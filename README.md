@@ -54,12 +54,12 @@ modo is published as [`@justanarthur/modo`](https://www.npmjs.com/package/@justa
 
 ```bash
 # with bun (recommended)
-bunx modo init my-ds
+bunx @justanarthur/modo init my-ds
 cd my-ds && bun install
 bun dev          # docs site at a local port (modo dev / modo build / modo check)
 
 # with npm/pnpm it works the same
-npx modo init my-ds
+npx @justanarthur/modo init my-ds
 cd my-ds && npm install && npm run dev
 ```
 
@@ -68,19 +68,21 @@ cd my-ds && npm install && npm run dev
 ```
 my-ds/
 ├── modo.config.ts          — site config (name, css, vite, shell, panel)
+├── global.css              — your global styles and chrome restyling
 ├── package.json            — depends on @justanarthur/modo, react, react-dom
 ├── tsconfig.json
 ├── tokens/                 — design tokens as plain CSS custom properties
-│   └── colors.css
+│   └── colors.css, radius.css, spacing.css, typography.css
 ├── primitives/             — tier 1: atoms (Button, Surface, …)
 │   └── button/
 │       ├── index.tsx       — the item: default export + TSDoc contract
+│       ├── examples.mdx    — its live examples
 │       └── button.css      — co-located CSS is auto-injected
 ├── components/             — tier 2: composites (Dialog, Select, …)
 └── blocks/                 — tier 3: page-level patterns
 ```
 
-`tokens/`, `primitives/`, `components/`, `blocks/` are auto-discovered by directory. any of them can be omitted; tiers render in that order. add more items later with `bunx modo add <tier>/<name>` (scaffolds from `lib/templates/stubs`).
+`tokens/`, `primitives/`, `components/`, `blocks/` are auto-discovered by directory. any of them can be omitted; tiers render in that order. add more later with `bunx modo add primitive my-thing` (or `component`, `block`, `token`); it writes `index.tsx` and `examples.mdx` from `lib/templates/stubs`.
 
 ## authoring items
 
