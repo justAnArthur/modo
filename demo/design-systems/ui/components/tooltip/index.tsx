@@ -13,13 +13,20 @@
  *   `Tooltip.PortalContainer` statics (both still exported by name) and a default export.
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
+ * - The 4px slide + fade (`getSlideOffset`, `spring.fast`) is replaced by the
+ *   shared morph layer (`lib/use-morph.ts` + `MorphSurface`): the label grows
+ *   out of its trigger with the goo neck by default, on `spring.moderate`,
+ *   with `from` / `effect` / `tier` props; `followCursor` tooltips fade, since
+ *   their panel travels with the pointer. The popup's motion wrapper now only
+ *   carries the cursor-follow offset.
  */
 
 import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip'
 import { motion, useMotionValue } from 'motion/react'
-import { createContext, type ReactNode, useContext, useEffect, useState } from 'react'
+import { createContext, type ReactNode, type RefObject, useContext, useEffect, useState } from 'react'
+import { MorphSurface } from '../../lib/morph-layers'
 import { useShape } from '../../lib/shape-context'
-import { spring } from '../../lib/springs'
+import { useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 
 // ---------------------------------------------------------------------------
@@ -98,23 +105,12 @@ interface TooltipProps {
   followCursor?: 'x' | 'y'
   /** Called when the tooltip's internal open state changes (before forceOpen is applied). */
   onOpenChange?: (open: boolean) => void
-}
-
-// ---------------------------------------------------------------------------
-// Animation helpers
-// ---------------------------------------------------------------------------
-
-function getSlideOffset(side: TooltipSide) {
-  switch (side) {
-    case 'top':
-      return { y: 4 }
-    case 'bottom':
-      return { y: -4 }
-    case 'left':
-      return { x: 4 }
-    case 'right':
-      return { x: -4 }
-  }
+  /** Where the label grows from (see Morph): the trigger, the pointer, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
+  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
+  /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. `followCursor` tooltips always fade. Defaults to `'goo'`. */
+  effect?: 'goo' | 'morph' | 'slide' | 'fade'
+  /** Spring tier of the morph. Defaults to `'moderate'`. */
+  tier?: 'moderate' | 'slow'
 }
 
 // ---------------------------------------------------------------------------
@@ -126,9 +122,9 @@ function getSlideOffset(side: TooltipSide) {
  * rich content support.
  *
  * The trigger is whatever element you pass as the single child — it only has
- * to accept a ref. The label is portalled, springs in from the resolved side
- * (4px slide plus a fade, `spring.fast`), and flips when it would collide
- * with the viewport edge. `followCursor` tracks the pointer along one axis
+ * to accept a ref. The label is portalled and grows out of its trigger
+ * through the shared morph (see Morph), with the goo neck by default on
+ * `spring.moderate`, and flips when it would collide with the viewport edge. `followCursor` tracks the pointer along one axis
  * for tall or wide triggers, while the other stays anchored by `side`. Built
  * on Base UI's Tooltip.
  *
@@ -151,14 +147,17 @@ function Tooltip({
   forceOpen,
   onOpenChange: onOpenChangeProp,
   followCursor,
+  from,
+  effect = 'goo',
+  tier = 'moderate',
 }: TooltipProps) {
   const [internalOpen, setInternalOpen] = useState(false)
   const open = forceOpen !== undefined ? forceOpen : internalOpen
   const shape = useShape()
   const portalContainer = useContext(TooltipPortalContainerContext)
   const hasAmbientProvider = useContext(TooltipGroupContext)
-
-  const slideOffset = getSlideOffset(side)
+  const { origin, capture } = useMorphOrigin()
+  const morph = useMorph(open, origin, { from, effect: followCursor ? 'fade' : effect, tier })
 
   // Cursor-follow offset from the trigger's center, driven as a motion value
   // so per-move updates skip React re-renders.
@@ -181,7 +180,8 @@ function Tooltip({
   const tooltip = (
     <TooltipPrimitive.Root
       open={open}
-      onOpenChange={v => {
+      onOpenChange={(v, details) => {
+        if (v) capture(details)
         setInternalOpen(v)
         onOpenChangeProp?.(v)
       }}
@@ -196,53 +196,33 @@ function Tooltip({
       <TooltipPrimitive.Portal container={portalContainer ?? undefined}>
         <TooltipPrimitive.Positioner side={side} sideOffset={sideOffset} className={cn('z-50', contentClassName)}>
           <TooltipPrimitive.Popup
-            render={(props, state) => {
-              const exiting = state.transitionStatus === 'ending'
-              const contentChildren = content
-              const {
-                style: baseStyle,
-                // motion.div has incompatible drag/animation event signatures —
-                // strip the React-DOM versions so they don't fight motion's own.
-                onDrag: _onDrag,
-                onDragStart: _onDragStart,
-                onDragEnd: _onDragEnd,
-                onAnimationStart: _onAnimationStart,
-                onAnimationEnd: _onAnimationEnd,
-                onAnimationIteration: _onAnimationIteration,
-                ...rest
-              } = props as React.HTMLAttributes<HTMLDivElement>
-              return (
-                // Outer wrapper carries Base UI's popup props plus the
-                // cursor-follow motion value; the inner box keeps the
-                // enter/exit slide so the two transforms don't fight.
-                <motion.div
-                  {...rest}
-                  style={{
-                    ...(baseStyle as React.CSSProperties | undefined),
-                    ...(followCursor === 'y' ? { y: followOffset } : followCursor === 'x' ? { x: followOffset } : {}),
-                  }}
-                >
-                  <motion.div
-                    className={cn(
-                      // Trim recenters the label; the padding bump only applies
-                      // where text-box is supported, keeping the same overall
-                      // height (~26px) as untrimmed browsers.
-                      'bg-foreground text-background text-caption px-2 py-1',
-                      '[text-box:trim-both_cap_alphabetic] supports-[text-box:trim-both]:py-2',
-                      shape.bg,
-                      'weight-medium',
-                      className,
-                    )}
-                    initial={{ opacity: 0, ...slideOffset }}
-                    animate={exiting ? { opacity: 0, ...slideOffset } : { opacity: 1, x: 0, y: 0 }}
-                    transition={exiting ? spring.fast.exit : spring.fast}
-                  >
-                    {contentChildren}
-                  </motion.div>
-                </motion.div>
-              )
-            }}
-          />
+            ref={morph.popupRef}
+            className="relative outline-none"
+            // The motion wrapper only carries the cursor-follow offset, as a
+            // motion value so per-move updates skip React re-renders.
+            render={
+              <motion.div
+                style={followCursor === 'y' ? { y: followOffset } : followCursor === 'x' ? { x: followOffset } : {}}
+              />
+            }
+          >
+            <MorphSurface
+              morph={morph}
+              bg="bg-foreground"
+              radius={shape.bg}
+              className={cn(
+                // Trim recenters the label; the padding bump only applies
+                // where text-box is supported, keeping the same overall
+                // height (~26px) as untrimmed browsers.
+                'text-background text-caption px-2 py-1',
+                '[text-box:trim-both_cap_alphabetic] supports-[text-box:trim-both]:py-2',
+                'weight-medium',
+                className,
+              )}
+            >
+              {content}
+            </MorphSurface>
+          </TooltipPrimitive.Popup>
         </TooltipPrimitive.Positioner>
       </TooltipPrimitive.Portal>
     </TooltipPrimitive.Root>

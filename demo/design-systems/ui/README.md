@@ -162,7 +162,7 @@ only what is specific to it:
 | `Tabs` | `registry/base/tabs.tsx` | `components/tabs/index.tsx` | `defaultSelectedIndex` added as the index-mode twin of the existing `defaultValue`; statics `.List/.Item/.Panel` |
 | `TabsSubtle` | `registry/base/tabs-subtle.tsx` | `components/tabs-subtle/index.tsx` | uncontrolled mode; panels may be authored inside the root (below); the tab list's ref write goes through `MutableRefObject`; statics `.Item/.Panel` |
 | `ThinkingIndicator` | `registry/default/thinking-indicator.tsx` | `components/thinking-indicator/index.tsx` | upstream prop JSDoc kept (it already matches the FF API table); the `.shimmer-text` rule it rides lives in `global.css` |
-| `Tooltip` | `registry/base/tooltip.tsx` | `components/tooltip/index.tsx` | `className`/`children` docs filled in; statics `.Provider` / `.PortalContainer` |
+| `Tooltip` | `registry/base/tooltip.tsx` | `components/tooltip/index.tsx` | `className`/`children` docs filled in; statics `.Provider` / `.PortalContainer`; the slide + fade replaced by the morph layer (goo from the trigger on `spring.moderate`, `from` / `effect` / `tier` props; `followCursor` tooltips fade) |
 
 `Select` in `modo.components.tsx` is not an item: modo's docs chrome renders its Select slot
 with a flat `value` / `onChange` / `options` contract
