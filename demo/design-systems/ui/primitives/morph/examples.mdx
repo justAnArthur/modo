@@ -1,0 +1,80 @@
+import Morph from './index'
+
+# Effects
+
+The same panel, four ways in. Goo is the default: the surface melts out of the trigger and pinches off.
+
+<div className="flex w-full flex-wrap items-start justify-center gap-x-6 gap-y-48 pb-40">
+  <Morph effect="goo" label="Goo">
+    <div className="flex flex-col gap-1">
+      <span className="text-subtitle weight-semibold text-foreground">Goo</span>
+      <span className="text-caption text-muted-foreground">A liquid neck to the trigger, then the panel lets go.</span>
+    </div>
+  </Morph>
+  <Morph effect="morph" label="Morph">
+    <div className="flex flex-col gap-1">
+      <span className="text-subtitle weight-semibold text-foreground">Morph</span>
+      <span className="text-caption text-muted-foreground">The trigger's box grows into the panel.</span>
+    </div>
+  </Morph>
+  <Morph effect="slide" label="Slide">
+    <div className="flex flex-col gap-1">
+      <span className="text-subtitle weight-semibold text-foreground">Slide</span>
+      <span className="text-caption text-muted-foreground">The finished panel travels in from the trigger.</span>
+    </div>
+  </Morph>
+  <Morph effect="fade" label="Fade">
+    <div className="flex flex-col gap-1">
+      <span className="text-subtitle weight-semibold text-foreground">Fade</span>
+      <span className="text-caption text-muted-foreground">No movement: what every effect becomes under reduced motion.</span>
+    </div>
+  </Morph>
+</div>
+
+# Sources
+
+`from` picks the starting point. Press the pointer stage anywhere on the button to see the circle start under your cursor; the edges start at the side of the window.
+
+<div className="flex w-full flex-wrap items-start justify-center gap-x-6 gap-y-48 pb-40">
+  <Morph from="trigger" label="Trigger">
+    <span className="text-caption text-muted-foreground">From the pressed trigger.</span>
+  </Morph>
+  <Morph from="pointer" label="Pointer">
+    <span className="text-caption text-muted-foreground">From the press point, as a circle.</span>
+  </Morph>
+  <Morph from="center" label="Center">
+    <span className="text-caption text-muted-foreground">Unfolds from its own center.</span>
+  </Morph>
+  <Morph from="left" label="Left edge">
+    <span className="text-caption text-muted-foreground">From the left side of the window.</span>
+  </Morph>
+  <Morph from="bottom" label="Bottom edge">
+    <span className="text-caption text-muted-foreground">From the bottom of the window.</span>
+  </Morph>
+</div>
+
+# Becoming the panel
+
+With `hideSource`, the trigger disappears while the panel is open, so it reads as turning into it.
+
+<div className="flex w-full flex-wrap items-start justify-center gap-x-6 gap-y-48 pb-40">
+  <Morph hideSource label="Goo">
+    <span className="text-caption text-muted-foreground">The trigger melts into the panel.</span>
+  </Morph>
+  <Morph hideSource effect="morph" label="Morph">
+    <span className="text-caption text-muted-foreground">The trigger grows into the panel.</span>
+  </Morph>
+</div>
+
+# Two speeds
+
+Small panels can open on `moderate`; the default `slow` tier gives the neck time to stretch.
+
+<div className="flex w-full flex-wrap items-start justify-center gap-x-6 gap-y-48 pb-40">
+  <Morph tier="moderate" label="Moderate">
+    <span className="text-caption text-muted-foreground">spring.moderate</span>
+  </Morph>
+  <Morph tier="slow" label="Slow">
+    <span className="text-caption text-muted-foreground">spring.slow</span>
+  </Morph>
+</div>

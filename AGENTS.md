@@ -64,7 +64,8 @@ Two vocabularies:
   - `text-display|title|subtitle|body|caption`;
   - `bg-hover`, `bg-active`, `text-muted-foreground`, `border-border`;
   - `text-syntax-*` (code highlighting), `font-mono`;
-  - `spring.*` and `--duration-*`.
+  - `spring.*` and `--duration-*`;
+  - the morph layer (`lib/use-morph.ts` + `MorphSurface`, docs `primitives/morph`): overlays grow from their source through it, never through hand-rolled animation.
 
 Rules:
 

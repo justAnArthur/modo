@@ -15,6 +15,11 @@ This port differs from the upstream registry in three ways:
 The sibling `../fluid-functionalism` package is a different project: a Radix
 flavor pulled with the shadcn CLI, still on Tailwind.
 
+On top of FF, the overlays morph: they grow out of whatever opened them, with
+a liquid "goo" neck by default. That layer is local code (`lib/use-morph.ts`,
+`lib/morph-layers.tsx`, documented by `primitives/morph`), with techniques
+taken from three more MIT projects (see [Morph sources](#morph-sources)).
+
 ## Source
 
 - Repository: `github.com/mickadesign/fluid-functionalism`
@@ -30,8 +35,26 @@ Every vendored file opens with a plain `/* */` header. The header names the
 upstream path and commit, carries the MIT notice, and lists every local
 modification. The vendored code below the header keeps upstream's formatting.
 Files written for this port (`uno.config.ts`, `vite.ts`, `modo.components.tsx`,
-`lib/use-controllable-state.ts`, `primitives/code/index.tsx`) use this repo's
-style: single quotes and no semicolons.
+`lib/use-controllable-state.ts`, `primitives/code/index.tsx`, the morph files
+`lib/use-morph.ts`, `lib/morph-layers.tsx` and `primitives/morph/index.tsx`) use this
+repo's style: single quotes and no semicolons.
+
+### Morph sources
+
+| Project | Repository @ commit | License | What it contributes |
+|---|---|---|---|
+| beUI | `github.com/starc007/ui-components` @ `de52f337e520e7ee37749b36eb1c32df86137bcb` | MIT © 2026 Saurabh Chauhan, [`LICENSE.beui`](./LICENSE.beui) | the gooey popover's rect interpolation, rounded-rect path, source cutout and goo filter; the morph select |
+| motion-primitives | `github.com/ibelick/motion-primitives` @ `120f64f6ca60348e251f929e9c81f11ccbe45eda` | MIT © 2024 ibelick, [`LICENSE.motion-primitives`](./LICENSE.motion-primitives) | the morphing popover and morphing dialog (trigger growing into the panel, shared parts) |
+| Sileo | `github.com/hiaaryan/sileo` @ `9793f844349983e140cf33cebbb8f51626d41407` | MIT, [`LICENSE.sileo`](./LICENSE.sileo) | the goo blur as a share of the surface radius; the gooey toast |
+
+Sileo declares MIT in its `package.json` but ships no LICENSE file, so
+`LICENSE.sileo` is the standard MIT text naming the repository's owner.
+beUI's and motion-primitives' are copied verbatim.
+
+Only visuals come from these projects. Base UI keeps all behavior
+(positioning, focus, dismissal, hover and tap, scroll lock), so none of
+their own hooks for it (click-outside, focus traps, dismissal, gestures,
+positioning) are ported.
 
 ## Layout
 
@@ -66,6 +89,8 @@ style: single quotes and no semicolons.
 | `hooks/use-touch-primary.tsx` | `lib/use-touch-primary.tsx` | `"use client"` dropped |
 | `fluid-hover-highlight.tsx` | `lib/fluid-hover-highlight.tsx` | `"use client"` dropped; `framer-motion` → `motion/react`; relative imports |
 | — (new) | `lib/use-controllable-state.ts` | Local addition: controlled + uncontrolled state, Base UI style |
+| — (new) | `lib/use-morph.ts` | Local addition: the morph engine (source rect → popup box on a spring tier, exit hold for Base UI's unmount), geometry after beUI's popover |
+| — (new) | `lib/morph-layers.tsx` | Local addition: `MorphSurface`, the renderer (shapes layer with beUI's goo filter, surface background and shadow, clipped content) |
 
 ### Styles
 
@@ -105,6 +130,7 @@ only what is specific to it:
 | `SizeProvider` | `registry/default/lib/size-context.tsx` + `app/docs/sizes/page.tsx` | `primitives/sizes/index.tsx` | upstream's `SizeProvider`, moved here from the vendored context so modo documents it (sized components import it from here), with the hooks, maps and types re-exported; the live demos become static examples (Select/TabsSubtle/InputGroup/CheckboxGroup/Dropdown swapped for Button/Badge/Switch/Tabs, token-inspector overlay dropped); the token table and type scale are written out rather than rendered from `sizeMap` / `typeScale` |
 | `FluidHover` | `app/docs/fluid-hover/{page,demos}.tsx` over `registry/default/hooks/use-fluid-hover.ts` + `fluid-hover-highlight.tsx` | `primitives/fluid-hover/index.tsx` | new container (`FluidHover` + `FluidHover.Item`) around the hook/highlight pair so examples need no hooks; `items`, `renderItem`, `disabledIndices`, `columns`, `highlightClassName` are the container's own API, `axis` and `gapClick` pass through to the hook; row classes are upstream's `rowClass` with per-axis variants; the two scripted-cursor demos are dropped |
 | `Motion` | `registry/default/lib/springs.ts` + `app/docs/motion/page.tsx` | `primitives/motion/index.tsx` | `Motion` is local demo code (FF ships none): it plays one tier's enter spring and exit tween on its children, adding `defaultShow`, `sameExit` and `reducedMotion`; `spring` / `exitFallbackMs` re-exported from the vendored `springs.ts`; the ball-on-track and fake-modal visuals become show/hide of arbitrary children |
+| `Morph` | — (local; see [Morph sources](#morph-sources)) | `primitives/morph/index.tsx` | a docs stage like `Motion`: a trigger and a panel playing one `from` × `effect` pair over `lib/use-morph.ts` |
 | `Code` | — (local; FF has no code item) | `primitives/code/index.tsx` | sugar-high tokens colored by the `--syntax-*` tokens, one surface step above its substrate; also the docs chrome's Code slot |
 
 #### components
@@ -164,6 +190,7 @@ The tiers mirror the FF docs navigation. FF's "System" pages become
 | primitives | `fluid-hover` (FluidHover) | `hooks/use-fluid-hover.ts` + `fluid-hover-highlight.tsx` | fluid-hover |
 | primitives | `motion` (Motion) | `lib/springs.ts` | motion |
 | primitives | `code` (Code) | — (local, sugar-high) | — |
+| primitives | `morph` (Morph) | — (local, `lib/use-morph.ts`) | — |
 | components | accordion, button, checkbox-group, combobox, dialog, dropdown, radio-group, select, slider, switch, tabs, tabs-subtle, tooltip | `registry/base/<id>.tsx` | same slug |
 | components | badge, card, color-picker, input-copy, input-group, input-message, table, thinking-indicator | `registry/default/<id>.tsx` | same slug |
 
