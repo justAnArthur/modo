@@ -174,7 +174,7 @@ Rules:
 
 ## commits
 
-- Conventional commits drive releases: a `feat`/`fix` scoped to the lib (`lib`, `modo`, `@justanarthur/modo`) bumps and publishes it; other scopes and unscoped commits don't. Details in `.github/AGENTS.md`.
+- Conventional commits drive releases: any commit scoped to the lib (`lib`, `modo`, `@justanarthur/modo`) bumps and publishes it, `refactor`/`docs`/`chore` included (`feat`/`perf` minor, `!` major, the rest patch); other scopes and unscoped commits don't. `[skip bump]` in the message suppresses it. Details in `.github/AGENTS.md`.
 
 ## chrome hooks (data-modo attrs)
 
