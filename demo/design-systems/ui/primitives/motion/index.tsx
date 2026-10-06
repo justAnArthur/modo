@@ -14,6 +14,8 @@
  *   show/hide of arbitrary children, toggled by the DS Button; the
  *   component-chip links are plain text.
  * - framer-motion → motion/react.
+ * - The "All tokens" lists name this port's components on each tier,
+ *   including the morphing overlays and liquid indicators (see Morph).
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  *   `text-<role>[-compact]`; the hex focus-ring fallback →
  *   `ring-focus-ring` / `border-focus-ring`; literal colors → color tokens;

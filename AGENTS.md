@@ -66,7 +66,7 @@ Two vocabularies:
   - `text-status-*` / `bg-status-*` (success, loading, error, warning, info, action);
   - `text-syntax-*` (code highlighting), `font-mono`;
   - `spring.*` and `--duration-*`;
-  - the morph layer (`lib/use-morph.ts` + `MorphSurface`, docs `primitives/morph`): overlays grow from their source through it, never through hand-rolled animation.
+  - the morph layer (`lib/use-morph.ts` + `MorphSurface`, docs `primitives/morph`) and the liquid indicators (`lib/goo-indicator.tsx`): overlays grow from their source and travelling indicators melt between items through them, never through hand-rolled animation.
 
 Rules:
 

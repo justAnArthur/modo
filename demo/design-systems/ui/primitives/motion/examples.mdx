@@ -67,9 +67,9 @@ Each tier beside the components that animate with it.
 
 <div className="flex w-full flex-col divide-y divide-border">
   {[
-    ['fast', 'Fluid hover · Focus rings · Checkbox · Radio · Tooltip · Table rows · Card grid · Input copy · Slider · Select · Combobox · Color picker · Accordion'],
-    ['moderate', 'Dropdown · Tabs indicator · Switch thumb · Selection merge / split'],
-    ['slow', 'Dialog'],
+    ['fast', 'Fluid hover · Focus rings · Checkbox · Radio · Table rows · Card grid · Input copy · Slider · Tabs hover'],
+    ['moderate', 'Tooltip · Select · Combobox · Dropdown · Context menu · Tabs indicator · Switch thumb · Selection merge / split · Badge · Button loading · Toast'],
+    ['slow', 'Dialog · Alert dialog · Popover · Preview card · Sheet · Color picker popover · Accordion · Morph'],
   ].map(([tier, uses]) => (
     <div key={tier} className="flex flex-col items-start gap-3 py-5 sm:flex-row sm:items-center sm:gap-6">
       <Motion tier={tier} className="shrink-0 sm:w-56">
