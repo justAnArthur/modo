@@ -154,3 +154,15 @@
   --badge-pink: oklch(0.656 0.212 354.31);
   --badge-rose: oklch(0.645 0.215 16.44);
 }
+
+/* ── Status roles ──
+   The toast states, picked from the badge palette (and --destructive /
+   --brand) by reference, so a status reads the same wherever it shows. */
+:root {
+  --status-success: var(--badge-green);
+  --status-loading: var(--badge-gray);
+  --status-error: var(--destructive);
+  --status-warning: var(--badge-amber);
+  --status-info: var(--badge-blue);
+  --status-action: var(--brand);
+}

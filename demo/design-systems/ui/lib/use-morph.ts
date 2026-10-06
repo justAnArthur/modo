@@ -184,6 +184,16 @@ function insetClip(rect: Rect, box: Rect) {
 }
 
 /**
+ * Base UI unmounts a closed popup once `getAnimations()` on it settles; a
+ * JS-driven animation registers none, so an empty animation holds it open
+ * for the tier's exit (plus a buffer). Finish or cancel it once the exit is
+ * done or abandoned.
+ */
+function holdExit(el: HTMLElement, tier: MorphTier) {
+  return el.animate(null, { duration: exitFallbackMs(spring[tier]) })
+}
+
+/**
  * Remembers what opened an overlay. Call `capture` from the Base UI root's
  * `onOpenChange` on open: its details carry the pressed trigger and the event.
  */
@@ -344,10 +354,7 @@ function useMorph(
     }
 
     if (!geometry.current) return
-    // Base UI unmounts a closed popup once `getAnimations()` on it settles; a
-    // JS-driven value registers none, so an empty animation holds it open
-    // until the morph lands (or the tier's fallback runs out).
-    const hold = popup.animate(null, { duration: exitFallbackMs(spring[tier]) })
+    const hold = holdExit(popup, tier)
     measure()
     render(progress.get())
     const controls = animate(progress, 0, {
@@ -379,4 +386,4 @@ function useMorph(
 type Morph = ReturnType<typeof useMorph>
 
 export type { Morph, MorphEffect, MorphFrom, MorphOptions, MorphOrigin, MorphSide, MorphTier }
-export { GOO_MATRIX, useMorph, useMorphOrigin }
+export { GOO_BLUR_RATIO, GOO_MATRIX, holdExit, useMorph, useMorphOrigin }

@@ -18,7 +18,7 @@
  *   same rect.
  */
 
-import type { ReactNode } from 'react'
+import type { ReactNode, Ref } from 'react'
 import { MorphPartInOverlay } from './morph-part'
 import { GOO_MATRIX, type Morph } from './use-morph'
 import { cn } from './utils'
@@ -38,20 +38,32 @@ interface MorphSurfaceProps {
   children?: ReactNode
 }
 
+interface GooFilterProps {
+  id: string
+  /** Blur radius; leave out when `blurRef` sets it per morph. */
+  blur?: number
+  blurRef?: Ref<SVGFEGaussianBlurElement>
+}
+
+/** The goo filter: blur, threshold the alpha back into solid shapes, then lay the crisp original on top. */
+export function GooFilter({ id, blur, blurRef }: GooFilterProps) {
+  return (
+    <svg aria-hidden className="absolute size-0">
+      <filter id={id} x="-50%" y="-50%" width="200%" height="200%" colorInterpolationFilters="sRGB">
+        <feGaussianBlur ref={blurRef} in="SourceGraphic" stdDeviation={blur} result="blur" />
+        <feColorMatrix in="blur" mode="matrix" values={GOO_MATRIX} result="goo" />
+        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+      </filter>
+    </svg>
+  )
+}
+
 export function MorphSurface({ morph, bg, shadow, radius, className, children }: MorphSurfaceProps) {
   const { refs, gooId, effect } = morph
 
   return (
     <>
-      {effect === 'goo' && (
-        <svg aria-hidden className="absolute size-0">
-          <filter id={gooId} x="-50%" y="-50%" width="200%" height="200%" colorInterpolationFilters="sRGB">
-            <feGaussianBlur ref={refs.blur} in="SourceGraphic" result="blur" />
-            <feColorMatrix in="blur" mode="matrix" values={GOO_MATRIX} result="goo" />
-            <feComposite in="SourceGraphic" in2="goo" operator="atop" />
-          </filter>
-        </svg>
-      )}
+      {effect === 'goo' && <GooFilter id={gooId} blurRef={refs.blur} />}
       {(effect === 'goo' || effect === 'morph') && (
         // The filter is the effect itself, not a visual value: it melts the shapes' own token background.
         <div

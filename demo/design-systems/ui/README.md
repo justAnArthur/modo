@@ -98,7 +98,7 @@ positioning) are ported.
 
 | Upstream | Local |
 |---|---|
-| `app/globals.css` §1 tokens | `tokens/colors.css`, with HEX converted to oklch. The surface ladder and shadows live in `primitives/surface/surface.css`. |
+| `app/globals.css` §1 tokens | `tokens/colors.css`, with HEX converted to oklch. The surface ladder and shadows live in `primitives/surface/surface.css`. Local addition: the `--status-*` roles (toast states), by reference to the badge palette, `--destructive` and `--brand`. |
 | `app/globals.css` §2 theme switching | `global.css` (`color-scheme`, `--overlay`) and `surface.css` (`--shadow-N` per scheme) |
 | `app/globals.css` §3 `@theme inline` | `uno.config.ts` `theme` |
 | `app/globals.css` `--fs-*` + `@utility text-*` | `tokens/typography.css` `--text-*` and a rule in `uno.config.ts` |
@@ -165,6 +165,7 @@ only what is specific to it:
 | `Tabs` | `registry/base/tabs.tsx` | `components/tabs/index.tsx` | `defaultSelectedIndex` added as the index-mode twin of the existing `defaultValue`; statics `.List/.Item/.Panel` |
 | `TabsSubtle` | `registry/base/tabs-subtle.tsx` | `components/tabs-subtle/index.tsx` | uncontrolled mode; panels may be authored inside the root (below); the tab list's ref write goes through `MutableRefObject`; statics `.Item/.Panel` |
 | `ThinkingIndicator` | `registry/default/thinking-indicator.tsx` | `components/thinking-indicator/index.tsx` | upstream prop JSDoc kept (it already matches the FF API table); the `.shimmer-text` rule it rides lives in `global.css` |
+| `Toast` | — (local; after Sileo, see [Morph sources](#morph-sources)) | `components/toast/index.tsx` | Base UI Toast (queue, timers, swipe, announcements) with Sileo's pill melting into a body through the shared `GooFilter`; autopilot expand/collapse, six states on the `--status-*` tokens, promise toasts; `Toast` is the provider + viewport, `Toast.Trigger` shows one, `useToast()` the imperative API |
 | `Tooltip` | `registry/base/tooltip.tsx` | `components/tooltip/index.tsx` | `className`/`children` docs filled in; statics `.Provider` / `.PortalContainer`; the slide + fade replaced by the morph layer (goo from the trigger on `spring.moderate`, `from` / `effect` / `tier` props; `followCursor` tooltips fade) |
 
 `Select` in `modo.components.tsx` is not an item: modo's docs chrome renders its Select slot
@@ -198,7 +199,7 @@ The tiers mirror the FF docs navigation. FF's "System" pages become
 | primitives | `morph` (Morph) | — (local, `lib/use-morph.ts`) | — |
 | components | accordion, button, checkbox-group, combobox, dialog, dropdown, radio-group, select, slider, switch, tabs, tabs-subtle, tooltip | `registry/base/<id>.tsx` | same slug |
 | components | badge, card, color-picker, input-copy, input-group, input-message, table, thinking-indicator | `registry/default/<id>.tsx` | same slug |
-| components | alert-dialog, popover, sheet | — (local, see [Morph sources](#morph-sources)) | — |
+| components | alert-dialog, popover, sheet, toast | — (local, see [Morph sources](#morph-sources)) | — |
 
 Button lives in `components/` to mirror the FF docs, and `modo.config.ts`
 points `shell.Button` at it explicitly (an explicit path skips modo's tier
