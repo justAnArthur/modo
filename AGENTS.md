@@ -47,6 +47,8 @@ From the `sparse` skill: how code reads. ponytail decides whether to write it.
 
 ## styling: tokens, never custom values
 
+**No custom visuals.** Everything you can see (color, font, size, weight, radius, border, shadow, opacity, motion) comes from the theme: a token, or a DS utility mapped to one. Custom CSS is structural only: `display`, flex and grid, position, sizing, overflow, and gaps or padding through `--space-*`. When the look you need has no token, add the token (see **Missing step** below); never write the value.
+
 Two vocabularies:
 
 - **Generic tokens** — the shadcn-named contract the lib reads from any host:
@@ -65,7 +67,7 @@ Two vocabularies:
 Rules:
 
 - **Lib (runtime TSX, `shell.css`):**
-  - Structure only (layout, grid, spacing rhythm, measure). Every visual reads a generic token.
+  - Structure only (layout, grid, spacing rhythm, measure). Every visual reads a generic token, or the host's own token when that token is what the page shows (a radius specimen applies `var(--radius-box)`).
   - No literal colors and no color fallbacks. Leave the fallback off so an undefined token inherits, or derive it from `currentColor`.
   - Borders and muted text read `--modo-border` / `--modo-muted`. `tokens/host-colors.ts` sets them at startup from the host's `--border` / `--muted-foreground` (wrapped when the token holds bare channels, e.g. `hsl(var(--border))`), else from `currentColor`.
   - Size fallbacks may be literal (`var(--space-2, 8px)`).
@@ -74,6 +76,7 @@ Rules:
   - No arbitrary values for color, type, radius, shadow or motion (`text-[15px]`, `bg-[#…]`, `rounded-[10px]`, `duration-[…]`).
   - No inline `style` for them, and no raw hex/oklch outside `tokens/*.css`.
   - Arbitrary values are fine for one-off layout geometry (a demo frame's width).
+  - The same holds for the DS's own CSS (`global.css`, an item's `.css`): structure is free, visuals go through tokens.
 - **Missing step on the scale:** add a token (the `tokens/*.css` var plus its utility mapping), then use it. Don't hard-code it.
 - **Chrome restyling:** the host restyles the chrome through `data-modo` attrs in its `global.css`; never fork lib CSS.
 - **Vendored upstream code** keeps upstream values; note any local changes in its header comment.
@@ -145,6 +148,7 @@ Rules:
 - `tokens/<group>.css` — one group per file: `colors`, `typography`, `spacing`, `radius`, `motion`.
   - Var prefixes (`--space-*`) work as an alternative to one file per group.
   - A bare shorthand like `--radius` joins its prefix family.
+  - In a group file, an unprefixed var belongs to that group (`--sm` in `spacing.css`); a var whose prefix names another group goes there (`--radius-sm` in `colors.css`).
 - `<tier>/<name>/index.tsx` — the item. Tiers are `primitives/`, `components/` and `blocks/`, auto-discovered.
   - Compound parts hang off the default export (`Card.Header`). Type them with interface merging, or with `Object.assign` for forwardRef consts.
   - Examples may use compound JSX.
@@ -172,5 +176,6 @@ Rules:
 - examples: `example-card`, `example-card-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`, `code-block`, `code-actions`, `icon-label`.
 - tables and tokens: `prop-table`, `token-list`, `token-row`, `token-name`, `token-meta`, `swatch` (`data-kind`), `raw-json`.
 - colors: `color-grid`, `color-stack`, `color-tile` (`data-flush` when it matches the page), `color-tile-name`, `color-tile-value`, `color-tile-pair`.
+- foundations: `token-label`; typography `type-families`, `type-family`, `type-family-sample`, `type-glyph`, `type-scale`, `type-step`, `type-sample`, `type-weights`, `type-weight`, `type-preview`; radius `radius-grid`, `radius-tile`, `radius-shape`; spacing `space-scale`, `space-step`, `space-bar`, `space-preview`; motion `motion-list`, `motion-row`, `motion-track`, `motion-dot`, `motion-curve`, `motion-preview`, `motion-bar`.
 
 The lib styles their structure, including the hover reveal of `example-actions`, `code-actions` and `anchor` (shown on hover or focus-within, always shown on touch) and the responsive grid (panel strip below 1280px, stacked below 768px). The host styles everything else through the same attrs, e.g. ui's `global.css` chrome section.
