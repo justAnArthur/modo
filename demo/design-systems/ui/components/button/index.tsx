@@ -18,10 +18,17 @@
  *   `text-<role>[-compact]`; the hex focus-ring fallback →
  *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
+ * - `loading` morphs (local, in the morph layer's language): the surface layer contracts into
+ *   a circle around the spinner on `spring.moderate` and springs back when loading ends, while
+ *   the button's own box keeps its size; the label and the spinner crossfade instead of
+ *   swapping. The spinner centres on the button, not on the label. `aria-busy` while loading.
+ *   The root's `transition-colors` → `transition-[color,opacity]`, so the disabled dim fades
+ *   in step instead of jumping (the root draws no background or border of its own).
  */
 
 import { Button as ButtonPrimitive } from '@base-ui/react/button'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotionConfig } from 'motion/react'
 import {
   type ButtonHTMLAttributes,
   cloneElement,
@@ -29,16 +36,19 @@ import {
   isValidElement,
   type ReactElement,
   type ReactNode,
+  useLayoutEffect,
+  useRef,
 } from 'react'
 import type { IconComponent } from '../../lib/icon-context'
 import { useShape } from '../../lib/shape-context'
 import { useSizeVariant } from '../../lib/size-context'
+import { spring } from '../../lib/springs'
 import { cn } from '../../lib/utils'
 
 const buttonVariants = cva(
   [
     'group relative isolate inline-flex items-center justify-center outline-none cursor-pointer',
-    'transition-colors duration-fast',
+    'transition-[color,opacity] duration-fast',
     'disabled:opacity-50 disabled:pointer-events-none',
     'focus-visible:ring-1 focus-visible:ring-focus-ring',
   ],
@@ -100,7 +110,7 @@ interface ButtonProps
   size?: ButtonSize
   /** Merge props onto the child element instead of rendering a `<button>` — the single React-element child becomes the rendered element (slot-style). Defaults to `false`. */
   asChild?: boolean
-  /** Shows a spinner and disables the button. Defaults to `false`. */
+  /** Folds the button into a circle around a spinner and disables it; the button keeps its box, so nothing around it moves. Defaults to `false`. */
   loading?: boolean
   /** Icon displayed before the label. */
   leadingIcon?: IconComponent
@@ -149,6 +159,51 @@ const activeBgVariants: Record<string, string> = {
   ghost: 'bg-active shadow-[0_0_0_1px_var(--active)] group-active:shadow-[0_0_0_0px_var(--active)]',
 }
 
+const { exit: _exit, ...enter } = spring.moderate
+
+/* Loading morph (local): the surface layer contracts from the button's box
+   into a circle one control tall around the spinner, on one progress value
+   like the morph layer (lib/use-morph.ts). The button's own box never
+   changes, so nothing around it moves. Left and right mix a share of the
+   button's width with pixels, so a stretched (w-full) button keeps the
+   circle centred without measuring its width. At rest the inline geometry
+   is dropped and the classes (inset-px, the inherited radius) take over. */
+function useLoadingMorph(loading: boolean) {
+  const surface = useRef<HTMLSpanElement>(null)
+  const progress = useMotionValue(loading ? 1 : 0)
+  const reduced = useReducedMotionConfig()
+
+  useLayoutEffect(() => {
+    const el = surface.current
+    const root = el?.parentElement
+    if (!el || !root || (!loading && progress.get() === 0)) return
+    const height = root.offsetHeight
+    // The surface sits 1px inside the button (its spread fills that pixel back out).
+    const circle = height / 2 - 1
+    const rest = Math.min(Number.parseFloat(getComputedStyle(root).borderTopLeftRadius) || 0, circle)
+    const render = (p: number) => {
+      const side = `calc(${50 * p}% + ${1 - (height / 2) * p}px)`
+      el.style.left = side
+      el.style.right = side
+      el.style.borderRadius = `${rest + (circle - rest) * p}px`
+    }
+    const settle = () => el.removeAttribute('style')
+    const target = loading ? 1 : 0
+    if (reduced || progress.get() === target) {
+      progress.jump(target)
+      return loading ? render(1) : settle()
+    }
+    const controls = animate(progress, target, {
+      ...enter,
+      onUpdate: render,
+      onComplete: loading ? undefined : settle,
+    })
+    return () => controls.stop()
+  }, [loading, reduced])
+
+  return surface
+}
+
 /**
  * Versatile button with variants, sizes, loading state, and icon support.
  *
@@ -156,8 +211,9 @@ const activeBgVariants: Record<string, string> = {
  * ladder: 36px by default, 28px compact — an explicit `size` wins, otherwise
  * the button follows the surrounding SizeProvider. The press effect shrinks
  * the fill by exactly 1px per side at any width, icons thicken their stroke
- * on hover, and `loading` swaps the label for a spinner while keeping the
- * button's width. Built on Base UI's Button; `asChild` renders your own
+ * on hover, and `loading` folds the surface into a circle around a spinner
+ * (and back when it ends) while the button keeps its box, so nothing around
+ * it moves. Built on Base UI's Button; `asChild` renders your own
  * element (e.g. a link) with the button's styling instead.
  *
  * @example {@include ./examples.mdx}
@@ -193,6 +249,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             className?: string
             style?: React.CSSProperties
             ref?: React.Ref<HTMLButtonElement>
+            'aria-busy'?: boolean
           }>)
         : null
     const label = asChildElement ? asChildElement.props.children : children
@@ -213,40 +270,28 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const shape = useShape()
     const bgClass = active ? activeBgVariants[variant ?? 'primary'] : bgVariants[variant ?? 'primary']
 
+    const surface = useLoadingMorph(loading)
+
     const internals = (
       <>
         <span
+          ref={surface}
           aria-hidden
           className={cn(
             'absolute inset-px rounded-[inherit] transition-[box-shadow,background-color] [transition-duration:180ms,80ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1),ease] group-active:[transition-duration:80ms,80ms]',
             bgClass,
           )}
         />
-        <span className="relative inline-flex items-center justify-center gap-[inherit]">
-          {loading ? (
-            <>
-              <span className="flex items-center justify-center gap-[inherit] opacity-0">
-                {LeadingIcon && !isIconOnly && <LeadingIcon size={iconSize} strokeWidth={2} />}
-                {label}
-                {TrailingIcon && !isIconOnly && <TrailingIcon size={iconSize} strokeWidth={2} />}
-              </span>
-              <span className="absolute inset-0 flex items-center justify-center">
-                <svg className={spinnerSizeClass} viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M 12 12 C 14 8.5 19 8.5 19 12 C 19 15.5 14 15.5 12 12 C 10 8.5 5 8.5 5 12 C 5 15.5 10 15.5 12 12 Z"
-                    stroke="currentColor"
-                    strokeWidth="1.125"
-                    strokeLinecap="round"
-                    pathLength="100"
-                    style={{
-                      strokeDasharray: '15 85',
-                      animation: 'spinner-move 2s linear infinite, spinner-dash 4s ease-in-out infinite',
-                    }}
-                  />
-                </svg>
-              </span>
-            </>
-          ) : isIconOnly ? (
+        {/* The label keeps its place while loading, so the button keeps its
+            box. Whatever leaves goes on the fast exit, so the label and the
+            spinner barely overlap while the surface folds or unfolds. */}
+        <motion.span
+          className="relative inline-flex items-center justify-center gap-[inherit]"
+          initial={false}
+          animate={{ opacity: loading ? 0 : 1 }}
+          transition={loading ? spring.fast.exit : enter}
+        >
+          {isIconOnly ? (
             <span className="[&_svg]:stroke-[1.5] [&_svg]:transition-[stroke-width] [&_svg]:duration-fast group-hover:[&_svg]:stroke-[2]">
               {label}
             </span>
@@ -273,7 +318,34 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
               )}
             </>
           )}
-        </span>
+        </motion.span>
+        <AnimatePresence initial={false}>
+          {loading && (
+            <motion.span
+              key="spinner"
+              aria-hidden
+              className="absolute inset-0 flex items-center justify-center"
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.6, transition: spring.fast.exit }}
+              transition={enter}
+            >
+              <svg className={spinnerSizeClass} viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M 12 12 C 14 8.5 19 8.5 19 12 C 19 15.5 14 15.5 12 12 C 10 8.5 5 8.5 5 12 C 5 15.5 10 15.5 12 12 Z"
+                  stroke="currentColor"
+                  strokeWidth="1.125"
+                  strokeLinecap="round"
+                  pathLength="100"
+                  style={{
+                    strokeDasharray: '15 85',
+                    animation: 'spinner-move 2s linear infinite, spinner-dash 4s ease-in-out infinite',
+                  }}
+                />
+              </svg>
+            </motion.span>
+          )}
+        </AnimatePresence>
       </>
     )
 
@@ -295,6 +367,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {
           ...props,
           ref,
+          'aria-busy': loading || undefined,
           className: cn(rootClassName, childProps.className),
           style: { ...style, ...childProps.style },
         },
@@ -309,6 +382,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref as React.Ref<HTMLButtonElement>}
         className={rootClassName}
         disabled={disabled || loading}
+        aria-busy={loading || undefined}
         style={style}
         {...props}
       >
