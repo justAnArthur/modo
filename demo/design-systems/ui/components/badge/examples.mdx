@@ -1,4 +1,5 @@
 import Badge from './index'
+import ChangeDemo from './change-demo'
 
 # Solid
 
@@ -55,4 +56,39 @@ text) for dense rows and table cells.
   <Badge size="compact" color="blue">History</Badge>
   <Badge size="compact" variant="dot" color="green">Philosophy</Badge>
   <Badge size="compact">Draft</Badge>
+</div>
+
+# Changes
+
+Press a button. A new label springs the badge to its new width while the
+text crossfades, a new color fades in, and the dot slides in or out with
+the variant. `ChangeDemo` is a docs stage: a Badge that steps through its
+`steps` on each press.
+
+<div className="flex w-48 flex-col items-start gap-3">
+  <ChangeDemo
+    label="Add one"
+    steps={[
+      { color: 'red', children: 8 },
+      { color: 'red', children: 9 },
+      { color: 'red', children: 10 },
+      { color: 'red', children: 99 },
+      { color: 'red', children: '99+' },
+    ]}
+  />
+  <ChangeDemo
+    label="Advance"
+    steps={[
+      { children: 'Draft' },
+      { color: 'amber', children: 'In review' },
+      { color: 'green', children: 'Published' },
+    ]}
+  />
+  <ChangeDemo
+    label="Sync"
+    steps={[
+      { color: 'blue', children: 'Syncing' },
+      { variant: 'dot', color: 'green', children: 'Synced' },
+    ]}
+  />
 </div>
