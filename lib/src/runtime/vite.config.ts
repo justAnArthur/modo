@@ -1,14 +1,14 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { defineConfig, type UserConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { defineConfig, type UserConfig } from 'vite'
+import { loadModoConfig } from '../lib/config.loader'
+import { createBundler } from '../plugins/bundle'
 import { configPlugin } from '../plugins/config'
-import { tokensPlugin } from '../plugins/tokens'
 import { itemsPlugin } from '../plugins/items'
 import { shellPlugin } from '../plugins/shell'
-import { createBundler } from '../plugins/bundle'
-import { loadModoConfig } from '../lib/config.loader'
+import { tokensPlugin } from '../plugins/tokens'
 
 // The CLI sets MODO_USER_ROOT before spawning Vite and chdirs to the runtime
 // dir. The runtime dir is the location of this file; LIB_DIR is its parent.
@@ -68,13 +68,7 @@ export default defineConfig(async () => {
       // on *source* changes and invalidates the outputs itself.
       watch: { ignored: ['**/.modo-tmp/**'] },
       fs: {
-        allow: [
-          workspaceRoot(USER_ROOT),
-          RUNTIME_DIR,
-          LIB_DIR,
-          USER_ROOT,
-          resolve(USER_ROOT, '.modo-tmp'),
-        ],
+        allow: [workspaceRoot(USER_ROOT), RUNTIME_DIR, LIB_DIR, USER_ROOT, resolve(USER_ROOT, '.modo-tmp')],
       },
     },
     optimizeDeps: {

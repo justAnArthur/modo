@@ -1,4 +1,4 @@
-import type { ReactNode, MouseEventHandler } from 'react'
+import type { MouseEventHandler, ReactNode } from 'react'
 import './button.css'
 
 export interface ButtonProps {
@@ -26,13 +26,7 @@ export default function Button({
 }: ButtonProps) {
   const cls = [className].filter(Boolean).join(' ')
   return (
-    <button
-      data-variant={variant}
-      data-size={size}
-      disabled={disabled}
-      onClick={onClick}
-      className={cls}
-    >
+    <button data-variant={variant} data-size={size} disabled={disabled} onClick={onClick} className={cls}>
       {children}
     </button>
   )

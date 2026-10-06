@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-import { spawn, execSync, type ChildProcess } from 'node:child_process'
-import { existsSync, readdirSync, writeFileSync, unlinkSync } from 'node:fs'
+import { type ChildProcess, execSync, spawn } from 'node:child_process'
+import { existsSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = join(import.meta.dirname, '..')
@@ -11,13 +11,11 @@ const TEMP_CONFIG = '.modo.config.ts'
 const wanted = process.argv.slice(2)
 // dir husks can outlive their tracked files (a merge-deleted DS leaves .modo-tmp/ behind)
 const all = readdirSync(DS_DIR, { withFileTypes: true })
-  .filter((e) => e.isDirectory() && existsSync(join(DS_DIR, e.name, 'modo.config.ts')))
-  .map((e) => e.name)
-const targets = wanted.length > 0 ? all.filter((n) => wanted.includes(n)) : all
+  .filter(e => e.isDirectory() && existsSync(join(DS_DIR, e.name, 'modo.config.ts')))
+  .map(e => e.name)
+const targets = wanted.length > 0 ? all.filter(n => wanted.includes(n)) : all
 if (targets.length === 0) {
-  process.stderr.write(
-    `no design systems found${wanted.length > 0 ? ` matching: ${wanted.join(', ')}` : ''}\n`,
-  )
+  process.stderr.write(`no design systems found${wanted.length > 0 ? ` matching: ${wanted.join(', ')}` : ''}\n`)
   process.stderr.write('usage: bun scripts/run-design-systems.ts [name ...]\n')
   process.exit(1)
 }
@@ -32,7 +30,9 @@ try {
 
 for (const e of readdirSync(DS_DIR, { withFileTypes: true })) {
   if (!e.isDirectory()) continue
-  try { unlinkSync(join(DS_DIR, e.name, TEMP_CONFIG)) } catch {}
+  try {
+    unlinkSync(join(DS_DIR, e.name, TEMP_CONFIG))
+  } catch {}
 }
 
 const items = [{ label: 'Switcher', component: '../../components/demo-switcher' }]
@@ -62,9 +62,17 @@ writeFileSync(
 
 const children: ChildProcess[] = []
 const cleanup = () => {
-  for (const child of children) try { child.kill('SIGTERM') } catch {}
-  for (const name of targets) try { unlinkSync(join(DS_DIR, name, TEMP_CONFIG)) } catch {}
-  try { unlinkSync(PEERS_FILE) } catch {}
+  for (const child of children)
+    try {
+      child.kill('SIGTERM')
+    } catch {}
+  for (const name of targets)
+    try {
+      unlinkSync(join(DS_DIR, name, TEMP_CONFIG))
+    } catch {}
+  try {
+    unlinkSync(PEERS_FILE)
+  } catch {}
   process.exit(0)
 }
 process.on('SIGINT', cleanup)

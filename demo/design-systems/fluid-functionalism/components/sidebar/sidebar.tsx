@@ -5,29 +5,21 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). `@radix-ui/react-dialog` rewritten to the unified `radix-ui` package.
  */
 
+import { motion, useReducedMotion } from 'motion/react'
+import { Dialog as DialogPrimitive } from 'radix-ui'
+import { type CSSProperties, forwardRef, type HTMLAttributes, type ReactNode, useEffect, useRef, useState } from 'react'
+import { ScrollArea } from '../../_fluid/scroll-area'
+import { exitFallbackMs, spring } from '../../_fluid/springs'
+import { surfaceClasses } from '../../_fluid/surface-classes'
+import { SurfaceProvider, useSurface } from '../../_fluid/surface-context'
+import { cn } from '../../_fluid/utils'
 import {
-  useEffect,
-  useRef,
-  useState,
-  forwardRef,
-  type ReactNode,
-  type CSSProperties,
-  type HTMLAttributes,
-} from "react";
-import { Dialog as DialogPrimitive } from "radix-ui";
-import { motion, useReducedMotion } from "motion/react";
-import { cn } from "../../_fluid/utils";
-import { spring, exitFallbackMs } from "../../_fluid/springs";
-import { useSurface, SurfaceProvider } from "../../_fluid/surface-context";
-import { surfaceClasses } from "../../_fluid/surface-classes";
-import { ScrollArea } from "../../_fluid/scroll-area";
-import {
-  useSidebar,
+  type SidebarCollapsible,
   SidebarShell,
   type SidebarSide,
   type SidebarVariant,
-  type SidebarCollapsible,
-} from "./sidebar-core";
+  useSidebar,
+} from './sidebar-core'
 
 // ─── Mobile sheet ────────────────────────────────────────────────────────────
 //
@@ -39,42 +31,42 @@ import {
 // the panel's exit animation completes.
 
 interface SidebarSheetProps {
-  side: SidebarSide;
-  open: boolean;
-  onClose: () => void;
-  children: ReactNode;
+  side: SidebarSide
+  open: boolean
+  onClose: () => void
+  children: ReactNode
 }
 
 function SidebarSheet({ side, open, onClose, children }: SidebarSheetProps) {
-  const { widthMobile } = useSidebar();
+  const { widthMobile } = useSidebar()
   // Reduced motion drops the slide (the movement) but keeps the scrim's
   // opacity fade — the state change stays legible without the travel.
-  const reduceMotion = useReducedMotion() ?? false;
-  const substrate = useSurface();
-  const level = Math.min(substrate + 2, 8);
-  const panelRef = useRef<HTMLDivElement | null>(null);
+  const reduceMotion = useReducedMotion() ?? false
+  const substrate = useSurface()
+  const level = Math.min(substrate + 2, 8)
+  const panelRef = useRef<HTMLDivElement | null>(null)
 
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(false)
   useEffect(() => {
-    if (open) setMounted(true);
-  }, [open]);
+    if (open) setMounted(true)
+  }, [open])
 
   // Fallback release for the deferred unmount: onAnimationComplete on the
   // panel is the primary signal, but rAF-driven animation callbacks can stall
   // in throttled/background tabs.
   useEffect(() => {
-    if (open) return;
-    const id = setTimeout(() => setMounted(false), exitFallbackMs(spring.moderate));
-    return () => clearTimeout(id);
-  }, [open]);
+    if (open) return
+    const id = setTimeout(() => setMounted(false), exitFallbackMs(spring.moderate))
+    return () => clearTimeout(id)
+  }, [open])
 
-  const offscreen = side === "left" ? "-100%" : "100%";
+  const offscreen = side === 'left' ? '-100%' : '100%'
 
   return (
     <DialogPrimitive.Root
       open={open}
-      onOpenChange={(nextOpen) => {
-        if (!nextOpen) onClose();
+      onOpenChange={nextOpen => {
+        if (!nextOpen) onClose()
       }}
     >
       {mounted && (
@@ -99,9 +91,9 @@ function SidebarSheet({ side, open, onClose, children }: SidebarSheetProps) {
             // reads as a selected item the moment the drawer opens, and
             // Chrome grants :focus-visible to script-driven focus so it shows
             // the keyboard ring too.
-            onOpenAutoFocus={(event) => {
-              event.preventDefault();
-              panelRef.current?.focus();
+            onOpenAutoFocus={event => {
+              event.preventDefault()
+              panelRef.current?.focus()
             }}
             // Radix warns when Content has no Description; an explicit
             // undefined clears the rendered attribute, which is what its
@@ -115,9 +107,9 @@ function SidebarSheet({ side, open, onClose, children }: SidebarSheetProps) {
               data-mobile="true"
               data-side={side}
               className={cn(
-                "fixed inset-y-0 z-50 flex flex-col overflow-hidden outline-none",
-                side === "left" ? "left-0" : "right-0",
-                surfaceClasses(level, 3)
+                'fixed inset-y-0 z-50 flex flex-col overflow-hidden outline-none',
+                side === 'left' ? 'left-0' : 'right-0',
+                surfaceClasses(level, 3),
               )}
               style={{ width: widthMobile }}
               initial={{ x: offscreen }}
@@ -127,7 +119,7 @@ function SidebarSheet({ side, open, onClose, children }: SidebarSheetProps) {
               animate={{ x: open ? 0 : offscreen }}
               transition={reduceMotion ? { duration: 0 } : open ? spring.moderate : spring.moderate.exit}
               onAnimationComplete={() => {
-                if (!open) setMounted(false);
+                if (!open) setMounted(false)
               }}
             >
               {/* Radix's TitleWarning checks for a rendered DialogTitle, so
@@ -139,7 +131,7 @@ function SidebarSheet({ side, open, onClose, children }: SidebarSheetProps) {
         </DialogPrimitive.Portal>
       )}
     </DialogPrimitive.Root>
-  );
+  )
 }
 
 // ─── Sidebar ─────────────────────────────────────────────────────────────────
@@ -147,60 +139,67 @@ function SidebarSheet({ side, open, onClose, children }: SidebarSheetProps) {
 export interface SidebarProps
   extends Omit<
     HTMLAttributes<HTMLDivElement>,
-    "onDrag" | "onDragStart" | "onDragEnd" | "onAnimationStart" | "onAnimationEnd" | "onAnimationIteration"
+    'onDrag' | 'onDragStart' | 'onDragEnd' | 'onAnimationStart' | 'onAnimationEnd' | 'onAnimationIteration'
   > {
-  side?: SidebarSide;
-  variant?: SidebarVariant;
+  side?: SidebarSide
+  variant?: SidebarVariant
   /** `"icon"` collapse is intentionally not supported — offcanvas or none. */
-  collapsible?: SidebarCollapsible;
+  collapsible?: SidebarCollapsible
   /** The `sidebar` variant's inner-edge border. Default true. */
-  bordered?: boolean;
+  bordered?: boolean
   /** Pin the rail's tooltip open (`true`) or closed (`false`); `undefined`
    *  leaves it on hover. Dragging always hides it. */
-  railTooltipOpen?: boolean;
+  railTooltipOpen?: boolean
   /** Render the built-in resize/collapse rail. Default true. */
-  rail?: boolean;
+  rail?: boolean
 }
 
 const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
   (
-    { side = "left", variant = "sidebar", collapsible = "offcanvas", bordered = true, rail = true, railTooltipOpen, className, style, children, ...props },
-    ref
+    {
+      side = 'left',
+      variant = 'sidebar',
+      collapsible = 'offcanvas',
+      bordered = true,
+      rail = true,
+      railTooltipOpen,
+      className,
+      style,
+      children,
+      ...props
+    },
+    ref,
   ) => {
-    const { isMobile, openMobile, setOpenMobile, width, registerSide } = useSidebar();
+    const { isMobile, openMobile, setOpenMobile, width, registerSide } = useSidebar()
 
     // The provider mirrors the side into the default shortcut ("[" / "]")
     // and the rail handle.
-    useEffect(() => registerSide(side), [side, registerSide]);
+    useEffect(() => registerSide(side), [side, registerSide])
 
-    if (collapsible === "none") {
+    if (collapsible === 'none') {
       return (
         <div
           ref={ref}
           data-slot="sidebar"
           data-variant={variant}
           data-side={side}
-          className={cn(
-            "peer sticky top-0 flex h-svh shrink-0 flex-col",
-            side === "right" && "order-last",
-            className
-          )}
+          className={cn('peer sticky top-0 flex h-svh shrink-0 flex-col', side === 'right' && 'order-last', className)}
           style={{ width, ...style } as CSSProperties}
           {...props}
         >
           <div
             data-sidebar="sidebar"
             className={cn(
-              "flex h-full w-full min-h-0 flex-col",
+              'flex h-full w-full min-h-0 flex-col',
               bordered &&
-                variant === "sidebar" &&
-                (side === "left" ? "border-r border-border" : "border-l border-border")
+                variant === 'sidebar' &&
+                (side === 'left' ? 'border-r border-border' : 'border-l border-border'),
             )}
           >
             {children}
           </div>
         </div>
-      );
+      )
     }
 
     // The desktop shell stays MOUNTED across the drawer breakpoint — its
@@ -215,24 +214,34 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
             {children}
           </SidebarSheet>
         )}
-        <SidebarShell ref={ref} side={side} variant={variant} bordered={bordered} rail={rail} railTooltipOpen={railTooltipOpen} className={className} style={style} {...props}>
+        <SidebarShell
+          ref={ref}
+          side={side}
+          variant={variant}
+          bordered={bordered}
+          rail={rail}
+          railTooltipOpen={railTooltipOpen}
+          className={className}
+          style={style}
+          {...props}
+        >
           {children}
         </SidebarShell>
       </>
-    );
-  }
-);
-Sidebar.displayName = "Sidebar";
+    )
+  },
+)
+Sidebar.displayName = 'Sidebar'
 
 // ─── SidebarContent ──────────────────────────────────────────────────────────
 
 export interface SidebarContentProps extends HTMLAttributes<HTMLDivElement> {
-  viewportClassName?: string;
+  viewportClassName?: string
 }
 
 const SidebarContent = forwardRef<HTMLDivElement, SidebarContentProps>(
   ({ className, viewportClassName, children, ...props }, ref) => {
-    const { isMobile } = useSidebar();
+    const { isMobile } = useSidebar()
 
     // Inside the mobile sheet, the sheet's flex column owns layout and this
     // region scrolls natively — a nested ScrollArea would double-scroll. The
@@ -245,13 +254,13 @@ const SidebarContent = forwardRef<HTMLDivElement, SidebarContentProps>(
           <div
             ref={ref}
             data-sidebar="content"
-            className={cn("scroll-fade flex min-h-0 w-full flex-1 flex-col overflow-y-auto", className)}
+            className={cn('scroll-fade flex min-h-0 w-full flex-1 flex-col overflow-y-auto', className)}
             {...props}
           >
             {children}
           </div>
         </div>
-      );
+      )
     }
 
     // The scroll primitive wraps children in an inline-styled sizer that
@@ -259,78 +268,81 @@ const SidebarContent = forwardRef<HTMLDivElement, SidebarContentProps>(
     // instead of truncating, so the viewport's direct child is forced back
     // to a plain shrinkable block.
     return (
-      <ScrollArea className={cn("scroll-divider min-h-0 w-full flex-1", className)} viewportClassName={cn("scroll-fade [&>div]:!block [&>div]:!min-w-0", viewportClassName)}>
+      <ScrollArea
+        className={cn('scroll-divider min-h-0 w-full flex-1', className)}
+        viewportClassName={cn('scroll-fade [&>div]:!block [&>div]:!min-w-0', viewportClassName)}
+      >
         <div ref={ref} data-sidebar="content" className="flex w-full min-w-0 flex-col" {...props}>
           {children}
         </div>
       </ScrollArea>
-    );
-  }
-);
-SidebarContent.displayName = "SidebarContent";
+    )
+  },
+)
+SidebarContent.displayName = 'SidebarContent'
 
-export { Sidebar, SidebarContent };
+export type {
+  SidebarCollapsible,
+  SidebarContextValue,
+  SidebarGroupActionProps,
+  SidebarGroupLabelProps,
+  SidebarInputProps,
+  SidebarInsetProps,
+  SidebarProviderProps,
+  SidebarRailProps,
+  SidebarSectionProps,
+  SidebarSide,
+  SidebarTriggerProps,
+  SidebarVariant,
+} from './sidebar-core'
 
 // Re-export the flavor-neutral parts so `sidebar` is a one-stop import.
 export {
-  SidebarProvider,
-  useSidebar,
-  SidebarTrigger,
-  SidebarRail,
-  SidebarInset,
-  SidebarInput,
-  SidebarHeader,
+  SIDEBAR_COOKIE_MAX_AGE,
+  SIDEBAR_COOKIE_NAME,
+  SIDEBAR_KEYBOARD_SHORTCUT,
+  SIDEBAR_KEYBOARD_SHORTCUT_RIGHT,
+  SIDEBAR_MAX_WIDTH,
+  SIDEBAR_MIN_WIDTH,
+  SIDEBAR_WIDTH,
+  SIDEBAR_WIDTH_MOBILE,
   SidebarFooter,
-  SidebarSeparator,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarGroupAction,
   SidebarGroupActions,
   SidebarGroupContent,
-  SIDEBAR_COOKIE_NAME,
-  SIDEBAR_COOKIE_MAX_AGE,
-  SIDEBAR_WIDTH,
-  SIDEBAR_WIDTH_MOBILE,
-  SIDEBAR_KEYBOARD_SHORTCUT,
-  SIDEBAR_KEYBOARD_SHORTCUT_RIGHT,
-  SIDEBAR_MIN_WIDTH,
-  SIDEBAR_MAX_WIDTH,
-} from "./sidebar-core";
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInput,
+  SidebarInset,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
+  useSidebar,
+} from './sidebar-core'
 export type {
-  SidebarContextValue,
-  SidebarProviderProps,
-  SidebarTriggerProps,
-  SidebarRailProps,
-  SidebarInsetProps,
-  SidebarInputProps,
-  SidebarSectionProps,
-  SidebarGroupLabelProps,
-  SidebarGroupActionProps,
-  SidebarSide,
-  SidebarVariant,
-  SidebarCollapsible,
-} from "./sidebar-core";
+  SidebarMenuActionProps,
+  SidebarMenuBadgeProps,
+  SidebarMenuButtonProps,
+  SidebarMenuItemProps,
+  SidebarMenuProps,
+  SidebarMenuSkeletonProps,
+  SidebarMenuSubButtonProps,
+  SidebarMenuSubItemProps,
+  SidebarMenuSubProps,
+} from './sidebar-menu'
 export {
   SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
   SidebarMenuAction,
   SidebarMenuActions,
   SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarMenuSkeleton,
   SidebarMenuSub,
-  SidebarMenuSubItem,
   SidebarMenuSubButton,
+  SidebarMenuSubItem,
   sidebarMenuButtonVariants,
-} from "./sidebar-menu";
-export type {
-  SidebarMenuProps,
-  SidebarMenuItemProps,
-  SidebarMenuButtonProps,
-  SidebarMenuActionProps,
-  SidebarMenuBadgeProps,
-  SidebarMenuSkeletonProps,
-  SidebarMenuSubProps,
-  SidebarMenuSubItemProps,
-  SidebarMenuSubButtonProps,
-} from "./sidebar-menu";
+} from './sidebar-menu'
+export { Sidebar, SidebarContent }

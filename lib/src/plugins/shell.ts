@@ -1,13 +1,8 @@
-import type { Plugin } from 'vite'
 import type { ComponentType } from 'react'
-import {
-  resolveShellSlots,
-  type LoadedComponent,
-  type ParsedItemLite,
-  type ResolvedShell,
-} from '../lib/slots'
+import type { Plugin } from 'vite'
 import type { SiteConfig } from '../lib/schema'
-import type { Bundler, BundleResult } from './bundle'
+import { type AnyComponent, type LoadedComponent, type ParsedItemLite, type ResolvedShell, resolveShellSlots } from '../lib/slots'
+import type { BundleResult, Bundler } from './bundle'
 
 interface Options {
   userRoot: string
@@ -40,11 +35,11 @@ type ShellResult = { shell: ResolvedShellExport; warnings: string[] }
 async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
   const warnings: string[] = []
   const config: Pick<SiteConfig, 'name' | 'shell' | 'panel'> = result.config ?? { name: '' }
-  const userItems: ParsedItemLite[] = result.items.map((it) => ({
+  const userItems: ParsedItemLite[] = result.items.map(it => ({
     name: it.name,
     id: it.id,
     tier: it.tier,
-    props: it.props.map((p) => ({ name: p.name, optional: p.optional })),
+    props: it.props.map(p => ({ name: p.name, optional: p.optional })),
     bundleUrl: it.bundlePath,
   }))
 
@@ -52,7 +47,7 @@ async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
     const extra = result.extras.get(p)
     if (!extra?.exported) return null
     return {
-      Component: null as unknown as ComponentType<any>,
+      Component: null as unknown as AnyComponent,
       cssPaths: extra.cssFiles,
       source: 'config',
       resolvedPath: p,
@@ -61,12 +56,9 @@ async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
     }
   }
 
-  const resolved = await resolveShellSlots(
-    { name: config.name, shell: config.shell },
-    userItems,
-    loadUserPath,
-    { warnings },
-  )
+  const resolved = await resolveShellSlots({ name: config.name, shell: config.shell }, userItems, loadUserPath, {
+    warnings,
+  })
   const panelItems: PanelItemExport[] = []
   for (const item of config.panel?.items ?? []) {
     const lc = await loadUserPath(item.component)
@@ -89,7 +81,7 @@ async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
     ...resolved.Sidebar.Root.cssPaths,
     ...resolved.Sidebar.Item.cssPaths,
     ...resolved.Sidebar.Section.cssPaths,
-    ...panelItems.flatMap((it) => it.cssPaths),
+    ...panelItems.flatMap(it => it.cssPaths),
   ]
   return {
     shell: {
@@ -98,7 +90,11 @@ async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
       Code: resolved.Code,
       Select: resolved.Select,
       Icon: resolved.Icon,
-      Sidebar: { Root: resolved.Sidebar.Root, Item: resolved.Sidebar.Item, Section: resolved.Sidebar.Section },
+      Sidebar: {
+        Root: resolved.Sidebar.Root,
+        Item: resolved.Sidebar.Item,
+        Section: resolved.Sidebar.Section,
+      },
       cssFiles,
       panelItems,
     },
@@ -128,7 +124,7 @@ export function shellPlugin(options: Options): Plugin {
       if (id === SHELL_RESOLVED) {
         const { shell, warnings } = await getCache()
         if (warnings.length > 0) {
-          process.stderr.write(`[modo:shell] warnings:\n${warnings.map((w) => '  • ' + w).join('\n')}\n`)
+          process.stderr.write(`[modo:shell] warnings:\n${warnings.map(w => `  • ${w}`).join('\n')}\n`)
         }
         const slotBindings = Object.entries({
           __Button: shell.Button,
@@ -140,27 +136,30 @@ export function shellPlugin(options: Options): Plugin {
           __SidebarItem: shell.Sidebar.Item,
           __SidebarSection: shell.Sidebar.Section,
         }).map(([name, s]) => ({ name, ...s }))
-        const panelItemBindings = shell.panelItems.map((it, idx) => ({ name: `__PanelItem${idx}`, ...it }))
+        const panelItemBindings = shell.panelItems.map((it, idx) => ({
+          name: `__PanelItem${idx}`,
+          ...it,
+        }))
         const exportOf = (s: { name: string; exportName?: string }) =>
           `__mod_${s.name}[${JSON.stringify(s.exportName ?? 'default')}]`
         const fallbackImports = slotBindings
-          .filter((s) => s.fallbackName && !s.bundlePath)
-          .map((s) => `import { ${s.fallbackName} as __fb_${s.name} } from '../lib/slots';`)
+          .filter(s => s.fallbackName && !s.bundlePath)
+          .map(s => `import { ${s.fallbackName} as __fb_${s.name} } from '../lib/slots';`)
           .join('\n')
         const imports = [
           `import { primitives as __primitives } from 'virtual:modo-items';`,
           fallbackImports,
-          ...[...slotBindings.filter((s) => s.bundlePath), ...panelItemBindings].map(
-            (s) => `import * as __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`,
+          ...[...slotBindings.filter(s => s.bundlePath), ...panelItemBindings].map(
+            s => `import * as __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`,
           ),
         ].join('\n')
         const bindings = [
-          ...slotBindings.map((s) => {
+          ...slotBindings.map(s => {
             if (s.bundlePath) return `const ${s.name} = ${exportOf(s)};`
             if (s.fallbackName) return `const ${s.name} = __fb_${s.name};`
             return `const ${s.name} = null;`
           }),
-          ...panelItemBindings.map((s) => `const ${s.name}_Comp = ${exportOf(s)};`),
+          ...panelItemBindings.map(s => `const ${s.name}_Comp = ${exportOf(s)};`),
         ].join('\n')
         const panelItemsJson = shell.panelItems
           .map(
@@ -187,7 +186,7 @@ export function shellPlugin(options: Options): Plugin {
       }
       if (id === SHELL_CSS_RESOLVED) {
         const { shell } = await getCache()
-        const imports = shell.cssFiles.map((f) => `import ${JSON.stringify(f)};`).join('\n')
+        const imports = shell.cssFiles.map(f => `import ${JSON.stringify(f)};`).join('\n')
         return [imports, `export default '';`].join('\n')
       }
       return null

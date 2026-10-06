@@ -1,5 +1,5 @@
-import { MuiProvider } from '../../theme'
 import Paper from '@mui/material/Paper'
+import { MuiProvider } from '../../theme'
 
 /**
  * Elevated surface. Paper-based.

@@ -1,9 +1,9 @@
-import { existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
-import { dirname, resolve, join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { randomUUID } from 'node:crypto'
+import { existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import esbuild from 'esbuild'
-import { siteConfigSchema, type SiteConfig } from './schema'
+import { type SiteConfig, siteConfigSchema } from './schema'
 
 const cacheDir = resolve(process.cwd(), '.modo-tmp')
 
@@ -13,7 +13,7 @@ const cacheDir = resolve(process.cwd(), '.modo-tmp')
 const cache = new Map<string, { inputs: string[]; stamp: string; config: SiteConfig }>()
 
 function stampOf(files: string[]): string {
-  return files.map((f) => (existsSync(f) ? statSync(f).mtimeMs : 0)).join(':')
+  return files.map(f => (existsSync(f) ? statSync(f).mtimeMs : 0)).join(':')
 }
 
 function ensureCacheDir() {
@@ -22,9 +22,7 @@ function ensureCacheDir() {
 
 export async function loadModoConfig(configPath: string): Promise<SiteConfig> {
   if (!existsSync(configPath)) {
-    throw new Error(
-      `modo config not found at ${configPath}.\nRun \`modo init <name>\` to scaffold a project.`,
-    )
+    throw new Error(`modo config not found at ${configPath}.\nRun \`modo init <name>\` to scaffold a project.`)
   }
   const hit = cache.get(configPath)
   if (hit && hit.stamp === stampOf(hit.inputs)) return hit.config
@@ -59,7 +57,7 @@ export async function loadModoConfig(configPath: string): Promise<SiteConfig> {
       throw err
     }
     const config = siteConfigSchema.parse(mod.default ?? mod)
-    const inputs = Object.keys(metafile.inputs).map((p) => resolve(workDir, p))
+    const inputs = Object.keys(metafile.inputs).map(p => resolve(workDir, p))
     cache.set(configPath, { inputs, stamp: stampOf(inputs), config })
     return config
   } finally {

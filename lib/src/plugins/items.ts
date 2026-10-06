@@ -1,5 +1,5 @@
-import type { Plugin } from 'vite'
 import { resolve, sep } from 'node:path'
+import type { Plugin } from 'vite'
 import type { Bundler, Tier } from './bundle'
 
 interface Options {
@@ -50,27 +50,34 @@ export function itemsPlugin(options: Options): Plugin {
           .flatMap((it, i) => it.exampleDocs.map((doc, j) => `import __x${i}_${j} from ${JSON.stringify(doc)};`))
           .join('\n')
         const docsJson = items
-          .map((it, i) => `${JSON.stringify(`${it.tier}:${it.id}`)}: [${it.exampleDocs.map((_, j) => `__x${i}_${j}`).join(',')}]`)
+          .map(
+            (it, i) =>
+              `${JSON.stringify(`${it.tier}:${it.id}`)}: [${it.exampleDocs.map((_, j) => `__x${i}_${j}`).join(',')}]`,
+          )
           .join(',')
-        const itemsJson = items.map((it) => `${JSON.stringify(it.id)}: ${safeId(it)}`).join(',')
+        const itemsJson = items.map(it => `${JSON.stringify(it.id)}: ${safeId(it)}`).join(',')
         const byIdJson = items
-          .map((it) => {
+          .map(it => {
             const ident = safeId(it)
             return `${JSON.stringify(`${it.tier}:${it.id}`)}: { id: ${JSON.stringify(it.id)}, tier: ${JSON.stringify(it.tier)}, name: ${JSON.stringify(it.name)}, description: ${JSON.stringify(it.description)}, props: ${JSON.stringify(it.props)}, Component: ${ident} }`
           })
           .join(',')
         const serializedJson = JSON.stringify(
-          items.map((it) => ({ id: it.id, tier: it.tier, name: it.name, description: it.description, props: it.props })),
+          items.map(it => ({
+            id: it.id,
+            tier: it.tier,
+            name: it.name,
+            description: it.description,
+            props: it.props,
+          })),
         )
         const examplesJson = items
-          .map((it) => `${JSON.stringify(`${it.tier}:${it.id}`)}: ${JSON.stringify(it.examples)}`)
+          .map(it => `${JSON.stringify(`${it.tier}:${it.id}`)}: ${JSON.stringify(it.examples)}`)
           .join(',')
         const propsJson = items
-          .map((it) => `${JSON.stringify(`${it.tier}:${it.id}`)}: ${JSON.stringify(it.props)}`)
+          .map(it => `${JSON.stringify(`${it.tier}:${it.id}`)}: ${JSON.stringify(it.props)}`)
           .join(',')
-        const byNameJson = items
-          .map((it) => `${JSON.stringify(it.name)}: ${safeId(it)}`)
-          .join(',')
+        const byNameJson = items.map(it => `${JSON.stringify(it.name)}: ${safeId(it)}`).join(',')
         // Named exports of the `examples` module, in scope in every example.
         const scopeCode = scope
           ? [
@@ -92,8 +99,8 @@ export function itemsPlugin(options: Options): Plugin {
       }
       if (id === ITEMS_CSS_RESOLVED) {
         const { items } = await bundler.get()
-        const cssFiles = items.flatMap((it) => it.cssFiles)
-        const imports = cssFiles.map((f) => `import ${JSON.stringify(f)};`).join('\n')
+        const cssFiles = items.flatMap(it => it.cssFiles)
+        const imports = cssFiles.map(f => `import ${JSON.stringify(f)};`).join('\n')
         return [imports, `export default '';`].join('\n')
       }
       return null

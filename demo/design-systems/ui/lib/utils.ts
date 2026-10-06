@@ -14,10 +14,10 @@
  *   own), the motion tiers (duration, delay) and `rounded-box|glyph`.
  */
 
-import { createCn } from "cn/config";
+import { createCn } from 'cn/config'
 
-const TYPE_ROLES = ["display", "title", "subtitle", "body", "caption", "micro"];
-const TIERS = ["fast", "fast-exit", "moderate", "moderate-exit", "slow", "slow-exit"];
+const TYPE_ROLES = ['display', 'title', 'subtitle', 'body', 'caption', 'micro']
+const TIERS = ['fast', 'fast-exit', 'moderate', 'moderate-exit', 'slow', 'slow-exit']
 
 // The type-scale role utilities (see /docs/sizes) are font sizes, but
 // tailwind-merge can't know that for custom classes — by default anything
@@ -26,11 +26,11 @@ const TIERS = ["fast", "fast-exit", "moderate", "moderate-exit", "slow", "slow-e
 export const cn = createCn({
   extend: {
     classGroups: {
-      "font-size": [{ text: TYPE_ROLES.flatMap((role) => [role, `${role}-compact`]) }],
-      "font-variation": [{ weight: ["normal", "medium", "semibold", "bold"] }],
+      'font-size': [{ text: TYPE_ROLES.flatMap(role => [role, `${role}-compact`]) }],
+      'font-variation': [{ weight: ['normal', 'medium', 'semibold', 'bold'] }],
       duration: [{ duration: TIERS }],
       delay: [{ delay: TIERS }],
-      rounded: [{ rounded: ["box", "glyph"] }],
+      rounded: [{ rounded: ['box', 'glyph'] }],
     },
   },
-});
+})

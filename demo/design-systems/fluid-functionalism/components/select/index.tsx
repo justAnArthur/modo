@@ -10,7 +10,13 @@ import { Select as FluidSelect, SelectContent, SelectItem, SelectTrigger } from 
  *
  * @example {@include ./examples.mdx}
  */
-export default function Select({ value, onChange, options, placeholder = 'Select…', size = 'default' }: {
+export default function Select({
+  value,
+  onChange,
+  options,
+  placeholder = 'Select…',
+  size = 'default',
+}: {
   /** Currently selected value. */
   value: string
   /** Called with the newly selected value. */

@@ -1,0 +1,6 @@
+or {
+  `$a === true`,
+  `$a !== true`,
+  `true === $a`,
+  `true !== $a`
+} as $c where { register_diagnostic(span=$c, message="Compared to `true`: trust the type and use the value.") }

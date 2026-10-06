@@ -22,7 +22,13 @@ declare module 'virtual:modo-tokens-css' {
 
 declare module 'virtual:modo-items' {
   import type { ComponentType } from 'react'
-  export type ItemProp = { name: string; type: string; optional: boolean; default?: string; description?: string }
+  export type ItemProp = {
+    name: string
+    type: string
+    optional: boolean
+    default?: string
+    description?: string
+  }
   export type ItemEntry = {
     id: string
     tier: 'primitives' | 'components' | 'blocks'

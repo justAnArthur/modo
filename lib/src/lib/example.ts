@@ -50,7 +50,7 @@ export function compileExampleBody(code: string): ExampleRenderer | string {
     })
     js = (out.code ?? '').replace(/['"]use strict['"];?/, '')
   } catch (err) {
-    console.error('[modo] example failed to compile:', (err as Error).message, '\n' + code)
+    console.error('[modo] example failed to compile:', (err as Error).message, `\n${code}`)
     cache.set(code, code)
     return code
   }
@@ -64,8 +64,8 @@ export function compileExampleBody(code: string): ExampleRenderer | string {
       let fn = fns.get(scope)
       if (!fn) {
         const decls = identifiers
-          .filter((n) => !RESERVED.has(n) && Object.prototype.hasOwnProperty.call(scope, n))
-          .map((n) => `var ${n} = __scope[${JSON.stringify(n)}];`)
+          .filter(n => !RESERVED.has(n) && Object.hasOwn(scope, n))
+          .map(n => `var ${n} = __scope[${JSON.stringify(n)}];`)
           .join('\n')
         fn = new Function('React', '__scope', `${decls}\n${js}`) as (
           react: typeof REACT_STUB,
@@ -75,7 +75,7 @@ export function compileExampleBody(code: string): ExampleRenderer | string {
       }
       return (fn(REACT_STUB, scope) as ReactElement | null) ?? null
     } catch (err) {
-      console.error('[modo] example failed:', err, '\n' + code)
+      console.error('[modo] example failed:', err, `\n${code}`)
       return null
     }
   }) as ExampleRenderer

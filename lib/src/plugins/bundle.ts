@@ -1,13 +1,13 @@
-import esbuild, { type BuildOptions, type Message, type Metafile } from 'esbuild'
-import mdx from '@mdx-js/esbuild'
-import remarkGfm from 'remark-gfm'
-import { remarkModoExamples } from './mdx-examples'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, statSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
-import { parseItemSource, type ParsedItem, type ParsedExample } from '../lib/tsdoc'
-import { discoverCssForFile } from '../lib/discover-css'
+import mdx from '@mdx-js/esbuild'
+import esbuild, { type BuildOptions, type Message, type Metafile } from 'esbuild'
+import remarkGfm from 'remark-gfm'
 import { loadModoConfig } from '../lib/config.loader'
+import { discoverCssForFile } from '../lib/discover-css'
 import type { SiteConfig } from '../lib/schema'
+import { type ParsedExample, type ParsedItem, parseItemSource } from '../lib/tsdoc'
+import { remarkModoExamples } from './mdx-examples'
 
 // One esbuild build for the whole design system: every item, every shell /
 // panel module and the `examples` scope module are entry points of the same
@@ -74,7 +74,8 @@ interface EntryFailure {
   messages: Message[]
 }
 
-const LEGACY_FLAT = /^(?:primitives|components|blocks|usr)-.+-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.mjs$/
+const LEGACY_FLAT =
+  /^(?:primitives|components|blocks|usr)-.+-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.mjs$/
 
 export function createBundler(opts: { userRoot: string; configPath: string }): Bundler {
   const { userRoot, configPath } = opts
@@ -108,7 +109,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
         const file = resolve(itemDir, 'index.tsx')
         if (!existsSync(file)) continue
         const p = parseItemSource(readFileSync(file, 'utf8'), {
-          readFile: (path) => {
+          readFile: path => {
             try {
               return readFileSync(resolve(itemDir, path), 'utf8')
             } catch {
@@ -125,7 +126,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
           description: p.description,
           props: p.props,
           examples: p.examples,
-          exampleDocs: p.exampleDocs.map((path) => resolve(itemDir, path)),
+          exampleDocs: p.exampleDocs.map(path => resolve(itemDir, path)),
           cssFiles: discoverCssForFile(file),
           file,
         })
@@ -150,7 +151,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
 
     const extraPaths = [
       ...Object.values(config?.shell ?? {}),
-      ...(config?.panel?.items ?? []).map((it) => it.component),
+      ...(config?.panel?.items ?? []).map(it => it.component),
     ].filter((p): p is string => typeof p === 'string')
     // `./modo.components.tsx#Select` names an export; several refs into one
     // file share its entry.
@@ -186,7 +187,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
         errors.push(`${it.tier}/${it.id}: index.tsx has no default export`)
         continue
       }
-      const docKeys = exampleDocs.map((doc) => keyByFile.get(doc)!).filter(ok)
+      const docKeys = exampleDocs.map(doc => keyByFile.get(doc)!).filter(ok)
       items.push({ ...it, exampleDocs: docKeys.map(out), bundlePath: out(key) })
     }
 
@@ -206,9 +207,9 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     if (scopeEntry && ok(scopeEntry.key)) {
       scope = {
         bundlePath: out(scopeEntry.key),
-        exports: exportsOf(scopeEntry.key).filter((n) => n !== 'default'),
+        exports: exportsOf(scopeEntry.key).filter(n => n !== 'default'),
       }
-      const itemNames = new Set(items.map((it) => it.name))
+      const itemNames = new Set(items.map(it => it.name))
       for (const name of scope.exports) {
         if (itemNames.has(name)) {
           warnings.push(
@@ -219,7 +220,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     }
 
     lastReport = await report(failures, errors, warnings, lastReport)
-    errors.push(...failures.map((f) => `${f.key}: ${f.messages.map((m) => m.text).join('; ')}`))
+    errors.push(...failures.map(f => `${f.key}: ${f.messages.map(m => m.text).join('; ')}`))
     return { config, items, extras, scope, errors, warnings }
   }
 
@@ -270,6 +271,7 @@ function baseOptions(userRoot: string, outdir: string): BuildOptions {
         'const require = (id) => {',
         "  if (id === 'react') return __modoReact;",
         "  if (id === 'react-dom') return __modoReactDOM;",
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: a template literal in generated code
         '  throw new Error(`[modo] dynamic require of "${id}" is not supported`);',
         '};',
       ].join('\n'),
@@ -300,7 +302,16 @@ function collect(built: Built, meta: Metafile, userRoot: string): void {
 function messagesOf(err: unknown): Message[] {
   const errs = (err as { errors?: Message[] })?.errors
   if (Array.isArray(errs) && errs.length > 0) return errs
-  return [{ id: '', pluginName: '', text: String((err as Error)?.message ?? err), location: null, notes: [], detail: undefined }]
+  return [
+    {
+      id: '',
+      pluginName: '',
+      text: String((err as Error)?.message ?? err),
+      location: null,
+      notes: [],
+      detail: undefined,
+    },
+  ]
 }
 
 // Combined build → on failure, probe each entry alone (write:false) to find
@@ -323,7 +334,7 @@ async function buildWithIsolation(
     try {
       const r = await esbuild.build({
         ...base,
-        entryPoints: Object.fromEntries(entries.map((e) => [e.key, e.file])),
+        entryPoints: Object.fromEntries(entries.map(e => [e.key, e.file])),
         splitting: true,
         metafile: true,
       })
@@ -343,8 +354,8 @@ async function buildWithIsolation(
       const culprits = probes.filter((p): p is EntryFailure => p !== null)
       if (culprits.length > 0) {
         failures.push(...culprits)
-        const bad = new Set(culprits.map((c) => c.key))
-        entries = entries.filter((e) => !bad.has(e.key))
+        const bad = new Set(culprits.map(c => c.key))
+        entries = entries.filter(e => !bad.has(e.key))
         continue
       }
 
@@ -354,9 +365,13 @@ async function buildWithIsolation(
       )
       failures.push({ key: '(combined build)', messages: messagesOf(combinedErr) })
       await Promise.all(
-        entries.map(async (e) => {
+        entries.map(async e => {
           try {
-            const r = await esbuild.build({ ...base, entryPoints: { [e.key]: e.file }, metafile: true })
+            const r = await esbuild.build({
+              ...base,
+              entryPoints: { [e.key]: e.file },
+              metafile: true,
+            })
             collect(built, r.metafile!, userRoot)
           } catch (err) {
             failures.push({ key: e.key, messages: messagesOf(err) })
@@ -393,7 +408,7 @@ async function report(
     }
   }
   if (groups.size > 0) {
-    const skipped = [...new Set(failures.map((f) => f.key))].filter((k) => !k.startsWith('('))
+    const skipped = [...new Set(failures.map(f => f.key))].filter(k => !k.startsWith('('))
     lines.push(`[modo:bundle] ${groups.size} error(s)${skipped.length ? ` — skipped: ${skipped.join(', ')}` : ''}`)
     const color = Boolean(process.stderr.isTTY)
     for (const { message, keys } of groups.values()) {
@@ -404,7 +419,7 @@ async function report(
   for (const e of errors) lines.push(`[modo:bundle] error: ${e}`)
   for (const w of warnings) lines.push(`[modo:bundle] warning: ${w}`)
 
-  const text = lines.length > 0 ? lines.join('\n') + '\n' : ''
+  const text = lines.length > 0 ? `${lines.join('\n')}\n` : ''
   // Rebuilds on every source change — don't repeat an unchanged report.
   if (text && text !== previous) process.stderr.write(text)
   return text
@@ -429,7 +444,12 @@ function resolveUserFile(userRoot: string, p: string): string | null {
 }
 
 function sanitize(p: string): string {
-  return p.replace(/\.(tsx?|jsx?)$/, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'module'
+  return (
+    p
+      .replace(/\.(tsx?|jsx?)$/, '')
+      .replace(/[^A-Za-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'module'
+  )
 }
 
 /** Delete everything in outdir the last build didn't write (old hashed chunks, removed items). */
@@ -453,7 +473,9 @@ function sweep(outdir: string, keep: Set<string>): void {
   try {
     walk(outdir)
   } catch (err) {
-    process.stderr.write(`[modo:bundle] warning: could not clean ${relative(process.cwd(), outdir)}: ${(err as Error).message}\n`)
+    process.stderr.write(
+      `[modo:bundle] warning: could not clean ${relative(process.cwd(), outdir)}: ${(err as Error).message}\n`,
+    )
   }
 }
 

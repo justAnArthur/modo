@@ -1,0 +1,9 @@
+// `rgb(var(--x) / 0.5)` reads a token, so a color function opening on `v` passes.
+or {
+  JsStringLiteralExpression(),
+  JsxString(),
+  JsTemplateChunkElement()
+} as $s where {
+  $s <: r"(?s).*(?:#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb)\(\s*[^v\s]).*",
+  register_diagnostic(span=$s, message="Literal color: read a token instead (colors live in tokens/*.css).")
+}

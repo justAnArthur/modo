@@ -21,49 +21,49 @@
  */
 
 import {
-  useRef,
-  useMemo,
   createContext,
-  useContext,
-  forwardRef,
   type ForwardRefExoticComponent,
-  type RefAttributes,
-  type ReactNode,
+  forwardRef,
   type HTMLAttributes,
+  type ReactNode,
+  type RefAttributes,
   type TdHTMLAttributes,
   type ThHTMLAttributes,
-} from "react";
-import { cn } from "../../lib/utils";
-import { SizeProvider, useSize, type SizeVariant } from "../../lib/size-context";
-import { useFluidHover, useRegisterFluidHoverItem } from "../../lib/use-fluid-hover";
-import { FluidHoverHighlight } from "../../lib/fluid-hover-highlight";
+  useContext,
+  useMemo,
+  useRef,
+} from 'react'
+import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { cn } from '../../lib/utils'
 
 // ── Context ──────────────────────────────────────────────
 
 interface TableContextValue {
-  registerItem: (index: number, element: HTMLElement | null) => void;
-  activeIndex: number | null;
+  registerItem: (index: number, element: HTMLElement | null) => void
+  activeIndex: number | null
 }
 
-const TableContext = createContext<TableContextValue | null>(null);
+const TableContext = createContext<TableContextValue | null>(null)
 
 // ── Table ────────────────────────────────────────────────
 
 interface TableProps extends HTMLAttributes<HTMLTableElement> {
   /** `Table.Header` and `Table.Body` children. */
-  children: ReactNode;
+  children: ReactNode
   /** Pins the table's rows to one step of the size ladder (default 36px, compact 28px — see Sizes). Defaults to the surrounding SizeProvider, else `"default"`. */
-  size?: SizeVariant;
+  size?: SizeVariant
 }
 
 /** The root plus its compound parts, typed so `<Table.Row>` type-checks. */
 type TableComponent = ForwardRefExoticComponent<TableProps & RefAttributes<HTMLTableElement>> & {
-  Header: typeof TableHeader;
-  Body: typeof TableBody;
-  Row: typeof TableRow;
-  Head: typeof TableHead;
-  Cell: typeof TableCell;
-};
+  Header: typeof TableHeader
+  Body: typeof TableBody
+  Row: typeof TableRow
+  Head: typeof TableHead
+  Cell: typeof TableCell
+}
 
 /**
  * Data table with row hover effects and semantic markup.
@@ -83,165 +83,140 @@ type TableComponent = ForwardRefExoticComponent<TableProps & RefAttributes<HTMLT
  *
  * @example {@include ./examples.mdx}
  */
-const Table = forwardRef<HTMLTableElement, TableProps>(
-  ({ children, size, className, ...props }, ref) => {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const sizeClasses = useSize(size);
+const Table = forwardRef<HTMLTableElement, TableProps>(({ children, size, className, ...props }, ref) => {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const sizeClasses = useSize(size)
 
-    const hover = useFluidHover(containerRef);
-    const {
-      activeIndex,
-      handlers,
-      registerItem,
-    } = hover;
+  const hover = useFluidHover(containerRef)
+  const { activeIndex, handlers, registerItem } = hover
 
+  const contextValue = useMemo(() => ({ registerItem, activeIndex }), [registerItem, activeIndex])
 
-    const contextValue = useMemo(
-      () => ({ registerItem, activeIndex }),
-      [registerItem, activeIndex]
-    );
+  const table = (
+    <TableContext.Provider value={contextValue}>
+      <div
+        ref={containerRef}
+        className="relative"
+        onMouseEnter={handlers.onMouseEnter}
+        onMouseMove={handlers.onMouseMove}
+        onMouseLeave={handlers.onMouseLeave}
+        onClick={handlers.onClick}
+      >
+        {/* Hover background */}
+        <FluidHoverHighlight hover={hover} />
 
-    const table = (
-      <TableContext.Provider value={contextValue}>
-        <div
-          ref={containerRef}
-          className="relative"
-          onMouseEnter={handlers.onMouseEnter}
-          onMouseMove={handlers.onMouseMove}
-          onMouseLeave={handlers.onMouseLeave}
-          onClick={handlers.onClick}
-        >
-          {/* Hover background */}
-          <FluidHoverHighlight hover={hover} />
+        <table ref={ref} className={cn('w-full border-collapse', sizeClasses.text, className)} {...props}>
+          {children}
+        </table>
+      </div>
+    </TableContext.Provider>
+  )
 
-          <table
-            ref={ref}
-            className={cn("w-full border-collapse", sizeClasses.text, className)}
-            {...props}
-          >
-            {children}
-          </table>
-        </div>
-      </TableContext.Provider>
-    );
+  // A size prop pins every cell to one ladder step (cells read the context).
+  return size ? <SizeProvider size={size}>{table}</SizeProvider> : table
+}) as TableComponent
 
-    // A size prop pins every cell to one ladder step (cells read the context).
-    return size ? <SizeProvider size={size}>{table}</SizeProvider> : table;
-  }
-) as TableComponent;
-
-Table.displayName = "Table";
+Table.displayName = 'Table'
 
 // ── TableHeader ──────────────────────────────────────────
 
-const TableHeader = forwardRef<
-  HTMLTableSectionElement,
-  HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => (
-  <thead ref={ref} className={cn("", className)} {...props} />
-));
+const TableHeader = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
+  ({ className, ...props }, ref) => <thead ref={ref} className={cn('', className)} {...props} />,
+)
 
-TableHeader.displayName = "TableHeader";
+TableHeader.displayName = 'TableHeader'
 
 // ── TableBody ────────────────────────────────────────────
 
-const TableBody = forwardRef<
-  HTMLTableSectionElement,
-  HTMLAttributes<HTMLTableSectionElement>
->(({ className, ...props }, ref) => (
-  <tbody ref={ref} className={cn("", className)} {...props} />
-));
+const TableBody = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
+  ({ className, ...props }, ref) => <tbody ref={ref} className={cn('', className)} {...props} />,
+)
 
-TableBody.displayName = "TableBody";
+TableBody.displayName = 'TableBody'
 
 // ── TableRow ─────────────────────────────────────────────
 
 interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
-  index?: number;
+  index?: number
 }
 
-const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(
-  ({ index, className, style, ...props }, ref) => {
-    const internalRef = useRef<HTMLTableRowElement>(null);
-    const ctx = useContext(TableContext);
+const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(({ index, className, style, ...props }, ref) => {
+  const internalRef = useRef<HTMLTableRowElement>(null)
+  const ctx = useContext(TableContext)
 
-    useRegisterFluidHoverItem(ctx?.registerItem, index, internalRef);
+  useRegisterFluidHoverItem(ctx?.registerItem, index, internalRef)
 
-    const isBodyRow = index !== undefined;
-    const activeIdx = ctx?.activeIndex ?? null;
-    const hideBorder = activeIdx !== null && (
-      (isBodyRow && (index === activeIdx || index === activeIdx - 1)) ||
-      (!isBodyRow && activeIdx === 0)
-    );
+  const isBodyRow = index !== undefined
+  const activeIdx = ctx?.activeIndex ?? null
+  const hideBorder =
+    activeIdx !== null &&
+    ((isBodyRow && (index === activeIdx || index === activeIdx - 1)) || (!isBodyRow && activeIdx === 0))
 
-    return (
-      <tr
-        ref={(node) => {
-          (internalRef as React.MutableRefObject<HTMLTableRowElement | null>).current = node;
-          if (typeof ref === "function") ref(node);
-          else if (ref) (ref as React.MutableRefObject<HTMLTableRowElement | null>).current = node;
-        }}
-        data-fluid-hover-index={index}
-        className={cn(
-          "group/row relative z-10 border-b transition-[border-color] duration-fast",
-          hideBorder ? "border-transparent" : "border-accent/40",
-          isBodyRow && activeIdx === index && "is-active",
-          isBodyRow ? "weight-normal" : "weight-semibold",
-          className
-        )}
-        style={style}
-        {...props}
-      />
-    );
-  }
-);
+  return (
+    <tr
+      ref={node => {
+        ;(internalRef as React.MutableRefObject<HTMLTableRowElement | null>).current = node
+        if (typeof ref === 'function') ref(node)
+        else if (ref) (ref as React.MutableRefObject<HTMLTableRowElement | null>).current = node
+      }}
+      data-fluid-hover-index={index}
+      className={cn(
+        'group/row relative z-10 border-b transition-[border-color] duration-fast',
+        hideBorder ? 'border-transparent' : 'border-accent/40',
+        isBodyRow && activeIdx === index && 'is-active',
+        isBodyRow ? 'weight-normal' : 'weight-semibold',
+        className,
+      )}
+      style={style}
+      {...props}
+    />
+  )
+})
 
-TableRow.displayName = "TableRow";
+TableRow.displayName = 'TableRow'
 
 // ── TableHead ────────────────────────────────────────────
 
-const TableHead = forwardRef<
-  HTMLTableCellElement,
-  ThHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => {
-  const sizeClasses = useSize();
-  return (
-    <th
-      ref={ref}
-      className={cn(
-        "text-left text-foreground",
-        // py + line box lands the row on the ladder (36px / 28px).
-        sizeClasses.variant === "compact" ? "px-2.5 py-[5px]" : "px-3 py-2",
-        className
-      )}
-      {...props}
-    />
-  );
-});
+const TableHead = forwardRef<HTMLTableCellElement, ThHTMLAttributes<HTMLTableCellElement>>(
+  ({ className, ...props }, ref) => {
+    const sizeClasses = useSize()
+    return (
+      <th
+        ref={ref}
+        className={cn(
+          'text-left text-foreground',
+          // py + line box lands the row on the ladder (36px / 28px).
+          sizeClasses.variant === 'compact' ? 'px-2.5 py-[5px]' : 'px-3 py-2',
+          className,
+        )}
+        {...props}
+      />
+    )
+  },
+)
 
-TableHead.displayName = "TableHead";
+TableHead.displayName = 'TableHead'
 
 // ── TableCell ────────────────────────────────────────────
 
-const TableCell = forwardRef<
-  HTMLTableCellElement,
-  TdHTMLAttributes<HTMLTableCellElement>
->(({ className, ...props }, ref) => {
-  const sizeClasses = useSize();
-  return (
-    <td
-      ref={ref}
-      className={cn(
-        "text-muted-foreground transition-colors duration-fast group-[.is-active]/row:text-foreground",
-        sizeClasses.variant === "compact" ? "px-2.5 py-[5px]" : "px-3 py-2",
-        className
-      )}
-      {...props}
-    />
-  );
-});
+const TableCell = forwardRef<HTMLTableCellElement, TdHTMLAttributes<HTMLTableCellElement>>(
+  ({ className, ...props }, ref) => {
+    const sizeClasses = useSize()
+    return (
+      <td
+        ref={ref}
+        className={cn(
+          'text-muted-foreground transition-colors duration-fast group-[.is-active]/row:text-foreground',
+          sizeClasses.variant === 'compact' ? 'px-2.5 py-[5px]' : 'px-3 py-2',
+          className,
+        )}
+        {...props}
+      />
+    )
+  },
+)
 
-TableCell.displayName = "TableCell";
+TableCell.displayName = 'TableCell'
 
 // ── Compound parts ───────────────────────────────────────
 
@@ -251,11 +226,11 @@ Object.assign(Table, {
   Row: TableRow,
   Head: TableHead,
   Cell: TableCell,
-});
+})
 
 // ── Exports ──────────────────────────────────────────────
 
-export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell };
-export type { TableProps, TableRowProps };
+export type { TableProps, TableRowProps }
+export { Table, TableBody, TableCell, TableHead, TableHeader, TableRow }
 
 export default Table

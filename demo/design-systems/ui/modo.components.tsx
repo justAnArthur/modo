@@ -3,14 +3,16 @@
  * modo.config.ts picks each one by export name: `./modo.components.tsx#Select`.
  */
 
-import { useEffect, useState } from 'react'
 import { Check, CodeXml, Copy, Link2, Monitor, Moon, Sun } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import FluidSelect from './components/select'
 
 const icons = { code: CodeXml, copy: Copy, check: Check, link: Link2 }
 
 /** Icon slot: the chrome asks for icons by name; lucide draws them. */
-export function Icon({ name }: {
+export function Icon({
+  name,
+}: {
   /** Which chrome icon to draw. */
   name: keyof typeof icons
   /** Accessible text; the button around the icon carries it. */
@@ -82,10 +84,10 @@ export function ThemeSwitcher() {
     return () => window.removeEventListener('ui:themechange', sync)
   }, [])
 
-  const active = THEMES.find((theme) => theme.value === preference) ?? THEMES[2]!
+  const active = THEMES.find(theme => theme.value === preference) ?? THEMES[2]!
 
   return (
-    <FluidSelect value={preference} onValueChange={(next) => window.__uiTheme?.set(next as ThemePreference)}>
+    <FluidSelect value={preference} onValueChange={next => window.__uiTheme?.set(next as ThemePreference)}>
       <FluidSelect.Trigger aria-label="Color theme" icon={active.icon} />
       <FluidSelect.Content>
         {THEMES.map((theme, index) => (

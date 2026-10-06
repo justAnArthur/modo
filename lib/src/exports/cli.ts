@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, existsSync, copyFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadModoConfig } from '../lib/config.loader'
@@ -49,11 +49,21 @@ async function main() {
 
   try {
     switch (cmd) {
-      case 'init': await runInit(args.slice(1)); break
-      case 'dev': await runVite('dev', args.slice(1)); break
-      case 'build': await runVite('build', args.slice(1)); break
-      case 'add': await runAdd(args.slice(1)); break
-      case 'check': await runCheck(); break
+      case 'init':
+        await runInit(args.slice(1))
+        break
+      case 'dev':
+        await runVite('dev', args.slice(1))
+        break
+      case 'build':
+        await runVite('build', args.slice(1))
+        break
+      case 'add':
+        await runAdd(args.slice(1))
+        break
+      case 'check':
+        await runCheck()
+        break
       default:
         process.stderr.write(`Unknown command: ${cmd}\n\n${HELP}`)
         process.exit(1)
@@ -72,12 +82,10 @@ async function runInit(args: string[]) {
   if (existsSync(projectDir)) throw new Error(`Directory already exists: ${projectDir}`)
 
   copyDir(templatesRoot, 'default', projectDir)
-  forFileTree(projectDir, (file) => {
+  forFileTree(projectDir, file => {
     const text = readFileSync(file, 'utf8')
     if (text.includes('__NAME__') || text.includes('__DESCRIPTION__')) {
-      writeFileSync(file, text
-        .replaceAll('__NAME__', name)
-        .replaceAll('__DESCRIPTION__', `${name} design system`))
+      writeFileSync(file, text.replaceAll('__NAME__', name).replaceAll('__DESCRIPTION__', `${name} design system`))
     }
   })
   process.stdout.write(`Scaffolded ${projectDir}\n`)
@@ -115,9 +123,7 @@ async function runAdd(args: string[]) {
 
   const stubText = readFileSync(resolve(templatesRoot, 'stubs', t.stub), 'utf8')
   const outFile = resolve(outDir, `${id}.${t.ext}`)
-  writeFileSync(outFile, stubText
-    .replaceAll('__NAME__', id)
-    .replaceAll('__NAME_PASCAL__', pascalize(id)))
+  writeFileSync(outFile, stubText.replaceAll('__NAME__', id).replaceAll('__NAME_PASCAL__', pascalize(id)))
   process.stdout.write(`Created ${outFile}\n`)
 }
 
@@ -148,7 +154,7 @@ function kebab(s: string): string {
 function pascalize(s: string): string {
   return s
     .split(/[-_\s]+/)
-    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : ''))
+    .map(w => (w ? w.charAt(0).toUpperCase() + w.slice(1) : ''))
     .join('')
 }
 

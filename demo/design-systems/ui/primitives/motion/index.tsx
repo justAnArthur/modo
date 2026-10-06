@@ -20,11 +20,11 @@
  *   `spring.*`.
  */
 
-import type { ReactNode } from 'react'
 import { MotionConfig, motion } from 'motion/react'
-import { cn } from '../../lib/utils'
+import type { ReactNode } from 'react'
 import { spring } from '../../lib/springs'
 import { useControllableState } from '../../lib/use-controllable-state'
+import { cn } from '../../lib/utils'
 
 type SpringTier = keyof typeof spring
 
@@ -122,7 +122,14 @@ export default function Motion({
           animate={
             shown
               ? { opacity: 1, scale: 1, y: 0, visibility: 'visible', transition: enter }
-              : { opacity: 0, scale: 0.95, y: 6, visibility: 'visible', transition: leave, transitionEnd: { visibility: 'hidden' } }
+              : {
+                  opacity: 0,
+                  scale: 0.95,
+                  y: 6,
+                  visibility: 'visible',
+                  transition: leave,
+                  transitionEnd: { visibility: 'hidden' },
+                }
           }
         >
           {children}
@@ -132,7 +139,7 @@ export default function Motion({
             type="button"
             aria-pressed={shown}
             aria-label={`${shown ? 'Hide' : 'Show'} (spring.${tier})`}
-            onClick={() => setShown((v) => !v)}
+            onClick={() => setShown(v => !v)}
             className="inline-flex h-7 cursor-pointer items-center rounded-lg px-3 text-caption text-foreground shadow-[0_0_0_1px_var(--border)] outline-none transition-colors duration-fast hover:bg-hover active:bg-active focus-visible:ring-1 focus-visible:ring-focus-ring"
           >
             {shown ? 'Hide' : 'Show'}
@@ -146,6 +153,6 @@ export default function Motion({
   )
 }
 
-export { Motion }
-export { spring, exitFallbackMs } from '../../lib/springs'
+export { exitFallbackMs, spring } from '../../lib/springs'
 export type { MotionProps, SpringTier }
+export { Motion }

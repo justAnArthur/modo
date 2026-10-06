@@ -1,2 +1,2 @@
+export type { ShellConfig, SiteConfig } from '../lib/schema'
 export { defineConfig } from './config'
-export type { SiteConfig, ShellConfig } from '../lib/schema'

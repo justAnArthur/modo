@@ -1,5 +1,5 @@
-import { MuiProvider } from '../../theme'
 import MuiLink from '@mui/material/Link'
+import { MuiProvider } from '../../theme'
 
 /**
  * Inline anchor. Thin modo adapter over MUI's Link; the docs chrome

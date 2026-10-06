@@ -5,37 +5,36 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). modo item docs: TSDoc on the component, compound static (ChatMessage.FileThumbnail); file renamed to index.tsx (the former adapter is gone).
  */
 
-import { forwardRef, type ReactNode } from "react";
-import { motion, type HTMLMotionProps } from "motion/react";
-import { cn } from "../../_fluid/utils";
-import { spring } from "../../_fluid/springs";
-import { useShape } from "../../_fluid/shape-context";
-import { useSize, type SizeVariant } from "../../_fluid/size-context";
-import { useTouchPrimary } from "../../_fluid/use-touch-primary";
-import { FileThumbnail } from "./file-thumbnail";
+import { type HTMLMotionProps, motion } from 'motion/react'
+import { forwardRef, type ReactNode } from 'react'
+import { useShape } from '../../_fluid/shape-context'
+import { type SizeVariant, useSize } from '../../_fluid/size-context'
+import { spring } from '../../_fluid/springs'
+import { useTouchPrimary } from '../../_fluid/use-touch-primary'
+import { cn } from '../../_fluid/utils'
+import { FileThumbnail } from './file-thumbnail'
 
-interface ChatMessageProps
-  extends Omit<HTMLMotionProps<"div">, "children"> {
+interface ChatMessageProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
   /** Who sent the message. Drives alignment and bubble colour:
    *  `user` → right-aligned accent bubble, `assistant` → left-aligned plain text. */
-  from: "user" | "assistant";
+  from: 'user' | 'assistant'
   /** Optional attachments rendered as square thumbnails above the bubble. */
-  files?: File[];
+  files?: File[]
   /** Side length of each attachment thumbnail in pixels. Defaults to 64. */
-  thumbnailSize?: number;
+  thumbnailSize?: number
   /** Timestamp shown in the hover-revealed meta row, before the actions.
    *  User-message only — ignored on assistant replies. Caller pre-formats it
    *  (e.g. `"Wednesday 6:08 PM"`). */
-  time?: ReactNode;
+  time?: ReactNode
   /** Icon-only action buttons shown in the hover-revealed meta row (e.g. copy,
    *  edit, regenerate). Rendered next to the timestamp. */
-  actions?: ReactNode;
+  actions?: ReactNode
   /** Message body. When omitted the text bubble is dropped (attachment-only message). */
-  children?: ReactNode;
+  children?: ReactNode
   /** Pins the message to one step of the size ladder (see /docs/sizes) —
    *  compact tightens bubble type and padding. Omitted, it follows the
    *  surrounding SizeProvider. */
-  size?: SizeVariant;
+  size?: SizeVariant
 }
 
 // ─── ChatMessage ──────────────────────────────────────────────────────────
@@ -54,17 +53,14 @@ interface ChatMessageProps
  * @example {@include ./examples.mdx}
  */
 const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
-  (
-    { from, files, thumbnailSize = 64, time, actions, children, size, className, ...props },
-    ref
-  ) => {
-    const shape = useShape();
-    const compact = useSize(size).variant === "compact";
-    const isUser = from === "user";
+  ({ from, files, thumbnailSize = 64, time, actions, children, size, className, ...props }, ref) => {
+    const shape = useShape()
+    const compact = useSize(size).variant === 'compact'
+    const isUser = from === 'user'
     // Hover-reveal is unreachable on touch — keep the meta row visible there.
-    const isTouch = useTouchPrimary();
+    const isTouch = useTouchPrimary()
     // Timestamps are a user-message affordance; assistant replies show actions only.
-    const showTime = isUser && time != null;
+    const showTime = isUser && time != null
 
     return (
       <motion.div
@@ -73,21 +69,16 @@ const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
         initial={{ opacity: 0, y: 8, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={spring.moderate}
-        style={{ transformOrigin: isUser ? "bottom right" : "bottom left" }}
+        style={{ transformOrigin: isUser ? 'bottom right' : 'bottom left' }}
         className={cn(
-          "group flex max-w-[80%] flex-col gap-1.5",
-          isUser ? "items-end self-end" : "items-start self-start",
-          className
+          'group flex max-w-[80%] flex-col gap-1.5',
+          isUser ? 'items-end self-end' : 'items-start self-start',
+          className,
         )}
         {...props}
       >
         {files && files.length > 0 && (
-          <div
-            className={cn(
-              "flex flex-wrap gap-1.5",
-              isUser ? "justify-end" : "justify-start"
-            )}
-          >
+          <div className={cn('flex flex-wrap gap-1.5', isUser ? 'justify-end' : 'justify-start')}>
             {files.map((file, i) => (
               <FileThumbnail
                 key={`${file.name}-${file.size}-${file.lastModified}-${i}`}
@@ -97,26 +88,26 @@ const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
             ))}
           </div>
         )}
-        {children != null && children !== "" && (
+        {children != null && children !== '' && (
           <div
             className={cn(
-              "whitespace-pre-wrap break-words",
-              compact ? "py-1.5 text-[13px]" : "py-2 text-[14px]",
+              'whitespace-pre-wrap break-words',
+              compact ? 'py-1.5 text-[13px]' : 'py-2 text-[14px]',
               // User keeps the bubble chrome (rounded fill + horizontal padding);
               // the assistant reply is flush-left plain text with no background.
               isUser
                 ? cn(
                     shape.bg,
-                    compact ? "px-3" : "px-3.5",
+                    compact ? 'px-3' : 'px-3.5',
                     // `text-pretty` is reserved for settled user bubbles. On the
                     // assistant reply it's left off on purpose: `text-wrap: pretty`
                     // re-balances the last lines on every content change, so a
                     // word-by-word stream visibly reflows earlier words to new
                     // lines. Default (normal) wrapping appends left-to-right and
                     // stays put as the text grows.
-                    "text-pretty bg-[color-mix(in_oklab,var(--accent),var(--background)_45%)] text-accent-foreground"
+                    'text-pretty bg-[color-mix(in_oklab,var(--accent),var(--background)_45%)] text-accent-foreground',
                   )
-                : "text-foreground"
+                : 'text-foreground',
             )}
           >
             {children}
@@ -130,32 +121,30 @@ const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
           // show their actions alone. User rows read date → icons left-to-right.
           <div
             className={cn(
-              "flex items-center gap-2 px-1 leading-none text-muted-foreground select-none",
-              compact ? "text-[11px]" : "text-[12px]",
+              'flex items-center gap-2 px-1 leading-none text-muted-foreground select-none',
+              compact ? 'text-[11px]' : 'text-[12px]',
               !isTouch && [
-                "opacity-0 pointer-events-none transition-opacity duration-150",
-                "group-hover:opacity-100 group-hover:pointer-events-auto",
-                "group-focus-within:opacity-100 group-focus-within:pointer-events-auto",
-              ]
+                'opacity-0 pointer-events-none transition-opacity duration-150',
+                'group-hover:opacity-100 group-hover:pointer-events-auto',
+                'group-focus-within:opacity-100 group-focus-within:pointer-events-auto',
+              ],
             )}
           >
             {showTime && <span className="tabular-nums">{time}</span>}
-            {actions != null && (
-              <span className="flex items-center gap-0.5">{actions}</span>
-            )}
+            {actions != null && <span className="flex items-center gap-0.5">{actions}</span>}
           </div>
         )}
       </motion.div>
-    );
-  }
-);
+    )
+  },
+)
 
-ChatMessage.displayName = "ChatMessage";
+ChatMessage.displayName = 'ChatMessage'
 
 /* Compound member: the attachment renderer (forwardRef consts can't take
    expando assignments, so Object.assign carries the type). */
-Object.assign(ChatMessage, { FileThumbnail });
+Object.assign(ChatMessage, { FileThumbnail })
 
-export { ChatMessage };
-export type { ChatMessageProps };
-export default ChatMessage;
+export type { ChatMessageProps }
+export { ChatMessage }
+export default ChatMessage

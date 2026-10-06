@@ -15,7 +15,7 @@ export function PropTable({ itemId }: { itemId: string }) {
         </tr>
       </thead>
       <tbody>
-        {list.map((p) => (
+        {list.map(p => (
           <tr key={p.name}>
             <td>
               <code>{p.name}</code>

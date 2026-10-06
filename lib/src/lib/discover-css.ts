@@ -5,6 +5,6 @@ export function discoverCssForFile(filePath: string): string[] {
   const dir = resolve(filePath, '..')
   if (!existsSync(dir)) return []
   return readdirSync(dir)
-    .filter((f) => f.endsWith('.css'))
-    .map((f) => resolve(dir, f))
+    .filter(f => f.endsWith('.css'))
+    .map(f => resolve(dir, f))
 }

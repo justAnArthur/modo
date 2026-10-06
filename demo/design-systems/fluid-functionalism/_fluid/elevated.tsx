@@ -5,16 +5,12 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC).
  */
 
-import {
-  forwardRef,
-  type ComponentPropsWithoutRef,
-  type ReactNode,
-} from "react";
-import { cn } from "./utils";
-import { useSurface, SurfaceProvider } from "./surface-context";
-import { surfaceClasses } from "./surface-classes";
+import { type ComponentPropsWithoutRef, forwardRef, type ReactNode } from 'react'
+import { surfaceClasses } from './surface-classes'
+import { SurfaceProvider, useSurface } from './surface-context'
+import { cn } from './utils'
 
-interface ElevatedProps extends ComponentPropsWithoutRef<"div"> {
+interface ElevatedProps extends ComponentPropsWithoutRef<'div'> {
   /**
    * Steps above the current substrate.
    *
@@ -26,7 +22,7 @@ interface ElevatedProps extends ComponentPropsWithoutRef<"div"> {
    *   2 — dropdown / popover / select menu
    *   4 — dialog / modal
    */
-  offset: number;
+  offset: number
   /**
    * Override for the shadow level. Defaults to the computed surface level.
    *
@@ -35,27 +31,23 @@ interface ElevatedProps extends ComponentPropsWithoutRef<"div"> {
    * reads `shadow-surface-3` whether it opens on the page or inside a
    * dialog, even though its background tracks the substrate.
    */
-  shadowLevel?: number;
-  children?: ReactNode;
+  shadowLevel?: number
+  children?: ReactNode
 }
 
 const Elevated = forwardRef<HTMLDivElement, ElevatedProps>(
   ({ offset, shadowLevel, className, children, ...props }, ref) => {
-    const substrate = useSurface();
-    const level = Math.min(substrate + offset, 8);
+    const substrate = useSurface()
+    const level = Math.min(substrate + offset, 8)
     return (
       <SurfaceProvider value={level}>
-        <div
-          ref={ref}
-          className={cn(surfaceClasses(level, shadowLevel ?? level), className)}
-          {...props}
-        >
+        <div ref={ref} className={cn(surfaceClasses(level, shadowLevel ?? level), className)} {...props}>
           {children}
         </div>
       </SurfaceProvider>
-    );
-  }
-);
-Elevated.displayName = "Elevated";
+    )
+  },
+)
+Elevated.displayName = 'Elevated'
 
-export { Elevated };
+export { Elevated }

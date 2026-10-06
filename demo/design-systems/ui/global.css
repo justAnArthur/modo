@@ -38,7 +38,7 @@
  * stylesheet order.
  */
 
-@import '@fontsource-variable/inter/opsz.css';
+@import "@fontsource-variable/inter/opsz.css";
 
 /* ── Theme switching (upstream §2) ──
    `color-scheme` is what flips every light-dark() token; the classes work on
@@ -282,12 +282,12 @@ html.transitioning *::after {
    to a scroll container, or to a ScrollArea via `viewportClassName`. */
 
 @property --sf-start {
-  syntax: '<number>';
+  syntax: "<number>";
   inherits: false;
   initial-value: 1;
 }
 @property --sf-end {
-  syntax: '<number>';
+  syntax: "<number>";
   inherits: false;
   initial-value: 1;
 }

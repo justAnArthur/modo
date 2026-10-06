@@ -1,6 +1,6 @@
 import { items } from 'virtual:modo-items'
-import { tokens } from 'virtual:modo-tokens'
 import { shell } from 'virtual:modo-shell'
+import { tokens } from 'virtual:modo-tokens'
 import { usePath } from './router'
 
 const TIERS = ['primitives', 'components', 'blocks'] as const
@@ -11,9 +11,14 @@ export function SidebarNav() {
   const isActive = (href: string) => path === href || (href !== '/' && path.startsWith(href))
   return (
     <>
-      <NavSection title="Foundations" basePath="/docs/tokens" items={tokens.map((g) => ({ id: g.name, name: g.name }))} isActive={isActive} />
-      {TIERS.map((tier) => {
-        const list = items.filter((it) => it.tier === tier)
+      <NavSection
+        title="Foundations"
+        basePath="/docs/tokens"
+        items={tokens.map(g => ({ id: g.name, name: g.name }))}
+        isActive={isActive}
+      />
+      {TIERS.map(tier => {
+        const list = items.filter(it => it.tier === tier)
         if (!list.length) return null
         return <NavSection key={tier} title={cap(tier)} basePath={`/docs/${tier}`} items={list} isActive={isActive} />
       })}
@@ -21,7 +26,12 @@ export function SidebarNav() {
   )
 }
 
-function NavSection({ title, basePath, items, isActive }: {
+function NavSection({
+  title,
+  basePath,
+  items,
+  isActive,
+}: {
   title: string
   basePath: string
   items: ReadonlyArray<{ id: string; name: string }>
@@ -30,7 +40,7 @@ function NavSection({ title, basePath, items, isActive }: {
   const { Item, Section } = shell.Sidebar
   return (
     <Section title={title}>
-      {items.map((it) => (
+      {items.map(it => (
         <Item key={it.id} href={`${basePath}/${it.id}`} active={isActive(`${basePath}/${it.id}`)}>
           {it.name}
         </Item>

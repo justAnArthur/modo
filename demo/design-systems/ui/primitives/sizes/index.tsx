@@ -75,14 +75,14 @@ export default function SizeProvider({ size, defaultSize = 'default', children }
   )
 }
 
-export { SizeProvider }
+export type { SizeClasses, SizeVariant, TypeScaleRole, TypeScaleStep } from '../../lib/size-context'
 export {
-  useSize,
-  useSizeVariant,
-  useSizeContext,
-  useTypeScale,
   sizeMap,
   typeScale,
+  useSize,
+  useSizeContext,
+  useSizeVariant,
+  useTypeScale,
 } from '../../lib/size-context'
-export type { SizeVariant, SizeClasses, TypeScaleRole, TypeScaleStep } from '../../lib/size-context'
 export type { SizeProviderProps }
+export { SizeProvider }

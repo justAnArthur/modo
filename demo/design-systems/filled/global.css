@@ -6,10 +6,10 @@
 
 /* Host-owned chrome visuals (the lib ships structure only): dividers on the
    docs shell asides. */
-[data-modo='sidebar'] {
+[data-modo="sidebar"] {
   border-right: 1px solid var(--border);
 }
 
-[data-modo='panel'] {
+[data-modo="panel"] {
   border-left: 1px solid var(--border);
 }

@@ -28,7 +28,7 @@ export function Router(): ReactNode {
       const a = (e.target as HTMLElement | null)?.closest('a')
       if (!a) return
       const href = a.getAttribute('href')
-      if (!href || !href.startsWith('/')) return
+      if (!href?.startsWith('/')) return
       if (a.target && a.target !== '_self') return
       e.preventDefault()
       window.history.pushState({}, '', href)
@@ -53,5 +53,5 @@ export function Router(): ReactNode {
     if (m) return <Fragment key={path}>{r.render(m)}</Fragment>
   }
 
-  return <NotFoundPage/>
+  return <NotFoundPage />
 }

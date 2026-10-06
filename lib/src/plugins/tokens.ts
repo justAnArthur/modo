@@ -1,7 +1,7 @@
-import type { Plugin } from 'vite'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { parseCss, buildGroup, GROUPS, type Group, type GroupName } from '../lib/css'
+import type { Plugin } from 'vite'
+import { buildGroup, GROUPS, type Group, type GroupName, parseCss } from '../lib/css'
 
 interface Options {
   userRoot: string
@@ -11,7 +11,6 @@ const TOKENS_VIRTUAL = 'virtual:modo-tokens'
 const TOKENS_RESOLVED = '\0virtual:modo-tokens'
 const TOKENS_CSS_VIRTUAL = 'virtual:modo-tokens-css'
 const TOKENS_CSS_RESOLVED = '\0virtual:modo-tokens-css'
-
 
 interface ParsedTokensResult {
   groups: Group[]
@@ -35,14 +34,14 @@ function parseTokens(userRoot: string): ParsedTokensResult {
     cssFiles.push(file)
     const parsed = parseCss(src)
     if (group) {
-      byGroup.get(group)!.push(...parsed.filter((p) => p.group === group))
+      byGroup.get(group)!.push(...parsed.filter(p => p.group === group))
     } else {
       for (const v of parsed) {
         byGroup.get(v.group)!.push(v)
       }
     }
   }
-  const groups = GROUPS.map((g) => buildGroup(g, byGroup.get(g)!)).filter((g) => g.vars.length > 0)
+  const groups = GROUPS.map(g => buildGroup(g, byGroup.get(g)!)).filter(g => g.vars.length > 0)
   return { groups, errors, cssFiles }
 }
 
@@ -73,7 +72,7 @@ export function tokensPlugin(options: Options): Plugin {
       }
       if (id === TOKENS_CSS_RESOLVED) {
         const { cssFiles } = getCache()
-        const imports = cssFiles.map((f) => `import ${JSON.stringify(f)};`).join('\n')
+        const imports = cssFiles.map(f => `import ${JSON.stringify(f)};`).join('\n')
         return [imports, `export default '';`].join('\n')
       }
       return null

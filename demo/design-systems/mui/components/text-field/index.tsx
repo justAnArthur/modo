@@ -1,5 +1,5 @@
-import { MuiProvider } from '../../theme'
 import MuiTextField from '@mui/material/TextField'
+import { MuiProvider } from '../../theme'
 
 /**
  * Text input with label and helper text. Thin modo adapter over MUI's

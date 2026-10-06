@@ -54,8 +54,7 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
     // The doc block belongs to the component declaration, not to wherever the
     // `export default` statement happens to sit (often the bottom of the file,
     // below sub-components that may carry their own JSDoc).
-    const declStart =
-      fnStart !== -1 ? fnStart : cleaned.search(new RegExp(`(?:const|let|var)\\s+${name}\\s*=`))
+    const declStart = fnStart !== -1 ? fnStart : cleaned.search(new RegExp(`(?:const|let|var)\\s+${name}\\s*=`))
     jsdocAnchor = declStart !== -1 ? declStart : (identMatch.index ?? 0)
     if (fnStart === -1) {
       forwardRefPropsType =
@@ -113,7 +112,7 @@ function extractJsdocAbove(src: string, exportIndex: number): string | null {
 function normalizeJsdoc(raw: string): string {
   return raw
     .split('\n')
-    .map((line) => line.replace(/^\s*\*\s?/, ''))
+    .map(line => line.replace(/^\s*\*\s?/, ''))
     .join('\n')
     .trim()
 }
@@ -193,7 +192,7 @@ function finishProps(
 ): ExtractPropsResult {
   const props: ParsedProp[] = []
   const litBody = litText.slice(1, -1)
-  const members = splitTopLevel(litBody, ';\n').filter((s) => s.trim())
+  const members = splitTopLevel(litBody, ';\n').filter(s => s.trim())
 
   for (const member of members) {
     const memberText = member.trim()
@@ -214,7 +213,7 @@ function finishProps(
   attachJsdocToProps(litBody, props)
 
   for (const p of props) {
-    const d = destructured.find((dd) => dd.name === p.name)
+    const d = destructured.find(dd => dd.name === p.name)
     if (d?.default) p.default = d.default
   }
 
@@ -222,12 +221,10 @@ function finishProps(
 }
 
 function attachJsdocToProps(litBody: string, props: ParsedProp[]): void {
-  const re = /\/\*\*([\s\S]*?)\*\/\s*([A-Za-z_$][\w$]*)\s*\??:/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(litBody)) !== null) {
+  for (const m of litBody.matchAll(/\/\*\*([\s\S]*?)\*\/\s*([A-Za-z_$][\w$]*)\s*\??:/g)) {
     const name = m[2]!
     const desc = normalizeJsdoc(m[1] ?? '')
-    const prop = props.find((p) => p.name === name)
+    const prop = props.find(p => p.name === name)
     if (prop) prop.description = desc
   }
 }
@@ -281,9 +278,7 @@ function expandIncludes(text: string, readFile: ParseOptions['readFile'], errors
 
 function extractExamples(jsdoc: string, include: (text: string) => string, docs: string[]): ParsedExample[] {
   const out: ParsedExample[] = []
-  const re = /(?:^|\n)[ \t]*@example\b([\s\S]*?)(?=\n[ \t]*@example\b|$)/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(jsdoc)) !== null) {
+  for (const m of jsdoc.matchAll(/(?:^|\n)[ \t]*@example\b([\s\S]*?)(?=\n[ \t]*@example\b|$)/g)) {
     const raw = (m[1] ?? '').trim()
     const doc = raw.match(MDX_INCLUDE)?.[1]
     if (doc) {
@@ -308,10 +303,13 @@ function parseExampleBlock(block: string): ParsedExample | null {
   let description: string | undefined
   if (head) {
     const lines = head.split('\n')
-    const titleLine = lines.find((l) => l.trim().startsWith('# '))
+    const titleLine = lines.find(l => l.trim().startsWith('# '))
     if (titleLine) {
       title = titleLine.replace(/^#\s+/, '').trim()
-      const rest = lines.filter((l) => l !== titleLine).join('\n').trim()
+      const rest = lines
+        .filter(l => l !== titleLine)
+        .join('\n')
+        .trim()
       if (rest) description = rest
     } else {
       description = head

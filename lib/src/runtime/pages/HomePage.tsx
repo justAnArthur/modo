@@ -20,40 +20,43 @@ export function HomePage() {
         <section data-modo="section">
           <h2 data-modo="section-title">Tokens</h2>
           <ul>
-            {tokens.map((g) => (
+            {tokens.map(g => (
               <li key={g.name}>
-                <Link href={`/docs/tokens/${g.name}`}>{g.name}</Link>{' '}
-                <small>({g.vars.length} vars)</small>
+                <Link href={`/docs/tokens/${g.name}`}>{g.name}</Link> <small>({g.vars.length} vars)</small>
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      {TIERS.map((tier) => {
-        const list = items.filter((it) => it.tier === tier)
+      {TIERS.map(tier => {
+        const list = items.filter(it => it.tier === tier)
         if (!list.length) return null
-        return <TierSection key={tier} title={cap(tier)} tier={tier} list={list}/>
+        return <TierSection key={tier} title={cap(tier)} tier={tier} list={list} />
       })}
     </>
   )
 }
 
-function TierSection({ title, tier, list }: {
-  title: string
-  tier: Tier
-  list: typeof items
-}) {
+function TierSection({ title, tier, list }: { title: string; tier: Tier; list: typeof items }) {
   return (
     <section data-modo="section">
       <h2 data-modo="section-title">{title}</h2>
       <ul>
-        {list.map((it) => {
+        {list.map(it => {
           const { lead } = splitLead(it.description)
           return (
             <li key={it.id}>
               <Link href={`/docs/${tier}/${it.id}`}>{it.name}</Link>
-              {lead ? <> — <span><Inlines tokens={lead.tokens}/></span></> : null}
+              {lead ? (
+                <>
+                  {' '}
+                  —{' '}
+                  <span>
+                    <Inlines tokens={lead.tokens} />
+                  </span>
+                </>
+              ) : null}
             </li>
           )
         })}

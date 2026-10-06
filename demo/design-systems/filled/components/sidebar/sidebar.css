@@ -34,7 +34,7 @@
   background: var(--muted, #f4f4f5);
 }
 
-.my-sidebar-item[data-active='true'] {
+.my-sidebar-item[data-active="true"] {
   background: var(--muted, #f4f4f5);
   font-weight: 600;
 }

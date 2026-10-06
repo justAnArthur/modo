@@ -19,17 +19,17 @@
 
 import './surface.css'
 import {
-  forwardRef,
   type ComponentPropsWithoutRef,
   type ForwardRefExoticComponent,
+  forwardRef,
   type ReactNode,
   type RefAttributes,
-} from "react";
-import { cn } from "../../lib/utils";
-import { useSurface, SurfaceProvider } from "../../lib/surface-context";
-import { surfaceClasses } from "../../lib/surface-classes";
+} from 'react'
+import { surfaceClasses } from '../../lib/surface-classes'
+import { SurfaceProvider, useSurface } from '../../lib/surface-context'
+import { cn } from '../../lib/utils'
 
-interface ElevatedProps extends ComponentPropsWithoutRef<"div"> {
+interface ElevatedProps extends ComponentPropsWithoutRef<'div'> {
   /**
    * Steps above the current substrate.
    *
@@ -41,7 +41,7 @@ interface ElevatedProps extends ComponentPropsWithoutRef<"div"> {
    *   2 — dropdown / popover / select menu
    *   4 — dialog / modal
    */
-  offset: number;
+  offset: number
   /**
    * Override for the shadow level. Defaults to the computed surface level.
    *
@@ -50,16 +50,16 @@ interface ElevatedProps extends ComponentPropsWithoutRef<"div"> {
    * reads `shadow-surface-3` whether it opens on the page or inside a
    * dialog, even though its background tracks the substrate.
    */
-  shadowLevel?: number;
+  shadowLevel?: number
   /** Merged after the surface classes; radius and padding go here. */
-  className?: string;
+  className?: string
   /** Content of the surface. Everything inside reads this surface's level as its substrate. */
-  children?: ReactNode;
+  children?: ReactNode
 }
 
 interface ElevatedStatics {
   /** `SurfaceProvider` — set the substrate for a subtree by hand. */
-  Provider: typeof SurfaceProvider;
+  Provider: typeof SurfaceProvider
 }
 
 /**
@@ -90,26 +90,22 @@ interface ElevatedStatics {
  */
 const Elevated = forwardRef<HTMLDivElement, ElevatedProps>(
   ({ offset, shadowLevel, className, children, ...props }, ref) => {
-    const substrate = useSurface();
-    const level = Math.min(substrate + offset, 8);
+    const substrate = useSurface()
+    const level = Math.min(substrate + offset, 8)
     return (
       <SurfaceProvider value={level}>
-        <div
-          ref={ref}
-          className={cn(surfaceClasses(level, shadowLevel ?? level), className)}
-          {...props}
-        >
+        <div ref={ref} className={cn(surfaceClasses(level, shadowLevel ?? level), className)} {...props}>
           {children}
         </div>
       </SurfaceProvider>
-    );
-  }
-) as ForwardRefExoticComponent<ElevatedProps & RefAttributes<HTMLDivElement>> & ElevatedStatics;
-Elevated.displayName = "Elevated";
+    )
+  },
+) as ForwardRefExoticComponent<ElevatedProps & RefAttributes<HTMLDivElement>> & ElevatedStatics
+Elevated.displayName = 'Elevated'
 
 Object.assign(Elevated, { Provider: SurfaceProvider })
 
-export { Elevated, SurfaceProvider, useSurface, surfaceClasses };
-export type { ElevatedProps };
+export type { ElevatedProps }
+export { Elevated, SurfaceProvider, surfaceClasses, useSurface }
 
 export default Elevated

@@ -1,11 +1,11 @@
-import { Component, useState, type ReactNode } from 'react'
-import { shell } from 'virtual:modo-shell'
 import { byName, exampleScope } from 'virtual:modo-items'
+import { shell } from 'virtual:modo-shell'
+import { Component, type ReactNode, useState } from 'react'
 import { compileExampleBody, isCompiledExample } from '../../lib/example'
 import type { ParsedExample } from '../../lib/tsdoc'
-import { Markdown } from '../markdown'
 import { Anchor, slug } from '../anchor'
 import { CopyButton } from '../code-block'
+import { Markdown } from '../markdown'
 
 // Identifiers available to every example: the `examples` config module's
 // exports, then the items by name (items win on collision). Module-level so
@@ -16,8 +16,13 @@ const bindings: Record<string, unknown> = { ...exampleScope, ...byName }
 export function ItemExamples({ examples, children }: { examples: ParsedExample[]; children?: ReactNode }) {
   return (
     <section data-modo="section">
-      <h2 data-modo="section-title" id="examples">Examples<Anchor id="examples" label="Examples" /></h2>
-      {examples.map((ex, i) => <ExampleCard key={i} example={ex} />)}
+      <h2 data-modo="section-title" id="examples">
+        Examples
+        <Anchor id="examples" label="Examples" />
+      </h2>
+      {examples.map((ex, i) => (
+        <ExampleCard key={i} example={ex} />
+      ))}
       {children}
     </section>
   )
@@ -52,9 +57,7 @@ function ExampleCard({ example: { title, description, code } }: { example: Parse
           <Markdown source={description} />
         </div>
       ) : null}
-      <ExampleFrame code={code}>
-        {isCompiledExample(compiled) ? compiled(bindings) : null}
-      </ExampleFrame>
+      <ExampleFrame code={code}>{isCompiledExample(compiled) ? compiled(bindings) : null}</ExampleFrame>
     </div>
   )
 }
@@ -71,7 +74,13 @@ export function ExampleFrame({ code, children }: { code: string; children: React
       </div>
       <div data-modo="example-actions">
         <CopyButton text={code} />
-        <Button variant="ghost" size="icon-sm" aria-label={codeLabel} aria-pressed={open} onClick={() => setOpen((o) => !o)}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={codeLabel}
+          aria-pressed={open}
+          onClick={() => setOpen(o => !o)}
+        >
           <Icon name="code" label={codeLabel} />
         </Button>
       </div>
