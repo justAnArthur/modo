@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
-import { buildGroup, GROUPS, type Group, type GroupName, parseCss } from '../lib/css'
+import { buildGroup, GROUPS, type Group, type GroupName, parseCss, prefixGroup } from '../lib/css'
 import { emitRoutes } from './static-routes'
 
 interface Options {
@@ -33,13 +33,11 @@ function parseTokens(userRoot: string): ParsedTokensResult {
     const group = (GROUPS as readonly string[]).includes(base) ? (base as GroupName) : null
     const src = readFileSync(file, 'utf8')
     cssFiles.push(file)
-    const parsed = parseCss(src)
-    if (group) {
-      byGroup.get(group)!.push(...parsed.filter(p => p.group === group))
-    } else {
-      for (const v of parsed) {
-        byGroup.get(v.group)!.push(v)
-      }
+    // A file named for a group owns its unprefixed vars (ui's `--sm` in
+    // spacing.css); a var whose name claims another group goes there.
+    for (const v of parseCss(src)) {
+      const g = group ? (prefixGroup(v.name) ?? group) : v.group
+      byGroup.get(g)!.push({ ...v, group: g })
     }
   }
   const groups = GROUPS.map(g => buildGroup(g, byGroup.get(g)!)).filter(g => g.vars.length > 0)

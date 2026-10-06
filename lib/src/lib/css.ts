@@ -35,7 +35,7 @@ export interface FontSizeSwatch {
 export type Swatch = ColorSwatch | LengthSwatch | DurationSwatch | FontFamilySwatch | FontSizeSwatch
 
 export interface Group {
-  name: string
+  name: GroupName
   vars: Array<ParsedVar & { swatch?: Swatch }>
 }
 
@@ -79,13 +79,18 @@ export function parseCss(src: string): ParsedVar[] {
   return out
 }
 
-export function groupForVar(name: string): GroupName | null {
+export function groupForVar(name: string): GroupName {
+  return prefixGroup(name) ?? 'colors'
+}
+
+/** The group a var's name claims (`--radius-sm` → radius), null when unprefixed. */
+export function prefixGroup(name: string): GroupName | null {
   const exact = EXACT_TO_GROUP[name]
   if (exact) return exact
   for (const [prefix, group] of Object.entries(PREFIX_TO_GROUP)) {
     if (name.startsWith(prefix)) return group
   }
-  return 'colors'
+  return null
 }
 
 export function buildGroup(name: GroupName, vars: ParsedVar[]): Group {
