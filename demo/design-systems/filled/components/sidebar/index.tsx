@@ -23,7 +23,7 @@ function SidebarItem({
   children?: React.ReactNode
 }) {
   return (
-    <a href={href} data-active={active ? 'true' : undefined} className="my-sidebar-item">
+    <a href={href} aria-current={active ? 'page' : undefined} className="my-sidebar-item">
       {children}
     </a>
   )
@@ -36,13 +36,6 @@ function SidebarSection({ title, children }: { title: string; children?: React.R
       <div className="my-sidebar-section-items">{children}</div>
     </div>
   )
-}
-
-interface Sidebar {
-  /** A nav link. */
-  Item: typeof SidebarItem
-  /** A titled group of links. */
-  Section: typeof SidebarSection
 }
 
 Sidebar.Item = SidebarItem

@@ -1,6 +1,6 @@
 .my-badge {
   display: inline-flex;
-  padding: 2px var(--sm);
+  padding: var(--2xs) var(--sm);
   background: var(--accent);
   color: var(--bg);
   border-radius: var(--radius-sm);

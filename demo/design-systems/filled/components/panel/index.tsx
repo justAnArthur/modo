@@ -1,7 +1,7 @@
 import './panel.css'
 
 /**
- * Right-side panel wrapper surface.
+ * Muted surface that pads and groups its content.
  *
  * @example {@include ./examples.mdx}
  */
@@ -11,9 +11,5 @@ export default function Panel({
   /** Panel body. */
   children?: React.ReactNode
 }) {
-  return (
-    <div data-modo="shell-panel" className="my-panel">
-      {children}
-    </div>
-  )
+  return <div className="my-panel">{children}</div>
 }
