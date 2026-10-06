@@ -1,0 +1,56 @@
+import ContextMenu from './index'
+import { ArrowLeft, ArrowRight, Code, Copy, Link, Printer, RotateCw, Save, Scissors, Clipboard, Trash2 } from 'lucide-react'
+
+# Right click
+
+Right-click anywhere in the area (long-press on touch): the menu swells out of the exact point you pressed. Rows are Dropdown's, with a shortcut at the end.
+
+<ContextMenu>
+  <ContextMenu.Trigger className="flex h-56 w-full max-w-lg items-center justify-center rounded-xl border border-dashed border-border text-caption text-muted-foreground">
+    Right-click here
+  </ContextMenu.Trigger>
+  <ContextMenu.Content>
+    <ContextMenu.Item index={0} icon={ArrowLeft} label="Back" shortcut="⌘[" />
+    <ContextMenu.Item index={1} icon={ArrowRight} label="Forward" shortcut="⌘]" disabled />
+    <ContextMenu.Item index={2} icon={RotateCw} label="Reload" shortcut="⌘R" />
+    <ContextMenu.Separator />
+    <ContextMenu.Item index={3} icon={Save} label="Save as…" shortcut="⌘S" />
+    <ContextMenu.Item index={4} icon={Printer} label="Print…" shortcut="⌘P" />
+    <ContextMenu.Item index={5} icon={Link} label="Copy link" />
+    <ContextMenu.Separator />
+    <ContextMenu.Label>Developer</ContextMenu.Label>
+    <ContextMenu.Item index={6} icon={Code} label="Inspect" shortcut="⌥⌘I" />
+  </ContextMenu.Content>
+</ContextMenu>
+
+# Compact
+
+`size="compact"` pins the rows to the 28px step of the size ladder, for dense surfaces.
+
+<ContextMenu size="compact">
+  <ContextMenu.Trigger className="flex h-40 w-full max-w-lg items-center justify-center rounded-xl border border-dashed border-border text-caption text-muted-foreground">
+    Right-click a file
+  </ContextMenu.Trigger>
+  <ContextMenu.Content className="w-48">
+    <ContextMenu.Item index={0} icon={Scissors} label="Cut" shortcut="⌘X" />
+    <ContextMenu.Item index={1} icon={Copy} label="Copy" shortcut="⌘C" />
+    <ContextMenu.Item index={2} icon={Clipboard} label="Paste" shortcut="⌘V" disabled />
+    <ContextMenu.Separator />
+    <ContextMenu.Item index={3} icon={Trash2} label="Delete" shortcut="⌫" />
+  </ContextMenu.Content>
+</ContextMenu>
+
+# Morph
+
+`effect="morph"` grows the menu out of the point as one clean surface, without the goo.
+
+<ContextMenu>
+  <ContextMenu.Trigger className="flex h-40 w-full max-w-lg items-center justify-center rounded-xl border border-dashed border-border text-caption text-muted-foreground">
+    Right-click for a plain morph
+  </ContextMenu.Trigger>
+  <ContextMenu.Content effect="morph">
+    <ContextMenu.Item index={0} icon={Copy} label="Copy" shortcut="⌘C" />
+    <ContextMenu.Item index={1} icon={Link} label="Copy link" />
+    <ContextMenu.Item index={2} icon={Printer} label="Print…" shortcut="⌘P" />
+  </ContextMenu.Content>
+</ContextMenu>
