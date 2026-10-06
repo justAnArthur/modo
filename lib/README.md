@@ -18,8 +18,11 @@ npm install --save-dev @justanarthur/modo
 # scaffold a starter design system in the current directory
 modo init
 
-# build the docs site for production
+# build the docs site for production into ./dist (every route is a static page)
 modo build
+
+# …served under a sub-path, e.g. a GitHub Pages project site
+modo build --base /my-ds/
 
 # run the dev server
 modo dev

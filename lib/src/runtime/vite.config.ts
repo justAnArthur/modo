@@ -75,7 +75,7 @@ export default defineConfig(async () => {
       include: ['react', 'react-dom', 'react-dom/client', 'marked'],
     },
     build: {
-      outDir: resolve(RUNTIME_DIR, 'dist'),
+      outDir: resolve(USER_ROOT, 'dist'),
       emptyOutDir: true,
     },
   }

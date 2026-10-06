@@ -10,7 +10,7 @@
     "samples:shadcn": "bun scripts/run-design-systems.ts shadcn",
     "samples:fluid-functionalism": "bun scripts/run-design-systems.ts fluid-functionalism",
     "samples:mui": "bun scripts/run-design-systems.ts mui",
-    "build": "modo build",
+    "build": "bun scripts/run-design-systems.ts --build",
     "check": "tsc --noEmit"
   },
   "dependencies": {

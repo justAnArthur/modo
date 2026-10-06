@@ -1,7 +1,7 @@
 import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
-import { usePath } from './router'
+import { usePath, withBase } from './router'
 
 const TIERS = ['primitives', 'components', 'blocks'] as const
 const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1)
@@ -41,7 +41,7 @@ function NavSection({
   return (
     <Section title={title}>
       {items.map(it => (
-        <Item key={it.id} href={`${basePath}/${it.id}`} active={isActive(`${basePath}/${it.id}`)}>
+        <Item key={it.id} href={withBase(`${basePath}/${it.id}`)} active={isActive(`${basePath}/${it.id}`)}>
           {it.name}
         </Item>
       ))}

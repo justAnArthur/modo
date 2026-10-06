@@ -2,6 +2,7 @@ import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import { Inlines, splitLead } from '../markdown'
+import { withBase } from '../router'
 
 const Link = shell.Link
 const TIERS = ['primitives', 'components', 'blocks'] as const
@@ -22,7 +23,7 @@ export function HomePage() {
           <ul>
             {tokens.map(g => (
               <li key={g.name}>
-                <Link href={`/docs/tokens/${g.name}`}>{g.name}</Link> <small>({g.vars.length} vars)</small>
+                <Link href={withBase(`/docs/tokens/${g.name}`)}>{g.name}</Link> <small>({g.vars.length} vars)</small>
               </li>
             ))}
           </ul>
@@ -47,7 +48,7 @@ function TierSection({ title, tier, list }: { title: string; tier: Tier; list: t
           const { lead } = splitLead(it.description)
           return (
             <li key={it.id}>
-              <Link href={`/docs/${tier}/${it.id}`}>{it.name}</Link>
+              <Link href={withBase(`/docs/${tier}/${it.id}`)}>{it.name}</Link>
               {lead ? (
                 <>
                   {' '}

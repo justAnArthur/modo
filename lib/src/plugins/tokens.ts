@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
 import { buildGroup, GROUPS, type Group, type GroupName, parseCss } from '../lib/css'
+import { emitRoutes } from './static-routes'
 
 interface Options {
   userRoot: string
@@ -76,6 +77,17 @@ export function tokensPlugin(options: Options): Plugin {
         return [imports, `export default '';`].join('\n')
       }
       return null
+    },
+    generateBundle: {
+      // After Vite emits index.html.
+      order: 'post',
+      handler(_, bundle) {
+        emitRoutes(
+          this,
+          bundle,
+          getCache().groups.map(g => `docs/tokens/${g.name}`),
+        )
+      },
     },
     configureServer(server) {
       server.watcher.add(resolve(options.userRoot, 'tokens'))
