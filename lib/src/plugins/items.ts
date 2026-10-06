@@ -1,6 +1,7 @@
 import { resolve, sep } from 'node:path'
 import type { Plugin } from 'vite'
 import type { Bundler, Tier } from './bundle'
+import { emitRoutes } from './static-routes'
 
 interface Options {
   userRoot: string
@@ -104,6 +105,18 @@ export function itemsPlugin(options: Options): Plugin {
         return [imports, `export default '';`].join('\n')
       }
       return null
+    },
+    generateBundle: {
+      // After Vite emits index.html.
+      order: 'post',
+      async handler(_, bundle) {
+        const { items } = await bundler.get()
+        emitRoutes(
+          this,
+          bundle,
+          items.map(it => `docs/${it.tier}/${it.id}`),
+        )
+      },
     },
     configureServer(s) {
       // Watch the whole project (Vite already ignores node_modules / .git):

@@ -3,6 +3,13 @@ import { NotFoundPage } from './pages/NotFoundPage'
 import { routes } from './routes'
 
 const NAVIGATE = 'modo:navigate'
+// '' or the `--base` the site was built with, minus its trailing slash.
+const BASE = import.meta.env.BASE_URL.slice(0, -1)
+
+/** An app path (`/docs/...`) as a URL under the site's base. */
+export function withBase(path: string): string {
+  return BASE + path
+}
 
 function subscribe(onChange: () => void) {
   window.addEventListener('popstate', onChange)
@@ -13,9 +20,13 @@ function subscribe(onChange: () => void) {
   }
 }
 
-/** The current pathname; re-renders on client navigation and history moves. */
+/** The current app path; re-renders on client navigation and history moves. */
 export function usePath(): string {
-  return useSyncExternalStore(subscribe, () => window.location.pathname || '/')
+  // Static hosts redirect a route dir to its trailing-slash form.
+  return useSyncExternalStore(
+    subscribe,
+    () => window.location.pathname.slice(BASE.length).replace(/(.)\/$/, '$1') || '/',
+  )
 }
 
 export function Router(): ReactNode {
@@ -28,7 +39,7 @@ export function Router(): ReactNode {
       const a = (e.target as HTMLElement | null)?.closest('a')
       if (!a) return
       const href = a.getAttribute('href')
-      if (!href?.startsWith('/')) return
+      if (!href?.startsWith(`${BASE}/`)) return
       if (a.target && a.target !== '_self') return
       e.preventDefault()
       window.history.pushState({}, '', href)
