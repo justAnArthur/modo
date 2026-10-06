@@ -24,6 +24,14 @@
  *   `text-<role>[-compact]`; the hex focus-ring fallback →
  *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
+ * - The popup morphs out of its trigger through the shared morph layer
+ *   (`lib/use-morph.ts` + `MorphSurface`, goo by default on
+ *   `spring.moderate`; `Select.Content` takes `from` / `effect` /
+ *   `hideSource` / `tier`). The `scaleY` motion wrapper and the `actionsRef`
+ *   deferred unmount (with its fallback timer) are gone: the morph holds Base
+ *   UI's unmount itself. The popup paints its level through the morph's
+ *   surface layers instead of `render={<Elevated/>}`, re-providing the level
+ *   with `SurfaceProvider` as `Elevated` did.
  */
 
 import { Select as SelectPrimitive } from '@base-ui/react/select'
@@ -39,22 +47,26 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
 } from 'react'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import type { IconComponent } from '../../lib/icon-context'
-import { isDisabledRow, popupMotionClass, popupScrollAreaClass, popupViewportClass } from '../../lib/popup'
+import { MorphSurface } from '../../lib/morph-layers'
+import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../lib/popup'
 import { shapeMap, useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
-import { exitFallbackMs, spring } from '../../lib/springs'
+import { spring } from '../../lib/springs'
+import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
+import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { useKeyboardNavGate } from '../../lib/use-keyboard-nav-gate'
+import { type MorphOrigin, useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { ScrollArea } from '../../primitives/scroll-area'
 import { SizeProvider } from '../../primitives/sizes'
-import { Elevated } from '../../primitives/surface'
 
 // ---------------------------------------------------------------------------
 // Select context
@@ -63,8 +75,8 @@ import { Elevated } from '../../primitives/surface'
 // flipping, anchor tracking), dismissal (outside press, focus-out, Escape
 // nesting inside dialogs), list keyboard navigation + typeahead, combobox
 // ARIA, and the hidden form input. This layer keeps the
-// fluid-hover overlays, the spring open/close animation (via actionsRef
-// deferred unmount), and the animated checkmark.
+// fluid-hover overlays, the morph open/close animation (lib/use-morph.ts),
+// and the animated checkmark.
 // ---------------------------------------------------------------------------
 
 // How long a selection holds the popup open before closing, so the
@@ -76,7 +88,7 @@ const selectionAckMs = 300
 interface SelectContextValue {
   value: string
   open: boolean
-  actionsRef: React.RefObject<{ unmount: () => void } | null>
+  origin: React.RefObject<MorphOrigin>
 }
 
 const SelectContext = createContext<SelectContextValue | null>(null)
@@ -171,7 +183,7 @@ interface SelectProps {
 function Select({ children, value, defaultValue, onValueChange, disabled = false, name, required, size }: SelectProps) {
   const [internalValue, setInternalValue] = useState(defaultValue ?? '')
   const [open, setOpen] = useState(false)
-  const actionsRef = useRef<{ unmount: () => void } | null>(null)
+  const { origin, capture } = useMorphOrigin()
   const currentValue = value !== undefined ? value : internalValue
 
   const items = useMemo(() => collectSelectItems(children), [children])
@@ -200,7 +212,8 @@ function Select({ children, value, defaultValue, onValueChange, disabled = false
   // press, trigger toggle, focus-out) closes immediately and cancels any
   // pending acknowledgment; re-picking within the window restarts it.
   const handleOpenChange = useCallback(
-    (nextOpen: boolean, eventDetails: { reason: string }) => {
+    (nextOpen: boolean, eventDetails: { reason: string; trigger?: Element; event?: Event }) => {
+      if (nextOpen) capture(eventDetails)
       if (!nextOpen && eventDetails.reason === 'item-press') {
         cancelAckClose()
         ackTimeoutRef.current = window.setTimeout(() => {
@@ -212,10 +225,10 @@ function Select({ children, value, defaultValue, onValueChange, disabled = false
       cancelAckClose()
       setOpen(nextOpen)
     },
-    [cancelAckClose],
+    [cancelAckClose, capture],
   )
 
-  const ctx = useMemo(() => ({ value: currentValue, open, actionsRef }), [currentValue, open])
+  const ctx = useMemo(() => ({ value: currentValue, open, origin }), [currentValue, open, origin])
 
   // A size prop pins the whole compound (trigger + portalled popup — React
   // context crosses portals) to one step of the ladder.
@@ -227,7 +240,6 @@ function Select({ children, value, defaultValue, onValueChange, disabled = false
         onValueChange={handleValueChange}
         open={open}
         onOpenChange={handleOpenChange}
-        actionsRef={actionsRef}
         items={items}
         disabled={disabled}
         name={name}
@@ -356,121 +368,112 @@ SelectTrigger.displayName = 'SelectTrigger'
 // ---------------------------------------------------------------------------
 
 interface SelectContentProps {
+  /** Where the menu grows from (see Morph): the trigger, the pointer, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
+  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | React.RefObject<HTMLElement | null>
+  /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
+  effect?: 'goo' | 'morph' | 'slide' | 'fade'
+  /** Hide the trigger while open, so it reads as turning into the menu. Defaults to `false`. */
+  hideSource?: boolean
+  /** Spring tier of the morph. Defaults to `'moderate'`. */
+  tier?: 'moderate' | 'slow'
   /** Additional classes for the menu container. */
   className?: string
   /** `Select.Item`, `Select.Group`, `Select.Label`, `Select.Separator`. */
   children: ReactNode
 }
 
-const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(({ className, children }, ref) => {
-  const { open, value, actionsRef } = useSelectContext()
-  const shape = popupShape
-  const containerRef = useRef<HTMLDivElement>(null)
+const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
+  ({ from, effect, hideSource, tier = 'moderate', className, children }, ref) => {
+    const { open, value, origin } = useSelectContext()
+    const morph = useMorph(open, origin, { from, effect, hideSource, tier })
+    useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
+    // Lifts 2 levels off its substrate with a fixed shadow (see Elevated).
+    const level = Math.min(useSurface() + 2, 8)
+    const shape = popupShape
+    const containerRef = useRef<HTMLDivElement>(null)
 
-  const hover = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
-  const { activeIndex, setActiveIndex, itemRects, isMeasured, handlers, registerItem, remeasure } = hover
+    const hover = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
+    const { activeIndex, setActiveIndex, itemRects, isMeasured, handlers, registerItem, remeasure } = hover
 
-  const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
+    const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
 
-  // Keyboard focus ring gate: seeded from the trigger's :focus-visible at
-  // open, earned by navigation keys inside the popup.
-  const { keyboardNavRef, trackKeyboardNav } = useKeyboardNavGate(open)
-  const [checkedIndex, setCheckedIndex] = useState<number | undefined>(undefined)
+    // Keyboard focus ring gate: seeded from the trigger's :focus-visible at
+    // open, earned by navigation keys inside the popup.
+    const { keyboardNavRef, trackKeyboardNav } = useKeyboardNavGate(open)
+    const [checkedIndex, setCheckedIndex] = useState<number | undefined>(undefined)
 
-  // Release Base UI's deferred unmount once the exit tween has played.
-  // onAnimationComplete on the motion.div is the primary signal; this
-  // timeout is a fallback for throttled/background tabs where rAF-driven
-  // animation callbacks can stall. The popup exits with spring.fast, so the
-  // fallback tracks that tier's exit duration plus a safety buffer.
-  useEffect(() => {
-    if (open) return
-    const id = setTimeout(() => actionsRef.current?.unmount(), exitFallbackMs(spring.fast))
-    return () => clearTimeout(id)
-  }, [open, actionsRef])
+    // Fresh rects once per open. Measuring is the hook's job — it owns the
+    // one coalesced pass that item registration and container resizes both
+    // feed into, and a second pass from elsewhere is what used to land a
+    // corrected rect on an already-mounted overlay. The popup keeps its items
+    // registered while it sits hidden between opens, so registration alone
+    // would never trigger a fresh pass on reopen.
+    useEffect(() => {
+      if (!open) return
+      remeasure()
+    }, [open, remeasure])
 
-  // Fresh rects once per open. Measuring is the hook's job — it owns the
-  // one coalesced pass that item registration and container resizes both
-  // feed into, and a second pass from elsewhere is what used to land a
-  // corrected rect on an already-mounted overlay. The popup keeps its items
-  // registered while it sits hidden between opens, so registration alone
-  // would never trigger a fresh pass on reopen.
-  useEffect(() => {
-    if (!open) return
-    remeasure()
-  }, [open, remeasure])
-
-  // Detect the checked row. Deliberately does NOT remeasure on a value
-  // change while open: the rows haven't moved, so the published rects stay
-  // trustworthy and only checkedIndex switches — which lets the selected
-  // marker spring from the old row to the picked one (the selection
-  // acknowledgment) instead of unmounting and snapping.
-  useEffect(() => {
-    if (!open) return
-    // Double rAF: first waits for React commit, second for layout
-    let inner: number
-    const outer = requestAnimationFrame(() => {
-      inner = requestAnimationFrame(() => {
-        const container = containerRef.current
-        if (container) {
-          const items = Array.from(container.querySelectorAll('[data-fluid-hover-index]')) as HTMLElement[]
-          const idx = items.findIndex(el => el.getAttribute('data-value') === value)
-          setCheckedIndex(idx !== -1 ? idx : undefined)
-        }
+    // Detect the checked row. Deliberately does NOT remeasure on a value
+    // change while open: the rows haven't moved, so the published rects stay
+    // trustworthy and only checkedIndex switches — which lets the selected
+    // marker spring from the old row to the picked one (the selection
+    // acknowledgment) instead of unmounting and snapping.
+    useEffect(() => {
+      if (!open) return
+      // Double rAF: first waits for React commit, second for layout
+      let inner: number
+      const outer = requestAnimationFrame(() => {
+        inner = requestAnimationFrame(() => {
+          const container = containerRef.current
+          if (container) {
+            const items = Array.from(container.querySelectorAll('[data-fluid-hover-index]')) as HTMLElement[]
+            const idx = items.findIndex(el => el.getAttribute('data-value') === value)
+            setCheckedIndex(idx !== -1 ? idx : undefined)
+          }
+        })
       })
-    })
-    return () => {
-      cancelAnimationFrame(outer)
-      cancelAnimationFrame(inner)
-    }
-  }, [open, value])
+      return () => {
+        cancelAnimationFrame(outer)
+        cancelAnimationFrame(inner)
+      }
+    }, [open, value])
 
-  // Reset every overlay index as the close begins. checkedIndex otherwise
-  // lags one open behind value (picking an item closes the popup before the
-  // effect above re-syncs it), and a leftover activeIndex is worse: Base UI
-  // keeps the popup mounted through the exit tween, so on reopen the hover
-  // pill would still be sitting on the previously active row and spring from
-  // there to the row that auto-focus lands on.
-  useEffect(() => {
-    if (open) return
-    setCheckedIndex(undefined)
-    setActiveIndex(null)
-    setFocusedIndex(null)
-  }, [open, setActiveIndex])
+    // Reset every overlay index as the close begins. checkedIndex otherwise
+    // lags one open behind value (picking an item closes the popup before the
+    // effect above re-syncs it), and a leftover activeIndex is worse: Base UI
+    // keeps the popup mounted through the exit tween, so on reopen the hover
+    // pill would still be sitting on the previously active row and spring from
+    // there to the row that auto-focus lands on.
+    useEffect(() => {
+      if (open) return
+      setCheckedIndex(undefined)
+      setActiveIndex(null)
+      setFocusedIndex(null)
+    }, [open, setActiveIndex])
 
-  // Overlays read rects only once the hook reports the item set fully
-  // measured. Positioning one from an incomplete pass mounts it at the wrong
-  // row, and the correcting pass then springs it across the list.
-  const checkedRect = isMeasured && checkedIndex != null ? itemRects[checkedIndex] : null
-  const focusRect = isMeasured && focusedIndex !== null ? itemRects[focusedIndex] : null
+    // Overlays read rects only once the hook reports the item set fully
+    // measured. Positioning one from an incomplete pass mounts it at the wrong
+    // row, and the correcting pass then springs it across the list.
+    const checkedRect = isMeasured && checkedIndex != null ? itemRects[checkedIndex] : null
+    const focusRect = isMeasured && focusedIndex !== null ? itemRects[focusedIndex] : null
 
-  const contentCtx = useMemo(
-    () => ({ registerItem, activeIndex, checkedIndex }),
-    [registerItem, activeIndex, checkedIndex],
-  )
+    const contentCtx = useMemo(
+      () => ({ registerItem, activeIndex, checkedIndex }),
+      [registerItem, activeIndex, checkedIndex],
+    )
 
-  return (
-    <SelectPrimitive.Portal>
-      <SelectPrimitive.Positioner
-        side="bottom"
-        align="start"
-        sideOffset={6}
-        alignItemWithTrigger={false}
-        className="z-50 outline-none"
-      >
-        <motion.div
-          className={popupMotionClass}
-          initial={{ opacity: 0, y: 'var(--popup-enter-y)', scaleY: 0.96 }}
-          animate={open ? { opacity: 1, y: 0, scaleY: 1 } : { opacity: 0, y: 'var(--popup-enter-y)', scaleY: 0.96 }}
-          transition={open ? spring.fast : spring.fast.exit}
-          // Base UI defers unmount while actionsRef is set; release it once
-          // the exit spring has finished so the close animation fully plays.
-          onAnimationComplete={() => {
-            if (!open) actionsRef.current?.unmount()
-          }}
+    return (
+      <SelectPrimitive.Portal>
+        <SelectPrimitive.Positioner
+          side="bottom"
+          align="start"
+          sideOffset={6}
+          alignItemWithTrigger={false}
+          className="z-50 outline-none"
         >
           <SelectContentContext.Provider value={contentCtx}>
             <SelectPrimitive.Popup
-              render={<Elevated offset={2} shadowLevel={3} ref={ref} />}
+              ref={morph.popupRef}
               // Capture phase: the primitive moves focus during its own keydown
               // handling, so the nav flag must be set before then.
               onKeyDownCapture={trackKeyboardNav}
@@ -500,89 +503,102 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(({ classNam
                 setFocusedIndex(null)
                 setActiveIndex(null)
               }}
-              className={cn(
-                // min-w tracks the trigger via the Positioner's --anchor-width
-                // var, matching the pre-migration minWidth: triggerRect.width.
-                `flex flex-col min-w-[var(--anchor-width)] max-h-[min(300px,var(--available-height))] overflow-hidden ${shape.container} select-none outline-none`,
-                className,
-              )}
+              className="relative select-none outline-none"
             >
-              {/* The list scrolls inside a ScrollArea; this wrapper is the rows'
+              <SurfaceProvider value={level}>
+                <MorphSurface
+                  morph={morph}
+                  bg={SURFACE_BG[level]}
+                  shadow={SURFACE_SHADOW[3]}
+                  radius={shape.container}
+                  className={cn(
+                    // min-w tracks the trigger via the Positioner's --anchor-width
+                    // var, matching the pre-migration minWidth: triggerRect.width.
+                    `flex flex-col min-w-[var(--anchor-width)] max-h-[min(300px,var(--available-height))] overflow-hidden ${shape.container}`,
+                    className,
+                  )}
+                >
+                  {/* The list scrolls inside a ScrollArea; this wrapper is the rows'
                     offsetParent, so the overlays scroll with them. */}
-              <ScrollArea className={popupScrollAreaClass} viewportClassName={cn(popupViewportClass, 'scroll-fade')}>
-                <div ref={containerRef} className="relative flex flex-col p-1">
-                  {/* The three overlays are torn down as the close begins rather
+                  <ScrollArea
+                    className={popupScrollAreaClass}
+                    viewportClassName={cn(popupViewportClass, 'scroll-fade')}
+                  >
+                    <div ref={containerRef} className="relative flex flex-col p-1">
+                      {/* The three overlays are torn down as the close begins rather
                     than exit-animated, because an overlay still mounted when the
                     popup reopens is one AnimatePresence re-adopts under its old
                     key: `initial` never runs again, so it keeps the position of the
                     row it had before and animates from there to the new one. The
                     popup's own fade covers their disappearance. */}
-                  {/* Selected background */}
-                  {open && (
-                    <AnimatePresence>
-                      {checkedRect && (
-                        <motion.div
-                          className={`absolute ${shape.bg} bg-active pointer-events-none`}
-                          // Position lives in `animate` so an in-session value
-                          // change springs the marker to the picked row (the
-                          // selection acknowledgment). Safe against the reopen
-                          // slide: the `open &&` teardown means no marker
-                          // survives a close, and a fresh mount with
-                          // initial={false} renders snapped at these values.
-                          initial={false}
-                          animate={{
-                            top: checkedRect.top,
-                            left: checkedRect.left,
-                            width: checkedRect.width,
-                            height: checkedRect.height,
-                            opacity: 1,
-                          }}
-                          exit={{ opacity: 0, transition: spring.moderate.exit }}
-                          transition={{
-                            ...spring.moderate,
-                            opacity: { duration: spring.fast.duration },
-                          }}
-                        />
+                      {/* Selected background */}
+                      {open && (
+                        <AnimatePresence>
+                          {checkedRect && (
+                            <motion.div
+                              className={`absolute ${shape.bg} bg-active pointer-events-none`}
+                              // Position lives in `animate` so an in-session value
+                              // change springs the marker to the picked row (the
+                              // selection acknowledgment). Safe against the reopen
+                              // slide: the `open &&` teardown means no marker
+                              // survives a close, and a fresh mount with
+                              // initial={false} renders snapped at these values.
+                              initial={false}
+                              animate={{
+                                top: checkedRect.top,
+                                left: checkedRect.left,
+                                width: checkedRect.width,
+                                height: checkedRect.height,
+                                opacity: 1,
+                              }}
+                              exit={{ opacity: 0, transition: spring.moderate.exit }}
+                              transition={{
+                                ...spring.moderate,
+                                opacity: { duration: spring.fast.duration },
+                              }}
+                            />
+                          )}
+                        </AnimatePresence>
                       )}
-                    </AnimatePresence>
-                  )}
 
-                  {/* Hover background */}
-                  <FluidHoverHighlight hover={hover} hidden={!open} className={shape.bg} />
+                      {/* Hover background */}
+                      <FluidHoverHighlight hover={hover} hidden={!open} className={shape.bg} />
 
-                  {/* Focus ring */}
-                  {open && (
-                    <AnimatePresence>
-                      {focusRect && (
-                        <motion.div
-                          className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
-                          initial={false}
-                          animate={{
-                            left: focusRect.left - 2,
-                            top: focusRect.top - 2,
-                            width: focusRect.width + 4,
-                            height: focusRect.height + 4,
-                          }}
-                          exit={{ opacity: 0, transition: spring.fast.exit }}
-                          transition={{
-                            ...spring.fast,
-                            opacity: { duration: spring.fast.duration },
-                          }}
-                        />
+                      {/* Focus ring */}
+                      {open && (
+                        <AnimatePresence>
+                          {focusRect && (
+                            <motion.div
+                              className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
+                              initial={false}
+                              animate={{
+                                left: focusRect.left - 2,
+                                top: focusRect.top - 2,
+                                width: focusRect.width + 4,
+                                height: focusRect.height + 4,
+                              }}
+                              exit={{ opacity: 0, transition: spring.fast.exit }}
+                              transition={{
+                                ...spring.fast,
+                                opacity: { duration: spring.fast.duration },
+                              }}
+                            />
+                          )}
+                        </AnimatePresence>
                       )}
-                    </AnimatePresence>
-                  )}
 
-                  {children}
-                </div>
-              </ScrollArea>
+                      {children}
+                    </div>
+                  </ScrollArea>
+                </MorphSurface>
+              </SurfaceProvider>
             </SelectPrimitive.Popup>
           </SelectContentContext.Provider>
-        </motion.div>
-      </SelectPrimitive.Positioner>
-    </SelectPrimitive.Portal>
-  )
-})
+        </SelectPrimitive.Positioner>
+      </SelectPrimitive.Portal>
+    )
+  },
+)
 
 SelectContent.displayName = 'SelectContent'
 
