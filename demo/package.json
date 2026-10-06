@@ -6,10 +6,6 @@
   "description": "demo harness: multi-design-system runner + demo-switcher. each design system lives in design-systems/<name> as its own workspace package.",
   "scripts": {
     "dev": "bun scripts/run-design-systems.ts",
-    "samples:filled": "bun scripts/run-design-systems.ts filled",
-    "samples:shadcn": "bun scripts/run-design-systems.ts shadcn",
-    "samples:fluid-functionalism": "bun scripts/run-design-systems.ts fluid-functionalism",
-    "samples:mui": "bun scripts/run-design-systems.ts mui",
     "build": "bun scripts/run-design-systems.ts --build",
     "check": "tsc --noEmit"
   },

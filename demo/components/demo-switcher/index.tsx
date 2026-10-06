@@ -2,18 +2,7 @@ import './demo-switcher.css'
 import type { ResolvedShellExport } from 'virtual:modo-shell'
 import peers from './.peers.json'
 
-/**
- * Cross-kit navigation. Renders one `<option>` per peer in the host's
- * Select slot; picking a peer navigates to it. Hidden if fewer than
- * two peers.
- *
- * @example
- * # Default
- *
- * ```tsx
- * <DemoSwitcher />
- * ```
- */
+// Cross-kit navigation: one option per peer in the host's Select; hidden with fewer than two.
 export default function DemoSwitcher({ shell }: { shell: ResolvedShellExport }) {
   if (peers.length < 2) return null
   // A peer is an origin in dev (one server per port) and a path when built.

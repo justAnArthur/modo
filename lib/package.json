@@ -66,7 +66,6 @@
   },
   "scripts": {
     "build": "bunup",
-    "dev": "vite --config src/runtime/vite.config.ts",
     "check": "tsc --noEmit",
     "test": "bun test"
   },
