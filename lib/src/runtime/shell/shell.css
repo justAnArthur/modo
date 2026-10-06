@@ -812,8 +812,9 @@
   }
 }
 
-/* The chrome's own focus ring; a live example keeps its design system's. */
-:focus-visible:not(:is([data-modo="example-card-stage"], [data-modo="bento-stage"]) *) {
+/* The chrome's own focus ring. A live example keeps its design system's, and
+   so does whatever it portals out of the app (a popover, a dialog). */
+[data-modo="app"] :focus-visible:not(:is([data-modo="example-card-stage"], [data-modo="bento-stage"]) *) {
   outline: 2px solid var(--modo-ring);
   outline-offset: 2px;
 }
