@@ -1,3 +1,4 @@
+// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
 /*
  * Vendored from the Fluid Functionalism registry (@fluid namespace,
  * fluidfunctionalism.com — MIT License © 2026 Micka Touillaud), pulled with

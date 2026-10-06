@@ -1,3 +1,4 @@
+// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
 /*
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/button.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b

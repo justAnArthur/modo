@@ -1,3 +1,4 @@
+// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
 /*
  * Vendored from the shadcn/ui registry (style "radix-nova", base color
  * "neutral"), pulled with `bunx shadcn@latest add button` (shadcn CLI 4.21.0).

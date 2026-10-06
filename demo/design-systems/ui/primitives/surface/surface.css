@@ -1,3 +1,4 @@
+/* biome-ignore-all lint: vendored upstream code keeps its own values (see the header) */
 /*
  * Surface elevation module: the 8-level surface ladder and its 1:1 shadow
  * recipes, plus the per-scheme selection of the active --shadow-N alias.

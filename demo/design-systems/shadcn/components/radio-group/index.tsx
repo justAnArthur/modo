@@ -1,3 +1,4 @@
+// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
 import { RadioGroupItem, RadioGroup as ShadcnRadioGroup } from './radio-group'
 
 /**
