@@ -1,14 +1,12 @@
 import { config } from 'virtual:modo-config'
 import { items } from 'virtual:modo-items'
 import { tokens } from 'virtual:modo-tokens'
+import { TIERS } from '../../lib/tiers'
 import { ExamplePreview, hasPreview } from '../items/preview'
 import { cap, count } from '../text'
 import { GroupPreview } from '../tokens/token-page'
 import { declared } from '../tokens/token-row'
 import { Bento, BentoCard } from './bento'
-import type { Tier } from './TierPage'
-
-const TIERS: Tier[] = ['primitives', 'components', 'blocks']
 
 export function HomePage() {
   // Light and dark blocks declare a token twice; count it once.

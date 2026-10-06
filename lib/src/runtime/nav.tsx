@@ -2,10 +2,9 @@ import { config } from 'virtual:modo-config'
 import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
+import { TIERS } from '../lib/tiers'
 import { usePath, withBase } from './router'
 import { cap } from './text'
-
-const TIERS = ['primitives', 'components', 'blocks'] as const
 
 export function SidebarNav() {
   const path = usePath()

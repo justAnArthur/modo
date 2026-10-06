@@ -1,6 +1,7 @@
 import { resolve, sep } from 'node:path'
 import { normalizePath, type Plugin } from 'vite'
 import type { Bundler } from './bundle'
+import { cssModule } from './css-module'
 import { emitRoutes } from './static-routes'
 
 interface Options {
@@ -39,64 +40,34 @@ export function itemsPlugin(options: Options): Plugin {
 
       if (id === ITEMS_RESOLVED) {
         const { items, scope } = await bundler.get()
+        const key = (it: { tier: string; id: string }) => JSON.stringify(`${it.tier}:${it.id}`)
         // Bound by index: two ids that differ only in `-`/`_` stay distinct.
-        const compImports = items.map((it, i) => `import __c${i} from ${JSON.stringify(it.bundlePath)};`).join('\n')
-        const docImports = items
-          .flatMap((it, i) => it.exampleDocs.map((doc, j) => `import __x${i}_${j} from ${JSON.stringify(doc)};`))
-          .join('\n')
-        const docsJson = items
-          .map(
-            (it, i) =>
-              `${JSON.stringify(`${it.tier}:${it.id}`)}: [${it.exampleDocs.map((_, j) => `__x${i}_${j}`).join(',')}]`,
-          )
-          .join(',')
-        const itemsJson = items.map((it, i) => `${JSON.stringify(it.id)}: __c${i}`).join(',')
-        const byIdJson = items
-          .map(
-            (it, i) =>
-              `${JSON.stringify(`${it.tier}:${it.id}`)}: { id: ${JSON.stringify(it.id)}, tier: ${JSON.stringify(it.tier)}, name: ${JSON.stringify(it.name)}, description: ${JSON.stringify(it.description)}, props: ${JSON.stringify(it.props)}, Component: __c${i} }`,
-          )
-          .join(',')
-        const serializedJson = JSON.stringify(
-          items.map(it => ({
-            id: it.id,
-            tier: it.tier,
-            name: it.name,
-            description: it.description,
-            props: it.props,
-          })),
+        const compImports = items.map((it, i) => `import __c${i} from ${JSON.stringify(it.bundlePath)};`)
+        const docImports = items.flatMap((it, i) =>
+          it.exampleDocs.map((doc, j) => `import __x${i}_${j} from ${JSON.stringify(doc)};`),
         )
-        const examplesJson = items
-          .map(it => `${JSON.stringify(`${it.tier}:${it.id}`)}: ${JSON.stringify(it.examples)}`)
-          .join(',')
-        const propsJson = items
-          .map(it => `${JSON.stringify(`${it.tier}:${it.id}`)}: ${JSON.stringify(it.props)}`)
-          .join(',')
-        const byNameJson = items.map((it, i) => `${JSON.stringify(it.name)}: __c${i}`).join(',')
+        const meta = items.map(({ id, tier, name, description, props }) => ({ id, tier, name, description, props }))
         // Named exports of the `examples` module, in scope in every example.
         const scopeCode = scope
           ? [
               `import * as __scope from ${JSON.stringify(scope.bundlePath)};`,
               `export const exampleScope = Object.fromEntries(Object.entries(__scope).filter(([k]) => k !== 'default'));`,
-            ].join('\n')
-          : `export const exampleScope = {};`
-        const rebuild = [
-          `export const items = ${serializedJson};`,
-          `export const byId = {${byIdJson}};`,
-          `export const components = {${itemsJson}};`,
-          `export const byName = {${byNameJson}};`,
-          `export const primitives = byName;`,
-          `export const examples = {${examplesJson}};`,
-          `export const props = {${propsJson}};`,
-          `export const exampleDocs = {${docsJson}};`,
+            ]
+          : [`export const exampleScope = {};`]
+        return [
+          ...compImports,
+          ...docImports,
+          ...scopeCode,
+          `export const items = ${JSON.stringify(meta)};`,
+          `export const byId = Object.fromEntries(items.map(it => [it.tier + ':' + it.id, it]));`,
+          `export const byName = {${items.map((it, i) => `${JSON.stringify(it.name)}: __c${i}`).join(',')}};`,
+          `export const examples = {${items.map(it => `${key(it)}: ${JSON.stringify(it.examples)}`).join(',')}};`,
+          `export const exampleDocs = {${items.map((it, i) => `${key(it)}: [${it.exampleDocs.map((_, j) => `__x${i}_${j}`).join(',')}]`).join(',')}};`,
         ].join('\n')
-        return [compImports, docImports, scopeCode, rebuild].join('\n')
       }
       if (id === ITEMS_CSS_RESOLVED) {
         const { items } = await bundler.get()
-        const cssFiles = items.flatMap(it => it.cssFiles)
-        const imports = cssFiles.map(f => `import ${JSON.stringify(f)};`).join('\n')
-        return [imports, `export default '';`].join('\n')
+        return cssModule(items.flatMap(it => it.cssFiles))
       }
       return null
     },

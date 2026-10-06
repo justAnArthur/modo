@@ -1,8 +1,8 @@
-import { props as propsMap } from 'virtual:modo-items'
+import { byId } from 'virtual:modo-items'
 import { Markdown } from '../markdown'
 
 export function PropTable({ itemId }: { itemId: string }) {
-  const list = propsMap[itemId] ?? []
+  const list = byId[itemId]?.props ?? []
   if (!list.length) return <p>No documented props.</p>
   return (
     <table data-modo="prop-table">

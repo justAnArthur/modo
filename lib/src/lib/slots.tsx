@@ -1,111 +1,81 @@
-import type {
-  AnchorHTMLAttributes,
-  ButtonHTMLAttributes,
-  ComponentType,
-  HTMLAttributes,
-  ReactNode,
-  SelectHTMLAttributes,
-} from 'react'
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, HTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react'
+import type { SiteConfig } from './schema'
 
-/** A host component: its props are whatever the design system declares. */
-// biome-ignore lint/suspicious/noExplicitAny: no prop type admits every host component
-export type AnyComponent = ComponentType<any>
+export type { Tier } from './tiers'
 
-export type Tier = 'primitives' | 'components' | 'blocks'
+import type { Tier } from './tiers'
 
 export interface ParsedItemLite {
   name: string
   id: string
   tier: Tier
   props: Array<{ name: string; optional: boolean }>
-  /** Live Component, populated by the shell plugin when it bundles the item. */
-  Component?: AnyComponent
   /** Absolute path of the item's entry in the shared build (.modo-tmp/build/items/<tier>/<id>.mjs). */
-  bundleUrl?: string
+  bundleUrl: string
 }
 
 export interface SlotMember {
   requiredProps: string[]
-  fallback: string
   userTier: Tier
   name: string
 }
 
 export interface ShellSlot {
   name: 'Button' | 'Link' | 'Sidebar' | 'Code' | 'Select' | 'Icon'
-  type: 'atom' | 'organism'
   userTier: Tier
   requiredProps: string[]
-  fallback: string
   members?: Record<string, SlotMember>
 }
 
 export const SLOTS: ShellSlot[] = [
   {
     name: 'Button',
-    type: 'atom',
     userTier: 'primitives',
     requiredProps: ['children'],
-    fallback: 'primitives/button',
   },
   {
     name: 'Link',
-    type: 'atom',
     userTier: 'primitives',
     requiredProps: ['href', 'children'],
-    fallback: 'primitives/link',
   },
   {
     name: 'Code',
-    type: 'atom',
     userTier: 'primitives',
     requiredProps: ['children'],
-    fallback: 'primitives/code',
   },
   {
     name: 'Icon',
-    type: 'atom',
     userTier: 'primitives',
     requiredProps: ['name'],
-    fallback: 'primitives/icon',
   },
   {
     name: 'Select',
-    type: 'atom',
     userTier: 'components',
     requiredProps: ['value', 'onChange', 'options'],
-    fallback: 'components/select',
   },
   {
     name: 'Sidebar',
-    type: 'organism',
     userTier: 'components',
     requiredProps: ['children'],
-    fallback: 'components/sidebar',
     members: {
       Item: {
         name: 'Item',
         userTier: 'components',
         requiredProps: ['href', 'children'],
-        fallback: 'components/sidebar',
       },
       Section: {
         name: 'Section',
         userTier: 'components',
         requiredProps: ['title', 'children'],
-        fallback: 'components/sidebar',
       },
     },
   },
 ]
 
-export interface UserConfigLite {
-  name?: string
-  shell?: Partial<Record<ShellSlot['name'], string>>
-}
-
+// Components are never loaded node-side (the shared build is browser-only):
+// a slot resolves to a bundle path or a plain fallback's name, which the
+// shell's virtual module imports in the browser.
 export interface LoadedComponent {
-  Component: AnyComponent
   cssPaths: string[]
   source: 'config' | 'interface-match' | 'fallback'
   resolvedPath: string
@@ -212,27 +182,9 @@ export function PlainSidebarSection({ title, children }: { title: string; childr
   )
 }
 
-function fallbackFor(slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Icon' | 'SidebarRoot'): AnyComponent {
-  switch (slotName) {
-    case 'Button':
-      return PlainButton
-    case 'Link':
-      return PlainLink
-    case 'Code':
-      return PlainCode
-    case 'Select':
-      return PlainSelect
-    case 'Icon':
-      return PlainIcon
-    case 'SidebarRoot':
-      return PlainSidebarRoot
-  }
-}
-
 function omitted(slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Icon' | 'Sidebar'): LoadedComponent {
   const fallbackName = slotName === 'Sidebar' ? 'SidebarRoot' : slotName
   return {
-    Component: fallbackFor(fallbackName),
     cssPaths: [],
     source: 'fallback',
     resolvedPath: `fallback:${slotName}`,
@@ -241,7 +193,7 @@ function omitted(slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Icon' | 'Sid
 }
 
 export async function resolveShellSlots(
-  config: UserConfigLite,
+  config: Pick<SiteConfig, 'shell'>,
   userItems: ParsedItemLite[],
   loadUserPath: LoadUserPath,
   opts: ResolveOptions = {},
@@ -275,19 +227,7 @@ export async function resolveShellSlots(
       .sort((a, b) => a.id.localeCompare(b.id))
     if (candidates.length > 0) {
       const c = candidates[0]!
-      if (c.bundleUrl || c.Component) {
-        return {
-          Component: null as unknown as AnyComponent,
-          cssPaths: [],
-          source: 'interface-match',
-          resolvedPath: `${c.tier}/${c.id}`,
-          bundlePath: c.bundleUrl,
-        }
-      }
-      const loaded = await loadUserPath(`.modo-bundles/${c.tier}/${c.id}.mjs`)
-      if (loaded) {
-        return { ...loaded, source: 'interface-match', resolvedPath: `${c.tier}/${c.id}` }
-      }
+      return { cssPaths: [], source: 'interface-match', resolvedPath: `${c.tier}/${c.id}`, bundlePath: c.bundleUrl }
     }
 
     if (!silence) warnings.push(`Shell slot "${slotName}${member ? `.${member.name}` : ''}" could not be resolved`)
@@ -303,47 +243,28 @@ export async function resolveShellSlots(
     Sidebar: await pick('Sidebar'),
   }
 
-  const sidebarRootComp = rootPicks.Sidebar.Component as unknown as {
-    Item?: AnyComponent
-    Section?: AnyComponent
-  } | null
   const sidebarMembers = SLOTS.find(s => s.name === 'Sidebar')!.members!
 
-  function fromRoot(name: 'Item' | 'Section'): LoadedComponent | null {
-    const fn = sidebarRootComp?.[name]
-    if (typeof fn !== 'function') return null
-    return {
-      Component: fn,
-      cssPaths: rootPicks.Sidebar.cssPaths,
-      source: 'interface-match',
-      resolvedPath: `${rootPicks.Sidebar.resolvedPath}.${name}`,
-    }
-  }
-
-  // Components are never imported node-side (the shared build is browser-only),
-  // so the root's Item/Section statics can't be inspected here. Any user-provided
-  // root owns its members; the shell resolves `Root.Item ?? Item` at runtime.
+  // The root's Item/Section statics can't be inspected node-side: a host root
+  // owns its members, and the shell resolves `Root.Item ?? Item` in the browser.
   const sidebarFromRoot = rootPicks.Sidebar.source !== 'fallback'
   const fallbackItem: LoadedComponent = {
-    Component: PlainSidebarItem,
     cssPaths: [],
     source: 'fallback',
     resolvedPath: 'fallback:Sidebar.Item',
     fallbackName: 'PlainSidebarItem',
   }
   const fallbackSection: LoadedComponent = {
-    Component: PlainSidebarSection,
     cssPaths: [],
     source: 'fallback',
     resolvedPath: 'fallback:Sidebar.Section',
     fallbackName: 'PlainSidebarSection',
   }
 
-  const sidebarItem =
-    fromRoot('Item') ?? (sidebarFromRoot ? fallbackItem : await pick('Sidebar', sidebarMembers.Item, fallbackItem))
-  const sidebarSection =
-    fromRoot('Section') ??
-    (sidebarFromRoot ? fallbackSection : await pick('Sidebar', sidebarMembers.Section, fallbackSection))
+  const sidebarItem = sidebarFromRoot ? fallbackItem : await pick('Sidebar', sidebarMembers.Item, fallbackItem)
+  const sidebarSection = sidebarFromRoot
+    ? fallbackSection
+    : await pick('Sidebar', sidebarMembers.Section, fallbackSection)
 
   return {
     Button: rootPicks.Button,

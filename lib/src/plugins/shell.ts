@@ -1,17 +1,11 @@
 import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
 import type { SiteConfig } from '../lib/schema'
-import {
-  type AnyComponent,
-  type LoadedComponent,
-  type ParsedItemLite,
-  type ResolvedShell,
-  resolveShellSlots,
-} from '../lib/slots'
+import { type LoadedComponent, type ParsedItemLite, type ResolvedShell, resolveShellSlots } from '../lib/slots'
 import type { BundleResult, Bundler } from './bundle'
+import { cssModule } from './css-module'
 
 interface Options {
-  userRoot: string
   libDir: string
   bundler: Bundler
 }
@@ -40,7 +34,7 @@ type ShellResult = { shell: ResolvedShellExport; warnings: string[] }
 // only ever imported in the browser, never in node.
 async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
   const warnings: string[] = []
-  const config: Pick<SiteConfig, 'name' | 'shell' | 'panel'> = result.config ?? { name: '' }
+  const config: Pick<SiteConfig, 'shell' | 'panel'> = result.config ?? {}
   const userItems: ParsedItemLite[] = result.items.map(it => ({
     name: it.name,
     id: it.id,
@@ -53,7 +47,6 @@ async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
     const extra = result.extras.get(p)
     if (!extra?.exported) return null
     return {
-      Component: null as unknown as AnyComponent,
       cssPaths: extra.cssFiles,
       source: 'config',
       resolvedPath: p,
@@ -62,9 +55,7 @@ async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
     }
   }
 
-  const resolved = await resolveShellSlots({ name: config.name, shell: config.shell }, userItems, loadUserPath, {
-    warnings,
-  })
+  const resolved = await resolveShellSlots(config, userItems, loadUserPath, { warnings })
   const panelItems: PanelItemExport[] = []
   for (const item of config.panel?.items ?? []) {
     const lc = await loadUserPath(item.component)
@@ -162,18 +153,14 @@ export function shellPlugin(options: Options): Plugin {
           .map(s => `import { ${s.fallbackName} as __fb_${s.name} } from ${slotsModule};`)
           .join('\n')
         const imports = [
-          `import { primitives as __primitives } from 'virtual:modo-items';`,
           fallbackImports,
           ...[...slotBindings.filter(s => s.bundlePath), ...panelItemBindings].map(
             s => `import * as __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`,
           ),
         ].join('\n')
         const bindings = [
-          ...slotBindings.map(s => {
-            if (s.bundlePath) return `const ${s.name} = ${exportOf(s)};`
-            if (s.fallbackName) return `const ${s.name} = __fb_${s.name};`
-            return `const ${s.name} = null;`
-          }),
+          // Every slot has a bundle or a plain fallback.
+          ...slotBindings.map(s => `const ${s.name} = ${s.bundlePath ? exportOf(s) : `__fb_${s.name}`};`),
           ...panelItemBindings.map(s => `const ${s.name}_Comp = ${exportOf(s)};`),
         ].join('\n')
         const panelItemsJson = shell.panelItems
@@ -191,18 +178,14 @@ export function shellPlugin(options: Options): Plugin {
           `  Code: __Code,`,
           `  Select: __Select,`,
           `  Icon: __Icon,`,
-          `  Sidebar: { Root: __SidebarRoot, Item: (__SidebarRoot && __SidebarRoot.Item) ?? __SidebarItem, Section: (__SidebarRoot && __SidebarRoot.Section) ?? __SidebarSection },`,
-          `  primitives: __primitives,`,
+          `  Sidebar: { Root: __SidebarRoot, Item: __SidebarRoot.Item ?? __SidebarItem, Section: __SidebarRoot.Section ?? __SidebarSection },`,
           `};`,
           `export const panelItems = [${panelItemsJson}];`,
-          `export const shellCSS = '';`,
-          `export default shell;`,
         ].join('\n')
       }
       if (id === SHELL_CSS_RESOLVED) {
         const { shell } = await getCache()
-        const imports = shell.cssFiles.map(f => `import ${JSON.stringify(f)};`).join('\n')
-        return [imports, `export default '';`].join('\n')
+        return cssModule(shell.cssFiles)
       }
       return null
     },

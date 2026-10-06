@@ -36,7 +36,7 @@ export function OtherTokens({ vars }: { vars: Var[] }) {
   )
 }
 
-export function TokenList({ vars }: { vars: Var[] }) {
+function TokenList({ vars }: { vars: Var[] }) {
   return (
     <div data-modo="token-list">
       {vars.map(v => (
@@ -59,7 +59,7 @@ export function TokenLabel({ v, children }: { v: Var; children?: ReactNode }) {
   )
 }
 
-export function TokenRow({ v }: { v: Var }) {
+function TokenRow({ v }: { v: Var }) {
   const sw = v.swatch
   return (
     <div data-modo="token-row">
@@ -85,8 +85,6 @@ function TokenSwatch({ sw }: { sw?: Swatch }): ReactElement | null {
     </span>
   )
   switch (sw.kind) {
-    case 'color':
-      return box({ background: sw.hex })
     case 'length':
       return box({ width: Math.min(sw.px, 80) })
     case 'duration':
@@ -102,8 +100,6 @@ function TokenSwatch({ sw }: { sw?: Swatch }): ReactElement | null {
 
 function meta(sw: Swatch): string {
   switch (sw.kind) {
-    case 'color':
-      return sw.hex
     case 'length':
       return `${sw.px}px`
     case 'duration':

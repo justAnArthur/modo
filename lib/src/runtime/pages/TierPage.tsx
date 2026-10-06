@@ -1,10 +1,9 @@
 import { items } from 'virtual:modo-items'
+import type { Tier } from '../../lib/tiers'
 import { ExamplePreview } from '../items/preview'
 import { Inlines, splitLead } from '../markdown'
 import { cap, count } from '../text'
 import { Bento, BentoCard } from './bento'
-
-export type Tier = 'primitives' | 'components' | 'blocks'
 
 const LEAD: Record<Tier, string> = {
   primitives: 'The smallest building blocks of this design system.',

@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm'
 import { loadModoConfig } from '../lib/config.loader'
 import { discoverCssForFile } from '../lib/discover-css'
 import type { SiteConfig } from '../lib/schema'
+import { TIERS, type Tier } from '../lib/tiers'
 import { type ParsedExample, type ParsedItem, parseItemSource } from '../lib/tsdoc'
 import { remarkModoExamples } from './mdx-examples'
 
@@ -14,10 +15,6 @@ import { remarkModoExamples } from './mdx-examples'
 // `splitting: true` build, so a module imported by several entries (a React
 // context, a theme provider) lands in one shared chunk and exists once at
 // runtime. Output: <userRoot>/.modo-tmp/build/{items,usr,scope,chunks}/…
-
-export type Tier = 'primitives' | 'components' | 'blocks'
-
-const TIERS: Tier[] = ['primitives', 'components', 'blocks']
 
 export interface BundledItem {
   id: string
@@ -53,8 +50,6 @@ export interface BundleResult {
   extras: Map<string, BundledExtra>
   /** The `examples` module; `exports` excludes `default`. */
   scope: { bundlePath: string; exports: string[] } | null
-  errors: string[]
-  warnings: string[]
 }
 
 export interface Bundler {
@@ -74,14 +69,9 @@ interface EntryFailure {
   messages: Message[]
 }
 
-const LEGACY_FLAT =
-  /^(?:primitives|components|blocks|usr)-.+-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.mjs$/
-
 export function createBundler(opts: { userRoot: string; configPath: string }): Bundler {
   const { userRoot, configPath } = opts
-  const tmp = resolve(userRoot, '.modo-tmp')
-  const outdir = resolve(tmp, 'build')
-  removeLegacyBundles(tmp)
+  const outdir = resolve(userRoot, '.modo-tmp', 'build')
 
   let current: Promise<BundleResult> | null = null
   let last: Promise<unknown> = Promise.resolve()
@@ -98,7 +88,6 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
       return null
     })
 
-    // ── items ────────────────────────────────────────────────────────────
     const parsed: Array<Omit<BundledItem, 'bundlePath'> & { key: string }> = []
     for (const tier of TIERS) {
       const tierDir = resolve(userRoot, tier)
@@ -137,7 +126,6 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
       }
     }
 
-    // ── entry table, deduped by file ─────────────────────────────────────
     const keyByFile = new Map<string, string>()
     for (const it of parsed) keyByFile.set(it.file, it.key)
     const usedKeys = new Set(keyByFile.values())
@@ -176,7 +164,6 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
 
     const entries: Entry[] = [...keyByFile].map(([file, key]) => ({ key, file }))
 
-    // ── build ────────────────────────────────────────────────────────────
     const built = await buildWithIsolation(entries, userRoot, outdir, failures, warnings)
     sweep(outdir, built.outputs)
 
@@ -224,8 +211,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     }
 
     lastReport = await report(failures, errors, warnings, lastReport)
-    errors.push(...failures.map(f => `${f.key}: ${f.messages.map(m => m.text).join('; ')}`))
-    return { config, items, extras, scope, errors, warnings }
+    return { config, items, extras, scope }
   }
 
   return {
@@ -234,8 +220,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
       if (!current) {
         // Builds share one outdir, so never let two overlap (a sweep would
         // delete the other build's fresh outputs).
-        const prev = last
-        current = prev.then(run, run)
+        current = last.then(run)
         last = current.catch(() => {})
       }
       return current
@@ -246,8 +231,6 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
   }
 }
 
-// ── esbuild ──────────────────────────────────────────────────────────────
-
 function baseOptions(userRoot: string, outdir: string): BuildOptions {
   return {
     absWorkingDir: userRoot,
@@ -256,7 +239,6 @@ function baseOptions(userRoot: string, outdir: string): BuildOptions {
     outdir,
     outExtension: { '.js': '.mjs' },
     chunkNames: 'chunks/[name]-[hash]',
-    assetNames: 'assets/[name]-[hash]',
     // Bundles run in the browser (served via /@fs); 'browser' resolves
     // CJS `main`-only and browser-conditional packages that 'neutral'
     // cannot (e.g. react-remove-scroll, hoist-non-react-statics).
@@ -388,8 +370,6 @@ async function buildWithIsolation(
   return built
 }
 
-// ── reporting ────────────────────────────────────────────────────────────
-
 async function report(
   failures: EntryFailure[],
   errors: string[],
@@ -428,8 +408,6 @@ async function report(
   if (text && text !== previous) process.stderr.write(text)
   return text
 }
-
-// ── files ────────────────────────────────────────────────────────────────
 
 /** `./x` → x (file), x/index.{tsx,ts,jsx,js} (dir) or x.{tsx,ts,jsx,js}. */
 function resolveUserFile(userRoot: string, p: string): string | null {
@@ -480,13 +458,5 @@ function sweep(outdir: string, keep: Set<string>): void {
     process.stderr.write(
       `[modo:bundle] warning: could not clean ${relative(process.cwd(), outdir)}: ${(err as Error).message}\n`,
     )
-  }
-}
-
-/** Pre-shared-build versions wrote flat `<tier|usr>-<id>-<uuid>.mjs` files into .modo-tmp. */
-function removeLegacyBundles(tmp: string): void {
-  if (!existsSync(tmp)) return
-  for (const name of readdirSync(tmp)) {
-    if (LEGACY_FLAT.test(name)) rmSync(join(tmp, name), { force: true })
   }
 }

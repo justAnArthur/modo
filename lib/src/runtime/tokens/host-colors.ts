@@ -7,7 +7,7 @@
 
 /** The function that turns this raw value into a color, '' when it already is
     one, or null when it is not a color at all (a shadow, a length, a ratio). */
-export function colorWrapper(value: string): string | null {
+function colorWrapper(value: string): string | null {
   const v = value.trim()
   if (!v) return null
   if (CSS.supports('color', v)) return ''

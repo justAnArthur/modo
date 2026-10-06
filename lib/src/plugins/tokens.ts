@@ -2,6 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve, sep } from 'node:path'
 import type { Plugin } from 'vite'
 import { buildGroup, GROUPS, type Group, type GroupName, parseCss, prefixGroup } from '../lib/css'
+import { cssModule } from './css-module'
 import { emitRoutes } from './static-routes'
 
 interface Options {
@@ -15,17 +16,15 @@ const TOKENS_CSS_RESOLVED = '\0virtual:modo-tokens-css'
 
 interface ParsedTokensResult {
   groups: Group[]
-  errors: string[]
   cssFiles: string[]
 }
 
 function parseTokens(userRoot: string): ParsedTokensResult {
   const tokensDir = resolve(userRoot, 'tokens')
-  const errors: string[] = []
   const cssFiles: string[] = []
   const byGroup = new Map<GroupName, ReturnType<typeof parseCss>>()
   for (const g of GROUPS) byGroup.set(g, [])
-  if (!existsSync(tokensDir)) return { groups: [], errors, cssFiles }
+  if (!existsSync(tokensDir)) return { groups: [], cssFiles }
   // Sorted: the files' import order is the cascade order.
   for (const entry of readdirSync(tokensDir).sort()) {
     if (!entry.endsWith('.css')) continue
@@ -42,7 +41,7 @@ function parseTokens(userRoot: string): ParsedTokensResult {
     }
   }
   const groups = GROUPS.map(g => buildGroup(g, byGroup.get(g)!)).filter(g => g.vars.length > 0)
-  return { groups, errors, cssFiles }
+  return { groups, cssFiles }
 }
 
 export function tokensPlugin(options: Options): Plugin {
@@ -63,17 +62,11 @@ export function tokensPlugin(options: Options): Plugin {
     },
     load(id) {
       if (id === TOKENS_RESOLVED) {
-        const { groups, errors } = getCache()
-        return [
-          `export const tokens = ${JSON.stringify(groups)};`,
-          `export const errors = ${JSON.stringify(errors)};`,
-          `export default tokens;`,
-        ].join('\n')
+        return `export const tokens = ${JSON.stringify(getCache().groups)};`
       }
       if (id === TOKENS_CSS_RESOLVED) {
         const { cssFiles } = getCache()
-        const imports = cssFiles.map(f => `import ${JSON.stringify(f)};`).join('\n')
-        return [imports, `export default '';`].join('\n')
+        return cssModule(cssFiles)
       }
       return null
     },

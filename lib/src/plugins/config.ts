@@ -1,9 +1,11 @@
 import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
 import { loadModoConfig } from '../lib/config.loader'
+import { cssModule } from './css-module'
 
 interface Options {
   userRoot: string
+  configPath: string
 }
 
 const VIRTUAL_ID = 'virtual:modo-config'
@@ -22,15 +24,13 @@ export function configPlugin(options: Options): Plugin {
     },
     async load(id) {
       if (id !== RESOLVED_ID && id !== CSS_RESOLVED_ID) return null
-      const configPath = process.env.MODO_CONFIG_PATH ?? resolve(options.userRoot, 'modo.config.ts')
-      const cfg = await loadModoConfig(configPath)
+      const cfg = await loadModoConfig(options.configPath)
 
       if (id === RESOLVED_ID) {
-        return [`export const config = ${JSON.stringify(cfg)};`, `export default config;`].join('\n')
+        return `export const config = ${JSON.stringify(cfg)};`
       }
 
-      if (!cfg.css) return `export default '';`
-      return [`import ${JSON.stringify(resolve(options.userRoot, cfg.css))};`, `export default '';`].join('\n')
+      return cssModule(cfg.css ? [resolve(options.userRoot, cfg.css)] : [])
     },
   }
 }

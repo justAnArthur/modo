@@ -1,4 +1,5 @@
 import { byId, exampleDocs, examples as examplesMap } from 'virtual:modo-items'
+import type { Tier } from '../../lib/tiers'
 import { Heading } from '../anchor'
 import { Blocks, Inlines, splitLead } from '../markdown'
 import { mdxComponents } from '../mdx'
@@ -6,7 +7,7 @@ import { cap } from '../text'
 import { ExampleBoundary, ItemExamples } from './examples'
 import { PropTable } from './prop-table'
 
-export function ItemPage({ tier, id }: { tier: 'primitives' | 'components' | 'blocks'; id: string }) {
+export function ItemPage({ tier, id }: { tier: Tier; id: string }) {
   const entry = byId[`${tier}:${id}`]
   if (!entry) {
     return (

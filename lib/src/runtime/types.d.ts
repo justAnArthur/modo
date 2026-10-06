@@ -1,87 +1,58 @@
 // Import types throughout: a relative import declaration isn't allowed in an
 // ambient module and, under skipLibCheck, silently types as any.
+
+// biome-ignore lint/suspicious/noExplicitAny: a host component's props are whatever its design system declares
+type ModoHostComponent = import('react').ComponentType<any>
+
 declare module 'virtual:modo-config' {
   export const config: import('../lib/schema').SiteConfig
-  export default config
-}
-
-declare module 'virtual:modo-config-css' {
-  const css: string
-  export default css
 }
 
 declare module 'virtual:modo-tokens' {
   export const tokens: import('../lib/css').Group[]
-  export const errors: string[]
-}
-
-declare module 'virtual:modo-tokens-css' {
-  const css: string
-  export default css
 }
 
 declare module 'virtual:modo-items' {
-  import type { ComponentType } from 'react'
-  export type ItemProp = {
-    name: string
-    type: string
-    optional: boolean
-    default?: string
-    description?: string
-  }
   export type ItemEntry = {
     id: string
-    tier: 'primitives' | 'components' | 'blocks'
+    tier: import('../lib/tiers').Tier
     name: string
     description: string
-    props: ItemProp[]
-    Component: ComponentType<any>
+    props: import('../lib/tsdoc').ParsedProp[]
   }
   export const items: ItemEntry[]
+  /** The items keyed `tier:id`. */
   export const byId: Record<string, ItemEntry>
-  export const components: Record<string, ComponentType<any>>
-  export const byName: Record<string, ComponentType<any>>
-  export const primitives: Record<string, ComponentType<any>>
-  export const examples: Record<string, Array<{ title?: string; description?: string; code: string }>>
-  export const props: Record<string, ItemProp[]>
+  /** Item components by name, as examples bind them. */
+  export const byName: Record<string, ModoHostComponent>
+  export const examples: Record<string, import('../lib/tsdoc').ParsedExample[]>
   /** Compiled `@example {@include ./x.mdx}` files per `tier:id`. */
-  export const exampleDocs: Record<string, ComponentType<{ components?: Record<string, unknown> }>[]>
+  export const exampleDocs: Record<string, import('react').ComponentType<{ components?: Record<string, unknown> }>[]>
   /** Named exports of the `examples` config module; `{}` when unset. */
   export const exampleScope: Record<string, unknown>
 }
 
-declare module 'virtual:modo-items-css' {
-  const css: string
-  export default css
-}
-
 declare module 'virtual:modo-shell' {
-  import type { ComponentType } from 'react'
   export type PanelItemExport = {
     label: string
     bundlePath: string
-    Component: ComponentType<any>
+    Component: ModoHostComponent
     cssPaths: string[]
   }
   export type ResolvedShellExport = {
-    Button: ComponentType<any>
-    Link: ComponentType<any>
-    Code: ComponentType<any>
-    Select: ComponentType<any>
-    Icon: ComponentType<{ name: 'code' | 'copy' | 'check' | 'link'; label: string }>
-    Sidebar: { Root: ComponentType<any>; Item: ComponentType<any>; Section: ComponentType<any> }
-    primitives: Record<string, ComponentType<any>>
+    Button: ModoHostComponent
+    Link: ModoHostComponent
+    Code: ModoHostComponent
+    Select: ModoHostComponent
+    Icon: import('react').ComponentType<{ name: 'code' | 'copy' | 'check' | 'link'; label: string }>
+    Sidebar: { Root: ModoHostComponent; Item: ModoHostComponent; Section: ModoHostComponent }
   }
   export const shell: ResolvedShellExport
   export const panelItems: PanelItemExport[]
-  export const shellCSS: string
 }
 
-declare module 'virtual:modo-shell-css' {
-  const css: string
-  export default css
-}
-
-declare module 'virtual:modo-warnings' {
-  export const warnings: string[]
-}
+// Stylesheet-only modules.
+declare module 'virtual:modo-config-css' {}
+declare module 'virtual:modo-tokens-css' {}
+declare module 'virtual:modo-items-css' {}
+declare module 'virtual:modo-shell-css' {}

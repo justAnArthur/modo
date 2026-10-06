@@ -1,9 +1,8 @@
-import { byName, exampleScope } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { isValidElement, type ReactNode } from 'react'
 import { Heading, slug } from './anchor'
 import { CodeBlock } from './code-block'
-import { ExampleFrame } from './items/examples'
+import { bindings, ExampleFrame } from './items/examples'
 import { contentHref } from './router'
 
 function textOf(node: ReactNode): string {
@@ -46,8 +45,7 @@ function Pre({ children }: { children?: ReactNode }) {
  * (lib/src/plugins/mdx-examples.ts).
  */
 export const mdxComponents: Record<string, unknown> = {
-  ...exampleScope,
-  ...byName,
+  ...bindings,
   a: ({ href = '', children }: { href?: string; children?: ReactNode }) => (
     <shell.Link href={contentHref(href)}>{children}</shell.Link>
   ),

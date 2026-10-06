@@ -59,15 +59,13 @@ function ColorPreview({ vars }: { vars: Var[] }) {
   return (
     <div data-modo="token-preview">
       {vars
-        .filter(v => colorExpr(v.name) !== null)
+        .flatMap(v => {
+          const fill = colorExpr(v.name)
+          return fill ? [{ v, fill }] : []
+        })
         .slice(0, 12)
-        .map(v => (
-          <span
-            key={v.name}
-            data-modo="token-chip"
-            style={{ background: colorExpr(v.name) ?? v.value }}
-            title={`${v.name}: ${v.value}`}
-          />
+        .map(({ v, fill }) => (
+          <span key={v.name} data-modo="token-chip" style={{ background: fill }} title={`${v.name}: ${v.value}`} />
         ))}
     </div>
   )
