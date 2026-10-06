@@ -19,7 +19,8 @@
  * Styling reads DS tokens (AGENTS.md styling): inline `fontVariationSettings`
  * → `weight-*`; the hex focus-ring fallback → `ring-focus-ring` /
  * `border-focus-ring`; `duration-80|120|160` and tier-length JS durations →
- * `duration-<tier>` / `spring.*`.
+ * `duration-<tier>` / `spring.*`; the unchecked `border-neutral-400` /
+ * `dark:border-neutral-500` → `border-control`.
  */
 
 import { Radio as RadioPrimitive } from '@base-ui/react/radio'
@@ -415,7 +416,7 @@ const RadioItem = forwardRef<HTMLDivElement, RadioItemProps>(
               isSelected
                 ? 'border-[1.5px] border-transparent'
                 : isActive
-                  ? 'border-[1.5px] border-neutral-400 dark:border-neutral-500'
+                  ? 'border-[1.5px] border-control'
                   : 'border-[1.5px] border-border',
             )}
           />

@@ -19,7 +19,8 @@
  *   level) stands in for it — it makes the same point the sidebar dialog made about
  *   composing inside an `xl` panel, using only items this port ships.
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
- *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
+ *   `text-<role>[-compact]`; inline `fontVariationSettings` and `font-bold`
+ *   → `weight-*`; the `bg-black/40` / `dark:bg-black/80` backdrop → `bg-scrim`.
  */
 
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
@@ -143,7 +144,7 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
             return (
               <motion.div
                 {...rest}
-                className={cn(container ? 'absolute' : 'fixed', 'inset-0 z-50 bg-black/40 dark:bg-black/80')}
+                className={cn(container ? 'absolute' : 'fixed', 'inset-0 z-50 bg-scrim')}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: exiting ? 0 : 1 }}
                 transition={exiting ? spring.slow.exit : spring.slow}
@@ -245,7 +246,7 @@ const DialogTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingEle
         ref={ref}
         className={cn(
           compact ? 'text-title-compact' : 'text-title',
-          'font-bold text-foreground leading-tight',
+          'weight-bold text-foreground leading-tight',
           className,
         )}
         {...props}

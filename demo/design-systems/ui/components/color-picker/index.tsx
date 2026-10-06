@@ -27,6 +27,10 @@
  *   hex focus-ring fallback → `ring-focus-ring` / `border-focus-ring`;
  *   literal colors → color tokens; `duration-80|120|160` and tier-length JS
  *   durations → `duration-<tier>` / `spring.*`.
+ * - The white and black thumb rings, shadows and scrub cursor → `--picker-*`
+ *   tokens. Colors the picker shows (values, swatches, the S/V and hue
+ *   gradients) and the canvas parse sentinels stay literal: they are color
+ *   data, not styling.
  */
 
 import { Menu } from '@base-ui/react/menu'
@@ -645,7 +649,7 @@ function SaturationSquare({ h, s, v, onChange }: SaturationSquareProps) {
         }}
       />
       <motion.div
-        className="absolute pointer-events-none rounded-full"
+        className="absolute pointer-events-none rounded-full border border-thumb shadow-picker-thumb"
         initial={false}
         animate={{
           left: `${s * 100}%`,
@@ -656,22 +660,18 @@ function SaturationSquare({ h, s, v, onChange }: SaturationSquareProps) {
         transition={{ duration: 0 }}
         style={{
           transform: 'translate(-50%, -50%)',
-          border: '1px solid white',
-          boxShadow: '0 0 0 1px rgba(0,0,0,1)',
           backgroundColor: thumbColor,
         }}
       />
       {hovered && !dragging && cursorPos && (
         <div
-          className="absolute pointer-events-none rounded-full"
+          className="absolute pointer-events-none rounded-full border-2 border-picker-ring shadow-picker-cursor"
           style={{
             left: `${cursorPos.x}%`,
             top: `${cursorPos.y}%`,
             width: 18,
             height: 18,
             transform: 'translate(-50%, -50%)',
-            border: '2px solid rgba(255, 255, 255, 0.55)',
-            boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.2)',
           }}
         />
       )}
@@ -695,7 +695,7 @@ function HueSlider({ h, onChange }: { h: number; onChange: (h: number) => void }
       showValue={false}
       hideFill
       thumbColor={hueColor}
-      thumbBorderColor="rgba(255,255,255,0.9)"
+      thumbBorderColor="var(--picker-thumb-border)"
       trackStyle={{
         background:
           'linear-gradient(to right, hsl(0,100%,50%), hsl(60,100%,50%), hsl(120,100%,50%), hsl(180,100%,50%), hsl(240,100%,50%), hsl(300,100%,50%), hsl(360,100%,50%))',
@@ -738,7 +738,7 @@ function AlphaSlider({
       showValue={false}
       hideFill
       thumbColor={solidColor}
-      thumbBorderColor="rgba(255,255,255,0.9)"
+      thumbBorderColor="var(--picker-thumb-border)"
       trackStyle={{
         backgroundImage: `linear-gradient(to right, ${transparentColor} 0%, ${solidColor} 98%), conic-gradient(var(--checker-a) 0 25%, var(--checker-b) 0 50%, var(--checker-a) 0 75%, var(--checker-b) 0)`,
         backgroundSize: '100% 100%, 8px 8px',
@@ -1328,13 +1328,12 @@ const ScrubColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
           }}
           className={cn('flex flex-1 min-w-0 items-center self-stretch px-2', !editing && 'cursor-ew-resize')}
         >
-          <NumberField.ScrubAreaCursor className="drop-shadow-[0_1px_1px_rgba(0,0,0,0.4)]">
+          <NumberField.ScrubAreaCursor className="drop-shadow-picker-cursor">
             <svg
               width={24}
               height={14}
               viewBox="0 0 24 14"
-              fill="#000"
-              stroke="#fff"
+              className="fill-picker-edge stroke-thumb"
               strokeWidth={1}
               aria-hidden="true"
             >

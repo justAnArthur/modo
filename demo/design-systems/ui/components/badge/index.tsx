@@ -11,7 +11,8 @@
  * - TSDoc with the FF docs page's examples added above the component;
  *   `export default Badge` added.
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
- *   `text-<role>[-compact]`; literal colors → color tokens.
+ *   `text-<role>[-compact]`; `font-medium` → `weight-medium`; literal colors →
+ *   color tokens.
  */
 
 import { cva, type VariantProps } from 'class-variance-authority'
@@ -42,7 +43,7 @@ const badgeColors = {
 
 type BadgeColor = keyof typeof badgeColors
 
-const badgeVariants = cva('inline-flex items-center font-medium whitespace-nowrap', {
+const badgeVariants = cva('inline-flex items-center weight-medium whitespace-nowrap', {
   variants: {
     variant: {
       solid: '',

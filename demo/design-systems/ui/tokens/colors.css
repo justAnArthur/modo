@@ -93,6 +93,22 @@
   --thumb: oklch(1 0 0);
   --shadow-thumb: 0 1px 2px rgb(0 0 0 / 0.1);
 
+  /* ── Color picker affordances ──
+     Drawn over any user color, so fixed white and black rather than theme
+     colors: they have to read on every fill, in either scheme. */
+  --picker-edge: oklch(0 0 0);
+  --picker-ring: oklch(1 0 0 / 0.55);
+  --picker-thumb-border: oklch(1 0 0 / 0.9);
+  --shadow-picker-thumb: 0 0 0 1px var(--picker-edge);
+  --shadow-picker-cursor: 0 0 0 1px oklch(0 0 0 / 0.2);
+  --drop-shadow-picker-cursor: 0 1px 1px oklch(0 0 0 / 0.4);
+
+  /* ── Controls ──
+     An unchecked checkbox or radio takes a stronger edge than --border;
+     a modal dialog dims the page behind it with the scrim. */
+  --control-border: light-dark(oklch(0.708 0 0), oklch(0.556 0 0));
+  --scrim: light-dark(oklch(0 0 0 / 0.4), oklch(0 0 0 / 0.8));
+
   /* ── Surface-relative interactive overlays (work on any elevation) ──
      --overlay is the tint-direction triplet — black for light surfaces,
      white for dark. Components consume it as rgb(var(--overlay) / α), so it
