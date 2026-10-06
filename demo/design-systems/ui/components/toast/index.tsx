@@ -21,6 +21,7 @@ import {
   createContext,
   forwardRef,
   type ReactNode,
+  type Ref,
   useContext,
   useEffect,
   useId,
@@ -128,9 +129,10 @@ interface Box {
 }
 
 /** One shape of the toast, sprung to its box: the pill or the body, as background or shadow. */
-function Shape({ box, className }: { box: Box; className: string }) {
+function Shape({ box, className, shapeRef }: { box: Box; className: string; shapeRef?: Ref<HTMLDivElement> }) {
   return (
     <motion.div
+      ref={shapeRef}
       aria-hidden
       className={cn('pointer-events-none absolute top-0 left-0', className)}
       initial={false}
@@ -157,7 +159,8 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
   const root = useRef<HTMLDivElement>(null)
   const header = useRef<HTMLDivElement>(null)
   const body = useRef<HTMLDivElement>(null)
-  const [size, setSize] = useState({ width: 0, pill: PILL, body: 0 })
+  const bodyShape = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState({ width: 0, pill: PILL, body: 0, radius: 0 })
 
   useEffect(() => {
     if (!hasBody || type === 'loading') return
@@ -180,6 +183,7 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
         width: root.current?.offsetWidth ?? 0,
         pill: Math.max(PILL, header.current?.offsetWidth ?? 0),
         body: body.current?.offsetHeight ?? 0,
+        radius: bodyShape.current ? Number.parseFloat(getComputedStyle(bodyShape.current).borderTopLeftRadius) || 0 : 0,
       })
     const observer = new ResizeObserver(measure)
     for (const el of [header.current, body.current]) if (el) observer.observe(el)
@@ -194,9 +198,11 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
   }, [ending])
 
   // The pill sits on the toast's side of the screen; the body opens away from
-  // the edge. While open, the pill reaches into the body by up to its own
-  // height, covering the body's corner on that side, so the outer edge runs
-  // straight and the goo only rounds the inner corner (Sileo's open pill).
+  // the edge. While open, the pill reaches into the body by the body's corner
+  // radius, covering that corner, so the outer edge runs straight and the goo
+  // only rounds the inner corner (Sileo's open pill). The body's padding on
+  // the pill side clears that reach. The header and the body content ride the
+  // same values as their shapes, so they never drift apart mid-spring.
   const bodyHeight = expanded ? size.body : 0
   const height = PILL + bodyHeight
   const pillX = position.endsWith('left')
@@ -204,7 +210,7 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
     : position.endsWith('right')
       ? size.width - size.pill
       : (size.width - size.pill) / 2
-  const pillHeight = PILL + Math.min(bodyHeight, PILL)
+  const pillHeight = PILL + Math.min(bodyHeight, size.radius)
   const pill = { x: pillX, y: top ? 0 : height - pillHeight, width: size.pill, height: pillHeight }
   const bodyBox = { x: 0, y: top ? PILL : 0, width: size.width, height: bodyHeight }
   const away = { opacity: 0, y: top ? -6 : 6, scale: 0.95 }
@@ -231,15 +237,15 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
       {/* The filter is the effect itself: it melts the two token-filled shapes into one. */}
       <div aria-hidden className="pointer-events-none absolute inset-0" style={{ filter: `url(#${gooId})` }}>
         <Shape box={pill} className={cn('rounded-full', SURFACE_BG[level])} />
-        {hasBody && <Shape box={bodyBox} className={cn(shape.container, SURFACE_BG[level])} />}
+        {hasBody && <Shape box={bodyBox} shapeRef={bodyShape} className={cn(shape.container, SURFACE_BG[level])} />}
       </div>
 
       <SurfaceProvider value={level}>
         <motion.div
           ref={header}
-          className={cn('absolute flex h-9 w-max items-center py-1.5 pr-3 pl-1.5', top ? 'top-0' : 'bottom-0')}
+          className="absolute top-0 left-0 flex h-9 w-max items-center py-1.5 pr-4 pl-1.5"
           initial={false}
-          animate={{ x: pillX }}
+          animate={{ x: pillX, y: top ? 0 : height - PILL }}
           transition={spring.slow}
         >
           <ToastPrimitive.Title className="relative inline-flex items-center whitespace-nowrap">
@@ -262,12 +268,12 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
         </motion.div>
         {hasBody && (
           <motion.div
-            className={cn('absolute inset-x-0 overflow-hidden', top ? 'top-9' : 'top-0')}
+            className="absolute top-0 left-0 w-full overflow-hidden"
             initial={false}
-            animate={{ height: bodyHeight, opacity: expanded ? 1 : 0 }}
-            transition={expanded ? spring.slow : spring.slow.exit}
+            animate={{ y: bodyBox.y, height: bodyHeight, opacity: expanded ? 1 : 0 }}
+            transition={{ ...spring.slow, opacity: expanded ? spring.slow : spring.slow.exit }}
           >
-            <div ref={body} className={cn('flex flex-col items-start gap-3 p-4', top ? 'pt-3' : 'pb-3')}>
+            <div ref={body} className={cn('flex flex-col items-start gap-3 p-4', top ? 'pt-6' : 'pb-6')}>
               <ToastPrimitive.Description className="text-caption text-muted-foreground" />
               {toast.actionProps && <ToastPrimitive.Action render={<Button size="compact" variant="secondary" />} />}
             </div>
