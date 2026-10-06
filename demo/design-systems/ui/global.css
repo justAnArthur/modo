@@ -416,6 +416,17 @@ html.transitioning *::after {
   --font-size-eyebrow: var(--text-caption);
   --font-size-sm: var(--text-caption);
   --font-size-xs: var(--text-micro);
+  /* A fixed length: the lib's 72ch resolves per element, so the lead,
+     captions and paragraphs each ended at a different width. */
+  --modo-measure: 45rem;
+}
+
+/* One reading column on item and token pages: the article keeps to the
+   measure, example cards and prop tables included, centered in the content
+   area. Overview grids (no article) keep the full width. */
+[data-modo="content"] > article {
+  max-width: var(--modo-measure);
+  margin-inline: auto;
 }
 
 /* Each section is a Sidebar.Group with its own gutter: the nav only adds
