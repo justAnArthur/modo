@@ -30,6 +30,8 @@ interface MorphOptions {
   hideSource?: boolean
   /** Spring tier. */
   tier?: MorphTier
+  /** Overrides `effect` (and `from`) for the close only, read as it starts: a swiped sheet slides on off its edge. */
+  exit?: { effect: 'slide' | 'fade'; from?: MorphFrom }
 }
 
 /** What opened the overlay: the pressed trigger and the press point. */
@@ -237,7 +239,7 @@ function useMorphOrigin() {
 function useMorph(
   open: boolean,
   origin: RefObject<MorphOrigin>,
-  { from = 'trigger', effect = 'goo', hideSource = false, tier = 'slow' }: MorphOptions = {},
+  { from = 'trigger', effect = 'goo', hideSource = false, tier = 'slow', exit }: MorphOptions = {},
   onExited?: () => void,
 ) {
   const reduced = useReducedMotionConfig()
@@ -245,7 +247,7 @@ function useMorph(
   const progress = useMotionValue(0)
   const gooId = `morph-goo-${useId().replace(/:/g, '')}`
   const geometry = useRef<Geometry | null>(null)
-  // The effect and source of the run in flight.
+  // The effect and source of the run in flight: a close can override both.
   const run = useRef({ effect: resolved, from })
   const targetRadius = useRef(0)
   const hidden = useRef<{ el: HTMLElement; opacity: string } | null>(null)
@@ -404,7 +406,12 @@ function useMorph(
       geometry.current = null
       exited.current?.()
     }
-    run.current = { effect: resolved, from }
+    run.current = exit
+      ? { effect: reduced ? 'fade' : exit.effect, from: exit.from ?? from }
+      : { effect: resolved, from }
+    // An override leaves from the whole surface as it stands, not from
+    // wherever the open had got to.
+    if (exit) progress.jump(1)
     const hold = holdExit(popup, tier)
     measure()
     render(progress.get())
