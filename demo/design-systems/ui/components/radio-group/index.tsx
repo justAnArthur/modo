@@ -4,8 +4,9 @@
  * `registry/base/radio-group.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications: `"use client"` dropped; `@/lib/*` and `@/hooks/*` imports
- * rewritten to `../../lib/{lib,hooks}/*`, `@/components/ui/fluid-hover-highlight`
- * to `../../lib/fluid-hover-highlight`, `framer-motion` to `motion/react`;
+ * rewritten to `../../lib/*` (`SizeProvider` to `../../primitives/sizes`),
+ * `@/components/ui/fluid-hover-highlight` to `../../lib/fluid-hover-highlight`,
+ * `framer-motion` to `motion/react`;
  * uncontrolled mode added — `defaultSelectedIndex` + group-level
  * `onSelectedIndexChange` twin `selectedIndex`, and `defaultValue` twins
  * `value` (`onValueChange` now also fires uncontrolled), both backed by
@@ -40,11 +41,12 @@ import {
 } from 'react'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { useShape } from '../../lib/shape-context'
-import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { cn } from '../../lib/utils'
+import { SizeProvider } from '../../primitives/sizes'
 
 interface RadioGroupContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void

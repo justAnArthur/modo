@@ -6,7 +6,8 @@
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
  * - `@/lib/*`, `@/hooks/*` and `@/components/ui/fluid-hover-highlight`
- *   imports rewritten to relative `../../lib/*` paths.
+ *   imports rewritten to relative `../../lib/*` paths, except `SizeProvider`
+ *   → `../../primitives/sizes`.
  * - Compound API: the parts hang off the root as statics (`Table.Header`,
  *   `Table.Body`, `Table.Row`, `Table.Head`, `Table.Cell`) via
  *   `Object.assign`; the root is cast to `TableComponent` so TS consumers see
@@ -35,9 +36,10 @@ import {
   useRef,
 } from 'react'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
-import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { cn } from '../../lib/utils'
+import { SizeProvider } from '../../primitives/sizes'
 
 // ── Context ──────────────────────────────────────────────
 

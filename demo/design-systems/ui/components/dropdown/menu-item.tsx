@@ -5,7 +5,7 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*` and
- *   `@/hooks/*` imports rewritten to relative `_fluid` paths.
+ *   `@/hooks/*` imports rewritten to `../../lib/*`.
  * - Uncontrolled selection: when the surrounding panel owns the selection
  *   (`defaultCheckedIndex` / `defaultCheckedIndices` on Dropdown or
  *   Dropdown.Content, `selfManaged` in context), a row with no `checked` prop

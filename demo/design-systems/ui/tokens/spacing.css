@@ -1,5 +1,9 @@
 :root {
-  --sm: 0.5rem;
-  --md: 1rem;
-  --lg: 1.5rem;
+  /* The docs chrome's spacing rhythm (AGENTS.md generic tokens). */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
 }

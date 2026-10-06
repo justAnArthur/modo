@@ -10,8 +10,9 @@ import { defineConfig, presetWind4 } from 'unocss'
  *
  * - presetWind4 is UnoCSS's Tailwind v4 preset. `dark: 'class'` emits
  *   `.dark .dark\:x`, the same "inside a .dark ancestor" contract as FF's
- *   `@custom-variant dark (&:is(.dark *))`; vite.ts mirrors
- *   prefers-color-scheme onto <html class="dark">.
+ *   `@custom-variant dark (&:is(.dark *))`; vite.ts puts the Theme panel's
+ *   stored preference (or the OS one under 'system') on <html> as
+ *   `.light` / `.dark`.
  * - Theme colors point straight at the CSS variables in tokens/colors.css and
  *   primitives/surface/surface.css. wind4 applies an opacity modifier to a
  *   var() color with color-mix(), so `bg-accent/12` works on the
@@ -69,6 +70,7 @@ export default defineConfig({
       // rgb(var(--overlay) / 0.08) ramp.
       overlay: 'rgb(var(--overlay))',
       selected: 'var(--selected)',
+      thumb: 'var(--thumb)',
       border: 'var(--border)',
       ring: 'var(--ring)',
       input: 'var(--input)',

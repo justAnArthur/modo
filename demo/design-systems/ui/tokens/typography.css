@@ -9,8 +9,8 @@
  * Local changes:
  * - The family is Inter Variable from @fontsource-variable/inter/opsz
  *   (imported in global.css) instead of upstream's self-hosted
- *   InterVariable.ttf. The opsz build matters: lib/font-weight.ts
- *   animates both the wght and opsz axes.
+ *   InterVariable.ttf. The opsz build matters: the `--weight-*` ladder sets
+ *   both the wght and opsz axes.
  * - The role sizes are renamed `--fs-*` → `--text-*` and read by the
  *   `text-<role>[-compact]` rule in uno.config.ts. They hold both columns of
  *   `typeScale` in lib/size-context.tsx (keep the two in sync), so a
@@ -19,11 +19,10 @@
  *   `html[data-size="compact"]` override set by the docs site's
  *   SizeAttribute — are not carried over.
  * - `micro` (keycaps, one notch below caption) is a local role.
- * - The `--weight-*` variation settings mirror `fontWeights` in
- *   lib/font-weight.ts (keep the two in sync; motion still animates
- *   the JS values) and are read by the `weight-*` rule in uno.config.ts.
- *   Their wght values live in `--font-weight-*`, the plain font-weight form
- *   the docs chrome reads.
+ * - Upstream's `fontWeights` (lib/font-weight.ts, fontVariationSettings
+ *   strings) become the `--weight-*` variation settings, read by the
+ *   `weight-*` rule in uno.config.ts. Each derives its wght from
+ *   `--font-weight-*`, the plain font-weight form the docs chrome reads.
  */
 
 :root {

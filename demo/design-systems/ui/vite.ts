@@ -38,8 +38,7 @@ const THEME_CONTROLLER = `(() => {
     const resolved = preference === 'system' ? (mq.matches ? 'dark' : 'light') : preference
     root.classList.toggle('dark', resolved === 'dark')
     root.classList.toggle('light', resolved === 'light')
-    root.dataset.theme = preference
-    window.dispatchEvent(new CustomEvent('ui:themechange', { detail: { preference, resolved } }))
+    window.dispatchEvent(new Event('ui:themechange'))
   }
   window.__uiTheme = {
     get: () => preference,

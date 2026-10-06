@@ -4,8 +4,8 @@
  * `registry/base/tabs-subtle.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications: `"use client"` dropped; `@/lib/*` and `@/hooks/*`
- * imports rewritten to `../../lib/{lib,hooks}/*`, `framer-motion` to
- * `motion/react`; uncontrolled mode added — `selectedIndex` and `onSelect` are
+ * imports rewritten to `../../lib/*` (`SizeProvider` to
+ * `../../primitives/sizes`), `framer-motion` to `motion/react`; uncontrolled mode added — `selectedIndex` and `onSelect` are
  * optional, with a `defaultSelectedIndex` twin backed by
  * `useControllableState`; panels may now be written inside `<TabsSubtle>` —
  * the root partitions its children, renders only the tabs inside the tab list
@@ -43,11 +43,12 @@ import {
 } from 'react'
 import type { IconComponent } from '../../lib/icon-context'
 import { useShape } from '../../lib/shape-context'
-import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { useFluidHover } from '../../lib/use-fluid-hover'
 import { cn } from '../../lib/utils'
+import { SizeProvider } from '../../primitives/sizes'
 
 interface TabsSubtleContextValue {
   registerTab: (index: number, element: HTMLElement | null) => void

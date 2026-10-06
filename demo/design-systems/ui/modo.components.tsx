@@ -30,19 +30,14 @@ export function Select({
   value,
   onChange,
   options,
-  placeholder = 'Select…',
-  size = 'default',
 }: {
   value: string
   onChange: (value: string) => void
   options: { value: string; label: string }[]
-  placeholder?: string
-  /** `sm` maps to the compact step of the size ladder. */
-  size?: 'default' | 'sm' | 'compact'
 }) {
   return (
-    <FluidSelect value={value} onValueChange={onChange} size={size === 'default' ? 'default' : 'compact'}>
-      <FluidSelect.Trigger placeholder={placeholder} />
+    <FluidSelect value={value} onValueChange={onChange}>
+      <FluidSelect.Trigger />
       <FluidSelect.Content>
         {options.map((option, index) => (
           <FluidSelect.Item key={option.value} value={option.value} index={index}>
@@ -75,7 +70,7 @@ const THEMES = [
  * OS flips underneath 'system'.
  */
 export function ThemeSwitcher() {
-  const [preference, setPreference] = useState<ThemePreference>(() => globalThis.window?.__uiTheme?.get() ?? 'system')
+  const [preference, setPreference] = useState<ThemePreference>(() => window.__uiTheme?.get() ?? 'system')
 
   useEffect(() => {
     const sync = () => setPreference(window.__uiTheme?.get() ?? 'system')

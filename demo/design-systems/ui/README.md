@@ -30,8 +30,8 @@ Every vendored file opens with a plain `/* */` header. The header names the
 upstream path and commit, carries the MIT notice, and lists every local
 modification. The vendored code below the header keeps upstream's formatting.
 Files written for this port (`uno.config.ts`, `vite.ts`, `modo.components.tsx`,
-`lib/use-controllable-state.ts`) use this repo's style: single
-quotes and no semicolons.
+`lib/use-controllable-state.ts`, `primitives/code/index.tsx`) use this repo's
+style: single quotes and no semicolons.
 
 ## Layout
 
@@ -51,12 +51,12 @@ quotes and no semicolons.
 
 | Upstream (`registry/default/…`) | Local | Modifications |
 |---|---|---|
-| `lib/utils.ts` | `lib/utils.ts` | `extendTailwindMerge` → `createCn` from `cn/config`, with the same font-size group extension |
+| `lib/utils.ts` | `lib/utils.ts` | `extendTailwindMerge` → `createCn` from `cn/config`, with the same font-size group extension; the local token utilities join their groups too (compact and `micro` type roles as font-size, `weight-*`, the `duration-*` / `delay-*` motion tiers, `rounded-box\|glyph`) |
 | `lib/springs.ts` | `lib/springs.ts` | none |
-| `lib/font-weight.ts` | `lib/font-weight.ts` | none |
+| `lib/font-weight.ts` | — | not ported: its `fontWeights` became the `--weight-*` tokens in `tokens/typography.css` (the `weight-*` utilities) |
 | `lib/popup.ts` | `lib/popup.ts` | none |
 | `lib/shape-context.tsx` | `lib/shape-context.tsx` | `"use client"` dropped |
-| `lib/size-context.tsx` | `lib/size-context.tsx` | `"use client"` dropped |
+| `lib/size-context.tsx` | `lib/size-context.tsx` | `"use client"` dropped; `SizeProvider` moved to `primitives/sizes` (the documented item), with `SizeContext` exported for it; `sizeMap` text classes → `text-body` / `text-body-compact` |
 | `lib/icon-context.tsx` | `lib/icon-context.tsx` | `"use client"` dropped; `size`/`strokeWidth` widened to `number \| string` for lucide v1 + React 18 types |
 | `lib/surface-context.tsx` | `lib/surface-context.tsx` | `"use client"` dropped |
 | `lib/surface-classes.ts` | `lib/surface-classes.ts` | `SURFACE_HOVER_*` and `surfaceHoverClasses` dropped (only Sidebar used them) |
@@ -85,7 +85,8 @@ only what is specific to it:
 
 - `"use client"` dropped (no RSC here).
 - Imports rewritten: `@/lib/*` → `../../lib/*`, `@/hooks/*` →
-  `../../lib/*`, `@/lib/elevated` → `../../primitives/surface`,
+  `../../lib/*`, `SizeProvider` from `@/lib/size-context` →
+  `../../primitives/sizes`, `@/lib/elevated` → `../../primitives/surface`,
   `@/components/ui/scroll-area` → `../../primitives/scroll-area`,
   `@/components/ui/fluid-hover-highlight` → `../../lib/fluid-hover-highlight`,
   `@/registry/radix/*` → the Base-flavor sibling, `framer-motion` →
@@ -99,11 +100,12 @@ only what is specific to it:
 
 | Item | Upstream | Local | Specific modifications |
 |---|---|---|---|
-| `Elevated` | `registry/default/lib/elevated.tsx` (+ `lib/surface-context.tsx`; docs "Surfaces") | `primitives/surface/index.tsx` | `.Provider` static (= `SurfaceProvider`); `useSurface` / `surfaceClasses` re-exported; `className`/`children` re-declared; imports `./surface.css` |
+| `Elevated` | `registry/default/lib/elevated.tsx` (+ `lib/surface-context.tsx`; docs "Surfaces") | `primitives/surface/index.tsx` | `.Provider` static (= `SurfaceProvider`); `useSurface` / `surfaceClasses` re-exported; `className`/`children` re-declared; `surface.css` co-located (modo injects it) |
 | `ScrollArea` | `registry/base/scroll-area.tsx` (docs "Scrollbars") | `primitives/scroll-area/index.tsx` | the root's forwardRef element type written out as `HTMLDivElement` (the parser needs a first type argument without `<`/`,`); `viewportClassName` documented; `.Bar` static (= `ScrollBar`) |
-| `SizeProvider` | `registry/default/lib/size-context.tsx` + `app/docs/sizes/page.tsx` | `primitives/sizes/index.tsx` | thin documented wrapper over the vendored context, with the hooks, maps and types re-exported; the live demos become static examples (Select/TabsSubtle/InputGroup/CheckboxGroup/Dropdown swapped for Button/Badge/Switch/Tabs, token-inspector overlay dropped); the token table and type scale are written out rather than rendered from `sizeMap` / `typeScale` |
+| `SizeProvider` | `registry/default/lib/size-context.tsx` + `app/docs/sizes/page.tsx` | `primitives/sizes/index.tsx` | upstream's `SizeProvider`, moved here from the vendored context so modo documents it (sized components import it from here), with the hooks, maps and types re-exported; the live demos become static examples (Select/TabsSubtle/InputGroup/CheckboxGroup/Dropdown swapped for Button/Badge/Switch/Tabs, token-inspector overlay dropped); the token table and type scale are written out rather than rendered from `sizeMap` / `typeScale` |
 | `FluidHover` | `app/docs/fluid-hover/{page,demos}.tsx` over `registry/default/hooks/use-fluid-hover.ts` + `fluid-hover-highlight.tsx` | `primitives/fluid-hover/index.tsx` | new container (`FluidHover` + `FluidHover.Item`) around the hook/highlight pair so examples need no hooks; `items`, `renderItem`, `disabledIndices`, `columns`, `highlightClassName` are the container's own API, `axis` and `gapClick` pass through to the hook; row classes are upstream's `rowClass` with per-axis variants; the two scripted-cursor demos are dropped |
 | `Motion` | `registry/default/lib/springs.ts` + `app/docs/motion/page.tsx` | `primitives/motion/index.tsx` | `Motion` is local demo code (FF ships none): it plays one tier's enter spring and exit tween on its children, adding `defaultShow`, `sameExit` and `reducedMotion`; `spring` / `exitFallbackMs` re-exported from the vendored `springs.ts`; the ball-on-track and fake-modal visuals become show/hide of arbitrary children |
+| `Code` | — (local; FF has no code item) | `primitives/code/index.tsx` | sugar-high tokens colored by the `--syntax-*` tokens, one surface step above its substrate; also the docs chrome's Code slot |
 
 #### components
 
@@ -137,8 +139,8 @@ only what is specific to it:
 `Select` in `modo.components.tsx` is not an item: modo's docs chrome renders its Select slot
 with a flat `value` / `onChange` / `options` contract
 (`lib/src/lib/slots.tsx`), and this adapter maps it onto
-`Select.Trigger` / `Select.Content` / `Select.Item` (with `sm` → the compact
-step) so the chrome runs on the design system's own Select. The
+`Select.Trigger` / `Select.Content` / `Select.Item` so the chrome runs on the
+design system's own Select. The
 `components/select` item keeps the upstream API untouched.
 
 `ThemeSwitcher` in `modo.components.tsx` is not an item either: it is the `Theme` entry in
@@ -161,13 +163,15 @@ The tiers mirror the FF docs navigation. FF's "System" pages become
 | primitives | `sizes` (SizeProvider) | `lib/size-context.tsx` | sizes |
 | primitives | `fluid-hover` (FluidHover) | `hooks/use-fluid-hover.ts` + `fluid-hover-highlight.tsx` | fluid-hover |
 | primitives | `motion` (Motion) | `lib/springs.ts` | motion |
+| primitives | `code` (Code) | — (local, sugar-high) | — |
 | components | accordion, button, checkbox-group, combobox, dialog, dropdown, radio-group, select, slider, switch, tabs, tabs-subtle, tooltip | `registry/base/<id>.tsx` | same slug |
 | components | badge, card, color-picker, input-copy, input-group, input-message, table, thinking-indicator | `registry/default/<id>.tsx` | same slug |
 
 Button lives in `components/` to mirror the FF docs, and `modo.config.ts`
 points `shell.Button` at it explicitly (an explicit path skips modo's tier
-check). The chrome renders `<Button variant="ghost" size="sm">`, which works
-because `sm` is upstream's legacy alias for `compact`.
+check). The chrome renders its icon buttons as `<Button variant="ghost"
+size="icon-sm">`, which works because `icon-sm` is upstream's legacy alias for
+`icon-compact`.
 
 Compound components export their root by default, with the parts attached
 as statics (`Select.Item`, `Accordion.Trigger`, …). Upstream's named exports
@@ -183,7 +187,8 @@ No ported file imports any of them.
 
 The files only they use are left out too: `sidebar-core`, `sidebar-menu`,
 `mobile-drawer`, `nav-item`, `nav-menu`, `lib/sidebar-menu-grid.ts`,
-`lib/theme-context.tsx` (modo has no theme toggle) and `registry/blocks/*`.
+`lib/theme-context.tsx` (the `ThemeSwitcher` panel item and vite.ts's
+pre-paint controller take its place) and `registry/blocks/*`.
 Inside kept files, the same rule removed `SURFACE_HOVER_BG`,
 `SURFACE_HOVER_SHADOW` and `surfaceHoverClasses` from `surface-classes.ts`.
 
@@ -333,11 +338,12 @@ Notable local behavior changes beyond the `default*` props:
 | `@base-ui/react` ^1.4.1 | `@base-ui/react` 1.4.1 (exact) | FF styling relies on its `--anchor-width`, `--available-height` and `data-side` hooks |
 | `lucide-react` ^0.564 | `lucide-react` ^1.47.0 | Workspace version; `icon-context`'s `size`/`strokeWidth` widened to `number \| string` for it |
 | `react` / `react-dom` ^19 | ^18.3 | The workspace pins React 18. React 19's ref typings are adapted per file: `MutableRefObject` casts where a forwarded ref is written, `useRef<T \| null>(null)` instead of the 1-arg null form, and `FilePreviewTile` turned into a `forwardRef` (React 19 passes `ref` as a plain prop; React 18 warns and drops it). |
-| self-hosted `InterVariable.ttf` | `@fontsource-variable/inter` ^5.3.0 (`opsz.css`) | npm-distributed. The opsz axis is needed by the font-weight ladder. |
+| self-hosted `InterVariable.ttf` | `@fontsource-variable/inter` ^5.3.0 (`opsz.css`) | npm-distributed. The opsz axis is needed by the `--weight-*` ladder. |
 | `pdfjs-dist` ^5.7.284 | same | InputMessage PDF thumbnails. It bundles under modo's esbuild as a lazy ~790 kB chunk; the worker is loaded from `cdn.jsdelivr.net`, as upstream does. |
 | `class-variance-authority` ^0.7.1 | same | |
 | `next` (`next/link`, `next/image` lint) | — | No Next.js here |
 | — | `@justanarthur/modo` (workspace) | The design system's own host |
+| — | `sugar-high` ^2.5.1 | Tokenizer for the local `primitives/code` item |
 | — | `vite` ^5.4, `esbuild` ^0.20, `typescript` ^5.4, `@types/react(-dom)` ^18.3 (dev) | `vite` ^5.4 makes UnoCSS's peer reuse modo's Vite 5. The others serve the scripts and `tsc`. |
 
 Every import is declared here, because bun's isolated linker only exposes
@@ -392,9 +398,10 @@ tables become the prop docs instead). Other per-item deviations:
 - The 22px mobile display size and the `html[data-size="compact"]` type-scale
   override are not carried over. Both are FF docs-site chrome. Compact type
   reaches components through `SizeProvider` / `useTypeScale()`.
-- `<html class="dark">` follows the OS only. modo has no theme toggle. A
-  `.light` / `.dark` class on a subtree still forces that scheme, which is
-  what the forced-theme previews use.
+- Theme switching is docs-site glue, not a ported `ThemeProvider`: vite.ts's
+  pre-paint controller and the `ThemeSwitcher` panel item. A `.light` /
+  `.dark` class on a subtree still forces that scheme, which is what the
+  forced-theme previews use.
 - `transition-[…]` with a CSS property outside wind4's list needs a
   `theme.property` entry in `uno.config.ts`.
 - Cross-item context (a `SizeProvider` example shrinking a Button, a surface

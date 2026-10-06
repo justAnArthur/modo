@@ -4,10 +4,10 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*` →
- *   relative `_fluid` paths.
+ *   `../../lib/*`.
  * - Prop JSDoc kept from upstream (it matches the FF docs API table);
- *   modo TSDoc and examples on `ThinkingIndicator`.
- * The `.shimmer-text` rule the label rides lives in global.css.
+ *   modo TSDoc and examples on `ThinkingIndicator`. The `.shimmer-text` rule
+ *   the label rides lives in global.css.
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`;
  *   `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /

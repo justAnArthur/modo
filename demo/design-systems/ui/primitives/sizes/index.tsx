@@ -3,11 +3,12 @@
  * `registry/default/lib/size-context.tsx` + docs `app/docs/sizes/page.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - The implementation stays in `lib/size-context.tsx` (vendored, shared by
- *   every sized component); this item is a thin documented `SizeProvider` wrapper
- *   around it so modo can list its props, plus re-exports of the hooks, maps and types.
+ * - `SizeProvider` moved here from `lib/size-context.tsx` (which keeps the
+ *   context, hooks and maps every sized component reads) so modo documents it;
+ *   its props are written inline with docs. Sized components import it from
+ *   here. The hooks, maps and types are re-exported.
  * - The docs page's live demos (toolbar ladder, compact-region callout, token
- *   inspector overlay, type-scale specimen) are rewritten as static TSDoc examples;
+ *   inspector overlay, type-scale specimen) are rewritten as static examples;
  *   Select, TabsSubtle, InputGroup, CheckboxGroup and Dropdown in upstream's demos
  *   are swapped for Button, Badge, Switch and Tabs; the inspector overlay is dropped.
  * - The token table and type scale are written out in the examples (values
@@ -16,17 +17,8 @@
  *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
  */
 
-import type { ReactNode } from 'react'
-import { SizeProvider as FluidSizeProvider } from '../../lib/size-context'
-
-interface SizeProviderProps {
-  /** Controlled variant — pins every control in the subtree to one step. `'default'` is 36px controls, `'compact'` is 28px. */
-  size?: 'default' | 'compact'
-  /** Uncontrolled initial variant, switchable via `useSizeContext().setSize`. Defaults to `'default'`. */
-  defaultSize?: 'default' | 'compact'
-  /** The region whose controls follow the step — popups opened from inside it included. */
-  children: ReactNode
-}
+import { type ReactNode, useCallback, useMemo, useState } from 'react'
+import { SizeContext, type SizeVariant, sizeMap } from '../../lib/size-context'
 
 /**
  * Two component sizes: a 36px default and a 28px compact. An interface reads
@@ -39,26 +31,11 @@ interface SizeProviderProps {
  * Density is a region decision, not a per-control one: wrap the region in a
  * `SizeProvider` and every sized component inside follows — menus included,
  * since React context crosses portals. Precedence is explicit `size` prop on
- * the component > nearest `SizeProvider` > `'default'`, so a single control can
- * still opt out with `size="default"` (or `size="compact"`). Button, Badge,
+ * the component > nearest `SizeProvider` > `'default'`. Button, Badge,
  * Select, Tabs, TabsSubtle, Dropdown, CheckboxGroup, RadioGroup, InputGroup,
  * InputCopy, InputMessage, Table, Switch, Slider, Accordion, Card, ColorPicker
- * and ThinkingIndicator all take that per-component `size`.
- *
- * Tokens per step (`useSize()` returns them as classes, `icon` in px):
- * `control` — control and list-row height, shared so a menu row lines up with
- * its trigger — h-9 · 36px / h-7 · 28px. `segmentItem + segmentPad` —
- * segmented tabs inside their padded list — 28px + 4px = 36px / 24px + 2px =
- * 28px. `text` — labels inside controls — 13px / 12px. `icon` — leading and
- * trailing icons, checkbox square, radio circle — 16px / 14px. `px / itemPx` —
- * control / row horizontal padding — 12px / 8px and 10px / 6px. `gap` —
- * icon-to-label and control-to-control gap — 8px / 4px.
- *
- * Type follows the ladder: compact drops each role one notch, so a dense
- * screen keeps the same hierarchy at a smaller size (`useTypeScale()`, px):
- * display 28 / 24, title 16 / 15, subtitle 14 / 13, body 13 / 12, caption
- * 12 / 11. The default column is also the `text-display|title|subtitle|body|caption`
- * utilities (tokens/typography.css).
+ * and ThinkingIndicator all take that per-component `size`. Type follows the
+ * ladder too: compact drops each type role one notch.
  *
  * Also exported from this item: `useSize(override?)`, `useSizeVariant(override?)`,
  * `useSizeContext()` (`{ size, setSize }` inside a provider), `useTypeScale(override?)`,
@@ -67,12 +44,36 @@ interface SizeProviderProps {
  *
  * @example {@include ./examples.mdx}
  */
-export default function SizeProvider({ size, defaultSize = 'default', children }: SizeProviderProps) {
-  return (
-    <FluidSizeProvider size={size} defaultSize={defaultSize}>
-      {children}
-    </FluidSizeProvider>
+export default function SizeProvider({
+  children,
+  size,
+  defaultSize = 'default',
+}: {
+  /** The region whose controls follow the step — popups opened from inside it included. */
+  children: ReactNode
+  /** Controlled variant — pins every control in the subtree to one step, overriding internal state. `'default'` is 36px controls, `'compact'` is 28px. */
+  size?: 'default' | 'compact'
+  /** Uncontrolled initial variant, switchable via `useSizeContext().setSize`. Defaults to `'default'`. */
+  defaultSize?: 'default' | 'compact'
+}) {
+  const [internalSize, setInternalSize] = useState<SizeVariant>(defaultSize)
+  const isControlled = size !== undefined
+  const resolved = size ?? internalSize
+
+  // Controlled providers ignore setSize entirely — a background write to the
+  // shadowed internal state would pop back out if the size prop were later
+  // removed.
+  const setSize = useCallback(
+    (next: SizeVariant) => {
+      if (isControlled) return
+      setInternalSize(next)
+    },
+    [isControlled],
   )
+
+  const value = useMemo(() => ({ size: resolved, setSize, classes: sizeMap[resolved] }), [resolved, setSize])
+
+  return <SizeContext.Provider value={value}>{children}</SizeContext.Provider>
 }
 
 export type { SizeClasses, SizeVariant, TypeScaleRole, TypeScaleStep } from '../../lib/size-context'
@@ -84,5 +85,4 @@ export {
   useSizeVariant,
   useTypeScale,
 } from '../../lib/size-context'
-export type { SizeProviderProps }
 export { SizeProvider }

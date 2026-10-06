@@ -6,7 +6,7 @@
  *
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
- * - `@/lib/*` and `@/hooks/*` imports rewritten to relative `_fluid` paths.
+ * - `@/lib/*` and `@/hooks/*` imports rewritten to sibling `./*` paths.
  */
 
 import { type KeyboardEvent, useCallback, useEffect, useRef } from 'react'

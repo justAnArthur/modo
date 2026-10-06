@@ -7,9 +7,13 @@
  *
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
+ * - `SizeProvider` moved to `primitives/sizes/index.tsx`, the documented
+ *   item (sized components import it from there); `SizeContext` exported for it.
+ * - `sizeMap` text classes read DS tokens (AGENTS.md styling): `text-[13px]` /
+ *   `text-[12px]` → `text-body` / `text-body-compact`.
  */
 
-import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
+import { createContext, useContext } from 'react'
 
 type SizeVariant = 'default' | 'compact'
 
@@ -55,7 +59,7 @@ const sizeMap: Record<SizeVariant, SizeClasses> = {
     controlHeight: 36,
     segmentItem: 'h-7',
     segmentPad: 'p-1',
-    text: 'text-[13px]',
+    text: 'text-body',
     px: 'px-3',
     itemPx: 'px-2',
     gap: 'gap-2',
@@ -70,7 +74,7 @@ const sizeMap: Record<SizeVariant, SizeClasses> = {
     controlHeight: 28,
     segmentItem: 'h-6',
     segmentPad: 'p-0.5',
-    text: 'text-[12px]',
+    text: 'text-body-compact',
     px: 'px-2.5',
     itemPx: 'px-1.5',
     gap: 'gap-1',
@@ -148,36 +152,5 @@ function useSizeContext() {
   return ctx
 }
 
-function SizeProvider({
-  children,
-  size,
-  defaultSize = 'default',
-}: {
-  children: ReactNode
-  /** Controlled variant — pin a whole region to one size (e.g. a compact
-   *  filter bar). Overrides internal state. */
-  size?: SizeVariant
-  defaultSize?: SizeVariant
-}) {
-  const [internalSize, setInternalSize] = useState<SizeVariant>(defaultSize)
-  const isControlled = size !== undefined
-  const resolved = size ?? internalSize
-
-  // Controlled providers ignore setSize entirely — a background write to the
-  // shadowed internal state would pop back out if the size prop were later
-  // removed.
-  const setSize = useCallback(
-    (next: SizeVariant) => {
-      if (isControlled) return
-      setInternalSize(next)
-    },
-    [isControlled],
-  )
-
-  const value = useMemo(() => ({ size: resolved, setSize, classes: sizeMap[resolved] }), [resolved, setSize])
-
-  return <SizeContext.Provider value={value}>{children}</SizeContext.Provider>
-}
-
 export type { SizeClasses, SizeVariant, TypeScaleRole, TypeScaleStep }
-export { SizeProvider, sizeMap, typeScale, useSize, useSizeContext, useSizeVariant, useTypeScale }
+export { SizeContext, sizeMap, typeScale, useSize, useSizeContext, useSizeVariant, useTypeScale }

@@ -7,7 +7,7 @@
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react` (the package's current name).
- * - `@/lib/*` and `@/hooks/*` imports rewritten to relative `_fluid` paths.
+ * - `@/lib/*` and `@/hooks/*` imports rewritten to sibling `./*` paths.
  * - `noUncheckedIndexedAccess`: `bridgePair` asserts its length-checked pair
  *   as `[Run, Run]`.
  */

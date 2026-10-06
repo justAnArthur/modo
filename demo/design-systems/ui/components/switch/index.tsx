@@ -291,7 +291,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
               return (
                 <motion.span
                   {...rest}
-                  className="absolute top-0 left-0 block rounded-full bg-white shadow-sm"
+                  className="absolute top-0 left-0 block rounded-full bg-thumb shadow-thumb"
                   initial={false}
                   style={{
                     ...(baseStyle as React.CSSProperties | undefined),

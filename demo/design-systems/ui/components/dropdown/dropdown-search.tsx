@@ -4,8 +4,7 @@
  * `registry/default/dropdown-search.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `@/lib/*` imports rewritten to relative `_fluid`
- *   paths.
+ * - `"use client"` dropped; `@/lib/*` imports rewritten to `../../lib/*`.
  * - `filter` mode (local addition): `value` / `onValueChange` become optional
  *   and, with `filter`, the field reads and writes the query the surrounding
  *   panel holds (`DropdownFilterContext`), which filters the rows itself. The

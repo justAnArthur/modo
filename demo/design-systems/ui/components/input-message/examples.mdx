@@ -45,7 +45,7 @@ for its × button.
       new File(['Quarterly notes'], 'notes.txt', { type: 'text/plain' }),
     ]}
     leftSlot={({ openFilePicker }) => (
-      <Button variant="ghost" size="icon-sm" aria-label="Attach" onClick={() => openFilePicker()}>
+      <Button variant="ghost" size="icon-compact" aria-label="Attach" onClick={() => openFilePicker()}>
         <Plus />
       </Button>
     )}
@@ -79,7 +79,7 @@ switcher, a mode toggle.
 <div className="w-full max-w-xl">
   <InputMessage
     leftSlot={
-      <Button variant="ghost" size="icon-sm" aria-label="Attach">
+      <Button variant="ghost" size="icon-compact" aria-label="Attach">
         <Plus />
       </Button>
     }
@@ -94,7 +94,7 @@ button.
 <div className="w-full max-w-xl">
   <InputMessage
     rightSlot={
-      <Button variant="ghost" size="sm" trailingIcon={ChevronDown}>
+      <Button variant="ghost" size="compact" trailingIcon={ChevronDown}>
         Sonnet 4.6
       </Button>
     }

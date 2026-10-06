@@ -1,16 +1,14 @@
 import SizeProvider from './index'
 import Tabs from '../../components/tabs'
 import Button from '../../components/button'
-import Table from '../../components/table'
 import Switch from '../../components/switch'
 import Badge from '../../components/badge'
 import { ChevronDown, ListFilter, Plus, SquareKanban, Table2 } from 'lucide-react'
 
 # The principle
 
-The same toolbar line at each step. One SizeProvider pins the row; every
-control inside follows — height, label size, icon size and padding shrink
-together, and the row gap steps from 8px to 4px.
+The same toolbar line at each step, one SizeProvider per row; the row gap
+steps from 8px to 4px.
 
 <div className="flex w-full flex-col gap-8">
   <SizeProvider size="default">
@@ -41,9 +39,8 @@ together, and the row gap steps from 8px to 4px.
 
 # Mixed controls
 
-A tab next to a button next to a badge next to a switch lands on the same
-rhythm at either step — each reads the step from the provider, so none of
-them is told its size.
+Tabs, Button, Badge and Switch read the step from the provider; none of them
+is told its size.
 
 <div className="flex w-full flex-col gap-6">
   <SizeProvider size="default">
@@ -76,8 +73,9 @@ them is told its size.
 
 # Typography scale
 
-Type follows the ladder. Compact drops each role one notch, so a dense
-screen keeps the same hierarchy at a smaller size.
+Each role at both steps (`useTypeScale()`). The default column is also the
+`text-<role>` utilities, the compact one `text-<role>-compact`
+(tokens/typography.css).
 
 <div className="grid w-full gap-8 sm:grid-cols-2">
   {[['Default', 0], ['Compact', 1]].map(([step, col]) => (
@@ -102,10 +100,7 @@ screen keeps the same hierarchy at a smaller size.
 
 # Compact regions
 
-Density is a region decision, not a per-control one. Wrap the region in a
-SizeProvider and everything inside follows — menus included, since React
-context crosses portals. Here the page stays at the default step and only
-its filter bar goes compact.
+The page stays at the default step; only its filter bar goes compact.
 
 <div className="flex w-full flex-col items-start gap-4">
   <div className="flex flex-wrap items-center gap-2">
@@ -126,9 +121,8 @@ its filter bar goes compact.
 
 # Component size prop
 
-Every sized component also takes a per-instance `size` that wins over the
-surrounding SizeProvider — here one Button and one Badge opt back into the
-default step inside a compact region.
+One Button and one Badge opt back into the default step inside a compact
+region.
 
 <SizeProvider size="compact">
   <div className="flex flex-wrap items-center gap-2">
@@ -141,8 +135,7 @@ default step inside a compact region.
 
 # Token reference
 
-Every number a sized component renders is one of these tokens, resolved for
-the active step — `useSize()` hands them out as classes (and `icon` as px).
+What `useSize()` returns for the active step: classes, and `icon` in px.
 
 <div className="w-full overflow-x-auto">
   <table className="w-full min-w-[560px] border-collapse text-body">

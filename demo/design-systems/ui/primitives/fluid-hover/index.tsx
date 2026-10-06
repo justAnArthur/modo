@@ -43,18 +43,6 @@ import { useShape } from '../../lib/shape-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { cn } from '../../lib/utils'
 
-// ---------------------------------------------------------------------------
-// One list is one FluidHover: the container owns the mouse handlers, hands
-// every row its index, and renders the single highlight that springs between
-// the rects the hook measures. Rows are real buttons — the hook only lights
-// them, it never moves focus.
-//
-// The escape hatch is the hook itself, re-exported at the bottom: a list this
-// container cannot express (rows inside a virtualizer, a popup that stays
-// mounted between opens, a highlight shared across two scopes) wires
-// `useFluidHover` + `FluidHoverHighlight` by hand exactly as upstream does.
-// ---------------------------------------------------------------------------
-
 type FluidHoverAxis = 'x' | 'y' | 'xy'
 
 interface FluidHoverContextValue {
@@ -90,8 +78,6 @@ const containerAxisClass: Record<FluidHoverAxis, string> = {
   x: 'flex flex-row gap-1',
   xy: 'grid gap-1',
 }
-
-// ── FluidHover.Item ──────────────────────────────────────
 
 interface FluidHoverItemProps extends HTMLAttributes<HTMLButtonElement> {
   /** Position in the list. Assigned automatically to direct children of `FluidHover`; pass it by hand for rows rendered inside a wrapper of your own. */
@@ -146,8 +132,6 @@ const FluidHoverItem = forwardRef<HTMLButtonElement, FluidHoverItemProps>(
 )
 
 FluidHoverItem.displayName = 'FluidHoverItem'
-
-// ── FluidHover ───────────────────────────────────────────
 
 interface FluidHoverProps extends HTMLAttributes<HTMLDivElement> {
   /** Which way the list runs: `'y'` for lists, `'x'` for strips, `'xy'` for grids. Defaults to `'y'`, or `'xy'` when `columns` is above 1. */

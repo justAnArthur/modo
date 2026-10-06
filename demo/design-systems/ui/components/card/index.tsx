@@ -5,7 +5,8 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` dropped; `@/lib/*`, `@/hooks/*` and
- *   `@/components/ui/fluid-hover-highlight` → relative `_fluid` paths.
+ *   `@/components/ui/fluid-hover-highlight` → `../../lib/*`, except
+ *   `SizeProvider` → `../../primitives/sizes`.
  * - `next/link` replaced with plain anchors (no Next.js in modo) — the
  *   stretched card link and CardButton's `href` form.
  * - Prop JSDoc on CardProps rewritten from the FF docs API table (`children`
@@ -39,9 +40,10 @@ import {
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { type IconComponent, useIcon } from '../../lib/icon-context'
 import { useShape } from '../../lib/shape-context'
-import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { cn } from '../../lib/utils'
+import { SizeProvider } from '../../primitives/sizes'
 
 // ---------------------------------------------------------------------------
 // Card is shadcn/ui's compositional card — the same parts and `data-slot`

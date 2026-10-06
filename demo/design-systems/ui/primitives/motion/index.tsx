@@ -11,7 +11,8 @@
  *   written as static examples (examples.mdx). It adds `sameExit` (the comparison's
  *   "same exit" side) and `reducedMotion` (a preview of the reduced-motion rule).
  * - The ball-on-track and fake-modal visuals are replaced by the demo's
- *   show/hide of arbitrary children; the component-chip links are plain text.
+ *   show/hide of arbitrary children, toggled by the DS Button; the
+ *   component-chip links are plain text.
  * - framer-motion → motion/react.
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  *   `text-<role>[-compact]`; the hex focus-ring fallback →
@@ -22,6 +23,7 @@
 
 import { MotionConfig, motion } from 'motion/react'
 import type { ReactNode } from 'react'
+import Button from '../../components/button'
 import { spring } from '../../lib/springs'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { cn } from '../../lib/utils'
@@ -65,14 +67,6 @@ interface MotionProps {
  * lands exactly with no overshoot, so it also carries panels that must settle
  * precisely.
  *
- * ## Tiers
- *
- * | Tier | Enter | Exit | Used by |
- * | --- | --- | --- | --- |
- * | `spring.fast` | 0.08s, bounce 0 | 0.06s | fluid hover, focus rings, checkbox, radio, tooltip, table rows, card grid, input copy, slider, select, combobox, color picker, accordion |
- * | `spring.moderate` | 0.16s, bounce 0 | 0.12s | dropdown, tabs indicator, switch thumb, selection merge / split |
- * | `spring.slow` | 0.24s, bounce 0.12 | 0.16s | dialog and other large surfaces |
- *
  * ## Usage
  *
  * Enter with `transition={spring.fast}` and leave with `exit={{ opacity: 0,
@@ -81,8 +75,8 @@ interface MotionProps {
  *
  * - `exitFallbackMs(tier)` (also exported) is the tier's exit in ms plus a 100ms
  *   buffer, for deferred-unmount timers that guard an exit tween.
- * - CSS consumers get the same tiers from `tokens/motion.css`: `--duration-fast`
- *   80ms / `--duration-fast-exit` 60ms, moderate 160 / 120, slow 240 / 160.
+ * - CSS consumers get the same tiers from `tokens/motion.css`
+ *   (`--duration-<tier>` and `--duration-<tier>-exit`).
  *
  * ## Reduced motion
  *
@@ -110,7 +104,7 @@ export default function Motion({
   children,
 }: MotionProps) {
   const [shown, setShown] = useControllableState(show, defaultShow, onShowChange)
-  const enter = spring[tier] ?? spring.moderate
+  const enter = spring[tier]
   const leave = sameExit ? enter : enter.exit
 
   return (
@@ -135,15 +129,15 @@ export default function Motion({
           {children}
         </motion.div>
         <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-          <button
-            type="button"
+          <Button
+            variant="tertiary"
+            size="compact"
             aria-pressed={shown}
             aria-label={`${shown ? 'Hide' : 'Show'} (spring.${tier})`}
             onClick={() => setShown(v => !v)}
-            className="inline-flex h-7 cursor-pointer items-center rounded-lg px-3 text-caption text-foreground shadow-[0_0_0_1px_var(--border)] outline-none transition-colors duration-fast hover:bg-hover active:bg-active focus-visible:ring-1 focus-visible:ring-focus-ring"
           >
             {shown ? 'Hide' : 'Show'}
-          </button>
+          </Button>
           <span className="font-mono text-caption-compact text-muted-foreground">
             spring.{tier} {enter.duration}s{enter.bounce ? ` bounce ${enter.bounce}` : ''} · exit {leave.duration}s
           </span>

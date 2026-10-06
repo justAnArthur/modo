@@ -5,9 +5,9 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*` and
- *   `@/hooks/*` → relative `_fluid` paths; `@/lib/elevated` →
- *   `../../primitives/surface`; `@/components/ui/scroll-area` →
- *   `../../primitives/scroll-area`; `@/components/ui/fluid-hover-highlight` →
+ *   `@/hooks/*` → `../../lib/*` (`SizeProvider` → `../../primitives/sizes`);
+ *   `@/lib/elevated` → `../../primitives/surface`; `@/components/ui/scroll-area`
+ *   → `../../primitives/scroll-area`; `@/components/ui/fluid-hover-highlight` →
  *   `../../lib/fluid-hover-highlight`.
  * - `SelectProps` members re-declared one per line with the FF docs API-table
  *   descriptions (modo's props table lists only members declared in the
@@ -47,12 +47,13 @@ import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import type { IconComponent } from '../../lib/icon-context'
 import { isDisabledRow, popupMotionClass, popupScrollAreaClass, popupViewportClass } from '../../lib/popup'
 import { shapeMap, useShape } from '../../lib/shape-context'
-import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { exitFallbackMs, spring } from '../../lib/springs'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { useKeyboardNavGate } from '../../lib/use-keyboard-nav-gate'
 import { cn } from '../../lib/utils'
 import { ScrollArea } from '../../primitives/scroll-area'
+import { SizeProvider } from '../../primitives/sizes'
 import { Elevated } from '../../primitives/surface'
 
 // ---------------------------------------------------------------------------

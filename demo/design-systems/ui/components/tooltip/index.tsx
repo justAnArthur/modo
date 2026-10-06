@@ -4,8 +4,9 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
- * - `framer-motion` → `motion/react`; `@/lib/{utils,springs,font-weight,shape-context}` imports
- *   rewritten to `../../lib/*`.
+ * - `framer-motion` → `motion/react`; `@/lib/{utils,springs,shape-context}` imports
+ *   rewritten to `../../lib/*` (the `@/lib/font-weight` import went with the inline
+ *   `fontVariationSettings`, below).
  * - `TooltipProps`: `className` / `children` docs filled in from the FF docs API table (modo's
  *   parser needs a description on every member).
  * - modo item: TSDoc (from the FF "Tooltip" docs page), the `Tooltip.Provider` /

@@ -5,9 +5,10 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
- * - `framer-motion` → `motion/react`; `@/lib/{utils,icon-context,font-weight,shape-context,
- *   size-context,springs}` rewritten to `../../lib/*`; `@/registry/radix/tooltip`
- *   → `../tooltip`.
+ * - `framer-motion` → `motion/react`; `@/lib/{utils,icon-context,shape-context,
+ *   size-context,springs}` rewritten to `../../lib/*` (the `@/lib/font-weight`
+ *   import went with the inline `fontVariationSettings`, below);
+ *   `@/registry/radix/tooltip` → `../tooltip`.
  * - React 18 types: `useRef<ReturnType<typeof setTimeout>>(null)` →
  *   `useRef<ReturnType<typeof setTimeout> | null>(null)` (React 19 allows the
  *   1-arg null form, React 18's overloads don't).

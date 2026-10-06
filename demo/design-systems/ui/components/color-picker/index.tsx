@@ -5,9 +5,9 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` dropped; `@/lib/*`, `@/hooks/*` and
- *   `@/components/ui/fluid-hover-highlight` → relative `_fluid` paths,
- *   `@/lib/elevated` → `../../primitives/surface`, `framer-motion` →
- *   `motion/react`.
+ *   `@/components/ui/fluid-hover-highlight` → `../../lib/*` (`SizeProvider`
+ *   → `../../primitives/sizes`), `@/lib/elevated` → `../../primitives/surface`,
+ *   `framer-motion` → `motion/react`.
  * - `@/registry/radix/{slider,tooltip}` → the Base-flavor siblings `../slider`
  *   and `../tooltip` (same `value`/`onChange`/`trackStyle`/`hideFill`/
  *   `thumbColor` and `content`/`delayDuration` APIs).
@@ -51,12 +51,13 @@ import {
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { useIcon } from '../../lib/icon-context'
 import { shapeMap, useShape } from '../../lib/shape-context'
-import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
 import { surfaceClasses } from '../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { cn } from '../../lib/utils'
+import { SizeProvider } from '../../primitives/sizes'
 import { Elevated } from '../../primitives/surface'
 import { Slider } from '../slider'
 import { Tooltip } from '../tooltip'

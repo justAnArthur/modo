@@ -1,12 +1,10 @@
 import ScrollArea from '../../primitives/scroll-area'
 import FluidHover from './index'
-import { Inbox, Settings } from 'lucide-react'
 
 # Blink or glide
 
-Plain `:hover` blinks off in every gap and pulls your eye back to the list;
-this one glides. Run the cursor down the rows, into the padding and past the
-last row: something is always lit, and a click in the gap lands on it.
+Plain `:hover` blinks off in every gap; this one glides. Run the cursor down
+the rows, into the padding and past the last row.
 
 <div className="w-64 rounded-xl border border-border/60">
   <FluidHover className="p-2" items={['Inbox', 'Drafts', 'Sent', 'Archive', 'Trash']} />
@@ -14,9 +12,7 @@ last row: something is always lit, and a click in the gap lands on it.
 
 # 3 axes
 
-Menus, tabs and card grids all feel the same under the cursor. Pass `y`,
-`x`, or `xy` with `columns`, and the highlight follows you down the list,
-across the strip, or to the closest card.
+The same highlight down a list, across a strip and to the closest card.
 
 <div className="flex w-full max-w-md flex-col gap-8">
   <div className="flex flex-col gap-2">
@@ -51,11 +47,8 @@ across the strip, or to the closest card.
 
 # When to split a list
 
-Split at the divider. The workspace rows are alternatives to each other, so
-they are one list and the nested chat rows ride with their parent; the
-account rows are a different kind of thing, so they are a second list the
-highlight never crosses into. Knowledge is disabled: the pointer passes over
-it to the row beyond.
+The workspace rows, nested chats included, are one list; the account rows
+below the divider are a second. Knowledge is disabled.
 
 <div className="w-64 rounded-xl border border-border/60">
   <FluidHover className="p-2">
@@ -72,10 +65,7 @@ it to the row beyond.
 
 # What it costs
 
-1 element, 1 transform, 1 loop per move — 60 rows below, and the work per
-move does not grow with the scrollback. The pick reads cached rectangles,
-never the DOM, and the highlight moves on a transform, so nothing is
-re-laid out while it travels.
+60 rows, and the work per move does not grow with them.
 
 <ScrollArea viewportClassName="scroll-fade" className="h-72 w-72 rounded-xl border border-border/60">
   <FluidHover
@@ -86,17 +76,9 @@ re-laid out while it travels.
 
 # Reduced motion
 
-The highlight respects the OS setting on its own. Turn on reduced motion and
-the travel drops out: the highlight still fades in on the nearest row, it
-just stops sliding between rows. No MotionConfig wrapper is needed, so a
-copied component behaves the same in your app.
+This list follows the reduce-motion setting of the system it runs on: turn
+it on to see the highlight fade in place instead of sliding.
 
-<div className="flex w-full max-w-sm flex-col gap-3">
-  <p className="text-caption leading-relaxed text-muted-foreground">
-    This list follows the reduce-motion setting of the system it runs on: with it on,
-    the highlight fades in on the nearest row instead of travelling to it.
-  </p>
-  <div className="rounded-xl border border-border/60">
-    <FluidHover className="p-2" items={['Inbox', 'Drafts', 'Sent', 'Archive', 'Trash']} />
-  </div>
+<div className="w-64 rounded-xl border border-border/60">
+  <FluidHover className="p-2" items={['Inbox', 'Drafts', 'Sent', 'Archive', 'Trash']} />
 </div>

@@ -11,8 +11,9 @@
  *   (upstream's size-alias and `active` notes folded in).
  * - modo item: TSDoc (from the FF "Button" docs page, plus Sizes / Active / As child examples for
  *   the API-table props the page has no section for) and a default export.
- * - Also the modo docs-chrome Button (`modo.config.ts` shell.Button): the chrome renders
- *   `<Button variant="ghost" size="sm">`, served by upstream's legacy `sm` → `compact` alias.
+ * - Also the modo docs-chrome Button (`modo.config.ts` shell.Button): the chrome renders its
+ *   icon buttons as `<Button variant="ghost" size="icon-sm">`, served by upstream's legacy
+ *   `icon-sm` → `icon-compact` alias.
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  *   `text-<role>[-compact]`; the hex focus-ring fallback →
  *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and

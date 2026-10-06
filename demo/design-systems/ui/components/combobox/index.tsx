@@ -5,7 +5,8 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` dropped (no RSC here).
- * - Imports rewritten: `@/lib/*` → `../../lib/*`, `@/hooks/*` → `../../lib/*`,
+ * - Imports rewritten: `@/lib/*` → `../../lib/*` (`SizeProvider` →
+ *   `../../primitives/sizes`), `@/hooks/*` → `../../lib/*`,
  *   `@/lib/elevated` → `../../primitives/surface`, `@/components/ui/scroll-area` →
  *   `../../primitives/scroll-area`, `@/components/ui/fluid-hover-highlight` →
  *   `../../lib/fluid-hover-highlight`, `framer-motion` → `motion/react`.
@@ -52,12 +53,13 @@ import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { type IconComponent, useIcon } from '../../lib/icon-context'
 import { isDisabledRow, popupMotionClass, popupScrollAreaClass, popupViewportClass } from '../../lib/popup'
 import { shapeMap, useShape } from '../../lib/shape-context'
-import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { exitFallbackMs, spring } from '../../lib/springs'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../lib/use-merge-split'
 import { cn } from '../../lib/utils'
 import { ScrollArea } from '../../primitives/scroll-area'
+import { SizeProvider } from '../../primitives/sizes'
 import { Elevated } from '../../primitives/surface'
 
 // ---------------------------------------------------------------------------

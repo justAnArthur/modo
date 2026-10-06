@@ -7,7 +7,7 @@
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react` (the package's current name).
- * - `@/lib/*` and `@/hooks/*` imports rewritten to relative `_fluid` paths.
+ * - `@/lib/*` and `@/hooks/*` imports rewritten to sibling `./*` paths.
  */
 
 import { AnimatePresence, motion, type Transition, useReducedMotion } from 'motion/react'

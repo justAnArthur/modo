@@ -3,8 +3,8 @@
  * `registry/base/tabs.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications: `"use client"` dropped; `@/lib/*` and `@/hooks/*`
- * imports rewritten to `../../lib/{lib,hooks}/*`, `framer-motion` to
- * `motion/react`; `defaultSelectedIndex` added as the index-mode twin of the
+ * imports rewritten to `../../lib/*` (`SizeProvider` to
+ * `../../primitives/sizes`), `framer-motion` to `motion/react`; `defaultSelectedIndex` added as the index-mode twin of the
  * existing value-mode `defaultValue` (it only seeds the first render, like
  * `defaultValue`); modo docs — TSDoc with FF's docs/API text, `Tabs.List` /
  * `Tabs.Item` / `Tabs.Panel` statics (typed via a cast on the root), default
@@ -36,12 +36,13 @@ import {
 } from 'react'
 import type { IconComponent } from '../../lib/icon-context'
 import { useShape } from '../../lib/shape-context'
-import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
 import { surfaceClasses } from '../../lib/surface-classes'
 import { useSurface } from '../../lib/surface-context'
 import { useFluidHover } from '../../lib/use-fluid-hover'
 import { cn } from '../../lib/utils'
+import { SizeProvider } from '../../primitives/sizes'
 
 /* ─────────────────────── Contexts ─────────────────────── */
 

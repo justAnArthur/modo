@@ -739,7 +739,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
           initial={false}
         >
           <motion.span
-            className={cn('block rounded-full shadow-thumb', !thumbColor && 'bg-white')}
+            className={cn('block rounded-full shadow-thumb', !thumbColor && 'bg-thumb')}
             initial={false}
             animate={{
               width: THUMB_SIZE_REST,

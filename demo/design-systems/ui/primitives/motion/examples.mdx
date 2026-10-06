@@ -3,7 +3,7 @@ import Motion from './index'
 
 # Three speeds
 
-All animations come from one of three springs. Hover states and small toggles use `fast`, dropdowns and tabs use `moderate`, dialogs and drawers use `slow`. Toggle each to feel the pace grow with the size of the thing that moves.
+Toggle each to feel the pace grow with the size of the thing that moves.
 
 <div className="flex w-full flex-wrap items-start justify-center gap-8">
   <Motion tier="fast">
@@ -28,12 +28,12 @@ All animations come from one of three springs. Hover states and small toggles us
 
 # Slow in, faster out
 
-Both panels open on `spring.slow`. The only difference is the close: the left leaves on the same `spring.slow`, the right on `spring.slow.exit` — one tier faster. Hide the left one first. That slight drag on the way out is exactly what you're trying to avoid.
+Both panels open on `spring.slow`; the left leaves on the same `spring.slow`, the right on `spring.slow.exit`. Hide the left one first: that slight drag on the way out is exactly what you're trying to avoid.
 
 <div className="flex w-full flex-wrap items-start justify-center gap-8">
   <div className="flex flex-col items-center gap-3">
     <Motion tier="slow" sameExit>
-      <div className="flex w-56 flex-col gap-2.5 rounded-xl border border-border bg-card p-4 shadow-xl">
+      <div className="flex w-56 flex-col gap-2.5 rounded-xl bg-surface-5 p-4 shadow-surface-5">
         <div className="h-3 w-1/2 rounded-full bg-foreground/10" />
         <div className="mt-1 h-2 w-full rounded-full bg-foreground/6" />
         <div className="h-2 w-2/5 rounded-full bg-foreground/6" />
@@ -47,7 +47,7 @@ Both panels open on `spring.slow`. The only difference is the close: the left le
   </div>
   <div className="flex flex-col items-center gap-3">
     <Motion tier="slow">
-      <div className="flex w-56 flex-col gap-2.5 rounded-xl border border-border bg-card p-4 shadow-xl">
+      <div className="flex w-56 flex-col gap-2.5 rounded-xl bg-surface-5 p-4 shadow-surface-5">
         <div className="h-3 w-1/2 rounded-full bg-foreground/10" />
         <div className="mt-1 h-2 w-full rounded-full bg-foreground/6" />
         <div className="h-2 w-2/5 rounded-full bg-foreground/6" />
@@ -63,7 +63,7 @@ Both panels open on `spring.slow`. The only difference is the close: the left le
 
 # All tokens
 
-Each tier enters on its spring and leaves on its exit tween. Everything lives in `springs` — duration values belong there, not scattered through component code. Under each tier, the components that animate with it.
+Each tier beside the components that animate with it.
 
 <div className="flex w-full flex-col divide-y divide-border">
   {[
@@ -82,7 +82,7 @@ Each tier enters on its spring and leaves on its exit tween. Everything lives in
 
 # Reduced motion preview
 
-All springs respect the OS setting. Wrap the app tree in `<MotionConfig reducedMotion="user">`, and when the user turns on reduced motion the position changes drop out and only the opacity fades remain. The right side forces that setting on to preview it.
+The right side forces reduced motion on to preview it.
 
 <div className="flex w-full flex-wrap items-start justify-center gap-8">
   <div className="flex flex-col items-center gap-3">

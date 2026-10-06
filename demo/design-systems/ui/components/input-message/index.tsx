@@ -6,7 +6,7 @@
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react`; `@/lib/*` and `@/hooks/*` rewritten to
- *   `../../lib/*`; `@/components/ui/fluid-hover-highlight` →
+ *   `../../lib/*` (`SizeProvider` → `../../primitives/sizes`); `@/components/ui/fluid-hover-highlight` →
  *   `../../lib/fluid-hover-highlight`; `@/registry/radix/{button,tooltip}` →
  *   `../button` / `../tooltip`; `@/registry/default/file-thumbnail` → `./file-thumbnail`
  *   (vendored beside this file).
@@ -62,13 +62,14 @@ import {
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { useIcon } from '../../lib/icon-context'
 import { useShape } from '../../lib/shape-context'
-import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
 import { surfaceClasses } from '../../lib/surface-classes'
 import { SurfaceProvider } from '../../lib/surface-context'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { cn } from '../../lib/utils'
+import { SizeProvider } from '../../primitives/sizes'
 import { Button } from '../button'
 import { Tooltip } from '../tooltip'
 import { FileThumbnail } from './file-thumbnail'
@@ -270,11 +271,11 @@ const FilePreviewTile = forwardRef<HTMLDivElement, FilePreviewTileProps>(functio
             onRemove()
           }}
           aria-label={`Remove ${file.name}`}
-          // Force the light-mode palette (dark circle + white X) regardless
-          // of theme — the close badge needs to read as a "delete affordance"
-          // over arbitrary image/PDF content, so it sits at a fixed contrast
-          // instead of flipping with the surrounding surface.
-          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-neutral-900 text-white opacity-0 group-hover/tile:opacity-100 transition-opacity duration-fast flex items-center justify-center cursor-pointer outline-none focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-focus-ring"
+          // Pinned to the light scheme (`light` class: dark circle + light X)
+          // regardless of theme — the close badge needs to read as a "delete
+          // affordance" over arbitrary image/PDF content, so it sits at a fixed
+          // contrast instead of flipping with the surrounding surface.
+          className="light absolute top-1 right-1 w-5 h-5 rounded-full bg-foreground text-background opacity-0 group-hover/tile:opacity-100 transition-opacity duration-fast flex items-center justify-center cursor-pointer outline-none focus-visible:opacity-100 focus-visible:ring-1 focus-visible:ring-focus-ring"
         >
           <XIcon size={12} strokeWidth={2.5} />
         </button>

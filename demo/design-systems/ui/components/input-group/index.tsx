@@ -4,7 +4,8 @@
  * `registry/default/input-group.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications: `"use client"` dropped; `@/lib/*` and `@/hooks/*` imports
- * rewritten to `../../lib/{lib,hooks}/*`; uncontrolled mode added —
+ * rewritten to `../../lib/*` (`SizeProvider` to `../../primitives/sizes`);
+ * uncontrolled mode added —
  * `InputField` `value` and `onChange` are optional, with a `defaultValue`
  * twin (`InputHTMLAttributes`' own `defaultValue` omitted in its favour)
  * backed by `useControllableState`; modo docs — TSDoc with FF's docs/API
@@ -32,10 +33,11 @@ import {
 } from 'react'
 import type { IconComponent } from '../../lib/icon-context'
 import { useShape } from '../../lib/shape-context'
-import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { cn } from '../../lib/utils'
+import { SizeProvider } from '../../primitives/sizes'
 
 interface InputGroupContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void

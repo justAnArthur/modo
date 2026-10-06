@@ -10,14 +10,12 @@
  * - modo item: TSDoc (from the FF "Surfaces" docs page) on the component, the forwardRef
  *   result typed with its `Provider` static, `Object.assign(Elevated, { Provider: SurfaceProvider })`,
  *   `SurfaceProvider` / `useSurface` / `surfaceClasses` re-exported, and a default export.
- * - Imports `./surface.css` (the 8-level ladder tokens; modo also auto-injects it).
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`;
  *   `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
  *   `spring.*`.
  */
 
-import './surface.css'
 import {
   type ComponentPropsWithoutRef,
   type ForwardRefExoticComponent,

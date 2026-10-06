@@ -5,9 +5,9 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*` and
- *   `@/hooks/*` → relative `_fluid` paths; `@/lib/elevated` →
- *   `../../primitives/surface`; `@/components/ui/scroll-area` →
- *   `../../primitives/scroll-area`; `@/components/ui/fluid-hover-highlight` →
+ *   `@/hooks/*` → `../../lib/*` (`SizeProvider` → `../../primitives/sizes`);
+ *   `@/lib/elevated` → `../../primitives/surface`; `@/components/ui/scroll-area`
+ *   → `../../primitives/scroll-area`; `@/components/ui/fluid-hover-highlight` →
  *   `../../lib/fluid-hover-highlight`; `@/components/ui/menu-item` and
  *   `@/components/ui/dropdown-search` → `./menu-item`, `./dropdown-search`
  *   (both vendored into this folder).
@@ -66,13 +66,14 @@ import {
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { isDisabledRow, popupMotionClass, popupScrollAreaClass, popupViewportClass } from '../../lib/popup'
 import { shapeMap } from '../../lib/shape-context'
-import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { exitFallbackMs, spring } from '../../lib/springs'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { type ItemRect, useFluidHover } from '../../lib/use-fluid-hover'
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../lib/use-merge-split'
 import { cn } from '../../lib/utils'
 import { ScrollArea } from '../../primitives/scroll-area'
+import { SizeProvider } from '../../primitives/sizes'
 import { Elevated } from '../../primitives/surface'
 import {
   DropdownEmpty,
