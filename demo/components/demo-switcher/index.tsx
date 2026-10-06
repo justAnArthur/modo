@@ -1,6 +1,6 @@
 import './demo-switcher.css'
-import peers from './.peers.json'
 import type { ResolvedShellExport } from 'virtual:modo-shell'
+import peers from './.peers.json'
 
 /**
  * Cross-kit navigation. Renders one `<option>` per peer in the host's

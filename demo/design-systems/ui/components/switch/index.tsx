@@ -23,13 +23,13 @@
  *   `duration-<tier>` / `spring.*`.
  */
 
-import { forwardRef, useRef, useState, useEffect, useCallback, useId, type HTMLAttributes } from 'react'
-import { motion, useMotionValue, animate, type Transition } from 'motion/react'
 import { Switch as SwitchPrimitive } from '@base-ui/react/switch'
-import { cn } from '../../lib/utils'
+import { animate, motion, type Transition, useMotionValue } from 'motion/react'
+import { forwardRef, type HTMLAttributes, useCallback, useEffect, useId, useRef, useState } from 'react'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
-import { useSize, type SizeVariant } from '../../lib/size-context'
 import { useControllableState } from '../../lib/use-controllable-state'
+import { cn } from '../../lib/utils'
 
 interface SwitchProps extends HTMLAttributes<HTMLDivElement> {
   /** Text label displayed next to the switch. */
@@ -328,7 +328,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
 
 Switch.displayName = 'Switch'
 
-export { Switch }
 export type { SwitchProps }
+export { Switch }
 
 export default Switch

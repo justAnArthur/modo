@@ -25,34 +25,34 @@
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
+import { Select as SelectPrimitive } from '@base-ui/react/select'
+import { cva, type VariantProps } from 'class-variance-authority'
+import { AnimatePresence, motion } from 'motion/react'
 import {
   Children,
-  forwardRef,
-  isValidElement,
-  useRef,
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
   createContext,
-  useContext,
-  type ReactNode,
+  forwardRef,
   type HTMLAttributes,
+  isValidElement,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { cva, type VariantProps } from 'class-variance-authority'
-import { Select as SelectPrimitive } from '@base-ui/react/select'
-import type { IconComponent } from '../../lib/icon-context'
-import { cn } from '../../lib/utils'
-import { spring, exitFallbackMs } from '../../lib/springs'
-import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
-import { useShape, shapeMap } from '../../lib/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
-import { Elevated } from '../../primitives/surface'
-import { popupMotionClass, popupScrollAreaClass, popupViewportClass, isDisabledRow } from '../../lib/popup'
-import { useKeyboardNavGate } from '../../lib/use-keyboard-nav-gate'
-import { ScrollArea } from '../../primitives/scroll-area'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import type { IconComponent } from '../../lib/icon-context'
+import { isDisabledRow, popupMotionClass, popupScrollAreaClass, popupViewportClass } from '../../lib/popup'
+import { shapeMap, useShape } from '../../lib/shape-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { exitFallbackMs, spring } from '../../lib/springs'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { useKeyboardNavGate } from '../../lib/use-keyboard-nav-gate'
+import { cn } from '../../lib/utils'
+import { ScrollArea } from '../../primitives/scroll-area'
+import { Elevated } from '../../primitives/surface'
 
 // ---------------------------------------------------------------------------
 // Select context
@@ -768,8 +768,7 @@ Select.Separator = SelectSeparator
 // Exports
 // ---------------------------------------------------------------------------
 
-export { Select, SelectTrigger, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator, triggerVariants }
-
-export type { SelectProps, SelectTriggerProps, SelectContentProps, SelectItemProps }
+export type { SelectContentProps, SelectItemProps, SelectProps, SelectTriggerProps }
+export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, triggerVariants }
 
 export default Select

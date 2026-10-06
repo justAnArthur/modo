@@ -5,40 +5,40 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). Type-skew fixes for this workspace's pinned deps: ref typings adjusted for @types/react 18 (MutableRefObject members/params, widened useRef generics).
  */
 
+import { cva, type VariantProps } from 'class-variance-authority'
+import { AnimatePresence, motion } from 'motion/react'
 import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useLayoutEffect,
-  useCallback,
-  useMemo,
-  useRef,
-  useId,
-  forwardRef,
-  Children,
-  type ReactNode,
-  type ReactElement,
-  type CSSProperties,
-  type HTMLAttributes,
-  type LiHTMLAttributes,
   type AnchorHTMLAttributes,
   type ButtonHTMLAttributes,
-  type Ref,
+  Children,
+  type CSSProperties,
+  createContext,
+  forwardRef,
+  type HTMLAttributes,
+  type LiHTMLAttributes,
   type MutableRefObject,
-  RefObject,
+  type ReactElement,
+  type ReactNode,
+  type Ref,
+  type RefObject,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
 } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '../../_fluid/utils'
-import { spring } from '../../_fluid/springs'
-import { fontWeights } from '../../_fluid/font-weight'
-import { useShape } from '../../_fluid/shape-context'
-import { useSize, SizeProvider, type SizeVariant } from '../../_fluid/size-context'
-import { useFluidHover, type ItemRect } from '../../_fluid/use-fluid-hover'
-import type { IconComponent } from '../../_fluid/icon-context'
-import { resolveSlotTemplate, slotElement } from './sidebar-core'
 import { FluidHoverHighlight } from '../../_fluid/fluid-hover-highlight'
+import { fontWeights } from '../../_fluid/font-weight'
+import type { IconComponent } from '../../_fluid/icon-context'
+import { useShape } from '../../_fluid/shape-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../_fluid/size-context'
+import { spring } from '../../_fluid/springs'
+import { type ItemRect, useFluidHover } from '../../_fluid/use-fluid-hover'
+import { cn } from '../../_fluid/utils'
+import { resolveSlotTemplate, slotElement } from './sidebar-core'
 
 // SSR-safe layout effect (client components still server-render in Next).
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
@@ -1359,13 +1359,13 @@ SidebarMenuSubButton.displayName = 'SidebarMenuSubButton'
 
 export {
   SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
   SidebarMenuAction,
   SidebarMenuActions,
   SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarMenuSkeleton,
   SidebarMenuSub,
-  SidebarMenuSubItem,
   SidebarMenuSubButton,
+  SidebarMenuSubItem,
 }

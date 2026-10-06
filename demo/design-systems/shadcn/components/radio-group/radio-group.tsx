@@ -5,9 +5,9 @@
  * Local modifications: none (verbatim as pulled).
  */
 
-import * as React from 'react'
 import { cn } from 'cn'
 import { RadioGroup as RadioGroupPrimitive } from 'radix-ui'
+import type * as React from 'react'
 
 function RadioGroup({ className, ...props }: React.ComponentProps<typeof RadioGroupPrimitive.Root>) {
   return <RadioGroupPrimitive.Root data-slot="radio-group" className={cn('grid w-full gap-2', className)} {...props} />

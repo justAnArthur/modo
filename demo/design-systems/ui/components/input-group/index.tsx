@@ -15,26 +15,26 @@
  * `spring.*`.
  */
 
+import { Field } from '@base-ui/react/field'
 import {
-  useRef,
-  useState,
-  useMemo,
   createContext,
-  useContext,
-  forwardRef,
   type ForwardRefExoticComponent,
-  type ReactNode,
+  forwardRef,
   type HTMLAttributes,
   type InputHTMLAttributes,
+  type ReactNode,
   type RefAttributes,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
 } from 'react'
-import { Field } from '@base-ui/react/field'
 import type { IconComponent } from '../../lib/icon-context'
-import { cn } from '../../lib/utils'
 import { useShape } from '../../lib/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
-import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
 import { useControllableState } from '../../lib/use-controllable-state'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { cn } from '../../lib/utils'
 
 interface InputGroupContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void
@@ -310,6 +310,6 @@ InputField.displayName = 'InputField'
 
 Object.assign(InputGroup, { Field: InputField })
 
-export { InputGroup, InputField }
-export type { InputGroupProps, InputFieldProps }
+export type { InputFieldProps, InputGroupProps }
+export { InputField, InputGroup }
 export default InputGroup

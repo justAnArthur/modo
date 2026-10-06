@@ -6,8 +6,8 @@
  * component code untouched.
  */
 
-import * as React from 'react'
 import { cn } from 'cn'
+import type * as React from 'react'
 
 /**
  * shadcn/ui Input — native text field.

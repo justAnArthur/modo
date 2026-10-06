@@ -22,23 +22,23 @@
  *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
  */
 
-import {
-  forwardRef,
-  isValidElement,
-  type ButtonHTMLAttributes,
-  type ReactElement,
-  type ReactNode,
-  type HTMLAttributes,
-} from 'react'
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { motion } from 'motion/react'
-import { cn } from '../../lib/utils'
+import {
+  type ButtonHTMLAttributes,
+  forwardRef,
+  type HTMLAttributes,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+} from 'react'
 import { useIcon } from '../../lib/icon-context'
-import { spring } from '../../lib/springs'
 import { useShape } from '../../lib/shape-context'
 import { useSize, useSizeVariant } from '../../lib/size-context'
-import { SurfaceProvider, useSurface } from '../../lib/surface-context'
+import { spring } from '../../lib/springs'
 import { surfaceClasses } from '../../lib/surface-classes'
+import { SurfaceProvider, useSurface } from '../../lib/surface-context'
+import { cn } from '../../lib/utils'
 import { Button } from '../button'
 
 const DIALOG_OFFSET = 4
@@ -333,8 +333,12 @@ Dialog.Title = DialogTitle
 Dialog.Description = DialogDescription
 Dialog.Close = DialogClose
 
-export { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose }
-export type { DialogProps, DialogContentProps }
-export type { DialogSlotProps as DialogTriggerProps, DialogSlotProps as DialogCloseProps }
+export type {
+  DialogContentProps,
+  DialogProps,
+  DialogSlotProps as DialogTriggerProps,
+  DialogSlotProps as DialogCloseProps,
+}
+export { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger }
 
 export default Dialog

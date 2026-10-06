@@ -14,11 +14,11 @@
  *   `spring.*`.
  */
 
-import { forwardRef, useState, useEffect, type HTMLAttributes } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
-import { cn } from '../../lib/utils'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { forwardRef, type HTMLAttributes, useEffect, useState } from 'react'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
-import { useSize, type SizeVariant } from '../../lib/size-context'
+import { cn } from '../../lib/utils'
 
 const circleA = 'M 12 8 C 14.21 8 16 9.79 16 12 C 16 14.21 14.21 16 12 16 C 9.79 16 8 14.21 8 12 C 8 9.79 9.79 8 12 8 Z'
 
@@ -148,6 +148,6 @@ const ThinkingIndicator = forwardRef<HTMLDivElement, ThinkingIndicatorProps>(
 
 ThinkingIndicator.displayName = 'ThinkingIndicator'
 
-export { ThinkingIndicator }
 export type { ThinkingIndicatorProps }
+export { ThinkingIndicator }
 export default ThinkingIndicator

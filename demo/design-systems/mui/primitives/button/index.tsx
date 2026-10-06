@@ -1,5 +1,5 @@
-import { MuiProvider } from '../../theme'
 import MuiButton from '@mui/material/Button'
+import { MuiProvider } from '../../theme'
 
 /**
  * Triggers an action. Thin modo adapter over MUI's Button; the docs chrome

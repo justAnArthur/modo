@@ -14,12 +14,12 @@
  *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
  */
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip'
 import { motion, useMotionValue } from 'motion/react'
-import { cn } from '../../lib/utils'
-import { spring } from '../../lib/springs'
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react'
 import { useShape } from '../../lib/shape-context'
+import { spring } from '../../lib/springs'
+import { cn } from '../../lib/utils'
 
 // ---------------------------------------------------------------------------
 // Portal container context
@@ -260,7 +260,7 @@ function Tooltip({
 Tooltip.Provider = TooltipProvider
 Tooltip.PortalContainer = TooltipPortalContainer
 
-export { Tooltip, TooltipPortalContainer, TooltipProvider }
 export type { TooltipProps, TooltipProviderProps, TooltipSide }
+export { Tooltip, TooltipPortalContainer, TooltipProvider }
 
 export default Tooltip

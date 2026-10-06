@@ -7,9 +7,9 @@
  * `@/components/ui/separator` rewritten to block-local relative imports.
  */
 
-import { useMemo } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from 'cn'
+import { useMemo } from 'react'
 
 import { Label } from './label'
 import { Separator } from './separator'
@@ -213,13 +213,13 @@ function FieldError({
 
 export {
   Field,
-  FieldLabel,
+  FieldContent,
   FieldDescription,
   FieldError,
   FieldGroup,
+  FieldLabel,
   FieldLegend,
   FieldSeparator,
   FieldSet,
-  FieldContent,
   FieldTitle,
 }

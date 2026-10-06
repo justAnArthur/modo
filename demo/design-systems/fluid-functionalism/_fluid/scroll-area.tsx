@@ -11,20 +11,20 @@
 // and tw-animate-css visibility classes are swapped for a plain opacity
 // transition. Falls back to native overflow scrolling on touch-primary devices.
 
+import { ScrollArea as ScrollAreaPrimitive } from 'radix-ui'
 import {
+  type ComponentPropsWithoutRef,
+  type ComponentRef,
   createContext,
   forwardRef,
   useContext,
   useEffect,
   useRef,
   useState,
-  type ComponentPropsWithoutRef,
-  type ComponentRef,
 } from 'react'
-import { ScrollArea as ScrollAreaPrimitive } from 'radix-ui'
-import { cn } from './utils'
 import { useShape } from './shape-context'
 import { useTouchPrimary } from './use-touch-primary'
+import { cn } from './utils'
 
 // On touch-primary devices the Radix machinery is skipped entirely in favour
 // of native overflow scrolling (better physics, momentum, rubber-banding);
@@ -207,5 +207,5 @@ const ScrollBar = forwardRef<
 
 ScrollBar.displayName = 'ScrollBar'
 
-export { ScrollArea, ScrollBar }
 export type { ScrollAreaProps }
+export { ScrollArea, ScrollBar }

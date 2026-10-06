@@ -1,7 +1,7 @@
-import type { Plugin } from 'vite'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { parseCss, buildGroup, GROUPS, type Group, type GroupName } from '../lib/css'
+import type { Plugin } from 'vite'
+import { buildGroup, GROUPS, type Group, type GroupName, parseCss } from '../lib/css'
 
 interface Options {
   userRoot: string

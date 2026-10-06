@@ -1,4 +1,4 @@
-import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { createTheme, ThemeProvider } from '@mui/material/styles'
 
 /**
  * MUI's default theme (light scheme), with `cssVariables: true` so component

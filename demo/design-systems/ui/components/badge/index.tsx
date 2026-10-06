@@ -14,11 +14,11 @@
  *   `text-<role>[-compact]`; literal colors → color tokens.
  */
 
-import { forwardRef, type HTMLAttributes } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '../../lib/utils'
+import { forwardRef, type HTMLAttributes } from 'react'
 import { useShape } from '../../lib/shape-context'
 import { useSizeVariant } from '../../lib/size-context'
+import { cn } from '../../lib/utils'
 
 const badgeColors = {
   gray: 'var(--badge-gray)',
@@ -151,7 +151,7 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
 
 Badge.displayName = 'Badge'
 
-export { Badge, badgeVariants, badgeColors }
-export type { BadgeProps, BadgeColor, BadgeSize }
+export type { BadgeColor, BadgeProps, BadgeSize }
+export { Badge, badgeColors, badgeVariants }
 
 export default Badge

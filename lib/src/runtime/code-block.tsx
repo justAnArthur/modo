@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import { shell } from 'virtual:modo-shell'
+import { useEffect, useState } from 'react'
 
 export function CopyButton({ text }: { text: string }) {
   const { Button, Icon } = shell

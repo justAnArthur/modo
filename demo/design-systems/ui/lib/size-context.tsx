@@ -8,7 +8,7 @@
  * - `"use client"` directive dropped (no RSC here).
  */
 
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react'
+import { createContext, type ReactNode, useCallback, useContext, useMemo, useState } from 'react'
 
 type SizeVariant = 'default' | 'compact'
 
@@ -178,5 +178,5 @@ function SizeProvider({
   return <SizeContext.Provider value={value}>{children}</SizeContext.Provider>
 }
 
-export { SizeProvider, useSize, useSizeVariant, useSizeContext, useTypeScale, sizeMap, typeScale }
-export type { SizeVariant, SizeClasses, TypeScaleRole, TypeScaleStep }
+export type { SizeClasses, SizeVariant, TypeScaleRole, TypeScaleStep }
+export { SizeProvider, sizeMap, typeScale, useSize, useSizeContext, useSizeVariant, useTypeScale }

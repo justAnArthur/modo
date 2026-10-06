@@ -40,8 +40,16 @@
  *   durations → `duration-<tier>` / `spring.*`.
  */
 
+import { AnimatePresence, motion, Reorder, useReducedMotion } from 'motion/react'
 import {
+  type ChangeEvent,
   forwardRef,
+  type HTMLAttributes,
+  type DragEvent as ReactDragEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+  type TextareaHTMLAttributes,
   useCallback,
   useEffect,
   useId,
@@ -49,28 +57,20 @@ import {
   useMemo,
   useRef,
   useState,
-  type ChangeEvent,
-  type DragEvent as ReactDragEvent,
-  type HTMLAttributes,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type MouseEvent as ReactMouseEvent,
-  type ReactNode,
-  type TextareaHTMLAttributes,
 } from 'react'
-import { AnimatePresence, motion, Reorder, useReducedMotion } from 'motion/react'
-import { cn } from '../../lib/utils'
-import { spring } from '../../lib/springs'
-import { useShape } from '../../lib/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
+import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { useIcon } from '../../lib/icon-context'
+import { useShape } from '../../lib/shape-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { spring } from '../../lib/springs'
 import { surfaceClasses } from '../../lib/surface-classes'
 import { SurfaceProvider } from '../../lib/surface-context'
-import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { useControllableState } from '../../lib/use-controllable-state'
-import { FileThumbnail } from './file-thumbnail'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { cn } from '../../lib/utils'
 import { Button } from '../button'
 import { Tooltip } from '../tooltip'
-import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { FileThumbnail } from './file-thumbnail'
 
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
@@ -1375,7 +1375,7 @@ const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
 
 InputMessage.displayName = 'InputMessage'
 
-export { InputMessage }
 export { FileThumbnail } from './file-thumbnail'
 export type { InputMessageProps, InputMessageSlotContext, InputMessageStatus, QueuedMessage }
+export { InputMessage }
 export default InputMessage

@@ -221,9 +221,7 @@ function finishProps(
 }
 
 function attachJsdocToProps(litBody: string, props: ParsedProp[]): void {
-  const re = /\/\*\*([\s\S]*?)\*\/\s*([A-Za-z_$][\w$]*)\s*\??:/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(litBody)) !== null) {
+  for (const m of litBody.matchAll(/\/\*\*([\s\S]*?)\*\/\s*([A-Za-z_$][\w$]*)\s*\??:/g)) {
     const name = m[2]!
     const desc = normalizeJsdoc(m[1] ?? '')
     const prop = props.find(p => p.name === name)
@@ -280,9 +278,7 @@ function expandIncludes(text: string, readFile: ParseOptions['readFile'], errors
 
 function extractExamples(jsdoc: string, include: (text: string) => string, docs: string[]): ParsedExample[] {
   const out: ParsedExample[] = []
-  const re = /(?:^|\n)[ \t]*@example\b([\s\S]*?)(?=\n[ \t]*@example\b|$)/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(jsdoc)) !== null) {
+  for (const m of jsdoc.matchAll(/(?:^|\n)[ \t]*@example\b([\s\S]*?)(?=\n[ \t]*@example\b|$)/g)) {
     const raw = (m[1] ?? '').trim()
     const doc = raw.match(MDX_INCLUDE)?.[1]
     if (doc) {

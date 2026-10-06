@@ -17,20 +17,20 @@
  *   `duration-<tier>` / `spring.*`.
  */
 
+import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area'
 import {
-  createContext,
-  forwardRef,
-  useContext,
   type ComponentPropsWithoutRef,
   type ComponentRef,
+  createContext,
   type ForwardRefExoticComponent,
+  forwardRef,
   type ReactNode,
   type RefAttributes,
+  useContext,
 } from 'react'
-import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area'
-import { cn } from '../../lib/utils'
 import { useShape } from '../../lib/shape-context'
 import { useTouchPrimary } from '../../lib/use-touch-primary'
+import { cn } from '../../lib/utils'
 
 // On touch-primary devices the Base UI machinery is skipped entirely in
 // favour of native overflow scrolling (better physics, momentum,
@@ -193,7 +193,7 @@ ScrollBar.displayName = 'ScrollBar'
 
 Object.assign(ScrollArea, { Bar: ScrollBar })
 
-export { ScrollArea, ScrollBar }
 export type { ScrollAreaProps }
+export { ScrollArea, ScrollBar }
 
 export default ScrollArea

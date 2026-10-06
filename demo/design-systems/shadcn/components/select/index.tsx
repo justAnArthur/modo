@@ -1,4 +1,4 @@
-import { Select as ShadcnSelect, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
+import { SelectContent, SelectItem, SelectTrigger, SelectValue, Select as ShadcnSelect } from './select'
 
 /**
  * shadcn/ui Select — single-choice dropdown backed by Radix.

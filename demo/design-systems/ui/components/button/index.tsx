@@ -18,20 +18,20 @@
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
+import { Button as ButtonPrimitive } from '@base-ui/react/button'
+import { cva, type VariantProps } from 'class-variance-authority'
 import {
+  type ButtonHTMLAttributes,
   cloneElement,
   forwardRef,
   isValidElement,
-  type ButtonHTMLAttributes,
   type ReactElement,
   type ReactNode,
 } from 'react'
-import { Button as ButtonPrimitive } from '@base-ui/react/button'
-import { cva, type VariantProps } from 'class-variance-authority'
 import type { IconComponent } from '../../lib/icon-context'
-import { cn } from '../../lib/utils'
 import { useShape } from '../../lib/shape-context'
 import { useSizeVariant } from '../../lib/size-context'
+import { cn } from '../../lib/utils'
 
 const buttonVariants = cva(
   [
@@ -318,7 +318,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button'
 
-export { Button, buttonVariants }
 export type { ButtonProps, ButtonSize }
+export { Button, buttonVariants }
 
 export default Button

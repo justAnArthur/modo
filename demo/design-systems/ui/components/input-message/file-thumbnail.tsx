@@ -15,8 +15,8 @@
  */
 
 import { useEffect, useState } from 'react'
-import { cn } from '../../lib/utils'
 import { useShape } from '../../lib/shape-context'
+import { cn } from '../../lib/utils'
 
 // ─── Lazy pdfjs loader ────────────────────────────────────────────────────
 // Imports pdfjs-dist on first PDF, caches the module, and points the worker
@@ -169,5 +169,5 @@ function FileThumbnail({ file, size, className }: FileThumbnailProps) {
   )
 }
 
-export { FileThumbnail, loadPdfjs, renderPdfFirstPage }
 export type { FileThumbnailProps }
+export { FileThumbnail, loadPdfjs, renderPdfFirstPage }

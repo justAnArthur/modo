@@ -1,5 +1,5 @@
-import type { Plugin } from 'vite'
 import { resolve } from 'node:path'
+import type { Plugin } from 'vite'
 import { loadModoConfig } from '../lib/config.loader'
 
 interface Options {

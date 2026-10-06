@@ -23,13 +23,13 @@
  *   `spring.*`.
  */
 
-import { forwardRef, useState, useCallback, useRef, useEffect, useId, type HTMLAttributes } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { cn } from '../../lib/utils'
+import { AnimatePresence, motion } from 'motion/react'
+import { forwardRef, type HTMLAttributes, useCallback, useEffect, useId, useRef, useState } from 'react'
 import { useIcon } from '../../lib/icon-context'
 import { useShape } from '../../lib/shape-context'
-import { useSize, type SizeVariant } from '../../lib/size-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
+import { cn } from '../../lib/utils'
 import { Tooltip } from '../tooltip'
 
 type InputCopyVariant = 'icon' | 'button'
@@ -449,6 +449,6 @@ const InputCopy = forwardRef<HTMLDivElement, InputCopyProps>(
 
 InputCopy.displayName = 'InputCopy'
 
+export type { InputCopyAlign, InputCopyProps, InputCopyVariant }
 export { InputCopy }
-export type { InputCopyProps, InputCopyVariant, InputCopyAlign }
 export default InputCopy

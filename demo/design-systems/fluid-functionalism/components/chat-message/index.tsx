@@ -5,13 +5,13 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). modo item docs: TSDoc on the component, compound static (ChatMessage.FileThumbnail); file renamed to index.tsx (the former adapter is gone).
  */
 
+import { type HTMLMotionProps, motion } from 'motion/react'
 import { forwardRef, type ReactNode } from 'react'
-import { motion, type HTMLMotionProps } from 'motion/react'
-import { cn } from '../../_fluid/utils'
-import { spring } from '../../_fluid/springs'
 import { useShape } from '../../_fluid/shape-context'
-import { useSize, type SizeVariant } from '../../_fluid/size-context'
+import { type SizeVariant, useSize } from '../../_fluid/size-context'
+import { spring } from '../../_fluid/springs'
 import { useTouchPrimary } from '../../_fluid/use-touch-primary'
+import { cn } from '../../_fluid/utils'
 import { FileThumbnail } from './file-thumbnail'
 
 interface ChatMessageProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
@@ -145,6 +145,6 @@ ChatMessage.displayName = 'ChatMessage'
    expando assignments, so Object.assign carries the type). */
 Object.assign(ChatMessage, { FileThumbnail })
 
-export { ChatMessage }
 export type { ChatMessageProps }
+export { ChatMessage }
 export default ChatMessage

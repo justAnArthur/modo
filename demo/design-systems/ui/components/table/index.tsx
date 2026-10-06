@@ -21,22 +21,22 @@
  */
 
 import {
-  useRef,
-  useMemo,
   createContext,
-  useContext,
-  forwardRef,
   type ForwardRefExoticComponent,
-  type RefAttributes,
-  type ReactNode,
+  forwardRef,
   type HTMLAttributes,
+  type ReactNode,
+  type RefAttributes,
   type TdHTMLAttributes,
   type ThHTMLAttributes,
+  useContext,
+  useMemo,
+  useRef,
 } from 'react'
-import { cn } from '../../lib/utils'
-import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
-import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { cn } from '../../lib/utils'
 
 // ── Context ──────────────────────────────────────────────
 
@@ -230,7 +230,7 @@ Object.assign(Table, {
 
 // ── Exports ──────────────────────────────────────────────
 
-export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell }
 export type { TableProps, TableRowProps }
+export { Table, TableBody, TableCell, TableHead, TableHeader, TableRow }
 
 export default Table

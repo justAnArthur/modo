@@ -5,11 +5,11 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). modo item docs: TSDoc on the component (file renamed to index.tsx; the former adapter is gone).
  */
 
-import { forwardRef, useState, useEffect, type HTMLAttributes } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
-import { cn } from '../../_fluid/utils'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { forwardRef, type HTMLAttributes, useEffect, useState } from 'react'
 import { fontWeights } from '../../_fluid/font-weight'
-import { useSize, type SizeVariant } from '../../_fluid/size-context'
+import { type SizeVariant, useSize } from '../../_fluid/size-context'
+import { cn } from '../../_fluid/utils'
 
 const circleA = 'M 12 8 C 14.21 8 16 9.79 16 12 C 16 14.21 14.21 16 12 16 C 9.79 16 8 14.21 8 12 C 8 9.79 9.79 8 12 8 Z'
 
@@ -131,6 +131,6 @@ const ThinkingIndicator = forwardRef<HTMLDivElement, ThinkingIndicatorProps>(
 
 ThinkingIndicator.displayName = 'ThinkingIndicator'
 
-export { ThinkingIndicator }
 export type { ThinkingIndicatorProps }
+export { ThinkingIndicator }
 export default ThinkingIndicator

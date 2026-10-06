@@ -19,23 +19,23 @@
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
+import { AnimatePresence, motion } from 'motion/react'
 import {
   createContext,
-  useContext,
-  useRef,
-  useEffect,
   forwardRef,
   type HTMLAttributes,
   type ReactElement,
   type ReactNode,
+  useContext,
+  useEffect,
+  useRef,
 } from 'react'
 import type { IconComponent } from '../../lib/icon-context'
-import { motion, AnimatePresence } from 'motion/react'
-import { cn } from '../../lib/utils'
-import { spring } from '../../lib/springs'
 import { shapeMap } from '../../lib/shape-context'
 import { useSize } from '../../lib/size-context'
+import { spring } from '../../lib/springs'
 import { useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { cn } from '../../lib/utils'
 
 // MenuItem is only used inside Dropdown, which opts out of the global pill
 // shape — see index.tsx for the rationale.
@@ -329,6 +329,6 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
 
 MenuItem.displayName = 'MenuItem'
 
-export { MenuItem }
 export type { MenuItemProps }
+export { MenuItem }
 export default MenuItem

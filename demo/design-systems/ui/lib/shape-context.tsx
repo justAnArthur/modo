@@ -8,7 +8,7 @@
  * - `"use client"` directive dropped (no RSC here).
  */
 
-import { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from 'react'
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 
 type ShapeVariant = 'pill' | 'rounded'
 
@@ -119,5 +119,5 @@ function ShapeProvider({ children, defaultShape = 'rounded' }: { children: React
   return <ShapeContext.Provider value={value}>{children}</ShapeContext.Provider>
 }
 
-export { ShapeProvider, useShape, useShapeContext, shapeMap }
-export type { ShapeVariant, ShapeClasses }
+export type { ShapeClasses, ShapeVariant }
+export { ShapeProvider, shapeMap, useShape, useShapeContext }

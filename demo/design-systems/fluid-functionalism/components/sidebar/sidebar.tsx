@@ -5,20 +5,20 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). `@radix-ui/react-dialog` rewritten to the unified `radix-ui` package.
  */
 
-import { useEffect, useRef, useState, forwardRef, type ReactNode, type CSSProperties, type HTMLAttributes } from 'react'
-import { Dialog as DialogPrimitive } from 'radix-ui'
 import { motion, useReducedMotion } from 'motion/react'
-import { cn } from '../../_fluid/utils'
-import { spring, exitFallbackMs } from '../../_fluid/springs'
-import { useSurface, SurfaceProvider } from '../../_fluid/surface-context'
-import { surfaceClasses } from '../../_fluid/surface-classes'
+import { Dialog as DialogPrimitive } from 'radix-ui'
+import { type CSSProperties, forwardRef, type HTMLAttributes, type ReactNode, useEffect, useRef, useState } from 'react'
 import { ScrollArea } from '../../_fluid/scroll-area'
+import { exitFallbackMs, spring } from '../../_fluid/springs'
+import { surfaceClasses } from '../../_fluid/surface-classes'
+import { SurfaceProvider, useSurface } from '../../_fluid/surface-context'
+import { cn } from '../../_fluid/utils'
 import {
-  useSidebar,
+  type SidebarCollapsible,
   SidebarShell,
   type SidebarSide,
   type SidebarVariant,
-  type SidebarCollapsible,
+  useSidebar,
 } from './sidebar-core'
 
 // ─── Mobile sheet ────────────────────────────────────────────────────────────
@@ -281,68 +281,68 @@ const SidebarContent = forwardRef<HTMLDivElement, SidebarContentProps>(
 )
 SidebarContent.displayName = 'SidebarContent'
 
-export { Sidebar, SidebarContent }
+export type {
+  SidebarCollapsible,
+  SidebarContextValue,
+  SidebarGroupActionProps,
+  SidebarGroupLabelProps,
+  SidebarInputProps,
+  SidebarInsetProps,
+  SidebarProviderProps,
+  SidebarRailProps,
+  SidebarSectionProps,
+  SidebarSide,
+  SidebarTriggerProps,
+  SidebarVariant,
+} from './sidebar-core'
 
 // Re-export the flavor-neutral parts so `sidebar` is a one-stop import.
 export {
-  SidebarProvider,
-  useSidebar,
-  SidebarTrigger,
-  SidebarRail,
-  SidebarInset,
-  SidebarInput,
-  SidebarHeader,
+  SIDEBAR_COOKIE_MAX_AGE,
+  SIDEBAR_COOKIE_NAME,
+  SIDEBAR_KEYBOARD_SHORTCUT,
+  SIDEBAR_KEYBOARD_SHORTCUT_RIGHT,
+  SIDEBAR_MAX_WIDTH,
+  SIDEBAR_MIN_WIDTH,
+  SIDEBAR_WIDTH,
+  SIDEBAR_WIDTH_MOBILE,
   SidebarFooter,
-  SidebarSeparator,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarGroupAction,
   SidebarGroupActions,
   SidebarGroupContent,
-  SIDEBAR_COOKIE_NAME,
-  SIDEBAR_COOKIE_MAX_AGE,
-  SIDEBAR_WIDTH,
-  SIDEBAR_WIDTH_MOBILE,
-  SIDEBAR_KEYBOARD_SHORTCUT,
-  SIDEBAR_KEYBOARD_SHORTCUT_RIGHT,
-  SIDEBAR_MIN_WIDTH,
-  SIDEBAR_MAX_WIDTH,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInput,
+  SidebarInset,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
+  useSidebar,
 } from './sidebar-core'
 export type {
-  SidebarContextValue,
-  SidebarProviderProps,
-  SidebarTriggerProps,
-  SidebarRailProps,
-  SidebarInsetProps,
-  SidebarInputProps,
-  SidebarSectionProps,
-  SidebarGroupLabelProps,
-  SidebarGroupActionProps,
-  SidebarSide,
-  SidebarVariant,
-  SidebarCollapsible,
-} from './sidebar-core'
+  SidebarMenuActionProps,
+  SidebarMenuBadgeProps,
+  SidebarMenuButtonProps,
+  SidebarMenuItemProps,
+  SidebarMenuProps,
+  SidebarMenuSkeletonProps,
+  SidebarMenuSubButtonProps,
+  SidebarMenuSubItemProps,
+  SidebarMenuSubProps,
+} from './sidebar-menu'
 export {
   SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
   SidebarMenuAction,
   SidebarMenuActions,
   SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarMenuSkeleton,
   SidebarMenuSub,
-  SidebarMenuSubItem,
   SidebarMenuSubButton,
+  SidebarMenuSubItem,
   sidebarMenuButtonVariants,
 } from './sidebar-menu'
-export type {
-  SidebarMenuProps,
-  SidebarMenuItemProps,
-  SidebarMenuButtonProps,
-  SidebarMenuActionProps,
-  SidebarMenuBadgeProps,
-  SidebarMenuSkeletonProps,
-  SidebarMenuSubProps,
-  SidebarMenuSubItemProps,
-  SidebarMenuSubButtonProps,
-} from './sidebar-menu'
+export { Sidebar, SidebarContent }

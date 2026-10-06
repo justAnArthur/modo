@@ -33,24 +33,24 @@
  *   literal colors → color tokens.
  */
 
+import { Slider as SliderPrimitive } from '@base-ui/react/slider'
+import { AnimatePresence, animate, type MotionValue, motion, useMotionValue, useTransform } from 'motion/react'
 import {
+  type CSSProperties,
   forwardRef,
-  useRef,
-  useState,
+  type HTMLAttributes,
+  useCallback,
   useEffect,
   useLayoutEffect,
-  useCallback,
   useMemo,
-  type CSSProperties,
-  type HTMLAttributes,
+  useRef,
+  useState,
 } from 'react'
-import { motion, useMotionValue, useTransform, animate, AnimatePresence, type MotionValue } from 'motion/react'
-import { Slider as SliderPrimitive } from '@base-ui/react/slider'
-import { cn } from '../../lib/utils'
-import { useSizeVariant, type SizeVariant } from '../../lib/size-context'
-import { spring } from '../../lib/springs'
 import { useShape } from '../../lib/shape-context'
+import { type SizeVariant, useSizeVariant } from '../../lib/size-context'
+import { spring } from '../../lib/springs'
 import { useControllableState } from '../../lib/use-controllable-state'
+import { cn } from '../../lib/utils'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -523,9 +523,8 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
         if (!isRange) return px
         if (thumbIndex === 0) {
           return Math.min(px, motionX1.get() - THUMB_SIZE * 0.5)
-        } else {
-          return Math.max(px, motionX0.get() + THUMB_SIZE * 0.5)
         }
+        return Math.max(px, motionX0.get() + THUMB_SIZE * 0.5)
       },
       [isRange, motionX0, motionX1],
     )
@@ -1189,11 +1188,10 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
           if (pipCount <= 1) return min
           const index = Math.max(0, Math.min(pipCount - 1, Math.round((clamped / rect.width) * (pipCount - 1))))
           return pipSteps[index]!
-        } else {
-          const raw = min + (clamped / rect.width) * (max - min)
-          const snapped = Math.round((raw - min) / step) * step + min
-          return Math.max(min, Math.min(max, snapped))
         }
+        const raw = min + (clamped / rect.width) * (max - min)
+        const snapped = Math.round((raw - min) / step) * step + min
+        return Math.max(min, Math.min(max, snapped))
       },
       [variant, pipSteps, pipCount, min, max, step],
     )
@@ -1720,7 +1718,7 @@ Slider.displayName = 'Slider'
  *  render <Slider> (optionally with `variant`) instead. */
 const SliderComfortable = ComfortableSlider
 
+export type { SliderComfortableProps, SliderProps, SliderValue, ValuePosition }
 export { Slider, SliderComfortable }
-export type { SliderProps, SliderValue, ValuePosition, SliderComfortableProps }
 
 export default Slider

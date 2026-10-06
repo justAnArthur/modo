@@ -1,4 +1,4 @@
-import { RadioGroup as ShadcnRadioGroup, RadioGroupItem } from './radio-group'
+import { RadioGroupItem, RadioGroup as ShadcnRadioGroup } from './radio-group'
 
 /**
  * shadcn/ui RadioGroup — single-choice control backed by Radix.

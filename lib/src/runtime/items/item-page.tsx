@@ -1,9 +1,9 @@
 import { byId, exampleDocs, examples as examplesMap } from 'virtual:modo-items'
+import { Anchor } from '../anchor'
+import { Blocks, Inlines, splitLead } from '../markdown'
+import { mdxComponents } from '../mdx'
 import { ItemExamples } from './examples'
 import { PropTable } from './prop-table'
-import { Blocks, Inlines, splitLead } from '../markdown'
-import { Anchor } from '../anchor'
-import { mdxComponents } from '../mdx'
 
 export function ItemPage({ tier, id }: { tier: 'primitives' | 'components' | 'blocks'; id: string }) {
   const entry = byId[`${tier}:${id}`]

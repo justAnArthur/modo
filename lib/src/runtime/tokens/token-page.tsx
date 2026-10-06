@@ -1,5 +1,5 @@
-import type { CSSProperties, ReactElement } from 'react'
 import { tokens as groups } from 'virtual:modo-tokens'
+import type { CSSProperties, ReactElement } from 'react'
 import type { Group, Swatch } from '../../lib/css'
 
 export function TokenGroupView({ group }: { group: string }) {
@@ -41,7 +41,7 @@ function SwatchCard({ v, isColor }: { v: Group['vars'][number]; isColor: boolean
         {isColor ? (
           <span data-modo="swatch" data-kind="color" style={{ background: `var(${v.name})` }} />
         ) : (
-          <Swatch sw={sw} />
+          <TokenSwatch sw={sw} />
         )}
         <code>{v.name}</code>
       </div>
@@ -54,7 +54,7 @@ function SwatchCard({ v, isColor }: { v: Group['vars'][number]; isColor: boolean
 }
 
 // Only the token's own value is inline; the frame is [data-modo="swatch"] CSS.
-function Swatch({ sw }: { sw?: Swatch }): ReactElement | null {
+function TokenSwatch({ sw }: { sw?: Swatch }): ReactElement | null {
   if (!sw) return null
   const box = (style?: CSSProperties) => <span data-modo="swatch" data-kind={sw.kind} style={style} />
   const text = (style: CSSProperties) => (

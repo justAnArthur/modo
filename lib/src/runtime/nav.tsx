@@ -1,6 +1,6 @@
 import { items } from 'virtual:modo-items'
-import { tokens } from 'virtual:modo-tokens'
 import { shell } from 'virtual:modo-shell'
+import { tokens } from 'virtual:modo-tokens'
 import { usePath } from './router'
 
 const TIERS = ['primitives', 'components', 'blocks'] as const

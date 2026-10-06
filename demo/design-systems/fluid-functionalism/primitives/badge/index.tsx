@@ -5,11 +5,11 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). modo item docs: TSDoc on the component, default export (file renamed to index.tsx; the former adapter is gone).
  */
 
-import { forwardRef, type HTMLAttributes } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '../../_fluid/utils'
+import { forwardRef, type HTMLAttributes } from 'react'
 import { useShape } from '../../_fluid/shape-context'
 import { useSizeVariant } from '../../_fluid/size-context'
+import { cn } from '../../_fluid/utils'
 
 const badgeColors = {
   gray: '#a3a3a3',
@@ -135,6 +135,6 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
 
 Badge.displayName = 'Badge'
 
-export { Badge, badgeVariants, badgeColors }
-export type { BadgeProps, BadgeColor, BadgeSize }
+export type { BadgeColor, BadgeProps, BadgeSize }
+export { Badge, badgeColors, badgeVariants }
 export default Badge

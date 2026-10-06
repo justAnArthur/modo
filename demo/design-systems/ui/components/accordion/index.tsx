@@ -25,34 +25,35 @@
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
+import { Accordion as AccordionPrimitive } from '@base-ui/react/accordion'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import {
-  useRef,
-  useState,
+  createContext,
+  type ForwardRefExoticComponent,
+  forwardRef,
+  type HTMLAttributes,
+  type ReactNode,
+  type RefAttributes,
+  useCallback,
+  useContext,
   useEffect,
   useLayoutEffect,
-  useCallback,
   useMemo,
-  createContext,
-  useContext,
-  forwardRef,
-  type ForwardRefExoticComponent,
-  type RefAttributes,
-  type ReactNode,
-  type HTMLAttributes,
+  useRef,
+  useState,
 } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
-import { Accordion as AccordionPrimitive } from '@base-ui/react/accordion'
 
 // SSR-safe layout effect (client components still server-render in Next).
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
-import { cn } from '../../lib/utils'
-import { useIcon } from '../../lib/icon-context'
-import { spring } from '../../lib/springs'
-import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
-import { useControllableState } from '../../lib/use-controllable-state'
-import { useShape } from '../../lib/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
+
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { useIcon } from '../../lib/icon-context'
+import { useShape } from '../../lib/shape-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { spring } from '../../lib/springs'
+import { useControllableState } from '../../lib/use-controllable-state'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { cn } from '../../lib/utils'
 
 // ─── Contexts ────────────────────────────────────────────────────────────────
 
@@ -916,5 +917,5 @@ Object.assign(Accordion, {
   Content: AccordionContent,
 })
 
-export { Accordion, AccordionGroup, AccordionItem, AccordionTrigger, AccordionContent }
+export { Accordion, AccordionContent, AccordionGroup, AccordionItem, AccordionTrigger }
 export default Accordion

@@ -1,11 +1,11 @@
-import { Component, useState, type ReactNode } from 'react'
-import { shell } from 'virtual:modo-shell'
 import { byName, exampleScope } from 'virtual:modo-items'
+import { shell } from 'virtual:modo-shell'
+import { Component, type ReactNode, useState } from 'react'
 import { compileExampleBody, isCompiledExample } from '../../lib/example'
 import type { ParsedExample } from '../../lib/tsdoc'
-import { Markdown } from '../markdown'
 import { Anchor, slug } from '../anchor'
 import { CopyButton } from '../code-block'
+import { Markdown } from '../markdown'
 
 // Identifiers available to every example: the `examples` config module's
 // exports, then the items by name (items win on collision). Module-level so

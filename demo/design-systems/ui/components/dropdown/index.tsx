@@ -40,56 +40,56 @@
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
+import type { MenuTriggerProps } from '@base-ui/react/menu'
+import { Menu } from '@base-ui/react/menu'
+import { AnimatePresence, motion } from 'motion/react'
 import {
   Children,
+  type ComponentProps,
   cloneElement,
-  isValidElement,
-  useRef,
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
   createContext,
-  useContext,
-  forwardRef,
   type ForwardRefExoticComponent,
-  type RefAttributes,
+  forwardRef,
+  type HTMLAttributes,
+  isValidElement,
   type ReactElement,
   type ReactNode,
-  type HTMLAttributes,
-  type ComponentProps,
+  type RefAttributes,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { Menu } from '@base-ui/react/menu'
-import type { MenuTriggerProps } from '@base-ui/react/menu'
-import {
-  DropdownContext,
-  MenuItem,
-  useDropdown,
-  useDropdownMaybe,
-  type DropdownContextValue,
-  type MenuItemRenderOptions,
-} from './menu-item'
-import { cn } from '../../lib/utils'
-import { spring, exitFallbackMs } from '../../lib/springs'
-import { useFluidHover, type ItemRect } from '../../lib/use-fluid-hover'
-import { useControllableState } from '../../lib/use-controllable-state'
-import { useMergeSplitBlocks, useSelectionRuns, SelectionBackgrounds } from '../../lib/use-merge-split'
+import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { isDisabledRow, popupMotionClass, popupScrollAreaClass, popupViewportClass } from '../../lib/popup'
 import { shapeMap } from '../../lib/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
-import { Elevated } from '../../primitives/surface'
-import { popupMotionClass, popupScrollAreaClass, popupViewportClass, isDisabledRow } from '../../lib/popup'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { exitFallbackMs, spring } from '../../lib/springs'
+import { useControllableState } from '../../lib/use-controllable-state'
+import { type ItemRect, useFluidHover } from '../../lib/use-fluid-hover'
+import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../lib/use-merge-split'
+import { cn } from '../../lib/utils'
 import { ScrollArea } from '../../primitives/scroll-area'
+import { Elevated } from '../../primitives/surface'
 import {
-  DropdownSearch,
   DropdownEmpty,
   DropdownFilterContext,
-  DropdownSearchHostContext,
-  useDropdownSearchHost,
   type DropdownFilterContextValue,
+  DropdownSearch,
+  DropdownSearchHostContext,
   type DropdownSearchProps,
+  useDropdownSearchHost,
 } from './dropdown-search'
-import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import {
+  DropdownContext,
+  type DropdownContextValue,
+  MenuItem,
+  type MenuItemRenderOptions,
+  useDropdown,
+  useDropdownMaybe,
+} from './menu-item'
 
 // Dropdown opts out of the global pill/rounded shape context — popover surfaces
 // look cleaner with the smaller "rounded" radii regardless of how the rest of
@@ -106,8 +106,8 @@ const shape = shapeMap.rounded
 // public dropdown API is unchanged.
 // ---------------------------------------------------------------------------
 
-export { useDropdown, useDropdownMaybe }
 export type { DropdownContextValue, MenuItemRenderOptions }
+export { useDropdown, useDropdownMaybe }
 
 // ---------------------------------------------------------------------------
 // Uncontrolled selection and uncontrolled search (local additions)
@@ -975,19 +975,19 @@ Object.assign(Dropdown, {
   Empty: DropdownEmpty,
 })
 
-export {
-  Dropdown,
-  DropdownLabel,
-  DropdownSeparator,
-  DropdownMenu,
-  DropdownTrigger,
-  DropdownContent,
-  DropdownSearch,
-  DropdownEmpty,
-  MenuItem,
-}
 // DropdownContextValue and MenuItemRenderOptions are already re-exported
 // above next to their import — repeating them here is a duplicate-export
 // build error.
-export type { DropdownProps, DropdownMenuProps, DropdownTriggerProps, DropdownContentProps, DropdownSearchProps }
+export type { DropdownContentProps, DropdownMenuProps, DropdownProps, DropdownSearchProps, DropdownTriggerProps }
+export {
+  Dropdown,
+  DropdownContent,
+  DropdownEmpty,
+  DropdownLabel,
+  DropdownMenu,
+  DropdownSearch,
+  DropdownSeparator,
+  DropdownTrigger,
+  MenuItem,
+}
 export default Dropdown

@@ -22,31 +22,31 @@
  * `duration-<tier>` / `spring.*`.
  */
 
+import { Tabs } from '@base-ui/react/tabs'
+import { AnimatePresence, motion } from 'motion/react'
 import {
   Children,
+  createContext,
+  type ForwardRefExoticComponent,
+  forwardRef,
+  type HTMLAttributes,
   isValidElement,
-  useRef,
-  useState,
+  type ReactNode,
+  type RefAttributes,
   useCallback,
+  useContext,
   useEffect,
   useId,
-  createContext,
-  useContext,
-  forwardRef,
-  type ForwardRefExoticComponent,
-  type ReactNode,
-  type HTMLAttributes,
-  type RefAttributes,
+  useRef,
+  useState,
 } from 'react'
-import { useControllableState } from '../../lib/use-controllable-state'
-import { Tabs } from '@base-ui/react/tabs'
-import { motion, AnimatePresence } from 'motion/react'
 import type { IconComponent } from '../../lib/icon-context'
-import { cn } from '../../lib/utils'
-import { spring } from '../../lib/springs'
 import { useShape } from '../../lib/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { spring } from '../../lib/springs'
+import { useControllableState } from '../../lib/use-controllable-state'
 import { useFluidHover } from '../../lib/use-fluid-hover'
+import { cn } from '../../lib/utils'
 
 interface TabsSubtleContextValue {
   registerTab: (index: number, element: HTMLElement | null) => void
@@ -546,6 +546,6 @@ TabsSubtlePanel.displayName = 'TabsSubtlePanel'
 
 Object.assign(TabsSubtle, { Item: TabsSubtleItem, Panel: TabsSubtlePanel })
 
+export type { TabsSubtleItemProps, TabsSubtlePanelProps, TabsSubtleProps }
 export { TabsSubtle, TabsSubtleItem, TabsSubtlePanel }
-export type { TabsSubtleProps, TabsSubtleItemProps, TabsSubtlePanelProps }
 export default TabsSubtle

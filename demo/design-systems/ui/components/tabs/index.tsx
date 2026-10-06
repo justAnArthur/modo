@@ -15,33 +15,33 @@
  * `duration-<tier>` / `spring.*`.
  */
 
+import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
+import { AnimatePresence, motion } from 'motion/react'
 import {
-  useRef,
-  useState,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  createContext,
-  useContext,
-  forwardRef,
   Children,
-  cloneElement,
-  isValidElement,
   type ComponentPropsWithoutRef,
+  cloneElement,
+  createContext,
   type ForwardRefExoticComponent,
+  forwardRef,
+  isValidElement,
   type ReactNode,
   type RefAttributes,
+  useCallback,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
 } from 'react'
-import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
-import { motion, AnimatePresence } from 'motion/react'
 import type { IconComponent } from '../../lib/icon-context'
-import { cn } from '../../lib/utils'
-import { spring } from '../../lib/springs'
 import { useShape } from '../../lib/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
-import { useSurface } from '../../lib/surface-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { spring } from '../../lib/springs'
 import { surfaceClasses } from '../../lib/surface-classes'
+import { useSurface } from '../../lib/surface-context'
 import { useFluidHover } from '../../lib/use-fluid-hover'
+import { cn } from '../../lib/utils'
 
 /* ─────────────────────── Contexts ─────────────────────── */
 
@@ -504,6 +504,6 @@ TabPanel.displayName = 'TabPanel'
 
 Object.assign(Tabs, { List: TabsList, Item: TabItem, Panel: TabPanel })
 
-export { Tabs, TabsList, TabItem, TabPanel }
-export type { TabsProps, TabsListProps, TabItemProps, TabPanelProps }
+export type { TabItemProps, TabPanelProps, TabsListProps, TabsProps }
+export { TabItem, TabPanel, Tabs, TabsList }
 export default Tabs

@@ -19,29 +19,29 @@
  * and tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
+import { Checkbox as CheckboxPrimitive } from '@base-ui/react/checkbox'
+import { AnimatePresence, motion } from 'motion/react'
 import {
+  createContext,
+  type ForwardRefExoticComponent,
+  forwardRef,
+  type HTMLAttributes,
+  type ReactNode,
+  type RefAttributes,
+  useCallback,
+  useContext,
+  useEffect,
   useRef,
   useState,
-  useEffect,
-  useCallback,
-  createContext,
-  useContext,
-  forwardRef,
-  type ForwardRefExoticComponent,
-  type ReactNode,
-  type HTMLAttributes,
-  type RefAttributes,
 } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { Checkbox as CheckboxPrimitive } from '@base-ui/react/checkbox'
-import { cn } from '../../lib/utils'
-import { spring } from '../../lib/springs'
-import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
-import { useMergeSplitBlocks, SelectionBackgrounds } from '../../lib/use-merge-split'
-import { useControllableState } from '../../lib/use-controllable-state'
-import { useShape } from '../../lib/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { useShape } from '../../lib/shape-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { spring } from '../../lib/springs'
+import { useControllableState } from '../../lib/use-controllable-state'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { SelectionBackgrounds, useMergeSplitBlocks } from '../../lib/use-merge-split'
+import { cn } from '../../lib/utils'
 
 interface CheckboxGroupContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void
@@ -456,6 +456,6 @@ CheckboxItem.displayName = 'CheckboxItem'
 
 Object.assign(CheckboxGroup, { Item: CheckboxItem })
 
-export { CheckboxGroup, CheckboxItem }
 export type { CheckboxGroupProps, CheckboxItemProps }
+export { CheckboxGroup, CheckboxItem }
 export default CheckboxGroup

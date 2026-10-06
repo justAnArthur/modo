@@ -10,8 +10,8 @@
 import { cn } from 'cn'
 
 import { Button } from '../../primitives/button'
-import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from './field'
 import { Input } from '../../primitives/input'
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from './field'
 
 export function LoginForm({ className, ...props }: React.ComponentProps<'form'>) {
   return (

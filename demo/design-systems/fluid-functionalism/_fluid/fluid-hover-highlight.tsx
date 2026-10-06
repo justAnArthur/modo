@@ -5,10 +5,10 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC).
  */
 
-import { motion, AnimatePresence, useReducedMotion, type Transition } from 'motion/react'
-import { cn } from './utils'
+import { AnimatePresence, motion, type Transition, useReducedMotion } from 'motion/react'
 import { spring } from './springs'
 import type { ItemRect, UseFluidHoverReturn } from './use-fluid-hover'
+import { cn } from './utils'
 
 // ---------------------------------------------------------------------------
 // The one hover highlight every fluid hover list renders: an absolutely

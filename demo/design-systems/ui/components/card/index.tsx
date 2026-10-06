@@ -24,23 +24,23 @@ import {
   Children,
   cloneElement,
   createContext,
-  forwardRef,
-  isValidElement,
-  useContext,
-  useMemo,
-  useRef,
   type ForwardRefExoticComponent,
+  forwardRef,
   type HTMLAttributes,
+  isValidElement,
   type ReactElement,
   type ReactNode,
   type RefAttributes,
+  useContext,
+  useMemo,
+  useRef,
 } from 'react'
-import { cn } from '../../lib/utils'
-import { useShape } from '../../lib/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
-import { useIcon, type IconComponent } from '../../lib/icon-context'
-import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { type IconComponent, useIcon } from '../../lib/icon-context'
+import { useShape } from '../../lib/shape-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { cn } from '../../lib/utils'
 
 // ---------------------------------------------------------------------------
 // Card is shadcn/ui's compositional card — the same parts and `data-slot`
@@ -974,20 +974,20 @@ Object.assign(Card, {
   Button: CardButton,
 })
 
+export type { CardButtonProps, CardButtonVariant, CardGroupProps, CardLogo, CardProps }
 export {
   Card,
-  CardGroup,
-  CardHeader,
-  CardTitle,
-  CardDescription,
   CardAction,
+  CardButton,
   CardContent,
-  CardFooter,
-  CardMedia,
-  CardImage,
+  CardDescription,
   CardEyebrow,
   CardFeature,
-  CardButton,
+  CardFooter,
+  CardGroup,
+  CardHeader,
+  CardImage,
+  CardMedia,
+  CardTitle,
 }
-export type { CardProps, CardGroupProps, CardLogo, CardButtonProps, CardButtonVariant }
 export default Card

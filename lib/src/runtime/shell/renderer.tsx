@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
 import { panelItems, shell } from 'virtual:modo-shell'
+import type { ReactNode } from 'react'
 import { SidebarNav } from '../nav'
 import { Toc } from './toc'
 

@@ -1,6 +1,6 @@
-import { isValidElement, type ReactNode } from 'react'
 import { byName, exampleScope } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
+import { isValidElement, type ReactNode } from 'react'
 import { Anchor, slug } from './anchor'
 import { CodeBlock } from './code-block'
 import { ExampleFrame } from './items/examples'

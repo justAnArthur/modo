@@ -5,38 +5,38 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). Type-skew fixes for this workspace's pinned deps: widened a useRef generic for @types/react 18.
  */
 
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import {
+  Children,
+  type CSSProperties,
+  cloneElement,
   createContext,
-  useContext,
-  useState,
-  useEffect,
-  useLayoutEffect,
+  type ElementType,
+  forwardRef,
+  type HTMLAttributes,
+  isValidElement,
+  type ReactElement,
+  type ReactNode,
+  type Ref,
   useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
   useMemo,
   useRef,
-  useId,
-  forwardRef,
-  cloneElement,
-  isValidElement,
-  Children,
-  type ReactNode,
-  type ReactElement,
-  type ElementType,
-  type CSSProperties,
-  type HTMLAttributes,
-  type Ref,
+  useState,
 } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
-import { cn } from '../../_fluid/utils'
-import { spring, exitFallbackMs } from '../../_fluid/springs'
 import { fontWeights } from '../../_fluid/font-weight'
+import { useIcon } from '../../_fluid/icon-context'
 import { useShape } from '../../_fluid/shape-context'
 import { useSize, useSizeVariant } from '../../_fluid/size-context'
-import { useIcon } from '../../_fluid/icon-context'
-import { useSurface, SurfaceProvider } from '../../_fluid/surface-context'
+import { exitFallbackMs, spring } from '../../_fluid/springs'
 import { surfaceClasses } from '../../_fluid/surface-classes'
-import { Button, type ButtonProps } from '../../primitives/button'
+import { SurfaceProvider, useSurface } from '../../_fluid/surface-context'
 import { Tooltip } from '../../_fluid/tooltip'
+import { cn } from '../../_fluid/utils'
+import { Button, type ButtonProps } from '../../primitives/button'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -1514,18 +1514,18 @@ const SidebarGroupContent = forwardRef<HTMLDivElement, SidebarSectionProps>(({ c
 SidebarGroupContent.displayName = 'SidebarGroupContent'
 
 export {
-  SidebarProvider,
-  SidebarShell,
-  SidebarTrigger,
-  SidebarRail,
-  SidebarInset,
-  SidebarInput,
-  SidebarHeader,
   SidebarFooter,
-  SidebarSeparator,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarGroupAction,
   SidebarGroupActions,
   SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInput,
+  SidebarInset,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarShell,
+  SidebarTrigger,
 }

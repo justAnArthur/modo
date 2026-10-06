@@ -19,15 +19,15 @@
 
 import './surface.css'
 import {
-  forwardRef,
   type ComponentPropsWithoutRef,
   type ForwardRefExoticComponent,
+  forwardRef,
   type ReactNode,
   type RefAttributes,
 } from 'react'
-import { cn } from '../../lib/utils'
-import { useSurface, SurfaceProvider } from '../../lib/surface-context'
 import { surfaceClasses } from '../../lib/surface-classes'
+import { SurfaceProvider, useSurface } from '../../lib/surface-context'
+import { cn } from '../../lib/utils'
 
 interface ElevatedProps extends ComponentPropsWithoutRef<'div'> {
   /**
@@ -105,7 +105,7 @@ Elevated.displayName = 'Elevated'
 
 Object.assign(Elevated, { Provider: SurfaceProvider })
 
-export { Elevated, SurfaceProvider, useSurface, surfaceClasses }
 export type { ElevatedProps }
+export { Elevated, SurfaceProvider, surfaceClasses, useSurface }
 
 export default Elevated

@@ -5,20 +5,20 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). `@radix-ui/react-slot` rewritten to the unified `radix-ui` package (`Slot.Root`). modo item docs: TSDoc on the component, default export (file renamed to index.tsx; the former adapter is gone).
  */
 
+import { cva, type VariantProps } from 'class-variance-authority'
+import { Slot } from 'radix-ui'
 import {
+  type ButtonHTMLAttributes,
   cloneElement,
   forwardRef,
   isValidElement,
-  type ButtonHTMLAttributes,
   type ReactElement,
   type ReactNode,
 } from 'react'
-import { Slot } from 'radix-ui'
-import { cva, type VariantProps } from 'class-variance-authority'
 import type { IconComponent } from '../../_fluid/icon-context'
-import { cn } from '../../_fluid/utils'
 import { useShape } from '../../_fluid/shape-context'
 import { useSizeVariant } from '../../_fluid/size-context'
+import { cn } from '../../_fluid/utils'
 
 const buttonVariants = cva(
   [
@@ -274,6 +274,6 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button'
 
-export { Button, buttonVariants }
 export type { ButtonProps, ButtonSize }
+export { Button, buttonVariants }
 export default Button

@@ -5,32 +5,32 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). `@radix-ui/react-select` rewritten to the unified `radix-ui` package.
  */
 
-import {
-  forwardRef,
-  useRef,
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
-  createContext,
-  useContext,
-  type ReactNode,
-  type HTMLAttributes,
-} from 'react'
-import { motion, AnimatePresence } from 'motion/react'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { AnimatePresence, motion } from 'motion/react'
 import { Select as SelectPrimitive } from 'radix-ui'
-import type { IconComponent } from '../../_fluid/icon-context'
-import { cn } from '../../_fluid/utils'
-import { spring, exitFallbackMs } from '../../_fluid/springs'
-import { useFluidHover, useRegisterFluidHoverItem } from '../../_fluid/use-fluid-hover'
-import { useShape, shapeMap } from '../../_fluid/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../_fluid/size-context'
+import {
+  createContext,
+  forwardRef,
+  type HTMLAttributes,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { Elevated } from '../../_fluid/elevated'
-import { popupMotionClass, popupScrollAreaClass, popupViewportClass, isDisabledRow } from '../../_fluid/popup'
-import { useKeyboardNavGate } from '../../_fluid/use-keyboard-nav-gate'
-import { ScrollArea } from '../../_fluid/scroll-area'
 import { FluidHoverHighlight } from '../../_fluid/fluid-hover-highlight'
+import type { IconComponent } from '../../_fluid/icon-context'
+import { isDisabledRow, popupMotionClass, popupScrollAreaClass, popupViewportClass } from '../../_fluid/popup'
+import { ScrollArea } from '../../_fluid/scroll-area'
+import { shapeMap, useShape } from '../../_fluid/shape-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../_fluid/size-context'
+import { exitFallbackMs, spring } from '../../_fluid/springs'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../_fluid/use-fluid-hover'
+import { useKeyboardNavGate } from '../../_fluid/use-keyboard-nav-gate'
+import { cn } from '../../_fluid/utils'
 
 // ---------------------------------------------------------------------------
 // Select context
@@ -717,6 +717,5 @@ SelectSeparator.displayName = 'SelectSeparator'
 // Exports
 // ---------------------------------------------------------------------------
 
-export { Select, SelectTrigger, SelectContent, SelectItem, SelectGroup, SelectLabel, SelectSeparator, triggerVariants }
-
-export type { SelectProps, SelectTriggerProps, SelectContentProps, SelectItemProps }
+export type { SelectContentProps, SelectItemProps, SelectProps, SelectTriggerProps }
+export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, triggerVariants }

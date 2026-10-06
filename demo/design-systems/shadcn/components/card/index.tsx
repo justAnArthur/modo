@@ -6,8 +6,8 @@
  * compound statics (Card.Header, …); component code untouched.
  */
 
-import * as React from 'react'
 import { cn } from 'cn'
+import type * as React from 'react'
 
 /**
  * shadcn/ui Card — grouped content container. Compound: sub-parts hang off
@@ -108,4 +108,4 @@ Card.Action = CardAction
 Card.Content = CardContent
 Card.Footer = CardFooter
 
-export { CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent }
+export { CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }

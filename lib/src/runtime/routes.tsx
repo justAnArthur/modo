@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
-import { HomePage } from './pages/HomePage'
-import { TokenGroupPage } from './pages/TokenGroupPage'
-import { PrimitivePage } from './pages/PrimitivePage'
-import { ComponentPage } from './pages/ComponentPage'
 import { BlockPage } from './pages/BlockPage'
+import { ComponentPage } from './pages/ComponentPage'
+import { HomePage } from './pages/HomePage'
+import { PrimitivePage } from './pages/PrimitivePage'
+import { TokenGroupPage } from './pages/TokenGroupPage'
 
 export interface Route {
   pattern: RegExp

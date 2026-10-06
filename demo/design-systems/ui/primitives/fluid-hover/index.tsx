@@ -26,22 +26,22 @@ import {
   Children,
   cloneElement,
   createContext,
-  forwardRef,
-  isValidElement,
-  useContext,
-  useMemo,
-  useRef,
   type ForwardRefExoticComponent,
+  forwardRef,
   type HTMLAttributes,
+  isValidElement,
   type MutableRefObject,
   type ReactElement,
   type ReactNode,
   type RefAttributes,
+  useContext,
+  useMemo,
+  useRef,
 } from 'react'
-import { cn } from '../../lib/utils'
+import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { useShape } from '../../lib/shape-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
-import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { cn } from '../../lib/utils'
 
 // ---------------------------------------------------------------------------
 // One list is one FluidHover: the container owns the mouse handlers, hands
@@ -322,20 +322,19 @@ FluidHover.displayName = 'FluidHover'
 // on the forwardRef above).
 Object.assign(FluidHover, { Item: FluidHoverItem })
 
-export { FluidHover, FluidHoverItem }
-export type { FluidHoverProps, FluidHoverItemProps, FluidHoverAxis }
-
-// The mechanism itself, unchanged — for lists this container cannot express.
-export {
-  useFluidHover,
-  useRegisterFluidHoverItem,
-} from '../../lib/use-fluid-hover'
+export type { FluidHoverHighlightProps } from '../../lib/fluid-hover-highlight'
+export { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 export type {
   ItemRect,
   UseFluidHoverOptions,
   UseFluidHoverReturn,
 } from '../../lib/use-fluid-hover'
-export { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
-export type { FluidHoverHighlightProps } from '../../lib/fluid-hover-highlight'
+// The mechanism itself, unchanged — for lists this container cannot express.
+export {
+  useFluidHover,
+  useRegisterFluidHoverItem,
+} from '../../lib/use-fluid-hover'
+export type { FluidHoverAxis, FluidHoverItemProps, FluidHoverProps }
+export { FluidHover, FluidHoverItem }
 
 export default FluidHover

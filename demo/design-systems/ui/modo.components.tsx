@@ -3,8 +3,8 @@
  * modo.config.ts picks each one by export name: `./modo.components.tsx#Select`.
  */
 
-import { useEffect, useState } from 'react'
 import { Check, CodeXml, Copy, Link2, Monitor, Moon, Sun } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import FluidSelect from './components/select'
 
 const icons = { code: CodeXml, copy: Copy, check: Check, link: Link2 }

@@ -9,24 +9,24 @@ import {
   Children,
   cloneElement,
   createContext,
-  forwardRef,
-  isValidElement,
-  useContext,
-  useMemo,
-  useRef,
   type ForwardRefExoticComponent,
+  forwardRef,
   type HTMLAttributes,
+  isValidElement,
   type ReactElement,
   type ReactNode,
   type RefAttributes,
+  useContext,
+  useMemo,
+  useRef,
 } from 'react'
-import { cn } from '../../_fluid/utils'
-import { fontWeights } from '../../_fluid/font-weight'
-import { useShape } from '../../_fluid/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../_fluid/size-context'
-import { useIcon, type IconComponent } from '../../_fluid/icon-context'
-import { useFluidHover, useRegisterFluidHoverItem } from '../../_fluid/use-fluid-hover'
 import { FluidHoverHighlight } from '../../_fluid/fluid-hover-highlight'
+import { fontWeights } from '../../_fluid/font-weight'
+import { type IconComponent, useIcon } from '../../_fluid/icon-context'
+import { useShape } from '../../_fluid/shape-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../_fluid/size-context'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../_fluid/use-fluid-hover'
+import { cn } from '../../_fluid/utils'
 
 // ---------------------------------------------------------------------------
 // Card is shadcn/ui's compositional card — the same parts and `data-slot`
@@ -948,20 +948,20 @@ Object.assign(Card, {
   Button: CardButton,
 })
 
+export type { CardButtonProps, CardButtonVariant, CardGroupProps, CardLogo, CardProps }
 export {
   Card,
-  CardGroup,
-  CardHeader,
-  CardTitle,
-  CardDescription,
   CardAction,
+  CardButton,
   CardContent,
-  CardFooter,
-  CardMedia,
-  CardImage,
+  CardDescription,
   CardEyebrow,
   CardFeature,
-  CardButton,
+  CardFooter,
+  CardGroup,
+  CardHeader,
+  CardImage,
+  CardMedia,
+  CardTitle,
 }
-export type { CardProps, CardGroupProps, CardLogo, CardButtonProps, CardButtonVariant }
 export default Card

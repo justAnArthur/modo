@@ -1,5 +1,5 @@
-import { MuiProvider } from '../../theme'
 import MuiChip from '@mui/material/Chip'
+import { MuiProvider } from '../../theme'
 
 /**
  * Compact tag for entities or filtering. Thin modo adapter over MUI's Chip.

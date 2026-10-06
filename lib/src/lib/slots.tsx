@@ -1,4 +1,15 @@
-import type { ComponentType, ReactNode } from 'react'
+import type {
+  AnchorHTMLAttributes,
+  ButtonHTMLAttributes,
+  ComponentType,
+  HTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+} from 'react'
+
+/** A host component: its props are whatever the design system declares. */
+// biome-ignore lint/suspicious/noExplicitAny: no prop type admits every host component
+export type AnyComponent = ComponentType<any>
 
 export type Tier = 'primitives' | 'components' | 'blocks'
 
@@ -8,7 +19,7 @@ export interface ParsedItemLite {
   tier: Tier
   props: Array<{ name: string; optional: boolean }>
   /** Live Component, populated by the shell plugin when it bundles the item. */
-  Component?: ComponentType<any>
+  Component?: AnyComponent
   /** Absolute path of the item's entry in the shared build (.modo-tmp/build/items/<tier>/<id>.mjs). */
   bundleUrl?: string
 }
@@ -94,7 +105,7 @@ export interface UserConfigLite {
 }
 
 export interface LoadedComponent {
-  Component: ComponentType<any>
+  Component: AnyComponent
   cssPaths: string[]
   source: 'config' | 'interface-match' | 'fallback'
   resolvedPath: string
@@ -140,23 +151,15 @@ export interface ResolveOptions {
    The user's primitives/components override these whenever they satisfy the
    slot contract. */
 
-export function PlainButton({ children, disabled, onClick, type = 'button', ...rest }: any) {
-  return (
-    <button type={type} disabled={disabled} onClick={onClick} {...rest}>
-      {children}
-    </button>
-  )
+export function PlainButton({ type = 'button', ...rest }: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <button type={type} {...rest} />
 }
 
-export function PlainLink({ href, children, ...rest }: any) {
-  return (
-    <a href={href} {...rest}>
-      {children}
-    </a>
-  )
+export function PlainLink(props: AnchorHTMLAttributes<HTMLAnchorElement>) {
+  return <a {...props} />
 }
 
-export function PlainCode({ children, ...rest }: any) {
+export function PlainCode({ children, ...rest }: HTMLAttributes<HTMLPreElement>) {
   return (
     <pre {...rest}>
       <code>{children}</code>
@@ -164,10 +167,17 @@ export function PlainCode({ children, ...rest }: any) {
   )
 }
 
-export function PlainSelect({ value, onChange, options, ...rest }: any) {
+export function PlainSelect({
+  onChange,
+  options,
+  ...rest
+}: Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> & {
+  onChange: (value: string) => void
+  options: { value: string; label: string }[]
+}) {
   return (
-    <select value={value} onChange={(e: any) => onChange?.(e.target.value)} {...rest}>
-      {(options ?? []).map((o: any) => (
+    <select onChange={e => onChange(e.target.value)} {...rest}>
+      {options.map(o => (
         <option key={o.value} value={o.value}>
           {o.label}
         </option>
@@ -202,12 +212,7 @@ export function PlainSidebarSection({ title, children }: { title: string; childr
   )
 }
 
-const PlainSidebar = Object.assign(PlainSidebarRoot, {
-  Item: PlainSidebarItem,
-  Section: PlainSidebarSection,
-})
-
-function fallbackFor(slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Icon' | 'SidebarRoot'): ComponentType<any> {
+function fallbackFor(slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Icon' | 'SidebarRoot'): AnyComponent {
   switch (slotName) {
     case 'Button':
       return PlainButton
@@ -265,7 +270,7 @@ export async function resolveShellSlots(
       const c = candidates[0]!
       if (c.bundleUrl || c.Component) {
         return {
-          Component: null as unknown as ComponentType<any>,
+          Component: null as unknown as AnyComponent,
           cssPaths: [],
           source: 'interface-match',
           resolvedPath: `${c.tier}/${c.id}`,
@@ -292,8 +297,8 @@ export async function resolveShellSlots(
   }
 
   const sidebarRootComp = rootPicks.Sidebar.Component as unknown as {
-    Item?: any
-    Section?: any
+    Item?: AnyComponent
+    Section?: AnyComponent
   } | null
   const sidebarMembers = SLOTS.find(s => s.name === 'Sidebar')!.members!
 

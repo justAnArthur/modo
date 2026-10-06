@@ -70,9 +70,7 @@ const EXACT_TO_GROUP: Record<string, GroupName> = {
 export function parseCss(src: string): ParsedVar[] {
   const cleaned = stripComments(src)
   const out: ParsedVar[] = []
-  const re = /(--[a-zA-Z0-9_-]+)\s*:\s*([^;]+);/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(cleaned)) !== null) {
+  for (const m of cleaned.matchAll(/(--[a-zA-Z0-9_-]+)\s*:\s*([^;]+);/g)) {
     const name = m[1]!
     const value = m[2]!.trim()
     const raw = m[0]

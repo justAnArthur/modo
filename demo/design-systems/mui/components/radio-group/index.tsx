@@ -1,9 +1,9 @@
-import { MuiProvider } from '../../theme'
 import FormControl from '@mui/material/FormControl'
-import FormLabel from '@mui/material/FormLabel'
-import MuiRadioGroup from '@mui/material/RadioGroup'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import FormLabel from '@mui/material/FormLabel'
 import Radio from '@mui/material/Radio'
+import MuiRadioGroup from '@mui/material/RadioGroup'
+import { MuiProvider } from '../../theme'
 
 /**
  * Exclusive choice between named options. Modo contract over MUI: RadioGroup

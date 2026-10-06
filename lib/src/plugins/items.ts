@@ -1,5 +1,5 @@
-import type { Plugin } from 'vite'
 import { resolve, sep } from 'node:path'
+import type { Plugin } from 'vite'
 import type { Bundler, Tier } from './bundle'
 
 interface Options {

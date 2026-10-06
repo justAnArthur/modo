@@ -20,11 +20,11 @@
  *   `spring.*`.
  */
 
-import type { ReactNode } from 'react'
 import { MotionConfig, motion } from 'motion/react'
-import { cn } from '../../lib/utils'
+import type { ReactNode } from 'react'
 import { spring } from '../../lib/springs'
 import { useControllableState } from '../../lib/use-controllable-state'
+import { cn } from '../../lib/utils'
 
 type SpringTier = keyof typeof spring
 
@@ -153,6 +153,6 @@ export default function Motion({
   )
 }
 
-export { Motion }
-export { spring, exitFallbackMs } from '../../lib/springs'
+export { exitFallbackMs, spring } from '../../lib/springs'
 export type { MotionProps, SpringTier }
+export { Motion }

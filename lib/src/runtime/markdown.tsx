@@ -1,6 +1,6 @@
-import { Fragment, type ReactNode } from 'react'
-import { Lexer, type MarkedToken, type Token, type Tokens } from 'marked'
 import { shell } from 'virtual:modo-shell'
+import { Lexer, type MarkedToken, type Token, type Tokens } from 'marked'
+import { Fragment, type ReactNode } from 'react'
 import { Anchor, slug } from './anchor'
 import { CodeBlock } from './code-block'
 
@@ -9,7 +9,10 @@ const lexed = new Map<string, Token[]>()
 
 function lex(source: string): Token[] {
   let tokens = lexed.get(source)
-  if (!tokens) lexed.set(source, (tokens = Lexer.lex(source).filter(t => t.type !== 'space')))
+  if (!tokens) {
+    tokens = Lexer.lex(source).filter(t => t.type !== 'space')
+    lexed.set(source, tokens)
+  }
   return tokens
 }
 

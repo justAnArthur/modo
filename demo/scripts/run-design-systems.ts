@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-import { spawn, execSync, type ChildProcess } from 'node:child_process'
-import { existsSync, readdirSync, writeFileSync, unlinkSync } from 'node:fs'
+import { type ChildProcess, execSync, spawn } from 'node:child_process'
+import { existsSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = join(import.meta.dirname, '..')

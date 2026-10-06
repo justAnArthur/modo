@@ -1,9 +1,9 @@
-import { existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
-import { dirname, resolve, join } from 'node:path'
-import { pathToFileURL } from 'node:url'
 import { randomUUID } from 'node:crypto'
+import { existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
+import { dirname, join, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import esbuild from 'esbuild'
-import { siteConfigSchema, type SiteConfig } from './schema'
+import { type SiteConfig, siteConfigSchema } from './schema'
 
 const cacheDir = resolve(process.cwd(), '.modo-tmp')
 

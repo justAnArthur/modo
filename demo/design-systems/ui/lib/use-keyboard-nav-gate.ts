@@ -9,7 +9,7 @@
  * - `@/lib/*` and `@/hooks/*` imports rewritten to relative `_fluid` paths.
  */
 
-import { useCallback, useEffect, useRef, type KeyboardEvent } from 'react'
+import { type KeyboardEvent, useCallback, useEffect, useRef } from 'react'
 import { POPUP_NAV_KEYS } from './popup'
 
 /**

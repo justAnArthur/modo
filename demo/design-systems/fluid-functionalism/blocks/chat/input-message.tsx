@@ -5,8 +5,15 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). Type-skew fixes for this workspace's pinned deps: guarded non-null assertions for this workspace’s noUncheckedIndexedAccess; ref typings adjusted for @types/react 18.
  */
 
+import { AnimatePresence, motion, Reorder, useReducedMotion } from 'motion/react'
 import {
+  type ChangeEvent,
   forwardRef,
+  type HTMLAttributes,
+  type DragEvent as ReactDragEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+  type TextareaHTMLAttributes,
   useCallback,
   useEffect,
   useId,
@@ -14,27 +21,20 @@ import {
   useMemo,
   useRef,
   useState,
-  type ChangeEvent,
-  type DragEvent as ReactDragEvent,
-  type HTMLAttributes,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type ReactNode,
-  type TextareaHTMLAttributes,
 } from 'react'
-import { AnimatePresence, motion, Reorder, useReducedMotion } from 'motion/react'
-import { cn } from '../../_fluid/utils'
+import { FluidHoverHighlight } from '../../_fluid/fluid-hover-highlight'
 import { fontWeights } from '../../_fluid/font-weight'
-import { spring } from '../../_fluid/springs'
-import { useShape } from '../../_fluid/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../_fluid/size-context'
 import { useIcon } from '../../_fluid/icon-context'
+import { useShape } from '../../_fluid/shape-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../_fluid/size-context'
+import { spring } from '../../_fluid/springs'
 import { surfaceClasses } from '../../_fluid/surface-classes'
 import { SurfaceProvider } from '../../_fluid/surface-context'
+import { Tooltip } from '../../_fluid/tooltip'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../_fluid/use-fluid-hover'
+import { cn } from '../../_fluid/utils'
 import { FileThumbnail } from '../../components/chat-message/file-thumbnail'
 import { Button } from '../../primitives/button'
-import { Tooltip } from '../../_fluid/tooltip'
-import { FluidHoverHighlight } from '../../_fluid/fluid-hover-highlight'
 
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
@@ -1272,6 +1272,6 @@ const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
 
 InputMessage.displayName = 'InputMessage'
 
-export { InputMessage }
 export type { InputMessageProps, InputMessageSlotContext, QueuedMessage }
+export { InputMessage }
 export default InputMessage

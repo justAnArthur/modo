@@ -28,37 +28,37 @@
  *   durations → `duration-<tier>` / `spring.*`.
  */
 
+import { Menu } from '@base-ui/react/menu'
+import { NumberField } from '@base-ui/react/number-field'
+import { Popover } from '@base-ui/react/popover'
+import { AnimatePresence, motion } from 'motion/react'
 import {
-  createContext,
-  forwardRef,
-  useContext,
-  useRef,
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
   type CSSProperties,
+  createContext,
   type ForwardRefExoticComponent,
+  forwardRef,
   type HTMLAttributes,
   type ReactNode,
   type RefAttributes,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { Popover } from '@base-ui/react/popover'
-import { Menu } from '@base-ui/react/menu'
-import { NumberField } from '@base-ui/react/number-field'
-import { cn } from '../../lib/utils'
-import { spring } from '../../lib/springs'
-import { useShape, shapeMap } from '../../lib/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
-import { useSurface, SurfaceProvider } from '../../lib/surface-context'
-import { surfaceClasses } from '../../lib/surface-classes'
+import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { useIcon } from '../../lib/icon-context'
+import { shapeMap, useShape } from '../../lib/shape-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { spring } from '../../lib/springs'
+import { surfaceClasses } from '../../lib/surface-classes'
+import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { cn } from '../../lib/utils'
 import { Elevated } from '../../primitives/surface'
 import { Slider } from '../slider'
 import { Tooltip } from '../tooltip'
-import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -272,11 +272,11 @@ function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: n
 
 function srgbToLinear(c: number): number {
   c = c / 255
-  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
 }
 
 function linearToSrgb(c: number): number {
-  const v = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055
+  const v = c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055
   return clamp01(v) * 255
 }
 
@@ -2292,8 +2292,7 @@ Object.assign(ColorPicker, { Popover: ColorPickerPopover })
 // Exports
 // ---------------------------------------------------------------------------
 
-export { ColorPicker, ColorPickerPopover, ColorPickerPortalContainer, ColorSwatch, ColorTile, parseColor, buildParsed }
-
-export type { ColorPickerProps, ColorPickerPopoverProps, ColorSwatchProps, ColorFormat, ParsedColor }
+export type { ColorFormat, ColorPickerPopoverProps, ColorPickerProps, ColorSwatchProps, ParsedColor }
+export { buildParsed, ColorPicker, ColorPickerPopover, ColorPickerPortalContainer, ColorSwatch, ColorTile, parseColor }
 
 export default ColorPicker

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
 import { shell } from 'virtual:modo-shell'
+import { useEffect, useState } from 'react'
 import { usePath } from '../router'
 
 interface Heading {

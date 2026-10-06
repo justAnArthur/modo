@@ -1,8 +1,8 @@
-import type { Plugin } from 'vite'
 import type { ComponentType } from 'react'
-import { resolveShellSlots, type LoadedComponent, type ParsedItemLite, type ResolvedShell } from '../lib/slots'
+import type { Plugin } from 'vite'
 import type { SiteConfig } from '../lib/schema'
-import type { Bundler, BundleResult } from './bundle'
+import { type AnyComponent, type LoadedComponent, type ParsedItemLite, type ResolvedShell, resolveShellSlots } from '../lib/slots'
+import type { BundleResult, Bundler } from './bundle'
 
 interface Options {
   userRoot: string
@@ -47,7 +47,7 @@ async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
     const extra = result.extras.get(p)
     if (!extra?.exported) return null
     return {
-      Component: null as unknown as ComponentType<any>,
+      Component: null as unknown as AnyComponent,
       cssPaths: extra.cssFiles,
       source: 'config',
       resolvedPath: p,
@@ -124,7 +124,7 @@ export function shellPlugin(options: Options): Plugin {
       if (id === SHELL_RESOLVED) {
         const { shell, warnings } = await getCache()
         if (warnings.length > 0) {
-          process.stderr.write(`[modo:shell] warnings:\n${warnings.map(w => '  • ' + w).join('\n')}\n`)
+          process.stderr.write(`[modo:shell] warnings:\n${warnings.map(w => `  • ${w}`).join('\n')}\n`)
         }
         const slotBindings = Object.entries({
           __Button: shell.Button,

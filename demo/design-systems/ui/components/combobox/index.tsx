@@ -29,35 +29,35 @@
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
 
+import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox'
+import { cva, type VariantProps } from 'class-variance-authority'
+import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
 import {
-  forwardRef,
-  useRef,
-  useEffect,
-  useState,
-  useCallback,
-  useMemo,
   createContext,
-  useContext,
+  forwardRef,
+  type HTMLAttributes,
+  type InputHTMLAttributes,
   type MutableRefObject,
   type ReactNode,
   type RefObject,
-  type HTMLAttributes,
-  type InputHTMLAttributes,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
 } from 'react'
-import { motion, AnimatePresence, animate, useMotionValue } from 'motion/react'
-import { cva, type VariantProps } from 'class-variance-authority'
-import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox'
-import { useIcon, type IconComponent } from '../../lib/icon-context'
-import { cn } from '../../lib/utils'
-import { spring, exitFallbackMs } from '../../lib/springs'
-import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
-import { useMergeSplitBlocks, useSelectionRuns, SelectionBackgrounds } from '../../lib/use-merge-split'
-import { useShape, shapeMap } from '../../lib/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
-import { Elevated } from '../../primitives/surface'
-import { popupMotionClass, popupScrollAreaClass, popupViewportClass, isDisabledRow } from '../../lib/popup'
-import { ScrollArea } from '../../primitives/scroll-area'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { type IconComponent, useIcon } from '../../lib/icon-context'
+import { isDisabledRow, popupMotionClass, popupScrollAreaClass, popupViewportClass } from '../../lib/popup'
+import { shapeMap, useShape } from '../../lib/shape-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { exitFallbackMs, spring } from '../../lib/springs'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../lib/use-merge-split'
+import { cn } from '../../lib/utils'
+import { ScrollArea } from '../../primitives/scroll-area'
+import { Elevated } from '../../primitives/surface'
 
 // ---------------------------------------------------------------------------
 // Combobox
@@ -1221,28 +1221,27 @@ Combobox.Empty = ComboboxEmpty
 // Exports
 // ---------------------------------------------------------------------------
 
-export {
-  Combobox,
-  ComboboxInput,
-  ComboboxChips,
-  ComboboxContent,
-  ComboboxList,
-  ComboboxItem,
-  ComboboxEmpty,
-  fieldVariants as comboboxFieldVariants,
-}
-
 export type {
-  ComboboxItemData,
-  ComboboxItemObject,
-  ComboboxValue,
-  ComboboxProps,
-  ComboboxInputProps,
   ComboboxChipsProps,
   ComboboxContentProps,
-  ComboboxListProps,
-  ComboboxItemProps,
   ComboboxEmptyProps,
+  ComboboxInputProps,
+  ComboboxItemData,
+  ComboboxItemObject,
+  ComboboxItemProps,
+  ComboboxListProps,
+  ComboboxProps,
+  ComboboxValue,
+}
+export {
+  Combobox,
+  ComboboxChips,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  fieldVariants as comboboxFieldVariants,
 }
 
 export default Combobox

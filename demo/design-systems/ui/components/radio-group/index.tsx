@@ -20,30 +20,30 @@
  * `duration-<tier>` / `spring.*`.
  */
 
+import { Radio as RadioPrimitive } from '@base-ui/react/radio'
+import { RadioGroup as RadioGroupPrimitive } from '@base-ui/react/radio-group'
+import { AnimatePresence, motion } from 'motion/react'
 import {
   Children,
+  createContext,
+  type ForwardRefExoticComponent,
+  forwardRef,
+  type HTMLAttributes,
+  isValidElement,
+  type ReactNode,
+  type RefAttributes,
+  useContext,
+  useEffect,
   useRef,
   useState,
-  useEffect,
-  createContext,
-  useContext,
-  forwardRef,
-  isValidElement,
-  type ForwardRefExoticComponent,
-  type ReactNode,
-  type HTMLAttributes,
-  type RefAttributes,
 } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
-import { RadioGroup as RadioGroupPrimitive } from '@base-ui/react/radio-group'
-import { Radio as RadioPrimitive } from '@base-ui/react/radio'
-import { cn } from '../../lib/utils'
-import { spring } from '../../lib/springs'
-import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
-import { useControllableState } from '../../lib/use-controllable-state'
-import { useShape } from '../../lib/shape-context'
-import { SizeProvider, useSize, type SizeVariant } from '../../lib/size-context'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { useShape } from '../../lib/shape-context'
+import { SizeProvider, type SizeVariant, useSize } from '../../lib/size-context'
+import { spring } from '../../lib/springs'
+import { useControllableState } from '../../lib/use-controllable-state'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { cn } from '../../lib/utils'
 
 interface RadioGroupContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void
@@ -467,6 +467,6 @@ RadioItem.displayName = 'RadioItem'
 
 Object.assign(RadioGroup, { Item: RadioItem })
 
-export { RadioGroup, RadioItem }
 export type { RadioGroupProps, RadioItemProps }
+export { RadioGroup, RadioItem }
 export default RadioGroup

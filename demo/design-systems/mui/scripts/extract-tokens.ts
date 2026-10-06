@@ -3,10 +3,11 @@
  * theme into tokens/*.css. Run: `bun scripts/extract-tokens.ts`. The per-file
  * breakdown (colors/spacing/radius/typography) is documented in README.md.
  */
-import { createTheme } from '@mui/material/styles'
+
 import { mkdir, writeFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { createTheme } from '@mui/material/styles'
 
 // Loose structural view of the theme — the script only walks it generically.
 interface LooseTheme {

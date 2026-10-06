@@ -1,6 +1,6 @@
-import { MuiProvider } from '../../theme'
-import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
+import TextField from '@mui/material/TextField'
+import { MuiProvider } from '../../theme'
 
 /**
  * Single-option picker. Modo contract over MUI: a `TextField select` fed

@@ -1,6 +1,6 @@
-import { MuiProvider } from '../../theme'
-import MuiSwitch from '@mui/material/Switch'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import MuiSwitch from '@mui/material/Switch'
+import { MuiProvider } from '../../theme'
 
 /**
  * Two-state toggle. Thin modo adapter over MUI's Switch; examples show

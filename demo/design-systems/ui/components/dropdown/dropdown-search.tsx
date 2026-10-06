@@ -16,22 +16,22 @@
 import {
   createContext,
   forwardRef,
+  type HTMLAttributes,
+  type InputHTMLAttributes,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type RefObject,
   useCallback,
   useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-  type HTMLAttributes,
-  type InputHTMLAttributes,
-  type KeyboardEvent as ReactKeyboardEvent,
-  type RefObject,
 } from 'react'
-import { cn } from '../../lib/utils'
 import { useIcon } from '../../lib/icon-context'
 import { useSize } from '../../lib/size-context'
-import { useSurface } from '../../lib/surface-context'
 import { SURFACE_BG } from '../../lib/surface-classes'
+import { useSurface } from '../../lib/surface-context'
+import { cn } from '../../lib/utils'
 
 // ---------------------------------------------------------------------------
 // Search inside a dropdown menu.
@@ -392,4 +392,4 @@ const DropdownEmpty = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>
 
 DropdownEmpty.displayName = 'DropdownEmpty'
 
-export { DropdownSearch, DropdownEmpty }
+export { DropdownEmpty, DropdownSearch }

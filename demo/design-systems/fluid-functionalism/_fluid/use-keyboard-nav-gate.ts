@@ -5,7 +5,7 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC).
  */
 
-import { useCallback, useEffect, useRef, type KeyboardEvent } from 'react'
+import { type KeyboardEvent, useCallback, useEffect, useRef } from 'react'
 import { POPUP_NAV_KEYS } from './popup'
 
 /**

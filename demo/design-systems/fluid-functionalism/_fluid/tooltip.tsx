@@ -5,13 +5,13 @@
  * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). `@radix-ui/react-tooltip` rewritten to the unified `radix-ui` package.
  */
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
-import { Tooltip as TooltipPrimitive } from 'radix-ui'
 import { motion, useMotionValue } from 'motion/react'
-import { cn } from './utils'
-import { spring, exitFallbackMs } from './springs'
+import { Tooltip as TooltipPrimitive } from 'radix-ui'
+import { createContext, type ReactNode, useContext, useEffect, useState } from 'react'
 import { fontWeights } from './font-weight'
 import { useShape } from './shape-context'
+import { exitFallbackMs, spring } from './springs'
+import { cn } from './utils'
 
 // ---------------------------------------------------------------------------
 // Portal container context
@@ -231,5 +231,5 @@ function Tooltip({
   return <TooltipPrimitive.Provider delayDuration={delayDuration ?? DEFAULT_DELAY}>{tooltip}</TooltipPrimitive.Provider>
 }
 
-export { Tooltip, TooltipPortalContainer, TooltipProvider }
 export type { TooltipProps, TooltipProviderProps, TooltipSide }
+export { Tooltip, TooltipPortalContainer, TooltipProvider }

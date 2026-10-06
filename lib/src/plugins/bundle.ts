@@ -1,13 +1,13 @@
-import esbuild, { type BuildOptions, type Message, type Metafile } from 'esbuild'
-import mdx from '@mdx-js/esbuild'
-import remarkGfm from 'remark-gfm'
-import { remarkModoExamples } from './mdx-examples'
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, statSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
-import { parseItemSource, type ParsedItem, type ParsedExample } from '../lib/tsdoc'
-import { discoverCssForFile } from '../lib/discover-css'
+import mdx from '@mdx-js/esbuild'
+import esbuild, { type BuildOptions, type Message, type Metafile } from 'esbuild'
+import remarkGfm from 'remark-gfm'
 import { loadModoConfig } from '../lib/config.loader'
+import { discoverCssForFile } from '../lib/discover-css'
 import type { SiteConfig } from '../lib/schema'
+import { type ParsedExample, type ParsedItem, parseItemSource } from '../lib/tsdoc'
+import { remarkModoExamples } from './mdx-examples'
 
 // One esbuild build for the whole design system: every item, every shell /
 // panel module and the `examples` scope module are entry points of the same
@@ -271,6 +271,7 @@ function baseOptions(userRoot: string, outdir: string): BuildOptions {
         'const require = (id) => {',
         "  if (id === 'react') return __modoReact;",
         "  if (id === 'react-dom') return __modoReactDOM;",
+        // biome-ignore lint/suspicious/noTemplateCurlyInString: a template literal in generated code
         '  throw new Error(`[modo] dynamic require of "${id}" is not supported`);',
         '};',
       ].join('\n'),
@@ -418,7 +419,7 @@ async function report(
   for (const e of errors) lines.push(`[modo:bundle] error: ${e}`)
   for (const w of warnings) lines.push(`[modo:bundle] warning: ${w}`)
 
-  const text = lines.length > 0 ? lines.join('\n') + '\n' : ''
+  const text = lines.length > 0 ? `${lines.join('\n')}\n` : ''
   // Rebuilds on every source change — don't repeat an unchanged report.
   if (text && text !== previous) process.stderr.write(text)
   return text

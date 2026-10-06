@@ -5,9 +5,9 @@
  * MIT License © Vercel Inc. for the referenced pattern.
  */
 
-import * as React from 'react'
-import { type VariantProps } from 'class-variance-authority'
+import type { VariantProps } from 'class-variance-authority'
 import { cn } from 'cn'
+import type * as React from 'react'
 
 import { buttonVariants } from '../button'
 
