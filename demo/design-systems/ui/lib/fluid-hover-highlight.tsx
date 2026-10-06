@@ -8,9 +8,14 @@
  * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react` (the package's current name).
  * - `@/lib/*` and `@/hooks/*` imports rewritten to sibling `./*` paths.
+ * - The fill is a `GooIndicator` (`./goo-indicator`, local): it melts from row
+ *   to row with a liquid neck instead of sliding as one box. The keyed fade,
+ *   `from`, `hidden` and `transition` behave as before; a square highlight
+ *   (no radius) has nothing to melt and slides as before.
  */
 
 import { AnimatePresence, motion, type Transition, useReducedMotion } from 'motion/react'
+import { GooIndicator } from './goo-indicator'
 import { spring } from './springs'
 import type { ItemRect, UseFluidHoverReturn } from './use-fluid-hover'
 import { cn } from './utils'
@@ -107,9 +112,7 @@ export function FluidHoverHighlight(props: FluidHoverHighlightProps) {
   const { from, className, transition } = props
   const { rect, session } = resolveHighlightSource(props)
   // Reads the OS media query directly, so an installed copy honours reduced
-  // motion without the app wrapping its tree in MotionConfig. A wrapped app
-  // gets the same result twice over: the travel is a transform, which
-  // MotionConfig reduces too.
+  // motion without the app wrapping its tree in MotionConfig.
   const reduceMotion = useReducedMotion() ?? false
   return (
     <AnimatePresence>
@@ -117,17 +120,19 @@ export function FluidHoverHighlight(props: FluidHoverHighlightProps) {
         <motion.div
           key={session}
           data-slot="fluid-hover-highlight"
-          // Pinned to the container's padding corner and moved with a
-          // transform, so the travel runs on the compositor instead of
-          // re-laying out every frame. Width and height are real layout
-          // values, but they only change when the target rect's size does,
-          // which in most lists is never.
-          className={cn('pointer-events-none absolute left-0 top-0 bg-hover', className)}
-          initial={{ opacity: 0, ...toTarget(from ?? rect) }}
-          animate={{ opacity: 1, ...toTarget(rect) }}
+          className="pointer-events-none absolute top-0 left-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: spring.fast.exit }}
-          transition={resolveHighlightTransition(transition, reduceMotion)}
-        />
+          transition={fade}
+        >
+          <GooIndicator
+            rect={rect}
+            from={from}
+            className={cn('bg-hover', className)}
+            transition={transition === false || reduceMotion ? false : (transition ?? spring.fast)}
+          />
+        </motion.div>
       )}
     </AnimatePresence>
   )
