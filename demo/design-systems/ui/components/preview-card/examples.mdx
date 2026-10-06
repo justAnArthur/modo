@@ -1,0 +1,61 @@
+import PreviewCard from './index'
+
+# Link preview
+
+Hover the link: after a short delay the card oozes out of it, and the pointer can travel into the card without closing it.
+
+<p className="max-w-md text-body text-muted-foreground">
+  This port takes its looks from{' '}
+  <PreviewCard>
+    <PreviewCard.Trigger href="https://www.fluidfunctionalism.com">Fluid Functionalism</PreviewCard.Trigger>
+    <PreviewCard.Content className="w-72">
+      <div className="flex items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-subtitle weight-semibold text-accent-foreground">FF</span>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-subtitle weight-semibold text-foreground">Fluid Functionalism</span>
+          <span className="text-caption text-muted-foreground">fluidfunctionalism.com</span>
+        </div>
+      </div>
+      <p className="text-caption text-muted-foreground">A component registry layering springs, a fluid hover, a size ladder and elevated surfaces over Radix or Base UI.</p>
+    </PreviewCard.Content>
+  </PreviewCard>{' '}
+  and its behavior from Base UI.
+</p>
+
+# Profile
+
+A mention that previews the person behind it. `delay` shortens the wait before it opens.
+
+<p className="max-w-md text-body text-muted-foreground">
+  The first notes on the engine came from{' '}
+  <PreviewCard>
+    <PreviewCard.Trigger href="#" delay={200}>@ada</PreviewCard.Trigger>
+    <PreviewCard.Content side="top" className="w-64">
+      <div className="flex items-center gap-3">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand/15 text-subtitle weight-semibold text-brand">AL</span>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-subtitle weight-semibold text-foreground">Ada Lovelace</span>
+          <span className="text-caption text-muted-foreground">@ada</span>
+        </div>
+      </div>
+      <p className="text-caption text-muted-foreground">Writes programs for engines that do not exist yet.</p>
+    </PreviewCard.Content>
+  </PreviewCard>{' '}
+  before the first commit.
+</p>
+
+# Morph
+
+`effect="morph"` grows the card out of the link without the liquid neck.
+
+<p className="max-w-md text-body text-muted-foreground">
+  Read the{' '}
+  <PreviewCard>
+    <PreviewCard.Trigger href="#">morph engine</PreviewCard.Trigger>
+    <PreviewCard.Content effect="morph" className="w-64">
+      <span className="text-subtitle weight-semibold text-foreground">Morph</span>
+      <p className="text-caption text-muted-foreground">One progress value on a spring tier carries the surface from its source to its own box.</p>
+    </PreviewCard.Content>
+  </PreviewCard>{' '}
+  docs for every source and effect.
+</p>
