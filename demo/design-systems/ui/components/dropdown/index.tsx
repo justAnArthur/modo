@@ -48,6 +48,9 @@
  *   outside `Menu.Popup`, so Base UI unmounted the menu before its exit
  *   played. The popup paints its level through the morph's surface layers
  *   instead of `render={<Elevated/>}`, re-providing it with `SurfaceProvider`.
+ * - `renderMenuItem` passes the row's activation to the Menu item primitive's
+ *   `onClick` (see menu-item.tsx), so Enter and Space pick a row instead of
+ *   only closing the menu.
  */
 
 import type { MenuTriggerProps } from '@base-ui/react/menu'
@@ -782,7 +785,18 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
     // onClick also fires for keyboard). The render div carries the Fluid
     // Functionalism visuals and the fluid-hover registration.
     const renderMenuItem = useCallback(
-      ({ radio, checkbox, checked, value, disabled, label, closeOnClick, element, children }: MenuItemRenderOptions) =>
+      ({
+        radio,
+        checkbox,
+        checked,
+        value,
+        disabled,
+        label,
+        closeOnClick,
+        onClick,
+        element,
+        children,
+      }: MenuItemRenderOptions) =>
         checkbox ? (
           // The row's own onClick toggles the consumer state; the primitive
           // only owns the role, aria-checked, and keyboard activation.
@@ -791,16 +805,24 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
             disabled={disabled}
             label={label}
             closeOnClick={closeOnClick}
+            onClick={onClick}
             render={element}
           >
             {children}
           </Menu.CheckboxItem>
         ) : radio ? (
-          <Menu.RadioItem value={value} disabled={disabled} label={label} closeOnClick={closeOnClick} render={element}>
+          <Menu.RadioItem
+            value={value}
+            disabled={disabled}
+            label={label}
+            closeOnClick={closeOnClick}
+            onClick={onClick}
+            render={element}
+          >
             {children}
           </Menu.RadioItem>
         ) : (
-          <Menu.Item disabled={disabled} label={label} closeOnClick={closeOnClick} render={element}>
+          <Menu.Item disabled={disabled} label={label} closeOnClick={closeOnClick} onClick={onClick} render={element}>
             {children}
           </Menu.Item>
         ),
