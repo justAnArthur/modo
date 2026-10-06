@@ -2,6 +2,8 @@
 
 > Atomic design system renderer — reads tokens / primitives / components / blocks and produces a docs site that uses the user's components in the chrome.
 
+**Live demo:** https://justanarthur.github.io/modo/ — five design systems documented by modo.
+
 `modo` enforces the structure of an atomic design system (`tokens → primitives → components → blocks`) and auto-renders its documentation site. The lib ships the renderer and a CLI; the design system itself is **zero content** — you bring your own tokens, components, and blocks.
 
 ## Install

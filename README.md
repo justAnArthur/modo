@@ -2,11 +2,14 @@
 
 a lightweight CLI that renders a **docs site / playground for your design system**. zero config: the lib enforces a simple folder structure (`tokens/ → primitives/ → components/ → blocks/`), discovers it, and produces the site — including **shell inheritance**: when your components match the docs chrome's slots (Button, Link, Select, Sidebar…), the chrome itself renders with *your* components. one Sidebar drives both the left nav and the right panel.
 
+**live demo: https://justanarthur.github.io/modo/** — every design system below, switchable from the panel.
+
 proven against real-world design systems — see `demo/design-systems/`:
 
 - **filled** — minimal reference DS
 - **shadcn/ui** — pulled with the real shadcn CLI (Tailwind v4), reorganized into modo structure
 - **fluid-functionalism** — the `@fluid` registry layer (motion springs, fluid hover) on its own shadcn foundation
+- **ui** — Fluid Functionalism (Base UI) on UnoCSS: springs, fluid hover, size ladder, surface elevation
 - **MUI** — adapters over `@mui/material`, default theme extracted into token files
 
 ## monorepo
