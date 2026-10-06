@@ -630,6 +630,176 @@
   white-space: nowrap;
 }
 
+/* Foundation pages. Every specimen is the host's token applied live (its
+   font, size, weight, radius, length, duration, easing); around it the lib
+   adds structure only, plus the shared border and muted text. */
+
+[data-modo="token-label"] {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1, 4px);
+  min-width: 0;
+}
+
+[data-modo="token-label"] > * {
+  max-width: 100%;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-modo="type-families"],
+[data-modo="type-weights"],
+[data-modo="radius-grid"] {
+  display: grid;
+  gap: var(--space-3, 12px);
+}
+
+[data-modo="type-families"] {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+}
+
+[data-modo="type-weights"],
+[data-modo="radius-grid"] {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
+}
+
+[data-modo="type-family"],
+[data-modo="type-weight"] {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4, 16px);
+  min-width: 0;
+  padding: var(--space-5, 24px);
+  border: 1px solid var(--modo-border);
+  border-radius: var(--radius-lg, 12px);
+}
+
+[data-modo="type-glyph"] {
+  font-size: var(--font-size-h1, 2rem);
+  line-height: 1;
+}
+
+[data-modo="type-family-sample"] {
+  display: grid;
+  overflow-wrap: anywhere;
+}
+
+[data-modo="type-preview"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3, 12px);
+}
+
+/* Scale rows: the token on the left, its specimen on the right. */
+[data-modo="type-step"],
+[data-modo="space-step"],
+[data-modo="motion-row"] {
+  display: grid;
+  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4, 16px);
+  padding-block: var(--space-3, 12px);
+  border-bottom: 1px solid var(--modo-border);
+}
+
+[data-modo="type-step"] {
+  align-items: baseline;
+}
+
+[data-modo="motion-row"]:has([data-modo="motion-curve"]) {
+  grid-template-columns: minmax(0, 12rem) auto minmax(0, 1fr);
+}
+
+@container (max-width: 560px) {
+  :is([data-modo="type-step"], [data-modo="space-step"], [data-modo="motion-row"]) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+[data-modo="type-sample"] {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-modo="radius-tile"] {
+  display: grid;
+  gap: var(--space-3, 12px);
+  min-width: 0;
+  margin: 0;
+}
+
+/* Filled and component-sized, so a few pixels of radius still read. */
+[data-modo="radius-shape"] {
+  inline-size: 5rem;
+  aspect-ratio: 1;
+  background: var(--modo-border);
+}
+
+[data-modo="token-preview"] > [data-modo="radius-shape"] {
+  flex: 1 1 0;
+  max-inline-size: 4rem;
+}
+
+[data-modo="space-preview"],
+[data-modo="motion-preview"] {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2, 8px);
+  width: 100%;
+}
+
+[data-modo="space-bar"],
+[data-modo="motion-bar"] {
+  block-size: var(--space-3, 12px);
+  max-inline-size: 100%;
+  border-radius: var(--radius-sm, 2px);
+  background: var(--modo-muted);
+}
+
+/* The dot crosses its track (a container, so 100cqi is the track's length)
+   with the row's own duration and easing set inline. */
+[data-modo="motion-track"] {
+  container-type: inline-size;
+  padding-block-end: var(--space-1, 4px);
+  border-bottom: 1px solid var(--modo-border);
+}
+
+[data-modo="motion-dot"] {
+  display: block;
+  inline-size: var(--space-3, 12px);
+  block-size: var(--space-3, 12px);
+  border-radius: var(--radius-sm, 2px);
+  background: currentColor;
+  transition-property: translate;
+}
+
+[data-modo="motion-row"]:hover [data-modo="motion-dot"] {
+  translate: calc(100cqi - 100%) 0;
+}
+
+[data-modo="motion-curve"] {
+  inline-size: var(--space-6, 32px);
+  block-size: var(--space-6, 32px);
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+}
+
+[data-modo="motion-curve"] path {
+  vector-effect: non-scaling-stroke;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-modo="motion-dot"] {
+    transition: none;
+  }
+}
+
 *:focus-visible {
   outline: 2px solid var(--accent, currentColor);
   outline-offset: 2px;

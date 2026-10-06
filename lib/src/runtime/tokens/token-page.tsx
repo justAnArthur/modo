@@ -1,9 +1,13 @@
 import { tokens as groups } from 'virtual:modo-tokens'
-import type { CSSProperties, ReactElement } from 'react'
-import type { Group, Swatch } from '../../lib/css'
+import type { ReactNode } from 'react'
+import type { GroupName } from '../../lib/css'
 import { colorExpr, colorValue, resolved } from './host-colors'
+import { RadiusPreview, RadiusView, SpacingPreview, SpacingView } from './lengths'
+import { MotionPreview, MotionView } from './motion'
+import { declared, OtherTokens, TokenSection, type Var } from './token-row'
+import { TypographyPreview, TypographyView } from './typography'
 
-type Var = Group['vars'][number]
+type View = (props: { vars: Var[] }) => ReactNode
 
 const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1)
 
@@ -31,6 +35,7 @@ export function TokenGroupView({ group }: { group: string }) {
     )
   }
   const vars = declared(g.vars)
+  const View = VIEWS[g.name]
   return (
     <article>
       <header>
@@ -38,57 +43,33 @@ export function TokenGroupView({ group }: { group: string }) {
         <h1 data-modo="page-title">{cap(g.name)}</h1>
         <p data-modo="page-lead">{vars.length} variables</p>
       </header>
-      {g.name === 'colors' ? (
-        <ColorGroups vars={vars} />
-      ) : (
-        <section data-modo="section">
-          <div data-modo="token-list">
-            {vars.map(v => (
-              <TokenRow key={v.name} v={v} />
-            ))}
-          </div>
-        </section>
-      )}
+      <View vars={vars} />
     </article>
   )
 }
 
-/** Token files declare light and dark blocks; the first declaration (`:root`)
-    names the token, the live cascade decides what it renders as. */
-function declared(vars: Var[]): Var[] {
-  return vars.filter((v, i) => vars.findIndex(w => w.name === v.name) === i)
-}
-
-/** A group at a glance, for the Foundations overview: colors as a strip of
-    fills, everything else as the same swatches the group page uses. */
+/** A group at a glance, for the Foundations overview. */
 export function GroupPreview({ group }: { group: string }) {
   const g = groups.find(gg => gg.name === group)
   if (!g) return null
-  const vars = declared(g.vars)
-  if (g.name === 'colors') {
-    return (
-      <div data-modo="token-preview">
-        {vars
-          .filter(v => colorExpr(v.name) !== null)
-          .slice(0, 12)
-          .map(v => (
-            <span
-              key={v.name}
-              data-modo="token-chip"
-              style={{ background: colorExpr(v.name) ?? v.value }}
-              title={`${v.name}: ${v.value}`}
-            />
-          ))}
-      </div>
-    )
-  }
+  const Preview = PREVIEWS[g.name]
+  return <Preview vars={declared(g.vars)} />
+}
+
+function ColorPreview({ vars }: { vars: Var[] }) {
   return (
     <div data-modo="token-preview">
-      {vars.slice(0, 6).map(v => (
-        <span key={v.name} title={`${v.name}: ${v.value}`}>
-          <TokenSwatch sw={v.swatch} />
-        </span>
-      ))}
+      {vars
+        .filter(v => colorExpr(v.name) !== null)
+        .slice(0, 12)
+        .map(v => (
+          <span
+            key={v.name}
+            data-modo="token-chip"
+            style={{ background: colorExpr(v.name) ?? v.value }}
+            title={`${v.name}: ${v.value}`}
+          />
+        ))}
     </div>
   )
 }
@@ -116,16 +97,7 @@ function ColorGroups({ vars }: { vars: Var[] }) {
     <>
       <ColorSection title="Theme" stacks={theme} page={page} />
       <ColorSection title="Custom" stacks={custom} page={page} />
-      {other.length > 0 && (
-        <section data-modo="section">
-          <h2 data-modo="section-title">Other</h2>
-          <div data-modo="token-list">
-            {other.map(v => (
-              <TokenRow key={v.name} v={v} />
-            ))}
-          </div>
-        </section>
-      )}
+      <OtherTokens vars={other} />
     </>
   )
 }
@@ -157,8 +129,7 @@ function ColorSection({ title, stacks, page }: SectionProps) {
   const filled = stacks.filter(s => s.length > 0)
   if (filled.length === 0) return null
   return (
-    <section data-modo="section">
-      <h2 data-modo="section-title">{title}</h2>
+    <TokenSection title={title}>
       <div data-modo="color-grid">
         {filled.map(s => (
           <div data-modo="color-stack" key={s[0]!.v.name}>
@@ -168,7 +139,7 @@ function ColorSection({ title, stacks, page }: SectionProps) {
           </div>
         ))}
       </div>
-    </section>
+    </TokenSection>
   )
 }
 
@@ -261,56 +232,18 @@ function luminance([r, g, b]: Rgba): number {
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
 }
 
-function TokenRow({ v }: { v: Var }) {
-  const sw = v.swatch
-  return (
-    <div data-modo="token-row">
-      <div data-modo="token-name">
-        <TokenSwatch sw={sw} />
-        <code>{v.name}</code>
-      </div>
-      <div data-modo="token-meta">
-        <code>{v.value}</code>
-        {sw ? <span> · {meta(sw)}</span> : null}
-      </div>
-    </div>
-  )
+const VIEWS: Record<GroupName, View> = {
+  colors: ColorGroups,
+  typography: TypographyView,
+  spacing: SpacingView,
+  radius: RadiusView,
+  motion: MotionView,
 }
 
-// Only the token's own value is inline; the frame is [data-modo="swatch"] CSS.
-function TokenSwatch({ sw }: { sw?: Swatch }): ReactElement | null {
-  if (!sw) return null
-  const box = (style?: CSSProperties) => <span data-modo="swatch" data-kind={sw.kind} style={style} />
-  const text = (style: CSSProperties) => (
-    <span data-modo="swatch" data-kind={sw.kind} style={style}>
-      Aa
-    </span>
-  )
-  switch (sw.kind) {
-    case 'color':
-      return box({ background: sw.hex })
-    case 'length':
-      return box({ width: Math.min(sw.px, 80) })
-    case 'duration':
-      return box()
-    case 'font-family':
-      return text({ fontFamily: sw.family })
-    case 'font-size':
-      return text({ fontSize: sw.px })
-  }
-}
-
-function meta(sw: Swatch): string {
-  switch (sw.kind) {
-    case 'color':
-      return sw.hex
-    case 'length':
-      return `${sw.px}px`
-    case 'duration':
-      return `${sw.ms}ms`
-    case 'font-family':
-      return sw.family
-    case 'font-size':
-      return `${sw.px}px`
-  }
+const PREVIEWS: Record<GroupName, View> = {
+  colors: ColorPreview,
+  typography: TypographyPreview,
+  spacing: SpacingPreview,
+  radius: RadiusPreview,
+  motion: MotionPreview,
 }
