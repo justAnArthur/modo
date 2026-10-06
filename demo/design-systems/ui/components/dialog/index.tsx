@@ -244,51 +244,6 @@ const DialogDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLPa
 )
 DialogDescription.displayName = 'DialogDescription'
 
-interface DialogProps {
-  /** Controlled open state. */
-  open?: boolean
-  /** Initial open state, for an uncontrolled dialog. Defaults to `false`. */
-  defaultOpen?: boolean
-  /** Called when the dialog opens or closes. */
-  onOpenChange?: (open: boolean) => void
-  /** Traps focus and locks page scroll while open. Defaults to `true`. */
-  modal?: boolean
-  /** The trigger and the content — `Dialog.Trigger` plus a `Dialog.Content`. */
-  children?: ReactNode
-}
-
-/**
- * 3 widths, spring in and out.
- *
- * The panel lifts 4 surface levels off whatever substrate it opens on and
- * re-provides that level, so a dropdown or select inside it keeps climbing
- * the ladder instead of melting into the dialog. Width comes from
- * `Dialog.Content`'s `size` — 400, 540 or 880, each one notch narrower in
- * compact regions. The panel grows out of its trigger through the shared
- * morph (see Morph): goo by default on `spring.slow`, or from the press
- * point, its own center, a viewport edge or any element, and the backdrop
- * fades with it. `Morph.Part` pairs an element in the trigger with its twin
- * in the panel, so a card's image or title flies into the dialog. `position="top"` anchors the panel 12dvh
- * down so a content-sized panel (a command menu) keeps its top edge still.
- * Built on Base UI's Dialog: open state is controlled with `open` /
- * `onOpenChange` or left to `defaultOpen`.
- *
- * Statics:
- * - `Dialog.Trigger` — the control that opens it. `render={<Button/>}` or
- *   Radix-style `asChild` with a single child both work.
- * - `Dialog.Content` — the panel: `size`, `position`, `showCloseButton`,
- *   `container`, and the morph options `from`, `effect`, `hideSource`,
- *   `tier`.
- * - `Dialog.Header` / `Dialog.Footer` — the stacked title block, and the
- *   right-aligned action row.
- * - `Dialog.Title` / `Dialog.Description` — the labelled heading and its
- *   supporting line, wired to the panel for screen readers.
- * - `Dialog.Close` — dismisses it; same `render` / `asChild` shape as the
- *   trigger. `Dialog.Content` renders its own ✕ unless
- *   `showCloseButton={false}`.
- *
- * @example {@include ./examples.mdx}
- */
 interface DialogStateProps {
   open?: boolean
   defaultOpen?: boolean
@@ -326,6 +281,51 @@ function DialogState({ open, defaultOpen = false, onOpenChange, children }: Dial
   )
 }
 
+interface DialogProps {
+  /** Controlled open state. */
+  open?: boolean
+  /** Initial open state, for an uncontrolled dialog. Defaults to `false`. */
+  defaultOpen?: boolean
+  /** Called when the dialog opens or closes. */
+  onOpenChange?: (open: boolean) => void
+  /** Traps focus and locks page scroll while open. Defaults to `true`. */
+  modal?: boolean
+  /** The trigger and the content — `Dialog.Trigger` plus a `Dialog.Content`. */
+  children?: ReactNode
+}
+
+/**
+ * 3 widths, grown out of whatever opened them.
+ *
+ * The panel lifts 4 surface levels off whatever substrate it opens on and
+ * re-provides that level, so a dropdown or select inside it keeps climbing
+ * the ladder instead of melting into the dialog. Width comes from
+ * `Dialog.Content`'s `size` — 400, 540 or 880, each one notch narrower in
+ * compact regions. The panel grows out of its trigger through the shared
+ * morph (see Morph): goo by default on `spring.slow`, or from the press
+ * point, its own center, a viewport edge or any element, and the backdrop
+ * fades with it. `Morph.Part` pairs an element in the trigger with its twin
+ * in the panel, so a card's image or title flies into the dialog. `position="top"` anchors the panel 12dvh
+ * down so a content-sized panel (a command menu) keeps its top edge still.
+ * Built on Base UI's Dialog: open state is controlled with `open` /
+ * `onOpenChange` or left to `defaultOpen`.
+ *
+ * Statics:
+ * - `Dialog.Trigger` — the control that opens it. `render={<Button/>}` or
+ *   Radix-style `asChild` with a single child both work.
+ * - `Dialog.Content` — the panel: `size`, `position`, `showCloseButton`,
+ *   `container`, and the morph options `from`, `effect`, `hideSource`,
+ *   `tier`.
+ * - `Dialog.Header` / `Dialog.Footer` — the stacked title block, and the
+ *   right-aligned action row.
+ * - `Dialog.Title` / `Dialog.Description` — the labelled heading and its
+ *   supporting line, wired to the panel for screen readers.
+ * - `Dialog.Close` — dismisses it; same `render` / `asChild` shape as the
+ *   trigger. `Dialog.Content` renders its own ✕ unless
+ *   `showCloseButton={false}`.
+ *
+ * @example {@include ./examples.mdx}
+ */
 function Dialog({ children, open, defaultOpen, onOpenChange, modal }: DialogProps) {
   return (
     <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
