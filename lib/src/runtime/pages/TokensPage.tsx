@@ -1,4 +1,5 @@
 import { tokens } from 'virtual:modo-tokens'
+import { cap } from '../text'
 import { GroupPreview } from '../tokens/token-page'
 import { Bento, BentoCard } from './bento'
 
@@ -22,7 +23,7 @@ export function TokensPage() {
             <BentoCard
               key={g.name}
               href={`/docs/tokens/${g.name}`}
-              title={g.name}
+              title={cap(g.name)}
               meta={`${g.vars.length} variables`}
               span={g.name === 'colors' || i % 5 === 0 ? 'wide' : undefined}
             >

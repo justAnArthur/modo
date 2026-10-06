@@ -2,6 +2,7 @@ import { config } from 'virtual:modo-config'
 import { items } from 'virtual:modo-items'
 import { tokens } from 'virtual:modo-tokens'
 import { ExamplePreview, hasPreview } from '../items/preview'
+import { cap } from '../text'
 import { GroupPreview } from '../tokens/token-page'
 import { Bento, BentoCard } from './bento'
 import type { Tier } from './TierPage'
@@ -35,7 +36,7 @@ export function HomePage() {
             <BentoCard
               key={tier}
               href={`/docs/${tier}`}
-              title={tier}
+              title={cap(tier)}
               meta={`${list.length} items`}
               description={list.map(it => it.name).join(', ')}
               span={tier === 'blocks' ? 'full' : undefined}

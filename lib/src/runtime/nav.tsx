@@ -3,9 +3,9 @@ import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import { usePath, withBase } from './router'
+import { cap } from './text'
 
 const TIERS = ['primitives', 'components', 'blocks'] as const
-const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1)
 
 export function SidebarNav() {
   const path = usePath()

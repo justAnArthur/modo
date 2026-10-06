@@ -1,6 +1,7 @@
 import { tokens as groups } from 'virtual:modo-tokens'
 import type { ReactNode } from 'react'
 import type { GroupName } from '../../lib/css'
+import { cap } from '../text'
 import { colorExpr, colorValue, resolved } from './host-colors'
 import { RadiusPreview, RadiusView, SpacingPreview, SpacingView } from './lengths'
 import { MotionPreview, MotionView } from './motion'
@@ -8,8 +9,6 @@ import { declared, OtherTokens, TokenSection, type Var } from './token-row'
 import { TypographyPreview, TypographyView } from './typography'
 
 type View = (props: { vars: Var[] }) => ReactNode
-
-const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1)
 
 /* The shadcn/ui theme schema, one column per family. Tokens a design system
    defines under these names render first; everything else follows as custom. */

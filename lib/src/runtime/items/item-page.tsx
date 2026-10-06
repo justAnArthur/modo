@@ -2,6 +2,7 @@ import { byId, exampleDocs, examples as examplesMap } from 'virtual:modo-items'
 import { Anchor } from '../anchor'
 import { Blocks, Inlines, splitLead } from '../markdown'
 import { mdxComponents } from '../mdx'
+import { cap } from '../text'
 import { ItemExamples } from './examples'
 import { PropTable } from './prop-table'
 
@@ -23,7 +24,7 @@ export function ItemPage({ tier, id }: { tier: 'primitives' | 'components' | 'bl
   return (
     <article>
       <header>
-        <p data-modo="page-eyebrow">{tier[0]!.toUpperCase() + tier.slice(1)}</p>
+        <p data-modo="page-eyebrow">{cap(tier)}</p>
         <h1 data-modo="page-title">{entry.name}</h1>
         {lead ? (
           <p data-modo="page-lead">

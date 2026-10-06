@@ -1,11 +1,10 @@
 import { items } from 'virtual:modo-items'
 import { ExamplePreview } from '../items/preview'
 import { Inlines, splitLead } from '../markdown'
+import { cap } from '../text'
 import { Bento, BentoCard } from './bento'
 
 export type Tier = 'primitives' | 'components' | 'blocks'
-
-const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1)
 
 const LEAD: Record<Tier, string> = {
   primitives: 'The smallest building blocks of this design system.',
