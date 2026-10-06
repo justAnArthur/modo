@@ -5,9 +5,20 @@
 @import "@fontsource/roboto/500.css";
 @import "@fontsource/roboto/700.css";
 
-/* The docs chrome reads the generic --font-sans; MUI's family is --font-family. */
+/* The chrome's generic type contract, wired to MUI's variants: a page title
+   is an h4, a section an h6 (MUI's medium-weight heading). */
 :root {
   --font-sans: var(--font-family);
+  --font-size-h1: var(--text-h4);
+  --font-size-h2: var(--text-h6);
+  --font-size-h3: var(--text-body1);
+  --font-size-lead: var(--text-body1);
+  --font-size-eyebrow: var(--text-caption);
+  --font-size-sm: var(--text-body2);
+  --font-size-xs: var(--text-caption);
+  --font-weight-medium: var(--text-h6-weight);
+  --font-weight-semibold: var(--text-h6-weight);
+  --font-weight-bold: var(--text-h4-weight);
 }
 
 /* Host-owned chrome visuals (the lib ships structure only): dividers on the

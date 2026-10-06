@@ -22,6 +22,8 @@
  * - The `--weight-*` variation settings mirror `fontWeights` in
  *   lib/font-weight.ts (keep the two in sync; motion still animates
  *   the JS values) and are read by the `weight-*` rule in uno.config.ts.
+ *   Their wght values live in `--font-weight-*`, the plain font-weight form
+ *   the docs chrome reads.
  */
 
 :root {
@@ -51,8 +53,12 @@
 
   /* Inter variable weights, each paired with the opsz that keeps a label's
      advance width steady as it changes weight. */
-  --weight-normal: "wght" 400, "opsz" 14;
-  --weight-medium: "wght" 450, "opsz" 15;
-  --weight-semibold: "wght" 550, "opsz" 18;
-  --weight-bold: "wght" 700, "opsz" 25;
+  --font-weight-normal: 400;
+  --font-weight-medium: 450;
+  --font-weight-semibold: 550;
+  --font-weight-bold: 700;
+  --weight-normal: "wght" var(--font-weight-normal), "opsz" 14;
+  --weight-medium: "wght" var(--font-weight-medium), "opsz" 15;
+  --weight-semibold: "wght" var(--font-weight-semibold), "opsz" 18;
+  --weight-bold: "wght" var(--font-weight-bold), "opsz" 25;
 }

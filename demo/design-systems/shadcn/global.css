@@ -150,3 +150,11 @@
 [data-modo="panel"] {
   border-left: 1px solid var(--border);
 }
+
+/* The chrome's generic type contract: Tailwind's small steps. Its weights
+   already carry the generic names; larger steps aren't wired because Tailwind
+   only emits the variables its utilities use. */
+:root {
+  --font-size-sm: var(--text-sm);
+  --font-size-xs: var(--text-xs);
+}
