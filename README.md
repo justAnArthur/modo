@@ -164,7 +164,7 @@ MIT
 
 Published to **npmjs.com only** (the package name `modo` is taken on npmjs.com by another user; this repo publishes under the `@justanarthur/modo` scope).
 
-The bump + publish + release pipeline is driven by [`just-github-actions-n-workflows`](https://github.com/justAnArthur/just-github-actions-n-workflows) (`v1.0.2`, stock workflows installed via the toolkit CLI; one local change: the tag filter stays `**@*`, since GitHub's `*` doesn't match the `/` in a scoped tag).
+The bump + publish + release pipeline is driven by [`just-github-actions-n-workflows`](https://github.com/justAnArthur/just-github-actions-n-workflows) (`v1.0.3`, stock workflows installed via the toolkit CLI).
 
 ### Required secret on the GitHub repo
 

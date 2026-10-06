@@ -14,7 +14,7 @@
 #
 #   jobs:
 #     publish:
-#       uses: justAnArthur/just-github-actions-n-workflows/.github/workflows/publish-npm-on-tag.yml@2dda2831489d143088530201f9f1713662870122
+#       uses: justAnArthur/just-github-actions-n-workflows/.github/workflows/publish-npm-on-tag.yml@743c6d8226fa652aeec8dc842aeac1cc423f9696
 #       with:
 #         tag: ${{ github.ref_name }}
 #       secrets:
@@ -24,15 +24,12 @@
 #   NPM_TOKEN — npm registry publish token
 # ---
 
-# toolkit-ref: @justanarthur/just-github-actions-n-workflows@1.0.2
+# toolkit-ref: @justanarthur/just-github-actions-n-workflows@1.0.3
 name: publish-npm-on-tag
 run-name: "publish-npm — ${{ inputs.tag || github.ref_name }}"
 
 on:
   push:
-    # local change: 1.0.2's "*@*" can't match scoped tags on GitHub (`*` stops
-    # at `/`, so `@scope/pkg@1.2.3` never fires); "**@*" does. Tags bump-version
-    # creates are dispatched by the toolkit's matcher, which accepts either.
     tags: [ "**@*" ]
   workflow_dispatch:
     inputs:
@@ -68,7 +65,7 @@ jobs:
     steps:
       - name: Resolve tag metadata
         id: meta
-        uses: justAnArthur/just-github-actions-n-workflows/actions/resolve-tag-meta@2dda2831489d143088530201f9f1713662870122
+        uses: justAnArthur/just-github-actions-n-workflows/actions/resolve-tag-meta@743c6d8226fa652aeec8dc842aeac1cc423f9696
         with:
           tag: ${{ inputs.tag || github.ref_name }}
 
@@ -89,14 +86,14 @@ jobs:
 
       - name: Resolve package directory
         id: pkg
-        uses: justAnArthur/just-github-actions-n-workflows/actions/resolve-package-dir@2dda2831489d143088530201f9f1713662870122
+        uses: justAnArthur/just-github-actions-n-workflows/actions/resolve-package-dir@743c6d8226fa652aeec8dc842aeac1cc423f9696
         with:
           tag_name: ${{ needs.resolve-meta.outputs.tag }}
 
       - name: Check if package is publishable (legacy fallback)
         if: needs.resolve-meta.outputs.has_annotation != 'true'
         id: gate
-        uses: justAnArthur/just-github-actions-n-workflows/actions/check-publishable@2dda2831489d143088530201f9f1713662870122
+        uses: justAnArthur/just-github-actions-n-workflows/actions/check-publishable@743c6d8226fa652aeec8dc842aeac1cc423f9696
         with:
           dir: ${{ steps.pkg.outputs.dir }}
 
@@ -111,7 +108,7 @@ jobs:
 
       - name: Pin workspace dependency versions
         if: steps.gate.outputs.skip != 'true'
-        uses: justAnArthur/just-github-actions-n-workflows/actions/pin-workspace-versions@2dda2831489d143088530201f9f1713662870122
+        uses: justAnArthur/just-github-actions-n-workflows/actions/pin-workspace-versions@743c6d8226fa652aeec8dc842aeac1cc423f9696
         with:
           dir: ${{ steps.pkg.outputs.dir }}
 
@@ -124,12 +121,12 @@ jobs:
 
       - name: Fetch all tags
         if: steps.gate.outputs.skip != 'true'
-        uses: justAnArthur/just-github-actions-n-workflows/actions/fetch-tags@2dda2831489d143088530201f9f1713662870122
+        uses: justAnArthur/just-github-actions-n-workflows/actions/fetch-tags@743c6d8226fa652aeec8dc842aeac1cc423f9696
 
       - name: Generate release notes
         if: steps.gate.outputs.skip != 'true'
         id: release_notes
-        uses: justAnArthur/just-github-actions-n-workflows/actions/generate-release-notes@2dda2831489d143088530201f9f1713662870122
+        uses: justAnArthur/just-github-actions-n-workflows/actions/generate-release-notes@743c6d8226fa652aeec8dc842aeac1cc423f9696
         with:
           tag_name: ${{ needs.resolve-meta.outputs.tag }}
           root_dir: ${{ github.workspace }}
