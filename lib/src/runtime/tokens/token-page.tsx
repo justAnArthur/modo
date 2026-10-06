@@ -5,6 +5,8 @@ import { colorExpr, colorValue, resolved } from './host-colors'
 
 type Var = Group['vars'][number]
 
+const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1)
+
 /* The shadcn/ui theme schema, one column per family. Tokens a design system
    defines under these names render first; everything else follows as custom. */
 const THEME = [
@@ -32,8 +34,8 @@ export function TokenGroupView({ group }: { group: string }) {
   return (
     <article>
       <header>
-        <p data-modo="page-eyebrow">Tokens</p>
-        <h1 data-modo="page-title">{g.name}</h1>
+        <p data-modo="page-eyebrow">Foundations</p>
+        <h1 data-modo="page-title">{cap(g.name)}</h1>
         <p data-modo="page-lead">{vars.length} variables</p>
       </header>
       {g.name === 'colors' ? (

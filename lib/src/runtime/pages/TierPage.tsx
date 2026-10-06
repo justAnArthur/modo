@@ -5,6 +5,8 @@ import { Bento, BentoCard } from './bento'
 
 export type Tier = 'primitives' | 'components' | 'blocks'
 
+const cap = (s: string) => s[0]!.toUpperCase() + s.slice(1)
+
 const LEAD: Record<Tier, string> = {
   primitives: 'The smallest building blocks of this design system.',
   components: 'Composed pieces built from the primitives.',
@@ -15,11 +17,13 @@ export function TierPage({ tier }: { tier: Tier }) {
   const list = items.filter(it => it.tier === tier)
   return (
     <>
-      <header data-modo="tokens-header">
-        <h1 data-modo="page-title">{tier}</h1>
-        <span data-modo="tokens-count">{list.length} items</span>
+      <header>
+        <p data-modo="page-eyebrow">Overview</p>
+        <h1 data-modo="page-title">{cap(tier)}</h1>
+        <p data-modo="page-lead">
+          {LEAD[tier]} {list.length} {list.length === 1 ? 'item' : 'items'}.
+        </p>
       </header>
-      <p data-modo="page-lead">{LEAD[tier]}</p>
       {list.length === 0 ? (
         <p>
           Nothing in <code>{tier}/</code> yet.

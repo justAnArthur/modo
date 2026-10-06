@@ -19,9 +19,14 @@ export function ExamplePreview({ itemId }: { itemId: string }): ReactElement {
   return <ExampleBoundary>{live}</ExampleBoundary>
 }
 
+/** Whether the item has an example ExamplePreview can render. */
+export function hasPreview(itemId: string): boolean {
+  return (examplesMap[itemId]?.length ?? 0) > 0 || firstLiveBlock(itemId) !== undefined
+}
+
 function firstLiveBlock(itemId: string): ReactNode {
   const Doc = exampleDocs[itemId]?.[0]
-  if (!Doc) return null
+  if (!Doc) return undefined
   // Compiled without a provider, MDX content is hook-free: calling it yields
   // the document's top-level blocks, and every live one is a ModoExample.
   const content = (Doc as (props: { components: Record<string, unknown> }) => ReactElement<{ children?: ReactNode }>)({

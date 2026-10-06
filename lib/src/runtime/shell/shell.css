@@ -557,16 +557,6 @@
   padding: 0 var(--space-1, 4px);
 }
 
-[data-modo="tokens-header"] {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-5, 24px);
-}
-
-[data-modo="tokens-count"] {
-  margin-left: auto;
-}
-
 /* Color tokens: columns of horizontal rectangles, name top-left, values
    running up the bottom-right edge. Fill, text, border and radius all come
    from the host (its tokens, its -foreground pairs, its page colors) — never a
@@ -638,11 +628,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-[data-modo="tokens-count"] {
-  color: var(--modo-muted);
-  font-size: 0.75rem;
 }
 
 *:focus-visible {

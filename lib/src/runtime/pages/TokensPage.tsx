@@ -5,11 +5,13 @@ import { Bento, BentoCard } from './bento'
 export function TokensPage() {
   return (
     <>
-      <header data-modo="tokens-header">
+      <header>
+        <p data-modo="page-eyebrow">Overview</p>
         <h1 data-modo="page-title">Foundations</h1>
-        <span data-modo="tokens-count">{tokens.length} groups</span>
+        <p data-modo="page-lead">
+          Every custom property this design system ships, in {tokens.length} {tokens.length === 1 ? 'group' : 'groups'}.
+        </p>
       </header>
-      <p data-modo="page-lead">Every custom property this design system ships, by group.</p>
       {tokens.length === 0 ? (
         <p>
           No <code>tokens/*.css</code> files found.
