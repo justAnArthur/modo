@@ -3,11 +3,11 @@
  * Vendored from the Fluid Functionalism registry (@fluid namespace,
  * fluidfunctionalism.com — MIT License © 2026 Micka Touillaud), pulled with
  * `bunx shadcn@latest add @fluid/badge` (shadcn CLI 4.21.0) into a scratch
- * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). modo item docs: TSDoc on the component, default export (file renamed to index.tsx; the former adapter is gone).
+ * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). modo item docs: TSDoc on the component, default export (file renamed to index.tsx; the former adapter is gone); `color` documented, `variant` and `children` redeclared on BadgeProps with JSDoc so modo's props table sees them.
  */
 
 import { cva, type VariantProps } from 'class-variance-authority'
-import { forwardRef, type HTMLAttributes } from 'react'
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react'
 import { useShape } from '../../_fluid/shape-context'
 import { useSizeVariant } from '../../_fluid/size-context'
 import { cn } from '../../_fluid/utils'
@@ -68,10 +68,15 @@ const legacySizeAliases: Partial<Record<BadgeSize, BadgeSizeCanonical>> = {
 interface BadgeProps
   extends Omit<HTMLAttributes<HTMLSpanElement>, 'color'>,
     Omit<VariantProps<typeof badgeVariants>, 'size'> {
+  /** Hue of the solid tint or of the dot. @default 'gray' */
   color?: BadgeColor
+  /** `solid` tints the surface; `dot` is an outlined pill with a leading color dot. @default 'solid' */
+  variant?: 'solid' | 'dot'
   /** Omitted, the badge follows the surrounding SizeProvider. Legacy
    *  sm/md/lg values still resolve. */
   size?: BadgeSize
+  /** The label. */
+  children?: ReactNode
 }
 
 /**

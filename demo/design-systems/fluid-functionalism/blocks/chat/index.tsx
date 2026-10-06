@@ -1,9 +1,10 @@
 /*
  * Fluid Functionalism chat conversation — a modo block composing three @fluid
  * registry pieces: ChatMessage (transcript entries), ThinkingIndicator (the
- * assistant's working state) and InputMessage (the composer). Authored for
- * this showcase (the registry ships the parts, not this composition) —
- * fluidfunctionalism.com, MIT License © 2026 Micka Touillaud.
+ * assistant's working state) and InputMessage (the composer). The block is
+ * authored for this showcase (the registry ships the parts, not this
+ * composition); the parts are fluidfunctionalism.com, MIT License © 2026
+ * Micka Touillaud.
  */
 
 import { useEffect, useRef, useState } from 'react'
@@ -50,19 +51,15 @@ export default function Chat({
   const [value, setValue] = useState('')
   const [thinking, setThinking] = useState(false)
   const nextId = useRef(initialMessages.length + 1)
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  useEffect(
-    () => () => {
-      if (timer.current) clearTimeout(timer.current)
-    },
-    [],
-  )
+  useEffect(() => () => clearTimeout(timer.current), [])
 
   const handleSend = (sent: string) => {
     setEntries(prev => [...prev, { id: nextId.current++, from: 'user', text: sent }])
     setValue('')
     setThinking(true)
+    clearTimeout(timer.current)
     timer.current = setTimeout(() => {
       setEntries(prev => [
         ...prev,

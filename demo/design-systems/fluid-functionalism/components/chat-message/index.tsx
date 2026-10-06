@@ -3,11 +3,11 @@
  * Vendored from the Fluid Functionalism registry (@fluid namespace,
  * fluidfunctionalism.com — MIT License © 2026 Micka Touillaud), pulled with
  * `bunx shadcn@latest add @fluid/chat-message` (shadcn CLI 4.21.0) into a scratch
- * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). modo item docs: TSDoc on the component, compound static (ChatMessage.FileThumbnail); file renamed to index.tsx (the former adapter is gone).
+ * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). modo item docs: TSDoc on the component, compound static (ChatMessage.FileThumbnail, typed by a ChatMessageComponent cast); file renamed to index.tsx (the former adapter is gone).
  */
 
 import { type HTMLMotionProps, motion } from 'motion/react'
-import { forwardRef, type ReactNode } from 'react'
+import { type ForwardRefExoticComponent, forwardRef, type ReactNode, type RefAttributes } from 'react'
 import { useShape } from '../../_fluid/shape-context'
 import { type SizeVariant, useSize } from '../../_fluid/size-context'
 import { spring } from '../../_fluid/springs'
@@ -36,6 +36,12 @@ interface ChatMessageProps extends Omit<HTMLMotionProps<'div'>, 'children'> {
    *  compact tightens bubble type and padding. Omitted, it follows the
    *  surrounding SizeProvider. */
   size?: SizeVariant
+}
+
+// The static is attached by Object.assign at the bottom; this cast is what
+// makes `<ChatMessage.FileThumbnail>` typecheck.
+type ChatMessageComponent = ForwardRefExoticComponent<ChatMessageProps & RefAttributes<HTMLDivElement>> & {
+  FileThumbnail: typeof FileThumbnail
 }
 
 // ─── ChatMessage ──────────────────────────────────────────────────────────
@@ -138,12 +144,13 @@ const ChatMessage = forwardRef<HTMLDivElement, ChatMessageProps>(
       </motion.div>
     )
   },
-)
+) as ChatMessageComponent
 
 ChatMessage.displayName = 'ChatMessage'
 
 /* Compound member: the attachment renderer (forwardRef consts can't take
-   expando assignments, so Object.assign carries the type). */
+   expando assignments, so Object.assign attaches it at runtime and the
+   ChatMessageComponent cast carries the type). */
 Object.assign(ChatMessage, { FileThumbnail })
 
 export type { ChatMessageProps }

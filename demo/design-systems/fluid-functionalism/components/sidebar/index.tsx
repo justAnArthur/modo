@@ -49,13 +49,6 @@ export default function Sidebar({
 }
 
 /* Declaration merging: the static members of the Sidebar compound. */
-interface Sidebar {
-  /** A nav anchor rendered as a @fluid menu button. */
-  Item: typeof SidebarItem
-  /** A titled group of nav items. */
-  Section: typeof SidebarSection
-}
-
 function SidebarItem({
   href,
   active = false,

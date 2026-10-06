@@ -31,6 +31,8 @@
  *     registry's stylesheet was dropped.
  *   - `@source` lines added so Tailwind scans the modo item directories and
  *     the shared `_fluid/` system files.
+ *   - A host chrome block added at the end: borders on the docs shell's
+ *     sidebar and panel through modo's `data-modo` attrs.
  */
 
 @import "tailwindcss";

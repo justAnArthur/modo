@@ -3,7 +3,7 @@
  * Vendored from the Fluid Functionalism registry (@fluid namespace,
  * fluidfunctionalism.com — MIT License © 2026 Micka Touillaud), pulled with
  * `bunx shadcn@latest add @fluid/button` (shadcn CLI 4.21.0) into a scratch
- * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). `@radix-ui/react-slot` rewritten to the unified `radix-ui` package (`Slot.Root`). modo item docs: TSDoc on the component, default export (file renamed to index.tsx; the former adapter is gone).
+ * scaffold. Local modifications: `@/…` imports rewritten to relative paths for the modo layout; `framer-motion` imports rewritten to `motion/react`; `"use client"` directives dropped (non-RSC). `@radix-ui/react-slot` rewritten to the unified `radix-ui` package (`Slot.Root`). modo item docs: TSDoc on the component, default export (file renamed to index.tsx; the former adapter is gone); `variant` and `children?: ReactNode` redeclared on ButtonProps (modo's props table and shell slot matcher read the interface body), and `variant`, `asChild`, `loading`, `leadingIcon`, `trailingIcon`, `children` documented.
  */
 
 import { cva, type VariantProps } from 'class-variance-authority'
@@ -80,12 +80,18 @@ const legacySizeAliases: Partial<Record<ButtonSize, ButtonSizeCanonical>> = {
 interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     Omit<VariantProps<typeof buttonVariants>, 'size'> {
+  /** `primary` filled, `secondary` tinted, `tertiary` outlined, `ghost` bare until hovered. @default 'primary' */
+  variant?: 'primary' | 'secondary' | 'tertiary' | 'ghost'
   /** Omitted, the button follows the surrounding SizeProvider (default 36px,
    *  compact 28px). Legacy sm/md/lg values still resolve. */
   size?: ButtonSize
+  /** Render the single child element (e.g. an anchor) as the button root. */
   asChild?: boolean
+  /** Swap the content for a spinner, keeping the width, and disable the button. */
   loading?: boolean
+  /** Icon drawn before the label. */
   leadingIcon?: IconComponent
+  /** Icon drawn after the label. */
   trailingIcon?: IconComponent
   /** Force the visual pressed/held state. Useful when the button drives an
    *  external open piece of UI (a popover, dropdown, etc.) so it reads as
@@ -94,6 +100,7 @@ interface ButtonProps
   // modo's shell slot matcher reads the interface body; without an explicit
   // `children` (inherited above from ButtonHTMLAttributes) the docs chrome
   // misses this Button.
+  /** The label; with `size="icon"` / `"icon-compact"`, the icon itself. */
   children?: ReactNode
 }
 

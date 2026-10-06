@@ -933,7 +933,8 @@ function CardButton({
 }
 
 /* Compound members: sub-parts hang off Card as attributes (forwardRef consts
-   can't take expando assignments, so Object.assign carries the types). */
+   can't take expando assignments, so Object.assign attaches them at runtime
+   and the CardComponent cast carries the types). */
 Object.assign(Card, {
   Group: CardGroup,
   Header: CardHeader,

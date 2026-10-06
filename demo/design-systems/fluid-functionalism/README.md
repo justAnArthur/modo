@@ -58,8 +58,10 @@ scaffold's `theme-provider` (modo has no theme toggle of its own).
   here), `@theme inline` (shadcn foundation + @fluid interaction states,
   surface ladder, elevation shadows), `@source` lines for the modo item
   dirs and `_fluid/`, the @fluid base layer (focus ring, shape-transition
-  guard, shimmer text, scroll fades/dividers, thin scrollbars) and keyframes.
-  Differences from the registry's stylesheet, all noted in the file header:
+  guard, shimmer text, scroll fades/dividers, thin scrollbars), keyframes,
+  and a host chrome block (borders on the docs shell's sidebar and panel via
+  `data-modo` attrs). Differences from the registry's stylesheet, all noted
+  in the file header:
   `@fontsource-variable/geist` replaced with `@fontsource-variable/inter/opsz`
   (FF's own app runs on Inter Variable, and its font-weight ladder animates
   the wght AND opsz axes), the @theme-declared keyframes moved to top level
@@ -71,10 +73,8 @@ scaffold's `theme-provider` (modo has no theme toggle of its own).
   `--active`, `--selected`, `--destructive-light`, `--overlay`,
   `--focus-ring`), surface ladder (`--surface-1…8`) and elevation shadows
   (`--shadow-1…8`, `--shadow-color`, dark-mode `--dm-*`).
-- `tokens/radius.css` — the shadcn `--radius` var. (modo's prefix grouping
-  files bare `--radius` under colors on the tokens page — known cosmetic
-  limitation; the value applies regardless. FF's real corner system is the
-  JS shape context: rounded 8px / pill 20px.)
+- `tokens/radius.css` — the shadcn `--radius` var. (FF's real corner system
+  is the JS shape context: rounded 8px / pill 20px.)
 - `tokens/typography.css` — `--font-sans: 'Inter Variable', …`.
 - No `tokens/motion.css` — FF's motion is JS-only: the spring tiers
   (`fast` 80ms / `moderate` 160ms critically damped / `slow` 240ms with
@@ -110,9 +110,12 @@ scaffold's `theme-provider` (modo has no theme toggle of its own).
   and a canned reply.
 - `vite.ts` — appends `@tailwindcss/vite` to the lib's Vite config via
   modo.config.ts's `vite` hook.
-- `modo.config.ts` — `css` and `vite` (Button and Sidebar resolve by
-  interface matching, Select by contract; Link and Code intentionally fall
-  back to the lib's Plain components).
+- `_shell/icon.tsx` — modo's Icon shell slot mapped onto lucide glyphs (a
+  docs-only adapter, not an item).
+- `modo.config.ts` — `css`, `vite` and `shell: { Icon }` pinning
+  `_shell/icon.tsx` (Button and Sidebar resolve by interface matching,
+  Select by contract; Link and Code intentionally fall back to the lib's
+  Plain components).
 
 ### Local modifications to vendored files
 
@@ -121,10 +124,14 @@ Unmodified as pulled except: `@/…` imports rewritten to relative paths;
 on `motion@13`, framer-motion's package rename); `@radix-ui/react-*`
 submodule imports rewritten to the unified `radix-ui` package;
 `"use client"` directives dropped; `next/link` in card.tsx replaced with
-plain anchors; and a handful of type-skew fixes for the workspace's pinned
-deps (`@types/react` 18 ref typings, `noUncheckedIndexedAccess`, a newer
-lucide-react major, and a lazy `pdfjs-dist` import that is not a workspace
-dependency). Each file's header lists exactly what was touched.
+plain anchors; `_fluid/utils.ts`'s clsx + tailwind-merge `cn` swapped for a
+re-export of the `cn` package; modo docs edits (TSDoc, default exports,
+compound statics, props redeclared or documented for the props table and
+the shell slot matcher); and a handful of type-skew fixes for the
+workspace's pinned deps (`@types/react` 18 ref typings,
+`noUncheckedIndexedAccess`, a newer lucide-react major, and a lazy
+`pdfjs-dist` import that is not a workspace dependency). Each file's header
+lists exactly what was touched.
 
 ## Run
 
