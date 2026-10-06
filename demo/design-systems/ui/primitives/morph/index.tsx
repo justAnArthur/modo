@@ -8,6 +8,7 @@
 import { type ReactNode, useState } from 'react'
 import Button from '../../components/button'
 import { MorphSurface } from '../../lib/morph-layers'
+import { MorphPart } from '../../lib/morph-part'
 import { useShape } from '../../lib/shape-context'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../lib/surface-context'
@@ -74,10 +75,20 @@ interface MorphProps {
  * tier's faster exit tween, like every other animation here (see Motion).
  * With reduced motion on, every effect becomes a fade.
  *
+ * ## Shared parts
+ *
+ * `Morph.Part` pairs an element in the trigger with its twin in the overlay
+ * (same `id`), so the part flies from one to the other while the surface
+ * morphs, and back on close: a card's image or title moving into a Dialog.
+ *
  * ## The `Morph` stage
  *
  * `Morph` itself is a docs stage, not a building block: a trigger and a small
  * panel below it that plays one `from` × `effect` pair.
+ *
+ * Statics:
+ * - `Morph.Part` — a shared part (`id`, `className`), for overlays that scope
+ *   parts (Dialog).
  *
  * @example {@include ./examples.mdx}
  */
@@ -132,5 +143,7 @@ export default function Morph({
   )
 }
 
+Morph.Part = MorphPart
+
 export type { MorphProps }
-export { Morph }
+export { Morph, MorphPart }

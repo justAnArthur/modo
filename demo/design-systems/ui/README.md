@@ -91,6 +91,7 @@ positioning) are ported.
 | — (new) | `lib/use-controllable-state.ts` | Local addition: controlled + uncontrolled state, Base UI style |
 | — (new) | `lib/use-morph.ts` | Local addition: the morph engine (source rect → popup box on a spring tier, exit hold for Base UI's unmount), geometry after beUI's popover |
 | — (new) | `lib/slot.ts` | Local addition: Dialog's `render` / `asChild` slot shape (`SlotProps`, `slotRender`), shared by every overlay part that wraps a control |
+| — (new) | `lib/morph-part.tsx` | Local addition: `MorphPart` (shared parts over a motion `layoutId`, after motion-primitives' morphing dialog) and the scope contexts overlays provide |
 | — (new) | `lib/morph-layers.tsx` | Local addition: `MorphSurface`, the renderer (shapes layer with beUI's goo filter, surface background and shadow, clipped content) |
 
 ### Styles
@@ -131,7 +132,7 @@ only what is specific to it:
 | `SizeProvider` | `registry/default/lib/size-context.tsx` + `app/docs/sizes/page.tsx` | `primitives/sizes/index.tsx` | upstream's `SizeProvider`, moved here from the vendored context so modo documents it (sized components import it from here), with the hooks, maps and types re-exported; the live demos become static examples (Select/TabsSubtle/InputGroup/CheckboxGroup/Dropdown swapped for Button/Badge/Switch/Tabs, token-inspector overlay dropped); the token table and type scale are written out rather than rendered from `sizeMap` / `typeScale` |
 | `FluidHover` | `app/docs/fluid-hover/{page,demos}.tsx` over `registry/default/hooks/use-fluid-hover.ts` + `fluid-hover-highlight.tsx` | `primitives/fluid-hover/index.tsx` | new container (`FluidHover` + `FluidHover.Item`) around the hook/highlight pair so examples need no hooks; `items`, `renderItem`, `disabledIndices`, `columns`, `highlightClassName` are the container's own API, `axis` and `gapClick` pass through to the hook; row classes are upstream's `rowClass` with per-axis variants; the two scripted-cursor demos are dropped |
 | `Motion` | `registry/default/lib/springs.ts` + `app/docs/motion/page.tsx` | `primitives/motion/index.tsx` | `Motion` is local demo code (FF ships none): it plays one tier's enter spring and exit tween on its children, adding `defaultShow`, `sameExit` and `reducedMotion`; `spring` / `exitFallbackMs` re-exported from the vendored `springs.ts`; the ball-on-track and fake-modal visuals become show/hide of arbitrary children |
-| `Morph` | — (local; see [Morph sources](#morph-sources)) | `primitives/morph/index.tsx` | a docs stage like `Motion`: a trigger and a panel playing one `from` × `effect` pair over `lib/use-morph.ts` |
+| `Morph` | — (local; see [Morph sources](#morph-sources)) | `primitives/morph/index.tsx` | a docs stage like `Motion`: a trigger and a panel playing one `from` × `effect` pair over `lib/use-morph.ts`; static `.Part` (= `MorphPart`) |
 | `Code` | — (local; FF has no code item) | `primitives/code/index.tsx` | sugar-high tokens colored by the `--syntax-*` tokens, one surface step above its substrate; also the docs chrome's Code slot |
 
 #### components
@@ -145,7 +146,7 @@ only what is specific to it:
 | `CheckboxGroup` | `registry/base/checkbox-group.tsx` | `components/checkbox-group/index.tsx` | uncontrolled mode + group-level callback; item `checked`/`onToggle` optional, falling back to group context; arrow-key focus guarded for `noUncheckedIndexedAccess`; static `.Item` |
 | `ColorPicker` | `registry/default/color-picker.tsx` | `components/color-picker/index.tsx` | `@/registry/radix/{slider,tooltip}` → the Base siblings `../slider` / `../tooltip`; `noUncheckedIndexedAccess` guards on regex captures, `rgb()`/`hsl()`/`oklch()` parts, `itemRects[i]` and the Slider's array value; static `.Popover`; uncontrolled support was already upstream (verified, kept) |
 | `Combobox` | `registry/base/combobox.tsx` | `components/combobox/index.tsx` | root de-generified (the parser needs a plain function plus a same-file `interface ComboboxProps`): items gained an index signature, `value`/`defaultValue` are `string \| string[]` and `onValueChange` is a union of the two handler shapes; `ComboboxValue<Multiple>` still exported; `creatable` added; `React.*` type refs replaced by named type imports; statics `.Input/.Chips/.Content/.List/.Item/.Empty` |
-| `Dialog` | `registry/base/dialog.tsx` | `components/dialog/index.tsx` | `DialogProps`, `DialogSlotProps` and `DialogContentProps` fully re-declared; statics attached as expando properties (`Dialog.Trigger = …`), so `<Dialog.Content>` types without a cast; FF's "With a sidebar" example replaced by "Surfaces inside a dialog" (Sidebar is not ported) |
+| `Dialog` | `registry/base/dialog.tsx` | `components/dialog/index.tsx` | `DialogProps` and `DialogContentProps` fully re-declared (the slot props now come from `lib/slot.ts`); statics attached as expando properties (`Dialog.Trigger = …`), so `<Dialog.Content>` types without a cast; FF's "With a sidebar" example replaced by "Surfaces inside a dialog" (Sidebar is not ported); the panel morphs out of its trigger (morph layer, goo on `spring.slow`; `from` / `effect` / `hideSource` / `tier` on `Dialog.Content`), the backdrop fades with the morph's progress, the root holds the open state and scopes `Morph.Part` pairs |
 | `Dropdown` | `registry/base/dropdown.tsx` | `components/dropdown/index.tsx` | uncontrolled selection and uncontrolled search filtering (below); `items[next].focus()` guarded; statics `.Menu/.Trigger/.Content/.Item/.Label/.Separator/.Search/.Empty`; FF's "Create from the query" section skipped — adding a row to the list is real consumer state |
 | — | `registry/default/menu-item.tsx` | `components/dropdown/menu-item.tsx` | a row with no `checked` derives it from a self-managed panel and toggles the panel's state; `sourceIndex` carries the authored index so selection survives filter re-indexing |
 | — | `registry/default/dropdown-search.tsx` | `components/dropdown/dropdown-search.tsx` | `filter` mode: `value`/`onValueChange` optional, the field reads and writes the query held by the panel (`DropdownFilterContext`) |
@@ -341,8 +342,9 @@ Already uncontrolled upstream and left on their own internal state (none of
 these go through `useControllableState`): Select `defaultValue` — checked
 explicitly, see its file header — ColorPicker and ColorPicker.Popover
 (`defaultValue`, `defaultFormat`, `defaultFormatOpen`, `defaultOpen`),
-Combobox `defaultValue`, Tabs `defaultValue`, and the `defaultOpen` of Dialog
-and Dropdown.Menu.
+Combobox `defaultValue`, Tabs `defaultValue`, and the `defaultOpen` of
+Dropdown.Menu. Dialog's `open` / `defaultOpen` now go through
+`useControllableState`, because the morph reads the open state.
 
 Notable local behavior changes beyond the `default*` props:
 

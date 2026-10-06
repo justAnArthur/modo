@@ -21,48 +21,54 @@
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  *   `text-<role>[-compact]`; inline `fontVariationSettings` and `font-bold`
  *   → `weight-*`; the `bg-black/40` / `dark:bg-black/80` backdrop → `bg-scrim`.
+ * - The panel morphs out of its trigger through the shared morph layer
+ *   (`lib/use-morph.ts` + `MorphSurface`, goo by default on `spring.slow`;
+ *   `Dialog.Content` takes `from` / `effect` / `hideSource` / `tier`), and the
+ *   backdrop's opacity follows the morph's progress. The popup is a
+ *   transparent, centered box; its level is painted by the morph's surface
+ *   layers and the padding sits on their content box. `Dialog` holds the open
+ *   state itself (`useControllableState`) to feed the morph, and scopes
+ *   `Morph.Part` pairs to the dialog.
+ * - The trigger / close slot shape moved to `lib/slot.ts`, shared with the
+ *   other overlays.
  */
 
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { motion } from 'motion/react'
 import {
-  type ButtonHTMLAttributes,
+  createContext,
   forwardRef,
   type HTMLAttributes,
-  isValidElement,
-  type ReactElement,
   type ReactNode,
+  type RefObject,
+  useContext,
+  useId,
+  useImperativeHandle,
+  useMemo,
 } from 'react'
 import { useIcon } from '../../lib/icon-context'
+import { MorphSurface } from '../../lib/morph-layers'
+import { MorphPartScope } from '../../lib/morph-part'
 import { useShape } from '../../lib/shape-context'
 import { useSize, useSizeVariant } from '../../lib/size-context'
-import { spring } from '../../lib/springs'
-import { surfaceClasses } from '../../lib/surface-classes'
+import { type SlotProps, slotRender } from '../../lib/slot'
+import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../lib/surface-context'
+import { useControllableState } from '../../lib/use-controllable-state'
+import { type MorphOrigin, useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { Button } from '../button'
 
 const DIALOG_OFFSET = 4
 
-// Trigger and Close compose either way — `render={<Button/>}` (the
-// library's composition API, shared with DropdownTrigger) or Radix-style
-// `asChild` with a single child element — so one snippet works everywhere.
-// Plain button attributes, which both the trigger and the close accept —
-// their state-typed render/className/style function forms stay off the
-// public surface.
-interface DialogSlotProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  /** The element that becomes the control, e.g. a Button. */
-  render?: ReactElement
-  /** Compose onto the single child instead. Both spellings work in both flavors. Defaults to `false`. */
-  asChild?: boolean
-  /** Control content when there is no render element. */
-  children?: ReactNode
-}
+// Trigger and Close compose either way — `render={<Button/>}` or Radix-style
+// `asChild` with a single child element (lib/slot.ts).
+type DialogSlotProps = SlotProps
 
-function slotRender(render: ReactElement | undefined, asChild: boolean | undefined, children: ReactNode) {
-  if (render) return render
-  return asChild && isValidElement(children) ? (children as ReactElement) : undefined
-}
+const DialogContext = createContext<{ open: boolean; origin: RefObject<MorphOrigin> }>({
+  open: false,
+  origin: { current: {} },
+})
 
 const DialogTrigger = forwardRef<HTMLButtonElement, DialogSlotProps>(({ render, asChild, children, ...props }, ref) => {
   const el = slotRender(render, asChild, children)
@@ -108,12 +114,35 @@ interface DialogContentProps extends HTMLAttributes<HTMLDivElement> {
    *  panel whose height follows its content (a command menu) keeps its top
    *  edge still. Defaults to `"center"`. */
   position?: 'center' | 'top'
+  /** Where the panel grows from (see Morph): the pressed trigger (its center when none), the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
+  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
+  /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
+  effect?: 'goo' | 'morph' | 'slide' | 'fade'
+  /** Hide the trigger while open, so it reads as turning into the panel. Defaults to `false`. */
+  hideSource?: boolean
+  /** Spring tier of the morph. Defaults to `'slow'`. */
+  tier?: 'moderate' | 'slow'
   /** Dialog content. Everything inside reads the dialog's surface level as its substrate. */
   children?: ReactNode
 }
 
 const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
-  ({ className, children, size = 'sm', container, showCloseButton = true, position = 'center', ...props }, ref) => {
+  (
+    {
+      className,
+      children,
+      size = 'sm',
+      container,
+      showCloseButton = true,
+      position = 'center',
+      from,
+      effect,
+      hideSource,
+      tier,
+      ...props
+    },
+    ref,
+  ) => {
     const XIcon = useIcon('x')
     const shape = useShape()
     const substrate = useSurface()
@@ -121,108 +150,50 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
     // The size ladder narrows the dialog one notch in compact regions —
     // width only, the padding stays put (see Sizes).
     const compact = useSize().variant === 'compact'
+    const { open, origin } = useContext(DialogContext)
+    const morph = useMorph(open, origin, { from, effect, hideSource, tier })
+    useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
 
-    // No `if (!open) return null` here — Base UI's `<DialogPrimitive.Popup>`
-    // handles mount/unmount itself, and waits for the motion opacity
-    // tween below to finish (via `element.getAnimations()`) before unmounting.
-    // Returning null early would short-circuit the closing animation.
     return (
       <DialogPrimitive.Portal container={container ?? undefined}>
         <DialogPrimitive.Backdrop
-          render={(backdropProps, state) => {
-            const exiting = state.transitionStatus === 'ending'
-            const {
-              style: _style,
-              onDrag: _onDrag,
-              onDragStart: _onDragStart,
-              onDragEnd: _onDragEnd,
-              onAnimationStart: _onAnimationStart,
-              onAnimationEnd: _onAnimationEnd,
-              onAnimationIteration: _onAnimationIteration,
-              ...rest
-            } = backdropProps as HTMLAttributes<HTMLDivElement>
-            return (
-              <motion.div
-                {...rest}
-                className={cn(container ? 'absolute' : 'fixed', 'inset-0 z-50 bg-scrim')}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: exiting ? 0 : 1 }}
-                transition={exiting ? spring.slow.exit : spring.slow}
-              />
-            )
-          }}
+          render={<motion.div style={{ opacity: morph.progress }} />}
+          className={cn(container ? 'absolute' : 'fixed', 'inset-0 z-50 bg-scrim')}
         />
         <DialogPrimitive.Popup
-          ref={ref}
-          render={(popupProps, state) => {
-            const exiting = state.transitionStatus === 'ending'
-            const {
-              style: baseStyle,
-              onDrag: _onDrag,
-              onDragStart: _onDragStart,
-              onDragEnd: _onDragEnd,
-              onAnimationStart: _onAnimationStart,
-              onAnimationEnd: _onAnimationEnd,
-              onAnimationIteration: _onAnimationIteration,
-              ...rest
-            } = popupProps as HTMLAttributes<HTMLDivElement>
-            return (
-              <motion.div
-                // Base UI's props first (data attrs, refs, role, etc.)…
-                {...rest}
-                // …then the consumer's `<Dialog.Content>` props (className,
-                // event handlers, data-*, etc.) land on the visible motion.div.
-                {...(props as Omit<
-                  HTMLAttributes<HTMLDivElement>,
-                  | 'onDrag'
-                  | 'onDragStart'
-                  | 'onDragEnd'
-                  | 'onAnimationStart'
-                  | 'onAnimationEnd'
-                  | 'onAnimationIteration'
-                >)}
-                className={cn(
-                  container ? 'absolute' : 'fixed',
-                  'left-1/2 z-50 w-[calc(100%-2rem)]',
-                  position === 'top' ? 'top-[12dvh]' : 'top-1/2',
-                  surfaceClasses(dialogLevel),
-                  'p-6 focus:outline-none',
-                  size === 'sm' && (compact ? 'max-w-[360px]' : 'max-w-[400px]'),
-                  size === 'lg' && (compact ? 'max-w-[480px]' : 'max-w-[540px]'),
-                  size === 'xl' && (compact ? 'max-w-[800px]' : 'max-w-[880px]'),
-                  shape.container,
-                  className,
-                )}
-                style={{
-                  ...(baseStyle as React.CSSProperties | undefined),
-                  ...(props.style as React.CSSProperties | undefined),
-                }}
-                initial={{ opacity: 0, scale: 0.97, x: '-50%', y: position === 'top' ? 0 : '-50%' }}
-                animate={{
-                  opacity: exiting ? 0 : 1,
-                  scale: exiting ? 0.97 : 1,
-                  x: '-50%',
-                  y: position === 'top' ? 0 : '-50%',
-                }}
-                transition={exiting ? spring.slow.exit : spring.slow}
-              >
-                <SurfaceProvider value={dialogLevel}>
-                  {children}
-                  {showCloseButton && (
-                    <DialogPrimitive.Close
-                      render={
-                        <Button variant="ghost" size="icon-sm" className="absolute right-3 top-3">
-                          <XIcon />
-                          <span className="sr-only">Close</span>
-                        </Button>
-                      }
-                    />
-                  )}
-                </SurfaceProvider>
-              </motion.div>
-            )
-          }}
-        />
+          ref={morph.popupRef}
+          {...props}
+          className={cn(
+            container ? 'absolute' : 'fixed',
+            'left-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 focus:outline-none',
+            position === 'top' ? 'top-[12dvh]' : 'top-1/2 -translate-y-1/2',
+            size === 'sm' && (compact ? 'max-w-[360px]' : 'max-w-[400px]'),
+            size === 'lg' && (compact ? 'max-w-[480px]' : 'max-w-[540px]'),
+            size === 'xl' && (compact ? 'max-w-[800px]' : 'max-w-[880px]'),
+          )}
+        >
+          <SurfaceProvider value={dialogLevel}>
+            <MorphSurface
+              morph={morph}
+              bg={SURFACE_BG[dialogLevel]}
+              shadow={SURFACE_SHADOW[dialogLevel]}
+              radius={shape.container}
+              className={cn('p-6', className)}
+            >
+              {children}
+              {showCloseButton && (
+                <DialogPrimitive.Close
+                  render={
+                    <Button variant="ghost" size="icon-sm" className="absolute right-3 top-3">
+                      <XIcon />
+                      <span className="sr-only">Close</span>
+                    </Button>
+                  }
+                />
+              )}
+            </MorphSurface>
+          </SurfaceProvider>
+        </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     )
   },
@@ -290,8 +261,11 @@ interface DialogProps {
  * re-provides that level, so a dropdown or select inside it keeps climbing
  * the ladder instead of melting into the dialog. Width comes from
  * `Dialog.Content`'s `size` — 400, 540 or 880, each one notch narrower in
- * compact regions — and both the backdrop and the panel run `spring.slow` in
- * and its faster exit tween out. `position="top"` anchors the panel 12dvh
+ * compact regions. The panel grows out of its trigger through the shared
+ * morph (see Morph): goo by default on `spring.slow`, or from the press
+ * point, its own center, a viewport edge or any element, and the backdrop
+ * fades with it. `Morph.Part` pairs an element in the trigger with its twin
+ * in the panel, so a card's image or title flies into the dialog. `position="top"` anchors the panel 12dvh
  * down so a content-sized panel (a command menu) keeps its top edge still.
  * Built on Base UI's Dialog: open state is controlled with `open` /
  * `onOpenChange` or left to `defaultOpen`.
@@ -300,7 +274,8 @@ interface DialogProps {
  * - `Dialog.Trigger` — the control that opens it. `render={<Button/>}` or
  *   Radix-style `asChild` with a single child both work.
  * - `Dialog.Content` — the panel: `size`, `position`, `showCloseButton`,
- *   `container`.
+ *   `container`, and the morph options `from`, `effect`, `hideSource`,
+ *   `tier`.
  * - `Dialog.Header` / `Dialog.Footer` — the stacked title block, and the
  *   right-aligned action row.
  * - `Dialog.Title` / `Dialog.Description` — the labelled heading and its
@@ -311,18 +286,30 @@ interface DialogProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Dialog({ children, open, defaultOpen, onOpenChange, modal }: DialogProps) {
-  // Base UI's Root handles controlled/uncontrolled state internally. We only
-  // narrow the (open, eventDetails) callback to (open) for our public prop.
+function Dialog({ children, open, defaultOpen = false, onOpenChange, modal }: DialogProps) {
+  // The open state lives here (not in Base UI's Root) because the morph
+  // reads it, and the open event tells it which trigger was pressed.
+  const [current, setCurrent] = useControllableState(open, defaultOpen, onOpenChange)
+  const { origin, capture } = useMorphOrigin()
+  const id = useId()
+  const ctx = useMemo(() => ({ open: current, origin }), [current, origin])
+  const parts = useMemo(() => ({ id, open: current }), [id, current])
+
   return (
-    <DialogPrimitive.Root
-      open={open}
-      defaultOpen={defaultOpen}
-      onOpenChange={next => onOpenChange?.(next)}
-      modal={modal}
-    >
-      {children}
-    </DialogPrimitive.Root>
+    <DialogContext.Provider value={ctx}>
+      <MorphPartScope.Provider value={parts}>
+        <DialogPrimitive.Root
+          open={current}
+          onOpenChange={(next, details) => {
+            if (next) capture(details)
+            setCurrent(next)
+          }}
+          modal={modal}
+        >
+          {children}
+        </DialogPrimitive.Root>
+      </MorphPartScope.Provider>
+    </DialogContext.Provider>
   )
 }
 

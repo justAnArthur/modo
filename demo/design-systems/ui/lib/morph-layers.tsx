@@ -19,6 +19,7 @@
  */
 
 import type { ReactNode } from 'react'
+import { MorphPartInOverlay } from './morph-part'
 import { GOO_MATRIX, type Morph } from './use-morph'
 import { cn } from './utils'
 
@@ -68,7 +69,7 @@ export function MorphSurface({ morph, bg, shadow, radius, className, children }:
         <div ref={refs.shadow} aria-hidden className={cn('pointer-events-none absolute inset-0', shadow, radius)} />
       )}
       <div ref={refs.content} className={cn('relative', className)}>
-        {children}
+        <MorphPartInOverlay.Provider value={true}>{children}</MorphPartInOverlay.Provider>
       </div>
     </>
   )

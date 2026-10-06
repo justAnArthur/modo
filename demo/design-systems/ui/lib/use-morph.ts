@@ -163,6 +163,10 @@ function layerBox(source: Rect, target: Rect, pad: number): Rect {
   return { x, y, w, h, r: 0 }
 }
 
+function overlaps(a: Rect, b: Rect) {
+  return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h
+}
+
 function place(el: HTMLElement | null, { x, y, w, h, r }: Rect) {
   if (!el) return
   el.style.inset = 'auto'
@@ -288,9 +292,11 @@ function useMorph(
       refs.blur.current?.setAttribute('stdDeviation', String(blur))
     }
     // The layer sits above the page, so the surface growing out of the source
-    // would cover it; punching the source back out keeps it visible. A clip
-    // path, not a mask: WebKit ignores `mask: url(#…)` on an SVG <mask>.
-    const cut = source.w > 0 && source.h > 0 && !hideSource
+    // would cover it; punching the source back out keeps it visible. Not when
+    // the overlay lands on top of its source (a dialog over its trigger): the
+    // hole would show through it. A clip path, not a mask: WebKit ignores
+    // `mask: url(#…)` on an SVG <mask>.
+    const cut = source.w > 0 && source.h > 0 && !hideSource && !overlaps(source, target)
     shapes.current.style.clipPath = cut
       ? `path(evenodd, "${roundedRectPath({ ...layer, x: 0, y: 0 })} ${roundedRectPath(local(source))}")`
       : ''
