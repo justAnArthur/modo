@@ -41,7 +41,8 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
 
   const fnDeclMatch = cleaned.match(/export\s+default\s+function\s+([A-Za-z_$][\w$]*)?\s*[(<]/)
   if (fnDeclMatch) {
-    name = fnDeclMatch[1] ?? 'Anonymous'
+    // Anonymous: the bundler names the item after its directory.
+    name = fnDeclMatch[1] ?? ''
     jsdocAnchor = fnDeclMatch.index ?? 0
     fnStart = cleaned.indexOf('function', jsdocAnchor)
   } else {
@@ -50,7 +51,7 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
       return fail('No `export default` found')
     }
     name = identMatch[1]!
-    fnStart = cleaned.search(new RegExp(`function\\s+${name}\\s*\\(`))
+    fnStart = cleaned.search(new RegExp(`function\\s+${name}\\s*[(<]`))
     // The doc block belongs to the component declaration, not to wherever the
     // `export default` statement happens to sit (often the bottom of the file,
     // below sub-components that may carry their own JSDoc).
@@ -63,8 +64,6 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
         )?.[1] ?? null
     }
   }
-
-  if (!name) return fail('Could not determine component name')
 
   const jsdoc = extractJsdocAbove(cleaned, jsdocAnchor) ?? ''
   // `@example` counts only at the start of a (`*`-stripped) line, so text like
@@ -101,11 +100,13 @@ function fail(msg: string): ParsedItem {
   return { name: '', description: '', props: [], examples: [], exampleDocs: [], errors: [msg] }
 }
 
-function extractJsdocAbove(src: string, exportIndex: number): string | null {
-  const before = src.slice(0, exportIndex)
-  const matches = [...before.matchAll(/\/\*\*([\s\S]*?)\*\//g)]
-  if (matches.length === 0) return null
-  const last = matches[matches.length - 1]!
+// The block right above the declaration: only whitespace and modifiers may
+// sit between them, or a prop's or sibling's doc would be taken for the item's.
+function extractJsdocAbove(src: string, declIndex: number): string | null {
+  const last = [...src.slice(0, declIndex).matchAll(/\/\*\*([\s\S]*?)\*\//g)].at(-1)
+  if (!last) return null
+  const gap = src.slice((last.index ?? 0) + last[0].length, declIndex)
+  if (!/^\s*(?:(?:export|default|async|declare)\s+)*$/.test(gap)) return null
   return normalizeJsdoc(last[1] ?? '')
 }
 
@@ -115,10 +116,6 @@ function normalizeJsdoc(raw: string): string {
     .map(line => line.replace(/^\s*\*\s?/, ''))
     .join('\n')
     .trim()
-}
-
-function nameFromParam(raw: string): string | undefined {
-  return raw.trim().match(/^(?:\.\.\.)?([A-Za-z_$][\w$]*)/)?.[1]
 }
 
 interface ExtractPropsResult {
@@ -139,7 +136,9 @@ function extractProps(src: string, fnStart: number): ExtractPropsResult {
   const destructured: Array<{ name: string; default?: string }> = []
   let typeLiteral = ''
 
-  const destrStart = paramsText.indexOf('{')
+  // Destructured only when the parameter itself opens with `{`; in
+  // `props: { … }` the brace is the type literal.
+  const destrStart = paramsText.trimStart().startsWith('{') ? paramsText.indexOf('{') : -1
   if (destrStart !== -1) {
     const destrEnd = matchClosing(paramsText, destrStart, '{', '}')
     if (destrEnd !== undefined) {
@@ -156,11 +155,7 @@ function extractProps(src: string, fnStart: number): ExtractPropsResult {
     }
   } else {
     const colonIdx = paramsText.indexOf(':')
-    if (colonIdx !== -1) {
-      typeLiteral = paramsText.slice(colonIdx + 1).trim()
-      const name = nameFromParam(paramsText.slice(0, colonIdx))
-      if (name) destructured.push({ name })
-    }
+    if (colonIdx !== -1) typeLiteral = paramsText.slice(colonIdx + 1).trim()
   }
 
   if (!typeLiteral) return { props, errors: ['No type literal found on parameter'] }
@@ -174,7 +169,7 @@ function extractProps(src: string, fnStart: number): ExtractPropsResult {
   }
   if (!litText) return { props, errors: ['Could not find object type literal'] }
 
-  return finishProps(litText, destructured, errors)
+  return { props: finishProps(litText, destructured), errors }
 }
 
 function extractForwardRefProps(src: string, typeName: string): ExtractPropsResult {
@@ -182,17 +177,22 @@ function extractForwardRefProps(src: string, typeName: string): ExtractPropsResu
   if (!litText) {
     return { props: [], errors: [`Could not find object type literal for ${typeName}`] }
   }
-  return finishProps(litText, [], [])
+  return { props: finishProps(litText, []), errors: [] }
 }
 
-function finishProps(
-  litText: string,
-  destructured: Array<{ name: string; default?: string }>,
-  errors: string[],
-): ExtractPropsResult {
+function finishProps(litText: string, destructured: Array<{ name: string; default?: string }>): ParsedProp[] {
   const props: ParsedProp[] = []
   const litBody = litText.slice(1, -1)
-  const members = splitTopLevel(litBody, ';\n').filter(s => s.trim())
+  // Members split at `;` and newlines; a line continuing a member (a union
+  // or intersection laid out one member per line) joins the one before it.
+  const members: string[] = []
+  for (const part of splitTopLevel(litBody, ';\n')) {
+    if (!part.trim()) continue
+    const prev = members.at(-1)
+    if (prev !== undefined && (/^\s*[|&]/.test(part) || /[:|&]\s*$/.test(prev)))
+      members[members.length - 1] = `${prev}\n${part}`
+    else members.push(part)
+  }
 
   for (const member of members) {
     const memberText = member.trim()
@@ -206,26 +206,40 @@ function finishProps(
     if (!m) continue
     const name = m[1]!
     const optional = m[2] === '?'
-    const type = (m[3] ?? '').trim()
+    const type = (m[3] ?? '')
+      .trim()
+      .replace(/^\|\s*/, '')
+      .replace(/\s+/g, ' ')
     props.push({ name, optional, type })
   }
 
   attachJsdocToProps(litBody, props)
 
+  // The code's own default wins over a documented `@default`.
   for (const p of props) {
     const d = destructured.find(dd => dd.name === p.name)
     if (d?.default) p.default = d.default
   }
 
-  return { props, errors }
+  return props
 }
 
+// `@default x` fills the Default column; `@values a, b` is dropped when the
+// type already lists them (a literal union), else kept as prose.
 function attachJsdocToProps(litBody: string, props: ParsedProp[]): void {
   for (const m of litBody.matchAll(/\/\*\*([\s\S]*?)\*\/\s*([A-Za-z_$][\w$]*)\s*\??:/g)) {
-    const name = m[2]!
-    const desc = normalizeJsdoc(m[1] ?? '')
-    const prop = props.find(p => p.name === name)
-    if (prop) prop.description = desc
+    const prop = props.find(p => p.name === m[2])
+    if (!prop) continue
+    const doc = normalizeJsdoc(m[1] ?? '')
+    const def = doc.match(/@default\s+([^\n@]+)/)?.[1]?.trim()
+    if (def) prop.default = def
+    const literalUnion = /['"`]/.test(prop.type)
+    prop.description = doc
+      .replace(/@default\s+[^\n@]*/g, '')
+      .replace(/@values\s+([^\n@]*)/g, (_, values: string) =>
+        literalUnion ? '' : `One of ${values.trim().replace(/[^,\s]+/g, v => `\`${v}\``)}.`,
+      )
+      .trim()
   }
 }
 

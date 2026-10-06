@@ -40,9 +40,9 @@ export function compileExampleBody(code: string): ExampleRenderer | string {
   let js: string
   try {
     const body = stripImports(code)
-    // Sibling elements need a fragment; only wrap JSX (a multi-line JS
-    // expression would otherwise turn into text children).
-    const wrapped = /\n/.test(body) && body.startsWith('<') ? `<>${body}</>` : body
+    // Sibling elements need a fragment, on one line or several; only wrap
+    // JSX (a JS expression would otherwise turn into text children).
+    const wrapped = body.startsWith('<') ? `<>${body}</>` : body
     const out = Babel.transform(`return (${wrapped});`, {
       presets: ['typescript', 'react'],
       filename: 'example.tsx',
