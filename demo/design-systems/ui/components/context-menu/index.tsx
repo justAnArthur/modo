@@ -28,7 +28,7 @@ import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { useFluidHover } from '../../lib/use-fluid-hover'
-import { type MorphOrigin, useMorph } from '../../lib/use-morph'
+import { type MorphOrigin, useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { ScrollArea } from '../../primitives/scroll-area'
 import { SizeProvider } from '../../primitives/sizes'
@@ -47,17 +47,6 @@ interface ContextMenuContextValue {
 const ContextMenuContext = createContext<ContextMenuContextValue>({ open: false, origin: { current: {} } })
 
 const ShortcutContext = createContext<string | undefined>(undefined)
-
-/**
- * Base UI's ContextMenu reports no trigger, and its event is either the
- * `contextmenu` itself or the long press's `touchstart`; `useMorphOrigin`
- * reads neither as a press point (a `contextmenu` has `detail` 0, like a
- * keyboard click), so the point comes straight off the event.
- */
-function pressPoint(event: Event) {
-  const at = 'touches' in event ? (event as TouchEvent).touches[0] : (event as MouseEvent)
-  return at && { x: at.clientX, y: at.clientY }
-}
 
 function RowShortcut() {
   const shortcut = useContext(ShortcutContext)
@@ -257,8 +246,8 @@ interface ContextMenuProps {
  */
 function ContextMenu({ open, defaultOpen = false, onOpenChange, disabled = false, size, children }: ContextMenuProps) {
   const [current, setCurrent] = useControllableState(open, defaultOpen, onOpenChange)
-  const origin = useRef<MorphOrigin>({})
-  const ctx = useMemo(() => ({ open: current, origin }), [current])
+  const { origin, capture } = useMorphOrigin()
+  const ctx = useMemo(() => ({ open: current, origin }), [current, origin])
 
   const root = (
     <ContextMenuContext.Provider value={ctx}>
@@ -266,7 +255,8 @@ function ContextMenu({ open, defaultOpen = false, onOpenChange, disabled = false
         open={current}
         disabled={disabled}
         onOpenChange={(next, details) => {
-          if (next) origin.current = { point: pressPoint(details.event) }
+          // The press point comes off the contextmenu or long-press event.
+          if (next) capture(details)
           setCurrent(next)
         }}
       >
