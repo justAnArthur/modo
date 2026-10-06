@@ -7,7 +7,9 @@
  * the toast lands and folds back before it leaves (Sileo's autopilot), or
  * whenever it is hovered. Base UI's Toast owns the queue, timers, swipe to
  * dismiss and announcements; Sileo's own store, timers and swipe are not
- * ported. Colors are the status tokens on the inverted surface, the sizes the
+ * ported. The toast is drawn like every other morph surface: the Elevated
+ * level's background shapes melted by the shared goo filter, their shadows
+ * beneath, the content on top. Colors are the status tokens, the sizes the
  * control ladder's, and the motion the spring tiers.
  */
 
@@ -32,8 +34,11 @@ import { useShape } from '../../lib/shape-context'
 import { sizeMap } from '../../lib/size-context'
 import { type SlotProps, slotRender } from '../../lib/slot'
 import { spring } from '../../lib/springs'
+import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
+import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { GOO_BLUR_RATIO, holdExit } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
+import Button from '../button'
 
 type ToastType = 'success' | 'loading' | 'error' | 'warning' | 'info' | 'action'
 type ToastPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
@@ -73,15 +78,6 @@ const VIEWPORT: Record<ToastPosition, string> = {
   'bottom-left': 'bottom-4 left-4 flex-col-reverse items-start',
   'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2 flex-col-reverse items-center',
   'bottom-right': 'bottom-4 right-4 flex-col-reverse items-end',
-}
-
-const ALIGN: Record<ToastPosition, string> = {
-  'top-left': 'items-start',
-  'top-center': 'items-center',
-  'top-right': 'items-end',
-  'bottom-left': 'flex-col-reverse items-start',
-  'bottom-center': 'flex-col-reverse items-center',
-  'bottom-right': 'flex-col-reverse items-end',
 }
 
 // The pill is one control tall, and the goo melts as much as its radius allows.
@@ -124,9 +120,31 @@ function useToast() {
   }, [manager])
 }
 
+interface Box {
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+/** One shape of the toast, sprung to its box: the pill or the body, as background or shadow. */
+function Shape({ box, className }: { box: Box; className: string }) {
+  return (
+    <motion.div
+      aria-hidden
+      className={cn('pointer-events-none absolute top-0 left-0', className)}
+      initial={false}
+      animate={{ ...box }}
+      transition={spring.slow}
+    />
+  )
+}
+
 function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
   const { position, timeout } = useContext(ToastSettings)
   const shape = useShape()
+  // Lifts 2 levels off its substrate with a fixed shadow, like a popover.
+  const level = Math.min(useSurface() + 2, 8)
   const gooId = `toast-goo-${useId().replace(/:/g, '')}`
   const type = (toast.type ?? 'info') as ToastType
   const Icon = ICONS[type]
@@ -138,7 +156,8 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
   const expanded = hasBody && type !== 'loading' && !ending && (hovered || auto)
   const root = useRef<HTMLDivElement>(null)
   const header = useRef<HTMLDivElement>(null)
-  const [pillWidth, setPillWidth] = useState(PILL)
+  const body = useRef<HTMLDivElement>(null)
+  const [size, setSize] = useState({ width: 0, pill: PILL, body: 0 })
 
   useEffect(() => {
     if (!hasBody || type === 'loading') return
@@ -152,13 +171,18 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
     }
   }, [hasBody, type, toast.timeout, timeout])
 
-  // The pill follows its title: measured, then sprung to the new width.
+  // The header and the body content keep their natural size (the header is
+  // `w-max`, outside the pill), so measuring them never feeds back the
+  // animated shapes.
   useLayoutEffect(() => {
-    const el = header.current
-    if (!el) return
-    const measure = () => setPillWidth(Math.max(PILL, el.offsetWidth))
+    const measure = () =>
+      setSize({
+        width: root.current?.offsetWidth ?? 0,
+        pill: Math.max(PILL, header.current?.offsetWidth ?? 0),
+        body: body.current?.offsetHeight ?? 0,
+      })
     const observer = new ResizeObserver(measure)
-    observer.observe(el)
+    for (const el of [header.current, body.current]) if (el) observer.observe(el)
     measure()
     return () => observer.disconnect()
   }, [])
@@ -169,6 +193,20 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
     return () => hold.cancel()
   }, [ending])
 
+  // The pill sits on the toast's side of the screen; the body opens away from
+  // the edge. While open, the pill reaches into the body by up to its own
+  // height, covering the body's corner on that side, so the outer edge runs
+  // straight and the goo only rounds the inner corner (Sileo's open pill).
+  const bodyHeight = expanded ? size.body : 0
+  const height = PILL + bodyHeight
+  const pillX = position.endsWith('left')
+    ? 0
+    : position.endsWith('right')
+      ? size.width - size.pill
+      : (size.width - size.pill) / 2
+  const pillHeight = PILL + Math.min(bodyHeight, PILL)
+  const pill = { x: pillX, y: top ? 0 : height - pillHeight, width: size.pill, height: pillHeight }
+  const bodyBox = { x: 0, y: top ? PILL : 0, width: size.width, height: bodyHeight }
   const away = { opacity: 0, y: top ? -6 : 6, scale: 0.95 }
 
   return (
@@ -180,58 +218,62 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
       onMouseLeave={() => setHovered(false)}
       render={
         <motion.div
-          initial={away}
-          animate={ending ? away : { opacity: 1, y: 0, scale: 1 }}
-          transition={ending ? spring.moderate.exit : spring.moderate}
+          initial={{ ...away, height: PILL }}
+          animate={ending ? { ...away, height } : { opacity: 1, y: 0, scale: 1, height }}
+          transition={ending ? spring.moderate.exit : { ...spring.moderate, height: spring.slow }}
         />
       }
       className="relative w-[min(22rem,calc(100vw-2rem))] select-none outline-none [translate:var(--toast-swipe-movement-x)_var(--toast-swipe-movement-y)]"
     >
       <GooFilter id={gooId} blur={BLUR} />
-      {/* The filter is the effect itself: it melts the pill and the body, both on the same token fill, into one shape. */}
-      <div className={cn('flex flex-col', ALIGN[position])} style={{ filter: `url(#${gooId})` }}>
+      <Shape box={pill} className={cn('rounded-full', SURFACE_SHADOW[3])} />
+      {hasBody && <Shape box={bodyBox} className={cn(shape.container, SURFACE_SHADOW[3])} />}
+      {/* The filter is the effect itself: it melts the two token-filled shapes into one. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0" style={{ filter: `url(#${gooId})` }}>
+        <Shape box={pill} className={cn('rounded-full', SURFACE_BG[level])} />
+        {hasBody && <Shape box={bodyBox} className={cn(shape.container, SURFACE_BG[level])} />}
+      </div>
+
+      <SurfaceProvider value={level}>
         <motion.div
-          className="flex h-9 shrink-0 items-center overflow-hidden rounded-full bg-foreground"
-          initial={{ width: PILL }}
-          animate={{ width: pillWidth }}
+          ref={header}
+          className={cn('absolute flex h-9 w-max items-center py-1.5 pr-3 pl-1.5', top ? 'top-0' : 'bottom-0')}
+          initial={false}
+          animate={{ x: pillX }}
           transition={spring.slow}
         >
-          <div ref={header} className="inline-flex items-center whitespace-nowrap py-1.5 pr-3 pl-1.5">
-            <ToastPrimitive.Title className="relative inline-flex items-center">
-              <AnimatePresence mode="popLayout" initial={false}>
-                <motion.span
-                  key={`${type}-${toast.title}`}
-                  className="inline-flex items-center gap-2"
-                  initial={{ opacity: 0, filter: 'blur(4px)' }}
-                  animate={{ opacity: 1, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, filter: 'blur(4px)', transition: spring.moderate.exit }}
-                  transition={spring.moderate}
-                >
-                  <span className={cn('flex size-6 items-center justify-center rounded-full', TONES[type])}>
-                    <Icon size={14} strokeWidth={2.5} className={type === 'loading' ? 'animate-spin' : undefined} />
-                  </span>
-                  <span className="text-body weight-medium text-background">{toast.title}</span>
-                </motion.span>
-              </AnimatePresence>
-            </ToastPrimitive.Title>
-          </div>
+          <ToastPrimitive.Title className="relative inline-flex items-center whitespace-nowrap">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={`${type}-${toast.title}`}
+                className="inline-flex items-center gap-2"
+                initial={{ opacity: 0, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, filter: 'blur(4px)', transition: spring.moderate.exit }}
+                transition={spring.moderate}
+              >
+                <span className={cn('flex size-6 items-center justify-center rounded-full', TONES[type])}>
+                  <Icon size={14} strokeWidth={2.5} className={type === 'loading' ? 'animate-spin' : undefined} />
+                </span>
+                <span className="text-body weight-medium text-foreground">{toast.title}</span>
+              </motion.span>
+            </AnimatePresence>
+          </ToastPrimitive.Title>
         </motion.div>
         {hasBody && (
           <motion.div
-            className={cn('w-full overflow-hidden bg-foreground', shape.container)}
+            className={cn('absolute inset-x-0 overflow-hidden', top ? 'top-9' : 'top-0')}
             initial={false}
-            animate={{ height: expanded ? 'auto' : 0, opacity: expanded ? 1 : 0 }}
+            animate={{ height: bodyHeight, opacity: expanded ? 1 : 0 }}
             transition={expanded ? spring.slow : spring.slow.exit}
           >
-            <div className="flex flex-col items-start gap-3 p-4">
-              <ToastPrimitive.Description className="text-caption text-background/70" />
-              {toast.actionProps && (
-                <ToastPrimitive.Action className="rounded-full bg-background/12 px-3 py-1 text-caption weight-medium text-background outline-none hover:bg-background/20 focus-visible:ring-1 focus-visible:ring-focus-ring" />
-              )}
+            <div ref={body} className={cn('flex flex-col items-start gap-3 p-4', top ? 'pt-3' : 'pb-3')}>
+              <ToastPrimitive.Description className="text-caption text-muted-foreground" />
+              {toast.actionProps && <ToastPrimitive.Action render={<Button size="compact" variant="secondary" />} />}
             </div>
           </motion.div>
         )}
-      </div>
+      </SurfaceProvider>
     </ToastPrimitive.Root>
   )
 }
