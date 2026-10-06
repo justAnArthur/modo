@@ -17,6 +17,8 @@
  *   as in upstream's `FluidHoverList`.
  * - Prose and examples follow the FF `/docs/fluid-hover` page (its five sections,
  *   minus the two scripted-cursor demos that only exist to film the mechanism).
+ * - The prose describes the highlight as it now moves: it melts from row to
+ *   row (`lib/goo-indicator.tsx`, local), with the cost of that while it moves.
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  *   `text-<role>[-compact]`; the hex focus-ring fallback →
  *   `ring-focus-ring` / `border-focus-ring`.
@@ -166,7 +168,8 @@ type FluidHoverComponent = ForwardRefExoticComponent<FluidHoverProps & RefAttrib
  * padding, or past the last row still lands on something, and a click there
  * lands on what is lit (`gapClick`). One list is one FluidHover: it owns the
  * container's mouse handlers, hands every row its index, and draws the single
- * highlight that springs between the measured rectangles.
+ * highlight that melts between the measured rectangles, stretching toward the
+ * next row and letting go (the liquid indicators in Morph).
  *
  * Three axes, one feel. `y` is for lists — menus, tables, radio rows — and
  * measures the vertical center; `x` is for strips — tabs, segmented controls —
@@ -180,13 +183,14 @@ type FluidHoverComponent = ForwardRefExoticComponent<FluidHoverProps & RefAttrib
  * is skipped rather than unregistered (`disabledIndices`, or `disabled` on the
  * row), so the rows around it keep their indices and their measurements.
  *
- * It costs 1 element, 1 transform and 1 loop per move: the pick is one pass
+ * It costs 1 transform and 1 loop per move: the pick is one pass
  * over cached rectangles per animation frame, with no DOM reads per row, and
- * the highlight travels on a transform, so its top, left, width and height are
- * never written while it moves. Reduced motion is honoured on its own, read
- * straight off the OS media query with no MotionConfig wrapper needed: the
- * highlight still fades in on the nearest row, it just stops sliding between
- * rows.
+ * the highlight travels on a transform. While it melts, a shrinking blob and
+ * the goo filter join it, and both are gone once it settles, so a resting
+ * highlight is filtered by nothing. Reduced motion is honoured on its own,
+ * read straight off the OS media query with no MotionConfig wrapper needed:
+ * the highlight still fades in on the nearest row, it just stops travelling
+ * between rows.
  *
  * Use it when everything in the list can be clicked (a menu, a list, tabs, a
  * grid of links), when the items sit close together, and when they stay where

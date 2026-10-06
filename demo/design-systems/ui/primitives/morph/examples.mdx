@@ -1,3 +1,9 @@
+import CheckboxGroup from '../../components/checkbox-group'
+import RadioGroup from '../../components/radio-group'
+import Switch from '../../components/switch'
+import Tabs from '../../components/tabs'
+import TabsSubtle from '../../components/tabs-subtle'
+import FluidHover from '../fluid-hover'
 import Morph from './index'
 
 # Effects
@@ -78,3 +84,52 @@ Small panels can open on `moderate`; the default `slow` tier gives the neck time
     <span className="text-caption text-muted-foreground">spring.slow</span>
   </Morph>
 </div>
+
+# Liquid indicators
+
+Click a tab next door: the indicator stretches toward it and lets go. Click a far one: a droplet stays behind and catches up.
+
+<div className="flex flex-col items-center gap-6">
+  <Tabs defaultValue="library">
+    <Tabs.List>
+      <Tabs.Item value="library" label="Library" />
+      <Tabs.Item value="recents" label="Recents" />
+      <Tabs.Item value="favorites" label="Favorites" />
+      <Tabs.Item value="settings" label="Settings" />
+    </Tabs.List>
+  </Tabs>
+  <TabsSubtle defaultSelectedIndex={0}>
+    {['Teamspaces', 'Recents', 'Favorites', 'Shared'].map((label, i) => (
+      <TabsSubtle.Item key={label} index={i} label={label} />
+    ))}
+  </TabsSubtle>
+</div>
+
+# Thumbs, picks and highlights
+
+The thumb melts across its track, the radio pick flows between rows, and the hover highlight drips from row to row.
+
+<div className="flex flex-wrap items-start justify-center gap-6">
+  <div className="flex flex-col gap-2">
+    <Switch label="Wi-Fi" />
+    <Switch label="Bluetooth" defaultChecked />
+  </div>
+  <RadioGroup defaultSelectedIndex={0} className="w-48">
+    {['Daily', 'Weekly', 'Monthly'].map((label, i) => (
+      <RadioGroup.Item key={label} index={i} label={label} />
+    ))}
+  </RadioGroup>
+  <div className="w-48 rounded-xl border border-border/60">
+    <FluidHover className="p-2" items={['Inbox', 'Drafts', 'Sent', 'Archive']} />
+  </div>
+</div>
+
+# Merging picks
+
+Check Bananas: it grows out of its row and melts the picks above and below into one. Uncheck it to pinch them apart.
+
+<CheckboxGroup defaultCheckedIndices={[0, 2]}>
+  {['Apples', 'Bananas', 'Cherries', 'Dates'].map((label, i) => (
+    <CheckboxGroup.Item key={label} index={i} label={label} />
+  ))}
+</CheckboxGroup>
