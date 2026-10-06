@@ -251,7 +251,11 @@ export async function resolveShellSlots(
   // warnings on every boot — the absence is the user's intent, not a bug.
   const silence = userItems.length === 0 && Object.keys(config.shell ?? {}).length === 0
 
-  async function pick(slotName: ShellSlot['name'], member?: SlotMember): Promise<LoadedComponent> {
+  async function pick(
+    slotName: ShellSlot['name'],
+    member?: SlotMember,
+    fallback = omitted(slotName),
+  ): Promise<LoadedComponent> {
     const base = member ?? SLOTS.find(s => s.name === slotName)!
     const { requiredProps: required, userTier: tier } = base
 
@@ -284,7 +288,7 @@ export async function resolveShellSlots(
     }
 
     if (!silence) warnings.push(`Shell slot "${slotName}${member ? `.${member.name}` : ''}" could not be resolved`)
-    return omitted(slotName)
+    return fallback
   }
 
   const rootPicks = {
@@ -317,9 +321,6 @@ export async function resolveShellSlots(
   // so the root's Item/Section statics can't be inspected here. Any user-provided
   // root owns its members; the shell resolves `Root.Item ?? Item` at runtime.
   const sidebarFromRoot = rootPicks.Sidebar.source !== 'fallback'
-  const sidebarItem = fromRoot('Item') ?? (sidebarFromRoot ? null : await pick('Sidebar', sidebarMembers.Item))
-  const sidebarSection = fromRoot('Section') ?? (sidebarFromRoot ? null : await pick('Sidebar', sidebarMembers.Section))
-
   const fallbackItem: LoadedComponent = {
     Component: PlainSidebarItem,
     cssPaths: [],
@@ -335,6 +336,12 @@ export async function resolveShellSlots(
     fallbackName: 'PlainSidebarSection',
   }
 
+  const sidebarItem =
+    fromRoot('Item') ?? (sidebarFromRoot ? fallbackItem : await pick('Sidebar', sidebarMembers.Item, fallbackItem))
+  const sidebarSection =
+    fromRoot('Section') ??
+    (sidebarFromRoot ? fallbackSection : await pick('Sidebar', sidebarMembers.Section, fallbackSection))
+
   return {
     Button: rootPicks.Button,
     Link: rootPicks.Link,
@@ -343,8 +350,8 @@ export async function resolveShellSlots(
     Icon: rootPicks.Icon,
     Sidebar: {
       Root: rootPicks.Sidebar,
-      Item: sidebarItem ?? fallbackItem,
-      Section: sidebarSection ?? fallbackSection,
+      Item: sidebarItem,
+      Section: sidebarSection,
     },
   }
 }
