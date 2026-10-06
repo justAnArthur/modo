@@ -2,8 +2,18 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "dist", ".modo-tmp", ".modo-cache"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../lib/src/runtime/types.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".modo-tmp"
+  ]
 }

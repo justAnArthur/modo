@@ -1,4 +1,0 @@
-# bun workspace — lib + demo harness + one package per design-system showcase
-# (keep in sync with "workspaces" in the root package.json)
-[workspace]
-packages = ["lib", "demo", "demo/design-systems/*"]
