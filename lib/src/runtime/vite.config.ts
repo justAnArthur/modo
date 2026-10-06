@@ -71,6 +71,9 @@ export default defineConfig(async () => {
         allow: [workspaceRoot(USER_ROOT), RUNTIME_DIR, LIB_DIR, USER_ROOT, resolve(USER_ROOT, '.modo-tmp')],
       },
     },
+    // Item bundles import React from the design system, the runtime from the
+    // lib; one copy, or hooks break across them.
+    resolve: { dedupe: ['react', 'react-dom'] },
     optimizeDeps: {
       include: ['react', 'react-dom', 'react-dom/client', 'marked'],
     },
