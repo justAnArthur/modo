@@ -95,6 +95,8 @@ function TokenSwatch({ sw }: { sw?: Swatch }): ReactElement | null {
       return text({ fontFamily: sw.family })
     case 'font-size':
       return text({ fontSize: sw.px })
+    case 'font-weight':
+      return text(sw.value.includes('"wght"') ? { fontVariationSettings: sw.value } : { fontWeight: sw.value })
   }
 }
 
@@ -110,5 +112,7 @@ function meta(sw: Swatch): string {
       return sw.family
     case 'font-size':
       return `${sw.px}px`
+    case 'font-weight':
+      return sw.value
   }
 }

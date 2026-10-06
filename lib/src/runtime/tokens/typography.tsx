@@ -6,12 +6,18 @@ const GLYPHS = ['ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz', '012
 
 type Role = 'family' | 'size' | 'weight' | 'other'
 
+// The parser classifies by name (lib/css.ts); leading and tracking have no swatch.
 function role(v: Var): Role {
-  if (/^--(leading|tracking)-|line-height|letter-spacing/.test(v.name)) return 'other'
-  if (v.name.includes('weight') || v.value.includes('"wght"') || /^[1-9]00$/.test(v.value)) return 'weight'
-  if (v.swatch?.kind === 'font-size') return 'size'
-  if (v.swatch?.kind === 'font-family') return 'family'
-  return 'other'
+  switch (v.swatch?.kind) {
+    case 'font-weight':
+      return 'weight'
+    case 'font-size':
+      return 'size'
+    case 'font-family':
+      return 'family'
+    default:
+      return 'other'
+  }
 }
 
 function roles(vars: Var[]) {

@@ -32,7 +32,13 @@ export interface FontSizeSwatch {
   px: number
 }
 
-export type Swatch = ColorSwatch | LengthSwatch | DurationSwatch | FontFamilySwatch | FontSizeSwatch
+export interface FontWeightSwatch {
+  kind: 'font-weight'
+  /** A weight (`600`) or a variable font's axis settings (`"wght" 550, "opsz" 18`). */
+  value: string
+}
+
+export type Swatch = ColorSwatch | LengthSwatch | DurationSwatch | FontFamilySwatch | FontSizeSwatch | FontWeightSwatch
 
 export interface Group {
   name: GroupName
@@ -70,7 +76,8 @@ const EXACT_TO_GROUP: Record<string, GroupName> = {
 export function parseCss(src: string): ParsedVar[] {
   const cleaned = stripComments(src)
   const out: ParsedVar[] = []
-  for (const m of cleaned.matchAll(/(--[a-zA-Z0-9_-]+)\s*:\s*([^;]+);/g)) {
+  // A declaration ends at `;` or, for the last one in a block, at `}`.
+  for (const m of cleaned.matchAll(/(--[a-zA-Z0-9_-]+)\s*:\s*([^;}]+)/g)) {
     const name = m[1]!
     const value = m[2]!.trim()
     const raw = m[0]
@@ -96,19 +103,25 @@ export function prefixGroup(name: string): GroupName | null {
 export function buildGroup(name: GroupName, vars: ParsedVar[]): Group {
   return {
     name,
-    vars: vars.map(v => ({ ...v, swatch: buildSwatch(name, v.value) })),
+    vars: vars.map(v => ({ ...v, swatch: buildSwatch(name, v) })),
   }
 }
 
-function buildSwatch(group: GroupName, value: string): Swatch | undefined {
+function buildSwatch(group: GroupName, { name, value }: ParsedVar): Swatch | undefined {
   if (group === 'colors') return colorSwatch(value)
   if (group === 'spacing' || group === 'radius') return lengthSwatch(value)
   if (group === 'motion') return durationSwatch(value) ?? lengthSwatch(value)
-  if (group === 'typography') {
-    if (/^\d/.test(value.trim())) return fontSizeSwatch(value) ?? lengthSwatch(value)
-    return { kind: 'font-family', family: value }
-  }
-  return undefined
+  return typographySwatch(name, value)
+}
+
+// By name first: `--font-weight-bold: 700` and `--leading-tight: 1.25` are
+// numbers, not font sizes.
+function typographySwatch(name: string, value: string): Swatch | undefined {
+  if (name.includes('weight') || value.includes('"wght"') || /^[1-9]00$/.test(value))
+    return { kind: 'font-weight', value }
+  if (/^--(leading|tracking)-|line-height|letter-spacing/.test(name)) return undefined
+  if (/^\d/.test(value)) return fontSizeSwatch(value) ?? lengthSwatch(value)
+  return { kind: 'font-family', family: value }
 }
 
 function colorSwatch(value: string): ColorSwatch | undefined {
