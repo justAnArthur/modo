@@ -5,8 +5,9 @@
 @import "@fontsource/roboto/500.css";
 @import "@fontsource/roboto/700.css";
 
-/* The chrome's generic type contract, wired to MUI's variants: a page title
-   is an h4, a section an h6 (MUI's medium-weight heading). */
+/* The chrome's generic contract, wired to MUI by reference. Type: a page
+   title is an h4, a section an h6 (MUI's medium-weight heading). Color: the
+   palette's divider, secondary text and primary main. */
 :root {
   --font-sans: var(--font-family);
   --font-size-h1: var(--text-h4);
@@ -19,14 +20,18 @@
   --font-weight-medium: var(--text-h6-weight);
   --font-weight-semibold: var(--text-h6-weight);
   --font-weight-bold: var(--text-h4-weight);
+
+  --border: var(--mui-palette-divider);
+  --muted-foreground: var(--mui-palette-text-secondary);
+  --ring: var(--mui-palette-primary-main);
 }
 
 /* Host-owned chrome visuals (the lib ships structure only): dividers on the
    docs shell asides. */
 [data-modo="sidebar"] {
-  border-right: 1px solid var(--mui-palette-divider);
+  border-right: 1px solid var(--border);
 }
 
 [data-modo="panel"] {
-  border-left: 1px solid var(--mui-palette-divider);
+  border-left: 1px solid var(--border);
 }

@@ -2,14 +2,16 @@
 
 Material UI v9 presented through `modo`. Components are thin modo adapters
 over the real `@mui/material` package; all visuals come from MUI's own emotion
-styling and default theme. No Tailwind, no hand-written component CSS — only
-generated tokens and the Roboto font import.
+styling and default theme. No Tailwind, no hand-written component CSS: besides
+the generated tokens, `global.css` imports Roboto, wires the chrome's generic
+type and color contract to MUI's tokens by reference and draws the
+sidebar/panel dividers.
 
 ## Layout
 
 ```
 modo.config.ts            name 'MUI', css './global.css'
-global.css                @fontsource/roboto imports (300/400/500/700)
+global.css                Roboto imports, the chrome's type/color contract, dividers
 theme.tsx                 createTheme({ cssVariables: true }) + MuiProvider
 scripts/extract-tokens.ts rerunnable token extraction (bun)
 tokens/*.css              generated from MUI's default theme
@@ -28,7 +30,8 @@ blocks/                   login-form
   own CSS-variable naming exactly (`--mui-palette-primary-main`,
   `--mui-palette-grey-500`, `--mui-palette-background-default`, …) and the
   fallback is the real default value. `*Channel` entries (`r g b` triplets MUI
-  keeps for internal color mixing) are skipped. 117 vars.
+  keeps for internal color mixing), `*Opacity` numbers and entries that read a
+  skipped channel are skipped. 111 vars.
 - `tokens/spacing.css` — `theme.spacing(n)` for n = 0–12 plus the half steps.
   With cssVariables on, spacing resolves through `var(--mui-spacing, 8px)`,
   so each step is n × 8px (`--space-1: 8px`, `--space-2: 16px`, …). 17 vars.
@@ -46,11 +49,12 @@ runtime keep using their own theme (see `theme.tsx`). Adapters import
 
 ## Shell slots
 
-Button (primitives), Link (primitives), Select (components) and Panel
-(components) resolve via interface matching; Code and Sidebar intentionally
-fall back to the lib's Plain components. The docs chrome passes
-`variant="ghost" size="sm"` to Button — the adapter normalizes `ghost` →
-`text` and `sm`/`md`/`lg` → `small`/`medium`/`large`.
+Button (primitives), Link (primitives) and Select (components) resolve via
+interface matching; Code, Icon and Sidebar intentionally fall back to the
+lib's Plain components. The docs chrome passes
+`variant="ghost" size="icon-sm"`, `aria-label` and `aria-pressed` to Button —
+the adapter maps `ghost` → `text` and `icon-sm` → `small`, and forwards the
+aria props.
 
 ## License
 

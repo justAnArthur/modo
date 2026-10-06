@@ -3,6 +3,7 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import FormLabel from '@mui/material/FormLabel'
 import Radio from '@mui/material/Radio'
 import MuiRadioGroup from '@mui/material/RadioGroup'
+import { useId } from 'react'
 import { MuiProvider } from '../../theme'
 
 /**
@@ -30,8 +31,9 @@ export default function RadioGroup({
   /** Custom radio children; takes precedence over `options`. */
   children?: React.ReactNode
 }) {
+  const id = useId()
   const group = (
-    <MuiRadioGroup defaultValue={defaultValue} row={row}>
+    <MuiRadioGroup aria-labelledby={label && id} defaultValue={defaultValue} row={row}>
       {children ??
         (options ?? []).map(option => (
           <FormControlLabel key={option.value} value={option.value} control={<Radio />} label={option.label} />
@@ -42,7 +44,7 @@ export default function RadioGroup({
     <MuiProvider>
       {label ? (
         <FormControl>
-          <FormLabel id="modo-radio-group-label">{label}</FormLabel>
+          <FormLabel id={id}>{label}</FormLabel>
           {group}
         </FormControl>
       ) : (

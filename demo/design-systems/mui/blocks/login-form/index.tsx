@@ -2,11 +2,12 @@ import Button from '@mui/material/Button'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
 import { MuiProvider } from '../../theme'
 
 /**
- * Sign-in block: Paper + Stack with email and password TextFields and a
- * contained submit Button. All MUI, no custom CSS.
+ * Sign-in block: Paper + Stack with a Typography heading, email and password
+ * TextFields and a contained submit Button. All MUI, no custom CSS.
  *
  * @example {@include ./examples.mdx}
  */
@@ -29,7 +30,9 @@ export default function LoginForm({
     <MuiProvider>
       <Paper sx={{ padding: 4, maxWidth: 360 }}>
         <Stack spacing={2}>
-          <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 500 }}>{title}</h2>
+          <Typography variant="h5" component="h2">
+            {title}
+          </Typography>
           <TextField label={emailLabel} type="email" autoComplete="email" />
           <TextField label={passwordLabel} type="password" autoComplete="current-password" />
           <Button variant="contained" type="submit">

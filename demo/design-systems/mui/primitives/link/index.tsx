@@ -15,7 +15,7 @@ export default function Link({
 }: {
   /** Target URL. */
   href: string
-  /** Underline behavior. @default 'hover' */
+  /** Underline behavior. @default 'always' */
   underline?: 'always' | 'hover' | 'none'
   /** Link color. @default 'primary' */
   color?: 'primary' | 'secondary' | 'error' | 'inherit' | 'textPrimary' | 'textSecondary'
