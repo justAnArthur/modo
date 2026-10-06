@@ -1,9 +1,3 @@
-:root {
-  --bg: #fff;
-  --fg: #111;
-  --accent: #3b82f6;
-}
-
 /* Host-owned chrome visuals (the lib ships structure only): dividers on the
    docs shell asides. */
 [data-modo="sidebar"] {

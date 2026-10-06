@@ -2,7 +2,7 @@
   padding: var(--md);
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
 }
 
 .my-card-title {
