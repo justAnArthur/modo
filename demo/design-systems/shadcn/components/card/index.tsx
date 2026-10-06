@@ -2,8 +2,9 @@
  * Vendored from the shadcn/ui registry (style "radix-nova", base color
  * "neutral"), pulled with `bunx shadcn@latest add card` (shadcn CLI 4.21.0).
  * MIT License © Vercel Inc. — https://ui.shadcn.com
- * Local modifications: modo item docs — TSDoc on Card, default export,
- * compound statics (Card.Header, …); component code untouched.
+ * Local modifications: modo item docs — TSDoc on Card and its `size` prop,
+ * default export, compound statics (Card.Header, …); Biome formatting and
+ * lint fixes (quotes, `import type`, sorted exports).
  */
 
 import { cn } from 'cn'
@@ -14,13 +15,20 @@ import type * as React from 'react'
  * Card as attributes.
  * Pulled via `bunx shadcn@latest add card` (radix-nova style, neutral base color).
  *
+ * Parts: `Card.Header` (title, description, action), `Card.Title`,
+ * `Card.Description` (muted line under the title), `Card.Action` (top-right
+ * slot), `Card.Content` (body) and `Card.Footer`.
+ *
  * @example {@include ./examples.mdx}
  */
 export default function Card({
   className,
   size = 'default',
   ...props
-}: React.ComponentProps<'div'> & { size?: 'default' | 'sm' }) {
+}: React.ComponentProps<'div'> & {
+  /** Spacing scale; `sm` tightens padding, gaps and the title. */
+  size?: 'default' | 'sm'
+}) {
   return (
     <div
       data-slot="card"
@@ -83,22 +91,6 @@ function CardFooter({ className, ...props }: React.ComponentProps<'div'>) {
       {...props}
     />
   )
-}
-
-/* Declaration merging: the compound members of Card. */
-interface Card {
-  /** Top region — title, description, action. */
-  Header: typeof CardHeader
-  /** Card heading. */
-  Title: typeof CardTitle
-  /** Muted secondary line under the title. */
-  Description: typeof CardDescription
-  /** Top-right action slot. */
-  Action: typeof CardAction
-  /** Body region. */
-  Content: typeof CardContent
-  /** Bottom region. */
-  Footer: typeof CardFooter
 }
 
 Card.Header = CardHeader

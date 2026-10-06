@@ -3,7 +3,8 @@
  * "neutral"), pulled with `bunx shadcn@latest add separator` (as a dependency
  * of the login-02 block; shadcn CLI 4.21.0). MIT License © Vercel Inc.
  * — https://ui.shadcn.com
- * Local modifications: `radix-ui` import repointed to the pre-bundled
+ * Local modifications: Biome formatting and lint fixes (quotes,
+ * `import type`, sorted imports).
  */
 
 'use client'

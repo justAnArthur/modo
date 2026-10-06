@@ -4,7 +4,9 @@
  * "neutral"), pulled with `bunx shadcn@latest add button` (shadcn CLI 4.21.0).
  * MIT License © Vercel Inc. — https://ui.shadcn.com
  * Local modifications: modo item docs — TSDoc on Button, default export;
- * component code untouched.
+ * documented `variant` / `size` and an explicit `children` on the props type
+ * literal (modo's props table and shell slot matcher read only that literal);
+ * Biome formatting and lint fixes (quotes, `import type`).
  */
 
 import { cva, type VariantProps } from 'class-variance-authority'
@@ -61,9 +63,13 @@ export default function Button({
   ...props
 }: React.ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
+    /** Visual style. */
+    variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'destructive' | 'link'
+    /** Height preset; the `icon*` sizes are square. */
+    size?: 'default' | 'xs' | 'sm' | 'lg' | 'icon' | 'icon-xs' | 'icon-sm' | 'icon-lg'
+    /** Renders the child element instead of a `<button>`, merging the button props onto it. */
     asChild?: boolean
-    // modo's shell slot matcher reads the prop type literal; without an
-    // explicit `children` the docs chrome misses this Button.
+    /** Button label. */
     children?: React.ReactNode
   }) {
   const Comp = asChild ? Slot.Root : 'button'

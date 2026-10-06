@@ -2,19 +2,19 @@ import Select from './index'
 
 # Basic
 
-<Select value="neutral" options={[
+<Select defaultValue="neutral" options={[
   { value: 'neutral', label: 'Neutral' },
   { value: 'gray', label: 'Gray' },
   { value: 'zinc', label: 'Zinc' },
   { value: 'stone', label: 'Stone' },
-]} onChange={() => {}} />
+]} />
 
 # Small trigger
 
 The sm trigger fits dense chrome like toolbars and sidebars.
 
-<Select size="sm" value="light" options={[
+<Select size="sm" defaultValue="light" options={[
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' },
   { value: 'system', label: 'System' },
-]} onChange={() => {}} />
+]} />

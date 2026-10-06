@@ -2,8 +2,10 @@
  * Vendored from the shadcn/ui registry (style "radix-nova", base color
  * "neutral"), pulled with `bunx shadcn@latest add input` (shadcn CLI 4.21.0).
  * MIT License © Vercel Inc. — https://ui.shadcn.com
- * Local modifications: modo item docs — TSDoc on Input, default export;
- * component code untouched.
+ * Local modifications: modo item docs — TSDoc on Input, default export, and
+ * a props type literal documenting `type` / `placeholder` / `disabled` (modo's
+ * props table reads only that literal); Biome formatting and lint fixes
+ * (quotes, `import type`).
  */
 
 import { cn } from 'cn'
@@ -15,7 +17,18 @@ import type * as React from 'react'
  *
  * @example {@include ./examples.mdx}
  */
-export default function Input({ className, type, ...props }: React.ComponentProps<'input'>) {
+export default function Input({
+  className,
+  type,
+  ...props
+}: React.ComponentProps<'input'> & {
+  /** Native input type: `text`, `email`, `password`, `file`, … */
+  type?: React.HTMLInputTypeAttribute
+  /** Hint shown while the field is empty. */
+  placeholder?: string
+  /** Dims the field and blocks input. */
+  disabled?: boolean
+}) {
   return (
     <input
       type={type}

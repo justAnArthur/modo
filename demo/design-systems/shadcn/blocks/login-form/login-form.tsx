@@ -5,7 +5,8 @@
  * 4.21.0). MIT License © Vercel Inc. — https://ui.shadcn.com
  * Local modifications: `@/components/ui/button` and `@/components/ui/input`
  * rewritten to relative paths (the modo reorganization); `@/components/ui/field`
- * rewritten to the block-local copy.
+ * rewritten to the block-local copy; Biome formatting and lint fixes
+ * (quotes, sorted imports).
  */
 
 import { cn } from 'cn'

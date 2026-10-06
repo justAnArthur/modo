@@ -1,11 +1,10 @@
 import Button from './index'
-import Link from '../../primitives/link'
 
 # Variants
 
 The six visual styles of the radix-nova button.
 
-<div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+<div className="flex items-center gap-2">
   <Button>Default</Button>
   <Button variant="secondary">Secondary</Button>
   <Button variant="outline">Outline</Button>
@@ -18,7 +17,7 @@ The six visual styles of the radix-nova button.
 
 Height presets from xs to lg.
 
-<div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+<div className="flex items-center gap-2">
   <Button size="xs">Extra small</Button>
   <Button size="sm">Small</Button>
   <Button>Default</Button>
@@ -29,7 +28,7 @@ Height presets from xs to lg.
 
 Square icon buttons; any child svg is sized automatically.
 
-<div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+<div className="flex items-center gap-2">
   <Button size="icon-xs" aria-label="Extra small icon">+</Button>
   <Button size="icon-sm" aria-label="Small icon">+</Button>
   <Button size="icon" aria-label="Icon">+</Button>

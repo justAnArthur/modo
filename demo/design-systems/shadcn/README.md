@@ -24,8 +24,9 @@ bunx shadcn@latest add login-02 -y   # lightest login block (6 files, no card de
 
 The registry sources live under style `radix-nova` at `ui.shadcn.com`.
 License: **MIT © Vercel Inc.** — https://ui.shadcn.com. Each vendored file
-keeps a provenance header; pulled code is unmodified except `@/…` imports
-rewritten to relative paths for the modo layout.
+keeps a provenance header whose "Local modifications" line lists what changed:
+`@/…` imports rewritten to relative paths for the modo layout, Biome
+formatting, and modo docs (TSDoc, default exports, documented prop literals).
 
 ## Reorganization into modo structure
 
@@ -34,29 +35,34 @@ rewritten to relative paths for the modo layout.
   variants (from the `shadcn` npm package's `dist/tailwind.css`, which the
   nova preset imports — vendored because that package is not a dependency
   here), `@theme inline`, base layer, and `@source` lines pointing at the
-  modo item dirs. The Geist font `@import` was dropped (not a dependency;
-  `--font-sans` falls back to system sans).
+  modo item dirs. The Geist font `@import` stays (`@fontsource-variable/geist`
+  is a dependency), so `--font-sans` is Geist Variable.
 - `tokens/colors.css` — raw `:root` / `.dark` oklch variable blocks from the
   scaffold (the `--radius` line moved out).
 - `tokens/radius.css` — the raw `--radius` variable.
 - `primitives/<name>/` — the compound single-file pattern: the vendored file
   is renamed to `index.tsx` with TSDoc on the component and a default export
   (`button`, `badge`, `input`; no adapter).
+- `primitives/link/` — authored for the showcase (shadcn ships no Link):
+  `variant="link"` is a plain text link, the other variants reuse the
+  Button's `buttonVariants()`. It is the chrome's Link and forwards the
+  `aria-label` / `title` the chrome passes.
 - `components/card/` — the compound single-file pattern: the vendored file is
   renamed to `index.tsx` with TSDoc on Card and the parts attached as static
   attributes (`Card.Header`, `Card.Title`, …; no adapter).
 - `components/select/`, `components/radio-group/` — vendored `<name>.tsx` +
   `index.tsx` adapter; `select/index.tsx` implements modo's Select shell
   contract (`value` / `onChange` / `options`), radio-group maps `options` to
-  generated items.
+  generated items; both take `defaultValue` for uncontrolled use.
 - `blocks/login-form/` — the pulled `login-02` block (`login-form.tsx`) with
   its block-local dependencies (`field.tsx`, `label.tsx`, `separator.tsx`)
   and the modo adapter `index.tsx`.
 - `vite.ts` — appends `@tailwindcss/vite` to the lib's Vite config via
   modo.config.ts's `vite` hook.
-- `modo.config.ts` — `css` and `vite` (Button, Link, Select resolve by
-  interface matching; Code and Sidebar intentionally fall back to the lib's
-  Plain components).
+- `_shell/icon.tsx` — not an item: maps the chrome's icon names onto lucide.
+- `modo.config.ts` — `css`, `vite` and `shell: { Icon: './_shell/icon.tsx' }`
+  (Button, Link, Select resolve by interface matching; Code and Sidebar
+  intentionally fall back to the lib's Plain components).
 
 ## Run
 

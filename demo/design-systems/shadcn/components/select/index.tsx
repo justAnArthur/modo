@@ -10,15 +10,18 @@ import { SelectContent, SelectItem, SelectTrigger, SelectValue, Select as Shadcn
  */
 export default function Select({
   value,
+  defaultValue,
   onChange,
   options,
   placeholder = 'Select an option',
   size = 'default',
 }: {
-  /** Currently selected value. */
-  value: string
+  /** Selected value when controlled. */
+  value?: string
+  /** Initially selected value when uncontrolled. */
+  defaultValue?: string
   /** Called with the newly selected value. */
-  onChange: (value: string) => void
+  onChange?: (value: string) => void
   /** Options to choose from. */
   options: { value: string; label: string }[]
   /** Placeholder shown while no value is selected. @default 'Select an option' */
@@ -27,7 +30,7 @@ export default function Select({
   size?: 'default' | 'sm'
 }) {
   return (
-    <ShadcnSelect value={value} onValueChange={onChange}>
+    <ShadcnSelect value={value} defaultValue={defaultValue} onValueChange={onChange}>
       <SelectTrigger size={size}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>

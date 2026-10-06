@@ -2,7 +2,8 @@
  * Vendored from the shadcn/ui registry (style "radix-nova", base color
  * "neutral"), pulled with `bunx shadcn@latest add select` (shadcn CLI 4.21.0).
  * MIT License © Vercel Inc. — https://ui.shadcn.com
- * Local modifications: none (verbatim as pulled).
+ * Local modifications: Biome formatting and lint fixes (quotes,
+ * `import type`, sorted imports).
  */
 
 'use client'

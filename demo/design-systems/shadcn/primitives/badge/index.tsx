@@ -3,7 +3,8 @@
  * "neutral"), pulled with `bunx shadcn@latest add badge` (shadcn CLI 4.21.0).
  * MIT License © Vercel Inc. — https://ui.shadcn.com
  * Local modifications: modo item docs — TSDoc on Badge, default export;
- * component code untouched.
+ * a documented `variant` on the props type literal (modo's props table reads
+ * only that literal); Biome formatting and lint fixes (quotes, `import type`).
  */
 
 import { cva, type VariantProps } from 'class-variance-authority'
@@ -42,7 +43,13 @@ export default function Badge({
   variant = 'default',
   asChild = false,
   ...props
-}: React.ComponentProps<'span'> & VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
+}: React.ComponentProps<'span'> &
+  VariantProps<typeof badgeVariants> & {
+    /** Visual style. */
+    variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'ghost' | 'link'
+    /** Renders the child element instead of a `<span>`, merging the badge props onto it. */
+    asChild?: boolean
+  }) {
   const Comp = asChild ? Slot.Root : 'span'
 
   return (

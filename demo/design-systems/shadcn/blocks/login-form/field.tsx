@@ -5,7 +5,8 @@
  * the login-02 block; shadcn CLI 4.21.0). MIT License © Vercel Inc.
  * — https://ui.shadcn.com
  * Local modifications: `@/components/ui/label` and
- * `@/components/ui/separator` rewritten to block-local relative imports.
+ * `@/components/ui/separator` rewritten to block-local relative imports;
+ * Biome formatting and lint fixes (quotes, sorted imports and exports).
  */
 
 import { cva, type VariantProps } from 'class-variance-authority'
