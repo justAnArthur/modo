@@ -4,8 +4,9 @@
  */
 
 import { Check, CodeXml, Copy, Link2, Monitor, Moon, Sun } from 'lucide-react'
-import { type ReactNode, useEffect, useState } from 'react'
+import { Children, isValidElement, type ReactNode, useEffect, useState } from 'react'
 import FluidSelect from './components/select'
+import Sidebar from './components/sidebar'
 
 const icons = { code: CodeXml, copy: Copy, check: Check, link: Link2 }
 
@@ -58,38 +59,48 @@ declare global {
 }
 
 /**
- * Sidebar slot: the chrome's nav as modo draws it by default. Pinned so the
- * chrome doesn't adopt the documented `Sidebar` (an app shell that needs its
- * provider) by its name.
+ * Sidebar slot: both asides of the chrome, drawn with the Sidebar's own
+ * parts. A section of links is a collapsible `Sidebar.Group` whose rows share
+ * one `Sidebar.Menu`, so the current page and the hover highlight melt from
+ * link to link (the TOC's current heading too, as the page scrolls); a panel
+ * section (the Theme select) keeps its control under the group label. Pinned
+ * in modo.config.ts, since by name alone modo would adopt the documented
+ * `Sidebar`, an app shell that needs its provider.
  */
 export function DocsNav({ children }: { children?: ReactNode }) {
   return <nav data-modo="sidebar-nav">{children}</nav>
 }
 
-DocsNav.Item = function DocsNavItem({
-  href,
-  active,
-  children,
-}: {
-  href: string
-  active?: boolean
-  children?: ReactNode
-}) {
+function DocsNavItem({ href, active, children }: { href: string; active?: boolean; children?: ReactNode }) {
   return (
-    <a data-modo="sidebar-item" href={href} aria-current={active ? 'page' : undefined}>
-      {children}
-    </a>
+    <Sidebar.MenuItem>
+      <Sidebar.MenuButton isActive={active} render={<a href={href} />}>
+        {children}
+      </Sidebar.MenuButton>
+    </Sidebar.MenuItem>
   )
 }
 
-DocsNav.Section = function DocsNavSection({ title, children }: { title: string; children?: ReactNode }) {
+function DocsNavSection({ title, children }: { title: string; children?: ReactNode }) {
+  const links = Children.toArray(children).every(child => isValidElement(child) && child.type === DocsNavItem)
+  if (!links) {
+    return (
+      <Sidebar.Group>
+        <Sidebar.GroupLabel>{title}</Sidebar.GroupLabel>
+        <div className="px-2">{children}</div>
+      </Sidebar.Group>
+    )
+  }
   return (
-    <div data-modo="sidebar-section">
-      <h3 data-modo="sidebar-section-title">{title}</h3>
-      <div data-modo="sidebar-section-items">{children}</div>
-    </div>
+    <Sidebar.Group collapsible>
+      <Sidebar.GroupLabel>{title}</Sidebar.GroupLabel>
+      <Sidebar.Menu>{children}</Sidebar.Menu>
+    </Sidebar.Group>
   )
 }
+
+DocsNav.Item = DocsNavItem
+DocsNav.Section = DocsNavSection
 
 const THEMES = [
   { value: 'light' as const, label: 'Light', icon: Sun },

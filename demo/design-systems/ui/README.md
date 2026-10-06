@@ -194,9 +194,14 @@ with a flat `value` / `onChange` / `options` contract
 design system's own Select. The
 `components/select` item keeps the upstream API untouched.
 
-`DocsNav` in `modo.components.tsx` is the chrome's own nav markup (modo's
-plain sidebar), pinned as `shell.Sidebar`: by name alone modo would adopt the
-documented `Sidebar`, an app shell that needs its provider, as the docs nav.
+`DocsNav` in `modo.components.tsx` is the chrome's Sidebar slot, pinned as
+`shell.Sidebar` (by name alone modo would adopt the documented `Sidebar`, an
+app shell that needs its provider). It draws both asides with the Sidebar's
+own parts: a section of links is a collapsible `Sidebar.Group` with one
+`Sidebar.Menu`, so the current page, the TOC's current heading and the hover
+highlight melt from link to link; a panel section (Theme) keeps its control
+under the group label. `global.css` hands the spacing to the groups and no
+longer styles the plain `sidebar-item` / `sidebar-section-title` hooks.
 
 `ThemeSwitcher` in `modo.components.tsx` is not an item either: it is the `Theme` entry in
 `modo.config.ts` `panel.items`, a `Select` of Light / Dark / System (each row
