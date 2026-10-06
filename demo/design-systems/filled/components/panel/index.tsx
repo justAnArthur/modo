@@ -3,16 +3,11 @@ import './panel.css'
 /**
  * Right-side panel wrapper surface.
  *
- * @example
- * # Default
- *
- * ```tsx
- * <Panel>
- *   <p>Make them yours.</p>
- * </Panel>
- * ```
+ * @example {@include ./examples.mdx}
  */
-export default function Panel({ children }: {
+export default function Panel({
+  children,
+}: {
   /** Panel body. */
   children?: React.ReactNode
 }) {

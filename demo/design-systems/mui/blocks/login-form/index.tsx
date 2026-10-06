@@ -1,26 +1,14 @@
-import { MuiProvider } from '../../theme'
+import Button from '@mui/material/Button'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
-import Button from '@mui/material/Button'
+import { MuiProvider } from '../../theme'
 
 /**
  * Sign-in block: Paper + Stack with email and password TextFields and a
  * contained submit Button. All MUI, no custom CSS.
  *
- * @example
- * # Default
- *
- * ```tsx
- * <LoginForm />
- * ```
- *
- * @example
- * # Custom copy
- *
- * ```tsx
- * <LoginForm title="Welcome back" submitLabel="Continue" />
- * ```
+ * @example {@include ./examples.mdx}
  */
 export default function LoginForm({
   title = 'Sign in',

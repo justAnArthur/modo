@@ -1,39 +1,12 @@
-import { MuiProvider } from '../../theme'
 import MuiButton from '@mui/material/Button'
+import { MuiProvider } from '../../theme'
 
 /**
  * Triggers an action. Thin modo adapter over MUI's Button; the docs chrome
  * inherits it for example cards, so it also accepts modo's `ghost` variant
  * and short sizes, normalizing them to the nearest MUI equivalents.
  *
- * @example
- * # Contained
- *
- * ```tsx
- * <Button>Save</Button>
- * ```
- *
- * @example
- * # Text
- *
- * ```tsx
- * <Button variant="text">Skip</Button>
- * ```
- *
- * @example
- * # Outlined
- *
- * ```tsx
- * <Button variant="outlined" color="secondary">Cancel</Button>
- * ```
- *
- * @example
- * # Sizes and disabled
- *
- * ```tsx
- * <Button size="small">Small</Button>
- * <Button size="large" color="error" disabled>Delete</Button>
- * ```
+ * @example {@include ./examples.mdx}
  */
 export default function Button({
   variant = 'contained',
@@ -56,19 +29,11 @@ export default function Button({
   /** Button label. */
   children?: React.ReactNode
 }) {
-  const muiVariant =
-    variant === 'ghost' ? 'text' : variant === 'default' ? 'contained' : variant
-  const muiSize =
-    size === 'sm' ? 'small' : size === 'md' ? 'medium' : size === 'lg' ? 'large' : size
+  const muiVariant = variant === 'ghost' ? 'text' : variant === 'default' ? 'contained' : variant
+  const muiSize = size === 'sm' ? 'small' : size === 'md' ? 'medium' : size === 'lg' ? 'large' : size
   return (
     <MuiProvider>
-      <MuiButton
-        variant={muiVariant}
-        color={color}
-        size={muiSize}
-        disabled={disabled}
-        onClick={onClick}
-      >
+      <MuiButton variant={muiVariant} color={color} size={muiSize} disabled={disabled} onClick={onClick}>
         {children}
       </MuiButton>
     </MuiProvider>

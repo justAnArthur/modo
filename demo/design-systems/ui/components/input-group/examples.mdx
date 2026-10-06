@@ -1,0 +1,34 @@
+import InputGroup from './index'
+import { Mail, Search } from 'lucide-react'
+
+# Basic
+
+A single field with a leading icon.
+
+<InputGroup>
+  <InputGroup.Field index={0} label="Search" placeholder="Search teamspaces..." icon={Search} />
+</InputGroup>
+
+# Multiple Fields
+
+The hover highlight follows the pointer from field to field.
+
+<InputGroup>
+  <InputGroup.Field index={0} label="Name" placeholder="Your name" />
+  <InputGroup.Field index={1} label="Email" placeholder="you@example.com" icon={Mail} />
+</InputGroup>
+
+# Error State
+
+An `error` message renders below the field and marks it invalid.
+
+<InputGroup>
+  <InputGroup.Field
+    index={0}
+    label="Email"
+    placeholder="you@example.com"
+    icon={Mail}
+    defaultValue="bad@"
+    error="Please enter a valid email address."
+  />
+</InputGroup>

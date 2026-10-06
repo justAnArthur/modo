@@ -1,0 +1,11 @@
+// Utilities whose value is a token: type, radius, shadow, motion. A bracket
+// holding a number is a hand-picked step; one reading `var(…)` is a token. The
+// regex has no lookaround, so "no `v` in the bracket" stands in for "no var()".
+or {
+  JsStringLiteralExpression(),
+  JsxString(),
+  JsTemplateChunkElement()
+} as $s where {
+  $s <: r"(?s).*(?:text|font|leading|tracking|rounded(?:-[a-z]+)?|shadow|duration|delay|ease)-\[[^\]\sv]*\d[^\]\sv]*\].*",
+  register_diagnostic(span=$s, message="Arbitrary value for a token: use the design system's utility, or add the missing step to tokens/*.css.")
+}

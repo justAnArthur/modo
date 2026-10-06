@@ -1,0 +1,26 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "root": true,
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "formatter": { "indentStyle": "space", "lineWidth": 120 },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded",
+      "arrowParentheses": "asNeeded"
+    }
+  },
+  "css": { "parser": { "tailwindDirectives": true } },
+  "linter": {
+    "rules": {
+      "style": { "noNonNullAssertion": "off", "noUselessElse": "error", "useTemplate": "error" },
+      "complexity": { "noUselessTernary": "error" }
+    }
+  },
+  "plugins": [
+    { "path": "./biome/arbitrary-values.grit", "includes": ["**/demo/**", "**/lib/templates/**"] },
+    "./biome/literal-colors.grit",
+    { "path": "./biome/literal-colors-css.grit", "includes": ["**", "!**/tokens/**"] },
+    "./biome/compare-true.grit"
+  ]
+}

@@ -1,26 +1,12 @@
-import { MuiProvider } from '../../theme'
-import MuiSwitch from '@mui/material/Switch'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import MuiSwitch from '@mui/material/Switch'
+import { MuiProvider } from '../../theme'
 
 /**
  * Two-state toggle. Thin modo adapter over MUI's Switch; examples show
  * static states since modo examples carry no hooks.
  *
- * @example
- * # Off / On
- *
- * ```tsx
- * <Switch />
- * <Switch checked />
- * ```
- *
- * @example
- * # With label and size
- *
- * ```tsx
- * <Switch label="Email notifications" checked />
- * <Switch label="Compact" size="small" />
- * ```
+ * @example {@include ./examples.mdx}
  */
 export default function Switch({
   checked = false,
@@ -39,12 +25,6 @@ export default function Switch({
 }) {
   const control = <MuiSwitch checked={checked} size={size} disabled={disabled} />
   return (
-    <MuiProvider>
-      {label !== undefined ? (
-        <FormControlLabel control={control} label={label} />
-      ) : (
-        control
-      )}
-    </MuiProvider>
+    <MuiProvider>{label !== undefined ? <FormControlLabel control={control} label={label} /> : control}</MuiProvider>
   )
 }

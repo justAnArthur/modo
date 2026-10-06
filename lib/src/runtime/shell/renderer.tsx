@@ -1,6 +1,7 @@
+import { panelItems, shell } from 'virtual:modo-shell'
 import type { ReactNode } from 'react'
-import { shell, panelItems } from 'virtual:modo-shell'
 import { SidebarNav } from '../nav'
+import { Toc } from './toc'
 
 export function Shell({ children }: { children: ReactNode }) {
   const { Root, Section } = shell.Sidebar
@@ -11,12 +12,15 @@ export function Shell({ children }: { children: ReactNode }) {
           <SidebarNav />
         </Root>
       </aside>
-      {children}
+
+      <main data-modo="content">{children}</main>
+
       <aside data-modo="panel">
         <Root>
-          {panelItems.map((it) => (
-            <Section key={it.bundlePath} title={it.label}>
-              <it.Component shell={shell} />
+          <Toc />
+          {panelItems.map((item, i) => (
+            <Section key={`${i}-${item.label}`} title={item.label}>
+              <item.Component shell={shell} />
             </Section>
           ))}
         </Root>

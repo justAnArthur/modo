@@ -9,6 +9,7 @@ export const shellSchema = z
     Select: componentRef.optional(),
     Sidebar: componentRef.optional(),
     Code: componentRef.optional(),
+    Icon: componentRef.optional(),
   })
   .strict()
 
@@ -35,6 +36,12 @@ export const siteConfigSchema = z
     // `(config: UserConfig) => UserConfig | Promise<UserConfig>`. Applied to
     // the lib's Vite config before dev/build — e.g. to add @tailwindcss/vite.
     vite: z.string().optional(),
+    // Path (relative to the project root) to a module whose named exports are
+    // in scope in every `@example` (e.g. curated icons:
+    // `export { Plus, Search } from 'lucide-react'`). Bundled into the same
+    // build as the items, so providers/contexts are shared. Item names win
+    // over scope exports on collision.
+    examples: z.string().optional(),
   })
   .strict()
 

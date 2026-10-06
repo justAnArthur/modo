@@ -7,8 +7,8 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { ChatMessage } from '../../components/chat-message/chat-message'
-import { ThinkingIndicator } from '../../components/thinking-indicator/thinking-indicator'
+import { ChatMessage } from '../../components/chat-message'
+import { ThinkingIndicator } from '../../components/thinking-indicator'
 import { InputMessage } from './input-message'
 
 interface Entry {
@@ -32,26 +32,13 @@ const initialMessages: Entry[] = [
  * "generated", and the composer is the @fluid InputMessage on its elevated
  * substrate. Send a message to watch the flow.
  *
- * @example # Conversation
- * ```tsx
- * <Chat />
- * ```
- *
- * @example # Thinking
- * Pin the assistant's working state after the last reply.
- *
- * ```tsx
- * <Chat pending />
- * ```
- *
- * @example # Compact transcript
- * The size ladder applies to bubbles, indicator and composer alike.
- *
- * ```tsx
- * <Chat size="compact" />
- * ```
+ * @example {@include ./examples.mdx}
  */
-export default function Chat({ pending = false, size = 'default', placeholder = 'Message Fluid…' }: {
+export default function Chat({
+  pending = false,
+  size = 'default',
+  placeholder = 'Message Fluid…',
+}: {
   /** Show the thinking indicator under the last reply (also appears live while a sent message is pending). */
   pending?: boolean
   /** Size ladder step applied to the transcript, indicator and composer. @values default, compact */
@@ -65,16 +52,19 @@ export default function Chat({ pending = false, size = 'default', placeholder = 
   const nextId = useRef(initialMessages.length + 1)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current)
-  }, [])
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current)
+    },
+    [],
+  )
 
   const handleSend = (sent: string) => {
-    setEntries((prev) => [...prev, { id: nextId.current++, from: 'user', text: sent }])
+    setEntries(prev => [...prev, { id: nextId.current++, from: 'user', text: sent }])
     setValue('')
     setThinking(true)
     timer.current = setTimeout(() => {
-      setEntries((prev) => [
+      setEntries(prev => [
         ...prev,
         {
           id: nextId.current++,
@@ -89,11 +79,9 @@ export default function Chat({ pending = false, size = 'default', placeholder = 
   const isThinking = pending || thinking
 
   return (
-    <div
-      style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 400, maxWidth: '100%' }}
-    >
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 400, maxWidth: '100%' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {entries.map((entry) => (
+        {entries.map(entry => (
           <ChatMessage
             key={entry.id}
             from={entry.from}
@@ -105,13 +93,7 @@ export default function Chat({ pending = false, size = 'default', placeholder = 
         ))}
         {isThinking ? <ThinkingIndicator size={size} /> : null}
       </div>
-      <InputMessage
-        size={size}
-        value={value}
-        onValueChange={setValue}
-        onSend={handleSend}
-        placeholder={placeholder}
-      />
+      <InputMessage size={size} value={value} onValueChange={setValue} onSend={handleSend} placeholder={placeholder} />
     </div>
   )
 }

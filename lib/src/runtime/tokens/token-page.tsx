@@ -1,11 +1,9 @@
-import type { CSSProperties, ReactElement } from 'react'
 import { tokens as groups } from 'virtual:modo-tokens'
+import type { CSSProperties, ReactElement } from 'react'
 import type { Group, Swatch } from '../../lib/css'
 import { colorExpr, colorValue, resolved } from './host-colors'
 
 type Var = Group['vars'][number]
-
-const stack: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 8 }
 
 /* The shadcn/ui theme schema, one column per family. Tokens a design system
    defines under these names render first; everything else follows as custom. */
@@ -16,12 +14,12 @@ const THEME = [
   ['border', 'input', 'ring'],
   ['chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5'],
   ['sidebar', 'sidebar-primary', 'sidebar-accent', 'sidebar-border', 'sidebar-ring'],
-].map((col) => col.map((n) => `--${n}`))
+].map(col => col.map(n => `--${n}`))
 const THEME_NAMES = new Set(THEME.flat())
 const MAX_STACK = 5
 
 export function TokenGroupView({ group }: { group: string }) {
-  const g = groups.find((gg) => gg.name === group)
+  const g = groups.find(gg => gg.name === group)
   if (!g) {
     return (
       <article>
@@ -30,16 +28,23 @@ export function TokenGroupView({ group }: { group: string }) {
       </article>
     )
   }
-  const unique = declared(g.vars)
+  const vars = declared(g.vars)
   return (
     <article>
-      <header data-modo="tokens-header">
-        <h1 data-modo="page-title">Tokens / {g.name}</h1>
-        <span data-modo="tokens-count">{unique.length} variables</span>
+      <header>
+        <p data-modo="page-eyebrow">Tokens</p>
+        <h1 data-modo="page-title">{g.name}</h1>
+        <p data-modo="page-lead">{vars.length} variables</p>
       </header>
-      {g.name === 'colors' ? <ColorGroups vars={unique} /> : (
-        <section data-modo="section" style={stack}>
-          {unique.map((v) => <TokenRow key={v.name} v={v} />)}
+      {g.name === 'colors' ? (
+        <ColorGroups vars={vars} />
+      ) : (
+        <section data-modo="section">
+          <div data-modo="token-list">
+            {vars.map(v => (
+              <TokenRow key={v.name} v={v} />
+            ))}
+          </div>
         </section>
       )}
     </article>
@@ -49,28 +54,38 @@ export function TokenGroupView({ group }: { group: string }) {
 /** Token files declare light and dark blocks; the first declaration (`:root`)
     names the token, the live cascade decides what it renders as. */
 function declared(vars: Var[]): Var[] {
-  return vars.filter((v, i) => vars.findIndex((w) => w.name === v.name) === i)
+  return vars.filter((v, i) => vars.findIndex(w => w.name === v.name) === i)
 }
 
 /** A group at a glance, for the Foundations overview: colors as a strip of
     fills, everything else as the same swatches the group page uses. */
 export function GroupPreview({ group }: { group: string }) {
-  const g = groups.find((gg) => gg.name === group)
+  const g = groups.find(gg => gg.name === group)
   if (!g) return null
   const vars = declared(g.vars)
   if (g.name === 'colors') {
     return (
       <div data-modo="token-preview">
-        {vars.filter((v) => colorExpr(v.name) !== null).slice(0, 12).map((v) => (
-          <span key={v.name} data-modo="token-chip" style={{ background: colorExpr(v.name) ?? v.value }} title={`${v.name}: ${v.value}`} />
-        ))}
+        {vars
+          .filter(v => colorExpr(v.name) !== null)
+          .slice(0, 12)
+          .map(v => (
+            <span
+              key={v.name}
+              data-modo="token-chip"
+              style={{ background: colorExpr(v.name) ?? v.value }}
+              title={`${v.name}: ${v.value}`}
+            />
+          ))}
       </div>
     )
   }
   return (
     <div data-modo="token-preview">
-      {vars.slice(0, 6).map((v) => (
-        <span key={v.name} title={`${v.name}: ${v.value}`}><Swatch sw={v.swatch} /></span>
+      {vars.slice(0, 6).map(v => (
+        <span key={v.name} title={`${v.name}: ${v.value}`}>
+          <TokenSwatch sw={v.swatch} />
+        </span>
       ))}
     </div>
   )
@@ -85,24 +100,28 @@ interface Tile {
 function ColorGroups({ vars }: { vars: Var[] }) {
   // A token counts as a color when its resolved value is one, either on its
   // own or wrapped the way the host wraps it (`hsl(var(--border))`).
-  const colors = vars.filter((v) => colorValue(v.name, resolved(v.name, v.value)) !== null)
-  const byName = new Map(colors.map((v) => [v.name, v]))
+  const colors = vars.filter(v => colorValue(v.name, resolved(v.name, v.value)) !== null)
+  const byName = new Map(colors.map(v => [v.name, v]))
   const partner = (name: string) => byName.get(name === '--background' ? '--foreground' : `${name}-foreground`)
-  const partners = new Set(colors.map((v) => partner(v.name)?.name))
-  const tiles = new Map(colors.filter((v) => !partners.has(v.name)).map((v) => [v.name, { v, fg: partner(v.name) }]))
+  const partners = new Set(colors.map(v => partner(v.name)?.name))
+  const tiles = new Map(colors.filter(v => !partners.has(v.name)).map(v => [v.name, { v, fg: partner(v.name) }]))
 
-  const theme = THEME.map((col) => col.flatMap((n) => tiles.get(n) ?? []))
-  const custom = families([...tiles.values()].filter((t) => !THEME_NAMES.has(t.v.name)))
-  const other = vars.filter((v) => !byName.has(v.name))
+  const theme = THEME.map(col => col.flatMap(n => tiles.get(n) ?? []))
+  const custom = families([...tiles.values()].filter(t => !THEME_NAMES.has(t.v.name)))
+  const other = vars.filter(v => !byName.has(v.name))
   const page = pageColors()
   return (
     <>
       <ColorSection title="Theme" stacks={theme} page={page} />
       <ColorSection title="Custom" stacks={custom} page={page} />
       {other.length > 0 && (
-        <section data-modo="section" style={stack}>
+        <section data-modo="section">
           <h2 data-modo="section-title">Other</h2>
-          {other.map((v) => <TokenRow key={v.name} v={v} />)}
+          <div data-modo="token-list">
+            {other.map(v => (
+              <TokenRow key={v.name} v={v} />
+            ))}
+          </div>
         </section>
       )}
     </>
@@ -112,12 +131,12 @@ function ColorGroups({ vars }: { vars: Var[] }) {
 /** Columns of related tokens: `--chart-1…5`, `--sidebar-*`, … Tokens without
     siblings share loose columns. Long families wrap every MAX_STACK tiles. */
 function families(tiles: Tile[]): Tile[][] {
-  const names = tiles.map((t) => t.v.name)
-  const key = (n: string) => (names.some((o) => o.startsWith(`${n}-`)) ? n : n.slice(0, n.lastIndexOf('-')))
+  const names = tiles.map(t => t.v.name)
+  const key = (n: string) => (names.some(o => o.startsWith(`${n}-`)) ? n : n.slice(0, n.lastIndexOf('-')))
   const byKey = new Map<string, Tile[]>()
   for (const t of tiles) byKey.set(key(t.v.name), [...(byKey.get(key(t.v.name)) ?? []), t])
-  const loose = [...byKey.values()].filter((f) => f.length === 1).flat()
-  return [...[...byKey.values()].filter((f) => f.length > 1), loose].flatMap(chunk)
+  const loose = [...byKey.values()].filter(f => f.length === 1).flat()
+  return [...[...byKey.values()].filter(f => f.length > 1), loose].flatMap(chunk)
 }
 
 function chunk(tiles: Tile[]): Tile[][] {
@@ -133,15 +152,17 @@ interface SectionProps {
 }
 
 function ColorSection({ title, stacks, page }: SectionProps) {
-  const filled = stacks.filter((s) => s.length > 0)
+  const filled = stacks.filter(s => s.length > 0)
   if (filled.length === 0) return null
   return (
     <section data-modo="section">
       <h2 data-modo="section-title">{title}</h2>
       <div data-modo="color-grid">
-        {filled.map((s) => (
+        {filled.map(s => (
           <div data-modo="color-stack" key={s[0]!.v.name}>
-            {s.map((t) => <ColorTile key={t.v.name} tile={t} page={page} />)}
+            {s.map(t => (
+              <ColorTile key={t.v.name} tile={t} page={page} />
+            ))}
           </div>
         ))}
       </div>
@@ -182,7 +203,8 @@ interface PageColors {
 /** The host's page text and canvas colors, as the docs content inherits them. */
 function pageColors(): PageColors {
   const at = document.querySelector('[data-modo="content"]') ?? document.body
-  let bg = 'white'
+  // The root paints the system canvas when nothing sets a background.
+  let bg = 'Canvas'
   for (let el: Element | null = at; el; el = el.parentElement) {
     const c = getComputedStyle(el).backgroundColor
     if (paint(c)[3] > 0) {
@@ -212,7 +234,7 @@ function paint(color: string, under?: string): Rgba {
 }
 
 function toHex([r, g, b]: Rgba): string {
-  return `#${[r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('')}`
+  return `#${[r, g, b].map(n => n.toString(16).padStart(2, '0')).join('')}`
 }
 
 function contrast(a: Rgba, b: Rgba): number {
@@ -229,36 +251,52 @@ function TokenRow({ v }: { v: Var }) {
   const sw = v.swatch
   return (
     <div data-modo="token-row">
-      <Swatch sw={sw} />
-      <code>{v.name}</code>
-      <span data-modo="token-row-value">
-        {v.value}
+      <div data-modo="token-name">
+        <TokenSwatch sw={sw} />
+        <code>{v.name}</code>
+      </div>
+      <div data-modo="token-meta">
+        <code>{v.value}</code>
         {sw ? <span> · {meta(sw)}</span> : null}
-      </span>
+      </div>
     </div>
   )
 }
 
-function Swatch({ sw }: { sw?: Swatch }): ReactElement | null {
+// Only the token's own value is inline; the frame is [data-modo="swatch"] CSS.
+function TokenSwatch({ sw }: { sw?: Swatch }): ReactElement | null {
   if (!sw) return null
-  const box = (style: CSSProperties) => <span data-modo="swatch" style={style} />
-  const text = (style: CSSProperties) => <span data-modo="swatch" style={{ padding: '0 6px', ...style }}>Aa</span>
-  const fill = 'var(--primary, var(--accent, currentColor))'
+  const box = (style?: CSSProperties) => <span data-modo="swatch" data-kind={sw.kind} style={style} />
+  const text = (style: CSSProperties) => (
+    <span data-modo="swatch" data-kind={sw.kind} style={style}>
+      Aa
+    </span>
+  )
   switch (sw.kind) {
-    case 'color': return box({ background: sw.hex })
-    case 'length': return box({ width: Math.min(sw.px, 80), background: fill })
-    case 'duration': return box({ background: fill })
-    case 'font-family': return text({ fontFamily: sw.family })
-    case 'font-size': return text({ fontSize: sw.px })
+    case 'color':
+      return box({ background: sw.hex })
+    case 'length':
+      return box({ width: Math.min(sw.px, 80) })
+    case 'duration':
+      return box()
+    case 'font-family':
+      return text({ fontFamily: sw.family })
+    case 'font-size':
+      return text({ fontSize: sw.px })
   }
 }
 
 function meta(sw: Swatch): string {
   switch (sw.kind) {
-    case 'color': return sw.hex
-    case 'length': return `${sw.px}px`
-    case 'duration': return `${sw.ms}ms`
-    case 'font-family': return sw.family
-    case 'font-size': return `${sw.px}px`
+    case 'color':
+      return sw.hex
+    case 'length':
+      return `${sw.px}px`
+    case 'duration':
+      return `${sw.ms}ms`
+    case 'font-family':
+      return sw.family
+    case 'font-size':
+      return `${sw.px}px`
   }
 }

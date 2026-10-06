@@ -1,6 +1,7 @@
 import { items } from 'virtual:modo-items'
-import { Bento, BentoCard } from './bento'
 import { ExamplePreview } from '../items/preview'
+import { Inlines, splitLead } from '../markdown'
+import { Bento, BentoCard } from './bento'
 
 export type Tier = 'primitives' | 'components' | 'blocks'
 
@@ -11,16 +12,18 @@ const LEAD: Record<Tier, string> = {
 }
 
 export function TierPage({ tier }: { tier: Tier }) {
-  const list = items.filter((it) => it.tier === tier)
+  const list = items.filter(it => it.tier === tier)
   return (
-    <main data-modo="content">
+    <>
       <header data-modo="tokens-header">
         <h1 data-modo="page-title">{tier}</h1>
         <span data-modo="tokens-count">{list.length} items</span>
       </header>
       <p data-modo="page-lead">{LEAD[tier]}</p>
       {list.length === 0 ? (
-        <p>Nothing in <code>{tier}/</code> yet.</p>
+        <p>
+          Nothing in <code>{tier}/</code> yet.
+        </p>
       ) : (
         <Bento>
           {list.map((it, i) => (
@@ -28,7 +31,7 @@ export function TierPage({ tier }: { tier: Tier }) {
               key={it.id}
               href={`/docs/${tier}/${it.id}`}
               title={it.name}
-              description={it.description}
+              description={<Lead source={it.description} />}
               // Blocks are page-sized, so they take the whole row; elsewhere
               // every fifth cell widens so the grid reads as a bento.
               span={tier === 'blocks' ? 'full' : i % 5 === 0 ? 'wide' : undefined}
@@ -39,6 +42,11 @@ export function TierPage({ tier }: { tier: Tier }) {
           ))}
         </Bento>
       )}
-    </main>
+    </>
   )
+}
+
+function Lead({ source }: { source: string }) {
+  const { lead } = splitLead(source)
+  return lead ? <Inlines tokens={lead.tokens} /> : null
 }

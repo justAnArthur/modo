@@ -1,6 +1,6 @@
-import { MuiProvider } from '../../theme'
-import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
+import TextField from '@mui/material/TextField'
+import { MuiProvider } from '../../theme'
 
 /**
  * Single-option picker. Modo contract over MUI: a `TextField select` fed
@@ -8,34 +8,7 @@ import MenuItem from '@mui/material/MenuItem'
  * `(value: string) => void`. The docs chrome and the demo switcher render
  * with this component.
  *
- * @example
- * # Framework
- *
- * ```tsx
- * <Select
- *   value="mui"
- *   options={[
- *     { value: 'filled', label: 'filled' },
- *     { value: 'shadcn', label: 'shadcn/ui' },
- *     { value: 'mui', label: 'MUI' },
- *   ]}
- *   onChange={() => {}}
- * />
- * ```
- *
- * @example
- * # With label
- *
- * ```tsx
- * <Select
- *   label="Density"
- *   value="comfortable"
- *   options={[
- *     { value: 'compact', label: 'Compact' },
- *     { value: 'comfortable', label: 'Comfortable' },
- *   ]}
- * />
- * ```
+ * @example {@include ./examples.mdx}
  */
 export default function Select({
   value,
@@ -63,13 +36,13 @@ export default function Select({
       <TextField
         select
         value={value}
-        onChange={(event) => onChange(event.target.value as string)}
+        onChange={event => onChange(event.target.value as string)}
         label={label}
         size={size}
         disabled={disabled}
         sx={{ minWidth: 160 }}
       >
-        {options.map((option) => (
+        {options.map(option => (
           <MenuItem key={option.value} value={option.value}>
             {option.label}
           </MenuItem>

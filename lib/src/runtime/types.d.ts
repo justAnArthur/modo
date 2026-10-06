@@ -22,7 +22,13 @@ declare module 'virtual:modo-tokens-css' {
 
 declare module 'virtual:modo-items' {
   import type { ComponentType } from 'react'
-  export type ItemProp = { name: string; type: string; optional: boolean; default?: string; description?: string }
+  export type ItemProp = {
+    name: string
+    type: string
+    optional: boolean
+    default?: string
+    description?: string
+  }
   export type ItemEntry = {
     id: string
     tier: 'primitives' | 'components' | 'blocks'
@@ -38,6 +44,10 @@ declare module 'virtual:modo-items' {
   export const primitives: Record<string, ComponentType<any>>
   export const examples: Record<string, Array<{ title?: string; description?: string; code: string }>>
   export const props: Record<string, ItemProp[]>
+  /** Compiled `@example {@include ./x.mdx}` files per `tier:id`. */
+  export const exampleDocs: Record<string, ComponentType<{ components?: Record<string, unknown> }>[]>
+  /** Named exports of the `examples` config module; `{}` when unset. */
+  export const exampleScope: Record<string, unknown>
 }
 
 declare module 'virtual:modo-items-css' {
@@ -58,6 +68,7 @@ declare module 'virtual:modo-shell' {
     Link: ComponentType<any>
     Code: ComponentType<any>
     Select: ComponentType<any>
+    Icon: ComponentType<{ name: 'code' | 'copy' | 'check' | 'link'; label: string }>
     Sidebar: { Root: ComponentType<any>; Item: ComponentType<any>; Section: ComponentType<any> }
     primitives: Record<string, ComponentType<any>>
   }

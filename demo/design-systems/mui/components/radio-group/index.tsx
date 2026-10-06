@@ -1,43 +1,16 @@
-import { MuiProvider } from '../../theme'
 import FormControl from '@mui/material/FormControl'
-import FormLabel from '@mui/material/FormLabel'
-import MuiRadioGroup from '@mui/material/RadioGroup'
 import FormControlLabel from '@mui/material/FormControlLabel'
+import FormLabel from '@mui/material/FormLabel'
 import Radio from '@mui/material/Radio'
+import MuiRadioGroup from '@mui/material/RadioGroup'
+import { MuiProvider } from '../../theme'
 
 /**
  * Exclusive choice between named options. Modo contract over MUI: RadioGroup
  * plus FormControlLabel-wrapped Radios generated from `options`; pass
  * children instead for full control.
  *
- * @example
- * # Stack
- *
- * ```tsx
- * <RadioGroup
- *   defaultValue="dark"
- *   options={[
- *     { value: 'light', label: 'Light' },
- *     { value: 'dark', label: 'Dark' },
- *     { value: 'system', label: 'System' },
- *   ]}
- * />
- * ```
- *
- * @example
- * # Row with label
- *
- * ```tsx
- * <RadioGroup
- *   label="Density"
- *   row
- *   defaultValue="comfortable"
- *   options={[
- *     { value: 'compact', label: 'Compact' },
- *     { value: 'comfortable', label: 'Comfortable' },
- *   ]}
- * />
- * ```
+ * @example {@include ./examples.mdx}
  */
 export default function RadioGroup({
   options,
@@ -60,13 +33,8 @@ export default function RadioGroup({
   const group = (
     <MuiRadioGroup defaultValue={defaultValue} row={row}>
       {children ??
-        (options ?? []).map((option) => (
-          <FormControlLabel
-            key={option.value}
-            value={option.value}
-            control={<Radio />}
-            label={option.label}
-          />
+        (options ?? []).map(option => (
+          <FormControlLabel key={option.value} value={option.value} control={<Radio />} label={option.label} />
         ))}
     </MuiRadioGroup>
   )

@@ -17,15 +17,27 @@ export interface ParsedItem {
   description: string
   props: ParsedProp[]
   examples: ParsedExample[]
+  /** `@example {@include ./x.mdx}` paths, relative to the item source. */
+  exampleDocs: string[]
   errors: string[]
 }
 
-export function parseItemSource(src: string): ParsedItem {
-  const cleaned = src.replace(/\/\/[^\n]*/g, '')
+export interface ParseOptions {
+  /** Reads a `{@include}` / `{@includeCode}` path (relative to the item source); null when it can't. */
+  readFile?: (path: string) => string | null
+}
+
+export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedItem {
+  // Line comments only where `//` follows start/whitespace/punctuation, so
+  // `https://…` inside JSDoc and strings survives.
+  const cleaned = src.replace(/(^|[\s;,(){}[\]])\/\/[^\n]*/g, '$1')
 
   let name = ''
   let jsdocAnchor = 0
   let fnStart = -1
+  // Set when the item is `const X = forwardRef<HTML…, XProps>(…)` — the props
+  // type is the named second type argument, not a parameter list.
+  let forwardRefPropsType: string | null = null
 
   const fnDeclMatch = cleaned.match(/export\s+default\s+function\s+([A-Za-z_$][\w$]*)?\s*[(<]/)
   if (fnDeclMatch) {
@@ -38,21 +50,44 @@ export function parseItemSource(src: string): ParsedItem {
       return fail('No `export default` found')
     }
     name = identMatch[1]!
-    jsdocAnchor = identMatch.index ?? 0
     fnStart = cleaned.search(new RegExp(`function\\s+${name}\\s*\\(`))
+    // The doc block belongs to the component declaration, not to wherever the
+    // `export default` statement happens to sit (often the bottom of the file,
+    // below sub-components that may carry their own JSDoc).
+    const declStart = fnStart !== -1 ? fnStart : cleaned.search(new RegExp(`(?:const|let|var)\\s+${name}\\s*=`))
+    jsdocAnchor = declStart !== -1 ? declStart : (identMatch.index ?? 0)
+    if (fnStart === -1) {
+      forwardRefPropsType =
+        cleaned.match(
+          new RegExp(`(?:const|let|var)\\s+${name}\\s*=\\s*forwardRef<[^,>]+,\\s*([A-Za-z_$][\\w$]*)>`),
+        )?.[1] ?? null
+    }
   }
 
   if (!name) return fail('Could not determine component name')
 
   const jsdoc = extractJsdocAbove(cleaned, jsdocAnchor) ?? ''
-  const exampleIdx = jsdoc.indexOf('@example')
-  const description = exampleIdx === -1 ? jsdoc : jsdoc.slice(0, exampleIdx).trimEnd()
+  // `@example` counts only at the start of a (`*`-stripped) line, so text like
+  // `you@example.com` in a description or example code is left alone.
+  const exampleIdx = jsdoc.search(/(?:^|\n)[ \t]*@example\b/)
+  const errors: string[] = []
+  // Includes expand per section, after the tag split, so an included file
+  // can't start a new `@example`.
+  const include = (text: string) => expandIncludes(text, opts.readFile, errors)
+  const description = include(exampleIdx === -1 ? jsdoc : jsdoc.slice(0, exampleIdx)).trim()
   const examplesRoot = exampleIdx === -1 ? '' : jsdoc.slice(exampleIdx)
-  const examples = examplesRoot ? extractExamples(examplesRoot) : []
+  const exampleDocs: string[] = []
+  const examples = examplesRoot ? extractExamples(examplesRoot, include, exampleDocs) : []
 
-  const result: ParsedItem = { name, description, props: [], examples, errors: [] }
+  const result: ParsedItem = { name, description, props: [], examples, exampleDocs, errors }
   if (fnStart === -1) {
-    result.errors.push('Could not locate function body')
+    if (forwardRefPropsType) {
+      const props = extractForwardRefProps(cleaned, forwardRefPropsType)
+      result.props = props.props
+      result.errors.push(...props.errors)
+    } else {
+      result.errors.push('Could not locate function body')
+    }
     return result
   }
 
@@ -63,7 +98,7 @@ export function parseItemSource(src: string): ParsedItem {
 }
 
 function fail(msg: string): ParsedItem {
-  return { name: '', description: '', props: [], examples: [], errors: [msg] }
+  return { name: '', description: '', props: [], examples: [], exampleDocs: [], errors: [msg] }
 }
 
 function extractJsdocAbove(src: string, exportIndex: number): string | null {
@@ -77,7 +112,7 @@ function extractJsdocAbove(src: string, exportIndex: number): string | null {
 function normalizeJsdoc(raw: string): string {
   return raw
     .split('\n')
-    .map((line) => line.replace(/^\s*\*\s?/, ''))
+    .map(line => line.replace(/^\s*\*\s?/, ''))
     .join('\n')
     .trim()
 }
@@ -130,11 +165,34 @@ function extractProps(src: string, fnStart: number): ExtractPropsResult {
 
   if (!typeLiteral) return { props, errors: ['No type literal found on parameter'] }
 
-  const litText = extractTopObjectLiteral(typeLiteral)
+  let litText = extractTopObjectLiteral(typeLiteral)
+  if (!litText) {
+    // A bare identifier (e.g. `props: ButtonProps`) resolves to an interface
+    // or object type alias declared in the same file, if any.
+    const ident = typeLiteral.match(/^[A-Za-z_$][\w$]*$/)
+    if (ident) litText = resolveLocalTypeLiteral(src, ident[0])
+  }
   if (!litText) return { props, errors: ['Could not find object type literal'] }
 
+  return finishProps(litText, destructured, errors)
+}
+
+function extractForwardRefProps(src: string, typeName: string): ExtractPropsResult {
+  const litText = resolveLocalTypeLiteral(src, typeName)
+  if (!litText) {
+    return { props: [], errors: [`Could not find object type literal for ${typeName}`] }
+  }
+  return finishProps(litText, [], [])
+}
+
+function finishProps(
+  litText: string,
+  destructured: Array<{ name: string; default?: string }>,
+  errors: string[],
+): ExtractPropsResult {
+  const props: ParsedProp[] = []
   const litBody = litText.slice(1, -1)
-  const members = splitTopLevel(litBody, ';\n').filter((s) => s.trim())
+  const members = splitTopLevel(litBody, ';\n').filter(s => s.trim())
 
   for (const member of members) {
     const memberText = member.trim()
@@ -155,7 +213,7 @@ function extractProps(src: string, fnStart: number): ExtractPropsResult {
   attachJsdocToProps(litBody, props)
 
   for (const p of props) {
-    const d = destructured.find((dd) => dd.name === p.name)
+    const d = destructured.find(dd => dd.name === p.name)
     if (d?.default) p.default = d.default
   }
 
@@ -163,12 +221,10 @@ function extractProps(src: string, fnStart: number): ExtractPropsResult {
 }
 
 function attachJsdocToProps(litBody: string, props: ParsedProp[]): void {
-  const re = /\/\*\*([\s\S]*?)\*\/\s*([A-Za-z_$][\w$]*)\s*\??:/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(litBody)) !== null) {
+  for (const m of litBody.matchAll(/\/\*\*([\s\S]*?)\*\/\s*([A-Za-z_$][\w$]*)\s*\??:/g)) {
     const name = m[2]!
     const desc = normalizeJsdoc(m[1] ?? '')
-    const prop = props.find((p) => p.name === name)
+    const prop = props.find(p => p.name === name)
     if (prop) prop.description = desc
   }
 }
@@ -186,12 +242,51 @@ function extractTopObjectLiteral(text: string): string | null {
   return s.slice(objStart, objEnd + 1)
 }
 
-function extractExamples(jsdoc: string): ParsedExample[] {
+function resolveLocalTypeLiteral(src: string, name: string): string | null {
+  for (const re of [
+    new RegExp(`interface\\s+${name}\\s*\\{`),
+    new RegExp(`interface\\s+${name}\\s+extends\\s+[^{;]+\\{`),
+    new RegExp(`type\\s+${name}\\s*=\\s*\\{`),
+  ]) {
+    const m = src.match(re)
+    if (!m) continue
+    const open = (m.index ?? 0) + m[0].length - 1
+    const close = matchClosing(src, open, '{', '}')
+    if (close !== undefined) return src.slice(open, close + 1)
+  }
+  return null
+}
+
+// TypeDoc's inline tags: `{@include ./doc.md}` inlines the file as Markdown,
+// `{@includeCode ./x.ts}` as a fenced block (the example's code inside an
+// `@example`). Not recursive. An `@example` that is only `{@include ./x.mdx}`
+// isn't inlined: the bundle compiles the file into live examples.
+const INCLUDE = /\{@include(Code)?\s+([^\s}]+)\s*\}/g
+const MDX_INCLUDE = /^\{@include\s+([^\s}]+\.mdx)\s*\}$/
+
+function expandIncludes(text: string, readFile: ParseOptions['readFile'], errors: string[]): string {
+  return text.replace(INCLUDE, (tag, code: string | undefined, path: string) => {
+    const content = readFile?.(path)
+    if (content == null) {
+      errors.push(`${tag}: file not found`)
+      return ''
+    }
+    if (!code) return content.trim()
+    return `\`\`\`${path.match(/\.(\w+)$/)?.[1] ?? ''}\n${content.trim()}\n\`\`\``
+  })
+}
+
+function extractExamples(jsdoc: string, include: (text: string) => string, docs: string[]): ParsedExample[] {
   const out: ParsedExample[] = []
-  const re = /@example\b([\s\S]*?)(?=@example\b|$)/g
-  let m: RegExpExecArray | null
-  while ((m = re.exec(jsdoc)) !== null) {
-    const block = (m[1] ?? '').trim()
+  for (const m of jsdoc.matchAll(/(?:^|\n)[ \t]*@example\b([\s\S]*?)(?=\n[ \t]*@example\b|$)/g)) {
+    const raw = (m[1] ?? '').trim()
+    const doc = raw.match(MDX_INCLUDE)?.[1]
+    if (doc) {
+      docs.push(doc)
+      continue
+    }
+
+    const block = include(raw)
     if (!block) continue
     const parsed = parseExampleBlock(block)
     if (parsed) out.push(parsed)
@@ -208,10 +303,13 @@ function parseExampleBlock(block: string): ParsedExample | null {
   let description: string | undefined
   if (head) {
     const lines = head.split('\n')
-    const titleLine = lines.find((l) => l.trim().startsWith('# '))
+    const titleLine = lines.find(l => l.trim().startsWith('# '))
     if (titleLine) {
       title = titleLine.replace(/^#\s+/, '').trim()
-      const rest = lines.filter((l) => l !== titleLine).join('\n').trim()
+      const rest = lines
+        .filter(l => l !== titleLine)
+        .join('\n')
+        .trim()
       if (rest) description = rest
     } else {
       description = head

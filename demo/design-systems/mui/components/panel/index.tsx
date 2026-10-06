@@ -1,26 +1,10 @@
-import { MuiProvider } from '../../theme'
 import Paper from '@mui/material/Paper'
+import { MuiProvider } from '../../theme'
 
 /**
  * Elevated surface. Paper-based.
  *
- * @example
- * # Default
- *
- * ```tsx
- * <Panel>
- *   <p>Make them yours.</p>
- * </Panel>
- * ```
- *
- * @example
- * # Elevation
- *
- * ```tsx
- * <Panel elevation={4}>
- *   <p>Higher up.</p>
- * </Panel>
- * ```
+ * @example {@include ./examples.mdx}
  */
 export default function Panel({
   elevation = 1,

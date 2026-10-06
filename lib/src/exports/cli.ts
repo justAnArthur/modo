@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, existsSync, copyFileSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadModoConfig } from '../lib/config.loader'
@@ -14,11 +14,12 @@ const HELP = `modo — atomic design system renderer
 Usage:
   modo init <name>         Scaffold a new design system project
   modo dev                 Start the docs dev server
-  modo build               Build the docs site
+  modo build               Build the docs site into ./dist
   modo add <kind> <name>   Add a new primitive/component/block/token
   modo check               Validate modo.config.ts
 
 Options:
+  --base <path>            build: public path the site is served under (default /)
   --help, -h               Show this help
   --version, -v            Print version
 `
@@ -49,11 +50,21 @@ async function main() {
 
   try {
     switch (cmd) {
-      case 'init': await runInit(args.slice(1)); break
-      case 'dev': await runVite('dev', args.slice(1)); break
-      case 'build': await runVite('build', args.slice(1)); break
-      case 'add': await runAdd(args.slice(1)); break
-      case 'check': await runCheck(); break
+      case 'init':
+        await runInit(args.slice(1))
+        break
+      case 'dev':
+        await runVite('dev', args.slice(1))
+        break
+      case 'build':
+        await runVite('build', args.slice(1))
+        break
+      case 'add':
+        await runAdd(args.slice(1))
+        break
+      case 'check':
+        await runCheck()
+        break
       default:
         process.stderr.write(`Unknown command: ${cmd}\n\n${HELP}`)
         process.exit(1)
@@ -72,12 +83,10 @@ async function runInit(args: string[]) {
   if (existsSync(projectDir)) throw new Error(`Directory already exists: ${projectDir}`)
 
   copyDir(templatesRoot, 'default', projectDir)
-  forFileTree(projectDir, (file) => {
+  forFileTree(projectDir, file => {
     const text = readFileSync(file, 'utf8')
     if (text.includes('__NAME__') || text.includes('__DESCRIPTION__')) {
-      writeFileSync(file, text
-        .replaceAll('__NAME__', name)
-        .replaceAll('__DESCRIPTION__', `${name} design system`))
+      writeFileSync(file, text.replaceAll('__NAME__', name).replaceAll('__DESCRIPTION__', `${name} design system`))
     }
   })
   process.stdout.write(`Scaffolded ${projectDir}\n`)
@@ -85,14 +94,17 @@ async function runInit(args: string[]) {
 
 async function runVite(mode: 'dev' | 'build', args: string[] = []) {
   const cwd = process.cwd()
-  const configIdx = args.indexOf('--config')
-  const configArg = configIdx >= 0 ? args[configIdx + 1] : undefined
-  const configPath = configArg ? resolve(cwd, configArg) : resolve(cwd, 'modo.config.ts')
+  const configPath = resolve(cwd, flag(args, '--config') ?? 'modo.config.ts')
   await loadModoConfig(configPath)
   process.env.MODO_USER_ROOT = cwd
   process.env.MODO_CONFIG_PATH = configPath
   process.chdir(runtimeRoot)
-  await importViteAndRun(runtimeRoot, mode)
+  await importViteAndRun(runtimeRoot, mode, flag(args, '--base'))
+}
+
+function flag(args: string[], name: string): string | undefined {
+  const i = args.indexOf(name)
+  return i >= 0 ? args[i + 1] : undefined
 }
 
 async function runAdd(args: string[]) {
@@ -115,9 +127,7 @@ async function runAdd(args: string[]) {
 
   const stubText = readFileSync(resolve(templatesRoot, 'stubs', t.stub), 'utf8')
   const outFile = resolve(outDir, `${id}.${t.ext}`)
-  writeFileSync(outFile, stubText
-    .replaceAll('__NAME__', id)
-    .replaceAll('__NAME_PASCAL__', pascalize(id)))
+  writeFileSync(outFile, stubText.replaceAll('__NAME__', id).replaceAll('__NAME_PASCAL__', pascalize(id)))
   process.stdout.write(`Created ${outFile}\n`)
 }
 
@@ -126,7 +136,7 @@ async function runCheck() {
   process.stdout.write(`OK — modo.config.ts is valid (name="${cfg.name}")\n`)
 }
 
-async function importViteAndRun(rt: string, mode: 'dev' | 'build') {
+async function importViteAndRun(rt: string, mode: 'dev' | 'build', base?: string) {
   const configFile = join(rt, 'vite.config.ts')
   const vite = await import('vite')
   if (mode === 'dev') {
@@ -135,7 +145,7 @@ async function importViteAndRun(rt: string, mode: 'dev' | 'build') {
     server.printUrls()
     return
   }
-  await vite.build({ configFile })
+  await vite.build({ configFile, base })
 }
 
 function kebab(s: string): string {
@@ -148,7 +158,7 @@ function kebab(s: string): string {
 function pascalize(s: string): string {
   return s
     .split(/[-_\s]+/)
-    .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : ''))
+    .map(w => (w ? w.charAt(0).toUpperCase() + w.slice(1) : ''))
     .join('')
 }
 

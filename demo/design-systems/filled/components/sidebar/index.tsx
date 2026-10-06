@@ -4,16 +4,7 @@ import './sidebar.css'
  * Navigation sidebar. Compound component: Root + `Sidebar.Item` + `Sidebar.Section`.
  * The docs chrome inherits it — the nav on the left side of this site is this component.
  *
- * @example # Sections and items
- * <Sidebar>
- *   <Sidebar.Section title="Foundations">
- *     <Sidebar.Item href="#colors">Colors</Sidebar.Item>
- *     <Sidebar.Item href="#spacing" active>Spacing</Sidebar.Item>
- *   </Sidebar.Section>
- *   <Sidebar.Section title="Components">
- *     <Sidebar.Item href="#button">Button</Sidebar.Item>
- *   </Sidebar.Section>
- * </Sidebar>
+ * @example {@include ./examples.mdx}
  */
 export default function Sidebar({ children }: { children?: React.ReactNode }) {
   return <nav className="my-sidebar">{children}</nav>

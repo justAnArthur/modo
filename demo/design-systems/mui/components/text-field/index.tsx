@@ -1,30 +1,11 @@
-import { MuiProvider } from '../../theme'
 import MuiTextField from '@mui/material/TextField'
+import { MuiProvider } from '../../theme'
 
 /**
  * Text input with label and helper text. Thin modo adapter over MUI's
  * TextField; examples use `defaultValue` since modo examples carry no hooks.
  *
- * @example
- * # Email
- *
- * ```tsx
- * <TextField label="Email" placeholder="you@example.com" />
- * ```
- *
- * @example
- * # Password with helper text
- *
- * ```tsx
- * <TextField label="Password" type="password" defaultValue="hunter2" helperText="At least 8 characters." />
- * ```
- *
- * @example
- * # Multiline
- *
- * ```tsx
- * <TextField label="Bio" defaultValue="Design systems enjoyer." multiline rows={3} />
- * ```
+ * @example {@include ./examples.mdx}
  */
 export default function TextField({
   label,

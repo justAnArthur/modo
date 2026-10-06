@@ -1,23 +1,13 @@
-import type { Plugin } from 'vite'
 import type { ComponentType } from 'react'
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs'
-import { resolve, join } from 'node:path'
-import { pathToFileURL } from 'node:url'
-import { randomUUID } from 'node:crypto'
-import { parseItemSource } from '../lib/tsdoc'
-import {
-  resolveShellSlots,
-  type LoadedComponent,
-  type ParsedItemLite,
-  type ResolvedShell,
-} from '../lib/slots'
-import { loadModoConfig } from '../lib/config.loader'
-import { discoverCssForFile } from '../lib/discover-css'
-import esbuild from 'esbuild'
+import type { Plugin } from 'vite'
+import type { SiteConfig } from '../lib/schema'
+import { type AnyComponent, type LoadedComponent, type ParsedItemLite, type ResolvedShell, resolveShellSlots } from '../lib/slots'
+import type { BundleResult, Bundler } from './bundle'
 
 interface Options {
   userRoot: string
   libDir: string
+  bundler: Bundler
 }
 
 const SHELL_VIRTUAL = 'virtual:modo-shell'
@@ -25,80 +15,10 @@ const SHELL_RESOLVED = '\0virtual:modo-shell'
 const SHELL_CSS_VIRTUAL = 'virtual:modo-shell-css'
 const SHELL_CSS_RESOLVED = '\0virtual:modo-shell-css'
 
-function tmpDir(root: string): string {
-  return resolve(root, '.modo-tmp')
-}
-
-function ensureTmpDir(root: string): string {
-  const dir = tmpDir(root)
-  mkdirSync(dir, { recursive: true })
-  return dir
-}
-
-async function bundleToFile(filePath: string, userRoot: string, prefix: string): Promise<{ path: string }> {
-  const dir = ensureTmpDir(userRoot)
-  const outFile = join(dir, `${prefix}-${randomUUID()}.mjs`)
-  await esbuild.build({
-    entryPoints: [filePath],
-    bundle: true,
-    format: 'esm',
-    outfile: outFile,
-    // Bundles run in the browser (served via /@fs); 'browser' resolves
-    // CJS `main`-only and browser-conditional packages that 'neutral' cannot.
-    platform: 'browser',
-    target: 'es2022',
-    external: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
-    loader: { '.ts': 'ts', '.tsx': 'tsx', '.css': 'empty', '.svg': 'dataurl' },
-    jsx: 'automatic',
-    jsxImportSource: 'react',
-    logLevel: 'silent',
-  })
-  return { path: '/@fs' + outFile }
-}
-
-async function bundle(filePath: string, userRoot: string, prefix: string): Promise<{ path: string; Component: unknown }> {
-  const { path } = await bundleToFile(filePath, userRoot, prefix)
-  const absPath = path.startsWith('/@fs') ? path.slice('/@fs'.length) : path
-  const mod = (await import(pathToFileURL(absPath).href + `?p=${prefix}&t=${Date.now()}`)) as {
-    default?: unknown
-  }
-  return { path, Component: (mod.default ?? mod) as unknown }
-}
-
-async function discoverUserItems(userRoot: string): Promise<ParsedItemLite[]> {
-  const tiers = ['primitives', 'components', 'blocks'] as const
-  const items: ParsedItemLite[] = []
-  for (const tier of tiers) {
-    const tierDir = resolve(userRoot, tier)
-    if (!existsSync(tierDir)) continue
-    for (const entry of readdirSync(tierDir)) {
-      const itemDir = resolve(tierDir, entry)
-      if (!statSync(itemDir).isDirectory()) continue
-      const tsx = resolve(itemDir, 'index.tsx')
-      if (!existsSync(tsx)) continue
-      const parsed = parseItemSource(readFileSync(tsx, 'utf8'))
-      const item: ParsedItemLite = {
-        name: parsed.name || entry,
-        id: entry,
-        tier,
-        props: parsed.props.map((p) => ({ name: p.name, optional: p.optional })),
-      }
-      try {
-        const { path } = await bundleToFile(tsx, userRoot, `${tier}-${entry}`)
-        item.bundleUrl = path
-      } catch (err) {
-        console.warn(`[shell] failed to bundle ${tier}/${entry}:`, (err as Error).message)
-      }
-      items.push(item)
-    }
-  }
-  return items
-}
-
 type PanelItemExport = {
   label: string
   bundlePath: string
-  Component: unknown
+  exportName?: string
   cssPaths: string[]
 }
 
@@ -107,38 +27,38 @@ type ResolvedShellExport = ResolvedShell & {
   panelItems: PanelItemExport[]
 }
 
-async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShellExport; warnings: string[] }> {
+type ShellResult = { shell: ResolvedShellExport; warnings: string[] }
+
+// Everything comes from the shared build (./bundle): items for interface
+// matching, config.shell / panel modules from its `extras`. Components are
+// only ever imported in the browser, never in node.
+async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
   const warnings: string[] = []
-  const configPath = process.env.MODO_CONFIG_PATH ?? resolve(opts.userRoot, 'modo.config.ts')
-  const config = await loadModoConfig(configPath)
-  const userItems = await discoverUserItems(opts.userRoot)
+  const config: Pick<SiteConfig, 'name' | 'shell' | 'panel'> = result.config ?? { name: '' }
+  const userItems: ParsedItemLite[] = result.items.map(it => ({
+    name: it.name,
+    id: it.id,
+    tier: it.tier,
+    props: it.props.map(p => ({ name: p.name, optional: p.optional })),
+    bundleUrl: it.bundlePath,
+  }))
 
   async function loadUserPath(p: string): Promise<LoadedComponent | null> {
-    const abs = resolve(opts.userRoot, p)
-    if (!existsSync(abs)) return null
-    const stat = statSync(abs)
-    let file = abs
-    if (stat.isDirectory()) {
-      const candidate = resolve(abs, 'index.tsx')
-      if (!existsSync(candidate)) return null
-      file = candidate
-    }
-    const { path, Component } = await bundle(file, opts.userRoot, `usr-${p.replace(/[^a-zA-Z0-9]+/g, '-')}`)
+    const extra = result.extras.get(p)
+    if (!extra?.exported) return null
     return {
-      Component: Component as React.ComponentType<any>,
-      cssPaths: discoverCssForFile(file),
+      Component: null as unknown as AnyComponent,
+      cssPaths: extra.cssFiles,
       source: 'config',
       resolvedPath: p,
-      bundlePath: path,
+      bundlePath: extra.bundlePath,
+      exportName: extra.exportName,
     }
   }
 
-  const resolved = await resolveShellSlots(
-    { name: config.name, shell: config.shell },
-    userItems,
-    loadUserPath,
-    { warnings },
-  )
+  const resolved = await resolveShellSlots({ name: config.name, shell: config.shell }, userItems, loadUserPath, {
+    warnings,
+  })
   const panelItems: PanelItemExport[] = []
   for (const item of config.panel?.items ?? []) {
     const lc = await loadUserPath(item.component)
@@ -149,7 +69,7 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
     panelItems.push({
       label: item.label,
       bundlePath: lc.bundlePath,
-      Component: lc.Component,
+      exportName: lc.exportName,
       cssPaths: lc.cssPaths,
     })
   }
@@ -157,10 +77,11 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
     ...resolved.Button.cssPaths,
     ...resolved.Link.cssPaths,
     ...resolved.Code.cssPaths,
+    ...resolved.Icon.cssPaths,
     ...resolved.Sidebar.Root.cssPaths,
     ...resolved.Sidebar.Item.cssPaths,
     ...resolved.Sidebar.Section.cssPaths,
-    ...panelItems.flatMap((it) => it.cssPaths),
+    ...panelItems.flatMap(it => it.cssPaths),
   ]
   return {
     shell: {
@@ -168,7 +89,12 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
       Link: resolved.Link,
       Code: resolved.Code,
       Select: resolved.Select,
-      Sidebar: { Root: resolved.Sidebar.Root, Item: resolved.Sidebar.Item, Section: resolved.Sidebar.Section },
+      Icon: resolved.Icon,
+      Sidebar: {
+        Root: resolved.Sidebar.Root,
+        Item: resolved.Sidebar.Item,
+        Section: resolved.Sidebar.Section,
+      },
       cssFiles,
       panelItems,
     },
@@ -177,18 +103,13 @@ async function resolveShellForUser(opts: Options): Promise<{ shell: ResolvedShel
 }
 
 export function shellPlugin(options: Options): Plugin {
-  let cache: { shell: ResolvedShellExport; warnings: string[] } | null = null
-  let cachePromise: Promise<{ shell: ResolvedShellExport; warnings: string[] }> | null = null
+  // Cached per build result: a rebuild (bundler.invalidate) yields a new one.
+  let cache: { result: BundleResult; value: Promise<ShellResult> } | null = null
 
-  function getCache(): Promise<{ shell: ResolvedShellExport; warnings: string[] }> {
-    if (cache) return Promise.resolve(cache)
-    if (cachePromise) return cachePromise
-    cachePromise = resolveShellForUser(options).then((result) => {
-      cache = result
-      cachePromise = null
-      return result
-    })
-    return cachePromise
+  async function getCache(): Promise<ShellResult> {
+    const result = await options.bundler.get()
+    if (cache?.result !== result) cache = { result, value: resolveShellForUser(result) }
+    return cache.value
   }
 
   return {
@@ -203,42 +124,42 @@ export function shellPlugin(options: Options): Plugin {
       if (id === SHELL_RESOLVED) {
         const { shell, warnings } = await getCache()
         if (warnings.length > 0) {
-          process.stderr.write(`[modo:shell] warnings:\n${warnings.map((w) => '  • ' + w).join('\n')}\n`)
+          process.stderr.write(`[modo:shell] warnings:\n${warnings.map(w => `  • ${w}`).join('\n')}\n`)
         }
-        const slotBindings: Array<{ name: string; bundlePath?: string; fallbackName?: string }> = [
-          { name: '__Button', bundlePath: shell.Button.bundlePath, fallbackName: shell.Button.fallbackName },
-          { name: '__Link', bundlePath: shell.Link.bundlePath, fallbackName: shell.Link.fallbackName },
-          { name: '__Code', bundlePath: shell.Code.bundlePath, fallbackName: shell.Code.fallbackName },
-          { name: '__Select', bundlePath: shell.Select.bundlePath, fallbackName: shell.Select.fallbackName },
-          { name: '__SidebarRoot', bundlePath: shell.Sidebar.Root.bundlePath, fallbackName: shell.Sidebar.Root.fallbackName },
-          { name: '__SidebarItem', bundlePath: shell.Sidebar.Item.bundlePath, fallbackName: shell.Sidebar.Item.fallbackName },
-          { name: '__SidebarSection', bundlePath: shell.Sidebar.Section.bundlePath, fallbackName: shell.Sidebar.Section.fallbackName },
-        ]
+        const slotBindings = Object.entries({
+          __Button: shell.Button,
+          __Link: shell.Link,
+          __Code: shell.Code,
+          __Select: shell.Select,
+          __Icon: shell.Icon,
+          __SidebarRoot: shell.Sidebar.Root,
+          __SidebarItem: shell.Sidebar.Item,
+          __SidebarSection: shell.Sidebar.Section,
+        }).map(([name, s]) => ({ name, ...s }))
         const panelItemBindings = shell.panelItems.map((it, idx) => ({
           name: `__PanelItem${idx}`,
-          bundlePath: it.bundlePath,
+          ...it,
         }))
+        const exportOf = (s: { name: string; exportName?: string }) =>
+          `__mod_${s.name}[${JSON.stringify(s.exportName ?? 'default')}]`
         const fallbackImports = slotBindings
-          .filter((s) => s.fallbackName && !s.bundlePath)
-          .map((s) => `import { ${s.fallbackName} as __fb_${s.name} } from '../lib/slots';`)
+          .filter(s => s.fallbackName && !s.bundlePath)
+          .map(s => `import { ${s.fallbackName} as __fb_${s.name} } from '../lib/slots';`)
           .join('\n')
         const imports = [
           `import { primitives as __primitives } from 'virtual:modo-items';`,
           fallbackImports,
-          ...slotBindings
-            .filter((s) => s.bundlePath)
-            .map((s) => `import __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`),
-          ...panelItemBindings.map((s) => `import __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`),
+          ...[...slotBindings.filter(s => s.bundlePath), ...panelItemBindings].map(
+            s => `import * as __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`,
+          ),
         ].join('\n')
         const bindings = [
-          ...slotBindings.map((s) => {
-            if (s.bundlePath) return `const ${s.name} = (__mod_${s.name}.default ?? __mod_${s.name});`
+          ...slotBindings.map(s => {
+            if (s.bundlePath) return `const ${s.name} = ${exportOf(s)};`
             if (s.fallbackName) return `const ${s.name} = __fb_${s.name};`
             return `const ${s.name} = null;`
           }),
-          ...panelItemBindings.map(
-            (s) => `const ${s.name}_Comp = (__mod_${s.name}.default ?? __mod_${s.name});`,
-          ),
+          ...panelItemBindings.map(s => `const ${s.name}_Comp = ${exportOf(s)};`),
         ].join('\n')
         const panelItemsJson = shell.panelItems
           .map(
@@ -254,6 +175,7 @@ export function shellPlugin(options: Options): Plugin {
           `  Link: __Link,`,
           `  Code: __Code,`,
           `  Select: __Select,`,
+          `  Icon: __Icon,`,
           `  Sidebar: { Root: __SidebarRoot, Item: (__SidebarRoot && __SidebarRoot.Item) ?? __SidebarItem, Section: (__SidebarRoot && __SidebarRoot.Section) ?? __SidebarSection },`,
           `  primitives: __primitives,`,
           `};`,
@@ -264,7 +186,7 @@ export function shellPlugin(options: Options): Plugin {
       }
       if (id === SHELL_CSS_RESOLVED) {
         const { shell } = await getCache()
-        const imports = shell.cssFiles.map((f) => `import ${JSON.stringify(f)};`).join('\n')
+        const imports = shell.cssFiles.map(f => `import ${JSON.stringify(f)};`).join('\n')
         return [imports, `export default '';`].join('\n')
       }
       return null

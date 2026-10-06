@@ -1,0 +1,124 @@
+import InputMessage from './index'
+import Button from '../../components/button'
+import { ChevronDown, Plus } from 'lucide-react'
+
+# Basic
+
+No props at all: the composer keeps its own draft, grows as you type and
+clears itself on Enter.
+
+<div className="w-full max-w-xl">
+  <InputMessage />
+</div>
+
+# Suggestions
+
+The ghost placeholder renders with a Tab keycap — Tab fills it into the
+composer. ArrowDown/ArrowUp walk the list below (focus stays in the
+textarea) and Enter or click fills the highlighted prompt; the first row
+shows a ↓ hint until a row is highlighted. Typing collapses the list.
+
+<div className="w-full max-w-xl">
+  <InputMessage
+    placeholderSuggestion="Why is every other input box so stiff?"
+    suggestions={[
+      'What is Fluid Functionalism about?',
+      'How does Micka tune the springs behind these animations?',
+      'Install the InputMessage component in my project',
+      'Draft a short thank-you note to Micka for the library',
+    ]}
+  />
+</div>
+
+# Attachments
+
+`defaultFiles` seeds the composer and turns attachment behavior on: drop a
+PNG, JPEG or PDF anywhere on the panel, or use the render-fn slot's
+`openFilePicker`. Images preview with object-cover, PDFs render their
+first page, anything else falls back to a document glyph — hover a tile
+for its × button.
+
+<div className="w-full max-w-xl">
+  <InputMessage
+    defaultFiles={[
+      new File(['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" fill="#6B97FF" /></svg>'], 'swatch.svg', { type: 'image/svg+xml' }),
+      new File(['Quarterly notes'], 'notes.txt', { type: 'text/plain' }),
+    ]}
+    leftSlot={({ openFilePicker }) => (
+      <Button variant="ghost" size="icon-sm" aria-label="Attach" onClick={() => openFilePicker()}>
+        <Plus />
+      </Button>
+    )}
+  />
+</div>
+
+# Queued messages
+
+`defaultStatus="streaming"` plus `defaultQueue` runs the composer as if a
+response were in flight: the send button is a Queue action, so a typed
+message joins the rows above instead of sending. Drag a row (or Alt+↑/↓)
+to reorder, double-click to pull it back into the composer, × to drop it.
+Clear the draft and the button becomes Stop — pressing it ends the
+response, and that streaming→idle edge dispatches the row at the top.
+
+<div className="w-full max-w-xl">
+  <InputMessage
+    defaultStatus="streaming"
+    defaultQueue={[
+      { id: 'q1', text: 'Also add a dark-mode screenshot', files: [] },
+      { id: 'q2', text: 'And link the changelog entry', files: [] },
+    ]}
+  />
+</div>
+
+# Left Slot Only
+
+`leftSlot` takes the bottom-left action area — an attach button, a model
+switcher, a mode toggle.
+
+<div className="w-full max-w-xl">
+  <InputMessage
+    leftSlot={
+      <Button variant="ghost" size="icon-sm" aria-label="Attach">
+        <Plus />
+      </Button>
+    }
+  />
+</div>
+
+# Right Slot Only
+
+`rightSlot` sits in the bottom-right, just before the built-in send
+button.
+
+<div className="w-full max-w-xl">
+  <InputMessage
+    rightSlot={
+      <Button variant="ghost" size="sm" trailingIcon={ChevronDown}>
+        Sonnet 4.6
+      </Button>
+    }
+  />
+</div>
+
+# Send Handler
+
+`onSend` receives the trimmed text and the attached files; an uncontrolled
+composer clears its own draft afterwards. The handler here is an empty
+arrow — in an app it is where the message joins the transcript.
+
+<div className="w-full max-w-xl">
+  <InputMessage
+    onSend={() => {}}
+    placeholder="Press Enter to send. Shift+Enter for newline."
+  />
+</div>
+
+# Disabled
+
+Dims the panel to 50% and drops pointer events — textarea, send button and
+drag-and-drop all go inert.
+
+<div className="w-full max-w-xl">
+  <InputMessage defaultValue="This composer is disabled" disabled />
+</div>

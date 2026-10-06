@@ -1,0 +1,75 @@
+import InputCopy from './index'
+
+# Basic
+
+Icon-only: the value fills the row and the copy glyph sits at the
+trailing edge, with a tooltip on hover.
+
+<div className="w-72">
+  <InputCopy value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json" />
+</div>
+
+# With Label
+
+`label` renders a muted caption above the field and joins the button's
+accessible name, so a screen reader announces "Copy Install command".
+
+<div className="w-72">
+  <InputCopy
+    label="Install command"
+    value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json"
+  />
+</div>
+
+# Button Variant
+
+`variant="button"` trades the tooltip for a visible Copy label. The label
+slot is pre-sized to the widest state ("Copied"), so the row never
+reflows when the state flips.
+
+<div className="w-72">
+  <InputCopy
+    variant="button"
+    value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json"
+  />
+</div>
+
+# Left Aligned
+
+`align="left"` puts the action on the leading edge, before the value —
+in either variant.
+
+<div className="flex flex-col gap-4 w-72">
+  <InputCopy
+    align="left"
+    value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json"
+  />
+  <InputCopy
+    variant="button"
+    align="left"
+    value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json"
+  />
+</div>
+
+# Disabled
+
+Dims the row to 50% and drops pointer events, so the value stays readable
+but nothing can be copied.
+
+<div className="w-72">
+  <InputCopy label="Invite code" value="ABCD-1234-EFGH" disabled />
+</div>
+
+# Copy Callback
+
+`onCopy` fires after a successful copy — count them, toast, or log the
+share. The handler below is an empty arrow (examples hold no state of
+their own); in an app it would be where you bump a counter.
+
+<div className="w-72">
+  <InputCopy
+    label="Share link"
+    value="https://fluidfunctionalism.com/r/input-copy"
+    onCopy={() => {}}
+  />
+</div>

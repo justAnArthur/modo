@@ -22,33 +22,13 @@ import {
  * Root/Item/Section API). Resolves the docs chrome's Sidebar slot by
  * interface matching.
  *
- * @example # Sections and items
- * The modo nav shape: sections with titled groups and anchor items.
- *
- * ```tsx
- * <Sidebar className="!min-h-0" style={{ maxWidth: 220 }}>
- *   <Sidebar.Section title="Foundations">
- *     <Sidebar.Item href="#colors" active>Colors</Sidebar.Item>
- *     <Sidebar.Item href="#surfaces">Surfaces</Sidebar.Item>
- *   </Sidebar.Section>
- *   <Sidebar.Section title="Components">
- *     <Sidebar.Item href="#button">Button</Sidebar.Item>
- *     <Sidebar.Item href="#select">Select</Sidebar.Item>
- *   </Sidebar.Section>
- * </Sidebar>
- * ```
- *
- * @example # Single group
- * ```tsx
- * <Sidebar className="!min-h-0" style={{ maxWidth: 180 }}>
- *   <Sidebar.Section title="Project">
- *     <Sidebar.Item href="#overview" active>Overview</Sidebar.Item>
- *     <Sidebar.Item href="#settings">Settings</Sidebar.Item>
- *   </Sidebar.Section>
- * </Sidebar>
- * ```
+ * @example {@include ./examples.mdx}
  */
-export default function Sidebar({ children, className, style }: {
+export default function Sidebar({
+  children,
+  className,
+  style,
+}: {
   /** Nav sections and items (Sidebar.Section / Sidebar.Item). */
   children?: ReactNode
   /** Class on the sidebar wrapper; pass a min-height override when embedding outside a full-height column. */
@@ -76,7 +56,11 @@ interface Sidebar {
   Section: typeof SidebarSection
 }
 
-function SidebarItem({ href, active = false, children }: {
+function SidebarItem({
+  href,
+  active = false,
+  children,
+}: {
   /** Navigation target. */
   href: string
   /** Marks the current page. */
@@ -95,7 +79,10 @@ function SidebarItem({ href, active = false, children }: {
   )
 }
 
-function SidebarSection({ title, children }: {
+function SidebarSection({
+  title,
+  children,
+}: {
   /** Group label. */
   title: string
   /** Sidebar.Item entries. */

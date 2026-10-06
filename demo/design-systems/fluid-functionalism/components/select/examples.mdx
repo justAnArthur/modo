@@ -1,0 +1,19 @@
+import Select from './index'
+
+# Basic
+
+<Select value="fast" options={[
+  { value: 'fast', label: 'Fast — 80ms' },
+  { value: 'moderate', label: 'Moderate — 160ms' },
+  { value: 'slow', label: 'Slow — 240ms' },
+]} onChange={() => {}} />
+
+# Compact trigger
+
+The compact step (28px) fits dense chrome like toolbars and sidebars.
+
+<Select size="sm" value="light" options={[
+  { value: 'light', label: 'Light' },
+  { value: 'dark', label: 'Dark' },
+  { value: 'system', label: 'System' },
+]} onChange={() => {}} />

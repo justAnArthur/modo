@@ -1,23 +1,11 @@
-import { MuiProvider } from '../../theme'
 import MuiLink from '@mui/material/Link'
+import { MuiProvider } from '../../theme'
 
 /**
  * Inline anchor. Thin modo adapter over MUI's Link; the docs chrome
  * inherits it for item links in the content area.
  *
- * @example
- * # Default
- *
- * ```tsx
- * <Link href="/docs/mui">Read the MUI docs</Link>
- * ```
- *
- * @example
- * # Always underlined
- *
- * ```tsx
- * <Link href="https://mui.com" underline="always">mui.com</Link>
- * ```
+ * @example {@include ./examples.mdx}
  */
 export default function Link({
   href,

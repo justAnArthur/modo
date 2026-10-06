@@ -8,27 +8,15 @@ import { Select as FluidSelect, SelectContent, SelectItem, SelectTrigger } from 
  * This adapter implements modo's Select shell contract (value / onChange /
  * options), so the docs chrome and demo switcher render with it.
  *
- * @example # Basic
- * ```tsx
- * <Select value="fast" options={[
- *   { value: 'fast', label: 'Fast — 80ms' },
- *   { value: 'moderate', label: 'Moderate — 160ms' },
- *   { value: 'slow', label: 'Slow — 240ms' },
- * ]} />
- * ```
- *
- * @example # Compact trigger
- * The compact step (28px) fits dense chrome like toolbars and sidebars.
- *
- * ```tsx
- * <Select size="sm" value="light" options={[
- *   { value: 'light', label: 'Light' },
- *   { value: 'dark', label: 'Dark' },
- *   { value: 'system', label: 'System' },
- * ]} />
- * ```
+ * @example {@include ./examples.mdx}
  */
-export default function Select({ value, onChange, options, placeholder = 'Select…', size = 'default' }: {
+export default function Select({
+  value,
+  onChange,
+  options,
+  placeholder = 'Select…',
+  size = 'default',
+}: {
   /** Currently selected value. */
   value: string
   /** Called with the newly selected value. */

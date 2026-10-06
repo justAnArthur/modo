@@ -1,0 +1,6 @@
+language css
+
+CssDeclaration() as $d where {
+  $d <: r"(?s).*(?:#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb)\(\s*[^v\s]).*",
+  register_diagnostic(span=$d, message="Literal color: define it in tokens/*.css and read the token.")
+}
