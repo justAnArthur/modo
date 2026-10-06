@@ -1,0 +1,103 @@
+import Popover from './index'
+import Button from '../button'
+import InputGroup from '../input-group'
+
+# Edit profile
+
+The panel oozes out of the trigger through a liquid neck, then lets go. Escape or a press outside closes it back into the button.
+
+<Popover>
+  <Popover.Trigger render={<Button variant="secondary">Edit profile</Button>} />
+  <Popover.Content className="w-72 gap-3">
+    <div className="flex flex-col gap-1">
+      <Popover.Title>Edit profile</Popover.Title>
+      <Popover.Description>Update how others see you.</Popover.Description>
+    </div>
+    <InputGroup>
+      <InputGroup.Field index={0} label="Name" placeholder="Ada Lovelace" />
+      <InputGroup.Field index={1} label="Username" placeholder="@ada" />
+    </InputGroup>
+    <div className="flex justify-end">
+      <Popover.Close render={<Button size="compact">Save</Button>} />
+    </div>
+  </Popover.Content>
+</Popover>
+
+# Hover
+
+With `openOnHover` the trigger opens it on hover too; a tap still toggles it on touch.
+
+<Popover>
+  <Popover.Trigger openOnHover delay={100} closeDelay={120} render={<Button variant="tertiary">Hover me</Button>} />
+  <Popover.Content>
+    <Popover.Title>Liquid preview</Popover.Title>
+    <Popover.Description>Move away and it melts back into the button.</Popover.Description>
+  </Popover.Content>
+</Popover>
+
+# Sides
+
+Each side keeps the neck between trigger and panel; near a viewport edge the panel flips.
+
+<div className="flex flex-wrap items-center justify-center gap-3">
+  <Popover>
+    <Popover.Trigger render={<Button variant="secondary">Top</Button>} />
+    <Popover.Content side="top">
+      <Popover.Description>Above the trigger.</Popover.Description>
+    </Popover.Content>
+  </Popover>
+  <Popover>
+    <Popover.Trigger render={<Button variant="secondary">Right</Button>} />
+    <Popover.Content side="right">
+      <Popover.Description>To the right.</Popover.Description>
+    </Popover.Content>
+  </Popover>
+  <Popover>
+    <Popover.Trigger render={<Button variant="secondary">Bottom</Button>} />
+    <Popover.Content side="bottom">
+      <Popover.Description>Below the trigger.</Popover.Description>
+    </Popover.Content>
+  </Popover>
+  <Popover>
+    <Popover.Trigger render={<Button variant="secondary">Left</Button>} />
+    <Popover.Content side="left">
+      <Popover.Description>To the left.</Popover.Description>
+    </Popover.Content>
+  </Popover>
+</div>
+
+# Morph
+
+`effect="morph"` with `hideSource`: the trigger itself grows into the panel and shrinks back, one continuous surface.
+
+<Popover>
+  <Popover.Trigger render={<Button variant="secondary">Add note</Button>} />
+  <Popover.Content effect="morph" hideSource sideOffset={-36} className="w-72 gap-3">
+    <Popover.Title>Add note</Popover.Title>
+    <InputGroup>
+      <InputGroup.Field index={0} label="Note" placeholder="Write something…" />
+    </InputGroup>
+    <div className="flex justify-end">
+      <Popover.Close render={<Button size="compact">Done</Button>} />
+    </div>
+  </Popover.Content>
+</Popover>
+
+# Sources
+
+`from` changes where the surface starts: the press point grows a circle under the cursor, `center` unfolds the panel in place.
+
+<div className="flex flex-wrap items-center justify-center gap-3">
+  <Popover>
+    <Popover.Trigger render={<Button variant="secondary">From the pointer</Button>} />
+    <Popover.Content from="pointer">
+      <Popover.Description>A circle from where you pressed.</Popover.Description>
+    </Popover.Content>
+  </Popover>
+  <Popover>
+    <Popover.Trigger render={<Button variant="secondary">From its center</Button>} />
+    <Popover.Content from="center" effect="morph">
+      <Popover.Description>Unfolds from its own center.</Popover.Description>
+    </Popover.Content>
+  </Popover>
+</div>

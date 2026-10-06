@@ -114,7 +114,7 @@ export default function Morph({
         {shown ? 'Close' : label}
       </Button>
       {(shown || mounted) && (
-        <div ref={morph.refs.popup} className="absolute top-full left-1/2 z-10 mt-3 -translate-x-1/2">
+        <div ref={morph.popupRef} className="absolute top-full left-1/2 z-10 mt-3 -translate-x-1/2">
           <SurfaceProvider value={level}>
             <MorphSurface
               morph={morph}

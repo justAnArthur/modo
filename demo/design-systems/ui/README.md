@@ -90,6 +90,7 @@ positioning) are ported.
 | `fluid-hover-highlight.tsx` | `lib/fluid-hover-highlight.tsx` | `"use client"` dropped; `framer-motion` → `motion/react`; relative imports |
 | — (new) | `lib/use-controllable-state.ts` | Local addition: controlled + uncontrolled state, Base UI style |
 | — (new) | `lib/use-morph.ts` | Local addition: the morph engine (source rect → popup box on a spring tier, exit hold for Base UI's unmount), geometry after beUI's popover |
+| — (new) | `lib/slot.ts` | Local addition: Dialog's `render` / `asChild` slot shape (`SlotProps`, `slotRender`), shared by every overlay part that wraps a control |
 | — (new) | `lib/morph-layers.tsx` | Local addition: `MorphSurface`, the renderer (shapes layer with beUI's goo filter, surface background and shadow, clipped content) |
 
 ### Styles
@@ -152,6 +153,7 @@ only what is specific to it:
 | `InputGroup` | `registry/default/input-group.tsx` | `components/input-group/index.tsx` | `InputField` uncontrolled mode (`InputHTMLAttributes`' own `defaultValue` omitted in favour of the local one); static `.Field` |
 | `InputMessage` | `registry/default/input-message.tsx` | `components/input-message/index.tsx` | uncontrolled twins for value, files, queue and status (below); `FilePreviewTile` turned into a `forwardRef` (it exits inside `<AnimatePresence mode="popLayout">`, which measures through a ref); guards on `queue[0]`, `history[i]`, `suggestions[i]` and the `moveQueued` swap; FF's Playground section skipped and the surrounding transcript dropped (`ChatMessage` is not ported) |
 | — | `registry/default/file-thumbnail.tsx` | `components/input-message/file-thumbnail.tsx` | the lazy `import("pdfjs-dist")` is kept as-is — verified against modo's esbuild settings, it lands in a ~790 kB chunk fetched only when a PDF is attached; the worker still comes from jsDelivr, so no bundler-side worker config is needed; the `@next/next/no-img-element` eslint-disable dropped |
+| `Popover` | — (local; after beUI's gooey popover and motion-primitives' morphing popover, see [Morph sources](#morph-sources)) | `components/popover/index.tsx` | Base UI Popover with the morph layer (goo by default); `openOnHover` on the trigger; statics `.Trigger/.Content/.Title/.Description/.Close` |
 | `RadioGroup` | `registry/base/radio-group.tsx` | `components/radio-group/index.tsx` | uncontrolled index and value modes; group context carries a `selectIndex` setter every item calls, so items need no `selected`/`onSelect`; arrow-key focus guarded; static `.Item` |
 | `Select` | `registry/base/select.tsx` | `components/select/index.tsx` | members re-declared one per line (the parser drops members whose type spans lines); upstream's uncontrolled `defaultValue` verified and kept rather than rerouted through `useControllableState`; expando statics `.Trigger/.Content/.Item/.Group/.Label/.Separator` |
 | `Slider` | `registry/base/slider.tsx` | `components/slider/index.tsx` | `var(--color-accent)` → `var(--accent)` (no `--color-*` aliases here); uncontrolled support on the public wrapper, with both engines still fully controlled; `SliderProps extends Omit<SliderEngineProps, "value" \| "onChange">`; React 18 ref types (`MutableRefObject`); indexed reads of the value/step/pip arrays asserted |
@@ -193,6 +195,7 @@ The tiers mirror the FF docs navigation. FF's "System" pages become
 | primitives | `morph` (Morph) | — (local, `lib/use-morph.ts`) | — |
 | components | accordion, button, checkbox-group, combobox, dialog, dropdown, radio-group, select, slider, switch, tabs, tabs-subtle, tooltip | `registry/base/<id>.tsx` | same slug |
 | components | badge, card, color-picker, input-copy, input-group, input-message, table, thinking-indicator | `registry/default/<id>.tsx` | same slug |
+| components | popover | — (local, see [Morph sources](#morph-sources)) | — |
 
 Button lives in `components/` to mirror the FF docs, and `modo.config.ts`
 points `shell.Button` at it explicitly (an explicit path skips modo's tier

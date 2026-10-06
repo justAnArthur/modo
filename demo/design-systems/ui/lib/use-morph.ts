@@ -13,7 +13,7 @@
  */
 
 import { animate, useMotionValue, useReducedMotionConfig } from 'motion/react'
-import { type RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef } from 'react'
+import { type RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { exitFallbackMs, spring } from './springs'
 
 type MorphSide = 'top' | 'right' | 'bottom' | 'left'
@@ -197,7 +197,7 @@ function useMorphOrigin() {
 /**
  * Drives one overlay's morph. `open` is the overlay's open state, `origin` what
  * opened it (`useMorphOrigin`). Spread the returned refs through
- * `MorphSurface`; `refs.popup` goes on the Base UI popup, which keeps its final
+ * `MorphSurface`; `popupRef` goes on the Base UI popup, which keeps its final
  * size the whole time, so positioning and collision flipping never see the
  * animation. `onExited` runs once a close has finished.
  */
@@ -217,8 +217,11 @@ function useMorph(
   const exited = useRef(onExited)
   exited.current = onExited
 
+  // Base UI mounts the popup a render after `open` flips, so the engine
+  // starts from the element's arrival, not from the flag.
+  const [popup, setPopup] = useState<HTMLDivElement | null>(null)
   const refs = {
-    popup: useRef<HTMLDivElement>(null),
+    popup: useRef<HTMLDivElement | null>(null),
     shapes: useRef<HTMLDivElement>(null),
     blur: useRef<SVGFEGaussianBlurElement>(null),
     copy: useRef<HTMLDivElement>(null),
@@ -265,9 +268,9 @@ function useMorph(
   }
 
   const measure = () => {
-    const popup = refs.popup.current
-    if (!popup) return
-    const box = popup.getBoundingClientRect()
+    const el = refs.popup.current
+    if (!el) return
+    const box = el.getBoundingClientRect()
     const target = { x: 0, y: 0, w: box.width, h: box.height, r: targetRadius.current }
     const source = sourceRect(from, origin.current ?? {}, box, target)
     const blur = resolved === 'goo' ? target.r * GOO_BLUR_RATIO : 0
@@ -307,7 +310,6 @@ function useMorph(
   }
 
   useLayoutEffect(() => {
-    const popup = refs.popup.current
     if (!popup) return
     const { exit, ...enter } = spring[tier]
 
@@ -356,11 +358,16 @@ function useMorph(
       controls.stop()
       hold.cancel()
     }
-  }, [open])
+  }, [open, popup])
 
   useEffect(() => reveal, [])
 
-  return { refs, gooId, effect: resolved, progress }
+  const popupRef = useCallback((node: HTMLDivElement | null) => {
+    refs.popup.current = node
+    setPopup(node)
+  }, [])
+
+  return { refs, popupRef, popup, gooId, effect: resolved, progress }
 }
 
 type Morph = ReturnType<typeof useMorph>
