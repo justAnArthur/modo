@@ -2,7 +2,8 @@
  * Local addition (not part of Fluid Functionalism): a sheet attached to an edge
  * of the window. Base UI's Drawer owns the behavior (swipe to dismiss, snap
  * points, focus, scroll lock); the panel grows through the shared morph layer
- * (`lib/use-morph.ts`), from its own edge with the goo neck by default. Its
+ * (`lib/use-morph.ts`), from its own edge with the goo neck by default, and a
+ * swipe that dismisses it slides it on off its edge (the morph's `exit`). Its
  * title, description, close and trigger are Dialog's parts, which Base UI
  * shares with the Drawer. Replaces beUI's bottom sheet and drawer
  * (github.com/starc007/ui-components @ de52f337e520e7ee37749b36eb1c32df86137bcb
@@ -20,6 +21,7 @@ import {
   type RefObject,
   useContext,
   useImperativeHandle,
+  useState,
 } from 'react'
 import { MorphSurface } from '../../lib/morph-layers'
 import { useShape } from '../../lib/shape-context'
@@ -40,7 +42,8 @@ import {
 
 type SheetSide = 'top' | 'right' | 'bottom' | 'left'
 
-const SheetSideContext = createContext<SheetSide>('bottom')
+/** The sheet's edge, and whether its last close was a swipe. */
+const SheetContext = createContext<{ side: SheetSide; swiped: boolean }>({ side: 'bottom', swiped: false })
 
 const SWIPE: Record<SheetSide, 'up' | 'right' | 'down' | 'left'> = {
   top: 'up',
@@ -82,9 +85,16 @@ interface SheetContentProps extends HTMLAttributes<HTMLDivElement> {
 
 const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(
   ({ from, effect, hideSource, tier, container, className, children, ...props }, ref) => {
-    const side = useContext(SheetSideContext)
+    const { side, swiped } = useContext(SheetContext)
     const { open, origin } = useDialogState()
-    const morph = useMorph(open, origin, { from: from ?? side, effect, hideSource, tier })
+    const morph = useMorph(open, origin, {
+      from: from ?? side,
+      effect,
+      hideSource,
+      tier,
+      // Swiped away, it slides on off its edge from where the finger let go.
+      exit: swiped ? { effect: 'slide', from: side } : undefined,
+    })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
     const shape = useShape()
     const level = Math.min(useSurface() + DRAWER_OFFSET, 8)
@@ -172,7 +182,8 @@ interface SheetProps {
  * The sheet grows out of its own edge with the goo neck by default (see
  * Morph), or from its trigger, the press point or any element, and closes
  * back the same way. Base UI's Drawer does the rest: a swipe back toward the
- * edge dismisses it, top and bottom sheets can rest at `snapPoints`, and
+ * edge dismisses it (it slides on off the edge from where the finger let
+ * go), top and bottom sheets can rest at `snapPoints`, and
  * focus and scroll are held while it is open. It floats a spacing step off
  * its edge and lifts 4 surface levels off its substrate, like a dialog; top
  * and bottom sheets show a handle.
@@ -198,12 +209,18 @@ function Sheet({
   defaultSnapPoint,
   modal = true,
 }: SheetProps) {
+  const [swiped, setSwiped] = useState(false)
+
   return (
-    <SheetSideContext.Provider value={side}>
+    <SheetContext.Provider value={{ side, swiped }}>
       <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
         {root => (
           <DrawerPrimitive.Root
-            {...root}
+            open={root.open}
+            onOpenChange={(next, details) => {
+              setSwiped(!next && details.reason === 'swipe')
+              root.onOpenChange(next, details)
+            }}
             swipeDirection={SWIPE[side]}
             snapPoints={snapPoints}
             defaultSnapPoint={defaultSnapPoint ?? snapPoints?.[0]}
@@ -213,7 +230,7 @@ function Sheet({
           </DrawerPrimitive.Root>
         )}
       </DialogState>
-    </SheetSideContext.Provider>
+    </SheetContext.Provider>
   )
 }
 
