@@ -9,15 +9,23 @@
 #
 #   jobs:
 #     bump:
-#       uses: justAnArthur/just-github-actions-n-workflows/.github/workflows/bump-version.yml@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+#       uses: justAnArthur/just-github-actions-n-workflows/.github/workflows/bump-version.yml@2dda2831489d143088530201f9f1713662870122
 #       with:
 #         bump_type: "minor:canary"
+#
+# release tags are pushed with GITHUB_TOKEN, and GitHub never starts
+# workflows from pushes made with that token. so after tagging, this
+# workflow dispatches every installed workflow whose `push.tags` filter
+# matches a new tag (publish-npm-on-tag, publish-docker-on-tag,
+# release-on-tag, deploy-vercel-on-tag, and copies of them) on the tag
+# ref, with the tag as their `tag` input. that's why it needs
+# `actions: write` — a reusable-workflow caller must grant it too.
 #
 # required secrets:
 #   (none — uses the auto-provided GITHUB_TOKEN)
 # ---
 
-# toolkit-ref: @justanarthur/just-github-actions-n-workflows@1.0.1
+# toolkit-ref: @justanarthur/just-github-actions-n-workflows@1.0.2
 name: bump-version
 run-name: >-
   ${{
@@ -81,6 +89,7 @@ on:
 permissions:
   contents: write
   packages: write
+  actions: write
 
 jobs:
   bump-version:
@@ -99,16 +108,17 @@ jobs:
           lfs: true
 
       - name: Fetch all tags and history
-        uses: justAnArthur/just-github-actions-n-workflows/actions/fetch-tags@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+        uses: justAnArthur/just-github-actions-n-workflows/actions/fetch-tags@2dda2831489d143088530201f9f1713662870122
 
       - name: Configure git user
         id: git_user
-        uses: justAnArthur/just-github-actions-n-workflows/actions/configure-git-user@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+        uses: justAnArthur/just-github-actions-n-workflows/actions/configure-git-user@2dda2831489d143088530201f9f1713662870122
         with:
           mode: ${{ github.event_name == 'push' && 'push' || 'dispatch' }}
 
       - name: Bump version
-        uses: justAnArthur/just-github-actions-n-workflows/actions/bump-version@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+        id: bump
+        uses: justAnArthur/just-github-actions-n-workflows/actions/bump-version@2dda2831489d143088530201f9f1713662870122
         with:
           bump_to_calculated_stable: ${{ inputs.bump_to_calculated_stable || 'false' }}
           bump_type_and_channel: ${{ inputs.bump_type || '' }}
@@ -118,3 +128,10 @@ jobs:
           github_event: ${{ toJson(github.event) }}
           co_author_name: ${{ steps.git_user.outputs.co_author_name }}
           co_author_email: ${{ steps.git_user.outputs.co_author_email }}
+
+      - name: Dispatch tag-triggered workflows
+        if: ${{ !cancelled() && steps.bump.outputs.tags != '' }}
+        uses: justAnArthur/just-github-actions-n-workflows/actions/dispatch-tag-workflows@2dda2831489d143088530201f9f1713662870122
+        with:
+          tags: ${{ steps.bump.outputs.tags }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}

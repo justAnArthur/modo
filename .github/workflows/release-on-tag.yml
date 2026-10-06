@@ -10,7 +10,7 @@
 #
 #   jobs:
 #     release:
-#       uses: justAnArthur/just-github-actions-n-workflows/.github/workflows/release-on-tag.yml@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+#       uses: justAnArthur/just-github-actions-n-workflows/.github/workflows/release-on-tag.yml@2dda2831489d143088530201f9f1713662870122
 #       with:
 #         tag: ${{ github.ref_name }}
 #
@@ -18,12 +18,15 @@
 #   (none — uses the auto-provided GITHUB_TOKEN)
 # ---
 
-# toolkit-ref: @justanarthur/just-github-actions-n-workflows@1.0.1
+# toolkit-ref: @justanarthur/just-github-actions-n-workflows@1.0.2
 name: release-on-tag
 run-name: "release — ${{ inputs.tag || github.ref_name }}"
 
 on:
   push:
+    # local change: 1.0.2's "*@*" can't match scoped tags on GitHub (`*` stops
+    # at `/`, so `@scope/pkg@1.2.3` never fires); "**@*" does. Tags bump-version
+    # creates are dispatched by the toolkit's matcher, which accepts either.
     tags: [ "**@*" ]
   workflow_dispatch:
     inputs:
@@ -48,7 +51,7 @@ jobs:
     steps:
       - name: Resolve tag metadata
         id: meta
-        uses: justAnArthur/just-github-actions-n-workflows/actions/resolve-tag-meta@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+        uses: justAnArthur/just-github-actions-n-workflows/actions/resolve-tag-meta@2dda2831489d143088530201f9f1713662870122
         with:
           tag: ${{ inputs.tag || github.ref_name }}
 
@@ -59,11 +62,11 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch all tags
-        uses: justAnArthur/just-github-actions-n-workflows/actions/fetch-tags@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+        uses: justAnArthur/just-github-actions-n-workflows/actions/fetch-tags@2dda2831489d143088530201f9f1713662870122
 
       - name: Generate release notes
         id: release_notes
-        uses: justAnArthur/just-github-actions-n-workflows/actions/generate-release-notes@5890c3923e2cc0cac448c7cb54c1209d7bbe53b4
+        uses: justAnArthur/just-github-actions-n-workflows/actions/generate-release-notes@2dda2831489d143088530201f9f1713662870122
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
           root_dir: ${{ github.workspace }}
