@@ -1,0 +1,346 @@
+import { Brain, Calendar, Check, Clock, CornerDownRight, Globe, Link, MessageCircle, MoreVertical, Pencil, Play, Plus, Search, SlidersHorizontal, SquareLibrary, Star, X } from 'lucide-react'
+import Sidebar from './index'
+import { DropdownContent, DropdownMenu, DropdownTrigger, MenuItem } from '../dropdown'
+import Tooltip from '../tooltip'
+import { SidebarInsetTopbar } from '../../blocks/sidebar-app/inset-topbar'
+import { SidebarSearchField } from '../../blocks/sidebar-app/search-field'
+import { SidebarUserFooter } from '../../blocks/sidebar-app/user-footer'
+import { SidebarWorkspaceHeader, WorkspaceTile } from '../../blocks/sidebar-app/workspace-header'
+
+# Sidebar
+
+The default layout sits flush with an inner border. Pick a row: the active background melts across to it, and the hover highlight drips from row to row.
+
+<div className="flex h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <Sidebar className="h-full" defaultValue="Chat">
+      <Sidebar.Content>
+        <Sidebar.Group collapsible>
+          <Sidebar.GroupLabel>Workspace</Sidebar.GroupLabel>
+          <Sidebar.Menu>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={MessageCircle} value="Chat">Chat</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Brain} value="Agents">Agents</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={SquareLibrary} value="Knowledge">Knowledge</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Play} value="Runs">Runs</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Check} value="Evals">Evals</Sidebar.MenuButton></Sidebar.MenuItem>
+          </Sidebar.Menu>
+        </Sidebar.Group>
+      </Sidebar.Content>
+    </Sidebar>
+    <Sidebar.Inset className="min-h-0">
+      <SidebarInsetTopbar />
+    </Sidebar.Inset>
+  </Sidebar.Provider>
+</div>
+
+# Floating
+
+`variant="floating"` lifts the sidebar onto its own card, one surface level up.
+
+<div className="flex h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <Sidebar variant="floating" className="h-full" defaultValue="Chat">
+      <Sidebar.Content>
+        <Sidebar.Group collapsible>
+          <Sidebar.GroupLabel>Workspace</Sidebar.GroupLabel>
+          <Sidebar.Menu>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={MessageCircle} value="Chat">Chat</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Brain} value="Agents">Agents</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={SquareLibrary} value="Knowledge">Knowledge</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Play} value="Runs">Runs</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Check} value="Evals">Evals</Sidebar.MenuButton></Sidebar.MenuItem>
+          </Sidebar.Menu>
+        </Sidebar.Group>
+      </Sidebar.Content>
+    </Sidebar>
+    <Sidebar.Inset className="min-h-0 pt-2">
+      <SidebarInsetTopbar />
+    </Sidebar.Inset>
+  </Sidebar.Provider>
+</div>
+
+# Inset
+
+`variant="inset"` makes your content stand out: the main region becomes the card, and the sidebar sits on the page around it.
+
+<div className="flex h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <Sidebar variant="inset" className="h-full" defaultValue="Chat">
+      <Sidebar.Content>
+        <Sidebar.Group collapsible>
+          <Sidebar.GroupLabel>Workspace</Sidebar.GroupLabel>
+          <Sidebar.Menu>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={MessageCircle} value="Chat">Chat</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Brain} value="Agents">Agents</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={SquareLibrary} value="Knowledge">Knowledge</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Play} value="Runs">Runs</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Check} value="Evals">Evals</Sidebar.MenuButton></Sidebar.MenuItem>
+          </Sidebar.Menu>
+        </Sidebar.Group>
+      </Sidebar.Content>
+    </Sidebar>
+    <Sidebar.Inset className="min-h-0">
+      <SidebarInsetTopbar />
+    </Sidebar.Inset>
+  </Sidebar.Provider>
+</div>
+
+# Nesting
+
+Two levels below the sections: a `collapsible` row folds its sub-menu, and the hover highlight flows from a parent into its children. Private starts folded to its label, Shared open with its rows closed, Recent open all the way down.
+
+<div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <Sidebar className="h-full" defaultValue="API guidelines">
+      <Sidebar.Content>
+        <Sidebar.Group collapsible defaultOpen={false}>
+          <Sidebar.GroupLabel>Private</Sidebar.GroupLabel>
+          <Sidebar.Menu>
+            <Sidebar.MenuItem collapsible>
+              <Sidebar.MenuButton icon={Pencil}>Drafts</Sidebar.MenuButton>
+              <Sidebar.MenuSub>
+                <Sidebar.MenuSubItem><Sidebar.MenuSubButton icon={Star} value="Onboarding revamp">Onboarding revamp</Sidebar.MenuSubButton></Sidebar.MenuSubItem>
+                <Sidebar.MenuSubItem><Sidebar.MenuSubButton icon={Search} value="Competitor teardown">Competitor teardown</Sidebar.MenuSubButton></Sidebar.MenuSubItem>
+              </Sidebar.MenuSub>
+            </Sidebar.MenuItem>
+            <Sidebar.MenuItem collapsible>
+              <Sidebar.MenuButton icon={Calendar}>Weekly notes</Sidebar.MenuButton>
+              <Sidebar.MenuSub>
+                <Sidebar.MenuSubItem><Sidebar.MenuSubButton icon={Clock} value="Week 35 — planning">Week 35 — planning</Sidebar.MenuSubButton></Sidebar.MenuSubItem>
+                <Sidebar.MenuSubItem><Sidebar.MenuSubButton icon={MessageCircle} value="Week 34 — retro">Week 34 — retro</Sidebar.MenuSubButton></Sidebar.MenuSubItem>
+              </Sidebar.MenuSub>
+            </Sidebar.MenuItem>
+          </Sidebar.Menu>
+        </Sidebar.Group>
+        <Sidebar.Group collapsible>
+          <Sidebar.GroupLabel>Shared</Sidebar.GroupLabel>
+          <Sidebar.Menu>
+            <Sidebar.MenuItem collapsible>
+              <Sidebar.MenuButton icon={Brain}>Engineering</Sidebar.MenuButton>
+              <Sidebar.MenuSub>
+                <Sidebar.MenuSubItem><Sidebar.MenuSubButton icon={Link} value="API guidelines">API guidelines</Sidebar.MenuSubButton></Sidebar.MenuSubItem>
+                <Sidebar.MenuSubItem><Sidebar.MenuSubButton icon={Play} value="Release process">Release process</Sidebar.MenuSubButton></Sidebar.MenuSubItem>
+              </Sidebar.MenuSub>
+            </Sidebar.MenuItem>
+            <Sidebar.MenuItem collapsible>
+              <Sidebar.MenuButton icon={Globe}>Product hub</Sidebar.MenuButton>
+              <Sidebar.MenuSub>
+                <Sidebar.MenuSubItem><Sidebar.MenuSubButton icon={MessageCircle} value="Customer interviews">Customer interviews</Sidebar.MenuSubButton></Sidebar.MenuSubItem>
+                <Sidebar.MenuSubItem><Sidebar.MenuSubButton icon={Star} value="Roadmap">Roadmap</Sidebar.MenuSubButton></Sidebar.MenuSubItem>
+              </Sidebar.MenuSub>
+            </Sidebar.MenuItem>
+          </Sidebar.Menu>
+        </Sidebar.Group>
+        <Sidebar.Group collapsible>
+          <Sidebar.GroupLabel>Recent</Sidebar.GroupLabel>
+          <Sidebar.Menu>
+            <Sidebar.MenuItem collapsible defaultOpen>
+              <Sidebar.MenuButton icon={Clock}>Today</Sidebar.MenuButton>
+              <Sidebar.MenuSub>
+                <Sidebar.MenuSubItem><Sidebar.MenuSubButton icon={Star} value="Onboarding revamp">Onboarding revamp</Sidebar.MenuSubButton></Sidebar.MenuSubItem>
+                <Sidebar.MenuSubItem><Sidebar.MenuSubButton icon={Link} value="API guidelines">API guidelines</Sidebar.MenuSubButton></Sidebar.MenuSubItem>
+              </Sidebar.MenuSub>
+            </Sidebar.MenuItem>
+            <Sidebar.MenuItem collapsible defaultOpen>
+              <Sidebar.MenuButton icon={Calendar}>Yesterday</Sidebar.MenuButton>
+              <Sidebar.MenuSub>
+                <Sidebar.MenuSubItem><Sidebar.MenuSubButton icon={MessageCircle} value="Customer interviews">Customer interviews</Sidebar.MenuSubButton></Sidebar.MenuSubItem>
+                <Sidebar.MenuSubItem><Sidebar.MenuSubButton icon={Play} value="Release process">Release process</Sidebar.MenuSubButton></Sidebar.MenuSubItem>
+              </Sidebar.MenuSub>
+            </Sidebar.MenuItem>
+          </Sidebar.Menu>
+        </Sidebar.Group>
+      </Sidebar.Content>
+    </Sidebar>
+  </Sidebar.Provider>
+</div>
+
+# Actions and badges
+
+A badge and up to three actions per row. The actions show on hover, so the label keeps the room at rest; the row menu grows out of its button. Section labels carry their own actions.
+
+<div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <Sidebar className="h-full">
+      <Sidebar.Content>
+        <Sidebar.Group collapsible>
+          <Sidebar.GroupLabel>Threads</Sidebar.GroupLabel>
+          <Sidebar.GroupActions>
+            <Tooltip content="New thread" side="top">
+              <Sidebar.GroupAction aria-label="New thread"><Plus /></Sidebar.GroupAction>
+            </Tooltip>
+            <Tooltip content="Filter threads" side="top">
+              <Sidebar.GroupAction aria-label="Filter threads"><SlidersHorizontal /></Sidebar.GroupAction>
+            </Tooltip>
+          </Sidebar.GroupActions>
+          <Sidebar.Menu>
+            {[
+              ['Summarise the Q3 board deck', 'unread', '12'],
+              ['Migration plan for Postgres 16', 'unread', '4'],
+              ['Why does retrieval miss the changelog?', 'idle', '6'],
+              ['Rewrite the onboarding emails', 'idle', '8'],
+              ['Debug the eval harness timeout', 'unread', '9'],
+              ['Draft the launch announcement', 'idle', '5'],
+            ].map(([label, status, badge]) => (
+              <Sidebar.MenuItem key={label}>
+                <Sidebar.MenuButton status={status}>{label}</Sidebar.MenuButton>
+                <Sidebar.MenuBadge>{badge}</Sidebar.MenuBadge>
+                <Sidebar.MenuActions showOnHover>
+                  <Tooltip content="Branch thread" side="top">
+                    <Sidebar.MenuAction aria-label="Branch thread"><CornerDownRight /></Sidebar.MenuAction>
+                  </Tooltip>
+                  <Tooltip content="Share thread" side="top">
+                    <Sidebar.MenuAction aria-label="Share thread"><Link /></Sidebar.MenuAction>
+                  </Tooltip>
+                  <DropdownMenu>
+                    <DropdownTrigger render={<Sidebar.MenuAction aria-label="More options"><MoreVertical /></Sidebar.MenuAction>} />
+                    <DropdownContent className="min-w-0 w-[240px]" align="start" sideOffset={4}>
+                      <MenuItem index={0} icon={Pencil} label="Rename" />
+                      <MenuItem index={1} icon={X} label="Delete" />
+                    </DropdownContent>
+                  </DropdownMenu>
+                </Sidebar.MenuActions>
+              </Sidebar.MenuItem>
+            ))}
+          </Sidebar.Menu>
+        </Sidebar.Group>
+      </Sidebar.Content>
+    </Sidebar>
+  </Sidebar.Provider>
+</div>
+
+# Header and footer
+
+The two ends of the rail: a workspace switcher and search on top, the user row at the bottom. Both menus grow out of their rows.
+
+<div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <Sidebar className="h-full" defaultValue="Chat">
+      <Sidebar.Header>
+        <SidebarWorkspaceHeader
+          name="Aurora AI"
+          tile={<WorkspaceTile>A</WorkspaceTile>}
+          defaultCheckedIndex={0}
+          menu={
+            <>
+              <MenuItem index={0} label="Aurora AI" />
+              <MenuItem index={1} label="Personal" />
+              <MenuItem index={2} icon={Plus} label="New workspace" />
+            </>
+          }
+        />
+        <SidebarSearchField />
+      </Sidebar.Header>
+      <Sidebar.Content>
+        <Sidebar.Group>
+          <Sidebar.GroupLabel>Workspace</Sidebar.GroupLabel>
+          <Sidebar.Menu>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={MessageCircle} value="Chat">Chat</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Brain} value="Agents">Agents</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={SquareLibrary} value="Knowledge">Knowledge</Sidebar.MenuButton></Sidebar.MenuItem>
+          </Sidebar.Menu>
+        </Sidebar.Group>
+      </Sidebar.Content>
+      <Sidebar.Footer>
+        <SidebarUserFooter
+          name="Micka Touillaud"
+          avatar={<span className="flex size-5 items-center justify-center rounded-full bg-muted-foreground text-micro-compact text-background">M</span>}
+          menu={
+            <>
+              <MenuItem index={0} label="Profile" />
+              <MenuItem index={1} label="Settings" />
+              <MenuItem index={2} label="Log out" />
+            </>
+          }
+        />
+      </Sidebar.Footer>
+    </Sidebar>
+    <Sidebar.Inset className="min-h-0">
+      <SidebarInsetTopbar />
+    </Sidebar.Inset>
+  </Sidebar.Provider>
+</div>
+
+# Resize, collapse and peek
+
+Drag the rail on the inner edge to resize, click it or press `[` to collapse. With `peek="hover"`, a collapsed sidebar oozes back out of the edge, or out of the trigger you rest on, and melts back in when you leave.
+
+<div className="flex h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0} peek="hover">
+    <Sidebar variant="inset" className="h-full" defaultValue="Summarise the Q3 board deck">
+      <Sidebar.Content>
+        <Sidebar.Group>
+          <Sidebar.GroupLabel>Threads</Sidebar.GroupLabel>
+          <Sidebar.Menu>
+            {[
+              ['Summarise the Q3 board deck', 'active', '12'],
+              ['Migration plan for Postgres 16', 'unread', '4'],
+              ['Why does retrieval miss the changelog?', 'idle', '6'],
+              ['Rewrite the onboarding emails', 'idle', '8'],
+              ['Debug the eval harness timeout', 'unread', '9'],
+            ].map(([label, status, badge]) => (
+              <Sidebar.MenuItem key={label}>
+                <Sidebar.MenuButton status={status} value={label}>{label}</Sidebar.MenuButton>
+                <Sidebar.MenuBadge>{badge}</Sidebar.MenuBadge>
+              </Sidebar.MenuItem>
+            ))}
+          </Sidebar.Menu>
+        </Sidebar.Group>
+      </Sidebar.Content>
+    </Sidebar>
+    <Sidebar.Inset className="min-h-0">
+      <SidebarInsetTopbar />
+    </Sidebar.Inset>
+  </Sidebar.Provider>
+</div>
+
+# Peek on click
+
+`peek="click"` floats the collapsed sidebar out only when its edge is pressed. Press outside or hit Escape to send it back; the trigger in its header pins it open.
+
+<div className="flex h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0} peek="click" defaultOpen={false}>
+    <Sidebar variant="inset" className="h-full" defaultValue="Chat">
+      <Sidebar.Header>
+        <SidebarWorkspaceHeader name="Aurora AI" tile={<WorkspaceTile>A</WorkspaceTile>} />
+      </Sidebar.Header>
+      <Sidebar.Content>
+        <Sidebar.Group>
+          <Sidebar.GroupLabel>Workspace</Sidebar.GroupLabel>
+          <Sidebar.Menu>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={MessageCircle} value="Chat">Chat</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Brain} value="Agents">Agents</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={SquareLibrary} value="Knowledge">Knowledge</Sidebar.MenuButton></Sidebar.MenuItem>
+          </Sidebar.Menu>
+        </Sidebar.Group>
+      </Sidebar.Content>
+    </Sidebar>
+    <Sidebar.Inset className="min-h-0">
+      <SidebarInsetTopbar />
+    </Sidebar.Inset>
+  </Sidebar.Provider>
+</div>
+
+# Mobile drawer
+
+Below `mobileBreakpoint` (768px by default) the sidebar is a Sheet: it grows out of the window's edge with the goo neck and swipes away. This one's breakpoint is set past any window, so the trigger always opens the drawer.
+
+<div className="flex h-[240px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={100000}>
+    <Sidebar defaultValue="Chat">
+      <Sidebar.Content>
+        <Sidebar.Group>
+          <Sidebar.GroupLabel>Workspace</Sidebar.GroupLabel>
+          <Sidebar.Menu>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={MessageCircle} value="Chat">Chat</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Brain} value="Agents">Agents</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={SquareLibrary} value="Knowledge">Knowledge</Sidebar.MenuButton></Sidebar.MenuItem>
+          </Sidebar.Menu>
+        </Sidebar.Group>
+      </Sidebar.Content>
+    </Sidebar>
+    <Sidebar.Inset className="min-h-0">
+      <SidebarInsetTopbar />
+    </Sidebar.Inset>
+  </Sidebar.Provider>
+</div>

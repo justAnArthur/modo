@@ -10,6 +10,7 @@ export default defineConfig({
     Button: './components/button',
     Select: './modo.components.tsx#Select',
     Icon: './modo.components.tsx#Icon',
+    Sidebar: './modo.components.tsx#DocsNav',
   },
   panel: { items: [{ label: 'Theme', component: './modo.components.tsx#ThemeSwitcher' }] },
 })

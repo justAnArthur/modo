@@ -1,0 +1,33 @@
+import SidebarApp from './index'
+
+# Preset
+
+The preset as it ships: collapsed. Press the trigger (or `[`) and the sidebar slides in; pick a thread and the active row melts over to it.
+
+<div className="h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <SidebarApp contained />
+</div>
+
+# Open
+
+`defaultOpen` starts it expanded. Open the workspace switcher, a thread's "More options" or the user row: each menu grows out of its row.
+
+<div className="h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <SidebarApp contained defaultOpen />
+</div>
+
+# Peek on hover
+
+`peek="hover"`: rest on the left edge or on the trigger and the collapsed sidebar oozes out of it; leave and it melts back. The trigger in its header pins it open.
+
+<div className="h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <SidebarApp contained peek="hover" />
+</div>
+
+# Floating on the right
+
+The same shell with `variant="floating"` and `side="right"`; the shortcut becomes `]`.
+
+<div className="h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <SidebarApp contained defaultOpen variant="floating" side="right" />
+</div>

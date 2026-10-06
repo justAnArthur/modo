@@ -1,0 +1,74 @@
+/*
+ * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
+ * `app/globals.css` (`.scroll-divider`) @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
+ * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
+ * Local modifications: none (modo injects this file beside the Sidebar).
+ */
+
+/* ── scroll-divider — a hairline marking a scroll edge ──────────────────────
+   Pairs with .scroll-fade on a descendant viewport: where the fade dissolves
+   content, this draws the line that says "the region continues". The line
+   can't live inside the scroller — the fade's own mask would erase it at
+   exactly the edge it belongs on — so it rides the parent's pseudo-elements
+   and borrows the scroller's timeline by name. Browsers without scroll-driven
+   timelines simply get the fade, as before. */
+@keyframes sf-divider-start {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sf-divider-end {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@supports (timeline-scope: --sf) {
+  .scroll-divider {
+    position: relative;
+    timeline-scope: --sf-scroller;
+    --scroll-divider-size: 48px;
+  }
+  .scroll-divider .scroll-fade {
+    scroll-timeline-name: --sf-scroller;
+  }
+  .scroll-divider::before,
+  .scroll-divider::after {
+    content: "";
+    position: absolute;
+    /* Inset so the line can hug the content's own gutter rather than the
+       panel edge — the sidebar's inset variant sets this to 8px. */
+    left: var(--scroll-divider-inset, 0px);
+    right: var(--scroll-divider-inset, 0px);
+    height: 1px;
+    background-color: var(--border);
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+  }
+  /* Top edge: absent at rest, fading in as content passes above. */
+  .scroll-divider::before {
+    top: 0;
+    animation: sf-divider-start both linear;
+    animation-timeline: --sf-scroller;
+    animation-range: 0 var(--scroll-divider-size);
+  }
+  /* A region flush with the panel's own top edge has nothing above for
+     content to pass under, so the start line would read as a stray border. */
+  .scroll-divider:first-child::before {
+    content: none;
+  }
+  /* Bottom edge: present while content continues below, gone at the end. */
+  .scroll-divider::after {
+    bottom: 0;
+    animation: sf-divider-end both linear;
+    animation-timeline: --sf-scroller;
+    animation-range: calc(100% - var(--scroll-divider-size)) 100%;
+  }
+}

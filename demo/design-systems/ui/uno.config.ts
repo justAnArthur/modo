@@ -29,7 +29,7 @@ import { defineConfig, presetWind4 } from 'unocss'
  */
 
 const root = dirname(fileURLToPath(import.meta.url))
-const sources = resolve(root, '{lib,primitives,components}/**/*.{ts,tsx,mdx}')
+const sources = resolve(root, '{lib,primitives,components,blocks}/**/*.{ts,tsx,mdx}')
 const chrome = resolve(root, 'modo.components.tsx')
 
 const TYPE_ROLES = ['display', 'title', 'subtitle', 'body', 'caption', 'micro'] as const

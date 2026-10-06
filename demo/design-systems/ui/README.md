@@ -37,8 +37,8 @@ modification. The vendored code below the header keeps upstream's formatting.
 Files written for this port (`uno.config.ts`, `vite.ts`, `modo.components.tsx`,
 `lib/use-controllable-state.ts`, `primitives/code/index.tsx`, the morph files
 in `lib/` (`use-morph.ts`, `morph-layers.tsx`, `morph-part.tsx`, `goo-indicator.tsx`,
-`slot.ts`) and `primitives/morph/index.tsx`, and the local components marked
-"— (local)" below) use this repo's style: single quotes and no semicolons.
+`slot.ts`) and `primitives/morph/index.tsx`, `blocks/sidebar-app/index.tsx`,
+and the local components marked "— (local)" below) use this repo's style: single quotes and no semicolons.
 
 ### Morph sources
 
@@ -65,9 +65,10 @@ positioning) are ported.
 | `global.css` | Theme switching, base styles, focus fallback, scrollbars, shimmer/spinner keyframes and `.scroll-fade`. |
 | `uno.config.ts`, `vite.ts` | The UnoCSS setup (see below). |
 | `lib/` | FF's shared system files (upstream `lib/`, `hooks/` and the fluid-hover highlight, flat, upstream names), imported relatively by items. modo only scans the tier folders, so it never mistakes them for items. |
-| `modo.components.tsx` | Components only the docs site uses: the `Icon` and `Select` shell-slot adapters and the `ThemeSwitcher` panel item, picked in `modo.config.ts` by export name (`./modo.components.tsx#Select`). |
+| `modo.components.tsx` | Components only the docs site uses: the `Icon`, `Select` and `DocsNav` shell-slot adapters and the `ThemeSwitcher` panel item, picked in `modo.config.ts` by export name (`./modo.components.tsx#Select`). |
 | `primitives/<id>/` | FF's "System" pages: `index.tsx` (component + TSDoc prose) and `examples.mdx`, pulled in by `@example {@include ./examples.mdx}`. |
 | `components/<id>/` | FF's "Components" pages, same shape. |
+| `blocks/<id>/` | Compositions of several items, same shape: `sidebar-app`, FF's sidebar preset `sa1FQfCxH6` as an app shell, with the header and footer blocks it is built from beside it. |
 
 ## Upstream → local file map
 
@@ -151,7 +152,7 @@ only what is specific to it:
 | `Combobox` | `registry/base/combobox.tsx` | `components/combobox/index.tsx` | root de-generified (the parser needs a plain function plus a same-file `interface ComboboxProps`): items gained an index signature, `value`/`defaultValue` are `string \| string[]` and `onValueChange` is a union of the two handler shapes; `ComboboxValue<Multiple>` still exported; `creatable` added; `React.*` type refs replaced by named type imports; statics `.Input/.Chips/.Content/.List/.Item/.Empty`; the popup morphs out of the field (morph layer, goo on `spring.moderate`; `from` / `effect` / `hideSource` / `tier` on `Combobox.Content`), replacing the `scaleY` wrapper and the `actionsRef` deferred unmount |
 | `Command` | — (local) | `components/command/index.tsx` | Base UI Autocomplete rendered inline in Dialog's panel (`position="top"`, no ✕), morphing from its trigger with goo; grouped/flat command data filtered by label + keywords; one fluid highlight follows Base UI's highlight; ⌘K/Ctrl+K `hotkey` (one palette answers a press); fresh palette per open; statics `.Trigger/.Content/.Palette/.Shortcut`; `CommandList`/`CommandListRoot` exported for Search |
 | `ContextMenu` | — (local; see [Morph sources](#morph-sources)) | `components/context-menu/index.tsx` | Base UI ContextMenu (right click, long press) with the morph layer growing from the press point (`from="pointer"` default, `spring.moderate`); rows are Dropdown's `MenuItem`, `Dropdown.Label`, `Dropdown.Separator` with fluid hover; `ContextMenu.Item` adds `shortcut`; `size` on the root; statics `.Trigger/.Content/.Item/.Label/.Separator` |
-| `Dialog` | `registry/base/dialog.tsx` | `components/dialog/index.tsx` | `DialogProps` and `DialogContentProps` fully re-declared (the slot props now come from `lib/slot.ts`); statics attached as expando properties (`Dialog.Trigger = …`), so `<Dialog.Content>` types without a cast; FF's "With a sidebar" example replaced by "Surfaces inside a dialog" (Sidebar is not ported); the panel morphs out of its trigger (morph layer, goo on `spring.slow`; `from` / `effect` / `hideSource` / `tier` on `Dialog.Content`), the backdrop fades with the morph's progress, the root holds the open state and scopes `Morph.Part` pairs |
+| `Dialog` | `registry/base/dialog.tsx` | `components/dialog/index.tsx` | `DialogProps` and `DialogContentProps` fully re-declared (the slot props now come from `lib/slot.ts`); statics attached as expando properties (`Dialog.Trigger = …`), so `<Dialog.Content>` types without a cast; FF's "With a sidebar" example replaced by "Surfaces inside a dialog" (written before the Sidebar was ported); the panel morphs out of its trigger (morph layer, goo on `spring.slow`; `from` / `effect` / `hideSource` / `tier` on `Dialog.Content`), the backdrop fades with the morph's progress, the root holds the open state and scopes `Morph.Part` pairs |
 | `Dropdown` | `registry/base/dropdown.tsx` | `components/dropdown/index.tsx` | uncontrolled selection and uncontrolled search filtering (below); `items[next].focus()` guarded; statics `.Menu/.Trigger/.Content/.Item/.Label/.Separator/.Search/.Empty`; FF's "Create from the query" section skipped — adding a row to the list is real consumer state; the popup menu morphs out of its trigger (morph layer, goo on `spring.moderate`; `from` / `effect` / `hideSource` / `tier` on `Dropdown.Content`), replacing the `scaleY` wrapper and the ignored `actionsRef`; popup rows hand activation to the Menu item's `onClick` so Enter / Space pick |
 | — | `registry/default/menu-item.tsx` | `components/dropdown/menu-item.tsx` | a row with no `checked` derives it from a self-managed panel and toggles the panel's state; `sourceIndex` carries the authored index so selection survives filter re-indexing |
 | — | `registry/default/dropdown-search.tsx` | `components/dropdown/dropdown-search.tsx` | `filter` mode: `value`/`onValueChange` optional, the field reads and writes the query held by the panel (`DropdownFilterContext`) |
@@ -165,6 +166,7 @@ only what is specific to it:
 | `Search` | — (local; after beUI's morphing search, see [Morph sources](#morph-sources)) | `components/search/index.tsx` | pill or icon button springing its own width in place (`spring.slow`), growing over its neighbors (`align`); with `items`, Autocomplete suggestions ooze out of the field via the morph layer (goo on `spring.moderate`, `effect`/`tier`) with Command's rows; Escape closes → clears → collapses; blur collapses when empty; `shortcut`; `<search>` landmark + form, `onSubmit` |
 | `Select` | `registry/base/select.tsx` | `components/select/index.tsx` | members re-declared one per line (the parser drops members whose type spans lines); upstream's uncontrolled `defaultValue` verified and kept rather than rerouted through `useControllableState`; expando statics `.Trigger/.Content/.Item/.Group/.Label/.Separator`; the popup morphs out of its trigger (morph layer, goo on `spring.moderate`; `from` / `effect` / `hideSource` / `tier` on `Select.Content`), replacing the `scaleY` wrapper and the `actionsRef` deferred unmount |
 | `Sheet` | — (local; replaces beUI's bottom sheet and drawer, see [Morph sources](#morph-sources)) | `components/sheet/index.tsx` | Base UI Drawer (swipe to dismiss, snap points, `Drawer.Viewport` for the swipe) with the morph growing from the sheet's own edge; a swipe-dismissed sheet slides on off its edge from the release point (the morph's `exit`); `side`, `snapPoints`, `defaultSnapPoint`; Dialog's parts and `DialogState` (Base UI's Drawer parts are Dialog's); statics as Dialog's plus `.Provider` / `.Indent` |
+| `Sidebar` | `registry/base/sidebar.tsx` (+ `registry/default/sidebar-core.tsx`, `sidebar-menu.tsx`; `app/globals.css` `.scroll-divider`) | `components/sidebar/index.tsx` (+ `sidebar-core.tsx`, `sidebar-menu.tsx`, `sidebar.css`) | the mobile sheet is the DS's `Sheet` (goo from its edge, swipe to dismiss) instead of a Dialog with a framer slide; the collapsed peek grows out of the edge strip or the hovered trigger through the morph layer (goo on `spring.moderate`, the source kept in the context's `peekOrigin`) instead of sliding in; the active row backgrounds are `GooIndicator`s and the hover highlight the liquid `FluidHoverHighlight`; uncontrolled selection (`value` on the buttons, `value` / `defaultValue` / `onValueChange` on `Sidebar`) and collapsible rows (`Sidebar.MenuItem collapsible`, below); statics `.Provider/.Trigger/.Rail/.Inset/.Input/.Header/.Content/.Footer/.Separator/.Group/.GroupLabel/.GroupAction/.GroupActions/.GroupContent/.Menu/.MenuItem/.MenuButton/.MenuAction/.MenuActions/.MenuBadge/.MenuSkeleton/.MenuSub/.MenuSubItem/.MenuSubButton` through a `SidebarComponent` cast; `fontVariationSettings` → `weight-*`, `text-[Npx]` → type roles, hex focus ring → `ring-focus-ring`, `duration-80\|160\|240` → tiers |
 | `Slider` | `registry/base/slider.tsx` | `components/slider/index.tsx` | `var(--color-accent)` → `var(--accent)` (no `--color-*` aliases here); uncontrolled support on the public wrapper, with both engines still fully controlled; `SliderProps extends Omit<SliderEngineProps, "value" \| "onChange">`; React 18 ref types (`MutableRefObject`); indexed reads of the value/step/pip arrays asserted |
 | `Switch` | `registry/base/switch.tsx` | `components/switch/index.tsx` | uncontrolled support; every in-body read goes through the resolved `isChecked` and a `toggle()` that also calls `onToggle`; the thumb is a `GooIndicator` in Base UI's Thumb (stretches as it travels), dragged x held in state |
 | `Table` | `registry/default/table.tsx` | `components/table/index.tsx` | statics `.Header/.Body/.Row/.Head/.Cell`; `TableProps` / `TableRowProps` exported |
@@ -174,12 +176,27 @@ only what is specific to it:
 | `Toast` | — (local; after Sileo, see [Morph sources](#morph-sources)) | `components/toast/index.tsx` | Base UI Toast (queue, timers, swipe, announcements) with Sileo's pill melting into a body through the shared `GooFilter`; autopilot expand/collapse, six states on the `--status-*` tokens, promise toasts; `Toast` is the provider + viewport, `Toast.Trigger` shows one, `useToast()` the imperative API |
 | `Tooltip` | `registry/base/tooltip.tsx` | `components/tooltip/index.tsx` | `className`/`children` docs filled in; statics `.Provider` / `.PortalContainer`; the slide + fade replaced by the morph layer (goo from the trigger on `spring.moderate`, `from` / `effect` / `tier` props; `followCursor` tooltips fade); a hand-off between grouped tooltips skips the morph (Base UI's `data-instant`) |
 
+#### blocks
+
+| Item | Upstream | Local | Specific modifications |
+|---|---|---|---|
+| `SidebarApp` | the app-sidebar.tsx and page.tsx FF's preset generator emits for `sa1FQfCxH6` (`lib/preset/sidebar-install.ts` @ `c367a0d066bc10e663b3d269bc40539ea8417b25`, later than the pin: the generator postdates it) | `blocks/sidebar-app/index.tsx` (+ `nav-data.ts`) | the selected thread rides `Sidebar`'s `value` and shows in the topbar; the switcher keeps its own pick (`defaultCheckedIndex`); the footer's raw icon buttons are the ghost `Button`; `variant`, `side`, `peek`, `contained` props |
+| — | `registry/blocks/sidebar-workspace-header.tsx` | `blocks/sidebar-app/workspace-header.tsx` | `fontVariationSettings` → `weight-semibold`, `text-[13px]` / `text-[10px]` → `text-body` / `text-micro-compact`; `defaultCheckedIndex` passed through |
+| — | `registry/blocks/sidebar-user-footer.tsx` | `blocks/sidebar-app/user-footer.tsx` | `text-[13px]` → `text-body` |
+| — | `registry/blocks/sidebar-app/search-field.tsx` | `blocks/sidebar-app/search-field.tsx` | `text-[11px]` → `text-micro` |
+| — | `registry/blocks/sidebar-app/inset-topbar.tsx` | `blocks/sidebar-app/inset-topbar.tsx` | `delay-200 duration-160` → `delay-slow duration-moderate` |
+| — | `registry/default/lib/sidebar-menu-grid.ts` | `blocks/sidebar-app/menu-grid.ts` | the width reads `--anchor-width` only; the `-ml-1` shift dropped (it would move the morph surface's content off its background) |
+
 `Select` in `modo.components.tsx` is not an item: modo's docs chrome renders its Select slot
 with a flat `value` / `onChange` / `options` contract
 (`lib/src/lib/slots.tsx`), and this adapter maps it onto
 `Select.Trigger` / `Select.Content` / `Select.Item` so the chrome runs on the
 design system's own Select. The
 `components/select` item keeps the upstream API untouched.
+
+`DocsNav` in `modo.components.tsx` is the chrome's own nav markup (modo's
+plain sidebar), pinned as `shell.Sidebar`: by name alone modo would adopt the
+documented `Sidebar`, an app shell that needs its provider, as the docs nav.
 
 `ThemeSwitcher` in `modo.components.tsx` is not an item either: it is the `Theme` entry in
 `modo.config.ts` `panel.items`, a `Select` of Light / Dark / System (each row
@@ -192,7 +209,8 @@ item to whatever a design system declares, so both show up under the runner.
 ## Tier mapping
 
 The tiers mirror the FF docs navigation. FF's "System" pages become
-`primitives/`; its "Components" become `components/`. There are no blocks.
+`primitives/`; its "Components" become `components/`. Its sidebar preset
+becomes the one block.
 
 | Tier | Item | Upstream source | FF docs page |
 |---|---|---|---|
@@ -206,6 +224,8 @@ The tiers mirror the FF docs navigation. FF's "System" pages become
 | components | accordion, button, checkbox-group, combobox, dialog, dropdown, radio-group, select, slider, switch, tabs, tabs-subtle, tooltip | `registry/base/<id>.tsx` | same slug |
 | components | badge, card, color-picker, input-copy, input-group, input-message, table, thinking-indicator | `registry/default/<id>.tsx` | same slug |
 | components | alert-dialog, command, context-menu, popover, preview-card, search, sheet, toast | — (local, see [Morph sources](#morph-sources)) | — |
+| components | sidebar | `base/sidebar.tsx` + `default/sidebar-core.tsx` + `default/sidebar-menu.tsx` | sidebar |
+| blocks | `sidebar-app` (SidebarApp) | the preset generator's output + `blocks/sidebar-*` | sidebar, preset `sa1FQfCxH6` |
 
 Button lives in `components/` to mirror the FF docs, and `modo.config.ts`
 points `shell.Button` at it explicitly (an explicit path skips modo's tier
@@ -219,21 +239,23 @@ are kept as well.
 
 ## Omitted
 
-These are not ported: ThinkingSteps, Sidebar, CommandMenu, ChatMessage and
-AskUserQuestions. Sidebar and CommandMenu are the FF docs site's own chrome,
-which modo's shell already provides; ThinkingSteps, ChatMessage and
+These are not ported: ThinkingSteps, CommandMenu, ChatMessage and
+AskUserQuestions. CommandMenu is the FF docs site's own chrome, which modo's
+shell already provides; ThinkingSteps, ChatMessage and
 AskUserQuestions are the agent-chat composites, left out of this port's scope.
 No ported file imports any of them.
 
-The files only they use are left out too: `sidebar-core`, `sidebar-menu`,
-`mobile-drawer`, `nav-item`, `nav-menu`, `lib/sidebar-menu-grid.ts`,
-`lib/theme-context.tsx` (the `ThemeSwitcher` panel item and vite.ts's
-pre-paint controller take its place) and `registry/blocks/*`.
-Inside kept files, the same rule removed `SURFACE_HOVER_BG`,
-`SURFACE_HOVER_SHADOW` and `surfaceHoverClasses` from `surface-classes.ts`.
+The files only they, or the FF docs site's nav, use are left out too:
+`mobile-drawer`, `nav-item`, `nav-menu`, `lib/theme-context.tsx` (the
+`ThemeSwitcher` panel item and vite.ts's pre-paint controller take its
+place) and the blocks other than the sidebar's (`queued-stack`,
+`dialog-sidebar`). Inside kept files, the same rule removed
+`SURFACE_HOVER_BG`, `SURFACE_HOVER_SHADOW` and `surfaceHoverClasses` from
+`surface-classes.ts` (only the Sidebar docs' callout cards used them; the
+callouts are not ported).
 
 The same goes for the docs-site-only CSS in `app/globals.css`: `.xl-fade-*`,
-`.inview-fade-block`, `.scroll-divider` (Sidebar only), `.bento-*` and
+`.inview-fade-block`, `.bento-*` and
 `.shiki`, plus the Tailwind directives, the self-hosted Inter `@font-face`
 and the Radix-only scroll-lock margin fix (`body[data-scroll-locked]`).
 
@@ -285,7 +307,7 @@ config.
   puts its reset in `base`. `global.css`'s `@layer base` rules join that layer
   after the reset, so utilities (in `default`) still win. This is the same
   arrangement as Tailwind's base/utilities split.
-- **Content.** UnoCSS scans `{lib,primitives,components}/**/*.{ts,tsx,mdx}`
+- **Content.** UnoCSS scans `{lib,primitives,components,blocks}/**/*.{ts,tsx,mdx}`
   and `modo.components.tsx` from disk (`content.filesystem`, and the same
   globs in `content.pipeline.include`, since the default pipeline skips
   `.ts`). Two reasons:
@@ -344,6 +366,8 @@ was added and the item's own state props became optional.
 | RadioGroup | `selectedIndex`, `value` | `defaultSelectedIndex`, `defaultValue` | `onSelectedIndexChange` (`onValueChange` now also fires uncontrolled) |
 | Slider | `value`, `onChange` (now optional) | `defaultValue` | — |
 | Switch | `checked`, `onToggle` (now optional) | `defaultChecked` | `onCheckedChange` |
+| Sidebar | `value` (new: the row whose `value` is selected) | `defaultValue` | `onValueChange` |
+| Sidebar.MenuItem `collapsible` | `open` (new: its sub-menu; upstream's docs held it in page state) | `defaultOpen` | `onOpenChange` |
 | Tabs | `value`, `selectedIndex` | `defaultSelectedIndex` (`defaultValue` is upstream's) | — |
 | TabsSubtle | `selectedIndex`, `onSelect` (now optional) | `defaultSelectedIndex` | — |
 
@@ -427,6 +451,8 @@ tables become the prop docs instead). Other per-item deviations:
 |---|---|
 | Button | Extra Sizes / Active / As-child examples, for API-table props the FF page has no section for. |
 | Dialog | "With a sidebar" replaced by "Surfaces inside a dialog" (a Select popover lifting off the dialog's own level) — the same point about composing inside an `xl` panel, with items this port ships. |
+| Sidebar | Layouts split into three examples; "Callouts" (docs-only cards), "Inside a dialog", the "No icon rail" prose (folded into the TSDoc) and "Functional and perfectly aligned" (an alignment-guides overlay) skipped; "Mobile drawer" added. Frames pass `mobileBreakpoint={0}` like FF's, so a rail stays a rail inside them. |
+| SidebarApp | One block page for FF's preset playground: the preset itself (collapsed), open, hover peek, floating on the right. |
 | Dropdown | "Create from the query" skipped: adding a row to the list is real consumer state, which an uncontrolled panel cannot stand in for. |
 | InputMessage | Playground skipped; the transcript around the Attachments / Send Handler demos dropped, since `ChatMessage` is not ported. |
 | FluidHover | The two scripted-cursor demos are dropped — they exist only to film the mechanism. |
