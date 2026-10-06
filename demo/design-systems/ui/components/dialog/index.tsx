@@ -70,6 +70,9 @@ const DialogContext = createContext<{ open: boolean; origin: RefObject<MorphOrig
   origin: { current: {} },
 })
 
+/** The open state and origin `DialogState` provides, for content built on another Base UI popup (Sheet). */
+const useDialogState = () => useContext(DialogContext)
+
 const DialogTrigger = forwardRef<HTMLButtonElement, DialogSlotProps>(({ render, asChild, children, ...props }, ref) => {
   const el = slotRender(render, asChild, children)
   return el ? (
@@ -150,7 +153,7 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
     // The size ladder narrows the dialog one notch in compact regions —
     // width only, the padding stays put (see Sizes).
     const compact = useSize().variant === 'compact'
-    const { open, origin } = useContext(DialogContext)
+    const { open, origin } = useDialogState()
     const morph = useMorph(open, origin, { from, effect, hideSource, tier })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
 
@@ -359,6 +362,7 @@ export {
   DialogState,
   DialogTitle,
   DialogTrigger,
+  useDialogState,
 }
 
 export default Dialog

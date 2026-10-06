@@ -158,6 +158,7 @@ only what is specific to it:
 | `Popover` | — (local; after beUI's gooey popover and motion-primitives' morphing popover, see [Morph sources](#morph-sources)) | `components/popover/index.tsx` | Base UI Popover with the morph layer (goo by default); `openOnHover` on the trigger; statics `.Trigger/.Content/.Title/.Description/.Close` |
 | `RadioGroup` | `registry/base/radio-group.tsx` | `components/radio-group/index.tsx` | uncontrolled index and value modes; group context carries a `selectIndex` setter every item calls, so items need no `selected`/`onSelect`; arrow-key focus guarded; static `.Item` |
 | `Select` | `registry/base/select.tsx` | `components/select/index.tsx` | members re-declared one per line (the parser drops members whose type spans lines); upstream's uncontrolled `defaultValue` verified and kept rather than rerouted through `useControllableState`; expando statics `.Trigger/.Content/.Item/.Group/.Label/.Separator`; the popup morphs out of its trigger (morph layer, goo on `spring.moderate`; `from` / `effect` / `hideSource` / `tier` on `Select.Content`), replacing the `scaleY` wrapper and the `actionsRef` deferred unmount |
+| `Sheet` | — (local; replaces beUI's bottom sheet and drawer, see [Morph sources](#morph-sources)) | `components/sheet/index.tsx` | Base UI Drawer (swipe to dismiss, snap points, `Drawer.Viewport` for the swipe) with the morph growing from the sheet's own edge; `side`, `snapPoints`, `defaultSnapPoint`; Dialog's parts and `DialogState` (Base UI's Drawer parts are Dialog's); statics as Dialog's plus `.Provider` / `.Indent` |
 | `Slider` | `registry/base/slider.tsx` | `components/slider/index.tsx` | `var(--color-accent)` → `var(--accent)` (no `--color-*` aliases here); uncontrolled support on the public wrapper, with both engines still fully controlled; `SliderProps extends Omit<SliderEngineProps, "value" \| "onChange">`; React 18 ref types (`MutableRefObject`); indexed reads of the value/step/pip arrays asserted |
 | `Switch` | `registry/base/switch.tsx` | `components/switch/index.tsx` | uncontrolled support; every in-body read goes through the resolved `isChecked` and a `toggle()` that also calls `onToggle` |
 | `Table` | `registry/default/table.tsx` | `components/table/index.tsx` | statics `.Header/.Body/.Row/.Head/.Cell`; `TableProps` / `TableRowProps` exported |
@@ -197,7 +198,7 @@ The tiers mirror the FF docs navigation. FF's "System" pages become
 | primitives | `morph` (Morph) | — (local, `lib/use-morph.ts`) | — |
 | components | accordion, button, checkbox-group, combobox, dialog, dropdown, radio-group, select, slider, switch, tabs, tabs-subtle, tooltip | `registry/base/<id>.tsx` | same slug |
 | components | badge, card, color-picker, input-copy, input-group, input-message, table, thinking-indicator | `registry/default/<id>.tsx` | same slug |
-| components | alert-dialog, popover | — (local, see [Morph sources](#morph-sources)) | — |
+| components | alert-dialog, popover, sheet | — (local, see [Morph sources](#morph-sources)) | — |
 
 Button lives in `components/` to mirror the FF docs, and `modo.config.ts`
 points `shell.Button` at it explicitly (an explicit path skips modo's tier
