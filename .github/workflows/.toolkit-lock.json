@@ -1,24 +1,24 @@
 {
-  "ref": "@justanarthur/just-github-actions-n-workflows@1.0.1",
-  "installedAt": "2026-09-15T14:14:30.606Z",
+  "ref": "@justanarthur/just-github-actions-n-workflows@1.0.3",
+  "installedAt": "2026-10-06T11:01:37.752Z",
   "workflows": {
     "bump-version.yml": {
       "name": "bump-version",
       "file": "bump-version.yml",
-      "ref": "@justanarthur/just-github-actions-n-workflows@1.0.1",
-      "installedAt": "2026-09-15T14:14:30.606Z"
+      "ref": "@justanarthur/just-github-actions-n-workflows@1.0.3",
+      "installedAt": "2026-10-06T11:01:37.752Z"
     },
     "publish-npm-on-tag.yml": {
       "name": "publish-npm-on-tag",
       "file": "publish-npm-on-tag.yml",
-      "ref": "@justanarthur/just-github-actions-n-workflows@1.0.1",
-      "installedAt": "2026-09-15T14:14:30.606Z"
+      "ref": "@justanarthur/just-github-actions-n-workflows@1.0.3",
+      "installedAt": "2026-10-06T11:01:37.752Z"
     },
     "release-on-tag.yml": {
       "name": "release-on-tag",
       "file": "release-on-tag.yml",
-      "ref": "@justanarthur/just-github-actions-n-workflows@1.0.1",
-      "installedAt": "2026-09-15T14:14:30.606Z"
+      "ref": "@justanarthur/just-github-actions-n-workflows@1.0.3",
+      "installedAt": "2026-10-06T11:01:37.752Z"
     }
   }
 }

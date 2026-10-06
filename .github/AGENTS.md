@@ -75,6 +75,7 @@ When the `bump-version.yml` workflow runs (push to `main`, or via `workflow_disp
    ```
 
    This JSON controls which publish/deploy workflows fire.
+6. **Dispatches the tag workflows** for each new tag. The tags are pushed with the default `GITHUB_TOKEN`, and GitHub never starts workflows from pushes made with that token — so `bump-version.yml` itself starts every workflow in `.github/workflows/` whose `push.tags` filter matches the tag, via `workflow_dispatch` on the tag ref with `tag=<tag>` (step "Dispatch tag-triggered workflows"; needs `actions: write`, already in the file). No PAT is involved.
 
 `deployTargets` is inferred from each manifest's properties:
 
@@ -86,6 +87,8 @@ When the `bump-version.yml` workflow runs (push to `main`, or via `workflow_disp
 | `deployTargets` (explicit, comma-separated) | overrides the above |
 
 ## 5. Why a publish or deploy silently skipped
+
+**No run at all for a new tag** → open the `bump-version` run that created it and check the "Dispatch tag-triggered workflows" step. It names every workflow it started and fails if a dispatch was rejected (most often: `actions: write` missing because a reusable-workflow caller didn't grant it). A tag workflow without a `workflow_dispatch` `tag` input is skipped with a warning. To recover, run the tag workflow from the Actions tab with the tag as `tag` input.
 
 Each of `publish-npm-on-tag.yml`, `publish-docker-on-tag.yml`, `deploy-vercel-on-tag.yml` runs `resolve-tag-meta` first, then guards the main job with `if:`. The job skips when the tag annotation doesn't list its target.
 
@@ -131,15 +134,53 @@ just-github-actions-n-workflows update    # upgrade to latest
 just-github-actions-n-workflows update --ref v1.2.3   # pin to version
 ```
 
-If you can't run the CLI (the v1 npm-install limitation noted in the toolkit README), re-curl the workflow files manually from the new tag and re-commit. The `update` command refreshes both workflows and this AGENTS.md.
+All three commands accept `--cwd <path>` (added in CLI v1.0.2), so you can run the CLI from anywhere — `--cwd` points at this repo:
+
+```sh
+npx @justanarthur/just-github-actions-n-workflows-cli@1.0.2 update --cwd /path/to/this-repo --yes
+```
+
+If you can't run the CLI for some reason (e.g. CI), re-curl the workflow files manually from the new tag and re-commit. Since CLI v1.0.2, `npx` works from any directory — the lib dep is rewritten at publish time, so no local clone is needed.
 
 ## 9. Don't edit the workflows or this file directly
 
-`.github/workflows/*.yml` and `.github/AGENTS.md` are owned by the toolkit. Local edits get blown away on the next `update` or `init --force`. If you need different behavior:
+`.github/workflows/*.yml` and `.github/AGENTS.md` are owned by the toolkit. Local edits get blown away on the next `update` or `init --force`. Adding `# local-edit:` or `# toolkit-ref:` comments does not protect them — the next refresh rewrites the whole file.
 
-- Adjust the workflow's `push.branches` / `push.tags` pattern after install (this is expected — `init` does NOT customize triggers).
-- Open an issue / PR upstream for behavior changes.
-- For repo-specific agent instructions, write a separate `CONTRIBUTING.md` or root-level `AGENTS.md` outside the toolkit's managed path.
+**If you need a different publish behavior, do NOT edit `publish-npm-on-tag.yml`.** Override at the package level instead:
+
+| need | where to put it |
+|------|-----------------|
+| publish to a different npm registry (`npm.pkg.github.com`, private registry, etc.) | `publishConfig.registry` in the package's `package.json` |
+| publish to a non-default dist-tag (`next`, `beta`, …) | `publishConfig.tag` in the package's `package.json` |
+| per-package auth token (e.g. GH Packages PAT) | `.npmrc` in the package's directory |
+| extra pre-publish steps (codegen, asset build) | the `Build` step in `publish-npm-on-tag.yml` already runs `bun run --silent build` — add a `build` script to `package.json`. don't insert new steps into the workflow |
+| bump logic / tag format / which deploy targets fire | `properties` in `package.json` (`gitCommitScopeRelatedNames`, `deployTargets`, `dockerfilePath`, `vercelProjectId`) |
+| deploy config (ssh target, compose profiles) | `.justactions.yml` at the repo root |
+
+The relevant publish step in `publish-npm-on-tag.yml` is:
+
+```yaml
+- name: Publish to npm
+  if: steps.gate.outputs.skip != 'true'
+  working-directory: ${{ steps.pkg.outputs.dir }}
+  run: bun publish -p --access public --tag ${{ needs.resolve-meta.outputs.npm_tag }}
+  env:
+    NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+```
+
+`bun publish` reads `publishConfig` and `.npmrc` from the package directory on every invocation. **That is the supported override surface.**
+
+Things you must NOT do, even if they look like the right call:
+
+- Replace the `bun publish` step with a `.npmrc` swap + second `bun publish` call to hit a second registry. The toolkit's design for dual-registry is to copy `publish-npm-on-tag.yml` to `publish-gh-packages.yml` in `.github/workflows/` (both fire on `**@*`); do not patch the upstream copy.
+- Comment out or remove the `Create GitHub release` step from `publish-npm-on-tag.yml`. That release is bundled by design. If you don't want it, either accept it, or stop using `publish-npm-on-tag.yml` and write your own (then you own the maintenance — updates won't help you).
+- Add `# toolkit-ref: <sha>` / `# local-edit:` banner comments to track your changes. These are deleted on next `update`. The lockfile at `.github/workflows/.toolkit-lock.json` already tracks the ref — read it.
+
+If you genuinely need behavior the toolkit doesn't support (e.g. you need to *skip* the bundled release, or run a second publish that the existing dual-workflow pattern can't express), open an issue upstream with a concrete use case. Don't patch locally and ship.
+
+Adjusting the workflow's `push.branches` / `push.tags` pattern after install is expected and survives updates. Keep `**` before the `@` in a tag pattern: GitHub's `*` doesn't match `/`, so `*@*` never fires for a scoped tag like `@scope/name@1.2.3` — `init` does NOT customize triggers, so the user is responsible for them.
+
+For repo-specific agent instructions, write a separate `CONTRIBUTING.md` or root-level `AGENTS.md` outside the toolkit's managed path.
 
 ## 10. Common agent mistakes in this repo
 
@@ -149,3 +190,7 @@ If you can't run the CLI (the v1 npm-install limitation noted in the toolkit REA
 - Pushing a tag like `v1.2.3` instead of `@scope/name@1.2.3` — none of the `**@*` triggers will match.
 - Running `npm version patch` directly — bypasses the conventional-commit-driven bump and produces a tag without the JSON annotation, which downstream workflows then fall back to legacy detection for.
 - Hand-editing `bump-version.yml` to change the bump logic — overwritten by `update`.
+- Adding a `workflow_run` / `gh workflow run` workflow to "publish after bump" — `bump-version.yml` already dispatches the tag workflows, so this publishes twice. Delete such a workaround after updating.
+- Copying a tag workflow (e.g. `publish-npm-on-tag.yml` → `publish-gh-packages.yml`) and removing its `workflow_dispatch` `tag` input — bump-version can then no longer start it.
+- Hand-editing `publish-npm-on-tag.yml` to swap `.npmrc` for dual-registry, comment out the release step, or hard-code a registry — overwritten by `update`. Use `publishConfig` / `.npmrc` / `.justactions.yml` instead (see section 9).
+- Adding `# toolkit-ref:` / `# local-edit:` comments to track manual workflow edits — deleted on next `update`. The lockfile already tracks the ref.
