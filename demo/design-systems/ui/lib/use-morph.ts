@@ -226,6 +226,8 @@ function useMorph(
   const progress = useMotionValue(0)
   const gooId = `morph-goo-${useId().replace(/:/g, '')}`
   const geometry = useRef<Geometry | null>(null)
+  // The effect and source of the run in flight.
+  const run = useRef({ effect: resolved, from })
   const targetRadius = useRef(0)
   const hidden = useRef<{ el: HTMLElement; opacity: string } | null>(null)
   const exited = useRef(onExited)
@@ -244,16 +246,15 @@ function useMorph(
     shadow: useRef<HTMLDivElement>(null),
     content: useRef<HTMLDivElement>(null),
   }
-  // goo and morph draw the moving surface in the shapes layer, which is cut
-  // around the source; slide and fade move the resting background itself.
-  const shaped = resolved === 'goo' || resolved === 'morph'
 
   const render = (p: number) => {
     const g = geometry.current
     if (!g) return
     const { bg, content, shadow, popup, shape } = refs
+    const { effect } = run.current
+    const shaped = effect === 'goo' || effect === 'morph'
     const slide = { ...g.target, x: g.offset.x * (1 - p), y: g.offset.y * (1 - p) }
-    const rect = clampRect(shaped ? lerpRect(g.source, g.target, p) : resolved === 'slide' ? slide : g.target)
+    const rect = clampRect(shaped ? lerpRect(g.source, g.target, p) : effect === 'slide' ? slide : g.target)
 
     place(
       shaped ? shape.current : bg.current,
@@ -262,9 +263,12 @@ function useMorph(
     place(shadow.current, rect)
     if (shadow.current) shadow.current.style.opacity = String(Math.min(1, Math.max(0, p)))
 
-    if (content.current) content.current.style.clipPath = shaped ? insetClip(rect, g.target) : ''
-    if (resolved === 'slide' && content.current) content.current.style.transform = `translate(${rect.x}px, ${rect.y}px)`
-    if (resolved === 'fade' && popup.current) popup.current.style.opacity = String(p)
+    // Every property on every frame: a reopen can change the effect mid-run.
+    if (content.current) {
+      content.current.style.clipPath = shaped ? insetClip(rect, g.target) : ''
+      content.current.style.transform = effect === 'slide' ? `translate(${rect.x}px, ${rect.y}px)` : ''
+    }
+    if (popup.current) popup.current.style.opacity = effect === 'fade' ? String(p) : ''
   }
 
   // Back to the resting state: the background and shadow fall back to their
@@ -284,20 +288,25 @@ function useMorph(
   const measure = () => {
     const el = refs.popup.current
     if (!el) return
+    const { effect, from } = run.current
+    // goo and morph draw the moving surface in the shapes layer, which is cut
+    // around the source; slide and fade move the resting background itself.
+    const shaped = effect === 'goo' || effect === 'morph'
     const box = el.getBoundingClientRect()
     const target = { x: 0, y: 0, w: box.width, h: box.height, r: targetRadius.current }
     const source = sourceRect(from, origin.current ?? {}, box, target)
-    const blur = resolved === 'goo' ? target.r * GOO_BLUR_RATIO : 0
+    const blur = effect === 'goo' ? target.r * GOO_BLUR_RATIO : 0
     const layer = layerBox(source, target, blur * 3)
     geometry.current = { source, target, layer, offset: slideOffset(from, source, target, box) }
 
     const { shapes, copy, bg } = refs
-    if (!shaped || !shapes.current) return
+    if (bg.current) bg.current.style.opacity = shaped ? '0' : ''
+    if (!shapes.current) return
+    shapes.current.style.display = shaped ? 'block' : ''
+    if (!shaped) return
     const local = (rect: Rect) => ({ ...rect, x: rect.x - layer.x, y: rect.y - layer.y })
-    if (bg.current) bg.current.style.opacity = '0'
-    shapes.current.style.display = 'block'
     place(shapes.current, { ...layer, r: 0 })
-    if (resolved === 'goo') {
+    if (effect === 'goo') {
       place(copy.current, local(source))
       refs.blur.current?.setAttribute('stdDeviation', String(blur))
     }
@@ -312,41 +321,58 @@ function useMorph(
       : ''
   }
 
-  const hide = (el: HTMLElement | undefined) => {
-    if (!hideSource || !el || hidden.current) return
-    hidden.current = { el, opacity: el.style.opacity }
-    // opacity, not visibility: the source must stay focusable so focus can return to it.
-    el.style.opacity = '0'
-  }
-
   const reveal = () => {
     if (!hidden.current) return
     hidden.current.el.style.opacity = hidden.current.opacity
     hidden.current = null
   }
 
+  const hide = (el: HTMLElement | undefined) => {
+    if (!hideSource || !el || hidden.current?.el === el) return
+    // Reopened from another source: the last one comes back.
+    reveal()
+    hidden.current = { el, opacity: el.style.opacity }
+    // opacity, not visibility: the source must stay focusable so focus can return to it.
+    el.style.opacity = '0'
+  }
+
   useLayoutEffect(() => {
-    if (!popup) return
-    const { exit, ...enter } = spring[tier]
+    if (!popup) {
+      // The popup left mid-run (Base UI or its owner unmounted it): give the
+      // source back and start the next open from scratch.
+      reveal()
+      progress.jump(0)
+      if (geometry.current && !open) exited.current?.()
+      geometry.current = null
+      return
+    }
+    const { exit: leave, ...enter } = spring[tier]
 
     if (open) {
-      if (!geometry.current && refs.bg.current) {
+      run.current = { effect: resolved, from }
+      const first = !geometry.current
+      if (first && refs.bg.current) {
         const box = popup.getBoundingClientRect()
         targetRadius.current = radiusOf(refs.bg.current, box.width, box.height)
-        // Hidden until the first measured frame: Base UI positions the popup
-        // in a microtask after this effect.
-        refs.bg.current.style.opacity = '0'
-        if (refs.shadow.current) refs.shadow.current.style.opacity = '0'
-        if (refs.content.current) refs.content.current.style.clipPath = 'inset(50%)'
       }
       let controls: ReturnType<typeof animate> | undefined
-      const frame = requestAnimationFrame(() => {
-        if (refs.bg.current) refs.bg.current.style.opacity = ''
+      const begin = () => {
         measure()
         hide(sourceElement(from, origin.current ?? {}))
         render(progress.get())
         controls = animate(progress, 1, { ...enter, onUpdate: render, onComplete: rest })
-      })
+      }
+      // A reopen picks the closing surface up where it is; only a fresh open
+      // waits a frame, hidden, since Base UI positions the popup in a
+      // microtask after this effect.
+      if (!first || !refs.bg.current) {
+        begin()
+        return () => controls?.stop()
+      }
+      refs.bg.current.style.opacity = '0'
+      if (refs.shadow.current) refs.shadow.current.style.opacity = '0'
+      if (refs.content.current) refs.content.current.style.clipPath = 'inset(50%)'
+      const frame = requestAnimationFrame(begin)
       return () => {
         cancelAnimationFrame(frame)
         controls?.stop()
@@ -354,17 +380,21 @@ function useMorph(
     }
 
     if (!geometry.current) return
+    const done = () => {
+      reveal()
+      geometry.current = null
+      exited.current?.()
+    }
+    run.current = { effect: resolved, from }
     const hold = holdExit(popup, tier)
     measure()
     render(progress.get())
     const controls = animate(progress, 0, {
-      ...exit,
+      ...leave,
       onUpdate: render,
       onComplete: () => {
         hold.finish()
-        reveal()
-        geometry.current = null
-        exited.current?.()
+        done()
       },
     })
     return () => {
