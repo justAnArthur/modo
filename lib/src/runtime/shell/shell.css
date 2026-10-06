@@ -285,11 +285,15 @@
   margin: 0 0 var(--space-6, 32px);
 }
 
-[data-modo="prose"] > [data-modo="example-card"] {
-  margin-top: var(--space-3, 12px);
-}
-
 @scope ([data-modo="prose"]) to ([data-modo="example-card"]) {
+  li > * {
+    margin: 0;
+  }
+
+  li > * + * {
+    margin-top: var(--space-3, 12px);
+  }
+
   /* Measure and leading per block (not on the container, where they would
      reach the example cards): cards keep the full content width. */
   :scope > * {
@@ -297,12 +301,7 @@
     margin: 0;
   }
 
-  li > * {
-    margin: 0;
-  }
-
-  :scope > * + *,
-  li > * + * {
+  :scope > * + * {
     margin-top: var(--space-3, 12px);
   }
 
@@ -401,36 +400,14 @@
   margin-inline-start: var(--space-2, 8px);
 }
 
-/* ── Hover reveal: example actions, code actions, anchors ──
-   Shown on hover or keyboard focus inside the owner; always on touch. */
-
-:is([data-modo="example-actions"], [data-modo="code-actions"], [data-modo="anchor"]) {
-  opacity: 0;
-  transition: opacity var(--duration-fast);
-}
-
-[data-modo="example-card-frame"]:is(:hover, :focus-within) > [data-modo="example-actions"],
-[data-modo="code-block"]:is(:hover, :focus-within) > [data-modo="code-actions"],
-:is(h2, h3, h4, h5, h6):is(:hover, :focus-within) > [data-modo="anchor"] {
-  opacity: 1;
-}
-
-@media (hover: none) {
-  :is([data-modo="example-actions"], [data-modo="code-actions"], [data-modo="anchor"]) {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :is([data-modo="example-actions"], [data-modo="code-actions"], [data-modo="anchor"]) {
-    transition: none;
-  }
-}
-
 /* ── Example card ── */
 
 [data-modo="example-card"] {
   margin: 0 0 var(--space-6, 32px);
+}
+
+[data-modo="prose"] > [data-modo="example-card"] {
+  margin-top: var(--space-3, 12px);
 }
 
 [data-modo="example-card-title"] {
@@ -490,6 +467,32 @@
 [data-modo="code-block"] pre,
 [data-modo="example-code"] pre {
   overflow-x: auto;
+}
+
+/* ── Hover reveal: example actions, code actions, anchors ──
+   Shown on hover or keyboard focus inside the owner; always on touch. */
+
+:is([data-modo="example-actions"], [data-modo="code-actions"], [data-modo="anchor"]) {
+  opacity: 0;
+  transition: opacity var(--duration-fast);
+}
+
+[data-modo="example-card-frame"]:is(:hover, :focus-within) > [data-modo="example-actions"],
+[data-modo="code-block"]:is(:hover, :focus-within) > [data-modo="code-actions"],
+:is(h2, h3, h4, h5, h6):is(:hover, :focus-within) > [data-modo="anchor"] {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  :is([data-modo="example-actions"], [data-modo="code-actions"], [data-modo="anchor"]) {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is([data-modo="example-actions"], [data-modo="code-actions"], [data-modo="anchor"]) {
+    transition: none;
+  }
 }
 
 /* ── TOC ── */
