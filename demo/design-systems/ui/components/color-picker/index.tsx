@@ -31,6 +31,17 @@
  *   tokens. Colors the picker shows (values, swatches, the S/V and hue
  *   gradients) and the canvas parse sentinels stay literal: they are color
  *   data, not styling.
+ * - `ColorPicker.Popover` and the format menu morph out of their triggers
+ *   through the shared morph layer (`lib/use-morph.ts` + `MorphSurface`, goo
+ *   by default; the popover on `spring.slow` with `from` / `effect` /
+ *   `hideSource` / `tier`, the menu on `spring.moderate`), the origin captured
+ *   from each Base UI root's `onOpenChange`. Their `actionsRef` deferred
+ *   unmounts, fallback timers and motion wrappers are gone: Popover and Menu
+ *   ignore `actionsRef`, and the wrappers animated outside the popup, so Base
+ *   UI unmounted both on the first frame of a close. The popover's panel
+ *   paints no surface of its own (a private `PanelSurfaceContext`): the
+ *   morph's surface layers paint its level; the menu's do the same in place of
+ *   `render={<Elevated/>}`.
  */
 
 import { Menu } from '@base-ui/react/menu'
@@ -45,6 +56,7 @@ import {
   type HTMLAttributes,
   type ReactNode,
   type RefAttributes,
+  type RefObject,
   useCallback,
   useContext,
   useEffect,
@@ -54,15 +66,16 @@ import {
 } from 'react'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { useIcon } from '../../lib/icon-context'
+import { MorphSurface } from '../../lib/morph-layers'
 import { shapeMap, useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
-import { surfaceClasses } from '../../lib/surface-classes'
+import { SURFACE_BG, SURFACE_SHADOW, surfaceClasses } from '../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { SizeProvider } from '../../primitives/sizes'
-import { Elevated } from '../../primitives/surface'
 import { Slider } from '../slider'
 import { Tooltip } from '../tooltip'
 
@@ -81,6 +94,10 @@ function ColorPickerPortalContainer({ value, children }: { value: HTMLElement | 
     <ColorPickerPortalContainerContext.Provider value={value}>{children}</ColorPickerPortalContainerContext.Provider>
   )
 }
+
+// False inside ColorPicker.Popover, whose morph layers paint the panel's
+// surface; the panel then paints none of its own.
+const PanelSurfaceContext = createContext(true)
 
 interface ParsedColor {
   // HSV (canonical, 0..360 / 0..1 / 0..1)
@@ -146,6 +163,14 @@ interface ColorPickerPopoverProps extends ColorPickerProps {
   defaultOpen?: boolean
   /** Called when the open state would change (fires even when controlled). */
   onOpenChange?: (open: boolean) => void
+  /** Where the panel grows from (see Morph): the trigger, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
+  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
+  /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
+  effect?: 'goo' | 'morph' | 'slide' | 'fade'
+  /** Hide the trigger while open, so it reads as turning into the panel. Defaults to `false`. */
+  hideSource?: boolean
+  /** Spring tier of the morph. Defaults to `'slow'`. */
+  tier?: 'moderate' | 'slow'
 }
 
 interface ColorSwatchProps extends Omit<HTMLAttributes<HTMLButtonElement>, 'color'> {
@@ -757,8 +782,8 @@ function AlphaSlider({
 // coordinates once on open and detached from the trigger on scroll),
 // dismissal, roving highlight, and typeahead. Menu.RadioGroup/RadioItem carry
 // the radio semantics. This layer keeps the fluid-hover
-// overlays and the spring open/close animation (actionsRef deferred unmount —
-// the same verified pattern as select.tsx / dropdown.tsx).
+// overlays and the morph open/close (lib/use-morph.ts) — the same pattern as
+// select.tsx / dropdown.tsx.
 // ---------------------------------------------------------------------------
 
 const FORMAT_LABELS: Record<ColorFormat, string> = {
@@ -853,7 +878,10 @@ function FormatDropdown({
   const [internalOpen, setInternalOpen] = useState(defaultOpen)
   const isControlled = openProp !== undefined
   const open = isControlled ? openProp : internalOpen
-  const actionsRef = useRef<{ unmount: () => void; close: () => void } | null>(null)
+  const { origin, capture } = useMorphOrigin()
+  const morph = useMorph(open, origin, { tier: 'moderate' })
+  // Lifts 2 levels off the panel with a fixed shadow (see Elevated).
+  const level = Math.min(useSurface() + 2, 8)
   const shape = useShape()
   const sizeClasses = useSize()
   const portalContainer = useContext(ColorPickerPortalContainerContext)
@@ -864,17 +892,6 @@ function FormatDropdown({
   const { activeIndex, setActiveIndex, itemRects, handlers, registerItem, remeasure } = hover
 
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
-
-  // Release Base UI's deferred unmount once the exit tween has played.
-  // onAnimationComplete on the motion.div is the primary signal; this timeout
-  // is a fallback for throttled/background tabs where rAF-driven animation
-  // callbacks can stall (spring.fast.exit is 60ms — 120ms covers it with
-  // margin without holding the portal open perceptibly).
-  useEffect(() => {
-    if (open) return
-    const id = setTimeout(() => actionsRef.current?.unmount(), 120)
-    return () => clearTimeout(id)
-  }, [open])
 
   // The popup keeps its rows registered between opens, so their rects
   // were taken while it was hidden: re-measure once it is open and laid out.
@@ -894,10 +911,10 @@ function FormatDropdown({
   return (
     <Menu.Root
       open={open}
-      onOpenChange={next => {
+      onOpenChange={(next, details) => {
+        if (next) capture(details)
         if (!isControlled) setInternalOpen(next)
       }}
-      actionsRef={actionsRef}
       // Non-modal: the page keeps scrolling and the Positioner tracks the
       // anchor, so the popup follows its trigger instead of detaching.
       modal={false}
@@ -923,115 +940,112 @@ function FormatDropdown({
       </Menu.Trigger>
       <Menu.Portal container={portalContainer ?? undefined}>
         <Menu.Positioner side="bottom" align="start" sideOffset={6} className="z-[60] outline-none">
-          <motion.div
-            initial={{ opacity: 0, y: -4, scaleY: 0.96 }}
-            animate={open ? { opacity: 1, y: 0, scaleY: 1 } : { opacity: 0, y: -4, scaleY: 0.96 }}
-            transition={open ? spring.fast : spring.fast.exit}
-            style={{ transformOrigin: 'top center' }}
-            // Base UI defers unmount while actionsRef is set; release it once
-            // the exit spring has finished so the close animation fully plays.
-            onAnimationComplete={() => {
-              if (!open) actionsRef.current?.unmount()
-            }}
-          >
-            <FormatMenuContext.Provider value={menuCtx}>
-              <Menu.Popup
-                render={
-                  <Elevated
-                    offset={2}
-                    shadowLevel={3}
-                    ref={(node: HTMLDivElement | null) => {
-                      ;(containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node
-                    }}
-                  />
+          <FormatMenuContext.Provider value={menuCtx}>
+            <Menu.Popup
+              ref={morph.popupRef}
+              onMouseEnter={() => {
+                handlers.onMouseEnter()
+                setFocusedIndex(null)
+              }}
+              onMouseMove={handlers.onMouseMove}
+              onMouseLeave={handlers.onMouseLeave}
+              onClick={handlers.onClick}
+              onFocus={e => {
+                const indexAttr = (e.target as HTMLElement)
+                  .closest('[data-fluid-hover-index]')
+                  ?.getAttribute('data-fluid-hover-index')
+                if (indexAttr != null) {
+                  const idx = Number(indexAttr)
+                  setActiveIndex(idx)
+                  setFocusedIndex((e.target as HTMLElement).matches(':focus-visible') ? idx : null)
                 }
-                onMouseEnter={() => {
-                  handlers.onMouseEnter()
-                  setFocusedIndex(null)
-                }}
-                onMouseMove={handlers.onMouseMove}
-                onMouseLeave={handlers.onMouseLeave}
-                onClick={handlers.onClick}
-                onFocus={e => {
-                  const indexAttr = (e.target as HTMLElement)
-                    .closest('[data-fluid-hover-index]')
-                    ?.getAttribute('data-fluid-hover-index')
-                  if (indexAttr != null) {
-                    const idx = Number(indexAttr)
-                    setActiveIndex(idx)
-                    setFocusedIndex((e.target as HTMLElement).matches(':focus-visible') ? idx : null)
-                  }
-                }}
-                onBlur={e => {
-                  if (containerRef.current?.contains(e.relatedTarget as Node)) return
-                  setFocusedIndex(null)
-                  setActiveIndex(null)
-                }}
-                className={cn(
-                  `relative flex flex-col min-w-[var(--anchor-width)] ${menuShape.container} p-1 select-none outline-none`,
-                )}
-              >
-                {/* Selected background */}
-                <AnimatePresence>
-                  {checkedRect && (
-                    <motion.div
-                      className={`absolute ${menuShape.bg} bg-active pointer-events-none`}
-                      initial={false}
-                      animate={{
-                        top: checkedRect.top,
-                        left: checkedRect.left,
-                        width: checkedRect.width,
-                        height: checkedRect.height,
-                        opacity: 1,
-                      }}
-                      exit={{ opacity: 0, transition: spring.moderate.exit }}
-                      transition={{
-                        ...spring.moderate,
-                        opacity: { duration: spring.fast.duration },
-                      }}
-                    />
-                  )}
-                </AnimatePresence>
-
-                {/* Hover background */}
-                <FluidHoverHighlight hover={hover} from={checkedRect} className={menuShape.bg} />
-
-                {/* Focus ring */}
-                <AnimatePresence>
-                  {focusRect && (
-                    <motion.div
-                      className={`absolute ${menuShape.focusRing} pointer-events-none z-20 border border-focus-ring`}
-                      initial={false}
-                      animate={{
-                        left: focusRect.left - 2,
-                        top: focusRect.top - 2,
-                        width: focusRect.width + 4,
-                        height: focusRect.height + 4,
-                      }}
-                      exit={{ opacity: 0, transition: spring.fast.exit }}
-                      transition={{
-                        ...spring.fast,
-                        opacity: { duration: spring.fast.duration },
-                      }}
-                    />
-                  )}
-                </AnimatePresence>
-
-                {/* display: contents keeps items direct flex children of the
-                    popup so fluid hover measurement and gap layout still work,
-                    while the group provides the radio value context. */}
-                <Menu.RadioGroup
-                  value={value}
-                  onValueChange={next => onChange(next as ColorFormat)}
-                  className="contents"
+              }}
+              onBlur={e => {
+                // The popup itself takes focus when the pointer leaves a row.
+                if (e.currentTarget.contains(e.relatedTarget as Node)) return
+                setFocusedIndex(null)
+                setActiveIndex(null)
+              }}
+              className="relative select-none outline-none"
+            >
+              <SurfaceProvider value={level}>
+                <MorphSurface
+                  morph={morph}
+                  bg={SURFACE_BG[level]}
+                  shadow={SURFACE_SHADOW[3]}
+                  radius={menuShape.container}
+                  className="min-w-[var(--anchor-width)]"
                 >
-                  {FORMATS.map((fmt, i) => (
-                    <FormatItem key={fmt} index={i} value={fmt} label={FORMAT_LABELS[fmt]} checked={value === fmt} />
-                  ))}
-                </Menu.RadioGroup>
-              </Menu.Popup>
-            </FormatMenuContext.Provider>
-          </motion.div>
+                  <div ref={containerRef} className="relative flex flex-col p-1">
+                    {/* Selected background */}
+                    <AnimatePresence>
+                      {checkedRect && (
+                        <motion.div
+                          className={`absolute ${menuShape.bg} bg-active pointer-events-none`}
+                          initial={false}
+                          animate={{
+                            top: checkedRect.top,
+                            left: checkedRect.left,
+                            width: checkedRect.width,
+                            height: checkedRect.height,
+                            opacity: 1,
+                          }}
+                          exit={{ opacity: 0, transition: spring.moderate.exit }}
+                          transition={{
+                            ...spring.moderate,
+                            opacity: { duration: spring.fast.duration },
+                          }}
+                        />
+                      )}
+                    </AnimatePresence>
+
+                    {/* Hover background */}
+                    <FluidHoverHighlight hover={hover} from={checkedRect} className={menuShape.bg} />
+
+                    {/* Focus ring */}
+                    <AnimatePresence>
+                      {focusRect && (
+                        <motion.div
+                          className={`absolute ${menuShape.focusRing} pointer-events-none z-20 border border-focus-ring`}
+                          initial={false}
+                          animate={{
+                            left: focusRect.left - 2,
+                            top: focusRect.top - 2,
+                            width: focusRect.width + 4,
+                            height: focusRect.height + 4,
+                          }}
+                          exit={{ opacity: 0, transition: spring.fast.exit }}
+                          transition={{
+                            ...spring.fast,
+                            opacity: { duration: spring.fast.duration },
+                          }}
+                        />
+                      )}
+                    </AnimatePresence>
+
+                    {/* display: contents keeps items direct flex children of the
+                    wrapper so fluid hover measurement and gap layout still work,
+                    while the group provides the radio value context. */}
+                    <Menu.RadioGroup
+                      value={value}
+                      onValueChange={next => onChange(next as ColorFormat)}
+                      className="contents"
+                    >
+                      {FORMATS.map((fmt, i) => (
+                        <FormatItem
+                          key={fmt}
+                          index={i}
+                          value={fmt}
+                          label={FORMAT_LABELS[fmt]}
+                          checked={value === fmt}
+                        />
+                      ))}
+                    </Menu.RadioGroup>
+                  </div>
+                </MorphSurface>
+              </SurfaceProvider>
+            </Menu.Popup>
+          </FormatMenuContext.Provider>
         </Menu.Positioner>
       </Menu.Portal>
     </Menu.Root>
@@ -1607,6 +1621,8 @@ type ColorPickerComponent = ForwardRefExoticComponent<ColorPickerProps & RefAttr
  * Statics:
  * - `ColorPicker.Popover` — `ColorPickerPopover`: the same panel behind a
  *   trigger button showing a color tile, an optional label and the hex value.
+ *   The panel oozes out of the trigger and back through the shared morph (see
+ *   Morph), with the morph options `from`, `effect`, `hideSource`, `tier`.
  *
  * Also exported: `ColorSwatch` and `ColorTile` (the swatch button and the
  * checkerboard tile), `ColorPickerPortalContainer` (portal the format menu
@@ -1757,6 +1773,7 @@ const ColorPicker = forwardRef<HTMLDivElement, ColorPickerProps>(
     // announce the panel's effective level so descendants (FormatDropdown,
     // etc.) elevate above it instead of colliding at the same surface.
     const pickerLevel = Math.max(substrate, 3)
+    const paintsSurface = useContext(PanelSurfaceContext)
 
     // A size prop pins the whole panel — format dropdown, inputs, eyedropper
     // (React context crosses portals) — to one step of the ladder.
@@ -1764,7 +1781,12 @@ const ColorPicker = forwardRef<HTMLDivElement, ColorPickerProps>(
       <SurfaceProvider value={pickerLevel}>
         <div
           ref={ref}
-          className={cn('flex flex-col gap-2 p-3', surfaceClasses(pickerLevel, 1), shape.container, className)}
+          className={cn(
+            'flex flex-col gap-2 p-3',
+            paintsSurface && surfaceClasses(pickerLevel, 1),
+            shape.container,
+            className,
+          )}
           style={{ width: PANEL_WIDTH }}
           {...props}
         >
@@ -2115,10 +2137,8 @@ function AlphaInput({ value, onCommit }: { value: number; onCommit: (n: number) 
 // captured rect and could overflow the viewport bottom), dismissal (outside
 // press, focus-out, Escape only while focus is relevant), and focus
 // management (focus moves into the panel on open and restores to the trigger
-// on close). The spring open/close animation stays via the actionsRef
-// deferred-unmount pattern (same as select.tsx) — the previous conditional
-// portal unmounted the AnimatePresence container itself, so the exit
-// animation never played.
+// on close). The panel morphs out of its trigger and back (lib/use-morph.ts),
+// the same pattern as popover.tsx.
 // ---------------------------------------------------------------------------
 
 const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
@@ -2134,6 +2154,10 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
       defaultOpen = false,
       onOpenChange,
       size,
+      from,
+      effect,
+      hideSource,
+      tier,
       ...pickerProps
     },
     ref,
@@ -2141,8 +2165,8 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
     const isOpenControlled = openProp !== undefined
     const [internalOpen, setInternalOpen] = useState(defaultOpen)
     const open = isOpenControlled ? openProp : internalOpen
-    const actionsRef = useRef<{ unmount: () => void; close: () => void } | null>(null)
-    const [panelEl, setPanelEl] = useState<HTMLDivElement | null>(null)
+    const { origin, capture } = useMorphOrigin()
+    const morph = useMorph(open, origin, { from, effect, hideSource, tier })
     const shape = useShape()
     // Resolved with the override directly: this component's own hooks run
     // outside the SizeProvider it renders, so the trigger can't read the pin
@@ -2154,11 +2178,12 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
     const level = Math.min(substrate + 2, 8)
 
     const handleOpenChange = useCallback(
-      (next: boolean) => {
+      (next: boolean, details: { trigger?: Element; event?: Event }) => {
+        if (next) capture(details)
         if (!isOpenControlled) setInternalOpen(next)
         onOpenChange?.(next)
       },
-      [isOpenControlled, onOpenChange],
+      [isOpenControlled, onOpenChange, capture],
     )
 
     const isControlled = pickerProps.value !== undefined
@@ -2173,17 +2198,6 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
       [isControlled, pickerProps],
     )
 
-    // Release Base UI's deferred unmount once the exit tween has played.
-    // onAnimationComplete on the motion.div is the primary signal; this
-    // timeout is a fallback for throttled/background tabs where rAF-driven
-    // animation callbacks can stall (spring.moderate.exit is 120ms — 150ms
-    // covers it with margin).
-    useEffect(() => {
-      if (open) return
-      const id = setTimeout(() => actionsRef.current?.unmount(), 150)
-      return () => clearTimeout(id)
-    }, [open])
-
     const XIcon = useIcon('x')
     const parsed = useMemo(() => parseColor(currentValue), [currentValue])
     const swatchColor = parsed ? rgbToHexStr(parsed.r, parsed.g, parsed.b, parsed.a) : currentValue
@@ -2197,7 +2211,6 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
       <Popover.Root
         open={open}
         onOpenChange={handleOpenChange}
-        actionsRef={actionsRef}
         // Non-modal: the page keeps scrolling and the Positioner tracks the
         // anchor, so the panel follows its trigger instead of detaching.
         modal={false}
@@ -2248,31 +2261,22 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
           </Popover.Trigger>
           <Popover.Portal>
             <Popover.Positioner side="bottom" align="start" sideOffset={6} className="z-50 outline-none">
-              <motion.div
-                initial={{ opacity: 0, y: -4, scaleY: 0.96 }}
-                animate={open ? { opacity: 1, y: 0, scaleY: 1 } : { opacity: 0, y: -4, scaleY: 0.96 }}
-                transition={open ? spring.moderate : spring.moderate.exit}
-                style={{ transformOrigin: 'top left' }}
-                // Base UI defers unmount while actionsRef is set; release it
-                // once the exit spring has finished so the close animation
-                // fully plays.
-                onAnimationComplete={() => {
-                  if (!open) actionsRef.current?.unmount()
-                }}
-              >
-                <Popover.Popup render={<div ref={setPanelEl} />} className="outline-none">
-                  <ColorPickerPortalContainer value={panelEl}>
-                    <SurfaceProvider value={level}>
-                      <ColorPicker
-                        {...pickerProps}
-                        value={currentValue}
-                        onValueChange={handleValueChange}
-                        className={cn(surfaceClasses(level, 3), pickerProps.className)}
-                      />
-                    </SurfaceProvider>
-                  </ColorPickerPortalContainer>
-                </Popover.Popup>
-              </motion.div>
+              <Popover.Popup ref={morph.popupRef} className="relative outline-none">
+                <ColorPickerPortalContainer value={morph.popup}>
+                  <SurfaceProvider value={level}>
+                    <MorphSurface
+                      morph={morph}
+                      bg={SURFACE_BG[level]}
+                      shadow={SURFACE_SHADOW[3]}
+                      radius={shape.container}
+                    >
+                      <PanelSurfaceContext.Provider value={false}>
+                        <ColorPicker {...pickerProps} value={currentValue} onValueChange={handleValueChange} />
+                      </PanelSurfaceContext.Provider>
+                    </MorphSurface>
+                  </SurfaceProvider>
+                </ColorPickerPortalContainer>
+              </Popover.Popup>
             </Popover.Positioner>
           </Popover.Portal>
         </div>
