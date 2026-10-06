@@ -32,6 +32,12 @@ interface MorphOptions {
   tier?: MorphTier
   /** Overrides `effect` (and `from`) for the close only, read as it starts: a swiped sheet slides on off its edge. */
   exit?: { effect: 'slide' | 'fade'; from?: MorphFrom }
+  /**
+   * Shows or hides at once while this returns true for the popup (Base UI's
+   * `data-instant` hand-off between grouped tooltips). Checked as a run
+   * starts and on every frame.
+   */
+  instant?: (popup: HTMLElement) => boolean
 }
 
 /** What opened the overlay: the pressed trigger and the press point. */
@@ -239,7 +245,7 @@ function useMorphOrigin() {
 function useMorph(
   open: boolean,
   origin: RefObject<MorphOrigin>,
-  { from = 'trigger', effect = 'goo', hideSource = false, tier = 'slow', exit }: MorphOptions = {},
+  { from = 'trigger', effect = 'goo', hideSource = false, tier = 'slow', exit, instant }: MorphOptions = {},
   onExited?: () => void,
 ) {
   const reduced = useReducedMotionConfig()
@@ -357,6 +363,8 @@ function useMorph(
     el.style.opacity = '0'
   }
 
+  const skip = (el: HTMLElement) => instant?.(el) ?? false
+
   useLayoutEffect(() => {
     if (!popup) {
       // The popup left mid-run (Base UI or its owner unmounted it): give the
@@ -380,13 +388,26 @@ function useMorph(
       const begin = () => {
         measure()
         hide(sourceElement(from, origin.current ?? {}))
+        if (skip(popup)) {
+          progress.jump(1)
+          rest()
+          return
+        }
         render(progress.get())
-        controls = animate(progress, 1, { ...enter, onUpdate: render, onComplete: rest })
+        controls = animate(progress, 1, {
+          ...enter,
+          onUpdate: p => {
+            if (skip(popup)) controls?.complete()
+            render(p)
+          },
+          onComplete: rest,
+        })
       }
-      // A reopen picks the closing surface up where it is; only a fresh open
-      // waits a frame, hidden, since Base UI positions the popup in a
+      // A reopen picks the closing surface up where it is, and a skipped morph
+      // shows at once (the popup it replaces is already gone); only a fresh
+      // open waits a frame, hidden, since Base UI positions the popup in a
       // microtask after this effect.
-      if (!first || !refs.bg.current) {
+      if (!first || skip(popup) || !refs.bg.current) {
         begin()
         return () => controls?.stop()
       }
@@ -406,6 +427,12 @@ function useMorph(
       geometry.current = null
       exited.current?.()
     }
+    if (skip(popup)) {
+      progress.jump(0)
+      popup.style.opacity = '0'
+      done()
+      return
+    }
     run.current = exit
       ? { effect: reduced ? 'fade' : exit.effect, from: exit.from ?? from }
       : { effect: resolved, from }
@@ -415,16 +442,20 @@ function useMorph(
     const hold = holdExit(popup, tier)
     measure()
     render(progress.get())
-    const controls = animate(progress, 0, {
+    let controls: ReturnType<typeof animate> | undefined
+    controls = animate(progress, 0, {
       ...leave,
-      onUpdate: render,
+      onUpdate: p => {
+        if (skip(popup)) controls?.complete()
+        render(p)
+      },
       onComplete: () => {
         hold.finish()
         done()
       },
     })
     return () => {
-      controls.stop()
+      controls?.stop()
       hold.cancel()
     }
   }, [open, popup])

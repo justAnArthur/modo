@@ -63,7 +63,8 @@ For tall or wide triggers, a centered tooltip sits far from the pointer —
 # Delay
 
 `delayDuration` overrides the hover delay per tooltip. Wrap a region in
-`Tooltip.Provider` to share one delay and let adjacent tooltips skip it.
+`Tooltip.Provider` to share one delay and let adjacent tooltips skip it,
+and the morph: the next label shows in place.
 
 <Tooltip.Provider delayDuration={300} skipDelayDuration={500}>
   <div className="flex flex-wrap gap-3">

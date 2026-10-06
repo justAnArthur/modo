@@ -19,11 +19,14 @@
  *   with `from` / `effect` / `tier` props; `followCursor` tooltips fade, since
  *   their panel travels with the pointer. The popup's motion wrapper now only
  *   carries the cursor-follow offset.
+ * - Moving between adjacent tooltips under a `Tooltip.Provider` skips the
+ *   morph (Base UI's `data-instant="delay"` hand-off): the next label shows
+ *   in place and the last one goes at once.
  */
 
 import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip'
 import { motion, useMotionValue } from 'motion/react'
-import { createContext, type ReactNode, type RefObject, useContext, useEffect, useState } from 'react'
+import { createContext, type ReactNode, type RefObject, useContext, useEffect, useRef, useState } from 'react'
 import { MorphSurface } from '../../lib/morph-layers'
 import { useShape } from '../../lib/shape-context'
 import { useMorph, useMorphOrigin } from '../../lib/use-morph'
@@ -130,7 +133,8 @@ interface TooltipProps {
  *
  * Statics:
  * - `Tooltip.Provider` — `TooltipProvider`: groups tooltips so moving from
- *   one trigger to an adjacent one skips the hover delay.
+ *   one trigger to an adjacent one skips the hover delay, and the morph: the
+ *   next label shows in place.
  * - `Tooltip.PortalContainer` — `TooltipPortalContainer`: portal every
  *   descendant tooltip into a given element instead of the body.
  *
@@ -157,7 +161,16 @@ function Tooltip({
   const portalContainer = useContext(TooltipPortalContainerContext)
   const hasAmbientProvider = useContext(TooltipGroupContext)
   const { origin, capture } = useMorphOrigin()
-  const morph = useMorph(open, origin, { from, effect: followCursor ? 'fade' : effect, tier })
+  // Base UI's hand-off between grouped tooltips: the next one shows in place
+  // (its popup carries `data-instant="delay"`) and the last one, closed with
+  // reason `none`, goes at once (its own `data-instant` lasts only a frame or two).
+  const handedOff = useRef(false)
+  const morph = useMorph(open, origin, {
+    from,
+    effect: followCursor ? 'fade' : effect,
+    tier,
+    instant: popup => handedOff.current || popup.dataset.instant === 'delay',
+  })
 
   // Cursor-follow offset from the trigger's center, driven as a motion value
   // so per-move updates skip React re-renders.
@@ -182,6 +195,7 @@ function Tooltip({
       open={open}
       onOpenChange={(v, details) => {
         if (v) capture(details)
+        handedOff.current = !v && details.reason === 'none'
         setInternalOpen(v)
         onOpenChangeProp?.(v)
       }}
