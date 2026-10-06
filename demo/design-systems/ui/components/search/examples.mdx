@@ -1,0 +1,74 @@
+import Search from './index'
+import Button from '../button'
+import { AlignLeft, Bell, Bold, FileText, Hash, Heading, Italic, Link, Settings, Underline } from 'lucide-react'
+
+# Pill
+
+Press it, or press `/` anywhere on the page: the pill grows into the field in place, over the buttons beside it. Type and the suggestions ooze out below; Escape clears the query, then collapses it.
+
+<div className="flex w-full max-w-md items-center gap-1">
+  <Search
+    placeholder="Search components"
+    shortcut="/"
+    items={['Accordion', 'Badge', 'Button', 'Card', 'Checkbox group', 'Combobox', 'Command', 'Dialog', 'Dropdown', 'Popover', 'Radio group', 'Select', 'Sheet', 'Slider', 'Switch', 'Tabs', 'Toast', 'Tooltip']}
+  />
+  <Button variant="ghost" size="icon" aria-label="Notifications">
+    <Bell />
+  </Button>
+  <Button variant="ghost" size="icon" aria-label="Settings">
+    <Settings />
+  </Button>
+</div>
+
+# Icon
+
+`variant="icon"` rests as a lone search icon. At the end of a toolbar, `align="end"` grows it leftward over the other tools.
+
+<div className="flex items-center gap-1">
+  <Button variant="ghost" size="icon" aria-label="Bold">
+    <Bold />
+  </Button>
+  <Button variant="ghost" size="icon" aria-label="Italic">
+    <Italic />
+  </Button>
+  <Button variant="ghost" size="icon" aria-label="Underline">
+    <Underline />
+  </Button>
+  <Button variant="ghost" size="icon" aria-label="Link">
+    <Link />
+  </Button>
+  <Search
+    variant="icon"
+    align="end"
+    width={240}
+    placeholder="Find in document"
+    items={[
+      { label: 'Introduction', icon: Heading },
+      { label: 'Getting started', icon: Heading },
+      { label: 'Installation', icon: Hash, keywords: ['setup', 'npm'] },
+      { label: 'Usage', icon: AlignLeft },
+      { label: 'Changelog', icon: FileText, keywords: ['releases'] },
+    ]}
+  />
+</div>
+
+# Without suggestions
+
+Leave out `items` for a plain search field: the same growth, no panel. Enter reports the query to `onSubmit`.
+
+<Search placeholder="Search the archive" />
+
+# Expanded
+
+`defaultExpanded` starts it open; leaving it empty still collapses it.
+
+<Search defaultExpanded placeholder="Filter" items={['Open', 'In progress', 'In review', 'Done', 'Cancelled']} />
+
+# Morph effects
+
+`effect` picks how the suggestions leave the field: a plain morph without the neck, or a fade.
+
+<div className="flex flex-col items-start gap-3">
+  <Search effect="morph" defaultExpanded width={220} placeholder="Morph" items={['Apple', 'Apricot', 'Avocado', 'Banana', 'Blueberry']} />
+  <Search effect="fade" defaultExpanded width={220} placeholder="Fade" items={['Apple', 'Apricot', 'Avocado', 'Banana', 'Blueberry']} />
+</div>
