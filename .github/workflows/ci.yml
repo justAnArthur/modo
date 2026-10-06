@@ -1,0 +1,23 @@
+# ci.yml
+# ---
+# lint and typecheck on every push to main and every pull request.
+# ---
+
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run lint
+      # The design systems type @justanarthur/modo/config from the lib's dist.
+      - run: bun run build
+      - run: bun run check
