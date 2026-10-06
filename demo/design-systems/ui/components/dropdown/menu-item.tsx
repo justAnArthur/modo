@@ -18,6 +18,10 @@
  * - Styling reads DS tokens (AGENTS.md styling): inline
  *   `fontVariationSettings` → `weight-*`; `duration-80|120|160` and
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
+ * - Inside a popup the row's activation travels as `onClick` in the render
+ *   options, for the primitive, instead of sitting on the render element:
+ *   Base UI's Enter/Space activation calls only the primitive's own `onClick`
+ *   prop, so a keyboard pick used to close the menu without selecting.
  */
 
 import { AnimatePresence, motion } from 'motion/react'
@@ -70,6 +74,10 @@ export interface MenuItemRenderOptions {
   disabled?: boolean
   label: string
   closeOnClick: boolean
+  /** The row's activation. It goes on the primitive, not on `element`: Base
+   *  UI's Enter/Space activation calls the primitive's own `onClick` prop and
+   *  never sees a handler on the render element. */
+  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void
   element: ReactElement
   children: ReactNode
 }
@@ -274,8 +282,8 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
       // Inside DropdownContent, the menu-item primitive (supplied by the
       // surrounding DropdownContent through context) owns the role,
       // aria-checked, tabIndex, roving highlight, typeahead, and Enter/Space/
-      // click activation (activation synthesizes a click, so handleActivate
-      // also fires for keyboard). The styled div carries the Fluid
+      // click activation (handleActivate rides on the primitive, whose
+      // keyboard activation calls it too). The styled div carries the Fluid
       // Functionalism visuals and the fluid-hover registration; MenuItem
       // itself imports no primitive.
       return renderMenuItem({
@@ -287,15 +295,9 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
         label,
         // Toggling one of several stays open; picking one of one closes.
         closeOnClick: closeOnClick ?? !multiple,
+        onClick: handleActivate,
         element: (
-          <div
-            ref={mergeRef}
-            data-fluid-hover-index={index}
-            aria-label={label}
-            onClick={handleActivate}
-            className={itemClassName}
-            {...props}
-          />
+          <div ref={mergeRef} data-fluid-hover-index={index} aria-label={label} className={itemClassName} {...props} />
         ),
         children: content,
       })

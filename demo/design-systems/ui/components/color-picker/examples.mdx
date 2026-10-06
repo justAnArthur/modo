@@ -11,10 +11,17 @@ color string.
 # Popover
 
 `ColorPicker.Popover` puts the same panel behind a trigger that shows a
-color tile, an optional `triggerLabel` and the hex value. The panel springs
-open under the trigger and follows it on scroll.
+color tile, an optional `triggerLabel` and the hex value. The panel oozes
+out of the trigger and follows it on scroll.
 
 <ColorPicker.Popover triggerLabel="Fill" defaultValue="#6B97FF" />
+
+# Morph
+
+`effect="morph"` with `hideSource`: the trigger itself grows into the panel
+and shrinks back, one continuous surface.
+
+<ColorPicker.Popover triggerLabel="Stroke" defaultValue="#FF3B30" effect="morph" hideSource />
 
 # With Swatches
 

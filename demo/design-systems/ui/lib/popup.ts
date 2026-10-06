@@ -4,32 +4,17 @@
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
  *
- * Local modifications: none.
+ * Local modifications:
+ * - `popupMotionClass` (the side-aware transform origin and slide offset of
+ *   the old `scaleY` enter/exit) dropped: the dropdown, select and combobox
+ *   popups now morph out of their trigger through `lib/use-morph.ts`.
  */
 
 // ---------------------------------------------------------------------------
 // Shared popup chrome for the dropdown, select, and combobox popups: the
-// enter/exit choreography classes and the ScrollArea sizing the list scrolls
-// inside. One definition, so the three popups never drift apart.
+// ScrollArea sizing the list scrolls inside. One definition, so the three
+// popups never drift apart.
 // ---------------------------------------------------------------------------
-
-/**
- * Enter/exit choreography follows the RESOLVED side — the one the positioner
- * lands on after collision flipping, not the requested one. The primitive
- * stamps `data-side` (on the positioner, or on the content itself); these
- * rules turn it into the transform origin and the 4px slide offset, so a
- * popup that flips above its anchor grows upward from its bottom edge.
- * framer-motion resolves the CSS variable when the tween starts, by which
- * time the position is settled.
- */
-export const popupMotionClass =
-  'origin-top [--popup-enter-y:-4px] ' +
-  'data-[side=top]:origin-bottom data-[side=top]:[--popup-enter-y:4px] ' +
-  '[[data-side=top]_&]:origin-bottom [[data-side=top]_&]:[--popup-enter-y:4px] ' +
-  'data-[side=left]:origin-right data-[side=left]:[--popup-enter-y:0px] ' +
-  '[[data-side=left]_&]:origin-right [[data-side=left]_&]:[--popup-enter-y:0px] ' +
-  'data-[side=right]:origin-left data-[side=right]:[--popup-enter-y:0px] ' +
-  '[[data-side=right]_&]:origin-left [[data-side=right]_&]:[--popup-enter-y:0px]'
 
 /**
  * Popup lists scroll inside ScrollArea: the hover-revealed thumb instead of
