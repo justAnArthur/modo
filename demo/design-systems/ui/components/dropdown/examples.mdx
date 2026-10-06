@@ -49,6 +49,29 @@ goes in `render`, and picking a row closes the menu.
   </Dropdown.Content>
 </Dropdown.Menu>
 
+# Morph
+
+The menu oozes out of its trigger by default. `effect="morph"` with `hideSource` turns the trigger itself into the menu and shrinks it back, one continuous surface.
+
+<div className="flex flex-wrap items-start justify-center gap-3">
+  <Dropdown.Menu>
+    <Dropdown.Trigger render={<Button variant="secondary">Goo</Button>} />
+    <Dropdown.Content defaultCheckedIndex={0}>
+      <Dropdown.Item index={0} icon={Mail} label="Email" />
+      <Dropdown.Item index={1} icon={Bell} label="Notifications" />
+      <Dropdown.Item index={2} icon={Shield} label="Privacy" />
+    </Dropdown.Content>
+  </Dropdown.Menu>
+  <Dropdown.Menu>
+    <Dropdown.Trigger render={<Button variant="secondary">Morph</Button>} />
+    <Dropdown.Content effect="morph" hideSource defaultCheckedIndex={0}>
+      <Dropdown.Item index={0} icon={Settings} label="General" />
+      <Dropdown.Item index={1} icon={Palette} label="Theme" />
+      <Dropdown.Item index={2} icon={Monitor} label="Display" />
+    </Dropdown.Content>
+  </Dropdown.Menu>
+</div>
+
 # Multiple selection
 
 `defaultCheckedIndices` (or `checkedIndices`): rows become checkboxes, the

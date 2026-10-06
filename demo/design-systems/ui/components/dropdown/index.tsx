@@ -39,6 +39,15 @@
  *   `text-<role>[-compact]`; the hex focus-ring fallback →
  *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
+ * - The popup menu morphs out of its trigger through the shared morph layer
+ *   (`lib/use-morph.ts` + `MorphSurface`, goo by default on
+ *   `spring.moderate`; `Dropdown.Content` takes `from` / `effect` /
+ *   `hideSource` / `tier`), the origin captured from `Menu.Root`'s
+ *   `onOpenChange`. The `scaleY` motion wrapper and the `actionsRef` deferred
+ *   unmount are gone: Menu ignores `actionsRef`, and the wrapper animated
+ *   outside `Menu.Popup`, so Base UI unmounted the menu before its exit
+ *   played. The popup paints its level through the morph's surface layers
+ *   instead of `render={<Elevated/>}`, re-providing it with `SurfaceProvider`.
  */
 
 import type { MenuTriggerProps } from '@base-ui/react/menu'
@@ -56,21 +65,27 @@ import {
   type ReactElement,
   type ReactNode,
   type RefAttributes,
+  type RefObject,
   useCallback,
   useContext,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
 } from 'react'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
-import { isDisabledRow, popupMotionClass, popupScrollAreaClass, popupViewportClass } from '../../lib/popup'
+import { MorphSurface } from '../../lib/morph-layers'
+import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../lib/popup'
 import { shapeMap } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
-import { exitFallbackMs, spring } from '../../lib/springs'
+import { spring } from '../../lib/springs'
+import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
+import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { type ItemRect, useFluidHover } from '../../lib/use-fluid-hover'
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../lib/use-merge-split'
+import { type MorphOrigin, useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { ScrollArea } from '../../primitives/scroll-area'
 import { SizeProvider } from '../../primitives/sizes'
@@ -329,14 +344,16 @@ type DropdownComponent = ForwardRefExoticComponent<DropdownProps & RefAttributes
  * and an animated focus ring. `Dropdown.Menu` + `Dropdown.Trigger` +
  * `Dropdown.Content` is the same panel as a popup on Base UI's Menu, which
  * brings the positioning, dismissal, roving highlight, typeahead and
- * close-on-select. Both take `checkedIndex` / `checkedIndices` to be driven
+ * close-on-select; the popup oozes out of its trigger and back through the
+ * shared morph (see Morph), goo by default. Both take `checkedIndex` / `checkedIndices` to be driven
  * from outside, or `defaultCheckedIndex` / `defaultCheckedIndices` to run
  * themselves — and a `Dropdown.Search` marked `filter` makes the panel own
  * the query too, keeping only the rows whose `label` matches and showing
  * `Dropdown.Empty` when none do.
  *
  * Statics: Dropdown.Menu (the popup root: open, defaultOpen, onOpenChange,
- * disabled), Dropdown.Trigger (render), Dropdown.Content (the popup panel),
+ * disabled), Dropdown.Trigger (render), Dropdown.Content (the popup panel:
+ * side, align, sideOffset and the morph options from, effect, hideSource, tier),
  * Dropdown.Item (a row: index, label, icon, checked, onSelect, disabled),
  * Dropdown.Label, Dropdown.Separator, Dropdown.Search and Dropdown.Empty.
  *
@@ -529,19 +546,13 @@ Dropdown.displayName = 'Dropdown'
 // Built on Base UI's Menu primitive, which owns the trigger wiring,
 // positioning (collision flipping, anchor tracking), dismissal (outside
 // press, focus-out, Escape), roving highlight, typeahead, and close-on-select.
-// This layer keeps the fluid-hover overlays and the
-// spring open/close animation (via actionsRef deferred unmount) — the same
-// verified pattern as select.tsx.
+// This layer keeps the fluid-hover overlays and the morph open/close
+// (lib/use-morph.ts) — the same pattern as select.tsx.
 // ---------------------------------------------------------------------------
-
-interface DropdownMenuActions {
-  unmount: () => void
-  close: () => void
-}
 
 interface DropdownMenuContextValue {
   open: boolean
-  actionsRef: React.RefObject<DropdownMenuActions | null>
+  origin: RefObject<MorphOrigin>
 }
 
 const DropdownMenuContext = createContext<DropdownMenuContextValue | null>(null)
@@ -577,17 +588,18 @@ function DropdownMenu({
 }: DropdownMenuProps) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen)
   const open = openProp !== undefined ? openProp : internalOpen
-  const actionsRef = useRef<DropdownMenuActions | null>(null)
+  const { origin, capture } = useMorphOrigin()
 
   const handleOpenChange = useCallback(
-    (next: boolean) => {
+    (next: boolean, details: { trigger?: Element; event?: Event }) => {
+      if (next) capture(details)
       if (openProp === undefined) setInternalOpen(next)
       onOpenChange?.(next)
     },
-    [openProp, onOpenChange],
+    [openProp, onOpenChange, capture],
   )
 
-  const ctx = useMemo(() => ({ open, actionsRef }), [open])
+  const ctx = useMemo(() => ({ open, origin }), [open, origin])
 
   // A size prop pins the whole compound (trigger content + portalled popup —
   // React context crosses portals) to one ladder step.
@@ -596,7 +608,6 @@ function DropdownMenu({
       <Menu.Root
         open={open}
         onOpenChange={handleOpenChange}
-        actionsRef={actionsRef}
         disabled={disabled}
         // Non-modal: the page keeps scrolling and the Positioner tracks the
         // anchor, so the popup follows its trigger instead of detaching.
@@ -628,9 +639,9 @@ const DropdownTrigger = Menu.Trigger
 // ---------------------------------------------------------------------------
 // DropdownContent (popup panel)
 //
-// Portal > Positioner > Popup carrying the exact inline-panel visuals:
-// Elevated surface, fluid-hover overlays, animated selected background,
-// and animated focus ring. Children are wrapped in a Menu.RadioGroup so
+// Portal > Positioner > Popup carrying the exact inline-panel visuals: the
+// surface (painted by the morph layer), fluid-hover overlays, animated
+// selected background, and animated focus ring. Children are wrapped in a Menu.RadioGroup so
 // radio-style MenuItems (boolean `checked`) get correct aria-checked from
 // `checkedIndex`.
 // ---------------------------------------------------------------------------
@@ -663,6 +674,14 @@ interface DropdownContentProps {
   align?: MenuPositionerProps['align']
   /** Gap to the trigger, in px. Defaults to `6`. */
   sideOffset?: number
+  /** Where the menu grows from (see Morph): the trigger, the pointer, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
+  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
+  /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
+  effect?: 'goo' | 'morph' | 'slide' | 'fade'
+  /** Hide the trigger while open, so it reads as turning into the menu. Defaults to `false`. */
+  hideSource?: boolean
+  /** Spring tier of the morph. Defaults to `'moderate'`. */
+  tier?: 'moderate' | 'slow'
 }
 
 const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
@@ -679,10 +698,18 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
       side = 'bottom',
       align = 'start',
       sideOffset = 6,
+      from,
+      effect,
+      hideSource,
+      tier = 'moderate',
     },
     ref,
   ) => {
-    const { open, actionsRef } = useDropdownMenuContext()
+    const { open, origin } = useDropdownMenuContext()
+    const morph = useMorph(open, origin, { from, effect, hideSource, tier })
+    useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
+    // Lifts 2 levels off its substrate with a fixed shadow (see Elevated).
+    const level = Math.min(useSurface() + 2, 8)
     const containerRef = useRef<HTMLDivElement>(null)
 
     const hover = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
@@ -736,17 +763,6 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
         if (inner !== undefined) cancelAnimationFrame(inner)
       }
     }, [open, hasSearch])
-
-    // Release Base UI's deferred unmount once the exit tween has played.
-    // onAnimationComplete on the motion.div is the primary signal; this
-    // timeout is a fallback for throttled/background tabs where rAF-driven
-    // animation callbacks can stall. The popup exits with spring.fast, so the
-    // fallback tracks that tier's exit duration plus a safety buffer.
-    useEffect(() => {
-      if (open) return
-      const id = setTimeout(() => actionsRef.current?.unmount(), exitFallbackMs(spring.fast))
-      return () => clearTimeout(id)
-    }, [open, actionsRef])
 
     // The popup keeps its rows registered between opens, so their rects
     // were taken while it was hidden: re-measure once it is open and laid out.
@@ -818,112 +834,110 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
     return (
       <Menu.Portal>
         <Menu.Positioner side={side} align={align} sideOffset={sideOffset} className="z-50 outline-none">
-          <motion.div
-            className={popupMotionClass}
-            initial={{ opacity: 0, y: 'var(--popup-enter-y)', scaleY: 0.96 }}
-            animate={open ? { opacity: 1, y: 0, scaleY: 1 } : { opacity: 0, y: 'var(--popup-enter-y)', scaleY: 0.96 }}
-            transition={open ? spring.fast : spring.fast.exit}
-            // Base UI defers unmount while actionsRef is set; release it once
-            // the exit spring has finished so the close animation fully plays.
-            onAnimationComplete={() => {
-              if (!open) actionsRef.current?.unmount()
-            }}
-          >
-            <DropdownContext.Provider value={contentCtx}>
-              <DropdownFilterContext.Provider value={rows.filterCtx}>
-                <DropdownSearchHostContext.Provider value={searchHost}>
-                  <Menu.Popup
-                    render={<Elevated offset={2} shadowLevel={3} ref={ref} />}
-                    onKeyDownCapture={redirectTypingToSearch}
-                    onMouseEnter={handlers.onMouseEnter}
-                    onMouseMove={handlers.onMouseMove}
-                    onClick={handlers.onClick}
-                    onMouseLeave={() => {
-                      handlers.onMouseLeave()
-                      // The pointer's session is over; a focused search field
-                      // gets its first-row highlight back.
-                      if (isSearchField(document.activeElement)) highlightFirst()
-                    }}
-                    onFocus={e => {
-                      const indexAttr = (e.target as HTMLElement)
-                        .closest('[data-fluid-hover-index]')
-                        ?.getAttribute('data-fluid-hover-index')
-                      // Keyboard navigation moves the hover background only — no
-                      // ring: in a menu the highlighted row is the focus indicator.
-                      if (indexAttr != null) {
-                        setActiveIndex(Number(indexAttr))
-                      } else if (isSearchField(e.target)) {
-                        // The search field: the first row (what Enter picks)
-                        // carries the highlight while it has focus.
-                        highlightFirst()
-                      } else if (e.target !== e.currentTarget) {
-                        // Focus moved to some other non-row inside the popup: no
-                        // row is highlighted any more. The popup focusing itself
-                        // (pointer leaving a row) doesn't count.
-                        setActiveIndex(null)
-                      }
-                    }}
-                    onBlur={e => {
-                      // The popup itself takes focus when the pointer leaves a row; only a
-                      // departure from the whole popup ends the hover session.
-                      if (e.currentTarget.contains(e.relatedTarget as Node)) return
+          <DropdownContext.Provider value={contentCtx}>
+            <DropdownFilterContext.Provider value={rows.filterCtx}>
+              <DropdownSearchHostContext.Provider value={searchHost}>
+                <Menu.Popup
+                  ref={morph.popupRef}
+                  onKeyDownCapture={redirectTypingToSearch}
+                  onMouseEnter={handlers.onMouseEnter}
+                  onMouseMove={handlers.onMouseMove}
+                  onClick={handlers.onClick}
+                  onMouseLeave={() => {
+                    handlers.onMouseLeave()
+                    // The pointer's session is over; a focused search field
+                    // gets its first-row highlight back.
+                    if (isSearchField(document.activeElement)) highlightFirst()
+                  }}
+                  onFocus={e => {
+                    const indexAttr = (e.target as HTMLElement)
+                      .closest('[data-fluid-hover-index]')
+                      ?.getAttribute('data-fluid-hover-index')
+                    // Keyboard navigation moves the hover background only — no
+                    // ring: in a menu the highlighted row is the focus indicator.
+                    if (indexAttr != null) {
+                      setActiveIndex(Number(indexAttr))
+                    } else if (isSearchField(e.target)) {
+                      // The search field: the first row (what Enter picks)
+                      // carries the highlight while it has focus.
+                      highlightFirst()
+                    } else if (e.target !== e.currentTarget) {
+                      // Focus moved to some other non-row inside the popup: no
+                      // row is highlighted any more. The popup focusing itself
+                      // (pointer leaving a row) doesn't count.
                       setActiveIndex(null)
-                    }}
-                    className={cn(
-                      // min-w tracks the trigger via the Positioner's
-                      // --anchor-width var.
-                      `flex flex-col w-72 max-w-full min-w-[var(--anchor-width)] max-h-[min(480px,var(--available-height))] overflow-hidden ${shape.container} select-none outline-none`,
-                      className,
-                    )}
-                  >
-                    {/* The list scrolls inside a ScrollArea; this wrapper is the rows'
-                    offsetParent, so the overlays scroll with them. */}
-                    <ScrollArea
-                      className={popupScrollAreaClass}
-                      viewportClassName={cn(popupViewportClass, !searchMounted && 'scroll-fade')}
+                    }
+                  }}
+                  onBlur={e => {
+                    // The popup itself takes focus when the pointer leaves a row; only a
+                    // departure from the whole popup ends the hover session.
+                    if (e.currentTarget.contains(e.relatedTarget as Node)) return
+                    setActiveIndex(null)
+                  }}
+                  className="relative select-none outline-none"
+                >
+                  <SurfaceProvider value={level}>
+                    <MorphSurface
+                      morph={morph}
+                      bg={SURFACE_BG[level]}
+                      shadow={SURFACE_SHADOW[3]}
+                      radius={shape.container}
+                      className={cn(
+                        // min-w tracks the trigger via the Positioner's
+                        // --anchor-width var.
+                        `flex flex-col w-72 max-w-full min-w-[var(--anchor-width)] max-h-[min(480px,var(--available-height))] overflow-hidden ${shape.container}`,
+                        className,
+                      )}
                     >
-                      <div ref={containerRef} className="relative flex flex-col p-1">
-                        {/* Selected backgrounds — merged runs in multiple mode */}
-                        {multiple && <SelectionBackgrounds blocks={blocks} />}
+                      {/* The list scrolls inside a ScrollArea; this wrapper is the rows'
+                    offsetParent, so the overlays scroll with them. */}
+                      <ScrollArea
+                        className={popupScrollAreaClass}
+                        viewportClassName={cn(popupViewportClass, !searchMounted && 'scroll-fade')}
+                      >
+                        <div ref={containerRef} className="relative flex flex-col p-1">
+                          {/* Selected backgrounds — merged runs in multiple mode */}
+                          {multiple && <SelectionBackgrounds blocks={blocks} />}
 
-                        {/* Selected background */}
-                        <AnimatePresence>
-                          {checkedRect && (
-                            <motion.div
-                              className={`absolute ${shape.bg} bg-active pointer-events-none`}
-                              initial={false}
-                              animate={{
-                                top: checkedRect.top,
-                                left: checkedRect.left,
-                                width: checkedRect.width,
-                                height: checkedRect.height,
-                                opacity: 1,
-                              }}
-                              exit={{ opacity: 0, transition: spring.moderate.exit }}
-                              transition={{
-                                ...spring.moderate,
-                                opacity: { duration: spring.fast.duration },
-                              }}
-                            />
-                          )}
-                        </AnimatePresence>
+                          {/* Selected background */}
+                          <AnimatePresence>
+                            {checkedRect && (
+                              <motion.div
+                                className={`absolute ${shape.bg} bg-active pointer-events-none`}
+                                initial={false}
+                                animate={{
+                                  top: checkedRect.top,
+                                  left: checkedRect.left,
+                                  width: checkedRect.width,
+                                  height: checkedRect.height,
+                                  opacity: 1,
+                                }}
+                                exit={{ opacity: 0, transition: spring.moderate.exit }}
+                                transition={{
+                                  ...spring.moderate,
+                                  opacity: { duration: spring.fast.duration },
+                                }}
+                              />
+                            )}
+                          </AnimatePresence>
 
-                        {/* Hover background */}
-                        <FluidHoverHighlight hover={hover} from={checkedRect} className={shape.bg} />
+                          {/* Hover background */}
+                          <FluidHoverHighlight hover={hover} from={checkedRect} className={shape.bg} />
 
-                        {/* display: contents keeps items direct flex children of the
+                          {/* display: contents keeps items direct flex children of the
                     wrapper so fluid hover measurement and gap layout still work,
                     while the group provides the radio value context. */}
-                        <Menu.RadioGroup value={selection.checkedIndex ?? null} className="contents">
-                          {rows.content}
-                        </Menu.RadioGroup>
-                      </div>
-                    </ScrollArea>
-                  </Menu.Popup>
-                </DropdownSearchHostContext.Provider>
-              </DropdownFilterContext.Provider>
-            </DropdownContext.Provider>
-          </motion.div>
+                          <Menu.RadioGroup value={selection.checkedIndex ?? null} className="contents">
+                            {rows.content}
+                          </Menu.RadioGroup>
+                        </div>
+                      </ScrollArea>
+                    </MorphSurface>
+                  </SurfaceProvider>
+                </Menu.Popup>
+              </DropdownSearchHostContext.Provider>
+            </DropdownFilterContext.Provider>
+          </DropdownContext.Provider>
         </Menu.Positioner>
       </Menu.Portal>
     )
