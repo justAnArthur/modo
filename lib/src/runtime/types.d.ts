@@ -1,6 +1,7 @@
+// Import types throughout: a relative import declaration isn't allowed in an
+// ambient module and, under skipLibCheck, silently types as any.
 declare module 'virtual:modo-config' {
-  import type { SiteConfig } from '../lib/schema'
-  export const config: SiteConfig
+  export const config: import('../lib/schema').SiteConfig
   export default config
 }
 
@@ -10,8 +11,6 @@ declare module 'virtual:modo-config-css' {
 }
 
 declare module 'virtual:modo-tokens' {
-  // An import type: a relative import declaration isn't allowed in an ambient
-  // module and, under skipLibCheck, silently types as any.
   export const tokens: import('../lib/css').Group[]
   export const errors: string[]
 }
