@@ -52,11 +52,13 @@ From the `sparse` skill: how code reads. ponytail decides whether to write it.
 Two vocabularies:
 
 - **Generic tokens** — the shadcn-named contract the lib reads from any host:
-  - colors: `--background`, `--foreground`, `--muted-foreground`, `--border`, `--accent`;
-  - radius and spacing: `--radius-sm|md|lg`, `--space-1…6`;
-  - type: `--font-sans`, `--font-mono`, `--font-size-h1|h2|h3|lead|eyebrow`;
+  - colors: `--border`, `--muted-foreground`, `--ring`;
+  - radius and spacing: `--radius-sm|md|lg` (else `--radius`), `--space-1…6`;
+  - type: `--font-sans`, `--font-size-h1|h2|h3|lead|eyebrow|sm|xs`, `--font-weight-medium|semibold|bold`;
   - motion: `--duration-fast`;
   - layout: `--modo-measure`.
+
+  A host wires the contract to its theme in `global.css`, by reference only (mui: `--font-sans: var(--font-family)`).
 - **Theme tokens** — a DS's own, defined in its `tokens/*.css` and exposed as its utilities. In ui:
   - `bg-surface-N` / `shadow-surface-N`;
   - `text-display|title|subtitle|body|caption`;
@@ -69,8 +71,10 @@ Rules:
 - **Lib (runtime TSX, `shell.css`):**
   - Structure only (layout, grid, spacing rhythm, measure). Every visual reads a generic token, or the host's own token when that token is what the page shows (a radius specimen applies `var(--radius-box)`).
   - No literal colors and no color fallbacks. Leave the fallback off so an undefined token inherits, or derive it from `currentColor`.
-  - Borders and muted text read `--modo-border` / `--modo-muted`. `tokens/host-colors.ts` sets them at startup from the host's `--border` / `--muted-foreground` (wrapped when the token holds bare channels, e.g. `hsl(var(--border))`), else from `currentColor`.
-  - Size fallbacks may be literal (`var(--space-2, 8px)`).
+  - Borders, muted text and the focus ring read `--modo-border` / `--modo-muted` / `--modo-ring`. `tokens/host-colors.ts` sets them at startup from the host's `--border` / `--muted-foreground` / `--ring` (wrapped when the token holds bare channels, e.g. `hsl(var(--border))`), else from `currentColor`.
+  - Defaults live in one place each. `shell.css` opens with the contract block: every generic type and radius token resolves once to a `--modo-*` var, falling back to a literal size or, for weights, the keyword `bold`. `tokens/host-colors.ts` does the same for colors. Rules read `--modo-*`, never a generic token with an inline fallback. Those two are the only literal visuals in the lib.
+  - Spacing fallbacks stay inline (`var(--space-2, 8px)`): spacing is structure. Motion has no default; no token means no transition.
+  - Inherit before you set: line-height, font family and link decoration come from the host. Capitalize in content (`cap()` in `runtime/text.ts`), never with `text-transform`.
 - **DS code** (items, examples, `modo.components.tsx`):
   - Use theme tokens through the DS's utilities.
   - No arbitrary values for color, type, radius, shadow or motion (`text-[15px]`, `bg-[#…]`, `rounded-[10px]`, `duration-[…]`).
