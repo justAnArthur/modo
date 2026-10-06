@@ -194,6 +194,21 @@ function insetClip(rect: Rect, box: Rect) {
 }
 
 /**
+ * A trigger that turns into its panel (`effect: 'morph'` with `hideSource`)
+ * opens in place: the panel lays over the trigger instead of beside it, so
+ * the trigger's box is where the panel starts. Anchored overlays pass
+ * `inPlaceOffset` as Base UI's `sideOffset` while this holds.
+ */
+function opensInPlace({ effect, hideSource }: MorphOptions) {
+  return effect === 'morph' && (hideSource ?? false)
+}
+
+/** Base UI `sideOffset` that pulls the panel back over its anchor, edge to edge, on whichever side it lands. */
+function inPlaceOffset({ side, anchor }: { side: string; anchor: { width: number; height: number } }) {
+  return side === 'top' || side === 'bottom' ? -anchor.height : -anchor.width
+}
+
+/**
  * Base UI unmounts a closed popup once `getAnimations()` on it settles; a
  * JS-driven animation registers none, so an empty animation holds it open
  * for the tier's exit (plus a buffer). Finish or cancel it once the exit is
@@ -473,4 +488,4 @@ function useMorph(
 type Morph = ReturnType<typeof useMorph>
 
 export type { Morph, MorphEffect, MorphFrom, MorphOptions, MorphOrigin, MorphSide, MorphTier }
-export { GOO_BLUR_RATIO, GOO_MATRIX, holdExit, useMorph, useMorphOrigin }
+export { GOO_BLUR_RATIO, GOO_MATRIX, holdExit, inPlaceOffset, opensInPlace, useMorph, useMorphOrigin }

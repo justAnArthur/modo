@@ -27,7 +27,7 @@ import { useShape } from '../../lib/shape-context'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useControllableState } from '../../lib/use-controllable-state'
-import { type MorphOrigin, useMorph, useMorphOrigin } from '../../lib/use-morph'
+import { inPlaceOffset, type MorphOrigin, opensInPlace, useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 
 interface PreviewCardContextValue {
@@ -69,9 +69,9 @@ PreviewCardTrigger.displayName = 'PreviewCardTrigger'
 interface PreviewCardContentProps extends HTMLAttributes<HTMLDivElement> {
   /** Side of the link the card opens on; it flips when there is no room. Defaults to `'bottom'`. */
   side?: 'top' | 'right' | 'bottom' | 'left'
-  /** Alignment along that side. Defaults to `'center'`. */
+  /** Alignment along that side. Defaults to `'center'`, or `'start'` when the card opens in place (`effect="morph"` with `hideSource`). */
   align?: 'start' | 'center' | 'end'
-  /** Gap between link and card in px — the length of the goo neck. Defaults to `12`. */
+  /** Gap between link and card in px — the length of the goo neck. Ignored when the card opens in place over its link (`effect="morph"` with `hideSource`). Defaults to `12`. */
   sideOffset?: number
   /** Where the card grows from (see Morph): the hovered link, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
   from?: 'trigger' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
@@ -93,7 +93,7 @@ const PreviewCardContent = forwardRef<HTMLDivElement, PreviewCardContentProps>(
   (
     {
       side = 'bottom',
-      align = 'center',
+      align,
       sideOffset = 12,
       from,
       effect,
@@ -108,6 +108,7 @@ const PreviewCardContent = forwardRef<HTMLDivElement, PreviewCardContentProps>(
   ) => {
     const { open, origin } = useContext(PreviewCardContext)
     const morph = useMorph(open, origin, { from, effect, hideSource, tier })
+    const inPlace = opensInPlace({ effect, hideSource })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
     const shape = useShape()
     // Lifts 2 levels off its substrate with a fixed shadow, like Popover (see Elevated).
@@ -117,8 +118,8 @@ const PreviewCardContent = forwardRef<HTMLDivElement, PreviewCardContentProps>(
       <PreviewCardPrimitive.Portal container={container ?? undefined}>
         <PreviewCardPrimitive.Positioner
           side={side}
-          align={align}
-          sideOffset={sideOffset}
+          align={align ?? (inPlace ? 'start' : 'center')}
+          sideOffset={inPlace ? inPlaceOffset : sideOffset}
           className="z-50 outline-none"
         >
           <PreviewCardPrimitive.Popup ref={morph.popupRef} className="relative outline-none" {...props}>

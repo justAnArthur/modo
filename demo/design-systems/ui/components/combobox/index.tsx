@@ -38,6 +38,8 @@
  *   fallback timer) are gone: the morph holds Base UI's unmount itself. The
  *   popup paints its level through the morph's surface layers instead of
  *   `render={<Elevated/>}`, re-providing it with `SurfaceProvider`.
+ * - `effect="morph"` with `hideSource` opens the list in place over its
+ *   trigger: the positioner's `sideOffset` becomes the engine's `inPlaceOffset`.
  */
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox'
@@ -70,7 +72,7 @@ import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../lib/use-merge-split'
-import { type MorphOrigin, useMorph, useMorphOrigin } from '../../lib/use-morph'
+import { inPlaceOffset, type MorphOrigin, opensInPlace, useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { ScrollArea } from '../../primitives/scroll-area'
 import { SizeProvider } from '../../primitives/sizes'
@@ -810,7 +812,7 @@ interface ComboboxContentProps {
   side?: 'top' | 'bottom' | 'left' | 'right'
   /** Alignment against the field. Defaults to `"start"`. */
   align?: 'start' | 'center' | 'end'
-  /** Gap to the field, in px. Defaults to `6`. */
+  /** Gap to the field, in px. Ignored when the list opens in place over the field (`effect="morph"` with `hideSource`). Defaults to `6`. */
   sideOffset?: number
   /** Where the list grows from (see Morph): the field, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'` (the field). */
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
@@ -852,7 +854,7 @@ const ComboboxContent = forwardRef<HTMLDivElement, ComboboxContentProps>(
           anchor={anchorRef}
           side={side}
           align={align}
-          sideOffset={sideOffset}
+          sideOffset={opensInPlace({ effect, hideSource }) ? inPlaceOffset : sideOffset}
           className="z-50 outline-none"
         >
           <ComboboxPrimitive.Popup ref={morph.popupRef} className="relative select-none outline-none">

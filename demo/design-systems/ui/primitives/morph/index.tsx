@@ -14,7 +14,7 @@ import { useShape } from '../../lib/shape-context'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useControllableState } from '../../lib/use-controllable-state'
-import { useMorph, useMorphOrigin } from '../../lib/use-morph'
+import { opensInPlace, useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 
 interface MorphProps {
@@ -68,7 +68,10 @@ interface MorphProps {
  *   its source, like two drops of water merging; `'morph'` grows it without
  *   one; `'slide'` moves the finished panel in; `'fade'` only fades.
  * - `hideSource` — hides the source while open, so it reads as turning into
- *   the overlay. Focus can still return to it.
+ *   the overlay. Focus can still return to it. With `effect="morph"` an
+ *   anchored overlay also opens in place: the panel lays over its trigger,
+ *   corner to corner, instead of beside it, so the trigger's own box is where
+ *   it starts and where it shrinks back to.
  *
  * ## Motion
  *
@@ -137,6 +140,7 @@ export default function Morph({
   const morph = useMorph(shown, origin, { from, effect, tier, hideSource }, () => setMounted(false))
   const shape = useShape()
   const level = Math.min(useSurface() + 2, 8)
+  const inPlace = opensInPlace({ effect, hideSource })
 
   return (
     <div className={cn('relative inline-flex flex-col items-center', className)}>
@@ -151,7 +155,13 @@ export default function Morph({
         {shown ? 'Close' : label}
       </Button>
       {(shown || mounted) && (
-        <div ref={morph.popupRef} className="absolute top-full left-1/2 z-10 mt-3 -translate-x-1/2">
+        // Opened in place, the panel covers its own trigger, so pressing the panel closes it.
+        // biome-ignore lint/a11y/useKeyWithClickEvents lint/a11y/noStaticElementInteractions: the trigger stays the keyboard path (Enter/Space on it toggles; focus stays on it)
+        <div
+          ref={morph.popupRef}
+          className={inPlace ? 'absolute top-0 left-0 z-10' : 'absolute top-full left-1/2 z-10 mt-3 -translate-x-1/2'}
+          onClick={inPlace ? () => setShown(false) : undefined}
+        >
           <SurfaceProvider value={level}>
             <MorphSurface
               morph={morph}

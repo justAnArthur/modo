@@ -32,6 +32,8 @@
  *   UI's unmount itself. The popup paints its level through the morph's
  *   surface layers instead of `render={<Elevated/>}`, re-providing the level
  *   with `SurfaceProvider` as `Elevated` did.
+ * - `effect="morph"` with `hideSource` opens the menu in place over its
+ *   trigger: the positioner's `sideOffset` becomes the engine's `inPlaceOffset`.
  */
 
 import { Select as SelectPrimitive } from '@base-ui/react/select'
@@ -63,7 +65,7 @@ import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { useKeyboardNavGate } from '../../lib/use-keyboard-nav-gate'
-import { type MorphOrigin, useMorph, useMorphOrigin } from '../../lib/use-morph'
+import { inPlaceOffset, type MorphOrigin, opensInPlace, useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { ScrollArea } from '../../primitives/scroll-area'
 import { SizeProvider } from '../../primitives/sizes'
@@ -467,7 +469,7 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
         <SelectPrimitive.Positioner
           side="bottom"
           align="start"
-          sideOffset={6}
+          sideOffset={opensInPlace({ effect, hideSource }) ? inPlaceOffset : 6}
           alignItemWithTrigger={false}
           className="z-50 outline-none"
         >

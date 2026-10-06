@@ -51,6 +51,8 @@
  * - `renderMenuItem` passes the row's activation to the Menu item primitive's
  *   `onClick` (see menu-item.tsx), so Enter and Space pick a row instead of
  *   only closing the menu.
+ * - `effect="morph"` with `hideSource` opens the menu in place over its
+ *   trigger: the positioner's `sideOffset` becomes the engine's `inPlaceOffset`.
  */
 
 import type { MenuTriggerProps } from '@base-ui/react/menu'
@@ -88,7 +90,7 @@ import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { type ItemRect, useFluidHover } from '../../lib/use-fluid-hover'
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../lib/use-merge-split'
-import { type MorphOrigin, useMorph, useMorphOrigin } from '../../lib/use-morph'
+import { inPlaceOffset, type MorphOrigin, opensInPlace, useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { ScrollArea } from '../../primitives/scroll-area'
 import { SizeProvider } from '../../primitives/sizes'
@@ -675,7 +677,7 @@ interface DropdownContentProps {
   side?: MenuPositionerProps['side']
   /** Alignment against the trigger. Defaults to `"start"`. */
   align?: MenuPositionerProps['align']
-  /** Gap to the trigger, in px. Defaults to `6`. */
+  /** Gap to the trigger, in px. Ignored when the menu opens in place over its trigger (`effect="morph"` with `hideSource`). Defaults to `6`. */
   sideOffset?: number
   /** Where the menu grows from (see Morph): the trigger, the pointer, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
@@ -855,7 +857,12 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
 
     return (
       <Menu.Portal>
-        <Menu.Positioner side={side} align={align} sideOffset={sideOffset} className="z-50 outline-none">
+        <Menu.Positioner
+          side={side}
+          align={align}
+          sideOffset={opensInPlace({ effect, hideSource }) ? inPlaceOffset : sideOffset}
+          className="z-50 outline-none"
+        >
           <DropdownContext.Provider value={contentCtx}>
             <DropdownFilterContext.Provider value={rows.filterCtx}>
               <DropdownSearchHostContext.Provider value={searchHost}>

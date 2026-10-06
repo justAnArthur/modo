@@ -42,6 +42,8 @@
  *   paints no surface of its own (a private `PanelSurfaceContext`): the
  *   morph's surface layers paint its level; the menu's do the same in place of
  *   `render={<Elevated/>}`.
+ * - `effect="morph"` with `hideSource` opens the popover in place over its
+ *   trigger: the positioner's `sideOffset` becomes the engine's `inPlaceOffset`.
  */
 
 import { Menu } from '@base-ui/react/menu'
@@ -73,7 +75,7 @@ import { spring } from '../../lib/springs'
 import { SURFACE_BG, SURFACE_SHADOW, surfaceClasses } from '../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
-import { useMorph, useMorphOrigin } from '../../lib/use-morph'
+import { inPlaceOffset, opensInPlace, useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { SizeProvider } from '../../primitives/sizes'
 import { Slider } from '../slider'
@@ -2260,7 +2262,12 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
             )}
           </Popover.Trigger>
           <Popover.Portal>
-            <Popover.Positioner side="bottom" align="start" sideOffset={6} className="z-50 outline-none">
+            <Popover.Positioner
+              side="bottom"
+              align="start"
+              sideOffset={opensInPlace({ effect, hideSource }) ? inPlaceOffset : 6}
+              className="z-50 outline-none"
+            >
               <Popover.Popup ref={morph.popupRef} className="relative outline-none">
                 <ColorPickerPortalContainer value={morph.popup}>
                   <SurfaceProvider value={level}>

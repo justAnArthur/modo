@@ -28,7 +28,7 @@ import { type SlotProps, slotRender } from '../../lib/slot'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useControllableState } from '../../lib/use-controllable-state'
-import { type MorphOrigin, useMorph, useMorphOrigin } from '../../lib/use-morph'
+import { inPlaceOffset, type MorphOrigin, opensInPlace, useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 
 interface PopoverContextValue {
@@ -76,9 +76,9 @@ PopoverClose.displayName = 'PopoverClose'
 interface PopoverContentProps extends HTMLAttributes<HTMLDivElement> {
   /** Side of the trigger the panel opens on; it flips when there is no room. Defaults to `'bottom'`. */
   side?: 'top' | 'right' | 'bottom' | 'left'
-  /** Alignment along that side. Defaults to `'center'`. */
+  /** Alignment along that side. Defaults to `'center'`, or `'start'` when the panel opens in place (`effect="morph"` with `hideSource`). */
   align?: 'start' | 'center' | 'end'
-  /** Gap between trigger and panel in px — the length of the goo neck. Defaults to `12`. */
+  /** Gap between trigger and panel in px — the length of the goo neck. Ignored when the panel opens in place over its trigger (`effect="morph"` with `hideSource`). Defaults to `12`. */
   sideOffset?: number
   /** Where the panel grows from (see Morph): the pressed trigger, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
@@ -100,7 +100,7 @@ const PopoverContent = forwardRef<HTMLDivElement, PopoverContentProps>(
   (
     {
       side = 'bottom',
-      align = 'center',
+      align,
       sideOffset = 12,
       from,
       effect,
@@ -115,6 +115,7 @@ const PopoverContent = forwardRef<HTMLDivElement, PopoverContentProps>(
   ) => {
     const { open, origin } = useContext(PopoverContext)
     const morph = useMorph(open, origin, { from, effect, hideSource, tier })
+    const inPlace = opensInPlace({ effect, hideSource })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
     const shape = useShape()
     // Lifts 2 levels off its substrate with a fixed shadow, like the dropdown
@@ -123,7 +124,12 @@ const PopoverContent = forwardRef<HTMLDivElement, PopoverContentProps>(
 
     return (
       <PopoverPrimitive.Portal container={container ?? undefined}>
-        <PopoverPrimitive.Positioner side={side} align={align} sideOffset={sideOffset} className="z-50 outline-none">
+        <PopoverPrimitive.Positioner
+          side={side}
+          align={align ?? (inPlace ? 'start' : 'center')}
+          sideOffset={inPlace ? inPlaceOffset : sideOffset}
+          className="z-50 outline-none"
+        >
           <PopoverPrimitive.Popup ref={morph.popupRef} className="relative outline-none" {...props}>
             <SurfaceProvider value={level}>
               <MorphSurface
