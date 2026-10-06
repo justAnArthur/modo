@@ -157,6 +157,7 @@ Rules:
 
 - All DSs: `bun dev` in `demo/` (ports 5173+i).
 - One DS: `bun scripts/run-design-systems.ts <name>` in `demo/`, or `cd demo/design-systems/<name> && MODO_PORT=<n> bunx modo dev`.
+- The site: `bun run build` in `demo/` builds every DS into `demo/dist/<name>/` (`SITE_BASE` sets the public path). `.github/workflows/pages.yml` deploys it to GitHub Pages on push to `main`.
 - Typecheck:
   - a DS: `cd demo/design-systems/<name> && bunx tsc -p . --noEmit`;
   - the lib: `cd lib && bun run check`.
