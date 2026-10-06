@@ -29,6 +29,15 @@
  *   `text-<role>[-compact]`; the hex focus-ring fallback →
  *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
+ * - The popup morphs out of the field through the shared morph layer
+ *   (`lib/use-morph.ts` + `MorphSurface`, goo by default on
+ *   `spring.moderate`; `Combobox.Content` takes `from` / `effect` /
+ *   `hideSource` / `tier`). Whatever opened it (typing, a press on the input
+ *   or the chevron), the source is the field the list anchors to. The
+ *   `scaleY` motion wrapper and the `actionsRef` deferred unmount (with its
+ *   fallback timer) are gone: the morph holds Base UI's unmount itself. The
+ *   popup paints its level through the morph's surface layers instead of
+ *   `render={<Elevated/>}`, re-providing it with `SurfaceProvider`.
  */
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox'
@@ -45,22 +54,26 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
 } from 'react'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { type IconComponent, useIcon } from '../../lib/icon-context'
-import { isDisabledRow, popupMotionClass, popupScrollAreaClass, popupViewportClass } from '../../lib/popup'
+import { MorphSurface } from '../../lib/morph-layers'
+import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../lib/popup'
 import { shapeMap, useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
-import { exitFallbackMs, spring } from '../../lib/springs'
+import { spring } from '../../lib/springs'
+import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
+import { SurfaceProvider, useSurface } from '../../lib/surface-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../lib/use-merge-split'
+import { type MorphOrigin, useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { ScrollArea } from '../../primitives/scroll-area'
 import { SizeProvider } from '../../primitives/sizes'
-import { Elevated } from '../../primitives/surface'
 
 // ---------------------------------------------------------------------------
 // Combobox
@@ -69,9 +82,9 @@ import { Elevated } from '../../primitives/surface'
 // primitive, which owns the filtering, the combobox/listbox ARIA wiring
 // (aria-activedescendant — the input keeps focus while arrows move a
 // highlight through the rows), positioning, dismissal, and the hidden form
-// input. This layer keeps the fluid-hover overlays, the spring open/
-// close animation (via actionsRef deferred unmount), and the animated
-// checkmark — the same visuals as Select.
+// input. This layer keeps the fluid-hover overlays, the morph open/close
+// (lib/use-morph.ts), and the animated checkmark — the same visuals as
+// Select.
 //
 // Items are data: pass `items` to the root and render rows from the
 // ComboboxList function child. String items are their own value and label;
@@ -116,7 +129,8 @@ interface ComboboxContextValue {
   multiple: boolean
   inputValue: string
   open: boolean
-  actionsRef: RefObject<{ unmount: () => void } | null>
+  /** What opened the popup; its trigger is always the field (`anchorRef`). */
+  origin: RefObject<MorphOrigin>
   /** The field (input group or chips container) the popup anchors to.
    *  `RefObject<HTMLDivElement>` (not `… | null`) so the ref prop on Base UI's
    *  InputGroup/Chips accepts it under @types/react 18. */
@@ -213,7 +227,8 @@ function toValues(v: string | readonly string[] | undefined): string[] {
  * (the input keeps focus while the arrows move a highlight through the rows),
  * the positioning and the hidden form input stay with Base UI. On top of that
  * sit the fluid-hover highlight, the merged selection background of
- * `CheckboxGroup`, and a spring open/close. `multiple` turns the picks into a
+ * `CheckboxGroup`, and a list that oozes out of the field and back through the
+ * shared morph (see Morph), goo by default. `multiple` turns the picks into a
  * `string[]` and pairs with `Combobox.Chips`: one chip per pick, Backspace in
  * an empty field drops the last one. Uncontrolled with `defaultValue`, or
  * controlled with `value` plus `onValueChange`.
@@ -221,7 +236,8 @@ function toValues(v: string | readonly string[] | undefined): string[] {
  * Statics:
  * - `Combobox.Input` — the single-pick field: icon, text input, clear ✕, chevron.
  * - `Combobox.Chips` — the multiple field: one chip per pick ahead of the input.
- * - `Combobox.Content` — the popup surface, holding `Combobox.Empty` and `Combobox.List`.
+ * - `Combobox.Content` — the popup surface, holding `Combobox.Empty` and `Combobox.List`:
+ *   `side`, `align`, `sideOffset` and the morph options `from`, `effect`, `hideSource`, `tier`.
  * - `Combobox.List` — a row per match, from a `(item, index) => ReactNode` child.
  * - `Combobox.Item` — one row: `value`, optional `icon` and `disabled`.
  * - `Combobox.Empty` — what shows when nothing matches.
@@ -252,7 +268,7 @@ function Combobox({
   const [highlight, setHighlight] = useState<Highlight | null>(null)
   // Local: items made by the create row while no consumer owns the list.
   const [createdItems, setCreatedItems] = useState<ComboboxItemData[]>([])
-  const actionsRef = useRef<{ unmount: () => void } | null>(null)
+  const { origin, capture } = useMorphOrigin()
   const anchorRef = useRef<HTMLDivElement | null>(null)
   // Memoized on the prop identity: a string value is stable by nature and a
   // consumer's array is state, so the derived array (and everything keyed on
@@ -360,14 +376,14 @@ function Combobox({
       multiple: isMultiple,
       inputValue,
       open,
-      actionsRef,
+      origin,
       anchorRef,
       disabled,
       itemsByValue,
       createRow,
       allSelected,
     }),
-    [values, isMultiple, inputValue, open, disabled, itemsByValue, createRow, allSelected],
+    [values, isMultiple, inputValue, open, origin, disabled, itemsByValue, createRow, allSelected],
   )
 
   // A size prop pins the whole compound (field + portalled popup — React
@@ -388,9 +404,12 @@ function Combobox({
           itemToStringValue={itemValue}
           filter={filterFn}
           open={open}
-          onOpenChange={next => setOpen(next)}
+          onOpenChange={(next, details) => {
+            // The list grows out of the field, whichever part opened it.
+            if (next) capture({ event: details.event, trigger: anchorRef.current ?? undefined })
+            setOpen(next)
+          }}
           onInputValueChange={next => setInputValue(next)}
-          actionsRef={actionsRef}
           autoHighlight={ALWAYS_HIGHLIGHT}
           onItemHighlighted={(item, details) =>
             setHighlight(item === undefined ? null : { index: details.index, keyboard: details.reason !== 'pointer' })
@@ -793,23 +812,37 @@ interface ComboboxContentProps {
   align?: 'start' | 'center' | 'end'
   /** Gap to the field, in px. Defaults to `6`. */
   sideOffset?: number
+  /** Where the list grows from (see Morph): the field, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'` (the field). */
+  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
+  /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
+  effect?: 'goo' | 'morph' | 'slide' | 'fade'
+  /** Hide the field while open, so it reads as turning into the list. Defaults to `false`. */
+  hideSource?: boolean
+  /** Spring tier of the morph. Defaults to `'moderate'`. */
+  tier?: 'moderate' | 'slow'
 }
 
 const ComboboxContent = forwardRef<HTMLDivElement, ComboboxContentProps>(
-  ({ className, children, side = 'bottom', align = 'start', sideOffset = 6 }, ref) => {
-    const { open, actionsRef, anchorRef } = useComboboxContext()
+  (
+    {
+      className,
+      children,
+      side = 'bottom',
+      align = 'start',
+      sideOffset = 6,
+      from,
+      effect,
+      hideSource,
+      tier = 'moderate',
+    },
+    ref,
+  ) => {
+    const { open, origin, anchorRef } = useComboboxContext()
+    const morph = useMorph(open, origin, { from, effect, hideSource, tier })
+    useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
+    // Lifts 2 levels off its substrate with a fixed shadow (see Elevated).
+    const level = Math.min(useSurface() + 2, 8)
     const shape = popupShape
-
-    // Release Base UI's deferred unmount once the exit tween has played.
-    // onAnimationComplete on the motion.div is the primary signal; this
-    // timeout is a fallback for throttled/background tabs where rAF-driven
-    // animation callbacks can stall. The popup exits with spring.fast, so the
-    // fallback tracks that tier's exit duration plus a safety buffer.
-    useEffect(() => {
-      if (open) return
-      const id = setTimeout(() => actionsRef.current?.unmount(), exitFallbackMs(spring.fast))
-      return () => clearTimeout(id)
-    }, [open, actionsRef])
 
     return (
       <ComboboxPrimitive.Portal>
@@ -822,29 +855,24 @@ const ComboboxContent = forwardRef<HTMLDivElement, ComboboxContentProps>(
           sideOffset={sideOffset}
           className="z-50 outline-none"
         >
-          <motion.div
-            className={popupMotionClass}
-            initial={{ opacity: 0, y: 'var(--popup-enter-y)', scaleY: 0.96 }}
-            animate={open ? { opacity: 1, y: 0, scaleY: 1 } : { opacity: 0, y: 'var(--popup-enter-y)', scaleY: 0.96 }}
-            transition={open ? spring.fast : spring.fast.exit}
-            // Base UI defers unmount while actionsRef is set; release it once
-            // the exit spring has finished so the close animation fully plays.
-            onAnimationComplete={() => {
-              if (!open) actionsRef.current?.unmount()
-            }}
-          >
-            <ComboboxPrimitive.Popup
-              render={<Elevated offset={2} shadowLevel={3} ref={ref} />}
-              className={cn(
-                // min-w tracks the field via the Positioner's --anchor-width
-                // var; the list inside owns padding and scrolling.
-                `flex flex-col min-w-[var(--anchor-width)] max-h-[min(300px,var(--available-height))] overflow-hidden ${shape.container} select-none outline-none`,
-                className,
-              )}
-            >
-              {children}
-            </ComboboxPrimitive.Popup>
-          </motion.div>
+          <ComboboxPrimitive.Popup ref={morph.popupRef} className="relative select-none outline-none">
+            <SurfaceProvider value={level}>
+              <MorphSurface
+                morph={morph}
+                bg={SURFACE_BG[level]}
+                shadow={SURFACE_SHADOW[3]}
+                radius={shape.container}
+                className={cn(
+                  // min-w tracks the field via the Positioner's --anchor-width
+                  // var; the list inside owns padding and scrolling.
+                  `flex flex-col min-w-[var(--anchor-width)] max-h-[min(300px,var(--available-height))] overflow-hidden ${shape.container}`,
+                  className,
+                )}
+              >
+                {children}
+              </MorphSurface>
+            </SurfaceProvider>
+          </ComboboxPrimitive.Popup>
         </ComboboxPrimitive.Positioner>
       </ComboboxPrimitive.Portal>
     )

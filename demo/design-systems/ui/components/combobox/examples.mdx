@@ -120,6 +120,39 @@ focused — the same field ladder as InputGroup.
   ))}
 </div>
 
+# Morph
+
+The list oozes out of the field by default, whatever opened it: typing, a press or ArrowDown. `effect="morph"` grows it straight out of the field's own box, with no neck.
+
+<div className="flex flex-wrap items-start justify-center gap-3">
+  <Combobox items={['Goo', 'Liquid neck', 'Drop']}>
+    <Combobox.Input placeholder="Goo" />
+    <Combobox.Content>
+      <Combobox.Empty>No match.</Combobox.Empty>
+      <Combobox.List>
+        {(item) => (
+          <Combobox.Item key={item} value={item}>
+            {item}
+          </Combobox.Item>
+        )}
+      </Combobox.List>
+    </Combobox.Content>
+  </Combobox>
+  <Combobox items={['Morph', 'Grow', 'Shrink back']}>
+    <Combobox.Input placeholder="Morph" />
+    <Combobox.Content effect="morph">
+      <Combobox.Empty>No match.</Combobox.Empty>
+      <Combobox.List>
+        {(item) => (
+          <Combobox.Item key={item} value={item}>
+            {item}
+          </Combobox.Item>
+        )}
+      </Combobox.List>
+    </Combobox.Content>
+  </Combobox>
+</div>
+
 # Long list
 
 String items are their own value and label. The list scrolls past 300px.
