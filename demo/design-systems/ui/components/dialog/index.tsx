@@ -286,9 +286,22 @@ interface DialogProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Dialog({ children, open, defaultOpen = false, onOpenChange, modal }: DialogProps) {
-  // The open state lives here (not in Base UI's Root) because the morph
-  // reads it, and the open event tells it which trigger was pressed.
+interface DialogStateProps {
+  open?: boolean
+  defaultOpen?: boolean
+  onOpenChange?: (open: boolean) => void
+  children: (root: {
+    open: boolean
+    onOpenChange: (next: boolean, details: { trigger?: Element; event?: Event }) => void
+  }) => ReactNode
+}
+
+/**
+ * A dialog's open state, held here (not in Base UI's Root) because the morph
+ * reads it, and the open event tells it which trigger was pressed. Also
+ * scopes `Morph.Part` pairs. AlertDialog shares it.
+ */
+function DialogState({ open, defaultOpen = false, onOpenChange, children }: DialogStateProps) {
   const [current, setCurrent] = useControllableState(open, defaultOpen, onOpenChange)
   const { origin, capture } = useMorphOrigin()
   const id = useId()
@@ -298,18 +311,27 @@ function Dialog({ children, open, defaultOpen = false, onOpenChange, modal }: Di
   return (
     <DialogContext.Provider value={ctx}>
       <MorphPartScope.Provider value={parts}>
-        <DialogPrimitive.Root
-          open={current}
-          onOpenChange={(next, details) => {
+        {children({
+          open: current,
+          onOpenChange: (next, details) => {
             if (next) capture(details)
             setCurrent(next)
-          }}
-          modal={modal}
-        >
-          {children}
-        </DialogPrimitive.Root>
+          },
+        })}
       </MorphPartScope.Provider>
     </DialogContext.Provider>
+  )
+}
+
+function Dialog({ children, open, defaultOpen, onOpenChange, modal }: DialogProps) {
+  return (
+    <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
+      {root => (
+        <DialogPrimitive.Root {...root} modal={modal}>
+          {children}
+        </DialogPrimitive.Root>
+      )}
+    </DialogState>
   )
 }
 
@@ -327,6 +349,16 @@ export type {
   DialogSlotProps as DialogTriggerProps,
   DialogSlotProps as DialogCloseProps,
 }
-export { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger }
+export {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogState,
+  DialogTitle,
+  DialogTrigger,
+}
 
 export default Dialog

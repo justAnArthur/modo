@@ -140,6 +140,7 @@ only what is specific to it:
 | Item | Upstream | Local | Specific modifications |
 |---|---|---|---|
 | `Accordion` | `registry/base/accordion.tsx` | `components/accordion/index.tsx` | open state runs through `useControllableState` (see [Behavior additions](#behavior-additions)); standalone `Accordion` accepts `highlight` and passes it to its items as their default; statics `.Group/.Item/.Trigger/.Content` |
+| `AlertDialog` | — (local) | `components/alert-dialog/index.tsx` | Base UI AlertDialog root (always modal, no outside-press dismissal) over Dialog's own parts and `DialogState`, so it morphs like Dialog; `AlertDialog.Content` drops the ✕ by default; statics as Dialog's |
 | `Badge` | `registry/default/badge.tsx` | `components/badge/index.tsx` | `variant` re-declared (it came from cva's `VariantProps` upstream) |
 | `Button` | `registry/base/button.tsx` | `components/button/index.tsx` | `variant`/`disabled`/`children` re-declared; extra Sizes / Active / As-child examples for API-table props the FF page has no section for; also serves modo's chrome Button (`shell.Button`) |
 | `Card` | `registry/default/card.tsx` | `components/card/index.tsx` | `next/link` → plain anchors (stretched card link, `CardButton`'s `href` form); statics `.Group/.Header/.Title/.Description/.Action/.Content/.Footer/.Media/.Image/.Eyebrow/.Feature/.Button` |
@@ -196,7 +197,7 @@ The tiers mirror the FF docs navigation. FF's "System" pages become
 | primitives | `morph` (Morph) | — (local, `lib/use-morph.ts`) | — |
 | components | accordion, button, checkbox-group, combobox, dialog, dropdown, radio-group, select, slider, switch, tabs, tabs-subtle, tooltip | `registry/base/<id>.tsx` | same slug |
 | components | badge, card, color-picker, input-copy, input-group, input-message, table, thinking-indicator | `registry/default/<id>.tsx` | same slug |
-| components | popover | — (local, see [Morph sources](#morph-sources)) | — |
+| components | alert-dialog, popover | — (local, see [Morph sources](#morph-sources)) | — |
 
 Button lives in `components/` to mirror the FF docs, and `modo.config.ts`
 points `shell.Button` at it explicitly (an explicit path skips modo's tier
