@@ -136,8 +136,10 @@ function sourceRect(from: MorphFrom, origin: MorphOrigin, box: DOMRect, target: 
     const trigger = origin.trigger?.getBoundingClientRect()
     const point =
       origin.point ?? (trigger && { x: trigger.left + trigger.width / 2, y: trigger.top + trigger.height / 2 })
-    // A huge radius clamps to a circle while the shape is small.
-    return point ? local(point.x, point.y, 0, 0, Math.max(target.w, target.h)) : center
+    // A droplet as wide as the surface's radius, so goo has a source to
+    // draw its neck from.
+    const d = target.r
+    return point ? local(point.x - d / 2, point.y - d / 2, d, d, d / 2) : center
   }
 
   const el = sourceElement(from, origin)
@@ -193,17 +195,34 @@ function holdExit(el: HTMLElement, tier: MorphTier) {
   return el.animate(null, { duration: exitFallbackMs(spring[tier]) })
 }
 
+/** Where the opening event happened; none for a keyboard-activated click. */
+function pressPoint(event: Event | undefined) {
+  // A long press (Base UI's ContextMenu) hands over its touchstart.
+  if (event && 'touches' in event) {
+    const { touches, changedTouches } = event as TouchEvent
+    const touch = touches[0] ?? changedTouches[0]
+    return touch && { x: touch.clientX, y: touch.clientY }
+  }
+  if (!(event instanceof MouseEvent)) return
+  // A keyboard-activated click reports `detail` 0 and no real coordinates; a
+  // keyboard context menu is placed on the focused element.
+  if (event.type === 'click' && event.detail === 0) return
+  return { x: event.clientX, y: event.clientY }
+}
+
 /**
  * Remembers what opened an overlay. Call `capture` from the Base UI root's
- * `onOpenChange` on open: its details carry the pressed trigger and the event.
+ * `onOpenChange` on open: its details carry the pressed trigger and the event
+ * (a click, a context menu, a long press).
  */
 function useMorphOrigin() {
   const origin = useRef<MorphOrigin>({})
   const capture = useCallback((details: { trigger?: Element; event?: Event }) => {
     const { trigger, event } = details
-    // A keyboard-activated click reports `detail` 0 and no real coordinates.
-    const point = event instanceof MouseEvent && event.detail > 0 ? { x: event.clientX, y: event.clientY } : undefined
-    origin.current = { trigger: trigger instanceof HTMLElement ? trigger : origin.current.trigger, point }
+    origin.current = {
+      trigger: trigger instanceof HTMLElement ? trigger : origin.current.trigger,
+      point: pressPoint(event),
+    }
   }, [])
   return { origin, capture }
 }
