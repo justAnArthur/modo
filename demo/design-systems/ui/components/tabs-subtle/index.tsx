@@ -21,6 +21,9 @@
  * → `weight-*`; the hex focus-ring fallback → `ring-focus-ring` /
  * `border-focus-ring`; `duration-80|120|160` and tier-length JS durations →
  * `duration-<tier>` / `spring.*`.
+ * The selected and hover pills are `GooIndicator`s (`lib/goo-indicator.tsx`,
+ * local): they melt from tab to tab instead of sliding; the hover pill now
+ * always returns to the selected tab as it fades.
  */
 
 import { Tabs } from '@base-ui/react/tabs'
@@ -41,6 +44,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { GooIndicator } from '../../lib/goo-indicator'
 import type { IconComponent } from '../../lib/icon-context'
 import { useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
@@ -91,8 +95,8 @@ type TabsSubtleComponent = ForwardRefExoticComponent<TabsSubtleProps & RefAttrib
 /**
  * Tab navigation with smooth pill animations.
  *
- * A borderless tab strip: the selected pill springs between tabs, a lighter
- * hover pill previews the next one, and the active label animates to semibold
+ * A borderless tab strip: the selected pill melts from tab to tab like a drop
+ * (the liquid indicators in Morph), a lighter hover pill previews the next one, and the active label animates to semibold
  * without shifting. With `activeLabel`, tabs collapse to their icon and the
  * selected one expands its label to a measured width. Base UI owns
  * `role="tablist"`, the roving tabindex and Arrow/Home/End navigation
@@ -258,66 +262,24 @@ const TabsSubtle = forwardRef<HTMLDivElement, TabsSubtleProps>(
               )}
               {...props}
             >
-              {/* Selected pill */}
+              {/* Selected pill: melts toward the next tab and lets go */}
               {selectedRect && (
-                <motion.div
-                  className={cn('absolute bg-active pointer-events-none', shape.bg)}
-                  initial={false}
-                  animate={{
-                    left: selectedRect.left,
-                    width: selectedRect.width,
-                    top: selectedRect.top,
-                    height: selectedRect.height,
-                    opacity: isHovering ? 0.8 : 1,
-                  }}
-                  transition={{
-                    ...spring.moderate,
-                    opacity: { duration: spring.fast.duration },
-                  }}
+                <GooIndicator
+                  rect={selectedRect}
+                  className={cn('bg-active', shape.bg)}
+                  opacity={isHovering ? 0.8 : 1}
                 />
               )}
 
-              {/* Hover pill */}
-              <AnimatePresence>
-                {hoverRect && !isHoveringSelected && selectedRect && (
-                  <motion.div
-                    className={cn('absolute bg-active pointer-events-none', shape.bg)}
-                    initial={{
-                      left: selectedRect.left,
-                      width: selectedRect.width,
-                      top: selectedRect.top,
-                      height: selectedRect.height,
-                      opacity: 0,
-                    }}
-                    animate={{
-                      left: hoverRect.left,
-                      width: hoverRect.width,
-                      top: hoverRect.top,
-                      height: hoverRect.height,
-                      opacity: 0.4,
-                    }}
-                    exit={
-                      !isMouseInside.current && selectedRect
-                        ? {
-                            left: selectedRect.left,
-                            width: selectedRect.width,
-                            top: selectedRect.top,
-                            height: selectedRect.height,
-                            opacity: 0,
-                            transition: {
-                              ...spring.moderate,
-                              opacity: { duration: spring.fast.exit.duration },
-                            },
-                          }
-                        : { opacity: 0, transition: spring.fast.exit }
-                    }
-                    transition={{
-                      ...spring.fast,
-                      opacity: { duration: spring.fast.duration },
-                    }}
-                  />
-                )}
-              </AnimatePresence>
+              {/* Hover pill: drips out of the selected pill toward the hovered tab, and back as it fades */}
+              {selectedRect && (
+                <GooIndicator
+                  rect={isHovering && hoverRect ? hoverRect : selectedRect}
+                  className={cn('bg-active', shape.bg)}
+                  transition={spring.fast}
+                  opacity={isHovering ? 0.4 : 0}
+                />
+              )}
 
               {/* Focus ring */}
               <AnimatePresence>
