@@ -11,3 +11,15 @@
   background: var(--muted);
   color: var(--fg);
 }
+
+.my-btn[data-variant="ghost"] {
+  background: transparent;
+  color: var(--fg);
+  border-color: transparent;
+}
+
+.my-btn[data-size="icon-sm"] {
+  display: inline-grid;
+  place-items: center;
+  padding: var(--xs);
+}
