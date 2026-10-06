@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadModoConfig } from '../lib/config.loader'
@@ -8,17 +8,20 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const libRoot = resolve(__dirname, '..')
 const runtimeRoot = resolve(libRoot, 'src', 'runtime')
 const templatesRoot = resolve(libRoot, 'templates')
+const DEBUG = process.env.MODO_DEBUG
 
 const HELP = `modo — atomic design system renderer
 
 Usage:
-  modo init <name>         Scaffold a new design system project
+  modo init <name>         Scaffold a design system in ./<name>
+  modo init <dir> <name>   Scaffold it in <dir>/<name>
   modo dev                 Start the docs dev server
   modo build               Build the docs site into ./dist
-  modo add <kind> <name>   Add a new primitive/component/block/token
+  modo add <kind> <name>   Add a primitive, component, block or token
   modo check               Validate modo.config.ts
 
 Options:
+  --config <file>          dev, build, check: the config file (default modo.config.ts)
   --base <path>            build: public path the site is served under (default /)
   --help, -h               Show this help
   --version, -v            Print version
@@ -27,7 +30,7 @@ Options:
 function exitWithError(err: unknown) {
   const msg = err instanceof Error ? err.message : String(err)
   process.stderr.write(`Error: ${msg}\n`)
-  if (process.env.MODO_DEBUG && err instanceof Error) {
+  if (DEBUG && err instanceof Error) {
     process.stderr.write(`${err.stack ?? ''}\n`)
   }
   process.exit(1)
@@ -48,29 +51,20 @@ async function main() {
     return
   }
 
-  try {
-    switch (cmd) {
-      case 'init':
-        await runInit(args.slice(1))
-        break
-      case 'dev':
-        await runVite('dev', args.slice(1))
-        break
-      case 'build':
-        await runVite('build', args.slice(1))
-        break
-      case 'add':
-        await runAdd(args.slice(1))
-        break
-      case 'check':
-        await runCheck()
-        break
-      default:
-        process.stderr.write(`Unknown command: ${cmd}\n\n${HELP}`)
-        process.exit(1)
-    }
-  } catch (err) {
-    exitWithError(err)
+  switch (cmd) {
+    case 'init':
+      return runInit(args.slice(1))
+    case 'dev':
+      return runVite('dev', args.slice(1))
+    case 'build':
+      return runVite('build', args.slice(1))
+    case 'add':
+      return runAdd(args.slice(1))
+    case 'check':
+      return runCheck(args.slice(1))
+    default:
+      process.stderr.write(`Unknown command: ${cmd}\n\n${HELP}`)
+      process.exit(1)
   }
 }
 
@@ -82,19 +76,19 @@ async function runInit(args: string[]) {
   const projectDir = resolve(outDir, name)
   if (existsSync(projectDir)) throw new Error(`Directory already exists: ${projectDir}`)
 
-  copyDir(templatesRoot, 'default', projectDir)
-  forFileTree(projectDir, file => {
+  cpSync(resolve(templatesRoot, 'default'), projectDir, { recursive: true, filter: src => !src.endsWith('.DS_Store') })
+  for (const rel of readdirSync(projectDir, { recursive: true, encoding: 'utf8' })) {
+    const file = resolve(projectDir, rel)
+    if (!statSync(file).isFile()) continue
     const text = readFileSync(file, 'utf8')
-    if (text.includes('__NAME__') || text.includes('__DESCRIPTION__')) {
-      writeFileSync(file, text.replaceAll('__NAME__', name).replaceAll('__DESCRIPTION__', `${name} design system`))
-    }
-  })
+    writeFileSync(file, text.replaceAll('__NAME__', name).replaceAll('__DESCRIPTION__', `${name} design system`))
+  }
   process.stdout.write(`Scaffolded ${projectDir}\n`)
 }
 
 async function runVite(mode: 'dev' | 'build', args: string[] = []) {
   const cwd = process.cwd()
-  const configPath = resolve(cwd, flag(args, '--config') ?? 'modo.config.ts')
+  const configPath = configOf(args)
   await loadModoConfig(configPath)
   process.env.MODO_USER_ROOT = cwd
   process.env.MODO_CONFIG_PATH = configPath
@@ -102,38 +96,50 @@ async function runVite(mode: 'dev' | 'build', args: string[] = []) {
   await importViteAndRun(runtimeRoot, mode, flag(args, '--base'))
 }
 
+function configOf(args: string[]): string {
+  return resolve(process.cwd(), flag(args, '--config') ?? 'modo.config.ts')
+}
+
 function flag(args: string[], name: string): string | undefined {
   const i = args.indexOf(name)
   return i >= 0 ? args[i + 1] : undefined
 }
 
+// An item is <tier>/<id>/index.tsx with its examples beside it; a token
+// group is a flat tokens/<id>.css.
+const TIERS: Record<string, string> = { primitive: 'primitives', component: 'components', block: 'blocks' }
+
 async function runAdd(args: string[]) {
   const [kind, name] = args
-  if (!kind || !name) {
-    throw new Error('add requires `<kind> <name>` where kind is primitive|component|block|token')
+  if (!kind || !name || !(kind in TIERS || kind === 'token')) {
+    throw new Error('add requires `<kind> <name>`, kind one of primitive, component, block, token')
   }
-  const targets: Record<string, { dir: string; stub: string; ext: string }> = {
-    primitive: { dir: 'primitives', stub: 'primitive.tsx', ext: 'tsx' },
-    component: { dir: 'components', stub: 'component.tsx', ext: 'tsx' },
-    block: { dir: 'blocks', stub: 'block.tsx', ext: 'tsx' },
-    token: { dir: 'tokens', stub: 'token.css', ext: 'css' },
-  }
-  const t = targets[kind]
-  if (!t) throw new Error(`Unknown kind: ${kind}. Expected one of: ${Object.keys(targets).join(', ')}`)
-
   const id = kebab(name)
-  const outDir = resolve(process.cwd(), t.dir, id)
-  mkdirSync(outDir, { recursive: true })
+  const fill = (stub: string) =>
+    readFileSync(resolve(templatesRoot, 'stubs', stub), 'utf8')
+      .replaceAll('__NAME__', id)
+      .replaceAll('__NAME_PASCAL__', pascalize(id))
+  const files: Record<string, string> =
+    kind === 'token'
+      ? { [`tokens/${id}.css`]: fill('token.css') }
+      : {
+          [`${TIERS[kind]}/${id}/index.tsx`]: fill('item.tsx'),
+          [`${TIERS[kind]}/${id}/examples.mdx`]: fill('examples.mdx'),
+        }
 
-  const stubText = readFileSync(resolve(templatesRoot, 'stubs', t.stub), 'utf8')
-  const outFile = resolve(outDir, `${id}.${t.ext}`)
-  writeFileSync(outFile, stubText.replaceAll('__NAME__', id).replaceAll('__NAME_PASCAL__', pascalize(id)))
-  process.stdout.write(`Created ${outFile}\n`)
+  for (const [rel, text] of Object.entries(files)) {
+    const file = resolve(process.cwd(), rel)
+    if (existsSync(file)) throw new Error(`Already exists: ${file}`)
+    mkdirSync(dirname(file), { recursive: true })
+    writeFileSync(file, text)
+    process.stdout.write(`Created ${file}\n`)
+  }
 }
 
-async function runCheck() {
-  const cfg = await loadModoConfig(resolve(process.cwd(), 'modo.config.ts'))
-  process.stdout.write(`OK — modo.config.ts is valid (name="${cfg.name}")\n`)
+async function runCheck(args: string[]) {
+  const configPath = configOf(args)
+  const cfg = await loadModoConfig(configPath)
+  process.stdout.write(`OK — ${configPath} is valid (name="${cfg.name}")\n`)
 }
 
 async function importViteAndRun(rt: string, mode: 'dev' | 'build', base?: string) {
@@ -160,44 +166,6 @@ function pascalize(s: string): string {
     .split(/[-_\s]+/)
     .map(w => (w ? w.charAt(0).toUpperCase() + w.slice(1) : ''))
     .join('')
-}
-
-function copyDir(root: string, sub: string, dest: string) {
-  const src = resolve(root, sub)
-  if (!existsSync(src)) throw new Error(`Missing template: ${src}`)
-  mkdirSync(dest, { recursive: true })
-  const stack: string[] = [src]
-  while (stack.length) {
-    const dir = stack.pop()!
-    for (const entry of readdirSync(dir)) {
-      if (entry === '.DS_Store') continue
-      const full = resolve(dir, entry)
-      if (statSync(full).isDirectory()) {
-        stack.push(full)
-        continue
-      }
-      const target = resolve(dest, full.slice(src.length).replace(/^\//, ''))
-      mkdirSync(dirname(target), { recursive: true })
-      copyFileSync(full, target)
-    }
-  }
-}
-
-function forFileTree(root: string, cb: (file: string, rel: string) => void): void {
-  const stack: { dir: string; rel: string }[] = [{ dir: root, rel: '' }]
-  while (stack.length) {
-    const { dir, rel: dirRel } = stack.pop()!
-    for (const entry of readdirSync(dir)) {
-      if (entry === '.DS_Store') continue
-      const full = resolve(dir, entry)
-      const rel = dirRel ? `${dirRel}/${entry}` : entry
-      if (statSync(full).isDirectory()) {
-        stack.push({ dir: full, rel })
-        continue
-      }
-      cb(full, rel)
-    }
-  }
 }
 
 main().catch(exitWithError)
