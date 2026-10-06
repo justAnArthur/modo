@@ -23,19 +23,201 @@
  *   `ring-focus-ring` / `border-focus-ring`; literal colors → color tokens;
  *   `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
  *   `spring.*`.
+ * - The copied state morphs (local, in the morph layer's language): the copy
+ *   glyph's two sheets melt through the shared goo filter (`GooFilter`,
+ *   `GOO_BLUR_RATIO`) into a disc tinted like Toast's state chip
+ *   (`--status-success`, `--status-error` for a failure), behind the check or
+ *   ✕, and split back into the glyph when the state times out. The glyphs
+ *   crossfade over one fixed slot instead of `mode="wait"`; the button
+ *   variant keeps that one glyph slot and swaps only its word.
  */
 
-import { AnimatePresence, motion } from 'motion/react'
-import { forwardRef, type HTMLAttributes, useCallback, useEffect, useId, useRef, useState } from 'react'
-import { useIcon } from '../../lib/icon-context'
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotionConfig } from 'motion/react'
+import {
+  forwardRef,
+  type HTMLAttributes,
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
+import { type IconComponent, useIcon } from '../../lib/icon-context'
+import { GooFilter } from '../../lib/morph-layers'
 import { useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
+import { GOO_BLUR_RATIO } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { Tooltip } from '../tooltip'
 
 type InputCopyVariant = 'icon' | 'button'
 type InputCopyAlign = 'right' | 'left'
+type CopyStatus = 'idle' | 'copied' | 'error'
+
+interface Rect {
+  x: number
+  y: number
+  w: number
+  h: number
+  r: number
+}
+
+// The copied state's disc (local): lucide's copy glyph is two sheets on a
+// 24-unit grid; scaled to the 14px glyph, they melt through the goo filter
+// into one disc behind the check, and split back when the state times out.
+const GLYPH = 14
+const DISC = 20
+const UNIT = GLYPH / 24
+const sheet = (at: number): Rect => ({ x: at * UNIT, y: at * UNIT, w: 14 * UNIT, h: 14 * UNIT, r: 2 * UNIT })
+const BACK = sheet(2)
+const FRONT = sheet(8)
+const DISC_RECT: Rect = { x: (GLYPH - DISC) / 2, y: (GLYPH - DISC) / 2, w: DISC, h: DISC, r: DISC / 2 }
+const BLUR = (DISC / 2) * GOO_BLUR_RATIO
+// The goo layer: the disc plus room for the blur on every side, in glyph coordinates.
+const LAYER = { at: DISC_RECT.x - BLUR * 3, size: DISC + BLUR * 6 }
+
+// Literal per state so the class extractor sees each one. The disc's tint is
+// the layer's opacity, applied after the goo filter, which needs opaque shapes.
+const TONE_BG = { copied: 'bg-status-success', error: 'bg-status-error' }
+const TONE_TEXT = { copied: 'text-status-success', error: 'text-status-error' }
+const CHECK_STROKE: Record<InputCopyVariant, string> = {
+  icon: '[&_svg]:stroke-[1.5] [&_svg]:transition-[stroke-width] [&_svg]:duration-fast group-hover:[&_svg]:stroke-[2]',
+  button: '[&_svg]:stroke-[2]',
+}
+
+const { exit: _exit, ...enter } = spring.slow
+
+function placeSheet(el: HTMLElement | null, a: Rect, b: Rect, p: number) {
+  if (!el) return
+  const lerp = (from: number, to: number) => from + (to - from) * p
+  // The slow tier overshoots; a size never goes below zero on the way back.
+  const w = Math.max(0, lerp(a.w, b.w))
+  const h = Math.max(0, lerp(a.h, b.h))
+  el.style.left = `${lerp(a.x, b.x) - LAYER.at}px`
+  el.style.top = `${lerp(a.y, b.y) - LAYER.at}px`
+  el.style.width = `${w}px`
+  el.style.height = `${h}px`
+  el.style.borderRadius = `${Math.min(Math.max(0, lerp(a.r, b.r)), w / 2, h / 2)}px`
+}
+
+/** The goo layer behind the glyph: two sheets on one progress value, idle at 0, copied (or failed) at 1. */
+function CopyDisc({ status }: { status: CopyStatus }) {
+  const layer = useRef<HTMLSpanElement>(null)
+  const back = useRef<HTMLSpanElement>(null)
+  const front = useRef<HTMLSpanElement>(null)
+  const progress = useMotionValue(0)
+  const reduced = useReducedMotionConfig()
+  const gooId = `copy-goo-${useId().replace(/:/g, '')}`
+  const tone = useRef<'copied' | 'error'>('copied')
+  if (status !== 'idle') tone.current = status
+  const on = status !== 'idle'
+
+  useLayoutEffect(() => {
+    if (!on && progress.get() === 0) return
+    const render = (p: number) => {
+      if (layer.current) layer.current.style.visibility = p > 0 ? 'visible' : 'hidden'
+      placeSheet(back.current, BACK, DISC_RECT, p)
+      placeSheet(front.current, FRONT, DISC_RECT, p)
+    }
+    const target = on ? 1 : 0
+    if (reduced) {
+      progress.jump(target)
+      return render(target)
+    }
+    const controls = animate(progress, target, { ...(on ? enter : spring.slow.exit), onUpdate: render })
+    return () => controls.stop()
+  }, [on, reduced])
+
+  return (
+    // Structural geometry: the layer box around the glyph slot, sized for the blur.
+    <span
+      aria-hidden
+      className="pointer-events-none absolute"
+      style={{ left: LAYER.at, top: LAYER.at, width: LAYER.size, height: LAYER.size }}
+    >
+      <GooFilter id={gooId} blur={BLUR} />
+      {/* The filter is the effect itself: it melts the two token-filled sheets into one. */}
+      <span ref={layer} className="invisible absolute inset-0 opacity-16" style={{ filter: `url(#${gooId})` }}>
+        <span ref={back} className={cn('absolute', TONE_BG[tone.current])} />
+        <span ref={front} className={cn('absolute', TONE_BG[tone.current])} />
+      </span>
+    </span>
+  )
+}
+
+const CHECK_PATH = 'M6 12L10 16L18 8'
+const ERROR_PATH = 'M9 9L15 15M15 9L9 15'
+
+/** The action's glyph slot: the copy icon, or the check / ✕ drawing itself over its disc. */
+function CopyGlyph({
+  status,
+  copyCount,
+  variant,
+  CopyIcon,
+}: {
+  status: CopyStatus
+  copyCount: number
+  variant: InputCopyVariant
+  CopyIcon: IconComponent
+}) {
+  return (
+    <span className="relative flex size-3.5 shrink-0 items-center justify-center">
+      <CopyDisc status={status} />
+      <AnimatePresence initial={false}>
+        {status === 'idle' ? (
+          <motion.span
+            key="copy"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8, transition: spring.fast.exit }}
+            transition={spring.fast}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <CopyIcon
+              size={14}
+              strokeWidth={1.5}
+              className="transition-[stroke-width] duration-fast group-hover:stroke-[2]"
+            />
+          </motion.span>
+        ) : (
+          <motion.span
+            key={`${status}-${copyCount}`}
+            initial={{ opacity: 0, scale: 0.6 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8, transition: spring.fast.exit }}
+            transition={spring.fast}
+            className={cn(
+              'absolute inset-0 flex items-center justify-center',
+              TONE_TEXT[status],
+              CHECK_STROKE[variant],
+            )}
+          >
+            <svg
+              width={14}
+              height={14}
+              viewBox="2 4 20 16"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <motion.path
+                d={status === 'error' ? ERROR_PATH : CHECK_PATH}
+                initial={{ pathLength: 0 }}
+                animate={{
+                  pathLength: 1,
+                  transition: { duration: spring.fast.duration, ease: 'easeOut' },
+                }}
+              />
+            </svg>
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </span>
+  )
+}
 
 interface InputCopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   /** The text value to display and copy to clipboard. */
@@ -61,8 +243,9 @@ interface InputCopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'
  * feedback.
  *
  * The whole row is the button: click anywhere on it and the value goes to
- * the clipboard, the copy glyph springs into a check that draws itself, and
- * the tooltip flips to "Copied" for 2 seconds. The value is monospaced and
+ * the clipboard, the copy glyph's two sheets melt into a tinted disc (the
+ * goo of Morph) behind a check that draws itself, and the tooltip flips to
+ * "Copied" for 2 seconds; then the disc splits back into the glyph. The value is monospaced and
  * highlights on hover so it reads as one selectable token rather than a
  * text field, and the async Clipboard API falls back to an off-screen
  * textarea + `execCommand` where it is unavailable (insecure context,
@@ -77,7 +260,7 @@ const InputCopy = forwardRef<HTMLDivElement, InputCopyProps>(
   ({ value, label, onCopy, disabled, variant = 'icon', align = 'right', size, className, ...props }, ref) => {
     const CopyIcon = useIcon('copy')
     // "copied" and "error" both occupy the same animation slot on the button
-    const [status, setStatus] = useState<'idle' | 'copied' | 'error'>('idle')
+    const [status, setStatus] = useState<CopyStatus>('idle')
     const [copyCount, setCopyCount] = useState(0)
     // "idle" = normal tooltip behavior, "copied" = force open, "suppressed" = force closed
     const [tooltipState, setTooltipState] = useState<'idle' | 'copied' | 'suppressed'>('idle')
@@ -159,83 +342,6 @@ const InputCopy = forwardRef<HTMLDivElement, InputCopyProps>(
       setTooltipState(prev => (prev === 'copied' ? 'suppressed' : prev))
     }, [])
 
-    const iconSwitch = (
-      <AnimatePresence mode="wait" initial={false}>
-        {status === 'error' ? (
-          <motion.span
-            key={`error-${copyCount}`}
-            initial={{ opacity: 0, scale: 0.6 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={spring.fast}
-            className="flex items-center justify-center text-destructive [&_svg]:stroke-[1.5] [&_svg]:transition-[stroke-width] [&_svg]:duration-fast group-hover:[&_svg]:stroke-[2]"
-          >
-            <svg
-              width={14}
-              height={14}
-              viewBox="2 4 20 16"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <motion.path
-                d="M9 9L15 15M15 9L9 15"
-                initial={{ pathLength: 0 }}
-                animate={{
-                  pathLength: 1,
-                  transition: { duration: spring.fast.duration, ease: 'easeOut' },
-                }}
-              />
-            </svg>
-          </motion.span>
-        ) : status === 'copied' ? (
-          <motion.span
-            key={`check-${copyCount}`}
-            initial={{ opacity: 0, scale: 0.6 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={spring.fast}
-            className="flex items-center justify-center [&_svg]:stroke-[1.5] [&_svg]:transition-[stroke-width] [&_svg]:duration-fast group-hover:[&_svg]:stroke-[2]"
-          >
-            <svg
-              width={14}
-              height={14}
-              viewBox="2 4 20 16"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <motion.path
-                d="M6 12L10 16L18 8"
-                initial={{ pathLength: 0 }}
-                animate={{
-                  pathLength: 1,
-                  transition: { duration: spring.fast.duration, ease: 'easeOut' },
-                }}
-              />
-            </svg>
-          </motion.span>
-        ) : (
-          <motion.span
-            key="copy"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={spring.fast}
-            className="flex items-center justify-center"
-          >
-            <CopyIcon
-              size={14}
-              strokeWidth={1.5}
-              className="transition-[stroke-width] duration-fast group-hover:stroke-[2]"
-            />
-          </motion.span>
-        )}
-      </AnimatePresence>
-    )
-
     const actionElement =
       variant === 'button' ? (
         <span
@@ -247,116 +353,34 @@ const InputCopy = forwardRef<HTMLDivElement, InputCopyProps>(
             'weight-normal',
           )}
         >
-          <AnimatePresence mode="wait" initial={false}>
-            {status === 'error' ? (
+          <CopyGlyph status={status} copyCount={copyCount} variant="button" CopyIcon={CopyIcon} />
+          <span className="select-none inline-grid text-left">
+            <span className="col-start-1 row-start-1 invisible" aria-hidden="true">
+              Copied
+            </span>
+            <AnimatePresence mode="wait" initial={false}>
               <motion.span
-                key={`error-label-${copyCount}`}
-                className="flex items-center gap-1.5 text-destructive"
+                key={status}
+                className={cn('col-start-1 row-start-1', status === 'error' && 'text-destructive')}
                 initial={{ opacity: 0, scale: 0.6 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
+                exit={{ opacity: 0, scale: 0.8, transition: spring.fast.exit }}
                 transition={spring.fast}
               >
-                <span className="flex items-center justify-center">
-                  <svg
-                    width={14}
-                    height={14}
-                    viewBox="2 4 20 16"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <motion.path
-                      d="M9 9L15 15M15 9L9 15"
-                      initial={{ pathLength: 0 }}
-                      animate={{
-                        pathLength: 1,
-                        transition: { duration: spring.fast.duration, ease: 'easeOut' },
-                      }}
-                    />
-                  </svg>
-                </span>
-                <span className="select-none inline-grid text-left">
-                  <span className="col-start-1 row-start-1 invisible" aria-hidden="true">
-                    Copied
-                  </span>
-                  <span className="col-start-1 row-start-1">Failed</span>
-                </span>
+                {status === 'copied' ? 'Copied' : status === 'error' ? 'Failed' : 'Copy'}
               </motion.span>
-            ) : status === 'copied' ? (
-              <motion.span
-                key={`check-label-${copyCount}`}
-                className="flex items-center gap-1.5"
-                initial={{ opacity: 0, scale: 0.6 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={spring.fast}
-              >
-                <span className="flex items-center justify-center">
-                  <svg
-                    width={14}
-                    height={14}
-                    viewBox="2 4 20 16"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <motion.path
-                      d="M6 12L10 16L18 8"
-                      initial={{ pathLength: 0 }}
-                      animate={{
-                        pathLength: 1,
-                        transition: { duration: spring.fast.duration, ease: 'easeOut' },
-                      }}
-                    />
-                  </svg>
-                </span>
-                <span className="select-none inline-grid text-left">
-                  <span className="col-start-1 row-start-1 invisible" aria-hidden="true">
-                    Copied
-                  </span>
-                  <span className="col-start-1 row-start-1">Copied</span>
-                </span>
-              </motion.span>
-            ) : (
-              <motion.span
-                key="copy-label"
-                className="flex items-center gap-1.5"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={spring.fast}
-              >
-                <span className="flex items-center justify-center">
-                  <CopyIcon
-                    size={14}
-                    strokeWidth={1.5}
-                    className="transition-[stroke-width] duration-fast group-hover:stroke-[2]"
-                  />
-                </span>
-                <span className="select-none inline-grid text-left">
-                  <span className="col-start-1 row-start-1 invisible" aria-hidden="true">
-                    Copied
-                  </span>
-                  <span className="col-start-1 row-start-1">Copy</span>
-                </span>
-              </motion.span>
-            )}
-          </AnimatePresence>
+            </AnimatePresence>
+          </span>
         </span>
       ) : (
         <span
           className={cn(
-            'shrink-0 px-1.5 transition-colors duration-fast',
+            'shrink-0 flex px-1.5 transition-colors duration-fast',
             rowPy,
             'text-muted-foreground group-hover:text-foreground',
           )}
         >
-          {iconSwitch}
+          <CopyGlyph status={status} copyCount={copyCount} variant="icon" CopyIcon={CopyIcon} />
         </span>
       )
 

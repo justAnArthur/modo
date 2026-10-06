@@ -13,12 +13,21 @@
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  *   `text-<role>[-compact]`; `font-medium` → `weight-medium`; literal colors →
  *   color tokens.
+ * - Changes animate (local, in the morph layer's language): a new label or
+ *   variant springs the badge from its old width to its new one on
+ *   `spring.moderate` (the content clipped on the way) while the label
+ *   crossfades with Toast's blur; a color fades over `duration-moderate`, and
+ *   the dot scales in and out with the label sliding to make room. The content
+ *   sits in one inner span that carries the morph, so the root keeps the
+ *   caller's `style`.
  */
 
 import { cva, type VariantProps } from 'class-variance-authority'
-import { forwardRef, type HTMLAttributes } from 'react'
+import { AnimatePresence, animate, motion, useReducedMotionConfig } from 'motion/react'
+import { forwardRef, type HTMLAttributes, type ReactNode, useLayoutEffect, useRef } from 'react'
 import { useShape } from '../../lib/shape-context'
 import { useSizeVariant } from '../../lib/size-context'
+import { spring } from '../../lib/springs'
 import { cn } from '../../lib/utils'
 
 const badgeColors = {
@@ -74,6 +83,64 @@ const legacySizeAliases: Partial<Record<BadgeSize, BadgeSizeCanonical>> = {
   lg: 'default',
 }
 
+const { exit: _exit, ...enter } = spring.moderate
+
+/** The label as text, when it is text: the key its crossfade runs on. */
+function textOf(node: ReactNode) {
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node) && node.every(part => typeof part === 'string' || typeof part === 'number'))
+    return node.join('')
+}
+
+/* Width morph (local): when the label or the variant changes, the content
+   span springs from its old width to its new one instead of jumping, and the
+   badge follows it. By the time the change commits the span already has its
+   new width, so a ResizeObserver keeps the resting one. At rest the inline
+   width is dropped. */
+function useWidthMorph(change: string) {
+  const content = useRef<HTMLSpanElement>(null)
+  const rest = useRef(0)
+  const live = useRef<number | null>(null)
+  const reduced = useReducedMotionConfig()
+
+  useLayoutEffect(() => {
+    const el = content.current
+    if (!el) return
+    const observer = new ResizeObserver(() => {
+      if (live.current === null) rest.current = el.offsetWidth
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  useLayoutEffect(() => {
+    const el = content.current
+    const from = live.current ?? rest.current
+    if (!el || !from) return
+    el.style.width = ''
+    const to = el.offsetWidth
+    rest.current = to
+    live.current = null
+    if (reduced || from === to) return
+    const write = (width: number) => {
+      live.current = width
+      el.style.width = `${width}px`
+    }
+    write(from)
+    const controls = animate(from, to, {
+      ...enter,
+      onUpdate: write,
+      onComplete: () => {
+        live.current = null
+        el.style.width = ''
+      },
+    })
+    return () => controls.stop()
+  }, [change, reduced])
+
+  return content
+}
+
 interface BadgeProps
   extends Omit<HTMLAttributes<HTMLSpanElement>, 'color'>,
     Omit<VariantProps<typeof badgeVariants>, 'size'> {
@@ -93,7 +160,9 @@ interface BadgeProps
  * page background (gray uses the accent token); dot badges keep a neutral
  * border and show the color as a small indicator. The badge rides the size
  * ladder — `size` pins it, otherwise it follows the surrounding SizeProvider
- * — and takes its corner radius from the shape context. The palette is also
+ * — and takes its corner radius from the shape context. Changes animate: a
+ * new label or variant springs the width while the label crossfades, and a
+ * new color fades in. The palette is also
  * exported as `badgeColors`, the class recipe as `badgeVariants`.
  *
  * @example {@include ./examples.mdx}
@@ -123,28 +192,60 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
       : {}
 
     const dotColor = color === 'gray' ? 'var(--muted-foreground)' : colorValue
+    const label = textOf(children)
+    const content = useWidthMorph(`${variant} ${size} ${label}`)
 
     return (
       <span
         ref={ref}
-        className={cn(badgeVariants({ variant, size }), shape.item, className)}
+        className={cn(
+          badgeVariants({ variant, size }),
+          shape.item,
+          'transition-[background-color] duration-moderate',
+          className,
+        )}
         style={{ ...colorStyle, ...style }}
         {...props}
       >
-        {!isSolid && (
-          <span
-            className="shrink-0 rounded-full"
-            style={{
-              width: dotSize,
-              height: dotSize,
-              backgroundColor: dotColor,
-            }}
-          />
-        )}
-        {/* text-box needs a block container — the badge root is a flex
-            container, so the label gets its own span. Height is fixed (h-*),
-            so trimming only recenters the letterforms. */}
-        <span className="[text-box:trim-both_cap_alphabetic]">{children}</span>
+        {/* The morphing box: it may shrink below its content while the width
+            springs (min-w-0), clipping it sideways only, and it positions
+            whatever pops out of the flow on its way out. */}
+        <span ref={content} className="relative inline-flex min-w-0 items-center gap-[inherit] overflow-x-clip">
+          <AnimatePresence mode="popLayout" initial={false}>
+            {!isSolid && (
+              <motion.span
+                key="dot"
+                className="shrink-0 rounded-full transition-[background-color] duration-moderate"
+                style={{
+                  width: dotSize,
+                  height: dotSize,
+                  backgroundColor: dotColor,
+                }}
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0, transition: spring.moderate.exit }}
+                transition={enter}
+              />
+            )}
+          </AnimatePresence>
+          <AnimatePresence mode="popLayout" initial={false}>
+            {/* text-box needs a block container — the badge root is a flex
+                container, so the label gets its own span. Height is fixed
+                (h-*), so trimming only recenters the letterforms. */}
+            <motion.span
+              key={label ?? 'label'}
+              layout="position"
+              className="[text-box:trim-both_cap_alphabetic]"
+              initial={{ opacity: 0, filter: 'blur(4px)' }}
+              // At rest the label keeps no filter, which would make it its own stacking context.
+              animate={{ opacity: 1, filter: 'blur(0px)', transitionEnd: { filter: 'none' } }}
+              exit={{ opacity: 0, filter: 'blur(4px)', transition: spring.moderate.exit }}
+              transition={enter}
+            >
+              {children}
+            </motion.span>
+          </AnimatePresence>
+        </span>
       </span>
     )
   },

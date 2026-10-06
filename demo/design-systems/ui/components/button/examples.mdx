@@ -1,5 +1,6 @@
 import Button from './index'
-import { ArrowRight, ChevronDown, Loader, Plus, Search, Settings } from 'lucide-react'
+import LoadingDemo from './loading-demo'
+import { ArrowRight, Check, ChevronDown, Loader, Plus, RotateCcw, Search, Settings } from 'lucide-react'
 
 # Variants
 
@@ -36,13 +37,32 @@ closer to its edge than the label would.
 
 # Loading & Disabled
 
-`loading` shows a spinner and disables the button; the hidden label keeps
-its width.
+`loading` folds the surface into a circle around a spinner and disables
+the button; the hidden label keeps its width.
 
 <div className="flex flex-wrap items-center gap-2">
   <Button loading>Loading</Button>
   <Button variant="secondary" loading leadingIcon={Loader}>Saving</Button>
   <Button disabled>Disabled</Button>
+</div>
+
+# Loading morph
+
+Press one. The surface folds into a circle around the spinner while the
+button keeps its box, so its neighbors never move, and springs back when
+loading ends. `LoadingDemo` is a docs stage: a Button whose `loading` holds
+for two seconds after a press.
+
+<div className="flex w-fit max-w-full flex-col gap-3">
+  <div className="flex flex-wrap items-center gap-2">
+    <LoadingDemo leadingIcon={Check}>Save</LoadingDemo>
+    <LoadingDemo variant="secondary">Publish</LoadingDemo>
+    <LoadingDemo variant="tertiary" trailingIcon={ArrowRight}>Next</LoadingDemo>
+    <LoadingDemo variant="secondary" size="icon" aria-label="Refresh">
+      <RotateCcw />
+    </LoadingDemo>
+  </div>
+  <LoadingDemo className="w-full">Create account</LoadingDemo>
 </div>
 
 # Sizes

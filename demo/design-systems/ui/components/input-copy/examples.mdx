@@ -9,6 +9,18 @@ trailing edge, with a tooltip on hover.
   <InputCopy value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json" />
 </div>
 
+# Copied morph
+
+Click a row. The copy glyph's two sheets melt into a disc in the success
+tint behind a check that draws itself, and split back into the glyph after
+two seconds; a failed copy turns the disc red behind a ✕. The compact step
+keeps the same disc.
+
+<div className="flex w-72 flex-col gap-4">
+  <InputCopy value="bun add @base-ui/react motion" />
+  <InputCopy variant="button" size="compact" value="bun add @base-ui/react motion" />
+</div>
+
 # With Label
 
 `label` renders a muted caption above the field and joins the button's
