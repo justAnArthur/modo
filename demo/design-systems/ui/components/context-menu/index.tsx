@@ -81,22 +81,32 @@ function renderMenuItem({
   disabled,
   label,
   closeOnClick,
+  onClick,
   element,
   children,
 }: MenuItemRenderOptions) {
+  // The row's activation goes on the primitive: Base UI's Enter/Space calls
+  // only the primitive's own onClick.
   return radio || checkbox ? (
     <ContextMenuPrimitive.CheckboxItem
       checked={checked}
       disabled={disabled}
       label={label}
       closeOnClick={closeOnClick}
+      onClick={onClick}
       render={element}
     >
       {children}
       <RowShortcut />
     </ContextMenuPrimitive.CheckboxItem>
   ) : (
-    <ContextMenuPrimitive.Item disabled={disabled} label={label} closeOnClick={closeOnClick} render={element}>
+    <ContextMenuPrimitive.Item
+      disabled={disabled}
+      label={label}
+      closeOnClick={closeOnClick}
+      onClick={onClick}
+      render={element}
+    >
       {children}
       <RowShortcut />
     </ContextMenuPrimitive.Item>
