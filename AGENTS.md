@@ -1,11 +1,11 @@
 # AGENTS.md — modo monorepo
 
-modo turns a design system (DS) into its own docs site. The lib is zero-content: every token, visual, component and word comes from the host DS.
+modo turns a design system (DS) into its own docs site. The lib brings no content: every token, visual, component and piece of documentation comes from the host DS. The chrome carries only its own labels ("Examples", "Props", "On this page").
 
 ## layout
 
-- `lib/` — the npm package `modo`: public API, schemas, renderer (plain Vite SPA), vite plugins, structural CSS, scaffold templates, the `modo` CLI.
-- `demo/` — the harness. `scripts/run-design-systems.ts` spawns one `modo dev` per DS, assigns ports and splices in the demo-switcher. `components/demo-switcher/` renders `shell.Select` to navigate between peers.
+- `lib/` — the npm package `@justanarthur/modo` (bin `modo`): public API and schemas (`src/lib`), Vite plugins (`src/plugins`), the renderer, a plain Vite SPA with its structural CSS (`src/runtime`), scaffold templates, the CLI.
+- `demo/` — the harness. `scripts/run-design-systems.ts` runs the lib's CLI once per DS (one dev server per port, or one static build each) and splices in the demo-switcher. `components/demo-switcher/` renders `shell.Select` to navigate between peers.
 - `demo/design-systems/<name>/` — one workspace package per DS, each with its own deps:
   - `filled/` — the minimal reference.
   - `shadcn/` — shadcn/ui pulled with the real CLI (Tailwind v4).
@@ -106,6 +106,7 @@ Rules:
   - `marked` lexer → React. Links and fences go through the shell's `Link` / `Code`; raw HTML shows as text.
   - The first paragraph is the lead; the rest renders in `data-modo="prose"`.
 - **Props** come from the destructured params plus the inline object type and per-prop JSDoc.
+  - In a prop's JSDoc, `@default x` fills the Default column (the code's own default wins); `@values a, b` names the allowed values and is dropped when the type already lists them.
   - A bare identifier type resolves to a same-file interface or type alias.
   - `const X = forwardRef<…, XProps>` resolves `XProps`.
   - Shell slot matching reads these props, so a converted component must keep `children` (and `href` for Link) visible.
@@ -113,7 +114,7 @@ Rules:
   - `@example` counts only at the start of a JSDoc line.
   - `//` is a comment only after start-of-line, whitespace or punctuation, so `https://` survives.
   - Inline example code can't contain `*/` (no JSX `{/* … */}`). Move it to `examples.mdx` instead.
-- **Examples compile in-browser** (babel standalone) as `return (<>…</>)` inside `new Function`.
+- **Inline `@example` code compiles in-browser** (babel standalone) as `return (<>…</>)` inside `new Function`; `examples.mdx` goes through the build instead (above).
   - One JSX expression or several siblings; no hooks.
   - Leading imports and a trailing `;` are stripped.
   - An identifier binds only if it is an item name or an `examples` scope export (items win on collision). Nothing touches globals.
@@ -121,11 +122,11 @@ Rules:
 
 ## lib conventions
 
-- **Workspaces:** bun. The root `package.json` `workspaces` (mirrored in `bun-workspace.toml`) lists `lib`, `demo` and `demo/design-systems/*`.
+- **Workspaces:** bun. The root `package.json` `workspaces` lists `lib`, `demo` and `demo/design-systems/*`.
 - **Lib package:**
   - ESM, `react-jsx`, `jsxImportSource: 'react'`.
   - bunup builds `dist/` from `src/exports/*`; the runtime and plugins ship as source, unbundled.
-  - Structural CSS only: no tokens, no component visuals, no copy.
+  - Structural CSS only (see **styling**).
 - **One shared build** (`lib/src/plugins/bundle.ts`):
   - Entries in ONE esbuild build (`splitting: true`, react external): every item (`items/<tier>/<id>`), every `shell.*` / `panel.items[].component` module (`usr/<name>`) and the `examples` module (`scope/examples`).
   - Output goes to `<DS>/.modo-tmp/build/`. Shared modules (contexts, providers) land in one chunk, so they cross items and the chrome.
@@ -136,7 +137,8 @@ Rules:
   - Unmatched slots fall back to the lib's Plain components; `modo.config.ts: shell` pins slots.
   - A `shell` / `panel.items[].component` reference may name an export: `./modo.components.tsx#Select` (else the default export). Several refs into one file share its build entry, so a DS can keep all its docs-only components in one `modo.components.tsx`.
   - Contracts beyond the matched props:
-    - Button gets `variant="ghost"`, `size="sm" | "icon-sm"`, `aria-label`, `aria-pressed`.
+    - Button gets `variant="ghost"`, `size="icon-sm"`, `aria-label`, `aria-pressed`.
+    - Link gets `aria-label` on icon-only anchors and `title` from Markdown links; forward them.
     - Code gets `language` and a string child.
     - Icon gets `name` (`code` | `copy` | `check` | `link`) and `label`. The host draws its own glyph; `PlainIcon` shows the label as text.
   - A host Link needn't forward data attributes: the chrome puts its hooks on wrappers.
@@ -154,32 +156,35 @@ Rules:
   - A bare shorthand like `--radius` joins its prefix family.
   - In a group file, an unprefixed var belongs to that group (`--sm` in `spacing.css`); a var whose prefix names another group goes there (`--radius-sm` in `colors.css`).
 - `<tier>/<name>/index.tsx` — the item. Tiers are `primitives/`, `components/` and `blocks/`, auto-discovered.
-  - Compound parts hang off the default export (`Card.Header`). Type them with interface merging, or with `Object.assign` for forwardRef consts.
+  - Compound parts hang off the default export (`Card.Header = …`; TypeScript types the assignments). For a forwardRef const, cast the `Object.assign` result to a type with the parts.
   - Examples may use compound JSX.
-- `<tier>/<name>/examples.mdx` — the item's examples; `<name>.md` for prose. Both are `{@include}`d from the TSDoc.
+- `<tier>/<name>/examples.mdx` — the item's examples; `<name>.md` for prose (see **docs**).
 - `<tier>/<name>/<name>.tsx` — vendored upstream source, imported by an adapter.
   - When the upstream component is the item, rename it to `index.tsx` instead (with a local-modifications header).
   - Adapters only for real API transforms: shell contracts, options→children, prop narrowing.
-- Co-located `.css` files in an item dir are auto-injected.
+- Co-located `.css` files in an item dir are auto-injected; don't import them.
+- Vendored files that trip the linter start with `// biome-ignore-all lint: vendored upstream code…` (or the `/* */` form in CSS), next to their provenance header.
 
 ## running
 
-- All DSs: `bun dev` in `demo/` (ports 5173+i).
-- One DS: `bun scripts/run-design-systems.ts <name>` in `demo/`, or `cd demo/design-systems/<name> && MODO_PORT=<n> bunx modo dev`.
+- All DSs: `bun dev` at the root or in `demo/` (ports 5173+i). The runner builds the lib's CLI first if it isn't built.
+- One DS: `bun dev <name>` in `demo/`.
 - The site: `bun run build` in `demo/` builds every DS into `demo/dist/<name>/` (`SITE_BASE` sets the public path). `.github/workflows/pages.yml` deploys it to GitHub Pages on push to `main`.
-- Typecheck:
-  - a DS: `cd demo/design-systems/<name> && bunx tsc -p . --noEmit`;
-  - the lib: `cd lib && bun run check`.
+- Checks (CI runs them on every push and pull request): `bun run lint`, `bun run build && bun run check` (typechecks every workspace), `bun run test` (the lib's parser tests).
+
+## commits
+
+- Conventional commits drive releases: a `feat`/`fix` scoped to the lib (`lib`, `modo`, `@justanarthur/modo`) bumps and publishes it; other scopes and unscoped commits don't. Details in `.github/AGENTS.md`.
 
 ## chrome hooks (data-modo attrs)
 
-- layout: `app`, `sidebar`, `content`, `panel`, `header`.
+- layout: `app`, `sidebar`, `content`, `panel`.
 - nav: `sidebar-nav`, `sidebar-section`, `sidebar-section-title`, `sidebar-section-items`, `sidebar-item` (`aria-current="page"` when active), `toc`, `toc-label` (`data-level`).
 - page: `page-eyebrow`, `page-title`, `page-lead`, `prose`, `section`, `section-title`, `anchor`, `hero`, `hero-stats`.
 - overviews: `bento`, `bento-card` (`data-span="wide|full"`), `bento-stage`, `bento-meta`, `bento-title`, `bento-count`, `bento-desc`, `bento-empty`, `token-preview`, `token-chip`.
 - examples: `example-card`, `example-card-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`, `code-block`, `code-actions`, `icon-label`.
-- tables and tokens: `prop-table`, `token-list`, `token-row`, `token-name`, `token-meta`, `swatch` (`data-kind`), `raw-json`.
+- tables and tokens: `prop-table`, `token-list`, `token-row`, `token-name`, `token-meta`, `swatch` (`data-kind`).
 - colors: `color-grid`, `color-stack`, `color-tile` (`data-flush` when it matches the page), `color-tile-name`, `color-tile-value`, `color-tile-pair`.
 - foundations: `token-label`; typography `type-families`, `type-family`, `type-family-sample`, `type-glyph`, `type-scale`, `type-step`, `type-sample`, `type-weights`, `type-weight`, `type-preview`; radius `radius-grid`, `radius-tile`, `radius-shape`; spacing `space-scale`, `space-step`, `space-bar`, `space-preview`; motion `motion-list`, `motion-row`, `motion-track`, `motion-dot`, `motion-curve`, `motion-preview`, `motion-bar`.
 
-The lib styles their structure, including the hover reveal of `example-actions`, `code-actions` and `anchor` (shown on hover or focus-within, always shown on touch) and the responsive grid (panel strip below 1280px, stacked below 768px). The host styles everything else through the same attrs, e.g. ui's `global.css` chrome section.
+The lib styles their structure, including the hover reveal of `example-actions`, `code-actions` and `anchor` (shown on hover or focus-within, always shown on touch) and the responsive grid (panel strip below 1280px, stacked below 768px). The host styles everything else through the same attrs (**styling: Chrome restyling**), e.g. ui's `global.css` chrome section.

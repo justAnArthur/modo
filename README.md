@@ -16,36 +16,39 @@ proven against real-world design systems — see `demo/design-systems/`:
 
 ```
 modo/
-├── lib/                          — the npm package: `modo`
-│   ├── src/runtime/              — internal renderer (plain Vite SPA) + vite plugins
+├── lib/                          — the npm package `@justanarthur/modo` (bin `modo`)
+│   ├── src/runtime/              — internal renderer (plain Vite SPA) + structural CSS
+│   ├── src/plugins/              — Vite plugins: the shared item build, tokens, shell
 │   ├── src/lib/                  — schemas, TSDoc parser, token/css parsing, slot matching
-│   └── templates/                — `modo init` scaffold
+│   ├── templates/                — `modo init` scaffold and `modo add` stubs
+│   └── test/                     — parser tests
 ├── demo/                         — harness: multi-DS runner + demo-switcher
 │   └── design-systems/<name>/    — one workspace package per design system showcase
-├── bun-workspace.toml
 └── package.json
 ```
 
 ## what the lib ships
 
-- discovery + parsing: `tokens/*.css` (file-per-group or var prefixes), `<tier>/<name>/index.tsx` items with TSDoc-extracted name/description/props/examples (in-browser compiled `@example` playground)
-- the docs site chrome (sidebar / content / panel / example cards / prop tables / swatches) as **structural CSS only** — zero design tokens, zero visuals, zero copy
+- discovery + parsing: `tokens/*.css` (file-per-group or var prefixes), `<tier>/<name>/index.tsx` items with TSDoc-extracted name/description/props, and their live examples from `examples.mdx`
+- the docs site chrome (sidebar / content / panel / example cards / prop tables / foundation pages) as **structural CSS only** — every visual reads your tokens; the chrome brings only its own labels
 - shell inheritance with graceful Plain fallbacks for unmatched slots
-- user hooks: `modo.config.ts` → `css` (global stylesheet), `vite` (extend the internal Vite config — e.g. add `@tailwindcss/vite`), `shell` (pin slots explicitly), `panel`
+- user hooks: `modo.config.ts` → `css` (global stylesheet), `vite` (extend the internal Vite config — e.g. add `@tailwindcss/vite`), `shell` (pin slots explicitly), `panel`, `examples` (names in scope in every example)
 
 ## development
 
 ```bash
 bun install
 
-# run all design-system showcases (one modo dev server each + switcher)
+# run all design-system showcases (one dev server each + switcher); builds the lib's CLI first if needed
 bun dev            # from repo root (or: cd demo && bun dev)
 
 # a single showcase
-cd demo && bun run samples:shadcn   # or samples:filled | samples:fluid-functionalism | samples:mui
+cd demo && bun dev shadcn
 
-# typecheck
-bun run check
+# what CI runs
+bun run lint
+bun run build && bun run check
+bun run test
 ```
 
 ## getting started
@@ -86,24 +89,32 @@ my-ds/
 
 ## authoring items
 
-an item is a default-exported function in `<tier>/<name>/index.tsx` whose TSDoc is the docs contract:
+an item is a default-exported function in `<tier>/<name>/index.tsx` whose TSDoc is the docs contract, with its examples beside it:
 
 ```tsx
 /**
  * Button — the primary interaction primitive.
  *
- * @example Primary
- * ```tsx
- * <Button onClick={() => alert('hi')}>Click me</Button>
- * ```
+ * @example {@include ./examples.mdx}
  */
-export default function Button({ variant = 'primary', children }) { … }
+export default function Button({ variant = 'primary', children }: {
+  /** Visual style. */
+  variant?: 'primary' | 'secondary'
+  /** Button content. */
+  children?: React.ReactNode
+}) { … }
 ```
 
-- **name / description** — from the TSDoc block anchored to the default export (plain `function` or `forwardRef` const both work).
-- **props** — extracted from the destructured params + inline type literal (or a same-file interface/type alias). rendered as the item's prop table and used for shell slot matching.
-- **examples** — `@example` blocks with an optional `# Heading` line and a ` ```tsx ` fence. examples compile **in the browser** (babel standalone): every capitalized JSX tag auto-binds to your item registry, so examples are self-contained JSX with **no imports and no hooks**.
-- **compound items** — attach sub-components as static attributes on the default export (`Card.Header`), typed via interface merging; `<Card.Header>` auto-binds in examples too.
+```mdx
+# Primary
+
+<Button>Click me</Button>
+```
+
+- **name / description** — from the TSDoc block right above the default export's declaration (plain `function` or `forwardRef` const both work).
+- **props** — extracted from the destructured params + inline type literal (or a same-file interface/type alias), with per-prop JSDoc (`@default`, `@values`). rendered as the item's prop table and used for shell slot matching.
+- **examples** — `examples.mdx` holds `# Title` + a JSX block per example; it goes through the same build as your items, so imports are real and providers are shared. a short inline `@example` (`# Title` and a ` ```tsx ` fence) also works; that one compiles in the browser with items bound by name.
+- **compound items** — attach sub-components as static attributes on the default export (`Card.Header = …`); `<Card.Header>` works in examples too.
 - **CSS** — any `.css` file co-located in the item dir is injected automatically.
 
 tokens are plain CSS, one file per group (`colors.css`, `typography.css`, `spacing.css`, `radius.css`, `motion.css`) — or a single file using var prefixes (`--space-*`, `--motion-*`, …). the tokens page renders each group as swatches.
@@ -133,6 +144,7 @@ export default defineConfig({
     Select: 'components/select',
     Sidebar: 'components/sidebar',
     Code: 'primitives/code',
+    Icon: './modo.components.tsx#Icon', // a path may name an export
   },
 
   // entries rendered in the right panel, each as a Sidebar.Section
@@ -146,16 +158,15 @@ export default defineConfig({
 
 ### shell inheritance
 
-the docs chrome looks for your components per slot (`Button`, `Link`, `Code` in primitives; `Select`, `Sidebar Root/Item/Section` in components) matched by parsed name + required props — `children` must be visible in the parsed type (`href` for `Link`). unmatched slots fall back to the lib's structural Plain components. to style the chrome itself, target the `data-modo` attributes (`data-modo="sidebar"`, `"example-card"`, `"swatch"`, …) from your `css` — the lib ships structure, you ship the look.
+the docs chrome looks for your components per slot (`Button`, `Link`, `Code`, `Icon` in primitives; `Select`, `Sidebar Root/Item/Section` in components) matched by parsed name + required props — `children` must be visible in the parsed type (`href` for `Link`). unmatched slots fall back to the lib's structural Plain components. to style the chrome itself, target the `data-modo` attributes (`data-modo="sidebar"`, `"example-card"`, `"swatch"`, …) from your `css` — the lib ships structure, you ship the look.
 
 ## installing the lib locally (monorepo development)
 
 ```bash
 git clone https://github.com/justAnArthur/modo && cd modo
 bun install
-cd lib && bun run build          # build dist/ before CLI tests
-bun dev                          # run every demo showcase (ports 5173+i)
-cd ../demo && bun run samples:shadcn   # a single showcase
+bun dev                          # every demo showcase (ports 5173+i)
+cd demo && bun dev shadcn        # a single showcase
 ```
 
 ## license
@@ -174,24 +185,13 @@ The bump + publish + release pipeline is driven by [`just-github-actions-n-workf
 
 ### Pipeline
 
-1. Conventional commit to `main` → `bump-version.yml` reads the scope (`lib` or `modo` or `justanarthur` or `@justanarthur/modo`), bumps `lib/package.json`, creates annotated tag `@justanarthur/modo@<version>` with JSON `{"deployTargets":["npm"]}`, pushes the tag, then dispatches the tag workflows for it (a push made with `GITHUB_TOKEN` starts no workflows on its own).
+1. Conventional commit to `main` → `bump-version.yml` reads the scope (`lib`, `modo`, `justanarthur`, `@justanarthur/modo` or `justanarthur/modo`), bumps `lib/package.json`, creates annotated tag `@justanarthur/modo@<version>` with JSON `{"deployTargets":["npm"]}`, pushes the tag, then dispatches the tag workflows for it (a push made with `GITHUB_TOKEN` starts no workflows on its own).
 2. Dispatch, or a tag pushed by hand → `publish-npm-on-tag.yml` resolves metadata, installs deps, builds, runs `bun publish -p --access public --tag <dist-tag>` to npmjs.com.
-3. `publish-npm-on-tag.yml` creates the GitHub Release with conventional-commit notes.
-
-### First tag (manual)
-
-The toolkit's tag annotation must be a JSON object. The first tag has to be created manually because there is no prior commit for `bump-version.yml` to derive it from:
-
-```sh
-git tag -a @justanarthur/modo@0.1.0 -m '{"deployTargets":["npm"]}'
-git push origin @justanarthur/modo@0.1.0
-```
-
-From the second release onward, `bump-version.yml` generates the annotation automatically.
+3. `publish-npm-on-tag.yml` creates the GitHub Release with conventional-commit notes. `release-on-tag.yml` runs for the same tag too; whichever finishes second finds the release already there.
 
 ### Local publish
 
 ```sh
 cd lib
-NPM_TOKEN=… bun publish -p --access public
+NPM_CONFIG_TOKEN=… bun publish -p --access public
 ```
