@@ -263,6 +263,9 @@ export async function resolveShellSlots(
     if (explicit) {
       const loaded = await loadUserPath(explicit)
       if (loaded) return { ...loaded, source: 'config', resolvedPath: explicit }
+      // A pin that doesn't load (missing file, failed build, no such export)
+      // must not fall back to interface matching in silence.
+      if (!member) warnings.push(`Shell slot "${slotName}" is pinned to "${explicit}", which didn't load`)
     }
 
     const expectedName = (member?.name ?? slotName).toLowerCase()

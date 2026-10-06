@@ -1,6 +1,6 @@
 import { resolve, sep } from 'node:path'
-import type { Plugin } from 'vite'
-import type { Bundler, Tier } from './bundle'
+import { normalizePath, type Plugin } from 'vite'
+import type { Bundler } from './bundle'
 import { emitRoutes } from './static-routes'
 
 interface Options {
@@ -13,12 +13,13 @@ const ITEMS_RESOLVED = '\0virtual:modo-items'
 const ITEMS_CSS_VIRTUAL = 'virtual:modo-items-css'
 const ITEMS_CSS_RESOLVED = '\0virtual:modo-items-css'
 
-// Markdown too: `{@include}`d .md and .mdx.
-const SOURCE_EXT = /\.(?:[cm]?[jt]sx?|mdx?)$/
+// Markdown too (`{@include}`d .md and .mdx), and what esbuild inlines.
+const SOURCE_EXT = /\.(?:[cm]?[jt]sx?|mdx?|json|svg)$/
 
 export function itemsPlugin(options: Options): Plugin {
   const { bundler } = options
-  const outPrefix = bundler.outdir + sep
+  // Module ids are posix even on Windows.
+  const outPrefix = `${normalizePath(bundler.outdir)}/`
 
   return {
     name: 'modo:items',
@@ -29,9 +30,6 @@ export function itemsPlugin(options: Options): Plugin {
       return null
     },
     async load(id) {
-      const safe = (s: string) => s.replace(/[^A-Za-z0-9_]/g, '_')
-      const safeId = (it: { id: string; tier: Tier }) => `__COMP_${safe(it.id)}_${safe(it.tier)}`
-
       // A build output is only read once the current build has finished
       // writing it (Vite's own fs load takes over after this).
       if (id.startsWith(outPrefix)) {
@@ -41,12 +39,8 @@ export function itemsPlugin(options: Options): Plugin {
 
       if (id === ITEMS_RESOLVED) {
         const { items, scope } = await bundler.get()
-        const compImports = items
-          .map((it, idx) => {
-            const ident = safeId(it)
-            return `import __c${idx} from ${JSON.stringify(it.bundlePath)};\nconst ${ident} = (__c${idx} && (__c${idx}.default ?? __c${idx}));`
-          })
-          .join('\n')
+        // Bound by index: two ids that differ only in `-`/`_` stay distinct.
+        const compImports = items.map((it, i) => `import __c${i} from ${JSON.stringify(it.bundlePath)};`).join('\n')
         const docImports = items
           .flatMap((it, i) => it.exampleDocs.map((doc, j) => `import __x${i}_${j} from ${JSON.stringify(doc)};`))
           .join('\n')
@@ -56,12 +50,12 @@ export function itemsPlugin(options: Options): Plugin {
               `${JSON.stringify(`${it.tier}:${it.id}`)}: [${it.exampleDocs.map((_, j) => `__x${i}_${j}`).join(',')}]`,
           )
           .join(',')
-        const itemsJson = items.map(it => `${JSON.stringify(it.id)}: ${safeId(it)}`).join(',')
+        const itemsJson = items.map((it, i) => `${JSON.stringify(it.id)}: __c${i}`).join(',')
         const byIdJson = items
-          .map(it => {
-            const ident = safeId(it)
-            return `${JSON.stringify(`${it.tier}:${it.id}`)}: { id: ${JSON.stringify(it.id)}, tier: ${JSON.stringify(it.tier)}, name: ${JSON.stringify(it.name)}, description: ${JSON.stringify(it.description)}, props: ${JSON.stringify(it.props)}, Component: ${ident} }`
-          })
+          .map(
+            (it, i) =>
+              `${JSON.stringify(`${it.tier}:${it.id}`)}: { id: ${JSON.stringify(it.id)}, tier: ${JSON.stringify(it.tier)}, name: ${JSON.stringify(it.name)}, description: ${JSON.stringify(it.description)}, props: ${JSON.stringify(it.props)}, Component: __c${i} }`,
+          )
           .join(',')
         const serializedJson = JSON.stringify(
           items.map(it => ({
@@ -78,7 +72,7 @@ export function itemsPlugin(options: Options): Plugin {
         const propsJson = items
           .map(it => `${JSON.stringify(`${it.tier}:${it.id}`)}: ${JSON.stringify(it.props)}`)
           .join(',')
-        const byNameJson = items.map(it => `${JSON.stringify(it.name)}: ${safeId(it)}`).join(',')
+        const byNameJson = items.map((it, i) => `${JSON.stringify(it.name)}: __c${i}`).join(',')
         // Named exports of the `examples` module, in scope in every example.
         const scopeCode = scope
           ? [
@@ -123,9 +117,12 @@ export function itemsPlugin(options: Options): Plugin {
       s.watcher.add(options.userRoot)
       const tmp = resolve(options.userRoot, '.modo-tmp') + sep
       let timer: ReturnType<typeof setTimeout> | null = null
-      s.watcher.on('all', (_event, file) => {
+      s.watcher.on('all', (event, file) => {
         if (!file.startsWith(options.userRoot + sep) || file.startsWith(tmp)) return
-        if (!SOURCE_EXT.test(file) || file.includes(`${sep}node_modules${sep}`)) return
+        // A css edit is Vite's HMR; a css file appearing or going changes
+        // which files an item injects.
+        const cssMoved = file.endsWith('.css') && (event === 'add' || event === 'unlink')
+        if (!(SOURCE_EXT.test(file) || cssMoved) || file.includes(`${sep}node_modules${sep}`)) return
         if (timer) clearTimeout(timer)
         timer = setTimeout(() => {
           timer = null

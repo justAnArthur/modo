@@ -1,7 +1,13 @@
-import type { ComponentType } from 'react'
+import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
 import type { SiteConfig } from '../lib/schema'
-import { type AnyComponent, type LoadedComponent, type ParsedItemLite, type ResolvedShell, resolveShellSlots } from '../lib/slots'
+import {
+  type AnyComponent,
+  type LoadedComponent,
+  type ParsedItemLite,
+  type ResolvedShell,
+  resolveShellSlots,
+} from '../lib/slots'
 import type { BundleResult, Bundler } from './bundle'
 
 interface Options {
@@ -74,15 +80,16 @@ async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
     })
   }
   const cssFiles = [
-    ...resolved.Button.cssPaths,
-    ...resolved.Link.cssPaths,
-    ...resolved.Code.cssPaths,
-    ...resolved.Icon.cssPaths,
-    ...resolved.Sidebar.Root.cssPaths,
-    ...resolved.Sidebar.Item.cssPaths,
-    ...resolved.Sidebar.Section.cssPaths,
-    ...panelItems.flatMap(it => it.cssPaths),
-  ]
+    resolved.Button,
+    resolved.Link,
+    resolved.Code,
+    resolved.Select,
+    resolved.Icon,
+    resolved.Sidebar.Root,
+    resolved.Sidebar.Item,
+    resolved.Sidebar.Section,
+    ...panelItems,
+  ].flatMap(it => it.cssPaths)
   return {
     shell: {
       Button: resolved.Button,
@@ -105,11 +112,22 @@ async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
 export function shellPlugin(options: Options): Plugin {
   // Cached per build result: a rebuild (bundler.invalidate) yields a new one.
   let cache: { result: BundleResult; value: Promise<ShellResult> } | null = null
+  let lastReport = ''
+  // An absolute path: a virtual module's relative import would resolve from the process cwd.
+  const slotsModule = JSON.stringify(resolve(options.libDir, 'src/lib/slots.tsx'))
 
   async function getCache(): Promise<ShellResult> {
     const result = await options.bundler.get()
-    if (cache?.result !== result) cache = { result, value: resolveShellForUser(result) }
+    if (cache?.result !== result) cache = { result, value: resolveShellForUser(result).then(report) }
     return cache.value
+  }
+
+  // Printed once per changed set, in the bundler's format, not on every load.
+  function report(shell: ShellResult): ShellResult {
+    const text = shell.warnings.map(w => `[modo:shell] warning: ${w}`).join('\n')
+    if (text && text !== lastReport) process.stderr.write(`${text}\n`)
+    lastReport = text
+    return shell
   }
 
   return {
@@ -122,10 +140,7 @@ export function shellPlugin(options: Options): Plugin {
     },
     async load(id) {
       if (id === SHELL_RESOLVED) {
-        const { shell, warnings } = await getCache()
-        if (warnings.length > 0) {
-          process.stderr.write(`[modo:shell] warnings:\n${warnings.map(w => `  • ${w}`).join('\n')}\n`)
-        }
+        const { shell } = await getCache()
         const slotBindings = Object.entries({
           __Button: shell.Button,
           __Link: shell.Link,
@@ -144,7 +159,7 @@ export function shellPlugin(options: Options): Plugin {
           `__mod_${s.name}[${JSON.stringify(s.exportName ?? 'default')}]`
         const fallbackImports = slotBindings
           .filter(s => s.fallbackName && !s.bundlePath)
-          .map(s => `import { ${s.fallbackName} as __fb_${s.name} } from '../lib/slots';`)
+          .map(s => `import { ${s.fallbackName} as __fb_${s.name} } from ${slotsModule};`)
           .join('\n')
         const imports = [
           `import { primitives as __primitives } from 'virtual:modo-items';`,

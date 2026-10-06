@@ -118,6 +118,10 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
           },
         })
         if (p.errors.length > 0) warnings.push(`${tier}/${id}: ${p.errors.join('; ')}`)
+        const exampleDocs = p.exampleDocs.map(path => resolve(itemDir, path))
+        for (const doc of exampleDocs.filter(d => !existsSync(d))) {
+          warnings.push(`${tier}/${id}: @example include not found: ${relative(itemDir, doc)}`)
+        }
         parsed.push({
           key: `items/${tier}/${id}`,
           id,
@@ -126,7 +130,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
           description: p.description,
           props: p.props,
           examples: p.examples,
-          exampleDocs: p.exampleDocs.map(path => resolve(itemDir, path)),
+          exampleDocs: exampleDocs.filter(d => existsSync(d)),
           cssFiles: discoverCssForFile(file),
           file,
         })

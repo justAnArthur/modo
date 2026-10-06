@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { resolve, sep } from 'node:path'
 import type { Plugin } from 'vite'
 import { buildGroup, GROUPS, type Group, type GroupName, parseCss, prefixGroup } from '../lib/css'
 import { emitRoutes } from './static-routes'
@@ -26,7 +26,8 @@ function parseTokens(userRoot: string): ParsedTokensResult {
   const byGroup = new Map<GroupName, ReturnType<typeof parseCss>>()
   for (const g of GROUPS) byGroup.set(g, [])
   if (!existsSync(tokensDir)) return { groups: [], errors, cssFiles }
-  for (const entry of readdirSync(tokensDir)) {
+  // Sorted: the files' import order is the cascade order.
+  for (const entry of readdirSync(tokensDir).sort()) {
     if (!entry.endsWith('.css')) continue
     const file = resolve(tokensDir, entry)
     const base = entry.replace(/\.css$/i, '').toLowerCase()
@@ -84,7 +85,18 @@ export function tokensPlugin(options: Options): Plugin {
       },
     },
     configureServer(server) {
-      server.watcher.add(resolve(options.userRoot, 'tokens'))
+      const dir = resolve(options.userRoot, 'tokens') + sep
+      // The pages read parsed values, so a token edit reloads them; Vite's
+      // css HMR alone would leave the numbers stale.
+      server.watcher.on('all', (_event, file) => {
+        if (!file.startsWith(dir) || !file.endsWith('.css')) return
+        cache = null
+        for (const id of [TOKENS_RESOLVED, TOKENS_CSS_RESOLVED]) {
+          const mod = server.moduleGraph.getModuleById(id)
+          if (mod) server.moduleGraph.invalidateModule(mod)
+        }
+        server.ws.send({ type: 'full-reload' })
+      })
     },
   }
 }
