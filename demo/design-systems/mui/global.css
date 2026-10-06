@@ -5,6 +5,11 @@
 @import "@fontsource/roboto/500.css";
 @import "@fontsource/roboto/700.css";
 
+/* The docs chrome reads the generic --font-sans; MUI's family is --font-family. */
+:root {
+  --font-sans: var(--font-family);
+}
+
 /* Host-owned chrome visuals (the lib ships structure only): dividers on the
    docs shell asides. */
 [data-modo="sidebar"] {
