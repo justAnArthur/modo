@@ -1,8 +1,14 @@
+<a href="https://justanarthur.github.io/modo/"><img src=".github/banner.svg" alt="Docs for your design system: Point it at tokens, primitives, components and blocks. It renders a docs site whose chrome is built from your own components." width="100%"></a>
+
 # modo
 
 a lightweight CLI that renders a **docs site / playground for your design system**. zero config: the lib enforces a simple folder structure (`tokens/ → primitives/ → components/ → blocks/`), discovers it, and produces the site — including **shell inheritance**: when your components match the docs chrome's slots (Button, Link, Select, Sidebar…), the chrome itself renders with *your* components. one Sidebar drives both the left nav and the right panel.
 
 **live demo: https://justanarthur.github.io/modo/** — every design system below, switchable from the panel.
+
+```bash
+bunx @justanarthur/modo init my-ds
+```
 
 proven against real-world design systems — see `demo/design-systems/`:
 
@@ -11,45 +17,6 @@ proven against real-world design systems — see `demo/design-systems/`:
 - **fluid-functionalism** — the `@fluid` registry layer (motion springs, fluid hover) on its own shadcn foundation
 - **ui** — Fluid Functionalism (Base UI) on UnoCSS: springs, fluid hover, size ladder, surface elevation
 - **MUI** — adapters over `@mui/material`, default theme extracted into token files
-
-## monorepo
-
-```
-modo/
-├── lib/                          — the npm package `@justanarthur/modo` (bin `modo`)
-│   ├── src/runtime/              — internal renderer (plain Vite SPA) + structural CSS
-│   ├── src/plugins/              — Vite plugins: the shared item build, tokens, shell
-│   ├── src/lib/                  — schemas, TSDoc parser, token/css parsing, slot matching
-│   ├── templates/                — `modo init` scaffold and `modo add` stubs
-│   └── test/                     — parser tests
-├── demo/                         — harness: multi-DS runner + demo-switcher
-│   └── design-systems/<name>/    — one workspace package per design system showcase
-└── package.json
-```
-
-## what the lib ships
-
-- discovery + parsing: `tokens/*.css` (file-per-group or var prefixes), `<tier>/<name>/index.tsx` items with TSDoc-extracted name/description/props, and their live examples from `examples.mdx`
-- the docs site chrome (sidebar / content / panel / example cards / prop tables / foundation pages) as **structural CSS only** — every visual reads your tokens; the chrome brings only its own labels
-- shell inheritance with graceful Plain fallbacks for unmatched slots
-- user hooks: `modo.config.ts` → `css` (global stylesheet), `vite` (extend the internal Vite config — e.g. add `@tailwindcss/vite`), `shell` (pin slots explicitly), `panel`, `examples` (names in scope in every example)
-
-## development
-
-```bash
-bun install
-
-# run all design-system showcases (one dev server each + switcher); builds the lib's CLI first if needed
-bun dev            # from repo root (or: cd demo && bun dev)
-
-# a single showcase
-cd demo && bun dev shadcn
-
-# what CI runs
-bun run lint
-bun run build && bun run check
-bun run test
-```
 
 ## getting started
 
@@ -86,6 +53,19 @@ my-ds/
 ```
 
 `tokens/`, `primitives/`, `components/`, `blocks/` are auto-discovered by directory. any of them can be omitted; tiers render in that order. add more later with `bunx modo add primitive my-thing` (or `component`, `block`, `token`); it writes `index.tsx` and `examples.mdx` from `lib/templates/stubs`.
+
+## how it works
+
+modo discovers the tiers by directory, reads each item's TSDoc contract and its `examples.mdx`, and renders everything in its own internal Vite app. the docs chrome is matched slot by slot against your components, so the site is styled by the design system it documents.
+
+```mermaid
+flowchart LR
+  T[tokens/] --> P[primitives/] --> C[components/] --> B[blocks/]
+  CFG[modo.config.ts] --> M[modo dev / modo build]
+  B --> M
+  M --> S[Docs site and playground]
+  C -. matching slots: Button, Link, Select, Sidebar .-> S
+```
 
 ## authoring items
 
@@ -160,20 +140,47 @@ export default defineConfig({
 
 the docs chrome looks for your components per slot (`Button`, `Link`, `Code`, `Icon` in primitives; `Select`, `Sidebar Root/Item/Section` in components) matched by parsed name + required props — `children` must be visible in the parsed type (`href` for `Link`). unmatched slots fall back to the lib's structural Plain components. to style the chrome itself, target the `data-modo` attributes (`data-modo="sidebar"`, `"example-card"`, `"swatch"`, …) from your `css` — the lib ships structure, you ship the look.
 
-## installing the lib locally (monorepo development)
+## what the lib ships
+
+- discovery + parsing: `tokens/*.css` (file-per-group or var prefixes), `<tier>/<name>/index.tsx` items with TSDoc-extracted name/description/props, and their live examples from `examples.mdx`
+- the docs site chrome (sidebar / content / panel / example cards / prop tables / foundation pages) as **structural CSS only** — every visual reads your tokens; the chrome brings only its own labels
+- shell inheritance with graceful Plain fallbacks for unmatched slots
+- user hooks: `modo.config.ts` → `css` (global stylesheet), `vite` (extend the internal Vite config — e.g. add `@tailwindcss/vite`), `shell` (pin slots explicitly), `panel`, `examples` (names in scope in every example)
+
+## structure
+
+```
+modo/
+├── lib/                          — the npm package `@justanarthur/modo` (bin `modo`)
+│   ├── src/runtime/              — internal renderer (plain Vite SPA) + structural CSS
+│   ├── src/plugins/              — Vite plugins: the shared item build, tokens, shell
+│   ├── src/lib/                  — schemas, TSDoc parser, token/css parsing, slot matching
+│   ├── templates/                — `modo init` scaffold and `modo add` stubs
+│   └── test/                     — parser tests
+├── demo/                         — harness: multi-DS runner + demo-switcher
+│   └── design-systems/<name>/    — one workspace package per design system showcase
+└── package.json
+```
+
+## develop
 
 ```bash
 git clone https://github.com/justAnArthur/modo && cd modo
 bun install
-bun dev                          # every demo showcase (ports 5173+i)
-cd demo && bun dev shadcn        # a single showcase
+
+# run all design-system showcases (one dev server each + switcher, ports 5173+i); builds the lib's CLI first if needed
+bun dev            # from repo root (or: cd demo && bun dev)
+
+# a single showcase
+cd demo && bun dev shadcn
+
+# what CI runs
+bun run lint
+bun run build && bun run check
+bun run test
 ```
 
-## license
-
-MIT
-
-## Release
+## releases
 
 Published to **npmjs.com only** (the package name `modo` is taken on npmjs.com by another user; this repo publishes under the `@justanarthur/modo` scope).
 
@@ -195,3 +202,7 @@ The bump + publish + release pipeline is driven by [`just-github-actions-n-workf
 cd lib
 NPM_CONFIG_TOKEN=… bun publish -p --access public
 ```
+
+## license
+
+[MIT](LICENSE)
