@@ -67,7 +67,8 @@
   "scripts": {
     "build": "bunup",
     "dev": "vite --config src/runtime/vite.config.ts",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test": "bun test"
   },
   "dependencies": {
     "@babel/standalone": "^7.24.0",

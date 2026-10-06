@@ -21,3 +21,4 @@ jobs:
       # The design systems type @justanarthur/modo/config from the lib's dist.
       - run: bun run build
       - run: bun run check
+      - run: bun run test
