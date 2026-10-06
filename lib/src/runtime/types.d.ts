@@ -10,8 +10,9 @@ declare module 'virtual:modo-config-css' {
 }
 
 declare module 'virtual:modo-tokens' {
-  import type { ParsedVar, Swatch } from '../lib/css'
-  export const tokens: Array<{ name: string; vars: Array<ParsedVar & { swatch?: Swatch }> }>
+  // An import type: a relative import declaration isn't allowed in an ambient
+  // module and, under skipLibCheck, silently types as any.
+  export const tokens: import('../lib/css').Group[]
   export const errors: string[]
 }
 
