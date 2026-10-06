@@ -218,16 +218,28 @@ function pageColors(): PageColors {
 type Rgba = [number, number, number, number]
 
 const pen = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!
+const probe = document.createElement('i')
+probe.hidden = true
+
+/** `color` as the page computes it. The canvas can't parse light-dark() or
+    system colors and silently keeps its previous fill; computed styles resolve
+    them against the page's color-scheme. */
+function computed(color: string): string {
+  if (!probe.isConnected) document.body.append(probe)
+  probe.style.color = ''
+  probe.style.color = color
+  return getComputedStyle(probe).color
+}
 
 /** Paint `color` (over `under`) and read the pixel back — resolves any CSS
     color syntax the browser knows (oklch, color-mix, …) to sRGB. */
 function paint(color: string, under?: string): Rgba {
   pen.clearRect(0, 0, 1, 1)
   if (under) {
-    pen.fillStyle = under
+    pen.fillStyle = computed(under)
     pen.fillRect(0, 0, 1, 1)
   }
-  pen.fillStyle = color
+  pen.fillStyle = computed(color)
   pen.fillRect(0, 0, 1, 1)
   const [r, g, b, a] = pen.getImageData(0, 0, 1, 1).data
   return [r!, g!, b!, a!]

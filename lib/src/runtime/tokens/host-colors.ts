@@ -5,17 +5,20 @@
    declaration for the second shape, so resolve the wrapper once and hand the
    rest of the runtime an expression that is valid either way. */
 
-const WRAPPERS = ['', 'hsl', 'oklch', 'rgb', 'lab', 'lch', 'hwb'] as const
-
 /** The function that turns this raw value into a color, '' when it already is
     one, or null when it is not a color at all (a shadow, a length, a ratio). */
 export function colorWrapper(value: string): string | null {
   const v = value.trim()
   if (!v) return null
-  for (const fn of WRAPPERS) {
-    if (CSS.supports('color', fn ? `${fn}(${v})` : v)) return fn
-  }
-  return null
+  if (CSS.supports('color', v)) return ''
+  return wrappersFor(v).find(fn => CSS.supports('color', `${fn}(${v})`)) ?? null
+}
+
+/** Bare channels fit several wrappers (`hsl(255 255 255)` parses too), so go
+    by convention: `H S% L%` is shadcn's hsl, plain triplets are rgb. One rule
+    for both themes, since the wrapper is fixed at startup. */
+function wrappersFor(channels: string): string[] {
+  return channels.includes('%') ? ['hsl', 'rgb', 'oklch'] : ['rgb', 'hsl', 'oklch']
 }
 
 function root(): CSSStyleDeclaration {
