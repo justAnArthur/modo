@@ -1,7 +1,7 @@
 import { items } from 'virtual:modo-items'
 import { ExamplePreview } from '../items/preview'
 import { Inlines, splitLead } from '../markdown'
-import { cap } from '../text'
+import { cap, count } from '../text'
 import { Bento, BentoCard } from './bento'
 
 export type Tier = 'primitives' | 'components' | 'blocks'
@@ -20,7 +20,7 @@ export function TierPage({ tier }: { tier: Tier }) {
         <p data-modo="page-eyebrow">Overview</p>
         <h1 data-modo="page-title">{cap(tier)}</h1>
         <p data-modo="page-lead">
-          {LEAD[tier]} {list.length} {list.length === 1 ? 'item' : 'items'}.
+          {LEAD[tier]} {count(list.length, 'item')}.
         </p>
       </header>
       {list.length === 0 ? (

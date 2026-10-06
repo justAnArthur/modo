@@ -10,6 +10,8 @@ const KEYWORDS: Record<string, string> = {
 }
 
 const ms = (v: Var) => (v.swatch?.kind === 'duration' ? v.swatch.ms : 0)
+// A duration's share of the longest; all-zero durations share equally.
+const share = (v: Var, longest: Var) => (ms(longest) ? ms(v) / ms(longest) : 1)
 const isEasing = (v: Var) => Object.hasOwn(KEYWORDS, v.value) || /^(cubic-bezier|linear|steps)\(/.test(v.value)
 
 function kinds(vars: Var[]) {
@@ -31,7 +33,7 @@ export function MotionView({ vars }: { vars: Var[] }) {
           <p data-modo="token-meta">Hover a row to play it.</p>
           <div data-modo="motion-list">
             {durations.map(v => (
-              <MotionRow key={v.name} v={v} duration={v} extent={ms(v) / ms(longest!)} />
+              <MotionRow key={v.name} v={v} duration={v} extent={share(v, longest!)} />
             ))}
           </div>
         </TokenSection>
@@ -58,7 +60,7 @@ function MotionRow({ v, duration, easing, extent }: { v: Var; duration?: Var; ea
     <div data-modo="motion-row">
       <TokenLabel v={v} />
       {easing ? <Curve value={easing.value} /> : null}
-      <div data-modo="motion-track" style={extent ? { inlineSize: `${extent * 100}%` } : undefined}>
+      <div data-modo="motion-track" style={extent === undefined ? undefined : { inlineSize: `${extent * 100}%` }}>
         <span
           data-modo="motion-dot"
           style={{
@@ -88,7 +90,7 @@ export function MotionPreview({ vars }: { vars: Var[] }) {
   return (
     <div data-modo="motion-preview">
       {durations.slice(0, 6).map(v => (
-        <div key={v.name} data-modo="motion-bar" style={{ inlineSize: `${(ms(v) / ms(longest!)) * 100}%` }} />
+        <div key={v.name} data-modo="motion-bar" style={{ inlineSize: `${share(v, longest!) * 100}%` }} />
       ))}
     </div>
   )

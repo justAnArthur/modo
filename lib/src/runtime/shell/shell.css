@@ -20,6 +20,10 @@
   --modo-radius-sm: var(--radius-sm, 4px);
   --modo-radius-md: var(--radius-md, var(--radius, 8px));
   --modo-radius-lg: var(--radius-lg, var(--radius, 12px));
+  /* The host sets --modo-measure itself; its stylesheets load after this one. */
+  --modo-measure: 72ch;
+  /* No default: without a host family the chrome inherits the page's. */
+  --modo-font-sans: var(--font-sans);
 }
 
 [data-modo="app"] {
@@ -27,7 +31,7 @@
   grid-template-columns: 240px minmax(0, 1fr) 280px;
   grid-template-areas: "sidebar content panel";
   min-height: 100vh;
-  font-family: var(--font-sans);
+  font-family: var(--modo-font-sans);
 }
 
 [data-modo="sidebar"] {
@@ -142,11 +146,10 @@
   text-wrap: balance;
 }
 
-/* The TSDoc summary. No fallback on the color: an undefined host token makes
-   the declaration invalid and the color simply inherits. */
+/* The TSDoc summary. */
 [data-modo="page-lead"] {
   font-size: var(--modo-font-size-lead);
-  max-width: var(--modo-measure, 68ch);
+  max-width: var(--modo-measure);
   color: var(--modo-muted);
   text-wrap: pretty;
   margin: 0 0 var(--space-5, 24px);
@@ -199,13 +202,16 @@
 }
 
 /* Examples are written for a full-width stage; in a cell they have to wrap.
-   `:where()` keeps this at zero specificity, so an example's own styles win. */
-[data-modo="bento-stage"] > * {
-  max-width: 100%;
-}
+   Layered, so an example's own styles win even from a host's layers
+   (an unlayered rule would beat Tailwind's at any specificity). */
+@layer modo-preview {
+  [data-modo="bento-stage"] > * {
+    max-width: 100%;
+  }
 
-[data-modo="bento-stage"] > :where(div) {
-  flex-wrap: wrap;
+  [data-modo="bento-stage"] > :where(div) {
+    flex-wrap: wrap;
+  }
 }
 
 [data-modo="bento-meta"] {
@@ -287,7 +293,7 @@
   /* Measure and leading per block (not on the container, where they would
      reach the example cards): cards keep the full content width. */
   :scope > * {
-    max-width: var(--modo-measure, 72ch);
+    max-width: var(--modo-measure);
     margin: 0;
   }
 
@@ -297,7 +303,7 @@
 
   :scope > * + *,
   li > * + * {
-    margin-top: 0.75em;
+    margin-top: var(--space-3, 12px);
   }
 
   p {
@@ -310,11 +316,11 @@
   }
 
   :scope > :is(h2, h3, h4, h5, h6) {
-    margin-top: 1.75em;
+    margin-top: var(--space-6, 32px);
   }
 
   :scope > :is(h2, h3, h4, h5, h6) + * {
-    margin-top: 0.5em;
+    margin-top: var(--space-2, 8px);
   }
 
   h2 {
@@ -325,7 +331,7 @@
   }
 
   :is(ul, ol) {
-    padding-inline-start: 1.25em;
+    padding-inline-start: var(--space-5, 24px);
   }
 
   ul {
@@ -336,12 +342,12 @@
   }
 
   li + li {
-    margin-top: 0.35em;
+    margin-top: var(--space-1, 4px);
   }
 
   blockquote {
     border-inline-start: 1px solid var(--modo-border);
-    padding-inline-start: 1em;
+    padding-inline-start: var(--space-4, 16px);
     color: var(--modo-muted);
   }
 
@@ -389,17 +395,10 @@
   scroll-margin-top: var(--space-6, 32px);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  html {
-    scroll-behavior: smooth;
-  }
-}
-
 [data-modo="anchor"] {
   display: inline-flex;
   vertical-align: middle;
   margin-inline-start: var(--space-2, 8px);
-  text-decoration: none;
 }
 
 /* ── Hover reveal: example actions, code actions, anchors ──
@@ -412,7 +411,7 @@
 
 [data-modo="example-card-frame"]:is(:hover, :focus-within) > [data-modo="example-actions"],
 [data-modo="code-block"]:is(:hover, :focus-within) > [data-modo="code-actions"],
-:is(h2, h3):is(:hover, :focus-within) > [data-modo="anchor"] {
+:is(h2, h3, h4, h5, h6):is(:hover, :focus-within) > [data-modo="anchor"] {
   opacity: 1;
 }
 
@@ -497,6 +496,10 @@
 
 [data-modo="toc-label"][data-level="3"] {
   padding-inline-start: var(--space-3, 12px);
+}
+
+[data-modo="toc-label"][data-level="4"] {
+  padding-inline-start: var(--space-5, 24px);
 }
 
 [data-modo="prop-table"] {
@@ -685,7 +688,6 @@
 
 [data-modo="type-glyph"] {
   font-size: var(--modo-font-size-h1);
-  line-height: 1;
 }
 
 [data-modo="type-family-sample"] {
@@ -807,7 +809,8 @@
   }
 }
 
-*:focus-visible {
+/* The chrome's own focus ring; a live example keeps its design system's. */
+:focus-visible:not(:is([data-modo="example-card-stage"], [data-modo="bento-stage"]) *) {
   outline: 2px solid var(--modo-ring);
   outline-offset: 2px;
 }

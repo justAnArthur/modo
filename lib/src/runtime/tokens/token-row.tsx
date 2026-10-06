@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactElement, ReactNode } from 'react'
 import type { Group, Swatch } from '../../lib/css'
-import { Anchor, slug } from '../anchor'
+import { Heading } from '../anchor'
 
 export type Var = Group['vars'][number]
 
@@ -18,13 +18,9 @@ export function byLength(vars: Var[]): Var[] {
 
 /** A titled part of a token page, anchored so the TOC lists it. */
 export function TokenSection({ title, children }: { title: string; children: ReactNode }) {
-  const id = slug(title)
   return (
     <section data-modo="section">
-      <h2 data-modo="section-title" id={id}>
-        {title}
-        <Anchor id={id} label={title} />
-      </h2>
+      <Heading level={2} label={title} modo="section-title" />
       {children}
     </section>
   )

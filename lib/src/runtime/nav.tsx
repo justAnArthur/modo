@@ -9,7 +9,7 @@ const TIERS = ['primitives', 'components', 'blocks'] as const
 
 export function SidebarNav() {
   const path = usePath()
-  const isActive = (href: string) => path === href || (href !== '/' && path.startsWith(href))
+  const isActive = (href: string) => path === href || path.startsWith(`${href}/`)
   return (
     <>
       <NavSection title={config.name} items={[{ id: '/', name: 'Overview' }]} isActive={isActive} />
@@ -17,7 +17,7 @@ export function SidebarNav() {
         title="Foundations"
         overview="/docs/tokens"
         basePath="/docs/tokens"
-        items={tokens.map(g => ({ id: g.name, name: g.name }))}
+        items={tokens.map(g => ({ id: g.name, name: cap(g.name) }))}
         isActive={isActive}
       />
       {TIERS.map(tier => {

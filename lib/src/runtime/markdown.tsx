@@ -1,8 +1,9 @@
 import { shell } from 'virtual:modo-shell'
 import { Lexer, type MarkedToken, type Token, type Tokens } from 'marked'
 import { Fragment, type ReactNode } from 'react'
-import { Anchor, slug } from './anchor'
+import { Heading } from './anchor'
 import { CodeBlock } from './code-block'
+import { contentHref } from './router'
 
 // Sources are static build output, so lexing once per string is enough.
 const lexed = new Map<string, Token[]>()
@@ -54,17 +55,13 @@ function block(t: MarkedToken, key: number): ReactNode {
         </p>
       )
 
-    case 'heading': {
+    case 'heading':
       // The page owns the h1.
-      const H = `h${Math.max(2, t.depth)}` as 'h2'
-      const id = slug(t.text)
       return (
-        <H key={key} id={id}>
+        <Heading key={key} level={Math.max(2, t.depth) as 2} label={t.text}>
           <Inlines tokens={t.tokens} />
-          <Anchor id={id} label={t.text} />
-        </H>
+        </Heading>
       )
-    }
 
     case 'code':
       return <CodeBlock key={key} code={t.text} language={t.lang || undefined} />
@@ -166,7 +163,7 @@ function inline(t: MarkedToken, key: number): ReactNode {
 
     case 'link':
       return (
-        <shell.Link key={key} href={t.href} title={t.title ?? undefined}>
+        <shell.Link key={key} href={contentHref(t.href)} title={t.title ?? undefined}>
           <Inlines tokens={t.tokens} />
         </shell.Link>
       )

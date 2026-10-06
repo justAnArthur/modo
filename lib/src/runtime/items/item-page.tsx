@@ -1,9 +1,9 @@
 import { byId, exampleDocs, examples as examplesMap } from 'virtual:modo-items'
-import { Anchor } from '../anchor'
+import { Heading } from '../anchor'
 import { Blocks, Inlines, splitLead } from '../markdown'
 import { mdxComponents } from '../mdx'
 import { cap } from '../text'
-import { ItemExamples } from './examples'
+import { ExampleBoundary, ItemExamples } from './examples'
 import { PropTable } from './prop-table'
 
 export function ItemPage({ tier, id }: { tier: 'primitives' | 'components' | 'blocks'; id: string }) {
@@ -41,16 +41,16 @@ export function ItemPage({ tier, id }: { tier: 'primitives' | 'components' | 'bl
         <ItemExamples examples={examples}>
           {docs.map((Doc, i) => (
             <div data-modo="prose" key={i}>
-              <Doc components={mdxComponents} />
+              {/* A broken .mdx (an unbound tag, a dropped item) stays in its box. */}
+              <ExampleBoundary>
+                <Doc components={mdxComponents} />
+              </ExampleBoundary>
             </div>
           ))}
         </ItemExamples>
       ) : null}
       <section data-modo="section">
-        <h2 data-modo="section-title" id="props">
-          Props
-          <Anchor id="props" label="Props" />
-        </h2>
+        <Heading level={2} label="Props" modo="section-title" />
         <PropTable itemId={`${tier}:${id}`} />
       </section>
     </article>

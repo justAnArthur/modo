@@ -2,15 +2,17 @@ import { config } from 'virtual:modo-config'
 import { items } from 'virtual:modo-items'
 import { tokens } from 'virtual:modo-tokens'
 import { ExamplePreview, hasPreview } from '../items/preview'
-import { cap } from '../text'
+import { cap, count } from '../text'
 import { GroupPreview } from '../tokens/token-page'
+import { declared } from '../tokens/token-row'
 import { Bento, BentoCard } from './bento'
 import type { Tier } from './TierPage'
 
 const TIERS: Tier[] = ['primitives', 'components', 'blocks']
 
 export function HomePage() {
-  const vars = tokens.reduce((n, g) => n + g.vars.length, 0)
+  // Light and dark blocks declare a token twice; count it once.
+  const vars = tokens.reduce((n, g) => n + declared(g.vars).length, 0)
   return (
     <>
       <header data-modo="hero">
@@ -19,12 +21,12 @@ export function HomePage() {
           {config.description ?? 'Tokens, primitives, components, and blocks in this design system.'}
         </p>
         <p data-modo="hero-stats">
-          {vars} tokens · {items.length} items
+          {count(vars, 'token')} · {count(items.length, 'item')}
         </p>
       </header>
       <Bento>
         {tokens.length > 0 && (
-          <BentoCard href="/docs/tokens" title="Foundations" meta={`${tokens.length} groups`} span="wide">
+          <BentoCard href="/docs/tokens" title="Foundations" meta={count(tokens.length, 'group')} span="wide">
             <GroupPreview group={tokens[0]!.name} />
           </BentoCard>
         )}
@@ -37,7 +39,7 @@ export function HomePage() {
               key={tier}
               href={`/docs/${tier}`}
               title={cap(tier)}
-              meta={`${list.length} items`}
+              meta={count(list.length, 'item')}
               description={list.map(it => it.name).join(', ')}
               span={tier === 'blocks' ? 'full' : undefined}
               zoom={tier === 'blocks' ? 0.7 : undefined}

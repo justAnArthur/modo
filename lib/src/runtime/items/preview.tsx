@@ -29,10 +29,17 @@ function firstLiveBlock(itemId: string): ReactNode {
   if (!Doc) return undefined
   // Compiled without a provider, MDX content is hook-free: calling it yields
   // the document's top-level blocks, and every live one is a ModoExample.
-  const content = (Doc as (props: { components: Record<string, unknown> }) => ReactElement<{ children?: ReactNode }>)({
-    components: { ...mdxComponents, ModoExample: Live },
-  })
-  return Children.toArray(content.props.children).find(c => isValidElement(c) && c.type === Live)
+  // Called during render, outside any boundary: a broken doc means no preview.
+  try {
+    const content = (Doc as (props: { components: Record<string, unknown> }) => ReactElement<{ children?: ReactNode }>)(
+      {
+        components: { ...mdxComponents, ModoExample: Live },
+      },
+    )
+    return Children.toArray(content.props.children).find(c => isValidElement(c) && c.type === Live)
+  } catch {
+    return undefined
+  }
 }
 
 function Live({ children }: { children: ReactNode }) {

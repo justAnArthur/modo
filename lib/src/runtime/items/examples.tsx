@@ -3,7 +3,7 @@ import { shell } from 'virtual:modo-shell'
 import { Component, type ReactNode, useState } from 'react'
 import { compileExampleBody, isCompiledExample } from '../../lib/example'
 import type { ParsedExample } from '../../lib/tsdoc'
-import { Anchor, slug } from '../anchor'
+import { Heading, slug } from '../anchor'
 import { CopyButton } from '../code-block'
 import { Markdown } from '../markdown'
 
@@ -16,10 +16,7 @@ export const bindings: Record<string, unknown> = { ...exampleScope, ...byName }
 export function ItemExamples({ examples, children }: { examples: ParsedExample[]; children?: ReactNode }) {
   return (
     <section data-modo="section">
-      <h2 data-modo="section-title" id="examples">
-        Examples
-        <Anchor id="examples" label="Examples" />
-      </h2>
+      <Heading level={2} label="Examples" modo="section-title" />
       {examples.map((ex, i) => (
         <ExampleCard key={i} example={ex} />
       ))}
@@ -46,12 +43,7 @@ function ExampleCard({ example: { title, description, code } }: { example: Parse
   const compiled = compileExampleBody(code)
   return (
     <div data-modo="example-card">
-      {title ? (
-        <h3 data-modo="example-card-title" id={`example-${slug(title)}`}>
-          {title}
-          <Anchor id={`example-${slug(title)}`} label={title} />
-        </h3>
-      ) : null}
+      {title ? <Heading level={3} label={title} id={`example-${slug(title)}`} modo="example-card-title" /> : null}
       {description ? (
         <div data-modo="prose">
           <Markdown source={description} />
@@ -66,7 +58,6 @@ function ExampleCard({ example: { title, description, code } }: { example: Parse
 export function ExampleFrame({ code, children }: { code: string; children: ReactNode }) {
   const { Code, Button, Icon } = shell
   const [open, setOpen] = useState(false)
-  const codeLabel = open ? 'Hide code' : 'Show code'
   return (
     <div data-modo="example-card-frame">
       <div data-modo="example-card-stage">
@@ -77,11 +68,11 @@ export function ExampleFrame({ code, children }: { code: string; children: React
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label={codeLabel}
+          aria-label="Show code"
           aria-pressed={open}
           onClick={() => setOpen(o => !o)}
         >
-          <Icon name="code" label={codeLabel} />
+          <Icon name="code" label="Code" />
         </Button>
       </div>
       {open && (

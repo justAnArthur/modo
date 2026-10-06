@@ -1,9 +1,10 @@
 import { byName, exampleScope } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { isValidElement, type ReactNode } from 'react'
-import { Anchor, slug } from './anchor'
+import { Heading, slug } from './anchor'
 import { CodeBlock } from './code-block'
 import { ExampleFrame } from './items/examples'
+import { contentHref } from './router'
 
 function textOf(node: ReactNode): string {
   if (typeof node === 'string' || typeof node === 'number') return String(node)
@@ -15,23 +16,18 @@ function textOf(node: ReactNode): string {
 // `# Title` names the example below it, like `@example # Title`.
 function ExampleTitle({ children }: { children?: ReactNode }) {
   const label = textOf(children)
-  const id = `example-${slug(label)}`
   return (
-    <h3 data-modo="example-card-title" id={id}>
+    <Heading level={3} label={label} id={`example-${slug(label)}`} modo="example-card-title">
       {children}
-      <Anchor id={id} label={label} />
-    </h3>
+    </Heading>
   )
 }
 
 function SubHeading({ children }: { children?: ReactNode }) {
-  const label = textOf(children)
-  const id = slug(label)
   return (
-    <h4 id={id}>
+    <Heading level={4} label={textOf(children)}>
       {children}
-      <Anchor id={id} label={label} />
-    </h4>
+    </Heading>
   )
 }
 
@@ -52,7 +48,9 @@ function Pre({ children }: { children?: ReactNode }) {
 export const mdxComponents: Record<string, unknown> = {
   ...exampleScope,
   ...byName,
-  a: ({ href, children }: { href?: string; children?: ReactNode }) => <shell.Link href={href}>{children}</shell.Link>,
+  a: ({ href = '', children }: { href?: string; children?: ReactNode }) => (
+    <shell.Link href={contentHref(href)}>{children}</shell.Link>
+  ),
   pre: Pre,
   h1: ExampleTitle,
   h2: ExampleTitle,

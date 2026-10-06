@@ -19,15 +19,15 @@ function label(heading: Element): string {
     .trim()
 }
 
-/** "On this page": the content's h2/h3 headings with ids, current one active. */
+/** "On this page": the content's h2–h4 headings with ids, current one active. */
 export function Toc() {
   const path = usePath()
   const [headings, setHeadings] = useState<Heading[]>([])
   const [active, setActive] = useState<string | null>(null)
 
   useEffect(() => {
-    const els = [...document.querySelectorAll<HTMLElement>('[data-modo="content"] :is(h2, h3)[id]')]
-    setHeadings(els.map(el => ({ id: el.id, label: label(el), level: el.tagName === 'H3' ? 3 : 2 })))
+    const els = [...document.querySelectorAll<HTMLElement>('[data-modo="content"] :is(h2, h3, h4)[id]')]
+    setHeadings(els.map(el => ({ id: el.id, label: label(el), level: Number(el.tagName[1]) })))
 
     let frame = 0
     const update = () => setActive(els.filter(el => el.getBoundingClientRect().top <= ACTIVE_OFFSET).at(-1)?.id ?? null)
