@@ -22,11 +22,16 @@
  *   fallback → `ring-focus-ring` / `border-focus-ring`; literal colors →
  *   color tokens; `duration-80|120|160` and tier-length JS durations →
  *   `duration-<tier>` / `spring.*`.
+ * - The thumb is a `GooIndicator` (`lib/goo-indicator.tsx`, local) inside
+ *   Base UI's Thumb: it stretches into a liquid drop as it travels. Its x is
+ *   React state while dragging (the indicator snaps to it) instead of a
+ *   motion value set per move.
  */
 
 import { Switch as SwitchPrimitive } from '@base-ui/react/switch'
-import { animate, motion, type Transition, useMotionValue } from 'motion/react'
-import { forwardRef, type HTMLAttributes, useCallback, useEffect, useId, useRef, useState } from 'react'
+import type { Transition } from 'motion/react'
+import { forwardRef, type HTMLAttributes, useCallback, useId, useRef, useState } from 'react'
+import { GooIndicator } from '../../lib/goo-indicator'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
 import { useControllableState } from '../../lib/use-controllable-state'
@@ -80,8 +85,9 @@ const DRAG_DEAD_ZONE = 2
  *
  * The whole row — track and label — is the hit target: click anywhere to
  * toggle, or grab the thumb and drag it across the midpoint. The thumb
- * stretches into a pill on hover and squashes on press, springing with the
- * motion tokens; a Base UI switch underneath carries the role, keyboard
+ * stretches into a pill on hover, squashes on press and melts across the
+ * track like a drop when it toggles (see Morph), springing with the motion
+ * tokens; a Base UI switch underneath carries the role, keyboard
  * toggling (Space/Enter) and focus ring. The label brightens when the switch
  * is on.
  *
@@ -114,7 +120,6 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
       onToggle?.()
     }, [setChecked, onToggle])
     const labelId = useId()
-    const hasMounted = useRef(false)
     const [hovered, setHovered] = useState(false)
     const [pressed, setPressed] = useState(false)
     const sizeClasses = useSize(size)
@@ -127,11 +132,12 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
       clientX: number
       originX: number
     } | null>(null)
-
-    const motionX = useMotionValue(isChecked ? THUMB_OFFSET + thumbTravel : THUMB_OFFSET)
-
-    useEffect(() => {
-      hasMounted.current = true
+    // Local: the dragged thumb's x, mirrored in a ref for the pointer handlers.
+    const [dragX, setDragXState] = useState<number | null>(null)
+    const dragXRef = useRef<number | null>(null)
+    const setDragX = useCallback((x: number | null) => {
+      dragXRef.current = x
+      setDragXState(x)
     }, [])
 
     const thumbWidth = pressed ? m.thumbSize + m.pressExtend : hovered ? m.thumbSize + m.pillExtend : m.thumbSize
@@ -139,15 +145,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
     const thumbY = pressed ? THUMB_OFFSET + m.pressShrink / 2 : THUMB_OFFSET
     const extraWidth = thumbWidth - m.thumbSize
     const thumbX = isChecked ? THUMB_OFFSET + thumbTravel - extraWidth : THUMB_OFFSET
-
-    useEffect(() => {
-      if (dragging.current) return
-      if (!hasMounted.current) {
-        motionX.set(thumbX)
-      } else {
-        animate(motionX, thumbX, thumbTransition ?? spring.moderate)
-      }
-    }, [thumbX, motionX, thumbTransition])
+    const thumb = { left: dragX ?? thumbX, top: thumbY, width: thumbWidth, height: thumbHeight }
 
     const handlePointerDown = useCallback(
       (e: React.PointerEvent<HTMLDivElement>) => {
@@ -158,11 +156,12 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
         didDrag.current = false
         pointerStart.current = {
           clientX: e.clientX,
-          originX: motionX.get(),
+          // Where the pressed thumb rests.
+          originX: isChecked ? THUMB_OFFSET + thumbTravel - m.pressExtend : THUMB_OFFSET,
         }
         ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
       },
-      [disabled, motionX],
+      [disabled, isChecked, thumbTravel, m],
     )
 
     const handlePointerMove = useCallback(
@@ -179,9 +178,9 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
         const pressedThumbWidth = m.thumbSize + m.pressExtend
         const dragMax = m.trackWidth - THUMB_OFFSET - pressedThumbWidth
         const rawX = pointerStart.current.originX + delta
-        motionX.set(Math.max(dragMin, Math.min(dragMax, rawX)))
+        setDragX(Math.max(dragMin, Math.min(dragMax, rawX)))
       },
-      [motionX, m],
+      [setDragX, m],
     )
 
     const handlePointerUp = useCallback(() => {
@@ -192,7 +191,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
         didDrag.current = true
         dragging.current = false
 
-        const currentX = motionX.get()
+        const currentX = dragXRef.current ?? pointerStart.current.originX
         const dragMin = THUMB_OFFSET
         const pressedThumbWidth = m.thumbSize + m.pressExtend
         const dragMax = m.trackWidth - THUMB_OFFSET - pressedThumbWidth
@@ -200,12 +199,9 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
 
         const shouldBeOn = currentX > midpoint
 
-        if (shouldBeOn !== isChecked) {
-          toggle()
-        } else {
-          const snapTarget = isChecked ? THUMB_OFFSET + thumbTravel : THUMB_OFFSET
-          animate(motionX, snapTarget, thumbTransition ?? spring.moderate)
-        }
+        if (shouldBeOn !== isChecked) toggle()
+        // Let go: the thumb springs from where it was dropped to its rest.
+        setDragX(null)
 
         requestAnimationFrame(() => {
           didDrag.current = false
@@ -213,7 +209,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
       }
 
       pointerStart.current = null
-    }, [isChecked, toggle, motionX, thumbTransition, m, thumbTravel])
+    }, [isChecked, toggle, setDragX, m])
 
     const handlePointerCancel = useCallback(() => {
       if (!pointerStart.current) return
@@ -221,12 +217,11 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
 
       if (dragging.current) {
         dragging.current = false
-        const snapTarget = isChecked ? THUMB_OFFSET + thumbTravel : THUMB_OFFSET
-        animate(motionX, snapTarget, thumbTransition ?? spring.moderate)
+        setDragX(null)
       }
 
       pointerStart.current = null
-    }, [isChecked, motionX, thumbTransition, thumbTravel])
+    }, [setDragX])
 
     return (
       <div
@@ -276,37 +271,15 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
           }}
           onClick={e => e.stopPropagation()}
         >
-          <SwitchPrimitive.Thumb
-            render={props => {
-              const {
-                style: baseStyle,
-                onDrag: _onDrag,
-                onDragStart: _onDragStart,
-                onDragEnd: _onDragEnd,
-                onAnimationStart: _onAnimationStart,
-                onAnimationEnd: _onAnimationEnd,
-                onAnimationIteration: _onAnimationIteration,
-                ...rest
-              } = props as React.HTMLAttributes<HTMLSpanElement>
-              return (
-                <motion.span
-                  {...rest}
-                  className="absolute top-0 left-0 block rounded-full bg-thumb shadow-thumb"
-                  initial={false}
-                  style={{
-                    ...(baseStyle as React.CSSProperties | undefined),
-                    x: motionX,
-                  }}
-                  animate={{
-                    y: thumbY,
-                    width: thumbWidth,
-                    height: thumbHeight,
-                  }}
-                  transition={hasMounted.current ? (thumbTransition ?? spring.moderate) : { duration: 0 }}
-                />
-              )
-            }}
-          />
+          <SwitchPrimitive.Thumb className="pointer-events-none absolute inset-0">
+            <GooIndicator
+              rect={thumb}
+              className="rounded-full bg-thumb"
+              shadow="shadow-thumb"
+              // A dragged thumb sticks to the pointer.
+              transition={dragX === null ? (thumbTransition ?? spring.moderate) : false}
+            />
+          </SwitchPrimitive.Thumb>
         </SwitchPrimitive.Root>
 
         {/* Label */}

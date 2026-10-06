@@ -20,6 +20,8 @@
  * `border-focus-ring`; `rounded-[Npx]` → radius tokens; `duration-80|120|160`
  * and tier-length JS durations → `duration-<tier>` / `spring.*`; the unchecked
  * `border-neutral-400` / `dark:border-neutral-500` → `border-control`.
+ * The inline run grouping is the shared `useSelectionRuns`; the merged
+ * backgrounds melt and split through the goo (`lib/use-merge-split.tsx`).
  */
 
 import { Checkbox as CheckboxPrimitive } from '@base-ui/react/checkbox'
@@ -43,7 +45,7 @@ import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
-import { SelectionBackgrounds, useMergeSplitBlocks } from '../../lib/use-merge-split'
+import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../lib/use-merge-split'
 import { cn } from '../../lib/utils'
 import { SizeProvider } from '../../primitives/sizes'
 
@@ -85,8 +87,10 @@ type CheckboxGroupComponent = ForwardRefExoticComponent<CheckboxGroupProps & Ref
  * Checkbox group with merged backgrounds for contiguous selections.
  *
  * Each row is a `CheckboxGroup.Item` with a stable `index`. Contiguous checked
- * rows share one background that merges and splits with a spring as rows are
- * toggled, a fluid hover highlight glides between rows, and Arrow Up/Down,
+ * rows share one background: a checked row's background grows out of its
+ * center and melts into its neighbours, an unchecked one pinches off and
+ * shrinks away (the liquid indicators in Morph). A fluid hover highlight melts
+ * from row to row, and Arrow Up/Down,
  * Home and End move focus while Space or Enter toggles. The checked label
  * animates to semibold without shifting its width. The group is uncontrolled
  * with `defaultCheckedIndices`, or controlled with `checkedIndices` plus
@@ -113,8 +117,6 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
     ref,
   ) => {
     const containerRef = useRef<HTMLDivElement>(null)
-    const groupIdCounter = useRef(0)
-    const prevGroupMap = useRef(new Map<number, number>())
 
     // Local: controlled `checkedIndices`, or internal state seeded from
     // `defaultCheckedIndices`.
@@ -139,46 +141,17 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
     const hover = useFluidHover(containerRef)
     const { activeIndex, setActiveIndex, itemRects, handlers, registerItem } = hover
 
-    // Group contiguous checked indices into runs with stable IDs
-    const runs: { start: number; end: number }[] = []
-    const sortedChecked = [...checkedIndices].sort((a, b) => a - b)
-    for (const idx of sortedChecked) {
-      const last = runs[runs.length - 1]
-      if (last && idx === last.end + 1) {
-        last.end = idx
-      } else {
-        runs.push({ start: idx, end: idx })
-      }
-    }
-
-    // Assign stable IDs: reuse previous ID if any member overlaps
-    const usedIds = new Set<number>()
-    const newGroupMap = new Map<number, number>()
-    const checkedGroups = runs.map(run => {
-      let stableId: number | null = null
-      for (let i = run.start; i <= run.end; i++) {
-        const prevId = prevGroupMap.current.get(i)
-        if (prevId !== undefined && !usedIds.has(prevId)) {
-          stableId = prevId
-          break
-        }
-      }
-      const id = stableId ?? ++groupIdCounter.current
-      usedIds.add(id)
-      for (let i = run.start; i <= run.end; i++) {
-        newGroupMap.set(i, id)
-      }
-      return { ...run, id }
-    })
-    prevGroupMap.current = newGroupMap
+    // Contiguous checked rows, as runs with stable ids (local: the shared
+    // useSelectionRuns instead of an inline copy of it).
+    const checkedGroups = useSelectionRuns([...checkedIndices])
 
     const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
 
     const focusRect = focusedIndex !== null ? itemRects[focusedIndex] : null
     const shape = useShape()
 
-    // Selected backgrounds, with the merge/split boundary animation when one
-    // unchecked row bridges or splits two checked runs.
+    // Selected backgrounds: contiguous rows melt into one block and split
+    // apart through the goo (see useMergeSplitBlocks).
     const blocks = useMergeSplitBlocks(checkedGroups, itemRects, shape.mergedRadius)
 
     const group = (
@@ -236,9 +209,7 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
           className={cn('relative flex flex-col w-72 max-w-full select-none', className)}
           {...props}
         >
-          {/* Selected backgrounds (merged for contiguous checked items).
-              A run is normally one block; mid merge/split it is drawn as two
-              abutting halves — see useMergeSplitBlocks. */}
+          {/* Selected backgrounds (merged for contiguous checked items). */}
           <SelectionBackgrounds blocks={blocks} />
 
           {/* Hover background */}

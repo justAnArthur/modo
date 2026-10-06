@@ -13,6 +13,9 @@
  * → `weight-*`; the hex focus-ring fallback → `ring-focus-ring` /
  * `border-focus-ring`; `duration-80|120|160` and tier-length JS durations →
  * `duration-<tier>` / `spring.*`.
+ * The active indicator and the hover pill are `GooIndicator`s
+ * (`lib/goo-indicator.tsx`, local): they melt from tab to tab instead of
+ * sliding; the hover pill now always returns to the active tab as it fades.
  */
 
 import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
@@ -34,11 +37,12 @@ import {
   useRef,
   useState,
 } from 'react'
+import { GooIndicator } from '../../lib/goo-indicator'
 import type { IconComponent } from '../../lib/icon-context'
 import { useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
-import { surfaceClasses } from '../../lib/surface-classes'
+import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
 import { useSurface } from '../../lib/surface-context'
 import { useFluidHover } from '../../lib/use-fluid-hover'
 import { cn } from '../../lib/utils'
@@ -105,9 +109,10 @@ type TabsComponent = ForwardRefExoticComponent<TabsProps & RefAttributes<HTMLDiv
  * spring animations.
  *
  * Built on Base UI Tabs: `Tabs` owns the selection, `Tabs.List` draws the
- * segmented track with an elevated indicator that springs to the active tab
- * (lifted three surface levels above whatever it sits on) and a translucent
- * hover pill, and `Tabs.Panel` shows the content of the active tab. Arrow keys
+ * segmented track with an elevated indicator that melts toward the active tab
+ * like a drop (lifted three surface levels above whatever it sits on; see the
+ * liquid indicators in Morph) and a translucent hover pill that drips out of
+ * it, and `Tabs.Panel` shows the content of the active tab. Arrow keys
  * move and activate. Select by value — `defaultValue` uncontrolled, `value` +
  * `onValueChange` controlled — or by index with `defaultSelectedIndex` /
  * `selectedIndex` + `onSelect`.
@@ -315,66 +320,25 @@ const TabsList = forwardRef<HTMLDivElement, TabsListProps>(({ children, classNam
         )}
         {...props}
       >
-        {/* Active segment indicator */}
+        {/* Active segment indicator: melts toward the next tab and lets go */}
         {selectedRect && (
-          <motion.div
-            className={cn('absolute pointer-events-none', surfaceClasses(indicatorLevel), shape.bg)}
-            initial={false}
-            animate={{
-              left: selectedRect.left,
-              width: selectedRect.width,
-              top: selectedRect.top,
-              height: selectedRect.height,
-              opacity: isHovering ? 0.85 : 1,
-            }}
-            transition={{
-              ...spring.moderate,
-              opacity: { duration: spring.fast.duration },
-            }}
+          <GooIndicator
+            rect={selectedRect}
+            className={cn(SURFACE_BG[indicatorLevel], shape.bg)}
+            shadow={SURFACE_SHADOW[indicatorLevel]}
+            opacity={isHovering ? 0.85 : 1}
           />
         )}
 
-        {/* Hover indicator */}
-        <AnimatePresence>
-          {hoverRect && !isHoveringSelected && selectedRect && (
-            <motion.div
-              className={cn('absolute pointer-events-none bg-hover', shape.bg)}
-              initial={{
-                left: selectedRect.left,
-                width: selectedRect.width,
-                top: selectedRect.top,
-                height: selectedRect.height,
-                opacity: 0,
-              }}
-              animate={{
-                left: hoverRect.left,
-                width: hoverRect.width,
-                top: hoverRect.top,
-                height: hoverRect.height,
-                opacity: 0.4,
-              }}
-              exit={
-                !isMouseInside.current && selectedRect
-                  ? {
-                      left: selectedRect.left,
-                      width: selectedRect.width,
-                      top: selectedRect.top,
-                      height: selectedRect.height,
-                      opacity: 0,
-                      transition: {
-                        ...spring.moderate,
-                        opacity: { duration: spring.fast.exit.duration },
-                      },
-                    }
-                  : { opacity: 0, transition: spring.fast.exit }
-              }
-              transition={{
-                ...spring.fast,
-                opacity: { duration: spring.fast.duration },
-              }}
-            />
-          )}
-        </AnimatePresence>
+        {/* Hover indicator: drips out of the active tab toward the hovered one, and back as it fades */}
+        {selectedRect && (
+          <GooIndicator
+            rect={isHovering && hoverRect ? hoverRect : selectedRect}
+            className={cn('bg-hover', shape.bg)}
+            transition={spring.fast}
+            opacity={isHovering ? 0.4 : 0}
+          />
+        )}
 
         {/* Focus ring */}
         <AnimatePresence>

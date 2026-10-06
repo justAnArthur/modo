@@ -1,6 +1,7 @@
 /*
  * Local addition (not part of Fluid Functionalism): the docs page of the morph
- * engine (`lib/use-morph.ts`, `lib/morph-layers.tsx`). `Morph` is a docs stage
+ * engine (`lib/use-morph.ts`, `lib/morph-layers.tsx`) and of the liquid
+ * indicators (`lib/goo-indicator.tsx`). `Morph` is a docs stage
  * like `primitives/motion`'s `Motion`: a trigger and a small panel that plays
  * one `from` × `effect` pair, so the page's examples stay hook-free.
  */
@@ -75,6 +76,30 @@ interface MorphProps {
  * tier's faster exit tween, like every other animation here (see Motion).
  * Under `<MotionConfig reducedMotion="user">`, reduced motion turns every
  * effect into a fade.
+ *
+ * ## Liquid indicators
+ *
+ * The same goo moves everything that travels between items: the active tab
+ * of Tabs and TabsSubtle, the Switch thumb, RadioGroup's selection and the
+ * fluid hover highlight of every list (Select, Dropdown, Combobox, Card,
+ * Accordion, FluidHover). The indicator springs to its new item and leaves
+ * a blob behind. The blob lingers for a third of the spring, then follows
+ * to the back of the new item while it shrinks, so the two melt into one
+ * stretched drop that lets go. A long move tears it into a drop and a
+ * droplet that catches up and is absorbed.
+ *
+ * Merged selections (CheckboxGroup, a multiple Dropdown) melt the same way:
+ * a checked row grows out of its center and flows into its checked
+ * neighbours, and an unchecked one pinches off and shrinks away.
+ *
+ * - The goo filter runs only while a blob is alive; at rest an indicator is
+ *   one plain element.
+ * - The melted shape is filled with the indicator's own token, so
+ *   translucent fills such as `bg-hover` and `bg-active` melt like opaque
+ *   surfaces. Shadows are drawn again beneath the goo while it moves.
+ * - A short move or a resize in place springs without a blob, and a square
+ *   indicator, with no radius to melt, only slides.
+ * - Reduced motion snaps the indicator into place.
  *
  * ## Shared parts
  *

@@ -21,6 +21,8 @@
  * `border-focus-ring`; `duration-80|120|160` and tier-length JS durations →
  * `duration-<tier>` / `spring.*`; the unchecked `border-neutral-400` /
  * `dark:border-neutral-500` → `border-control`.
+ * The selected background is a `GooIndicator` (`lib/goo-indicator.tsx`): it
+ * melts from row to row instead of sliding.
  */
 
 import { Radio as RadioPrimitive } from '@base-ui/react/radio'
@@ -41,6 +43,7 @@ import {
   useState,
 } from 'react'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { GooIndicator } from '../../lib/goo-indicator'
 import { useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
@@ -98,8 +101,8 @@ type RadioGroupComponent = ForwardRefExoticComponent<RadioGroupProps & RefAttrib
  * Radio button group with fluid hover and animated selection.
  *
  * Each row is a `RadioGroup.Item` with a stable `index`. The selected
- * background springs to the chosen row, a fluid hover highlight glides between
- * rows, the dot scales in, and the label animates to semibold without shifting
+ * background melts to the chosen row, a fluid hover highlight melts between
+ * rows (the liquid indicators in Morph), the dot scales in, and the label animates to semibold without shifting
  * its width. Arrow keys, Home and End move focus and select, with a roving
  * tabindex on the selected row. Select by index — uncontrolled with
  * `defaultSelectedIndex`, controlled with `selectedIndex` +
@@ -228,24 +231,8 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
         className={cn('relative flex flex-col w-72 max-w-full select-none', className)}
         {...props}
       >
-        {/* Selected background */}
-        {selectedRect && (
-          <motion.div
-            className={`absolute ${shape.bg} bg-active pointer-events-none`}
-            initial={false}
-            animate={{
-              top: selectedRect.top,
-              left: selectedRect.left,
-              width: selectedRect.width,
-              height: selectedRect.height,
-              opacity: 1,
-            }}
-            transition={{
-              ...spring.moderate,
-              opacity: { duration: spring.fast.duration },
-            }}
-          />
-        )}
+        {/* Selected background: melts from the old row to the new one */}
+        {selectedRect && <GooIndicator rect={selectedRect} className={cn('bg-active', shape.bg)} />}
 
         {/* Hover background */}
         <FluidHoverHighlight hover={hover} className={shape.bg} />
