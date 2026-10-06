@@ -1,25 +1,24 @@
 button[data-variant] {
-  display: inline-block;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid transparent;
-  border-radius: var(--radius-md, 6px);
-  font-family: inherit;
-  font-weight: 500;
+  border-radius: var(--radius-md);
+  font: inherit;
+  font-weight: var(--font-weight-medium);
   cursor: pointer;
-  padding: 0.4rem 0.75rem;
 }
 
 button[data-variant="primary"] {
-  background: var(--accent, #3b82f6);
-  color: var(--accent-foreground, #ffffff);
+  background: var(--accent);
+  color: var(--accent-foreground);
 }
 
 button[data-variant="secondary"] {
-  background: var(--muted, #f4f4f5);
-  color: var(--foreground, #0a0a0a);
-  border-color: var(--border, #e4e4e7);
+  background: var(--muted);
+  color: var(--foreground);
+  border-color: var(--border);
 }
 
 button[data-variant="ghost"] {
   background: transparent;
-  color: var(--foreground, #0a0a0a);
+  color: var(--foreground);
 }
