@@ -42,7 +42,7 @@ Multiple items with fluid hover — only one can be expanded at a time.
   <Accordion.Item value="item-4" index={3}>
     <Accordion.Trigger>Animation</Accordion.Trigger>
     <Accordion.Content>
-      Smooth height transitions and spring-animated chevron rotation.
+      The panel morphs out of its row and the chevron rotates on a spring.
       The fluid hover background tracks your cursor.
     </Accordion.Content>
   </Accordion.Item>
@@ -96,6 +96,53 @@ per open item reads as a second layer.
     <Accordion.Trigger>Compare with the sections above</Accordion.Trigger>
     <Accordion.Content>
       Those hold a block across the row and its panel while open.
+    </Accordion.Content>
+  </Accordion.Item>
+</Accordion.Group>
+
+# Morph
+
+Each panel drips out of the row where it was pressed (its middle, from the keyboard) and widens into the item, its content revealed by the same shape; closing folds it back into the row. The rows below ride its bottom edge.
+
+<Accordion.Group type="single" collapsible defaultValue="shipping">
+  <Accordion.Item value="shipping" index={0}>
+    <Accordion.Trigger>When does my order ship?</Accordion.Trigger>
+    <Accordion.Content>
+      Orders placed before noon leave the same day. You get a tracking
+      link by email as soon as the parcel is scanned.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="returns" index={1}>
+    <Accordion.Trigger>Can I return it?</Accordion.Trigger>
+    <Accordion.Content>
+      Anything unused comes back free within 30 days. Start a return from
+      your order page and print the label.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="warranty" index={2}>
+    <Accordion.Trigger>What does the warranty cover?</Accordion.Trigger>
+    <Accordion.Content>
+      Two years on parts and labour. Accidental damage is covered once,
+      on top of that.
+    </Accordion.Content>
+  </Accordion.Item>
+</Accordion.Group>
+
+# Without the goo
+
+`effect="morph"` grows the same shape with no liquid neck to its row; `tier="moderate"` runs the goo on the quicker, critically damped spring.
+
+<Accordion.Group type="single" collapsible>
+  <Accordion.Item value="morph" index={0}>
+    <Accordion.Trigger>Plain morph</Accordion.Trigger>
+    <Accordion.Content effect="morph">
+      The tint grows from the press point into the item, with no neck.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="moderate" index={1}>
+    <Accordion.Trigger>Moderate tier</Accordion.Trigger>
+    <Accordion.Content tier="moderate">
+      The goo again, on the moderate spring.
     </Accordion.Content>
   </Accordion.Item>
 </Accordion.Group>

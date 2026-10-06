@@ -24,10 +24,30 @@
  *   `fontVariationSettings` → `weight-*`; the hex focus-ring fallback →
  *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
+ * - The panel morphs out of its row instead of springing its height (local
+ *   morph language, see `primitives/morph`): one progress value grows a shape
+ *   from the press point in the row (its middle for a keyboard open) to the
+ *   whole item, the content is revealed by a clip from the same rect, and the
+ *   panel's layout height follows the shape's bottom edge, so the rows below
+ *   flow with it. Under `highlight="item"` the open tint is that shape, melted
+ *   into the row through the shared `GooFilter`; it lives in
+ *   `AccordionContent` now (the group draws only the `"trigger"` tint), and
+ *   the hover fills sit one layer above it. The group's hover highlight and
+ *   focus ring snap with rows a morph pushes around (instead of springing
+ *   after them over the content) until the pointer or focus moves. `effect`
+ *   and `tier` on `AccordionContent`; reduced motion snaps, as before.
  */
 
 import { Accordion as AccordionPrimitive } from '@base-ui/react/accordion'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import {
+  AnimatePresence,
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useReducedMotionConfig,
+  useTransform,
+} from 'motion/react'
 import {
   createContext,
   type ForwardRefExoticComponent,
@@ -38,6 +58,8 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
+  useImperativeHandle,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -49,11 +71,13 @@ const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : use
 
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { useIcon } from '../../lib/icon-context'
+import { GooFilter } from '../../lib/morph-layers'
 import { useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { GOO_BLUR_RATIO } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { SizeProvider } from '../../primitives/sizes'
 
@@ -74,6 +98,10 @@ interface AccordionGroupContextValue {
   remeasure: () => void
   openValues: Set<string>
   openItemRects: Map<number, ItemRect>
+  /** The group's choice; its items draw the `"item"` tint themselves. */
+  highlight: 'trigger' | 'item'
+  /** A closed row is hovered: open tints step back. */
+  dimOpen: boolean
 }
 
 const AccordionGroupContext = createContext<AccordionGroupContextValue | null>(null)
@@ -89,6 +117,8 @@ interface AccordionItemContextValue {
   triggerRef: React.MutableRefObject<HTMLDivElement | null>
   /** Standalone items carry the group's choice themselves. */
   highlight: 'trigger' | 'item'
+  /** Where the row was last pressed, in px from its left edge; the panel grows from there. */
+  press: React.MutableRefObject<number | null>
 }
 
 const AccordionItemContext = createContext<AccordionItemContextValue | null>(null)
@@ -233,21 +263,20 @@ const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>((props, r
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
 
   const focusRect = focusedIndex !== null ? itemRects[focusedIndex] : null
-  // An open item tints its trigger by default; "item" restores the older
-  // block treatment that spans the panel too. The trigger rects are the
-  // ones fluid hover already tracks, so this is a choice of source.
   // "trigger" tints the open row only while you're on it: the panel below
   // already says the item is open, so the fill goes back to being a hover
-  // affordance rather than a persistent state.
+  // affordance rather than a persistent state. The trigger rects are the
+  // ones fluid hover already tracks. Local: the "item" block is drawn by each
+  // item's content, as the shape its panel morphs out of.
   const expandedRects =
-    highlight === 'item'
-      ? openItemRects
-      : new Map(
+    highlight === 'trigger'
+      ? new Map(
           [...openItemRects.keys()].flatMap(idx => {
             const rect = idx === activeIndex ? itemRects[idx] : null
             return rect ? ([[idx, rect]] as [number, ItemRect][]) : []
           }),
         )
+      : new Map<number, ItemRect>()
 
   const isHoveringNonOpen = activeIndex !== null && !openItemRects.has(activeIndex)
   const shape = useShape()
@@ -271,7 +300,12 @@ const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>((props, r
     else handleSingleValueChange(next[0] ?? '')
   }
 
+  // Local: rows a morphing panel pushes around carry the hover highlight and
+  // the focus ring with them (a snap, not a spring chasing them), until the
+  // pointer or the focus moves again.
+  const [reflowing, setReflowing] = useState(false)
   const remeasure = useCallback(() => {
+    setReflowing(true)
     measureItems()
     measureFullItems()
   }, [measureItems, measureFullItems])
@@ -287,8 +321,10 @@ const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>((props, r
       remeasure,
       openValues,
       openItemRects,
+      highlight,
+      dimOpen: isHoveringNonOpen,
     }),
-    [registerItem, registerFullItem, activeIndex, remeasure, openValues, openItemRects],
+    [registerItem, registerFullItem, activeIndex, remeasure, openValues, openItemRects, highlight, isHoveringNonOpen],
   )
 
   const group = (
@@ -318,6 +354,7 @@ const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>((props, r
               }}
               onMouseEnter={handlers.onMouseEnter}
               onMouseMove={e => {
+                setReflowing(false)
                 const container = containerRef.current
                 if (container) {
                   const cRect = container.getBoundingClientRect()
@@ -340,6 +377,7 @@ const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>((props, r
               }}
               onMouseLeave={handlers.onMouseLeave}
               onFocus={e => {
+                setReflowing(false)
                 const indexAttr = (e.target as HTMLElement)
                   .closest('[data-fluid-hover-index]')
                   ?.getAttribute('data-fluid-hover-index')
@@ -395,8 +433,12 @@ const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>((props, r
                 ))}
               </AnimatePresence>
 
-              {/* Hover background */}
-              <FluidHoverHighlight hover={hover} className={shape.bg} />
+              {/* Hover background, one layer above the items' open tints */}
+              <FluidHoverHighlight
+                hover={hover}
+                className={cn(shape.bg, 'z-1')}
+                transition={reflowing ? false : undefined}
+              />
 
               {/* Focus ring */}
               <AnimatePresence>
@@ -412,7 +454,7 @@ const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>((props, r
                     }}
                     exit={{ opacity: 0, transition: spring.fast.exit }}
                     transition={{
-                      ...spring.fast,
+                      ...(reflowing ? { duration: 0 } : spring.fast),
                       opacity: { duration: spring.fast.duration },
                     }}
                   />
@@ -468,14 +510,22 @@ type AccordionComponent = ForwardRefExoticComponent<AccordionProps & RefAttribut
  * Accordion is the standalone form: every row carries its own hover fill.
  * Accordion.Group takes the same props and adds one magnetic highlight that
  * glides between rows, so give each item inside it an `index`. Built on Base
- * UI Accordion (WAI-ARIA wiring, keyboard navigation, focus management), with
- * a spring-driven panel height and chevron. Uncontrolled through
- * `defaultValue`, controlled through `value` + `onValueChange`.
+ * UI Accordion (WAI-ARIA wiring, keyboard navigation, focus management).
+ * Uncontrolled through `defaultValue`, controlled through `value` +
+ * `onValueChange`.
+ *
+ * The panel grows out of its row (see Morph): a shape drips from where the
+ * row was pressed (its middle, from the keyboard), widens into the whole
+ * item, and the content is revealed by a clip from the same shape. Under the
+ * default `highlight="item"` that shape is the open tint, melted into the
+ * row through a liquid goo neck; closing folds it back into the row. The
+ * rows below ride the shape's bottom edge, so nothing jumps.
  *
  * Statics: Accordion.Group (the grouped root: type, collapsible,
  * defaultValue, value, onValueChange, highlight, size), Accordion.Item (value,
  * index, disabled), Accordion.Trigger (the row that toggles its item) and
- * Accordion.Content (the collapsible panel).
+ * Accordion.Content (the collapsible panel: `effect` — `'goo'` or a plain
+ * `'morph'` — and the spring `tier`, `'slow'` or `'moderate'`).
  *
  * @example {@include ./examples.mdx}
  */
@@ -573,12 +623,12 @@ const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(
     const groupCtx = useAccordionGroup()
     const standaloneOpen = useContext(StandaloneOpenContext)
     const standaloneHighlight = useContext(StandaloneHighlightContext)
-    const highlight = highlightProp ?? standaloneHighlight ?? 'item'
-    const shape = useShape()
+    const highlight = groupCtx ? groupCtx.highlight : (highlightProp ?? standaloneHighlight ?? 'item')
 
     const isOpen = groupCtx?.grouped ? groupCtx.openValues.has(value) : standaloneOpen.has(value)
 
     const triggerRef = useRef<HTMLDivElement>(null)
+    const press = useRef<number | null>(null)
 
     useRegisterFluidHoverItem(groupCtx?.grouped ? groupCtx.registerItem : undefined, index, triggerRef)
 
@@ -594,7 +644,7 @@ const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(
     }, [index, groupCtx, isOpen])
 
     return (
-      <AccordionItemContext.Provider value={{ index, value, isOpen, triggerRef, highlight }}>
+      <AccordionItemContext.Provider value={{ index, value, isOpen, triggerRef, highlight, press }}>
         <AccordionPrimitive.Item
           value={value}
           disabled={disabled}
@@ -609,25 +659,12 @@ const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(
                   else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
                 }}
                 data-fluid-hover-index={index}
-                className={cn(!groupCtx?.grouped && 'relative', className)}
+                // Positioned in a group too: the content's open tint covers
+                // the whole item (fluid hover adds positioned ancestors'
+                // offsets, so the row rects don't move).
+                className={cn('relative', className)}
                 {...props}
               >
-                {/* Standalone expanded background. Under the default
-                    "trigger" choice the tint lives inside AccordionTrigger,
-                    where it covers the row and not the panel below it. */}
-                {!groupCtx?.grouped && highlight === 'item' && (
-                  <AnimatePresence>
-                    {isOpen && (
-                      <motion.div
-                        className={`absolute inset-0 ${shape.bg} bg-accent/20 dark:bg-accent/12 pointer-events-none`}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0, transition: spring.moderate.exit }}
-                        transition={{ duration: spring.moderate.exit.duration }}
-                      />
-                    )}
-                  </AnimatePresence>
-                )}
                 {children}
               </div>
             )
@@ -651,12 +688,19 @@ const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
   ({ children, className, ...props }, ref) => {
     const ChevronRight = useIcon('chevron-right')
     const groupCtx = useAccordionGroup()
-    const { index, isOpen, triggerRef, highlight } = useAccordionItemContext()
+    const { index, isOpen, triggerRef, highlight, press } = useAccordionItemContext()
     const shape = useShape()
     const sizeClasses = useSize()
     const [isHovered, setIsHovered] = useState(false)
 
     const isActive = groupCtx?.grouped ? groupCtx.activeIndex === index : isHovered
+
+    // In layout px, so a scaled ancestor doesn't move the source.
+    const capture = (event: React.PointerEvent<HTMLDivElement>) => {
+      const row = event.currentTarget
+      const box = row.getBoundingClientRect()
+      press.current = ((event.clientX - box.left) * row.offsetWidth) / box.width
+    }
 
     const triggerContent = (
       // Render Header as a <div>. Base UI's Header defaults to <h3>, which
@@ -708,11 +752,20 @@ const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
     )
 
     if (groupCtx?.grouped) {
-      return <div ref={triggerRef}>{triggerContent}</div>
+      return (
+        <div ref={triggerRef} onPointerDown={capture}>
+          {triggerContent}
+        </div>
+      )
     }
 
     return (
-      <div className="relative" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+      <div
+        className="relative"
+        onPointerDown={capture}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         {/* Open tint, scoped to this row: the panel below keeps the page's
             own surface, the way a sidebar row highlights without colouring
             its sub-tree. */}
@@ -733,7 +786,7 @@ const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
         <AnimatePresence>
           {isHovered && (
             <motion.div
-              className={`absolute inset-0 ${shape.bg} bg-hover pointer-events-none`}
+              className={`absolute inset-0 z-1 ${shape.bg} bg-hover pointer-events-none`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, transition: spring.fast.exit }}
@@ -754,159 +807,233 @@ AccordionTrigger.displayName = 'AccordionTrigger'
 interface AccordionContentProps extends HTMLAttributes<HTMLDivElement> {
   /** Collapsible content. */
   children: ReactNode
+  /** How the panel grows out of its row (see Morph): `goo` melts the open tint out of the row through a liquid neck, `morph` grows it without one. Defaults to `'goo'`. */
+  effect?: 'goo' | 'morph'
+  /** Spring tier the panel opens on; it closes on the tier's faster exit tween. Defaults to `'slow'`. */
+  tier?: 'moderate' | 'slow'
 }
 
-const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps>(({ children, className, ...props }, ref) => {
-  const groupCtx = useAccordionGroup()
-  const { isOpen } = useAccordionItemContext()
-  const sizeClasses = useSize()
-  // Read here rather than relying on a MotionConfig the consumer may not
-  // have: height is a positional value, so framer would otherwise animate
-  // it for a reduced-motion user in any app that installs this component.
-  const reduceMotion = useReducedMotion() ?? false
+interface Rect {
+  x: number
+  y: number
+  w: number
+  h: number
+  r: number
+}
 
-  // The open height is animated to a self-measured LAYOUT pixel value, not
-  // `height: "auto"`: framer resolves an "auto" target by measuring the
-  // element's *visual* (transformed) size, so under a scaled ancestor
-  // (e.g. /demo's 1.7x card) the animation overshoots to scale× the real
-  // height and snaps back when the final "auto" lands — a visible height
-  // reduction at the end of every open. offsetHeight and ResizeObserver
-  // are transform-immune.
-  const innerRef = useRef<HTMLDivElement | null>(null)
-  const roRef = useRef<ResizeObserver | null>(null)
-  const [contentHeight, setContentHeight] = useState<number | null>(null)
-  // Items open at mount render `initial: "auto"` and receive their first
-  // pixel target a commit later; that hand-off must SNAP (duration 0), not
-  // spring — framer would measure the spring's numeric start visually
-  // (scaled) and play a shrink. Items that open later spring normally.
-  const needsSnap = useRef(isOpen)
-  // Height springs only when THIS panel toggles. When contentHeight
-  // changes underneath it instead — anything collapsible nested inside
-  // the panel, another accordion included — it must snap: a spring
-  // re-targeted every frame chases the child's own animation, lands
-  // after it, and drags everything below the item along late. Same rule
-  // as SidebarGroup / SidebarMenuSub; see motion-guidelines.md.
-  const prevOpenRef = useRef(isOpen)
-  const togglingRef = useRef(false)
-  if (prevOpenRef.current !== isOpen) {
-    prevOpenRef.current = isOpen
-    togglingRef.current = true
-  }
+// The morph engine's rect interpolation (lib/use-morph.ts). `t` stops at 1:
+// the slow tier's bounce would push the rows below past their place and back.
+function grow(a: Rect, b: Rect, t: number): Rect {
+  const at = (from: number, to: number) => from + (to - from) * Math.min(1, t)
+  const w = at(a.w, b.w)
+  const h = at(a.h, b.h)
+  return { x: at(a.x, b.x), y: at(a.y, b.y), w, h, r: Math.min(at(a.r, b.r), w / 2, h / 2) }
+}
 
-  const measureRef = useCallback((el: HTMLDivElement | null) => {
-    roRef.current?.disconnect()
-    roRef.current = null
-    innerRef.current = el
-    if (!el) return
-    if (el.offsetHeight > 0) setContentHeight(el.offsetHeight)
-    const ro = new ResizeObserver(() => {
-      // Ignore the 0 that fires while the panel is display:none.
-      if (el.offsetHeight > 0) setContentHeight(el.offsetHeight)
-    })
-    ro.observe(el)
-    roRef.current = ro
-  }, [])
+function place(el: HTMLElement | null, { x, y, w, h, r }: Rect) {
+  if (!el) return
+  el.style.left = `${x}px`
+  el.style.top = `${y}px`
+  el.style.width = `${w}px`
+  el.style.height = `${h}px`
+  el.style.borderRadius = `${r}px`
+}
 
-  // Re-measure synchronously (pre-paint) when opening, so the spring's
-  // target is the fresh layout height from its first frame.
-  useIsoLayoutEffect(() => {
-    if (isOpen && innerRef.current && innerRef.current.offsetHeight > 0) {
-      setContentHeight(innerRef.current.offsetHeight)
+const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps>(
+  ({ children, className, effect = 'goo', tier = 'slow', ...props }, ref) => {
+    const groupCtx = useAccordionGroup()
+    const { isOpen, highlight, press } = useAccordionItemContext()
+    const shape = useShape()
+    const sizeClasses = useSize()
+    // The OS setting as well as MotionConfig's: the panel's height is layout,
+    // which a consumer without a MotionConfig would otherwise animate for a
+    // reduced-motion user.
+    const reduceOS = useReducedMotion() ?? false
+    const reduceConfig = useReducedMotionConfig()
+    const reduceMotion = reduceOS || reduceConfig
+    const gooId = `accordion-goo-${useId().replace(/:/g, '')}`
+    const progress = useMotionValue(isOpen ? 1 : 0)
+    // The tint is there for most of the morph and fades only as the shape
+    // gets back into the row, so the shape, not a fade, carries the motion.
+    const tint = useTransform(progress, [0, 0.3], [0, 1])
+    const tinted = highlight === 'item'
+    const remeasure = useRef(groupCtx?.remeasure)
+    remeasure.current = groupCtx?.remeasure
+
+    const refs = {
+      panel: useRef<HTMLDivElement>(null),
+      content: useRef<HTMLDivElement>(null),
+      rest: useRef<HTMLDivElement>(null),
+      goo: useRef<HTMLDivElement>(null),
+      row: useRef<HTMLDivElement>(null),
+      shape: useRef<HTMLDivElement>(null),
     }
-  }, [isOpen])
+    useImperativeHandle(ref, () => refs.panel.current as HTMLDivElement, [])
 
-  useEffect(() => {
-    if (contentHeight !== null) needsSnap.current = false
-  }, [contentHeight])
+    // In the item's own coordinates: `x` is the source's left edge, `row`
+    // the trigger row's height (the panel's offsetTop), `body` the content's.
+    const geometry = useRef({ x: 0, width: 0, row: 0, body: 0 })
 
-  // Whether the framer-motion height exit animation has fully finished.
-  // Base UI's Panel would apply `hidden` the moment a controlled item
-  // closes (useCollapsibleRoot sets `mounted = false` in a layout effect
-  // when no CSS transition/animation is detected on the panel element, and
-  // useCollapsiblePanel derives `hidden = !open && !mounted`) — which is
-  // `display: none` and would freeze the exit animation mid-flight. So we
-  // take over the `hidden` attribute below and only apply it once the exit
-  // has actually completed.
-  const [exitComplete, setExitComplete] = useState(!isOpen)
-  if (isOpen && exitComplete) {
-    // Reset during render so the panel is un-hidden before the opening
-    // animation's first paint.
-    setExitComplete(false)
-  }
+    // One frame of the morph. The shape grows from a point in the middle of
+    // the row to the whole item; the panel's layout height is the shape's
+    // reach below the row, so the rows underneath move with its bottom edge,
+    // and the content shows only inside the shape.
+    const render = (p: number) => {
+      const { x, width, row, body } = geometry.current
+      const rect = grow(
+        { x, y: row / 2, w: 0, h: 0, r: width },
+        { x: 0, y: 0, w: width, h: row + body, r: shape.bgRadius },
+        p,
+      )
+      const reach = rect.y + rect.h - row
+      const { panel, content } = refs
+      if (panel.current) panel.current.style.height = `${Math.max(0, reach)}px`
+      if (content.current) {
+        content.current.style.clipPath = `inset(${rect.y - row}px ${width - rect.x - rect.w}px ${body - reach}px ${rect.x}px round ${rect.r}px)`
+      }
+      place(refs.shape.current, rect)
+      remeasure.current?.()
+    }
 
-  // Render through `<AccordionPrimitive.Panel keepMounted>` so the panel
-  // element persists through the exit animation and the trigger ↔ panel
-  // ARIA contract stays intact: the panel carries `role="region"`,
-  // `aria-labelledby` and the id that the Trigger's `aria-controls` points
-  // to. The framer-motion height animation lives one level down inside the
-  // persistent panel element and flips its target with `isOpen` (content
-  // stays mounted so it can be measured).
-  return (
-    <AccordionPrimitive.Panel
-      keepMounted
-      render={panelProps => {
-        const {
-          // Applied too early for our exit animation (see above); we
-          // control the attribute ourselves.
-          hidden: _baseHidden,
-          // Only carries the --accordion-panel-height/width vars, which
-          // stay 'auto' since Base UI never measures JS-driven animations;
-          // dropped for parity with the Root/Item render props above.
-          style: _baseStyle,
-          ...restPanel
-        } = panelProps as React.HTMLAttributes<HTMLDivElement> & {
-          hidden?: boolean
-        }
-        return (
-          <div {...restPanel} hidden={!isOpen && exitComplete}>
-            <motion.div
-              ref={ref}
-              className={cn('overflow-hidden', className)}
-              initial={{ height: isOpen ? 'auto' : 0 }}
-              animate={{ height: isOpen ? (contentHeight ?? 0) : 0, opacity: isOpen ? 1 : 0 }}
-              // spring.fast lands with the trigger's chevron, and its
-              // bounce: 0 keeps pure height from overshooting its content.
-              // A close is a decision already made, so it takes the quicker
-              // exit tier — the target flip has no `exit` prop to carry it.
-              // Opacity runs ahead of the height on its own timing: the
-              // body dissolves rather than being sliced by the clip edge,
-              // which is what stops the rows below reading as shoved.
-              transition={
-                needsSnap.current || reduceMotion || !togglingRef.current
-                  ? { duration: 0 }
-                  : isOpen
-                    ? { ...spring.fast, opacity: { duration: spring.fast.exit.duration } }
-                    : { ...spring.fast.exit, opacity: { duration: 0.04 } }
-              }
-              onUpdate={() => {
-                groupCtx?.remeasure()
-              }}
-              onAnimationComplete={() => {
-                togglingRef.current = false
-                groupCtx?.remeasure()
-                if (!isOpen) setExitComplete(true)
-              }}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              {...(props as any)}
-            >
-              <div
-                ref={measureRef}
-                className={cn(
-                  'pt-1 text-muted-foreground',
-                  sizeClasses.px,
-                  sizeClasses.text,
-                  sizeClasses.variant === 'compact' ? 'pb-2.5' : 'pb-3',
+    // Base UI's Panel would apply `hidden` the moment a controlled item
+    // closes (no CSS animation for it to wait on) — `display: none` would
+    // cut the morph off mid-flight. So the `hidden` attribute is ours, and
+    // only lands once the close has finished.
+    const [exitComplete, setExitComplete] = useState(!isOpen)
+    if (isOpen && exitComplete) {
+      // Reset during render so the panel is laid out before the opening
+      // morph's first frame.
+      setExitComplete(false)
+    }
+
+    // Back to rest: open, the panel's height and the tint are their classes
+    // again (auto height, one block over the item), so they follow content
+    // that resizes; closed, the panel goes `hidden`.
+    const settle = (open: boolean) => {
+      const { panel, content, goo, rest } = refs
+      if (panel.current) panel.current.style.height = open ? '' : '0px'
+      if (content.current) content.current.style.clipPath = ''
+      if (goo.current) goo.current.style.display = ''
+      if (rest.current) rest.current.style.display = ''
+      remeasure.current?.()
+      if (!open) setExitComplete(true)
+    }
+
+    const wasOpen = useRef(isOpen)
+    useIsoLayoutEffect(() => {
+      if (wasOpen.current === isOpen) return
+      wasOpen.current = isOpen
+      const { panel, content, goo, rest, row } = refs
+      if (!panel.current || !content.current) return
+      const g = geometry.current
+      g.width = panel.current.offsetWidth
+      g.row = panel.current.offsetTop
+      g.body = content.current.offsetHeight
+      // A reopen mid-close keeps its source, so the shape never jumps.
+      if (isOpen && progress.get() === 0) g.x = press.current ?? g.width / 2
+      press.current = null
+
+      if (reduceMotion) {
+        progress.set(isOpen ? 1 : 0)
+        settle(isOpen)
+        return
+      }
+      if (goo.current) goo.current.style.display = 'block'
+      if (rest.current) rest.current.style.display = 'none'
+      if (row.current) row.current.style.height = `${g.row}px`
+      render(progress.get())
+      const { exit, ...enter } = spring[tier]
+      const controls = animate(progress, isOpen ? 1 : 0, {
+        ...(isOpen ? enter : exit),
+        onUpdate: render,
+        onComplete: () => settle(isOpen),
+      })
+      return () => controls.stop()
+    }, [isOpen])
+
+    // The content keeps its natural size while the panel morphs, so this
+    // never feeds back: it retargets a running morph and, at rest, lets the
+    // group re-measure rows a nested accordion pushed around.
+    useIsoLayoutEffect(() => {
+      const content = refs.content.current
+      if (!content) return
+      const observer = new ResizeObserver(() => {
+        if (content.offsetHeight > 0) geometry.current.body = content.offsetHeight
+        remeasure.current?.()
+      })
+      observer.observe(content)
+      return () => observer.disconnect()
+    }, [])
+
+    // Render through `<AccordionPrimitive.Panel keepMounted>` so the panel
+    // element persists through the close and the trigger ↔ panel ARIA
+    // contract stays intact: the panel carries `role="region"`,
+    // `aria-labelledby` and the id that the Trigger's `aria-controls` points
+    // to.
+    return (
+      <AccordionPrimitive.Panel
+        keepMounted
+        render={panelProps => {
+          const {
+            hidden: _baseHidden,
+            // Only carries the --accordion-panel-height/width vars, which
+            // stay 'auto' since Base UI never measures JS-driven animations.
+            style: _baseStyle,
+            ...restPanel
+          } = panelProps as React.HTMLAttributes<HTMLDivElement> & {
+            hidden?: boolean
+          }
+          return (
+            <div {...restPanel} hidden={!isOpen && exitComplete}>
+              {/* Neither this nor the panel is positioned, so the tint
+                  below covers the whole item (row + panel). */}
+              <div ref={refs.panel} className={className} {...props}>
+                {tinted && (
+                  <motion.div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    initial={false}
+                    animate={{ opacity: groupCtx?.dimOpen ? 0.7 : 1 }}
+                    transition={{ duration: spring.moderate.exit.duration }}
+                  >
+                    <motion.div className="absolute inset-0" style={{ opacity: tint }}>
+                      {/* The tint's strength: solid shapes, so the goo
+                          threshold sees full alpha, faded as one layer. */}
+                      <div className="absolute inset-0 opacity-20 dark:opacity-12">
+                        <div ref={refs.rest} className={cn('absolute inset-0 bg-accent', shape.bg)} />
+                        {effect === 'goo' && <GooFilter id={gooId} blur={shape.bgRadius * GOO_BLUR_RATIO} />}
+                        {/* The filter is the effect itself: it melts the row and the growing shape into one. */}
+                        <div
+                          ref={refs.goo}
+                          className="absolute inset-0 hidden"
+                          style={effect === 'goo' ? { filter: `url(#${gooId})` } : undefined}
+                        >
+                          <div ref={refs.row} className={cn('absolute inset-x-0 top-0 bg-accent', shape.bg)} />
+                          <div ref={refs.shape} className="absolute bg-accent" />
+                        </div>
+                      </div>
+                    </motion.div>
+                  </motion.div>
                 )}
-              >
-                {children}
+                <div
+                  ref={refs.content}
+                  className={cn(
+                    'relative pt-1 text-muted-foreground',
+                    sizeClasses.px,
+                    sizeClasses.text,
+                    sizeClasses.variant === 'compact' ? 'pb-2.5' : 'pb-3',
+                  )}
+                >
+                  {children}
+                </div>
               </div>
-            </motion.div>
-          </div>
-        )
-      }}
-    />
-  )
-})
+            </div>
+          )
+        }}
+      />
+    )
+  },
+)
 
 AccordionContent.displayName = 'AccordionContent'
 
