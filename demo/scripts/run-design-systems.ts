@@ -8,6 +8,9 @@ const DS_DIR = join(ROOT, 'design-systems')
 const PEERS_FILE = join(ROOT, 'components', 'demo-switcher', '.peers.json')
 const TEMP_CONFIG = '.modo.config.ts'
 const SITE_DIR = join(ROOT, 'dist')
+// By path, not `bunx modo`: on a fresh install the lib's bin is linked before
+// its dist exists, and bunx then fetches the unrelated `modo` from npm.
+const MODO_CLI = join(ROOT, '..', 'lib', 'dist', 'cli.js')
 // The path the built site is served under, e.g. `/modo/` on a GitHub Pages project site.
 const SITE_BASE = process.env.SITE_BASE ?? '/'
 
@@ -74,7 +77,7 @@ function buildSite() {
   mkdirSync(SITE_DIR)
   for (const name of targets) {
     const cwd = join(DS_DIR, name)
-    execFileSync('bunx', ['modo', 'build', '--config', TEMP_CONFIG, '--base', `${SITE_BASE}${name}/`], {
+    execFileSync('node', [MODO_CLI, 'build', '--config', TEMP_CONFIG, '--base', `${SITE_BASE}${name}/`], {
       cwd,
       stdio: 'inherit',
     })
