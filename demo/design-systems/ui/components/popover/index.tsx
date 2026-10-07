@@ -199,8 +199,9 @@ interface PopoverProps {
  * Statics:
  * - `Popover.Trigger` — the control that opens it: `render={<Button/>}` or
  *   `asChild`; `openOnHover`, `delay`, `closeDelay`.
- * - `Popover.Content` — the panel: `side`, `align`, `sideOffset` and the
- *   morph options `from`, `effect`, `hideSource`, `tier`.
+ * - `Popover.Content` — the panel: `side`, `align` (the trigger's `start`,
+ *   `center` or `end`), `sideOffset` and the morph options `from`,
+ *   `effect`, `hideSource`, `tier`.
  * - `Popover.Title` / `Popover.Description` — its labelled heading and
  *   supporting line, wired for screen readers.
  * - `Popover.Close` — closes it; same `render` / `asChild` shape.

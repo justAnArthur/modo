@@ -66,6 +66,31 @@ Each side keeps the neck between trigger and panel; near a viewport edge the pan
   </Popover>
 </div>
 
+# Align
+
+`align` lines the panel up with the trigger's start edge, its center (the default) or its end edge; the neck stays between them.
+
+<div className="flex flex-wrap items-center justify-center gap-3">
+  <Popover>
+    <Popover.Trigger render={<Button variant="secondary">Start</Button>} />
+    <Popover.Content align="start">
+      <Popover.Description>Lined up with the trigger's start edge.</Popover.Description>
+    </Popover.Content>
+  </Popover>
+  <Popover>
+    <Popover.Trigger render={<Button variant="secondary">Center</Button>} />
+    <Popover.Content align="center">
+      <Popover.Description>Centered on the trigger.</Popover.Description>
+    </Popover.Content>
+  </Popover>
+  <Popover>
+    <Popover.Trigger render={<Button variant="secondary">End</Button>} />
+    <Popover.Content align="end">
+      <Popover.Description>Lined up with the trigger's end edge.</Popover.Description>
+    </Popover.Content>
+  </Popover>
+</div>
+
 # Morph
 
 `effect="morph"` with `hideSource`: the trigger itself grows into the panel and shrinks back, one continuous surface.
