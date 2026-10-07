@@ -14,6 +14,9 @@
  *   controlled and `onToggle` fires exactly as upstream.
  * - Every in-body read of `checked` / `onToggle()` goes through the resolved
  *   state (`isChecked`) and a `toggle()` that flips it and calls `onToggle`.
+ *   The Root's `onCheckedChange` is dropped: Base UI's keyboard and assistive
+ *   activation re-click its hidden input, which already reaches the row's
+ *   `onClick`, so keeping both toggled twice (a flip back, uncontrolled).
  * - `SwitchProps` members carry the FF docs API-table descriptions (plus the
  *   new props), so modo's parser lists them.
  * - TSDoc with the FF docs page's examples added above the component;
@@ -252,11 +255,6 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
         <SwitchPrimitive.Root
           checked={isChecked}
           aria-labelledby={labelId}
-          // Base UI passes (checked, eventDetails); narrow to () => void for our onToggle.
-          onCheckedChange={() => {
-            if (didDrag.current) return
-            toggle()
-          }}
           disabled={disabled}
           tabIndex={0}
           className={cn(
@@ -269,6 +267,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
             width: m.trackWidth,
             height: m.trackHeight,
           }}
+          // Base UI re-dispatches this click on its hidden input, which bubbles to the row and toggles it: stop the original so a press toggles once.
           onClick={e => e.stopPropagation()}
         >
           <SwitchPrimitive.Thumb className="pointer-events-none absolute inset-0">
@@ -276,7 +275,6 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
               rect={thumb}
               className="rounded-full bg-thumb"
               shadow="shadow-thumb"
-              // A dragged thumb sticks to the pointer.
               transition={dragX === null ? (thumbTransition ?? spring.moderate) : false}
             />
           </SwitchPrimitive.Thumb>

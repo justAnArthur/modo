@@ -83,12 +83,10 @@ function retract(from: ItemRect, to: ItemRect): ItemRect {
   return { left, top, width, height }
 }
 
-/** A rect as motion targets: position as a transform, size as layout. */
 function toTarget(rect: ItemRect) {
   return { x: rect.left, y: rect.top, width: rect.width, height: rect.height }
 }
 
-/** The goo blur for a shape: its resting corner radius times the engine's ratio. */
 function blurOf(el: Element, rect: ItemRect) {
   const r = Number.parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0
   return Math.min(r, rect.width / 2, rect.height / 2) * GOO_BLUR_RATIO
@@ -193,11 +191,12 @@ export function GooIndicator({
   const travel = transition === false || reduced ? false : transition
   const travelRef = useRef(travel)
   travelRef.current = travel
+  const read = () => ({ left: x.get(), top: y.get(), width: width.get(), height: height.get() })
 
   // Only a new rect moves it: the transition is often an inline object.
   useLayoutEffect(() => {
     const move = travelRef.current as ValueAnimationTransition<number> | false
-    const current = { left: x.get(), top: y.get(), width: width.get(), height: height.get() }
+    const current = read()
     if (!move) {
       x.jump(rect.left)
       y.jump(rect.top)
@@ -220,8 +219,7 @@ export function GooIndicator({
   const melting = trails.length > 0
   const linger = travel ? { ...travel, delay: (travel.duration ?? 0) / 3 } : undefined
   const shape = cn('pointer-events-none absolute top-0 left-0', className)
-  const current = { left: x.get(), top: y.get(), width: width.get(), height: height.get() }
-  const box = trails.reduce<ItemRect>((all, trail) => union(all, trail.from), union(current, rect))
+  const box = trails.reduce<ItemRect>((all, trail) => union(all, trail.from), union(read(), rect))
   const drop = (trail: Trail) => setTrails(list => list.filter(t => t.id !== trail.id))
 
   return (

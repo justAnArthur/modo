@@ -320,7 +320,6 @@ const TabsList = forwardRef<HTMLDivElement, TabsListProps>(({ children, classNam
         )}
         {...props}
       >
-        {/* Active segment indicator: melts toward the next tab and lets go */}
         {selectedRect && (
           <GooIndicator
             rect={selectedRect}
@@ -330,7 +329,7 @@ const TabsList = forwardRef<HTMLDivElement, TabsListProps>(({ children, classNam
           />
         )}
 
-        {/* Hover indicator: drips out of the active tab toward the hovered one, and back as it fades */}
+        {/* the hover pill rests on the active tab, so it drips back into it as it fades */}
         {selectedRect && (
           <GooIndicator
             rect={isHovering && hoverRect ? hoverRect : selectedRect}

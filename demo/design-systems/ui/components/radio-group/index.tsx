@@ -133,7 +133,6 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
     },
     ref,
   ) => {
-    // Local: controlled props, or internal state seeded from `default*`.
     const [selectedIndex, selectIndex] = useControllableState<number | undefined>(
       selectedIndexProp,
       defaultSelectedIndex,
@@ -231,7 +230,6 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
         className={cn('relative flex flex-col w-72 max-w-full select-none', className)}
         {...props}
       >
-        {/* Selected background: melts from the old row to the new one */}
         {selectedRect && <GooIndicator rect={selectedRect} className={cn('bg-active', shape.bg)} />}
 
         {/* Hover background */}

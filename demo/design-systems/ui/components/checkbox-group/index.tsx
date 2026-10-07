@@ -118,8 +118,6 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
   ) => {
     const containerRef = useRef<HTMLDivElement>(null)
 
-    // Local: controlled `checkedIndices`, or internal state seeded from
-    // `defaultCheckedIndices`.
     const [checkedIndices, setCheckedIndices] = useControllableState<Set<number>>(
       checkedIndicesProp,
       new Set(defaultCheckedIndices),
@@ -141,8 +139,6 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
     const hover = useFluidHover(containerRef)
     const { activeIndex, setActiveIndex, itemRects, handlers, registerItem } = hover
 
-    // Contiguous checked rows, as runs with stable ids (local: the shared
-    // useSelectionRuns instead of an inline copy of it).
     const checkedGroups = useSelectionRuns([...checkedIndices])
 
     const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
@@ -150,8 +146,6 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
     const focusRect = focusedIndex !== null ? itemRects[focusedIndex] : null
     const shape = useShape()
 
-    // Selected backgrounds: contiguous rows melt into one block and split
-    // apart through the goo (see useMergeSplitBlocks).
     const blocks = useMergeSplitBlocks(checkedGroups, itemRects, shape.mergedRadius)
 
     const group = (
@@ -209,7 +203,6 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
           className={cn('relative flex flex-col w-72 max-w-full select-none', className)}
           {...props}
         >
-          {/* Selected backgrounds (merged for contiguous checked items). */}
           <SelectionBackgrounds blocks={blocks} />
 
           {/* Hover background */}

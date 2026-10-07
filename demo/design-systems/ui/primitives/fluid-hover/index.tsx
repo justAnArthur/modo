@@ -54,18 +54,10 @@ interface FluidHoverContextValue {
 
 const FluidHoverContext = createContext<FluidHoverContextValue | null>(null)
 
-/**
- * Skips a row without unregistering it, so the rows around it keep their
- * indices and their measurements. Both spellings land here: `disabled` on a
- * row and `disabledIndices` on the list set the same attribute.
- */
 function isItemDisabled(element: HTMLElement) {
   return element.hasAttribute('data-disabled')
 }
 
-// Upstream's `rowClass` (demos.tsx), split into the shared part and the three
-// axis shapes: a full-width row, a strip cell that keeps its content's width,
-// and a grid tile that stacks a title over a description.
 const itemBaseClass =
   'relative z-10 flex shrink-0 cursor-pointer items-center text-left text-body text-foreground outline-none focus-visible:ring-1 focus-visible:ring-focus-ring'
 
@@ -237,9 +229,7 @@ const FluidHover = forwardRef<HTMLDivElement, FluidHoverProps>(
     const containerRef = useRef<HTMLDivElement | null>(null)
     const shape = useShape()
 
-    // `columns` is the grid: asking for more than one column is asking for the
-    // 2-D pick, and asking for `xy` without a column count means two.
-    const resolvedAxis: FluidHoverAxis = axis ?? (columns !== undefined && columns > 1 ? 'xy' : 'y')
+    const resolvedAxis: FluidHoverAxis = axis ?? ((columns ?? 1) > 1 ? 'xy' : 'y')
     const resolvedColumns = resolvedAxis === 'xy' ? Math.max(1, columns ?? 2) : 1
 
     const hover = useFluidHover(containerRef, {
@@ -306,8 +296,6 @@ const FluidHover = forwardRef<HTMLDivElement, FluidHoverProps>(
 
 FluidHover.displayName = 'FluidHover'
 
-// Compound static: `<FluidHover.Item>` (typed by the FluidHoverComponent cast
-// on the forwardRef above).
 Object.assign(FluidHover, { Item: FluidHoverItem })
 
 export type { FluidHoverHighlightProps } from '../../lib/fluid-hover-highlight'

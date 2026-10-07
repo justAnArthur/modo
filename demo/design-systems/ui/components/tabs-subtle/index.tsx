@@ -64,6 +64,8 @@ interface TabsSubtleContextValue {
 
 const TabsSubtleContext = createContext<TabsSubtleContextValue | null>(null)
 
+const isPanel = (child: ReactNode) => isValidElement(child) && child.type === TabsSubtlePanel
+
 function useTabsSubtle() {
   const ctx = useContext(TabsSubtleContext)
   if (!ctx) throw new Error('useTabsSubtle must be used within a TabsSubtle')
@@ -129,15 +131,12 @@ const TabsSubtle = forwardRef<HTMLDivElement, TabsSubtleProps>(
     },
     ref,
   ) => {
-    // Local: controlled `selectedIndex`, or internal state seeded from
-    // `defaultSelectedIndex`.
     const [selectedIndex, onSelect] = useControllableState(selectedIndexProp, defaultSelectedIndex, onSelectProp)
 
-    // Local: the root IS the tab list, so panels written inside it are pulled
-    // out and rendered right after it, under the same context.
+    // the root IS the tab list, so panels written inside it are rendered right after it
     const childList = Children.toArray(children)
-    const panels = childList.filter(child => isValidElement(child) && child.type === TabsSubtlePanel)
-    const tabs = childList.filter(child => !(isValidElement(child) && child.type === TabsSubtlePanel))
+    const panels = childList.filter(isPanel)
+    const tabs = childList.filter(child => !isPanel(child))
     const generatedIdPrefix = useId()
     const resolvedIdPrefix = idPrefix ?? (panels.length > 0 ? generatedIdPrefix : undefined)
 
@@ -262,7 +261,6 @@ const TabsSubtle = forwardRef<HTMLDivElement, TabsSubtleProps>(
               )}
               {...props}
             >
-              {/* Selected pill: melts toward the next tab and lets go */}
               {selectedRect && (
                 <GooIndicator
                   rect={selectedRect}
@@ -271,7 +269,7 @@ const TabsSubtle = forwardRef<HTMLDivElement, TabsSubtleProps>(
                 />
               )}
 
-              {/* Hover pill: drips out of the selected pill toward the hovered tab, and back as it fades */}
+              {/* the hover pill rests on the selected tab, so it drips back into it as it fades */}
               {selectedRect && (
                 <GooIndicator
                   rect={isHovering && hoverRect ? hoverRect : selectedRect}
@@ -483,7 +481,6 @@ interface TabsSubtlePanelProps extends HTMLAttributes<HTMLDivElement> {
 // linked to its tab through the shared idPrefix.
 const TabsSubtlePanel = forwardRef<HTMLDivElement, TabsSubtlePanelProps>(
   ({ index, selectedIndex, idPrefix, children, className, ...props }, ref) => {
-    // Local: fall back to the group's selection and id prefix.
     const ctx = useContext(TabsSubtleContext)
     const resolvedSelectedIndex = selectedIndex ?? ctx?.selectedIndex ?? -1
     const resolvedIdPrefix = idPrefix ?? ctx?.idPrefix

@@ -97,7 +97,8 @@ export function useMergeSplitBlocks(runs: Run[], itemRects: ItemRect[], R: numbe
     for (let i = run.start; i <= run.end; i++) {
       const row = itemRects[i]
       if (!row) continue
-      const bottom = i < run.end ? (itemRects[i + 1]?.top ?? row.top + row.height) : row.top + row.height
+      const next = i < run.end ? itemRects[i + 1] : undefined
+      const bottom = next?.top ?? row.top + row.height
       const top = i === run.start ? R : 0
       const end = i === run.end ? R : 0
       blocks.push({
@@ -132,7 +133,6 @@ const rest = (b: SelBlock) => ({
   ...corners(b.radii),
 })
 
-// A sliver at the row's center: grown out of, shrunk back into.
 const seed = (b: SelBlock) => ({
   top: b.top + b.height / 2,
   left: b.left + (b.width * (1 - SEED)) / 2,
@@ -178,9 +178,10 @@ export function SelectionBackgrounds({ blocks }: { blocks: SelBlock[] }) {
   useEffect(() => () => clearTimeout(timer.current), [])
 
   // While it melts, the layer keeps covering every row it has drawn, the ones leaving included.
-  const box = blocks.reduce<ItemRect | null>((all, b) => union(all, b), null)
+  const box = blocks.reduce<ItemRect | null>(union, null)
   const changing = melting || rows !== shown.current
-  covered.current = changing && covered.current ? (box ? union(covered.current, box) : covered.current) : box
+  if (!changing) covered.current = box
+  else if (box) covered.current = union(covered.current, box)
   radius.current = Math.max(changing ? radius.current : 0, ...blocks.flatMap(b => b.radii))
 
   return (
