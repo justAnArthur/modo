@@ -111,7 +111,7 @@ const PreviewCardContent = forwardRef<HTMLDivElement, PreviewCardContentProps>(
     const inPlace = opensInPlace({ effect, hideSource })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
     const shape = useShape()
-    // Lifts 2 levels off its substrate with a fixed shadow, like Popover (see Elevated).
+    // Fixed shadow, like Popover (see Elevated).
     const level = Math.min(useSurface() + 2, 8)
 
     return (

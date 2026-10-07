@@ -61,8 +61,6 @@ import { Button } from '../button'
 
 const DIALOG_OFFSET = 4
 
-// Trigger and Close compose either way — `render={<Button/>}` or Radix-style
-// `asChild` with a single child element (lib/slot.ts).
 type DialogSlotProps = SlotProps
 
 const DialogContext = createContext<{ open: boolean; origin: RefObject<MorphOrigin> }>({
@@ -305,10 +303,10 @@ interface DialogProps {
  * morph (see Morph): goo by default on `spring.slow`, or from the press
  * point, its own center, a viewport edge or any element, and the backdrop
  * fades with it. `Morph.Part` pairs an element in the trigger with its twin
- * in the panel, so a card's image or title flies into the dialog. `position="top"` anchors the panel 12dvh
- * down so a content-sized panel (a command menu) keeps its top edge still.
- * Built on Base UI's Dialog: open state is controlled with `open` /
- * `onOpenChange` or left to `defaultOpen`.
+ * in the panel, so a card's image or title flies into the dialog.
+ * `position="top"` anchors the panel 12dvh down so a content-sized panel (a
+ * command menu) keeps its top edge still. Built on Base UI's Dialog: open
+ * state is controlled with `open` / `onOpenChange` or left to `defaultOpen`.
  *
  * Statics:
  * - `Dialog.Trigger` — the control that opens it. `render={<Button/>}` or

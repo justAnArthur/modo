@@ -118,8 +118,7 @@ const PopoverContent = forwardRef<HTMLDivElement, PopoverContentProps>(
     const inPlace = opensInPlace({ effect, hideSource })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
     const shape = useShape()
-    // Lifts 2 levels off its substrate with a fixed shadow, like the dropdown
-    // and select menus (see Elevated).
+    // Fixed shadow, like the dropdown and select menus (see Elevated).
     const level = Math.min(useSurface() + 2, 8)
 
     return (

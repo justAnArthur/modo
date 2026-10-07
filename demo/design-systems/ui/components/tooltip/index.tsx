@@ -127,9 +127,9 @@ interface TooltipProps {
  * The trigger is whatever element you pass as the single child — it only has
  * to accept a ref. The label is portalled and grows out of its trigger
  * through the shared morph (see Morph), with the goo neck by default on
- * `spring.moderate`, and flips when it would collide with the viewport edge. `followCursor` tracks the pointer along one axis
- * for tall or wide triggers, while the other stays anchored by `side`. Built
- * on Base UI's Tooltip.
+ * `spring.moderate`, and flips when it would collide with the viewport edge.
+ * `followCursor` tracks the pointer along one axis for tall or wide triggers,
+ * while the other stays anchored by `side`. Built on Base UI's Tooltip.
  *
  * Statics:
  * - `Tooltip.Provider` — `TooltipProvider`: groups tooltips so moving from
@@ -212,13 +212,7 @@ function Tooltip({
           <TooltipPrimitive.Popup
             ref={morph.popupRef}
             className="relative outline-none"
-            // The motion wrapper only carries the cursor-follow offset, as a
-            // motion value so per-move updates skip React re-renders.
-            render={
-              <motion.div
-                style={followCursor === 'y' ? { y: followOffset } : followCursor === 'x' ? { x: followOffset } : {}}
-              />
-            }
+            render={<motion.div style={followCursor ? { [followCursor]: followOffset } : {}} />}
           >
             <MorphSurface
               morph={morph}

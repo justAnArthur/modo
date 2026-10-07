@@ -61,8 +61,7 @@ function RowShortcut() {
   )
 }
 
-// MenuItem hands its styled row to the surrounding menu's primitive; here that
-// is Base UI's context-menu item, with the row's shortcut after its content.
+// MenuItem's render hook: the styled row goes into Base UI's context-menu item.
 function renderMenuItem({
   radio,
   checkbox,
@@ -136,7 +135,7 @@ const ContextMenuContent = forwardRef<HTMLDivElement, ContextMenuContentProps>(
     const { open, origin } = useContext(ContextMenuContext)
     const morph = useMorph(open, origin, { from, effect, hideSource, tier })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
-    // Lifts 2 levels off its substrate with a fixed shadow, like Dropdown (see Elevated).
+    // Fixed shadow, like Dropdown (see Elevated).
     const level = Math.min(useSurface() + 2, 8)
     const containerRef = useRef<HTMLDivElement>(null)
     const hover = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
@@ -255,7 +254,6 @@ function ContextMenu({ open, defaultOpen = false, onOpenChange, disabled = false
         open={current}
         disabled={disabled}
         onOpenChange={(next, details) => {
-          // The press point comes off the contextmenu or long-press event.
           if (next) capture(details)
           setCurrent(next)
         }}
