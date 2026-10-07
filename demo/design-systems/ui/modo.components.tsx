@@ -92,8 +92,8 @@ declare global {
  * own provider, so the content between them is the inset card (global.css).
  * The trigger in the card's corner (or `[` for the nav, `]` for the panel)
  * switches a side between open and on hover: on hover it stays hidden until
- * the pointer reaches the strip beside the card, then opens until the pointer
- * leaves it. Below md each side is a drawer. The panel starts on hover below xl.
+ * the pointer reaches the column under the trigger, then opens until the
+ * pointer leaves it. Below md each side is a drawer. The panel starts on hover below xl.
  *
  * A section of links is a collapsible `Sidebar.Group` whose rows share one
  * `Sidebar.Menu`, so the current page and the hover highlight melt from link
@@ -112,7 +112,7 @@ export function DocsNav({ children }: { children?: ReactNode }) {
 function DocsSidebar({ side, children }: { side: SidebarSide; children?: ReactNode }) {
   const [pinned, setPinned] = useState(() => side === 'left' || window.matchMedia('(min-width: 1280px)').matches)
   const [hovered, setHovered] = useState(false)
-  const root = useRef<HTMLDivElement>(null)
+  const trigger = useRef<HTMLButtonElement>(null)
 
   const togglePinned = useCallback(() => {
     setPinned(previous => !previous)
@@ -126,14 +126,14 @@ function DocsSidebar({ side, children }: { side: SidebarSide; children?: ReactNo
   }, [])
 
   return (
-    <Sidebar.Provider ref={root} open={pinned || hovered} onOpenChange={onOpenChange} persist={false} shortcut={null}>
+    <Sidebar.Provider open={pinned || hovered} onOpenChange={onOpenChange} persist={false} shortcut={null}>
       <Sidebar variant="inset" side={side}>
         <Sidebar.Content>
           <nav aria-label={side === 'left' ? 'Docs' : 'Page'}>{children}</nav>
         </Sidebar.Content>
       </Sidebar>
-      <DocsNavTrigger side={side} pinned={pinned} onToggle={togglePinned} />
-      <HoverOpen side={side} root={root} enabled={!pinned} hovered={hovered} onHoveredChange={setHovered} />
+      <DocsNavTrigger buttonRef={trigger} side={side} pinned={pinned} onToggle={togglePinned} />
+      <HoverOpen side={side} trigger={trigger} enabled={!pinned} hovered={hovered} onHoveredChange={setHovered} />
     </Sidebar.Provider>
   )
 }
@@ -146,7 +146,17 @@ const shortcutKey = (side: SidebarSide) =>
  * or on hover, and a drawer below md. The card sits flush with an open
  * sidebar and a gutter away from a hidden one, so the trigger follows.
  */
-function DocsNavTrigger({ side, pinned, onToggle }: { side: SidebarSide; pinned: boolean; onToggle: () => void }) {
+function DocsNavTrigger({
+  buttonRef,
+  side,
+  pinned,
+  onToggle,
+}: {
+  buttonRef: RefObject<HTMLButtonElement>
+  side: SidebarSide
+  pinned: boolean
+  onToggle: () => void
+}) {
   const { open, isMobile, toggleSidebar } = useSidebar()
   const toggle = isMobile ? toggleSidebar : onToggle
   const key = shortcutKey(side)
@@ -177,7 +187,7 @@ function DocsNavTrigger({ side, pinned, onToggle }: { side: SidebarSide; pinned:
           </span>
         }
       >
-        <Button variant="ghost" size="icon" aria-label={label} onClick={toggle}>
+        <Button ref={buttonRef} variant="ghost" size="icon" aria-label={label} onClick={toggle}>
           <Glyph />
         </Button>
       </Tooltip>
@@ -186,20 +196,21 @@ function DocsNavTrigger({ side, pinned, onToggle }: { side: SidebarSide; pinned:
 }
 
 /**
- * On hover: the pointer reaching the strip between the window's edge and the
- * card opens the sidebar, and leaving the sidebar and its trigger closes it a
- * beat later. The strip is measured off the card, so it is the gutter while
- * the sidebar is hidden and the sidebar itself once it opens.
+ * On hover: the pointer in the column from the window's edge to the trigger's
+ * far edge opens the sidebar, so it needn't touch the edge (where a browser's
+ * own hover sidebar lives), and leaving it closes the sidebar a beat later.
+ * The trigger rides the sidebar's edge as it opens, so the column grows to
+ * cover it.
  */
 function HoverOpen({
   side,
-  root,
+  trigger,
   enabled,
   hovered,
   onHoveredChange,
 }: {
   side: SidebarSide
-  root: RefObject<HTMLElement>
+  trigger: RefObject<HTMLElement>
   enabled: boolean
   hovered: boolean
   onHoveredChange: (hovered: boolean) => void
@@ -207,24 +218,20 @@ function HoverOpen({
   const { isMobile } = useSidebar()
 
   useEffect(() => {
-    const card = document.querySelector('[data-modo="content"]')
-    if (!enabled || isMobile || !card) return
+    if (!enabled || isMobile) return
     let close: ReturnType<typeof setTimeout> | undefined
 
     const onPointerMove = (event: PointerEvent) => {
-      if (event.pointerType !== 'mouse') return
-      const box = card.getBoundingClientRect()
-      const beside = side === 'left' ? event.clientX < box.left : event.clientX > box.right
-      if (!hovered) {
-        if (beside) onHoveredChange(true)
-        return
-      }
-      if (beside || root.current?.contains(event.target as Node)) {
+      const button = trigger.current?.getBoundingClientRect()
+      if (event.pointerType !== 'mouse' || !button) return
+      const inside = side === 'left' ? event.clientX < button.right : event.clientX > button.left
+      if (inside) {
         clearTimeout(close)
         close = undefined
+        if (!hovered) onHoveredChange(true)
         return
       }
-      close ??= setTimeout(() => onHoveredChange(false), 300)
+      if (hovered) close ??= setTimeout(() => onHoveredChange(false), 300)
     }
 
     document.addEventListener('pointermove', onPointerMove)
@@ -232,7 +239,7 @@ function HoverOpen({
       document.removeEventListener('pointermove', onPointerMove)
       clearTimeout(close)
     }
-  }, [side, root, enabled, isMobile, hovered, onHoveredChange])
+  }, [side, trigger, enabled, isMobile, hovered, onHoveredChange])
 
   return null
 }

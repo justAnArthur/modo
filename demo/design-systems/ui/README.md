@@ -202,8 +202,10 @@ own provider, and `global.css` turns the content between them into the inset
 card (the lib's grid columns become `auto`, so they follow the sidebars' width
 springs). The trigger in the card's corner, `[` for the nav and `]` for the
 panel, switch a side between open and on hover: on hover it stays hidden
-until the pointer reaches the strip between the window's edge and the card,
-then opens (no peek card) until the pointer leaves it and its trigger.
+until the pointer reaches the column under its trigger (from the window's edge
+to the trigger's far edge, so a browser's own edge hover sidebar stays out of
+the way), then opens (no peek card) until the pointer leaves it and its
+trigger.
 `DocsNav` owns those keys, so a demo sidebar in the content keeps them only
 while it has focus. Below md each side is a drawer; the panel starts on hover
 below xl. A section of links is a collapsible `Sidebar.Group` with one
