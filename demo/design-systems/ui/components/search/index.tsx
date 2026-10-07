@@ -12,11 +12,12 @@
  */
 
 import { Autocomplete } from '@base-ui/react/autocomplete'
-import { motion, useReducedMotionConfig } from 'motion/react'
+import { motion } from 'motion/react'
 import { type KeyboardEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useIcon } from '../../lib/icon-context'
 import { MorphSurface } from '../../lib/morph-layers'
+import { useReduceMotion } from '../../lib/reduced-motion'
 import { shapeMap, useShape } from '../../lib/shape-context'
 import { useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
@@ -124,7 +125,7 @@ function Search({
   // it, so the goo neck grows from the field's final box.
   const [settled, setSettled] = useState(isExpanded)
   const [rest, setRest] = useState(0)
-  const reduced = useReducedMotionConfig()
+  const reduced = useReduceMotion()
   const shape = useShape()
   const size = useSize()
   const level = Math.min(useSurface() + 2, 8)

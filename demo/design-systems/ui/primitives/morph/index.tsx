@@ -78,7 +78,7 @@ interface MorphProps {
  *
  * The morph opens on a spring tier (`slow` by default) and closes on that
  * tier's faster exit tween, like every other animation here (see Motion).
- * Under `<MotionConfig reducedMotion="user">`, reduced motion turns every
+ * Reduced motion, the OS setting or a `MotionConfig` asking for it, turns every
  * effect into a fade.
  *
  * ## Liquid indicators

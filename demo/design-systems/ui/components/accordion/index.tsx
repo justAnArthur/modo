@@ -42,15 +42,7 @@
  */
 
 import { Accordion as AccordionPrimitive } from '@base-ui/react/accordion'
-import {
-  AnimatePresence,
-  animate,
-  motion,
-  useMotionValue,
-  useReducedMotion,
-  useReducedMotionConfig,
-  useTransform,
-} from 'motion/react'
+import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'motion/react'
 import {
   createContext,
   type ForwardRefExoticComponent,
@@ -75,6 +67,7 @@ const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : use
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { useIcon } from '../../lib/icon-context'
 import { GooFilter } from '../../lib/morph-layers'
+import { useReduceMotion } from '../../lib/reduced-motion'
 import { useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
@@ -840,12 +833,7 @@ const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps>(
     const { isOpen, highlight, press } = useAccordionItemContext()
     const shape = useShape()
     const sizeClasses = useSize()
-    // The OS setting as well as MotionConfig's: the panel's height is layout,
-    // which a consumer without a MotionConfig would otherwise animate for a
-    // reduced-motion user.
-    const reduceOS = useReducedMotion() ?? false
-    const reduceConfig = useReducedMotionConfig()
-    const reduceMotion = reduceOS || reduceConfig
+    const reduceMotion = useReduceMotion()
     const gooId = `accordion-goo-${useId().replace(/:/g, '')}`
     const progress = useMotionValue(isOpen ? 1 : 0)
     // The tint is there for most of the morph and fades only as the shape

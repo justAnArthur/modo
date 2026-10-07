@@ -10,7 +10,8 @@
  * ported. The toast is drawn like every other morph surface: the Elevated
  * level's background shapes melted by the shared goo filter, their shadows
  * beneath, the content on top. Colors are the status tokens, the sizes the
- * control ladder's, and the motion the spring tiers.
+ * control ladder's, and the motion the spring tiers; reduced motion keeps the
+ * fades and snaps the shapes.
  */
 
 import { Toast as ToastPrimitive } from '@base-ui/react/toast'
@@ -31,6 +32,7 @@ import {
   useState,
 } from 'react'
 import { GooFilter } from '../../lib/morph-layers'
+import { useReduceMotion } from '../../lib/reduced-motion'
 import { useShape } from '../../lib/shape-context'
 import { sizeMap } from '../../lib/size-context'
 import { type SlotProps, slotRender } from '../../lib/slot'
@@ -84,6 +86,7 @@ const VIEWPORT: Record<ToastPosition, string> = {
 // The pill is one control tall, and the goo melts as much as its radius allows.
 const PILL = sizeMap.default.controlHeight
 const BLUR = (PILL / 2) * GOO_BLUR_RATIO
+const SNAP = { duration: 0 }
 const AUTO_EXPAND_MS = 150
 const AUTO_COLLAPSE_BEFORE_MS = 2000
 
@@ -129,6 +132,7 @@ interface Box {
 }
 
 function Shape({ box, className, shapeRef }: { box: Box; className: string; shapeRef?: Ref<HTMLDivElement> }) {
+  const reduced = useReduceMotion()
   return (
     <motion.div
       ref={shapeRef}
@@ -136,7 +140,7 @@ function Shape({ box, className, shapeRef }: { box: Box; className: string; shap
       className={cn('pointer-events-none absolute top-0 left-0', className)}
       initial={false}
       animate={{ ...box }}
-      transition={spring.slow}
+      transition={reduced ? SNAP : spring.slow}
     />
   )
 }
@@ -213,7 +217,10 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
   const pillHeight = PILL + Math.min(bodyHeight, size.radius)
   const pill = { x: pillX, y: top ? 0 : height - pillHeight, width: size.pill, height: pillHeight }
   const bodyBox = { x: 0, y: top ? PILL : 0, width: size.width, height: bodyHeight }
-  const away = { opacity: 0, y: top ? -6 : 6, scale: 0.95 }
+  const reduced = useReduceMotion()
+  // Reduced motion keeps the fades and drops the travel.
+  const away = reduced ? { opacity: 0 } : { opacity: 0, y: top ? -6 : 6, scale: 0.95 }
+  const move = reduced ? SNAP : spring.slow
 
   return (
     <ToastPrimitive.Root
@@ -226,7 +233,7 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
         <motion.div
           initial={{ ...away, height: PILL }}
           animate={ending ? { ...away, height } : { opacity: 1, y: 0, scale: 1, height }}
-          transition={ending ? spring.moderate.exit : { ...spring.moderate, height: spring.slow }}
+          transition={ending ? spring.moderate.exit : { ...spring.moderate, height: move }}
         />
       }
       className="relative w-[min(22rem,calc(100vw-2rem))] select-none outline-none [translate:var(--toast-swipe-movement-x)_var(--toast-swipe-movement-y)]"
@@ -246,7 +253,7 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
           className="absolute top-0 left-0 flex h-9 w-max items-center py-1.5 pr-4 pl-1.5"
           initial={false}
           animate={{ x: pillX, y: top ? 0 : height - PILL }}
-          transition={spring.slow}
+          transition={move}
         >
           <ToastPrimitive.Title className="relative inline-flex items-center whitespace-nowrap">
             <AnimatePresence mode="popLayout" initial={false}>
@@ -271,7 +278,7 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
             className="absolute top-0 left-0 w-full overflow-hidden"
             initial={false}
             animate={{ y: bodyBox.y, height: bodyHeight, opacity: expanded ? 1 : 0 }}
-            transition={{ ...spring.slow, opacity: expanded ? spring.slow : spring.slow.exit }}
+            transition={{ ...move, opacity: expanded ? spring.slow : spring.slow.exit }}
           >
             <div ref={body} className={cn('flex flex-col items-start gap-3 p-4', top ? 'pt-6' : 'pb-6')}>
               <ToastPrimitive.Description className="text-caption text-muted-foreground" />

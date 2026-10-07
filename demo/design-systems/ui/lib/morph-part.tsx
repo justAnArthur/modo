@@ -10,6 +10,7 @@
 
 import { motion } from 'motion/react'
 import { createContext, type ReactNode, useContext } from 'react'
+import { useReduceMotion } from './reduced-motion'
 import { spring } from './springs'
 
 /** Set by an overlay root: the id its parts are scoped to and whether it is open. */
@@ -32,9 +33,10 @@ interface MorphPartProps {
 function MorphPart({ id, className, children }: MorphPartProps) {
   const scope = useContext(MorphPartScope)
   const inOverlay = useContext(MorphPartInOverlay)
+  const reduced = useReduceMotion()
   // The overlay's twin lets go of the id as soon as the close starts, so the
   // trigger's part flies back while Base UI still shows the closing overlay.
-  const layoutId = scope && (scope.open || !inOverlay) ? `${scope.id}-${id}` : undefined
+  const layoutId = scope && !reduced && (scope.open || !inOverlay) ? `${scope.id}-${id}` : undefined
 
   return (
     <motion.div layoutId={layoutId} transition={enter} className={className}>

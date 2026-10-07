@@ -36,7 +36,7 @@ upstream path and commit, carries the MIT notice, and lists every local
 modification. The vendored code below the header keeps upstream's formatting.
 Files written for this port (`uno.config.ts`, `vite.ts`, `modo.components.tsx`,
 `lib/use-controllable-state.ts`, `primitives/code/index.tsx`, the morph files
-in `lib/` (`use-morph.ts`, `morph-layers.tsx`, `morph-part.tsx`, `goo-indicator.tsx`,
+in `lib/` (`use-morph.ts`, `reduced-motion.ts`, `morph-layers.tsx`, `morph-part.tsx`, `goo-indicator.tsx`,
 `slot.ts`) and `primitives/morph/index.tsx`, `blocks/sidebar-app/index.tsx`,
 and the local components marked "— (local)" below) use this repo's style: single quotes and no semicolons.
 
@@ -91,7 +91,8 @@ positioning) are ported.
 | `hooks/use-touch-primary.tsx` | `lib/use-touch-primary.tsx` | `"use client"` dropped |
 | `fluid-hover-highlight.tsx` | `lib/fluid-hover-highlight.tsx` | `"use client"` dropped; `framer-motion` → `motion/react`; relative imports; the fill is a `GooIndicator` (melts from row to row), props unchanged |
 | — (new) | `lib/use-controllable-state.ts` | Local addition: controlled + uncontrolled state, Base UI style |
-| — (new) | `lib/use-morph.ts` | Local addition: the morph engine (source rect → popup box on a spring tier, exit hold for Base UI's unmount), geometry after beUI's popover; a close-only `exit` override, an `instant` predicate that ends a run at once, press points from clicks, context menus and long presses (a droplet source for `from="pointer"`), cleanup when the popup unmounts mid-run |
+| — (new) | `lib/use-morph.ts` | Local addition: the morph engine (source rect → popup box on a spring tier, exit hold for Base UI's unmount), geometry after beUI's popover; a close-only `exit` override, an `instant` predicate that ends a run at once, press points from clicks, context menus and long presses (a droplet source for `from="pointer"`), cleanup when the popup unmounts mid-run; focus goes back to the trigger when a closed popup that held it is gone and Base UI skipped the return (the exit hold makes a menu read the pointer leaving the inert popup as a hover close) |
+| — (new) | `lib/reduced-motion.ts` | Local addition: `useReduceMotion`, the one reduced-motion read for the morph layer and the liquid indicators — the OS setting, or a `MotionConfig` asking for it (motion's `useReducedMotionConfig` alone ignores the OS without `<MotionConfig reducedMotion="user">`) |
 | — (new) | `lib/slot.ts` | Local addition: Dialog's `render` / `asChild` slot shape (`SlotProps`, `slotRender`), shared by every overlay part that wraps a control |
 | — (new) | `lib/morph-part.tsx` | Local addition: `MorphPart` (shared parts over a motion `layoutId`, after motion-primitives' morphing dialog) and the scope contexts overlays provide |
 | — (new) | `lib/goo-indicator.tsx` | Local addition: `GooIndicator` (melts between items, a lingering blob follows it) and `GooLayer` (goo over the shapes' coverage, filled with their own token, on only while moving), on the engine's `GOO_MATRIX` / `GOO_BLUR_RATIO` |

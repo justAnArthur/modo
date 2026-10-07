@@ -19,15 +19,9 @@
  * alike.
  */
 
-import {
-  animate,
-  motion,
-  type Transition,
-  useMotionValue,
-  useReducedMotionConfig,
-  type ValueAnimationTransition,
-} from 'motion/react'
+import { animate, motion, type Transition, useMotionValue, type ValueAnimationTransition } from 'motion/react'
 import { type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useReduceMotion } from './reduced-motion'
 import { spring } from './springs'
 import type { ItemRect } from './use-fluid-hover'
 import { GOO_BLUR_RATIO, GOO_MATRIX } from './use-morph'
@@ -178,7 +172,7 @@ export function GooIndicator({
   transition = spring.moderate,
   opacity = 1,
 }: GooIndicatorProps) {
-  const reduced = useReducedMotionConfig()
+  const reduced = useReduceMotion()
   const start = from ?? rect
   const x = useMotionValue(start.left)
   const y = useMotionValue(start.top)

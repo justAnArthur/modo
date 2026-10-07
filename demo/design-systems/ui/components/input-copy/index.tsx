@@ -32,7 +32,7 @@
  *   variant keeps that one glyph slot and swaps only its word.
  */
 
-import { AnimatePresence, animate, motion, useMotionValue, useReducedMotionConfig } from 'motion/react'
+import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
 import {
   forwardRef,
   type HTMLAttributes,
@@ -45,6 +45,7 @@ import {
 } from 'react'
 import { type IconComponent, useIcon } from '../../lib/icon-context'
 import { GooFilter } from '../../lib/morph-layers'
+import { useReduceMotion } from '../../lib/reduced-motion'
 import { useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
@@ -108,7 +109,7 @@ function CopyDisc({ status }: { status: CopyStatus }) {
   const back = useRef<HTMLSpanElement>(null)
   const front = useRef<HTMLSpanElement>(null)
   const progress = useMotionValue(0)
-  const reduced = useReducedMotionConfig()
+  const reduced = useReduceMotion()
   const gooId = `copy-goo-${useId().replace(/:/g, '')}`
   const tone = useRef<'copied' | 'error'>('copied')
   const on = status !== 'idle'

@@ -16,14 +16,15 @@
  *   `muted-foreground` dots that melt into one blob (swelling to hold their
  *   area) and split again through the shared `GooFilter`, one loop every
  *   eight slow-tier lengths, beside a plain cycling label. Reduced motion
- *   (the OS setting or MotionConfig's, which now also counts for the
- *   shimmer look) holds them split and still. The default stays upstream's
+ *   (`useReduceMotion`: the OS setting or MotionConfig's, which now also
+ *   counts for the shimmer look) holds them split and still. The default stays upstream's
  *   `shimmer` look.
  */
 
-import { AnimatePresence, motion, useReducedMotion, useReducedMotionConfig } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { forwardRef, type HTMLAttributes, useEffect, useId, useState } from 'react'
 import { GooFilter } from '../../lib/morph-layers'
+import { useReduceMotion } from '../../lib/reduced-motion'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
 import { GOO_BLUR_RATIO } from '../../lib/use-morph'
@@ -110,10 +111,7 @@ const ThinkingIndicator = forwardRef<HTMLDivElement, ThinkingIndicatorProps>(
     const [index, setIndex] = useState(0)
     // Reduced motion drops the infinite glyph morph and the word cycling — a
     // static glyph and label carry the same meaning without the movement.
-    // Local: MotionConfig's setting counts too.
-    const reduceOS = useReducedMotion() ?? false
-    const reduceConfig = useReducedMotionConfig() ?? false
-    const reduceMotion = reduceOS || reduceConfig
+    const reduceMotion = useReduceMotion()
     const label = variant === 'goo' ? 'text-muted-foreground' : 'shimmer-text'
 
     useEffect(() => {

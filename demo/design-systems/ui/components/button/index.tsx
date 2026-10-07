@@ -28,7 +28,7 @@
 
 import { Button as ButtonPrimitive } from '@base-ui/react/button'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { AnimatePresence, animate, motion, useMotionValue, useReducedMotionConfig } from 'motion/react'
+import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
 import {
   type ButtonHTMLAttributes,
   cloneElement,
@@ -40,6 +40,7 @@ import {
   useRef,
 } from 'react'
 import type { IconComponent } from '../../lib/icon-context'
+import { useReduceMotion } from '../../lib/reduced-motion'
 import { useShape } from '../../lib/shape-context'
 import { useSizeVariant } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
@@ -171,7 +172,7 @@ const { exit: _exit, ...enter } = spring.moderate
 function useLoadingMorph(loading: boolean) {
   const surface = useRef<HTMLSpanElement>(null)
   const progress = useMotionValue(loading ? 1 : 0)
-  const reduced = useReducedMotionConfig()
+  const reduced = useReduceMotion()
 
   useLayoutEffect(() => {
     const el = surface.current

@@ -18,9 +18,10 @@
  *   `radii` and `instant`.
  */
 
-import { AnimatePresence, motion, useReducedMotionConfig } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { GooLayer, union } from './goo-indicator'
+import { useReduceMotion } from './reduced-motion'
 import { spring } from './springs'
 import type { ItemRect } from './use-fluid-hover'
 import { GOO_BLUR_RATIO } from './use-morph'
@@ -157,7 +158,7 @@ const variants = (b: SelBlock) => ({
  * it off them; the filter runs only for that change. Reduced motion fades.
  */
 export function SelectionBackgrounds({ blocks }: { blocks: SelBlock[] }) {
-  const reduced = useReducedMotionConfig()
+  const reduced = useReduceMotion()
   const mode: Mode = blocks.some(b => b.instant) ? 'snap' : reduced ? 'fade' : 'goo'
   const rows = blocks.map(b => b.key).join('|')
   const [melting, setMelting] = useState(false)

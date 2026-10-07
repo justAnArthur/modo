@@ -23,8 +23,9 @@
  */
 
 import { cva, type VariantProps } from 'class-variance-authority'
-import { AnimatePresence, animate, motion, useReducedMotionConfig } from 'motion/react'
+import { AnimatePresence, animate, motion } from 'motion/react'
 import { forwardRef, type HTMLAttributes, type ReactNode, useLayoutEffect, useRef } from 'react'
+import { useReduceMotion } from '../../lib/reduced-motion'
 import { useShape } from '../../lib/shape-context'
 import { useSizeVariant } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
@@ -100,7 +101,7 @@ function useWidthMorph(change: string) {
   const content = useRef<HTMLSpanElement>(null)
   const rest = useRef(0)
   const live = useRef<number | null>(null)
-  const reduced = useReducedMotionConfig()
+  const reduced = useReduceMotion()
 
   useLayoutEffect(() => {
     const el = content.current
