@@ -268,7 +268,7 @@ function Combobox({
   const [inputValue, setInputValue] = useState('')
   const [open, setOpen] = useState(false)
   const [highlight, setHighlight] = useState<Highlight | null>(null)
-  // Local: items made by the create row while no consumer owns the list.
+  // Items the create row made while no consumer owns the list.
   const [createdItems, setCreatedItems] = useState<ComboboxItemData[]>([])
   const { origin, capture } = useMorphOrigin()
   const anchorRef = useRef<HTMLDivElement | null>(null)
@@ -278,13 +278,12 @@ function Combobox({
   const controlledValues = useMemo(() => toValues(value), [value])
   const values = value !== undefined ? controlledValues : internalValues
 
-  // Local: the consumer's items plus anything `creatable` made here. A
-  // consumer that adds a created item to `items` itself wins — the internal
-  // copy is deduped away, so the two modes never double a row.
+  // The consumer's items plus anything `creatable` made here. A consumer that
+  // adds a created item to `items` itself wins — the internal copy is deduped
+  // away, so the two modes never double a row.
   const allItems = useMemo<readonly ComboboxItemData[]>(() => {
-    if (createdItems.length === 0) return items
     const own = createdItems.filter(made => !items.some(item => itemValue(item) === itemValue(made)))
-    return own.length === 0 ? items : [...items, ...own]
+    return own.length ? [...items, ...own] : items
   }, [items, createdItems])
 
   // The query the primitive filters on: the trimmed input. In single mode
@@ -327,8 +326,6 @@ function Combobox({
   // and selects whatever comes back.
   const onCreateRef = useRef(onCreate)
   onCreateRef.current = onCreate
-  const creatableRef = useRef(creatable)
-  creatableRef.current = creatable
   const handleValueChange = useCallback(
     (next: ComboboxItemData[] | ComboboxItemData | null) => {
       const picked = Array.isArray(next) ? next : next == null ? [] : [next]
@@ -337,19 +334,17 @@ function Combobox({
       if (created) {
         const madeQuery = itemLabel(created)
         const made = onCreateRef.current?.(madeQuery) ?? undefined
-        if (made === undefined) {
-          if (creatableRef.current) {
-            // Local: no consumer owns the list, so the item is made and kept
-            // here — the row it adds is indistinguishable from a real one.
-            const own: ComboboxItemData = { value: madeQuery, label: madeQuery }
-            setCreatedItems(prev => (prev.some(item => itemValue(item) === madeQuery) ? prev : [...prev, own]))
-            nextValues = [...nextValues, madeQuery]
-          } else if (!isMultiple) {
-            // Nothing to select: a single field keeps its pick.
-            return
-          }
-        } else {
+        if (made !== undefined) {
           nextValues = [...nextValues, itemValue(made)]
+        } else if (creatable) {
+          // No consumer owns the list, so the item is made and kept here: the
+          // row it adds is indistinguishable from a real one.
+          const own: ComboboxItemData = { value: madeQuery, label: madeQuery }
+          setCreatedItems(prev => (prev.some(item => itemValue(item) === madeQuery) ? prev : [...prev, own]))
+          nextValues = [...nextValues, madeQuery]
+        } else if (!isMultiple) {
+          // Nothing to select: a single field keeps its pick.
+          return
         }
       }
       if (value === undefined) setInternalValues(nextValues)
@@ -357,7 +352,7 @@ function Combobox({
         isMultiple ? nextValues : (nextValues[0] ?? ''),
       )
     },
-    [value, onValueChange, isMultiple],
+    [value, onValueChange, isMultiple, creatable],
   )
 
   // The create row must survive the filter that hides every other miss.

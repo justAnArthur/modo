@@ -131,12 +131,6 @@ const shape = shapeMap.rounded
 export type { DropdownContextValue, MenuItemRenderOptions }
 export { useDropdown, useDropdownMaybe }
 
-// ---------------------------------------------------------------------------
-// Uncontrolled selection and uncontrolled search (local additions)
-//
-// Both panels take the same pair of concerns, so both read them from here.
-// ---------------------------------------------------------------------------
-
 /* "Nothing checked", so useControllableState always sees a defined value
    while the caller drives the selection (`undefined` is what it reads as
    "uncontrolled"). */
@@ -196,9 +190,9 @@ function usePanelSelection(
         setMany(prev =>
           prev.includes(source) ? prev.filter(i => i !== source) : [...prev, source].sort((a, b) => a - b),
         )
-      } else {
-        setSingle(source)
+        return
       }
+      setSingle(source)
     },
     [multiple, setMany, setSingle],
   )
@@ -250,10 +244,7 @@ function usePanelRows(children: ReactNode): PanelRows {
   const filtering = useMemo(
     () =>
       Children.toArray(children).some(
-        child =>
-          isValidElement(child) &&
-          child.type === DropdownSearch &&
-          (child.props as { filter?: boolean }).filter === true,
+        child => isValidElement(child) && child.type === DropdownSearch && (child.props as { filter?: boolean }).filter,
       ),
     [children],
   )
@@ -271,16 +262,20 @@ function usePanelRows(children: ReactNode): PanelRows {
         rendered.push(child)
         continue
       }
+
       if (child.type === DropdownEmpty) {
         empties.push(child)
         continue
       }
+
       const rowProps = child.props as { label?: unknown; index?: unknown }
       if (typeof rowProps.label !== 'string' || typeof rowProps.index !== 'number') {
         rendered.push(child)
         continue
       }
+
       if (needle && !rowProps.label.toLowerCase().includes(needle)) continue
+
       rendered.push(
         cloneElement(child as ReactElement<Record<string, unknown>>, {
           index: sources.length,
@@ -783,9 +778,9 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
     const blocks = useMergeSplitBlocks(runs, open ? itemRects : NO_RECTS, shape.bgRadius)
     // Inside the popup, Base UI's Menu.Item / Menu.RadioItem own the role,
     // aria-checked, tabIndex, roving highlight, typeahead, and Enter/Space/
-    // click activation (activation synthesizes a click, so the row div's
-    // onClick also fires for keyboard). The render div carries the Fluid
-    // Functionalism visuals and the fluid-hover registration.
+    // click activation. Keyboard activation reaches only the primitive's own
+    // onClick, so the row's activation rides there. The render div carries the
+    // Fluid Functionalism visuals and the fluid-hover registration.
     const renderMenuItem = useCallback(
       ({
         radio,
@@ -800,8 +795,6 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
         children,
       }: MenuItemRenderOptions) =>
         checkbox ? (
-          // The row's own onClick toggles the consumer state; the primitive
-          // only owns the role, aria-checked, and keyboard activation.
           <Menu.CheckboxItem
             checked={!!checked}
             disabled={disabled}
@@ -1007,8 +1000,6 @@ const DropdownSeparator = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEleme
 
 DropdownSeparator.displayName = 'DropdownSeparator'
 
-// Compound statics: `<Dropdown.Menu>`, `<Dropdown.Item>`, … (typed by the
-// DropdownComponent cast on the forwardRef above).
 Object.assign(Dropdown, {
   Menu: DropdownMenu,
   Trigger: DropdownTrigger,

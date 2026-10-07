@@ -164,21 +164,23 @@ interface SelectProps {
 }
 
 /**
- * An animated select menu: fluid hover on the rows, a spring-driven popover,
- * and a checkmark that draws itself as the selection lands.
+ * An animated select menu: fluid hover on the rows, a popup that oozes out of
+ * its trigger, and a checkmark that draws itself as the selection lands.
  *
  * Built on Base UI's Select — positioning and collision flipping, dismissal,
  * typeahead, combobox ARIA and the hidden form input all come from the
  * primitive. This layer adds the magnetic hover background, the selected
- * background that springs from the old row to the picked one, and a keyboard
- * focus ring that only appears once you actually use the keyboard. A pick
- * holds the popup open for 300ms so that acknowledgment is seen; Escape and
- * outside presses close at once. Uncontrolled through `defaultValue`,
- * controlled through `value` + `onValueChange`.
+ * background that springs from the old row to the picked one, a keyboard
+ * focus ring that only appears once you actually use the keyboard, and the
+ * popup's open and close through the shared morph (see Morph), goo by
+ * default. A pick holds the popup open for 300ms so that acknowledgment is
+ * seen; Escape and outside presses close at once. Uncontrolled through
+ * `defaultValue`, controlled through `value` + `onValueChange`.
  *
  * Statics: Select.Trigger (variant, icon, placeholder, error),
- * Select.Content (the popover), Select.Item (index, value, icon, disabled),
- * Select.Group, Select.Label and Select.Separator.
+ * Select.Content (the popup: the morph options from, effect, hideSource,
+ * tier), Select.Item (index, value, icon, disabled), Select.Group,
+ * Select.Label and Select.Separator.
  *
  * @example {@include ./examples.mdx}
  */

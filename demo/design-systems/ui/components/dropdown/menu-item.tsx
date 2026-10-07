@@ -162,9 +162,8 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
 
     // Uncontrolled panels answer for rows that brought no `checked` of their
     // own; a row that did keeps it.
-    const isChecked =
-      checked ??
-      (selfManaged ? (multiple ? (checkedIndices?.includes(index) ?? false) : checkedIndex === index) : undefined)
+    const panelChecked = multiple ? (checkedIndices?.includes(index) ?? false) : checkedIndex === index
+    const isChecked = checked ?? (selfManaged ? panelChecked : undefined)
     const isCheckbox = !!multiple && typeof isChecked === 'boolean'
 
     useRegisterFluidHoverItem(registerItem, index, internalRef)
