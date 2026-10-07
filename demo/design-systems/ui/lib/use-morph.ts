@@ -12,7 +12,7 @@
  * `shadow-surface-N` is never cut off.
  */
 
-import { animate, useMotionValue, useReducedMotionConfig } from 'motion/react'
+import { animate, clamp, useMotionValue, useReducedMotionConfig } from 'motion/react'
 import { type RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { exitFallbackMs, spring } from './springs'
 
@@ -70,6 +70,7 @@ const GOO_MATRIX = '1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10'
 const GOO_BLUR_RATIO = 0.5
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+const drawsShape = (effect: MorphEffect) => effect === 'goo' || effect === 'morph'
 
 function lerpRect(a: Rect, b: Rect, t: number): Rect {
   return {
@@ -151,8 +152,9 @@ function sourceRect(from: MorphFrom, origin: MorphOrigin, box: DOMRect, target: 
   }
 
   const el = sourceElement(from, origin)
-  const rect = el?.getBoundingClientRect()
-  if (!el || !rect || !onScreen(rect)) return center
+  if (!el) return center
+  const rect = el.getBoundingClientRect()
+  if (!onScreen(rect)) return center
   return local(rect.left, rect.top, rect.width, rect.height, radiusOf(el, rect.width, rect.height))
 }
 
@@ -187,6 +189,10 @@ function place(el: HTMLElement | null, { x, y, w, h, r }: Rect) {
   el.style.borderRadius = `${r}px`
 }
 
+function within(rect: Rect, layer: Rect): Rect {
+  return { ...rect, x: rect.x - layer.x, y: rect.y - layer.y }
+}
+
 function insetClip(rect: Rect, box: Rect) {
   const right = box.w - rect.x - rect.w
   const bottom = box.h - rect.y - rect.h
@@ -199,8 +205,8 @@ function insetClip(rect: Rect, box: Rect) {
  * the trigger's box is where the panel starts. Anchored overlays pass
  * `inPlaceOffset` as Base UI's `sideOffset` while this holds.
  */
-function opensInPlace({ effect, hideSource }: MorphOptions) {
-  return effect === 'morph' && (hideSource ?? false)
+function opensInPlace({ effect, hideSource = false }: MorphOptions) {
+  return effect === 'morph' && hideSource
 }
 
 /** Base UI `sideOffset` that pulls the panel back over its anchor, edge to edge, on whichever side it lands. */
@@ -264,7 +270,9 @@ function useMorph(
   onExited?: () => void,
 ) {
   const reduced = useReducedMotionConfig()
-  const resolved: MorphEffect = reduced ? 'fade' : effect
+  const resolve = (wanted: MorphEffect): MorphEffect => (reduced ? 'fade' : wanted)
+  const resolved = resolve(effect)
+  const { exit: leave, ...enter } = spring[tier]
   const progress = useMotionValue(0)
   const gooId = `morph-goo-${useId().replace(/:/g, '')}`
   const geometry = useRef<Geometry | null>(null)
@@ -294,16 +302,13 @@ function useMorph(
     if (!g) return
     const { bg, content, shadow, popup, shape } = refs
     const { effect } = run.current
-    const shaped = effect === 'goo' || effect === 'morph'
+    const shaped = drawsShape(effect)
     const slide = { ...g.target, x: g.offset.x * (1 - p), y: g.offset.y * (1 - p) }
     const rect = clampRect(shaped ? lerpRect(g.source, g.target, p) : effect === 'slide' ? slide : g.target)
 
-    place(
-      shaped ? shape.current : bg.current,
-      shaped ? { ...rect, x: rect.x - g.layer.x, y: rect.y - g.layer.y } : rect,
-    )
+    place(shaped ? shape.current : bg.current, shaped ? within(rect, g.layer) : rect)
     place(shadow.current, rect)
-    if (shadow.current) shadow.current.style.opacity = String(Math.min(1, Math.max(0, p)))
+    if (shadow.current) shadow.current.style.opacity = String(clamp(0, 1, p))
 
     // Every property on every frame: a reopen can change the effect mid-run.
     if (content.current) {
@@ -331,9 +336,7 @@ function useMorph(
     const el = refs.popup.current
     if (!el) return
     const { effect, from } = run.current
-    // goo and morph draw the moving surface in the shapes layer, which is cut
-    // around the source; slide and fade move the resting background itself.
-    const shaped = effect === 'goo' || effect === 'morph'
+    const shaped = drawsShape(effect)
     const box = el.getBoundingClientRect()
     const target = { x: 0, y: 0, w: box.width, h: box.height, r: targetRadius.current }
     const source = sourceRect(from, origin.current ?? {}, box, target)
@@ -346,10 +349,10 @@ function useMorph(
     if (!shapes.current) return
     shapes.current.style.display = shaped ? 'block' : ''
     if (!shaped) return
-    const local = (rect: Rect) => ({ ...rect, x: rect.x - layer.x, y: rect.y - layer.y })
+
     place(shapes.current, { ...layer, r: 0 })
     if (effect === 'goo') {
-      place(copy.current, local(source))
+      place(copy.current, within(source, layer))
       refs.blur.current?.setAttribute('stdDeviation', String(blur))
     }
     // The layer sits above the page, so the surface growing out of the source
@@ -359,7 +362,7 @@ function useMorph(
     // `mask: url(#…)` on an SVG <mask>.
     const cut = source.w > 0 && source.h > 0 && !hideSource && !overlaps(source, target)
     shapes.current.style.clipPath = cut
-      ? `path(evenodd, "${roundedRectPath({ ...layer, x: 0, y: 0 })} ${roundedRectPath(local(source))}")`
+      ? `path(evenodd, "${roundedRectPath({ ...layer, x: 0, y: 0 })} ${roundedRectPath(within(source, layer))}")`
       : ''
   }
 
@@ -378,65 +381,62 @@ function useMorph(
     el.style.opacity = '0'
   }
 
-  const skip = (el: HTMLElement) => instant?.(el) ?? false
+  const skip = (el: HTMLElement) => instant?.(el)
 
-  useLayoutEffect(() => {
-    if (!popup) {
-      // The popup left mid-run (Base UI or its owner unmounted it): give the
-      // source back and start the next open from scratch.
-      reveal()
-      progress.jump(0)
-      if (geometry.current && !open) exited.current?.()
-      geometry.current = null
+  const opening = (popup: HTMLDivElement) => {
+    run.current = { effect: resolved, from }
+    const first = !geometry.current
+    if (first && refs.bg.current) {
+      const box = popup.getBoundingClientRect()
+      targetRadius.current = radiusOf(refs.bg.current, box.width, box.height)
+    }
+
+    let controls: ReturnType<typeof animate> | undefined
+    const begin = () => {
+      measure()
+      hide(sourceElement(from, origin.current ?? {}))
+      if (skip(popup)) {
+        progress.jump(1)
+        rest()
+        return
+      }
+
+      render(progress.get())
+      controls = animate(progress, 1, {
+        ...enter,
+        onUpdate: p => {
+          if (skip(popup)) controls?.complete()
+          render(p)
+        },
+        onComplete: rest,
+      })
+    }
+
+    // A reopen picks the closing surface up where it is, and a skipped morph
+    // shows at once (the popup it replaces is already gone); only a fresh
+    // open waits a frame, hidden, since Base UI positions the popup in a
+    // microtask after this effect.
+    if (!first || skip(popup) || !refs.bg.current) {
+      begin()
+      return () => controls?.stop()
+    }
+
+    refs.bg.current.style.opacity = '0'
+    if (refs.shadow.current) refs.shadow.current.style.opacity = '0'
+    if (refs.content.current) refs.content.current.style.clipPath = 'inset(50%)'
+    const frame = requestAnimationFrame(begin)
+    return () => {
+      cancelAnimationFrame(frame)
+      controls?.stop()
+    }
+  }
+
+  const closing = (popup: HTMLDivElement) => {
+    if (!geometry.current) {
+      exited.current?.()
       return
     }
-    const { exit: leave, ...enter } = spring[tier]
 
-    if (open) {
-      run.current = { effect: resolved, from }
-      const first = !geometry.current
-      if (first && refs.bg.current) {
-        const box = popup.getBoundingClientRect()
-        targetRadius.current = radiusOf(refs.bg.current, box.width, box.height)
-      }
-      let controls: ReturnType<typeof animate> | undefined
-      const begin = () => {
-        measure()
-        hide(sourceElement(from, origin.current ?? {}))
-        if (skip(popup)) {
-          progress.jump(1)
-          rest()
-          return
-        }
-        render(progress.get())
-        controls = animate(progress, 1, {
-          ...enter,
-          onUpdate: p => {
-            if (skip(popup)) controls?.complete()
-            render(p)
-          },
-          onComplete: rest,
-        })
-      }
-      // A reopen picks the closing surface up where it is, and a skipped morph
-      // shows at once (the popup it replaces is already gone); only a fresh
-      // open waits a frame, hidden, since Base UI positions the popup in a
-      // microtask after this effect.
-      if (!first || skip(popup) || !refs.bg.current) {
-        begin()
-        return () => controls?.stop()
-      }
-      refs.bg.current.style.opacity = '0'
-      if (refs.shadow.current) refs.shadow.current.style.opacity = '0'
-      if (refs.content.current) refs.content.current.style.clipPath = 'inset(50%)'
-      const frame = requestAnimationFrame(begin)
-      return () => {
-        cancelAnimationFrame(frame)
-        controls?.stop()
-      }
-    }
-
-    if (!geometry.current) return
     const done = () => {
       reveal()
       geometry.current = null
@@ -448,15 +448,15 @@ function useMorph(
       done()
       return
     }
-    run.current = exit
-      ? { effect: reduced ? 'fade' : exit.effect, from: exit.from ?? from }
-      : { effect: resolved, from }
+
+    run.current = { effect: resolve(exit?.effect ?? effect), from: exit?.from ?? from }
     // An override leaves from the whole surface as it stands, not from
     // wherever the open had got to.
     if (exit) progress.jump(1)
     const hold = holdExit(popup, tier)
     measure()
     render(progress.get())
+    // `let`: a skipped run can report before `animate` returns.
     let controls: ReturnType<typeof animate> | undefined
     controls = animate(progress, 0, {
       ...leave,
@@ -473,6 +473,19 @@ function useMorph(
       controls?.stop()
       hold.cancel()
     }
+  }
+
+  useLayoutEffect(() => {
+    if (!popup) {
+      // The popup left mid-run (Base UI or its owner unmounted it): give the
+      // source back and start the next open from scratch.
+      reveal()
+      progress.jump(0)
+      if (geometry.current && !open) exited.current?.()
+      geometry.current = null
+      return
+    }
+    return open ? opening(popup) : closing(popup)
   }, [open, popup])
 
   useEffect(() => reveal, [])

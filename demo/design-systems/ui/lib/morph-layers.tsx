@@ -5,11 +5,12 @@
  *
  * - shapes: while goo or morph runs, the growing surface, cut around the
  *   source so the source stays visible. For goo, an SVG goo filter melts it
- *   with a copy of the source into one shape with a liquid neck. The filter (blur, alpha threshold, composite on top) is beUI's
- *   gooey popover (github.com/starc007/ui-components
- *   `components/motion/popover.tsx` @ de52f337e520e7ee37749b36eb1c32df86137bcb
- *   — MIT © 2026 Saurabh Chauhan, notice: LICENSE.beui), the same one Sileo's
- *   toast uses (github.com/hiaaryan/sileo `src/sileo.tsx` @
+ *   with a copy of the source into one shape with a liquid neck. The filter
+ *   (blur, alpha threshold, composite on top) is beUI's gooey popover
+ *   (github.com/starc007/ui-components `components/motion/popover.tsx` @
+ *   de52f337e520e7ee37749b36eb1c32df86137bcb — MIT © 2026 Saurabh Chauhan,
+ *   notice: LICENSE.beui), the same one Sileo's toast uses
+ *   (github.com/hiaaryan/sileo `src/sileo.tsx` @
  *   9793f844349983e140cf33cebbb8f51626d41407 — MIT, notice: LICENSE.sileo).
  * - surface: the background and, above it, the shadow (so a dark scheme's
  *   inset highlight lands on top, as on one `Elevated` element). Two layers

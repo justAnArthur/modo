@@ -18,7 +18,7 @@ interface SlotProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 function slotRender(render: ReactElement | undefined, asChild: boolean | undefined, children: ReactNode) {
   if (render) return render
-  return asChild && isValidElement(children) ? (children as ReactElement) : undefined
+  return asChild && isValidElement(children) ? children : undefined
 }
 
 export type { SlotProps }

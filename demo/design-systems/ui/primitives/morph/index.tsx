@@ -55,7 +55,8 @@ interface MorphProps {
  *
  * ## Options
  *
- * Every morphing overlay takes the same three options.
+ * Every morphing overlay takes the same `from`, `effect` and `hideSource`
+ * options, and a spring `tier` (see Motion).
  *
  * - `from` — where the surface grows from. `'trigger'` is the trigger that
  *   was pressed; it is measured again on close, and when it has gone or
@@ -154,7 +155,7 @@ export default function Morph({
       >
         {shown ? 'Close' : label}
       </Button>
-      {(shown || mounted) && (
+      {mounted && (
         // Opened in place, the panel covers its own trigger, so pressing the panel closes it.
         // biome-ignore lint/a11y/useKeyWithClickEvents lint/a11y/noStaticElementInteractions: the trigger stays the keyboard path (Enter/Space on it toggles; focus stays on it)
         <div
