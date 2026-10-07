@@ -3,9 +3,30 @@
  * modo.config.ts picks each one by export name: `./modo.components.tsx#Select`.
  */
 
-import { Check, CodeXml, Copy, Link2, Monitor, Moon, Sun } from 'lucide-react'
-import { Children, isValidElement, type ReactNode, useEffect, useState } from 'react'
-import { SidebarInsetTopbar } from './blocks/sidebar-app/inset-topbar'
+import {
+  Check,
+  CodeXml,
+  Copy,
+  Link2,
+  Monitor,
+  Moon,
+  PanelLeft,
+  PanelLeftDashed,
+  PanelRight,
+  PanelRightDashed,
+  Sun,
+} from 'lucide-react'
+import {
+  Children,
+  isValidElement,
+  type ReactNode,
+  type RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
+import Button from './components/button'
 import FluidSelect from './components/select'
 import Sidebar, {
   SIDEBAR_KEYBOARD_SHORTCUT,
@@ -13,6 +34,7 @@ import Sidebar, {
   type SidebarSide,
   useSidebar,
 } from './components/sidebar'
+import Tooltip from './components/tooltip'
 import { cn } from './lib/utils'
 
 const icons = { code: CodeXml, copy: Copy, check: Check, link: Link2 }
@@ -67,10 +89,11 @@ declare global {
 
 /**
  * Sidebar slot: both asides of the chrome, each an inset `Sidebar` with its
- * own provider, so the content between them is the inset card (global.css)
- * and either side hides on its own: the trigger in the card's corner, `[` for
- * the nav, `]` for the panel. Collapsed, a side peeks back out when you rest
- * on its trigger; below md each is a drawer. The panel starts hidden below xl.
+ * own provider, so the content between them is the inset card (global.css).
+ * The trigger in the card's corner (or `[` for the nav, `]` for the panel)
+ * switches a side between open and on hover: on hover it stays hidden until
+ * the pointer reaches the strip beside the card, then opens until the pointer
+ * leaves it. Below md each side is a drawer. The panel starts on hover below xl.
  *
  * A section of links is a collapsible `Sidebar.Group` whose rows share one
  * `Sidebar.Menu`, so the current page and the hover highlight melt from link
@@ -83,38 +106,135 @@ export function DocsNav({ children }: { children?: ReactNode }) {
   const [side, setSide] = useState<SidebarSide>()
   // The slot gets no side: which aside it landed in tells, before first paint.
   if (!side) return <div ref={node => node && setSide(node.closest('[data-modo="panel"]') ? 'right' : 'left')} />
+  return <DocsSidebar side={side}>{children}</DocsSidebar>
+}
+
+function DocsSidebar({ side, children }: { side: SidebarSide; children?: ReactNode }) {
+  const [pinned, setPinned] = useState(() => side === 'left' || window.matchMedia('(min-width: 1280px)').matches)
+  const [hovered, setHovered] = useState(false)
+  const root = useRef<HTMLDivElement>(null)
+
+  const togglePinned = useCallback(() => {
+    setPinned(previous => !previous)
+    setHovered(false)
+  }, [])
+
+  // The rail collapses or drags it open: that pins or unpins it.
+  const onOpenChange = useCallback((open: boolean) => {
+    setPinned(open)
+    setHovered(false)
+  }, [])
 
   return (
-    <Sidebar.Provider
-      defaultOpen={side === 'left' || window.matchMedia('(min-width: 1280px)').matches}
-      peek="hover"
-      persist={false}
-      shortcut={null}
-    >
+    <Sidebar.Provider ref={root} open={pinned || hovered} onOpenChange={onOpenChange} persist={false} shortcut={null}>
       <Sidebar variant="inset" side={side}>
         <Sidebar.Content>
           <nav aria-label={side === 'left' ? 'Docs' : 'Page'}>{children}</nav>
         </Sidebar.Content>
       </Sidebar>
-      <DocsNavTrigger side={side} />
+      <DocsNavTrigger side={side} pinned={pinned} onToggle={togglePinned} />
+      <HoverOpen side={side} root={root} enabled={!pinned} hovered={hovered} onHoveredChange={setHovered} />
     </Sidebar.Provider>
   )
 }
 
-/** The inset topbar's trigger, pinned to the card's top corner: the card sits flush with an open sidebar, a gutter away from a hidden one. */
-function DocsNavTrigger({ side }: { side: SidebarSide }) {
-  const { open, isMobile } = useSidebar()
-  useDocsShortcut(side)
-  const gutter = !open || isMobile
+const shortcutKey = (side: SidebarSide) =>
+  side === 'left' ? SIDEBAR_KEYBOARD_SHORTCUT : SIDEBAR_KEYBOARD_SHORTCUT_RIGHT
+
+/**
+ * The trigger, in the card's top corner where the inset topbar keeps it: open
+ * or on hover, and a drawer below md. The card sits flush with an open
+ * sidebar and a gutter away from a hidden one, so the trigger follows.
+ */
+function DocsNavTrigger({ side, pinned, onToggle }: { side: SidebarSide; pinned: boolean; onToggle: () => void }) {
+  const { open, isMobile, toggleSidebar } = useSidebar()
+  const toggle = isMobile ? toggleSidebar : onToggle
+  const key = shortcutKey(side)
+  useDocsShortcut(key, toggle)
+
+  const name = side === 'left' ? 'sidebar' : 'panel'
+  const label = isMobile ? `Open ${name}` : pinned ? `Show ${name} on hover` : `Keep ${name} open`
+  const solid = pinned || isMobile
+  const Glyph = side === 'left' ? (solid ? PanelLeft : PanelLeftDashed) : solid ? PanelRight : PanelRightDashed
+
   return (
-    <SidebarInsetTopbar
+    <div
       className={cn(
-        'absolute top-2 transition-[margin] duration-fast',
+        'absolute top-2 flex h-12 items-center px-1.5 transition-[margin] duration-fast',
         side === 'left' ? 'left-full' : 'right-full',
-        gutter && (side === 'left' ? 'ml-2' : 'mr-2'),
+        (!open || isMobile) && (side === 'left' ? 'ml-2' : 'mr-2'),
       )}
-    />
+    >
+      <Tooltip
+        side="bottom"
+        content={
+          <span className="flex items-center gap-1.5">
+            {/* As the Sidebar's trigger: a flex row escapes the tooltip's text-box trim. */}
+            <span className="[text-box:trim-both_cap_alphabetic]">{label}</span>
+            <kbd className="-my-1 flex h-4 min-w-4 items-center justify-center rounded border border-background/30 px-1 font-sans text-micro-compact text-background/80">
+              {key}
+            </kbd>
+          </span>
+        }
+      >
+        <Button variant="ghost" size="icon" aria-label={label} onClick={toggle}>
+          <Glyph />
+        </Button>
+      </Tooltip>
+    </div>
   )
+}
+
+/**
+ * On hover: the pointer reaching the strip between the window's edge and the
+ * card opens the sidebar, and leaving the sidebar and its trigger closes it a
+ * beat later. The strip is measured off the card, so it is the gutter while
+ * the sidebar is hidden and the sidebar itself once it opens.
+ */
+function HoverOpen({
+  side,
+  root,
+  enabled,
+  hovered,
+  onHoveredChange,
+}: {
+  side: SidebarSide
+  root: RefObject<HTMLElement>
+  enabled: boolean
+  hovered: boolean
+  onHoveredChange: (hovered: boolean) => void
+}) {
+  const { isMobile } = useSidebar()
+
+  useEffect(() => {
+    const card = document.querySelector('[data-modo="content"]')
+    if (!enabled || isMobile || !card) return
+    let close: ReturnType<typeof setTimeout> | undefined
+
+    const onPointerMove = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse') return
+      const box = card.getBoundingClientRect()
+      const beside = side === 'left' ? event.clientX < box.left : event.clientX > box.right
+      if (!hovered) {
+        if (beside) onHoveredChange(true)
+        return
+      }
+      if (beside || root.current?.contains(event.target as Node)) {
+        clearTimeout(close)
+        close = undefined
+        return
+      }
+      close ??= setTimeout(() => onHoveredChange(false), 300)
+    }
+
+    document.addEventListener('pointermove', onPointerMove)
+    return () => {
+      document.removeEventListener('pointermove', onPointerMove)
+      clearTimeout(close)
+    }
+  }, [side, root, enabled, isMobile, hovered, onHoveredChange])
+
+  return null
 }
 
 /**
@@ -123,10 +243,7 @@ function DocsNavTrigger({ side }: { side: SidebarSide }) {
  * and on a fresh load that is a demo in the content, mounted a render before
  * the chrome's. The demos keep the key while focus is inside one.
  */
-function useDocsShortcut(side: SidebarSide) {
-  const { toggleSidebar } = useSidebar()
-  const key = side === 'left' ? SIDEBAR_KEYBOARD_SHORTCUT : SIDEBAR_KEYBOARD_SHORTCUT_RIGHT
-
+function useDocsShortcut(key: string, toggle: () => void) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== key || event.metaKey || event.ctrlKey || event.altKey) return
@@ -136,11 +253,11 @@ function useDocsShortcut(side: SidebarSide) {
       // Capture phase: the demos' providers listen on window too, and must not toggle with it.
       event.stopImmediatePropagation()
       event.preventDefault()
-      toggleSidebar()
+      toggle()
     }
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
-  }, [key, toggleSidebar])
+  }, [key, toggle])
 }
 
 function DocsNavItem({ href, active, children }: { href: string; active?: boolean; children?: ReactNode }) {

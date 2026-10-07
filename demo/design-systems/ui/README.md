@@ -200,11 +200,13 @@ design system's own Select. The
 app shell that needs its provider). Each aside is an inset `Sidebar` with its
 own provider, and `global.css` turns the content between them into the inset
 card (the lib's grid columns become `auto`, so they follow the sidebars' width
-springs). Either side hides on its own: the trigger in the card's corner, `[`
-for the nav and `]` for the panel. `DocsNav` owns those keys, so a demo
-sidebar in the content keeps them only while it has focus. Collapsed, a side
-peeks back out from its trigger; below md each is a drawer; the panel starts
-hidden below xl. A section of links is a collapsible `Sidebar.Group` with one
+springs). The trigger in the card's corner, `[` for the nav and `]` for the
+panel, switch a side between open and on hover: on hover it stays hidden
+until the pointer reaches the strip between the window's edge and the card,
+then opens (no peek card) until the pointer leaves it and its trigger.
+`DocsNav` owns those keys, so a demo sidebar in the content keeps them only
+while it has focus. Below md each side is a drawer; the panel starts on hover
+below xl. A section of links is a collapsible `Sidebar.Group` with one
 `Sidebar.Menu`, so the current page, the TOC's current heading and the hover
 highlight melt from link to link; a panel section (Theme) keeps its control
 under the group label.
