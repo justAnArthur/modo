@@ -912,7 +912,10 @@ const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps>(
     const settle = (open: boolean) => {
       const { panel, content, goo, rest } = refs
       if (panel.current) panel.current.style.height = open ? '' : '0px'
-      if (content.current) content.current.style.clipPath = ''
+      // Closed, the content stays clipped shut: `hidden` lands with React's
+      // next commit, a task later, and unclipped content would paint below
+      // the collapsed row for a frame in between.
+      if (content.current) content.current.style.clipPath = open ? '' : 'inset(50%)'
       if (goo.current) goo.current.style.display = ''
       if (rest.current) rest.current.style.display = ''
       remeasure.current?.()
