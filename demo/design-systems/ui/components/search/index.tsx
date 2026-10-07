@@ -68,7 +68,7 @@ interface SearchProps {
   emptyMessage?: string
   /** How the suggestions grow out of the field (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
   effect?: 'goo' | 'morph' | 'slide' | 'fade'
-  /** Spring tier of the suggestions' morph. Defaults to `'moderate'`. */
+  /** Spring tier of the suggestions' plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
   tier?: 'moderate' | 'slow'
   /** Classes for the root, the box the resting button keeps in the layout. */
   className?: string

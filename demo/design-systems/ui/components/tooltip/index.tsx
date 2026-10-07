@@ -15,7 +15,7 @@
  *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
  * - The 4px slide + fade (`getSlideOffset`, `spring.fast`) is replaced by the
  *   shared morph layer (`lib/use-morph.ts` + `MorphSurface`): the label grows
- *   out of its trigger with the goo neck by default, on `spring.moderate`,
+ *   out of its trigger with the goo neck by default, on `spring.goo`,
  *   with `from` / `effect` / `tier` props; `followCursor` tooltips fade, since
  *   their panel travels with the pointer. The popup's motion wrapper now only
  *   carries the cursor-follow offset.
@@ -112,7 +112,7 @@ interface TooltipProps {
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
   /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. `followCursor` tooltips always fade. Defaults to `'goo'`. */
   effect?: 'goo' | 'morph' | 'slide' | 'fade'
-  /** Spring tier of the morph. Defaults to `'moderate'`. */
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
   tier?: 'moderate' | 'slow'
 }
 
@@ -127,7 +127,7 @@ interface TooltipProps {
  * The trigger is whatever element you pass as the single child — it only has
  * to accept a ref. The label is portalled and grows out of its trigger
  * through the shared morph (see Morph), with the goo neck by default on
- * `spring.moderate`, and flips when it would collide with the viewport edge.
+ * `spring.goo`, and flips when it would collide with the viewport edge.
  * `followCursor` tracks the pointer along one axis for tall or wide triggers,
  * while the other stays anchored by `side`. Built on Base UI's Tooltip.
  *

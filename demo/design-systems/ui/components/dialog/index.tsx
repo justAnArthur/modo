@@ -22,7 +22,7 @@
  *   `text-<role>[-compact]`; inline `fontVariationSettings` and `font-bold`
  *   → `weight-*`; the `bg-black/40` / `dark:bg-black/80` backdrop → `bg-scrim`.
  * - The panel morphs out of its trigger through the shared morph layer
- *   (`lib/use-morph.ts` + `MorphSurface`, goo by default on `spring.slow`;
+ *   (`lib/use-morph.ts` + `MorphSurface`, goo by default on `spring.goo`;
  *   `Dialog.Content` takes `from` / `effect` / `hideSource` / `tier`), and the
  *   backdrop's opacity follows the morph's progress. The popup is a
  *   transparent, centered box; its level is painted by the morph's surface
@@ -121,7 +121,7 @@ interface DialogContentProps extends HTMLAttributes<HTMLDivElement> {
   effect?: 'goo' | 'morph' | 'slide' | 'fade'
   /** Hide the trigger while open, so it reads as turning into the panel. Defaults to `false`. */
   hideSource?: boolean
-  /** Spring tier of the morph. Defaults to `'slow'`. */
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'slow'`. */
   tier?: 'moderate' | 'slow'
   /** Dialog content. Everything inside reads the dialog's surface level as its substrate. */
   children?: ReactNode
@@ -300,7 +300,7 @@ interface DialogProps {
  * the ladder instead of melting into the dialog. Width comes from
  * `Dialog.Content`'s `size` — 400, 540 or 880, each one notch narrower in
  * compact regions. The panel grows out of its trigger through the shared
- * morph (see Morph): goo by default on `spring.slow`, or from the press
+ * morph (see Morph): goo by default on `spring.goo`, or from the press
  * point, its own center, a viewport edge or any element, and the backdrop
  * fades with it. `Morph.Part` pairs an element in the trigger with its twin
  * in the panel, so a card's image or title flies into the dialog.

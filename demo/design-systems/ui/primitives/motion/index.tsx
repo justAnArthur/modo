@@ -14,6 +14,8 @@
  *   show/hide of arbitrary children, toggled by the DS Button; the
  *   component-chip links are plain text.
  * - framer-motion → motion/react.
+ * - The page names the morph engine's own `goo` tier (a local addition to
+ *   `lib/springs.ts`).
  * - The "All tokens" lists name this port's components on each tier,
  *   including the morphing overlays and liquid indicators (see Morph).
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
@@ -68,6 +70,10 @@ interface MotionProps {
  * the thing that moves, the slower the tier. `moderate` is critically damped: it
  * lands exactly with no overshoot, so it also carries panels that must settle
  * precisely.
+ *
+ * A fourth tier, `goo`, belongs to the morph engine alone (see Morph): the goo
+ * effect lands in about 200ms with a little bounce and springs back rather
+ * than tweening, so its liquid neck has time to stretch and pinch off.
  *
  * ## Usage
  *

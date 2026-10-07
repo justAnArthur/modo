@@ -33,8 +33,8 @@
  *   data, not styling.
  * - `ColorPicker.Popover` and the format menu morph out of their triggers
  *   through the shared morph layer (`lib/use-morph.ts` + `MorphSurface`, goo
- *   by default; the popover on `spring.slow` with `from` / `effect` /
- *   `hideSource` / `tier`, the menu on `spring.moderate`), the origin captured
+ *   by default on `spring.goo`; the popover takes `from` / `effect` /
+ *   `hideSource` / `tier`, the menu's plain morph is on `spring.moderate`), the origin captured
  *   from each Base UI root's `onOpenChange`. Their `actionsRef` deferred
  *   unmounts, fallback timers and motion wrappers are gone: Popover and Menu
  *   ignore `actionsRef`, and the wrappers animated outside the popup, so Base
@@ -171,7 +171,7 @@ interface ColorPickerPopoverProps extends ColorPickerProps {
   effect?: 'goo' | 'morph' | 'slide' | 'fade'
   /** Hide the trigger while open, so it reads as turning into the panel. Defaults to `false`. */
   hideSource?: boolean
-  /** Spring tier of the morph. Defaults to `'slow'`. */
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'slow'`. */
   tier?: 'moderate' | 'slow'
 }
 

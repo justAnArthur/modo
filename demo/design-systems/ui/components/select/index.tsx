@@ -26,7 +26,7 @@
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  * - The popup morphs out of its trigger through the shared morph layer
  *   (`lib/use-morph.ts` + `MorphSurface`, goo by default on
- *   `spring.moderate`; `Select.Content` takes `from` / `effect` /
+ *   `spring.goo`; `Select.Content` takes `from` / `effect` /
  *   `hideSource` / `tier`). The `scaleY` motion wrapper and the `actionsRef`
  *   deferred unmount (with its fallback timer) are gone: the morph holds Base
  *   UI's unmount itself. The popup paints its level through the morph's
@@ -378,7 +378,7 @@ interface SelectContentProps {
   effect?: 'goo' | 'morph' | 'slide' | 'fade'
   /** Hide the trigger while open, so it reads as turning into the menu. Defaults to `false`. */
   hideSource?: boolean
-  /** Spring tier of the morph. Defaults to `'moderate'`. */
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
   tier?: 'moderate' | 'slow'
   /** Additional classes for the menu container. */
   className?: string

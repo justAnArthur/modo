@@ -41,7 +41,7 @@
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  * - The popup menu morphs out of its trigger through the shared morph layer
  *   (`lib/use-morph.ts` + `MorphSurface`, goo by default on
- *   `spring.moderate`; `Dropdown.Content` takes `from` / `effect` /
+ *   `spring.goo`; `Dropdown.Content` takes `from` / `effect` /
  *   `hideSource` / `tier`), the origin captured from `Menu.Root`'s
  *   `onOpenChange`. The `scaleY` motion wrapper and the `actionsRef` deferred
  *   unmount are gone: Menu ignores `actionsRef`, and the wrapper animated
@@ -680,7 +680,7 @@ interface DropdownContentProps {
   effect?: 'goo' | 'morph' | 'slide' | 'fade'
   /** Hide the trigger while open, so it reads as turning into the menu. Defaults to `false`. */
   hideSource?: boolean
-  /** Spring tier of the morph. Defaults to `'moderate'`. */
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
   tier?: 'moderate' | 'slow'
 }
 

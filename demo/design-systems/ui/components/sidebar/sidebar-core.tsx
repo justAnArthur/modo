@@ -13,7 +13,7 @@
  *   `text-caption-compact` / `text-caption`; the hex focus-ring fallback →
  *   `ring-focus-ring`; `duration-80|160|240` → `duration-<tier>`.
  * - The collapsed peek grows out of what opened it through the morph layer
- *   (`lib/use-morph.ts`, goo on `spring.moderate`): the edge strip or the
+ *   (`lib/use-morph.ts`, goo on `spring.goo`): the edge strip or the
  *   hovered trigger, recorded in the context's `peekOrigin`, and melts back
  *   into it on dismissal, replacing the card's slide in from off the edge.
  * - What is folded or collapsed away is `inert`: a folded `SidebarGroup`, and

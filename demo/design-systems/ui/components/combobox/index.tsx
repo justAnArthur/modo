@@ -31,7 +31,7 @@
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  * - The popup morphs out of the field through the shared morph layer
  *   (`lib/use-morph.ts` + `MorphSurface`, goo by default on
- *   `spring.moderate`; `Combobox.Content` takes `from` / `effect` /
+ *   `spring.goo`; `Combobox.Content` takes `from` / `effect` /
  *   `hideSource` / `tier`). Whatever opened it (typing, a press on the input
  *   or the chevron), the source is the field the list anchors to. The
  *   `scaleY` motion wrapper and the `actionsRef` deferred unmount (with its
@@ -815,7 +815,7 @@ interface ComboboxContentProps {
   effect?: 'goo' | 'morph' | 'slide' | 'fade'
   /** Hide the field while open, so it reads as turning into the list. Defaults to `false`. */
   hideSource?: boolean
-  /** Spring tier of the morph. Defaults to `'moderate'`. */
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
   tier?: 'moderate' | 'slow'
 }
 

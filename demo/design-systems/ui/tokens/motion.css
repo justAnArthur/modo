@@ -18,6 +18,9 @@
  *   slow      240ms enter, 160ms exit — the one tier with a little bounce
  *             (bounce 0.12)
  * The bigger the thing that moves, the slower the tier.
+ *
+ * Local addition: `goo`, the morph engine's tier for the goo effect — 250ms
+ * to land (bounce 0.15), a 200ms spring back — so the liquid neck reads.
  */
 
 :root {
@@ -27,4 +30,6 @@
   --duration-moderate-exit: 120ms;
   --duration-slow: 240ms;
   --duration-slow-exit: 160ms;
+  --duration-goo: 250ms;
+  --duration-goo-exit: 200ms;
 }

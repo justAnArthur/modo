@@ -79,7 +79,7 @@ interface PreviewCardContentProps extends HTMLAttributes<HTMLDivElement> {
   effect?: 'goo' | 'morph' | 'slide' | 'fade'
   /** Hide the link while open, so it reads as turning into the card. Defaults to `false`. */
   hideSource?: boolean
-  /** Spring tier of the morph. Defaults to `'slow'`. */
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'slow'`. */
   tier?: 'moderate' | 'slow'
   /** Portal target. Defaults to the document body. */
   container?: HTMLElement | null

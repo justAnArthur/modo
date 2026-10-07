@@ -62,6 +62,8 @@ interface Geometry {
   layer: Rect
   /** Where a slide starts, as an offset from the target. */
   offset: { x: number; y: number }
+  /** The goo's blur while it melts; 0 for the other effects. */
+  blur: number
 }
 
 // The alpha threshold that turns the blur back into solid, merging shapes
@@ -69,6 +71,13 @@ interface Geometry {
 // the surface radius (Sileo's BLUR_RATIO), so rounder surfaces melt more.
 const GOO_MATRIX = '1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -10'
 const GOO_BLUR_RATIO = 0.5
+// An overlay melts harder than an indicator, so its neck reads at any radius,
+// and lets go over the last share of the run: the blur eases to nothing as
+// the surface lands, so the neck pinches off however short the gap, and the
+// resting surface takes over without a jump.
+const GOO_SURFACE_BLUR = 8
+const GOO_RELEASE = 0.3
+const GOO_SETTLE = 0.1
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 const drawsShape = (effect: MorphEffect) => effect === 'goo' || effect === 'morph'
@@ -221,7 +230,7 @@ function inPlaceOffset({ side, anchor }: { side: string; anchor: { width: number
  * for the tier's exit (plus a buffer). Finish or cancel it once the exit is
  * done or abandoned.
  */
-function holdExit(el: HTMLElement, tier: MorphTier) {
+function holdExit(el: HTMLElement, tier: MorphTier | 'goo') {
   return el.animate(null, { duration: exitFallbackMs(spring[tier]) })
 }
 
@@ -291,7 +300,8 @@ function useMorph(
   const reduced = useReduceMotion()
   const resolve = (wanted: MorphEffect): MorphEffect => (reduced ? 'fade' : wanted)
   const resolved = resolve(effect)
-  const { exit: leave, ...enter } = spring[tier]
+  // Goo runs on its own tier: on `tier` the neck would be gone in a frame or two.
+  const timing = (effect: MorphEffect) => (effect === 'goo' ? 'goo' : tier)
   const progress = useMotionValue(0)
   const gooId = `morph-goo-${useId().replace(/:/g, '')}`
   const geometry = useRef<Geometry | null>(null)
@@ -311,6 +321,7 @@ function useMorph(
     popup: useRef<HTMLDivElement | null>(null),
     shapes: useRef<HTMLDivElement>(null),
     blur: useRef<SVGFEGaussianBlurElement>(null),
+    outline: useRef<SVGFEFloodElement>(null),
     copy: useRef<HTMLDivElement>(null),
     shape: useRef<HTMLDivElement>(null),
     bg: useRef<HTMLDivElement>(null),
@@ -329,7 +340,15 @@ function useMorph(
 
     place(shaped ? shape.current : bg.current, shaped ? within(rect, g.layer) : rect)
     place(shadow.current, rect)
-    if (shadow.current) shadow.current.style.opacity = String(clamp(0, 1, p))
+
+    // While the goo melts, its outline stands in for the shadow, which would
+    // draw the bare rect around the neck; they cross over as it lets go. The
+    // outline also fades in the last stretch back into the source, or it
+    // would linger as a halo round the trigger through the spring's tail.
+    const melting = effect === 'goo' ? clamp(0, 1, (1 - p) / GOO_RELEASE) : 0
+    refs.blur.current?.setAttribute('stdDeviation', String(g.blur * melting))
+    refs.outline.current?.setAttribute('flood-opacity', String(melting * clamp(0, 1, p / GOO_SETTLE)))
+    if (shadow.current) shadow.current.style.opacity = String(effect === 'goo' ? 1 - melting : clamp(0, 1, p))
 
     // Every property on every frame: a reopen can change the effect mid-run.
     if (content.current) {
@@ -361,9 +380,9 @@ function useMorph(
     const box = el.getBoundingClientRect()
     const target = { x: 0, y: 0, w: box.width, h: box.height, r: targetRadius.current }
     const source = sourceRect(from, origin.current ?? {}, box, target)
-    const blur = effect === 'goo' ? target.r * GOO_BLUR_RATIO : 0
+    const blur = effect === 'goo' ? Math.max(GOO_SURFACE_BLUR, target.r * GOO_BLUR_RATIO) : 0
     const layer = layerBox(source, target, blur * 3)
-    geometry.current = { source, target, layer, offset: slideOffset(from, source, target, box) }
+    geometry.current = { source, target, layer, offset: slideOffset(from, source, target, box), blur }
 
     const { shapes, copy, bg } = refs
     if (bg.current) bg.current.style.opacity = shaped ? '0' : ''
@@ -372,10 +391,7 @@ function useMorph(
     if (!shaped) return
 
     place(shapes.current, { ...layer, r: 0 })
-    if (effect === 'goo') {
-      place(copy.current, within(source, layer))
-      refs.blur.current?.setAttribute('stdDeviation', String(blur))
-    }
+    if (effect === 'goo') place(copy.current, within(source, layer))
     // The layer sits above the page, so the surface growing out of the source
     // would cover it; punching the source back out keeps it visible. Not when
     // the overlay lands on top of its source (a dialog over its trigger): the
@@ -424,6 +440,7 @@ function useMorph(
       }
 
       render(progress.get())
+      const { exit: _, ...enter } = spring[timing(run.current.effect)]
       controls = animate(progress, 1, {
         ...enter,
         onUpdate: p => {
@@ -476,13 +493,13 @@ function useMorph(
     // An override leaves from the whole surface as it stands, not from
     // wherever the open had got to.
     if (exit) progress.jump(1)
-    const hold = holdExit(popup, tier)
+    const hold = holdExit(popup, timing(run.current.effect))
     measure()
     render(progress.get())
     // `let`: a skipped run can report before `animate` returns.
     let controls: ReturnType<typeof animate> | undefined
     controls = animate(progress, 0, {
-      ...leave,
+      ...spring[timing(run.current.effect)].exit,
       onUpdate: p => {
         if (skip(popup)) controls?.complete()
         render(p)

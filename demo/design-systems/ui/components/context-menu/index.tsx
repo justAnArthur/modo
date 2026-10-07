@@ -120,7 +120,7 @@ interface ContextMenuContentProps {
   effect?: 'goo' | 'morph' | 'slide' | 'fade'
   /** Hide the `from` element while open, so it reads as turning into the menu. Defaults to `false`. */
   hideSource?: boolean
-  /** Spring tier of the morph. Defaults to `'moderate'`. */
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
   tier?: 'moderate' | 'slow'
   /** Portal target. Defaults to the document body. */
   container?: HTMLElement | null

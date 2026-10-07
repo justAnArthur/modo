@@ -22,7 +22,7 @@ interface MorphProps {
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left'
   /** How it gets there: `'goo'` grows the surface with a liquid neck to its source, `'morph'` grows it without one, `'slide'` moves the finished panel in, `'fade'` only fades (what every effect becomes under reduced motion). Defaults to `'goo'`. */
   effect?: 'goo' | 'morph' | 'slide' | 'fade'
-  /** Spring tier the panel opens on; it closes on the tier's faster exit tween. Defaults to `'slow'`. */
+  /** Spring tier of a plain morph, slide or fade, which closes on the tier's faster exit tween; goo runs on its own `spring.goo`. Defaults to `'slow'`. */
   tier?: 'moderate' | 'slow'
   /** Hide the trigger while the panel is open, so the trigger reads as becoming the panel. Defaults to `false`. */
   hideSource?: boolean
@@ -56,7 +56,7 @@ interface MorphProps {
  * ## Options
  *
  * Every morphing overlay takes the same `from`, `effect` and `hideSource`
- * options, and a spring `tier` (see Motion).
+ * options, and a spring `tier` for the effects other than goo (see Motion).
  *
  * - `from` — where the surface grows from. `'trigger'` is the trigger that
  *   was pressed; it is measured again on close, and when it has gone or
@@ -76,8 +76,14 @@ interface MorphProps {
  *
  * ## Motion
  *
- * The morph opens on a spring tier (`slow` by default) and closes on that
- * tier's faster exit tween, like every other animation here (see Motion).
+ * Goo runs on its own tier, `spring.goo`: it lands in about 200ms with a
+ * little bounce and springs back in about as long, slow enough for the neck
+ * to stretch. Its blur eases away over the last stretch, so the neck pinches
+ * off as the surface lands, and while it melts a hairline in the shadow's
+ * color follows the liquid shape, so a surface the color of the page still
+ * shows it; the surface's own shadow takes over as it lets go. The other
+ * effects open on a spring tier (`slow` by default) and close on that tier's
+ * faster exit tween, like every other animation here (see Motion).
  * Reduced motion, the OS setting or a `MotionConfig` asking for it, turns every
  * effect into a fade.
  *

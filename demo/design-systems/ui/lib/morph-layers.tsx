@@ -44,16 +44,29 @@ interface GooFilterProps {
   /** Blur radius; leave out when `blurRef` sets it per morph. */
   blur?: number
   blurRef?: Ref<SVGFEGaussianBlurElement>
+  /** Outlines the melted shape with the surface shadow's 1px ring (`--shadow-color`), so a surface the color of the page still shows its neck; the ref's `flood-opacity` fades it. */
+  outlineRef?: Ref<SVGFEFloodElement>
 }
 
 /** The goo filter: blur, threshold the alpha back into solid shapes, then lay the crisp original on top. */
-export function GooFilter({ id, blur, blurRef }: GooFilterProps) {
+export function GooFilter({ id, blur, blurRef, outlineRef }: GooFilterProps) {
   return (
     <svg aria-hidden className="absolute size-0">
       <filter id={id} x="-50%" y="-50%" width="200%" height="200%" colorInterpolationFilters="sRGB">
         <feGaussianBlur ref={blurRef} in="SourceGraphic" stdDeviation={blur} result="blur" />
         <feColorMatrix in="blur" mode="matrix" values={GOO_MATRIX} result="goo" />
-        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+        <feComposite in="SourceGraphic" in2="goo" operator="atop" result="body" />
+        {outlineRef && (
+          <>
+            <feMorphology in="goo" operator="dilate" radius={1} result="grown" />
+            <feFlood ref={outlineRef} className="[flood-color:var(--shadow-color)]" />
+            <feComposite in2="grown" operator="in" result="outline" />
+            <feMerge>
+              <feMergeNode in="outline" />
+              <feMergeNode in="body" />
+            </feMerge>
+          </>
+        )}
       </filter>
     </svg>
   )
@@ -64,7 +77,7 @@ export function MorphSurface({ morph, bg, shadow, radius, className, children }:
 
   return (
     <>
-      {effect === 'goo' && <GooFilter id={gooId} blurRef={refs.blur} />}
+      {effect === 'goo' && <GooFilter id={gooId} blurRef={refs.blur} outlineRef={refs.outline} />}
       {(effect === 'goo' || effect === 'morph') && (
         // The filter is the effect itself, not a visual value: it melts the shapes' own token background.
         <div

@@ -9,7 +9,7 @@
  *   `../../primitives/scroll-area`, `@/components/ui/sidebar-{core,menu}` →
  *   the siblings `./sidebar-core` / `./sidebar-menu`.
  * - The mobile sheet is the DS's `Sheet` (Base UI Drawer through the morph
- *   layer): it grows out of its edge with the goo neck on `spring.moderate`
+ *   layer): it grows out of its edge with the goo neck on `spring.goo`
  *   and swipes away, replacing upstream's Dialog with a framer slide, its
  *   held-open exit and its `bg-black` scrim.
  * - `SidebarProps` re-declared one member per line with the FF docs text;
