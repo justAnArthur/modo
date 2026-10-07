@@ -54,7 +54,7 @@ Two vocabularies:
 - **Generic tokens** — the shadcn-named contract the lib reads from any host:
   - colors: `--border`, `--muted-foreground`, `--ring`;
   - radius and spacing: `--radius-sm|md|lg` (else `--radius`), `--space-1…6`;
-  - type: `--font-sans`, `--font-size-h1|h2|h3|lead|eyebrow|sm|xs`, `--font-weight-medium|semibold|bold`;
+  - type: `--font-sans`, `--font-weight-medium|semibold|bold`, and per element role (`h1|h2|h3|h4|p|lead|eyebrow|sm|xs`) `--font-size-<role>`, `--line-height-<role>`, `--font-weight-<role>`, `--color-<role>` (any subset; an unset one inherits or takes the lib's default). The typography foundation page shows them as Elements;
   - motion: `--duration-fast`;
   - layout: `--modo-measure`.
 
@@ -73,7 +73,7 @@ Rules:
 - **Lib (runtime TSX, `shell.css`):**
   - Structure only (layout, grid, spacing rhythm, measure). Every visual reads a generic token, or the host's own token when that token is what the page shows (a radius specimen applies `var(--radius-box)`).
   - No literal colors and no color fallbacks. Leave the fallback off so an undefined token inherits, or derive it from `currentColor`.
-  - Borders, muted text and the focus ring read `--modo-border` / `--modo-muted` / `--modo-ring`. `tokens/host-colors.ts` sets them at startup from the host's `--border` / `--muted-foreground` / `--ring` (wrapped when the token holds bare channels, e.g. `hsl(var(--border))`), else from `currentColor`.
+  - Borders, muted text and the focus ring read `--modo-border` / `--modo-muted` / `--modo-ring`. `tokens/host-colors.ts` sets them at startup from the host's `--border` / `--muted-foreground` / `--ring` (wrapped when the token holds bare channels, e.g. `hsl(var(--border))`), else from `currentColor`. It sets `--modo-color-<role>` from `--color-<role>` the same way (lead and eyebrow fall back to `--modo-muted`).
   - Defaults live in one place each. `shell.css` opens with the contract block: every generic type and radius token resolves once to a `--modo-*` var, falling back to a literal size or, for weights, the keyword `bold`. `tokens/host-colors.ts` does the same for colors. Rules read `--modo-*`, never a generic token with an inline fallback. Those two are the only literal visuals in the lib.
   - Spacing fallbacks stay inline (`var(--space-2, 8px)`): spacing is structure. Motion has no default; no token means no transition.
   - Inherit before you set: line-height, font family and link decoration come from the host. Capitalize in content (`cap()` in `runtime/text.ts`), never with `text-transform`.
@@ -187,6 +187,6 @@ Rules:
 - examples: `example-card`, `example-card-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`, `code-block`, `code-actions`, `icon-label`.
 - tables and tokens: `prop-table`, `token-list`, `token-row`, `token-name`, `token-meta`, `swatch` (`data-kind`).
 - colors: `color-grid`, `color-stack`, `color-tile` (`data-flush` when it matches the page), `color-tile-name`, `color-tile-value`, `color-tile-pair`.
-- foundations: `token-label`; typography `type-families`, `type-family`, `type-family-sample`, `type-glyph`, `type-scale`, `type-step`, `type-sample`, `type-weights`, `type-weight`, `type-preview`; radius `radius-grid`, `radius-tile`, `radius-shape`; spacing `space-scale`, `space-step`, `space-bar`, `space-preview`; motion `motion-list`, `motion-row`, `motion-track`, `motion-dot`, `motion-curve`, `motion-preview`, `motion-bar`.
+- foundations: `token-label`; typography `type-elements`, `type-element`, `type-families`, `type-family`, `type-family-sample`, `type-glyph`, `type-scale`, `type-step`, `type-sample`, `type-weights`, `type-weight`, `type-preview`; radius `radius-grid`, `radius-tile`, `radius-shape`; spacing `space-scale`, `space-step`, `space-bar`, `space-preview`; motion `motion-list`, `motion-row`, `motion-track`, `motion-dot`, `motion-curve`, `motion-preview`, `motion-bar`.
 
 The lib styles their structure, including the hover reveal of `example-actions`, `code-actions` and `anchor` (shown on hover or focus-within, always shown on touch) and the responsive grid (panel strip below 1280px, stacked below 768px). The host styles everything else through the same attrs (**styling: Chrome restyling**), e.g. ui's `global.css` chrome section.

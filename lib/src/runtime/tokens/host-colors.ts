@@ -55,9 +55,26 @@ const CHROME: Array<[string, string, string]> = [
   ['--modo-ring', '--ring', 'currentColor'],
 ]
 
+/* Type roles' colors (`--color-<role>`), with the muted fallback where the
+   chrome has always dimmed a role. A role without either stays unset and
+   inherits. */
+const ROLES: Array<[string, string | null]> = [
+  ['h1', null],
+  ['h2', null],
+  ['h3', null],
+  ['h4', null],
+  ['p', null],
+  ['lead', 'var(--modo-muted)'],
+  ['eyebrow', 'var(--modo-muted)'],
+]
+
 export function installHostColors(): void {
   const el = document.documentElement
   for (const [own, token, fallback] of CHROME) {
     el.style.setProperty(own, colorExpr(token) ?? fallback)
+  }
+  for (const [role, fallback] of ROLES) {
+    const expr = colorExpr(`--color-${role}`) ?? fallback
+    if (expr) el.style.setProperty(`--modo-color-${role}`, expr)
   }
 }

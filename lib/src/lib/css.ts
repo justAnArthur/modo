@@ -88,11 +88,21 @@ export function prefixGroup(name: string): GroupName | null {
   return null
 }
 
-export function buildGroup(name: GroupName, vars: ParsedVar[]): Group {
+/** `all` resolves references: `--font-size-h1: var(--text-display)` is a size, not a family. */
+export function buildGroup(name: GroupName, vars: ParsedVar[], all: ParsedVar[] = vars): Group {
+  const byName = new Map(all.map(v => [v.name, v.value]))
   return {
     name,
-    vars: vars.map(v => ({ ...v, swatch: buildSwatch(name, v) })),
+    vars: vars.map(v => ({ ...v, swatch: buildSwatch(name, { ...v, value: resolveRef(v.value, byName) }) })),
   }
+}
+
+function resolveRef(value: string, byName: Map<string, string>, seen = new Set<string>()): string {
+  const ref = value.match(/^var\((--[\w-]+)\)$/)?.[1]
+  const next = ref && !seen.has(ref) ? byName.get(ref) : undefined
+  if (next === undefined) return value
+  seen.add(ref!)
+  return resolveRef(next, byName, seen)
 }
 
 function buildSwatch(group: GroupName, { name, value }: ParsedVar): Swatch | undefined {
@@ -107,7 +117,7 @@ function buildSwatch(group: GroupName, { name, value }: ParsedVar): Swatch | und
 function typographySwatch(name: string, value: string): Swatch | undefined {
   if (name.includes('weight') || value.includes('"wght"') || /^[1-9]00$/.test(value))
     return { kind: 'font-weight', value }
-  if (/^--(leading|tracking)-|line-height|letter-spacing/.test(name)) return undefined
+  if (/^--(leading|tracking)-|line-height|letter-spacing|color/.test(name)) return undefined
   if (/^\d/.test(value)) return fontSizeSwatch(value) ?? lengthSwatch(value)
   return { kind: 'font-family', family: value }
 }

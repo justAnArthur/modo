@@ -40,7 +40,8 @@ function parseTokens(userRoot: string): ParsedTokensResult {
       byGroup.get(g)!.push({ ...v, group: g })
     }
   }
-  const groups = GROUPS.map(g => buildGroup(g, byGroup.get(g)!)).filter(g => g.vars.length > 0)
+  const all = [...byGroup.values()].flat()
+  const groups = GROUPS.map(g => buildGroup(g, byGroup.get(g)!, all)).filter(g => g.vars.length > 0)
   return { groups, cssFiles }
 }
 

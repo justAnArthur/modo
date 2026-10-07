@@ -68,6 +68,18 @@ describe('parseCss', () => {
       'font-family',
     ])
   })
+
+  test('a type role classifies by what it references; its color has no swatch', () => {
+    const vars = parseCss(
+      ':root { --text-body: 13px; --font-size-p: var(--text-body); --line-height-p: 20px; --color-p: var(--muted) }',
+    )
+    expect(buildGroup('typography', vars).vars.map(v => v.swatch?.kind)).toEqual([
+      'font-size',
+      'font-size',
+      undefined,
+      undefined,
+    ])
+  })
 })
 
 describe('compileExampleBody', () => {

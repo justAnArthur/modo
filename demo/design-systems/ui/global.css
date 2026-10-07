@@ -407,15 +407,7 @@ html.transitioning *::after {
    look, tokens only. Both asides are inset Sidebars (`DocsNav` in
    modo.components.tsx), which bring their own look. */
 
-/* The chrome's generic type contract, wired to this system's roles. */
 :root {
-  --font-size-h1: var(--text-display);
-  --font-size-h2: var(--text-title);
-  --font-size-h3: var(--text-subtitle);
-  --font-size-lead: var(--text-subtitle);
-  --font-size-eyebrow: var(--text-caption);
-  --font-size-sm: var(--text-caption);
-  --font-size-xs: var(--text-micro);
   /* A fixed length: the lib's 72ch resolves per element, so the lead,
      captions and paragraphs each ended at a different width. */
   --modo-measure: 45rem;
