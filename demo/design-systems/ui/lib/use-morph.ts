@@ -12,8 +12,9 @@
  * `shadow-surface-N` is never cut off.
  */
 
-import { animate, clamp, useMotionValue, useReducedMotionConfig } from 'motion/react'
+import { animate, clamp, useMotionValue } from 'motion/react'
 import { type RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useReduceMotion } from './reduced-motion'
 import { exitFallbackMs, spring } from './springs'
 
 type MorphSide = 'top' | 'right' | 'bottom' | 'left'
@@ -224,6 +225,24 @@ function holdExit(el: HTMLElement, tier: MorphTier) {
   return el.animate(null, { duration: exitFallbackMs(spring[tier]) })
 }
 
+/**
+ * Puts focus back on the trigger once a closed popup that held it has gone,
+ * unless it went somewhere on purpose. The exit hold keeps the popup mounted
+ * while Base UI marks it inert, so the pointer "leaves" it, and a menu reads
+ * that leave as a hover close, which skips Base UI's own focus return. Two
+ * frames: after Base UI's return and a parent popup's focus restore.
+ */
+function returnFocus(trigger: HTMLElement) {
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      const active = document.activeElement
+      if (!trigger.isConnected || active === trigger) return
+      if (active && active !== document.body && !active.contains(trigger)) return
+      trigger.focus({ preventScroll: true })
+    }),
+  )
+}
+
 /** Where the opening event happened; none for a keyboard-activated click. */
 function pressPoint(event: Event | undefined) {
   // A long press (Base UI's ContextMenu) hands over its touchstart.
@@ -269,7 +288,7 @@ function useMorph(
   { from = 'trigger', effect = 'goo', hideSource = false, tier = 'slow', exit, instant }: MorphOptions = {},
   onExited?: () => void,
 ) {
-  const reduced = useReducedMotionConfig()
+  const reduced = useReduceMotion()
   const resolve = (wanted: MorphEffect): MorphEffect => (reduced ? 'fade' : wanted)
   const resolved = resolve(effect)
   const { exit: leave, ...enter } = spring[tier]
@@ -282,6 +301,8 @@ function useMorph(
   const hidden = useRef<{ el: HTMLElement; opacity: string } | null>(null)
   const exited = useRef(onExited)
   exited.current = onExited
+  // The trigger to give focus back to, when the popup held it as it closed.
+  const returnTo = useRef<HTMLElement | null>(null)
 
   // Base UI mounts the popup a render after `open` flips, so the engine
   // starts from the element's arrival, not from the flag.
@@ -384,6 +405,7 @@ function useMorph(
   const skip = (el: HTMLElement) => instant?.(el)
 
   const opening = (popup: HTMLDivElement) => {
+    returnTo.current = null
     run.current = { effect: resolved, from }
     const first = !geometry.current
     if (first && refs.bg.current) {
@@ -432,6 +454,7 @@ function useMorph(
   }
 
   const closing = (popup: HTMLDivElement) => {
+    returnTo.current = popup.contains(document.activeElement) ? (origin.current?.trigger ?? null) : null
     if (!geometry.current) {
       exited.current?.()
       return
@@ -493,6 +516,9 @@ function useMorph(
   const popupRef = useCallback((node: HTMLDivElement | null) => {
     refs.popup.current = node
     setPopup(node)
+    if (node || !returnTo.current) return
+    returnFocus(returnTo.current)
+    returnTo.current = null
   }, [])
 
   return { refs, popupRef, popup, gooId, effect: resolved, progress }
