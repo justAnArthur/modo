@@ -5,8 +5,15 @@
 
 import { Check, CodeXml, Copy, Link2, Monitor, Moon, Sun } from 'lucide-react'
 import { Children, isValidElement, type ReactNode, useEffect, useState } from 'react'
+import { SidebarInsetTopbar } from './blocks/sidebar-app/inset-topbar'
 import FluidSelect from './components/select'
-import Sidebar from './components/sidebar'
+import Sidebar, {
+  SIDEBAR_KEYBOARD_SHORTCUT,
+  SIDEBAR_KEYBOARD_SHORTCUT_RIGHT,
+  type SidebarSide,
+  useSidebar,
+} from './components/sidebar'
+import { cn } from './lib/utils'
 
 const icons = { code: CodeXml, copy: Copy, check: Check, link: Link2 }
 
@@ -59,22 +66,88 @@ declare global {
 }
 
 /**
- * Sidebar slot: both asides of the chrome, drawn with the Sidebar's own
- * parts. A section of links is a collapsible `Sidebar.Group` whose rows share
- * one `Sidebar.Menu`, so the current page and the hover highlight melt from
- * link to link (the TOC's current heading too, as the page scrolls); a panel
+ * Sidebar slot: both asides of the chrome, each an inset `Sidebar` with its
+ * own provider, so the content between them is the inset card (global.css)
+ * and either side hides on its own: the trigger in the card's corner, `[` for
+ * the nav, `]` for the panel. Collapsed, a side peeks back out when you rest
+ * on its trigger; below md each is a drawer. The panel starts hidden below xl.
+ *
+ * A section of links is a collapsible `Sidebar.Group` whose rows share one
+ * `Sidebar.Menu`, so the current page and the hover highlight melt from link
+ * to link (the TOC's current heading too, as the page scrolls); a panel
  * section (the Theme select) keeps its control under the group label. Pinned
  * in modo.config.ts, since by name alone modo would adopt the documented
  * `Sidebar`, an app shell that needs its provider.
  */
 export function DocsNav({ children }: { children?: ReactNode }) {
-  return <nav data-modo="sidebar-nav">{children}</nav>
+  const [side, setSide] = useState<SidebarSide>()
+  // The slot gets no side: which aside it landed in tells, before first paint.
+  if (!side) return <div ref={node => node && setSide(node.closest('[data-modo="panel"]') ? 'right' : 'left')} />
+
+  return (
+    <Sidebar.Provider
+      defaultOpen={side === 'left' || window.matchMedia('(min-width: 1280px)').matches}
+      peek="hover"
+      persist={false}
+      shortcut={null}
+    >
+      <Sidebar variant="inset" side={side}>
+        <Sidebar.Content>
+          <nav aria-label={side === 'left' ? 'Docs' : 'Page'}>{children}</nav>
+        </Sidebar.Content>
+      </Sidebar>
+      <DocsNavTrigger side={side} />
+    </Sidebar.Provider>
+  )
+}
+
+/** The inset topbar's trigger, pinned to the card's top corner: the card sits flush with an open sidebar, a gutter away from a hidden one. */
+function DocsNavTrigger({ side }: { side: SidebarSide }) {
+  const { open, isMobile } = useSidebar()
+  useDocsShortcut(side)
+  const gutter = !open || isMobile
+  return (
+    <SidebarInsetTopbar
+      className={cn(
+        'absolute top-2 transition-[margin] duration-fast',
+        side === 'left' ? 'left-full' : 'right-full',
+        gutter && (side === 'left' ? 'ml-2' : 'mr-2'),
+      )}
+    />
+  )
+}
+
+/**
+ * `[` / `]` for the docs sidebars, owned here rather than by their providers:
+ * a provider's key goes to the first one mounted when focus is on the page,
+ * and on a fresh load that is a demo in the content, mounted a render before
+ * the chrome's. The demos keep the key while focus is inside one.
+ */
+function useDocsShortcut(side: SidebarSide) {
+  const { toggleSidebar } = useSidebar()
+  const key = side === 'left' ? SIDEBAR_KEYBOARD_SHORTCUT : SIDEBAR_KEYBOARD_SHORTCUT_RIGHT
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== key || event.metaKey || event.ctrlKey || event.altKey) return
+      const target = event.target as HTMLElement
+      if (target.isContentEditable) return
+      if (target.closest('input, textarea, select, [data-modo="content"] [data-slot="sidebar-wrapper"]')) return
+      // Capture phase: the demos' providers listen on window too, and must not toggle with it.
+      event.stopImmediatePropagation()
+      event.preventDefault()
+      toggleSidebar()
+    }
+    window.addEventListener('keydown', onKeyDown, true)
+    return () => window.removeEventListener('keydown', onKeyDown, true)
+  }, [key, toggleSidebar])
 }
 
 function DocsNavItem({ href, active, children }: { href: string; active?: boolean; children?: ReactNode }) {
+  const { setOpenMobile } = useSidebar()
   return (
     <Sidebar.MenuItem>
-      <Sidebar.MenuButton isActive={active} render={<a href={href} />}>
+      <Sidebar.MenuButton isActive={active} render={<a href={href} />} onClick={() => setOpenMobile(false)}>
         {children}
       </Sidebar.MenuButton>
     </Sidebar.MenuItem>

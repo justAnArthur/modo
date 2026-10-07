@@ -197,12 +197,17 @@ design system's own Select. The
 
 `DocsNav` in `modo.components.tsx` is the chrome's Sidebar slot, pinned as
 `shell.Sidebar` (by name alone modo would adopt the documented `Sidebar`, an
-app shell that needs its provider). It draws both asides with the Sidebar's
-own parts: a section of links is a collapsible `Sidebar.Group` with one
+app shell that needs its provider). Each aside is an inset `Sidebar` with its
+own provider, and `global.css` turns the content between them into the inset
+card (the lib's grid columns become `auto`, so they follow the sidebars' width
+springs). Either side hides on its own: the trigger in the card's corner, `[`
+for the nav and `]` for the panel. `DocsNav` owns those keys, so a demo
+sidebar in the content keeps them only while it has focus. Collapsed, a side
+peeks back out from its trigger; below md each is a drawer; the panel starts
+hidden below xl. A section of links is a collapsible `Sidebar.Group` with one
 `Sidebar.Menu`, so the current page, the TOC's current heading and the hover
 highlight melt from link to link; a panel section (Theme) keeps its control
-under the group label. `global.css` hands the spacing to the groups and no
-longer styles the plain `sidebar-item` / `sidebar-section-title` hooks.
+under the group label.
 
 `ThemeSwitcher` in `modo.components.tsx` is not an item either: it is the `Theme` entry in
 `modo.config.ts` `panel.items`, a `Select` of Light / Dark / System (each row

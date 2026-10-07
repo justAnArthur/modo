@@ -404,8 +404,8 @@ html.transitioning *::after {
 
 /* ── modo docs chrome ──
    The lib ships structure only; these give its hooks the design system's
-   look, tokens only. Both asides are drawn with the Sidebar's own parts
-   (`DocsNav` in modo.components.tsx), which bring their own look. */
+   look, tokens only. Both asides are inset Sidebars (`DocsNav` in
+   modo.components.tsx), which bring their own look. */
 
 /* The chrome's generic type contract, wired to this system's roles. */
 :root {
@@ -429,11 +429,52 @@ html.transitioning *::after {
   margin-inline: auto;
 }
 
-/* Each section is a Sidebar.Group with its own gutter: the nav only adds
-   the rail's outer one. */
-[data-modo="sidebar-nav"] {
-  gap: 0;
-  padding: var(--space-2);
+/* The inset layout, as Sidebar.Inset draws it: both asides are inset
+   Sidebars (DocsNav) and the content is the card between them. Each aside's
+   column follows its sidebar's width spring, so hiding one reflows the card;
+   below md both are drawers and the card takes the row. */
+[data-modo="app"] {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: none;
+  grid-template-areas: "sidebar content panel";
+}
+
+[data-modo="sidebar"],
+[data-modo="panel"] {
+  position: sticky;
+  top: 0;
+  /* Over the card: the corner triggers and the peek overlap it. */
+  z-index: 1;
+  height: 100vh;
+  max-height: none;
+  /* The Sidebar scrolls its own rows. */
+  overflow: visible;
+}
+
+[data-modo="content"] {
+  margin: var(--space-2);
+  /* The inset topbar's band, where the corner triggers sit. */
+  padding-top: calc(3rem + var(--space-2));
+  border-radius: var(--radius-xl);
+  background-color: var(--surface-2);
+  box-shadow: var(--shadow-2);
+  transition: margin var(--duration-fast);
+}
+
+/* Flush with an open sidebar: its rows keep their own gutter. */
+@media (min-width: 768px) {
+  [data-modo="app"]:has(> [data-modo="sidebar"] [data-slot="sidebar"][data-state="expanded"]) > [data-modo="content"] {
+    margin-left: 0;
+  }
+
+  [data-modo="app"]:has(> [data-modo="panel"] [data-slot="sidebar"][data-state="expanded"]) > [data-modo="content"] {
+    margin-right: 0;
+  }
+}
+
+/* The lib drops the TOC below xl; here the panel is a sidebar at any width. */
+[data-modo="toc"] {
+  display: block;
 }
 
 /* The code panel under an example is flush with the frame, not a card in a card. */
