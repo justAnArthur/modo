@@ -19,6 +19,12 @@
  *   `html[data-size="compact"]` override set by the docs site's
  *   SizeAttribute — are not carried over.
  * - `micro` (keycaps, one notch below caption) is a local role.
+ * - Each role's line-height (FF's typography page: 28/34, 16/22, 14/20,
+ *   13/20, 12/16) is a `--leading-*` token, emitted by the same
+ *   `text-<role>` rule; the compact step keeps its role's leading.
+ * - The docs chrome's element roles (`--font-size-<el>`, `--line-height-<el>`,
+ *   `--font-weight-<el>`, `--color-<el>`) reference these, following FF's
+ *   rules: headings in foreground, text muted.
  * - Upstream's `fontWeights` (lib/font-weight.ts, fontVariationSettings
  *   strings) become the `--weight-*` variation settings, read by the
  *   `weight-*` rule in uno.config.ts. Each derives its wght from
@@ -42,6 +48,14 @@
   /* Keycaps and chips. */
   --text-micro: 11px;
 
+  /* Each role's paired line-height. */
+  --leading-display: 34px;
+  --leading-title: 22px;
+  --leading-subtitle: 20px;
+  --leading-body: 20px;
+  --leading-caption: 16px;
+  --leading-micro: 14px;
+
   /* The compact step: each role one notch down. */
   --text-display-compact: 24px;
   --text-title-compact: 15px;
@@ -60,4 +74,46 @@
   --weight-medium: "wght" var(--font-weight-medium), "opsz" 15;
   --weight-semibold: "wght" var(--font-weight-semibold), "opsz" 18;
   --weight-bold: "wght" var(--font-weight-bold), "opsz" 25;
+
+  /* The docs chrome's elements (modo's type contract), on the roles above. */
+  --font-size-h1: var(--text-display);
+  --line-height-h1: var(--leading-display);
+  --font-weight-h1: var(--font-weight-bold);
+  --color-h1: var(--foreground);
+
+  --font-size-h2: var(--text-title);
+  --line-height-h2: var(--leading-title);
+  --font-weight-h2: var(--font-weight-semibold);
+  --color-h2: var(--foreground);
+
+  --font-size-h3: var(--text-subtitle);
+  --line-height-h3: var(--leading-subtitle);
+  --font-weight-h3: var(--font-weight-semibold);
+  --color-h3: var(--foreground);
+
+  --font-size-h4: var(--text-body);
+  --line-height-h4: var(--leading-body);
+  --font-weight-h4: var(--font-weight-semibold);
+  --color-h4: var(--foreground);
+
+  --font-size-p: var(--text-body);
+  --line-height-p: var(--leading-body);
+  --font-weight-p: var(--font-weight-normal);
+  --color-p: var(--muted-foreground);
+
+  --font-size-lead: var(--text-body);
+  --line-height-lead: var(--leading-body);
+  --font-weight-lead: var(--font-weight-normal);
+  --color-lead: var(--muted-foreground);
+
+  --font-size-eyebrow: var(--text-caption);
+  --line-height-eyebrow: var(--leading-caption);
+  --font-weight-eyebrow: var(--font-weight-medium);
+  --color-eyebrow: var(--muted-foreground);
+
+  --font-size-sm: var(--text-caption);
+  --line-height-sm: var(--leading-caption);
+
+  --font-size-xs: var(--text-micro);
+  --line-height-xs: var(--leading-micro);
 }

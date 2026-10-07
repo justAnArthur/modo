@@ -132,11 +132,14 @@ export default defineConfig({
   // same-named variable (`--radius-box`), a cycle with the token itself.
   rules: [
     // FF's type-scale role utilities (upstream `@utility text-display` …),
-    // riding the --text-* tokens in tokens/typography.css; `-compact` is the
-    // ladder's compact step.
+    // riding the --text-* and --leading-* tokens in tokens/typography.css;
+    // `-compact` is the ladder's compact step.
     [
       new RegExp(`^text-(${TYPE_ROLES.join('|')})(-compact)?$`),
-      ([, role, compact = '']) => ({ 'font-size': `var(--text-${role}${compact})` }),
+      ([, role, compact = '']) => ({
+        'font-size': `var(--text-${role}${compact})`,
+        'line-height': `var(--leading-${role})`,
+      }),
       { autocomplete: `text-(${TYPE_ROLES.join('|')})` },
     ],
     // The Inter weight ladder (font-variation-settings, not font-weight).
