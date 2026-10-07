@@ -3,20 +3,42 @@
    muted text, focus ring). The host restyles the rest via data-modo attrs. */
 
 /* The generic contract, resolved once. Each reads the host's token, else the
-   lib's default: a size for type and radius, a CSS keyword for weight. Motion
-   has no default (no token, no transition). These are the only literal
+   lib's default: a size for type and radius, a CSS keyword for weight. A token
+   without a default (motion, line-heights, p/h4 sizes) inherits when unset.
+   Role colors come from tokens/host-colors.ts. These are the only literal
    visuals in this file. */
 :root {
+  --modo-font-weight-medium: var(--font-weight-medium, normal);
+  --modo-font-weight-semibold: var(--font-weight-semibold, bold);
+  --modo-font-weight-bold: var(--font-weight-bold, bold);
+
+  /* Type roles: size, line-height and weight per element the chrome renders. */
   --modo-font-size-h1: var(--font-size-h1, 2rem);
   --modo-font-size-h2: var(--font-size-h2, 1.25rem);
   --modo-font-size-h3: var(--font-size-h3, 1rem);
+  --modo-font-size-h4: var(--font-size-h4);
+  --modo-font-size-p: var(--font-size-p);
   --modo-font-size-lead: var(--font-size-lead, 1.125rem);
   --modo-font-size-eyebrow: var(--font-size-eyebrow, 0.8125rem);
   --modo-font-size-sm: var(--font-size-sm, 0.8125rem);
   --modo-font-size-xs: var(--font-size-xs, 0.6875rem);
-  --modo-font-weight-medium: var(--font-weight-medium, normal);
-  --modo-font-weight-semibold: var(--font-weight-semibold, bold);
-  --modo-font-weight-bold: var(--font-weight-bold, bold);
+  --modo-line-height-h1: var(--line-height-h1);
+  --modo-line-height-h2: var(--line-height-h2);
+  --modo-line-height-h3: var(--line-height-h3);
+  --modo-line-height-h4: var(--line-height-h4);
+  --modo-line-height-p: var(--line-height-p);
+  --modo-line-height-lead: var(--line-height-lead);
+  --modo-line-height-eyebrow: var(--line-height-eyebrow);
+  --modo-line-height-sm: var(--line-height-sm);
+  --modo-line-height-xs: var(--line-height-xs);
+  --modo-font-weight-h1: var(--font-weight-h1, var(--modo-font-weight-bold));
+  --modo-font-weight-h2: var(--font-weight-h2, var(--modo-font-weight-semibold));
+  --modo-font-weight-h3: var(--font-weight-h3, var(--modo-font-weight-semibold));
+  --modo-font-weight-h4: var(--font-weight-h4, var(--modo-font-weight-semibold));
+  --modo-font-weight-p: var(--font-weight-p);
+  --modo-font-weight-lead: var(--font-weight-lead);
+  --modo-font-weight-eyebrow: var(--font-weight-eyebrow, var(--modo-font-weight-medium));
+
   --modo-radius-sm: var(--radius-sm, 4px);
   --modo-radius-md: var(--radius-md, var(--radius, 8px));
   --modo-radius-lg: var(--radius-lg, var(--radius, 12px));
@@ -134,14 +156,17 @@
 
 [data-modo="page-eyebrow"] {
   font-size: var(--modo-font-size-eyebrow);
-  font-weight: var(--modo-font-weight-medium);
-  color: var(--modo-muted);
+  line-height: var(--modo-line-height-eyebrow);
+  font-weight: var(--modo-font-weight-eyebrow);
+  color: var(--modo-color-eyebrow);
   margin: 0 0 var(--space-1, 4px);
 }
 
 [data-modo="page-title"] {
   font-size: var(--modo-font-size-h1);
-  font-weight: var(--modo-font-weight-bold);
+  line-height: var(--modo-line-height-h1);
+  font-weight: var(--modo-font-weight-h1);
+  color: var(--modo-color-h1);
   margin: 0 0 var(--space-2, 8px);
   text-wrap: balance;
 }
@@ -149,8 +174,10 @@
 /* The TSDoc summary. */
 [data-modo="page-lead"] {
   font-size: var(--modo-font-size-lead);
+  line-height: var(--modo-line-height-lead);
+  font-weight: var(--modo-font-weight-lead);
+  color: var(--modo-color-lead);
   max-width: var(--modo-measure);
-  color: var(--modo-muted);
   text-wrap: pretty;
   margin: 0 0 var(--space-5, 24px);
 }
@@ -163,6 +190,7 @@
   margin: 0;
   color: var(--modo-muted);
   font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
 }
 
 /* Bento: overview grids of live previews. Two columns from a medium content
@@ -246,6 +274,7 @@
 [data-modo="bento-desc"] {
   color: var(--modo-muted);
   font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
 }
 
 [data-modo="bento-count"] {
@@ -305,12 +334,18 @@
     margin-top: var(--space-3, 12px);
   }
 
+  :is(p, li) {
+    font-size: var(--modo-font-size-p);
+    line-height: var(--modo-line-height-p);
+    font-weight: var(--modo-font-weight-p);
+    color: var(--modo-color-p);
+  }
+
   p {
     text-wrap: pretty;
   }
 
   :is(h2, h3, h4, h5, h6) {
-    font-weight: var(--modo-font-weight-semibold);
     text-wrap: balance;
   }
 
@@ -324,9 +359,21 @@
 
   h2 {
     font-size: var(--modo-font-size-h2);
+    line-height: var(--modo-line-height-h2);
+    font-weight: var(--modo-font-weight-h2);
+    color: var(--modo-color-h2);
   }
   h3 {
     font-size: var(--modo-font-size-h3);
+    line-height: var(--modo-line-height-h3);
+    font-weight: var(--modo-font-weight-h3);
+    color: var(--modo-color-h3);
+  }
+  :is(h4, h5, h6) {
+    font-size: var(--modo-font-size-h4);
+    line-height: var(--modo-line-height-h4);
+    font-weight: var(--modo-font-weight-h4);
+    color: var(--modo-color-h4);
   }
 
   :is(ul, ol) {
@@ -363,6 +410,7 @@
     border-collapse: collapse;
     width: 100%;
     font-size: var(--modo-font-size-sm);
+    line-height: var(--modo-line-height-sm);
   }
 
   :is(th, td) {
@@ -383,7 +431,9 @@
 
 [data-modo="section-title"] {
   font-size: var(--modo-font-size-h2);
-  font-weight: var(--modo-font-weight-semibold);
+  line-height: var(--modo-line-height-h2);
+  font-weight: var(--modo-font-weight-h2);
+  color: var(--modo-color-h2);
   margin: 0 0 var(--space-3, 12px);
   text-wrap: balance;
 }
@@ -412,7 +462,9 @@
 
 [data-modo="example-card-title"] {
   font-size: var(--modo-font-size-h3);
-  font-weight: var(--modo-font-weight-semibold);
+  line-height: var(--modo-line-height-h3);
+  font-weight: var(--modo-font-weight-h3);
+  color: var(--modo-color-h3);
   margin: 0 0 var(--space-2, 8px);
 }
 
@@ -509,6 +561,7 @@
   border-collapse: collapse;
   width: 100%;
   font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
 }
 
 [data-modo="prop-table"] :is(th, td) {
@@ -541,11 +594,13 @@
   align-items: center;
   gap: var(--space-2, 8px);
   font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
 }
 
 [data-modo="token-meta"] {
   margin-top: var(--space-1, 4px);
   font-size: var(--modo-font-size-xs);
+  line-height: var(--modo-line-height-xs);
   color: var(--modo-muted);
 }
 
@@ -600,6 +655,7 @@
   padding: var(--modo-tile-pad);
   border-radius: var(--modo-radius-lg);
   font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
 }
 
 [data-modo="color-tile"][data-flush] {
@@ -624,6 +680,7 @@
 [data-modo="color-tile-pair"] {
   margin-top: auto;
   font-size: var(--modo-font-size-xs);
+  line-height: var(--modo-line-height-xs);
 }
 
 [data-modo="color-tile-value"] {
@@ -634,6 +691,7 @@
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   font-size: var(--modo-font-size-xs);
+  line-height: var(--modo-line-height-xs);
 }
 
 [data-modo="color-tile-value"] > * {
@@ -706,6 +764,7 @@
 }
 
 /* Scale rows: the token on the left, its specimen on the right. */
+[data-modo="type-element"],
 [data-modo="type-step"],
 [data-modo="space-step"],
 [data-modo="motion-row"] {
@@ -717,6 +776,7 @@
   border-bottom: 1px solid var(--modo-border);
 }
 
+[data-modo="type-element"],
 [data-modo="type-step"] {
   align-items: baseline;
 }
@@ -726,7 +786,7 @@
 }
 
 @container (max-width: 560px) {
-  :is([data-modo="type-step"], [data-modo="space-step"], [data-modo="motion-row"]) {
+  :is([data-modo="type-element"], [data-modo="type-step"], [data-modo="space-step"], [data-modo="motion-row"]) {
     grid-template-columns: minmax(0, 1fr);
   }
 }

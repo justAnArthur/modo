@@ -1,10 +1,27 @@
 import type { CSSProperties } from 'react'
+import { resolved } from './host-colors'
 import { byLength, OtherTokens, TokenLabel, TokenSection, type Var } from './token-row'
 
 const SAMPLE = 'The quick brown fox jumps over the lazy dog'
 const GLYPHS = ['ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz', '0123456789 !?&@#%']
 
 type Role = 'family' | 'size' | 'weight' | 'other'
+
+/** The contract's type roles (shell.css), each with the tag it renders as. */
+const ELEMENTS = {
+  h1: 'h1',
+  h2: 'h2',
+  h3: 'h3',
+  h4: 'h4',
+  p: 'p',
+  lead: 'p',
+  eyebrow: 'p',
+  sm: 'p',
+  xs: 'p',
+} as const
+type ElementRole = keyof typeof ELEMENTS
+
+const ROLE_TOKEN = new RegExp(`^--(font-size|line-height|font-weight|color)-(${Object.keys(ELEMENTS).join('|')})$`)
 
 // The parser classifies by name (lib/css.ts); leading and tracking have no swatch.
 function role(v: Var): Role {
@@ -20,10 +37,13 @@ function role(v: Var): Role {
   }
 }
 
-function roles(vars: Var[]) {
+function roles(all: Var[]) {
+  const elements = (Object.keys(ELEMENTS) as ElementRole[]).filter(e => all.some(v => v.name === `--font-size-${e}`))
+  const vars = all.filter(v => !ROLE_TOKEN.test(v.name))
   const of = (r: Role) => vars.filter(v => role(v) === r)
   const weights = of('weight')
   return {
+    elements,
     families: of('family'),
     sizes: byLength(of('size')),
     weights,
@@ -43,11 +63,20 @@ function sizeStyle(v: Var, weight?: Var): CSSProperties {
 }
 
 export function TypographyView({ vars }: { vars: Var[] }) {
-  const { families, sizes, weights, other, weightOf } = roles(vars)
+  const { elements, families, sizes, weights, other, weightOf } = roles(vars)
   const paired = new Set(sizes.map(weightOf))
   const standalone = weights.filter(w => !paired.has(w))
   return (
     <>
+      {elements.length > 0 && (
+        <TokenSection title="Elements">
+          <div data-modo="type-elements">
+            {elements.map(e => (
+              <ElementStep key={e} element={e} />
+            ))}
+          </div>
+        </TokenSection>
+      )}
       {families.length > 0 && (
         <TokenSection title="Families">
           <div data-modo="type-families">
@@ -98,6 +127,34 @@ function Family({ v }: { v: Var }) {
         ))}
       </div>
       <TokenLabel v={v} />
+    </div>
+  )
+}
+
+// The role as the chrome renders it: its --modo-* vars, defaults included.
+function ElementStep({ element }: { element: ElementRole }) {
+  const Tag = ELEMENTS[element]
+  const metrics = ['font-size', 'line-height', 'font-weight']
+    .map(p => resolved(`--modo-${p}-${element}`))
+    .filter(Boolean)
+    .join(' · ')
+  return (
+    <div data-modo="type-element">
+      <div data-modo="token-label">
+        <code>{element}</code>
+        <span data-modo="token-meta">{metrics}</span>
+      </div>
+      <Tag
+        data-modo="type-sample"
+        style={{
+          fontSize: `var(--modo-font-size-${element})`,
+          lineHeight: `var(--modo-line-height-${element})`,
+          fontWeight: `var(--modo-font-weight-${element})`,
+          color: `var(--modo-color-${element})`,
+        }}
+      >
+        {SAMPLE}
+      </Tag>
     </div>
   )
 }
