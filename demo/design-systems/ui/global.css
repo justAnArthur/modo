@@ -413,10 +413,10 @@ html.transitioning *::after {
   --modo-measure: 45rem;
 }
 
-/* One reading column on item and token pages: the article keeps to the
-   measure, example cards and prop tables included, centered in the content
-   area. Overview grids (no article) keep the full width. */
-[data-modo="content"] > article {
+/* One reading column on every page: the article (example cards and prop
+   tables included), and an overview's header and grid, keep to the measure,
+   centered in the content area. */
+[data-modo="content"] > * {
   max-width: var(--modo-measure);
   margin-inline: auto;
 }
