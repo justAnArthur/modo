@@ -261,12 +261,12 @@ The two ends of the rail: a workspace switcher and search on top, the user row a
   </Sidebar.Provider>
 </div>
 
-# Resize, collapse and peek
+# Resize, collapse and open on hover
 
-Drag the rail on the inner edge to resize, click it or press `[` to collapse. With `peek="hover"`, a collapsed sidebar oozes back out of the edge, or out of the trigger you rest on, and melts back in when you leave.
+Drag the rail on the inner edge to resize, click it or press `[` to collapse. With `openOnHover`, collapsing leaves the sidebar on hover: it opens when the pointer reaches the edge or the trigger beside it, and closes when it leaves. The trigger's dashed glyph shows the mode; press it to keep the sidebar open again.
 
 <div className="flex h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
-  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0} peek="hover">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0} openOnHover>
     <Sidebar variant="inset" className="h-full" defaultValue="Summarise the Q3 board deck">
       <Sidebar.Content>
         <Sidebar.Group>
@@ -284,33 +284,6 @@ Drag the rail on the inner edge to resize, click it or press `[` to collapse. Wi
                 <Sidebar.MenuBadge>{badge}</Sidebar.MenuBadge>
               </Sidebar.MenuItem>
             ))}
-          </Sidebar.Menu>
-        </Sidebar.Group>
-      </Sidebar.Content>
-    </Sidebar>
-    <Sidebar.Inset className="min-h-0">
-      <SidebarInsetTopbar />
-    </Sidebar.Inset>
-  </Sidebar.Provider>
-</div>
-
-# Peek on click
-
-`peek="click"` floats the collapsed sidebar out only when its edge is pressed. Press outside or hit Escape to send it back; the trigger in its header pins it open.
-
-<div className="flex h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
-  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0} peek="click" defaultOpen={false}>
-    <Sidebar variant="inset" className="h-full" defaultValue="Chat">
-      <Sidebar.Header>
-        <SidebarWorkspaceHeader name="Aurora AI" tile={<WorkspaceTile>A</WorkspaceTile>} />
-      </Sidebar.Header>
-      <Sidebar.Content>
-        <Sidebar.Group>
-          <Sidebar.GroupLabel>Workspace</Sidebar.GroupLabel>
-          <Sidebar.Menu>
-            <Sidebar.MenuItem><Sidebar.MenuButton icon={MessageCircle} value="Chat">Chat</Sidebar.MenuButton></Sidebar.MenuItem>
-            <Sidebar.MenuItem><Sidebar.MenuButton icon={Brain} value="Agents">Agents</Sidebar.MenuButton></Sidebar.MenuItem>
-            <Sidebar.MenuItem><Sidebar.MenuButton icon={SquareLibrary} value="Knowledge">Knowledge</Sidebar.MenuButton></Sidebar.MenuItem>
           </Sidebar.Menu>
         </Sidebar.Group>
       </Sidebar.Content>

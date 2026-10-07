@@ -443,7 +443,7 @@ html.transitioning *::after {
 [data-modo="panel"] {
   position: sticky;
   top: 0;
-  /* Over the card: the corner triggers and the peek overlap it. */
+  /* Over the card: the corner triggers overlap it. */
   z-index: 1;
   height: 100vh;
   max-height: none;

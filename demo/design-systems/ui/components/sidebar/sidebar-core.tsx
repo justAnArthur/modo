@@ -12,12 +12,13 @@
  *   `text-micro-compact`, the group label's `text-[11px]` / `text-[12px]` →
  *   `text-caption-compact` / `text-caption`; the hex focus-ring fallback →
  *   `ring-focus-ring`; `duration-80|160|240` → `duration-<tier>`.
- * - The collapsed peek grows out of what opened it through the morph layer
- *   (`lib/use-morph.ts`, goo on `spring.goo`): the edge strip or the
- *   hovered trigger, recorded in the context's `peekOrigin`, and melts back
- *   into it on dismissal, replacing the card's slide in from off the edge.
+ * - No collapsed peek (the card floated out of the edge strip, `peek`):
+ *   `openOnHover` on the provider opens the sidebar itself, in flow, while
+ *   the pointer is between its edge and the far side of a trigger beside it;
+ *   the trigger then switches between open and on hover (dashed glyph), and
+ *   the rail collapses or resizes the hover without keeping it open.
  * - What is folded or collapsed away is `inert`: a folded `SidebarGroup`, and
- *   the rail panel of a collapsed sidebar without peek. Their rows were still
+ *   the rail panel of a collapsed sidebar. Their rows were still
  *   tab stops while clipped away (React 18 has no `inert` prop type, hence
  *   the spreads).
  */
@@ -46,13 +47,11 @@ import {
   useState,
 } from 'react'
 import { useIcon } from '../../lib/icon-context'
-import { MorphSurface } from '../../lib/morph-layers'
 import { useShape } from '../../lib/shape-context'
 import { useSize, useSizeVariant } from '../../lib/size-context'
 import { exitFallbackMs, spring } from '../../lib/springs'
-import { SURFACE_BG, SURFACE_SHADOW, surfaceClasses } from '../../lib/surface-classes'
+import { surfaceClasses } from '../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../lib/surface-context'
-import { type MorphOrigin, useMorph } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { Button, type ButtonProps } from '../button'
 import { Tooltip } from '../tooltip'
@@ -74,6 +73,11 @@ export const SIDEBAR_MAX_WIDTH = 360
  *  bottoming out — the same "throw it at the edge to dismiss" affordance
  *  native apps use. */
 export const SIDEBAR_COLLAPSE_SLOP = 56
+/** Open on hover: the strip past the sidebar's inner edge that opens it, and
+ *  how close a trigger must sit to that edge to widen the strip to its own
+ *  far side (px). */
+export const SIDEBAR_HOVER_STRIP = 12
+export const SIDEBAR_HOVER_TRIGGER_GAP = 24
 
 // ─── Context ─────────────────────────────────────────────────────────────────
 
@@ -82,7 +86,9 @@ export type SidebarVariant = 'sidebar' | 'floating' | 'inset'
 export type SidebarCollapsible = 'offcanvas' | 'none'
 
 export interface SidebarContextValue {
+  /** What shows: expanded while kept open or open on hover. */
   state: 'expanded' | 'collapsed'
+  /** Kept open. */
   open: boolean
   setOpen: (open: boolean | ((prev: boolean) => boolean)) => void
   openMobile: boolean
@@ -101,22 +107,15 @@ export interface SidebarContextValue {
   registerSide: (side: SidebarSide) => void
   /** The resolved toggle key ("[" / "]" / custom / null when disabled). */
   shortcut: string | null
-  /** Collapsed-peek mode: reveal the sidebar as a floating overlay from the
-   *  collapsed edge on hover or click, without pinning it open. */
-  peek: 'hover' | 'click' | 'none'
-  /** True while the collapsed sidebar is peeking as an overlay. */
-  isPeeking: boolean
-  setIsPeeking: React.Dispatch<React.SetStateAction<boolean>>
-  /** Shared hover-intent machinery for the peek: ONE timer serves every
-   *  affordance that can float the rail out (the edge strip, the trigger),
-   *  so crossing between them — or into the peeked card — cancels a pending
-   *  dismissal instead of racing a second timer. */
-  schedulePeek: () => void
-  scheduleDismissPeek: () => void
-  cancelPeekTimer: () => void
-  /** What the peek grows out of: the edge strip or the trigger that armed
-   *  it, written before the peek is scheduled. */
-  peekOrigin: MutableRefObject<MorphOrigin>
+  /** The collapsed sidebar opens on hover (see the provider's prop). */
+  openOnHover: boolean
+  /** True while the collapsed sidebar is open on hover. */
+  hoverOpen: boolean
+  setHoverOpen: React.Dispatch<React.SetStateAction<boolean>>
+  /** Internal: the shell and the triggers register their nodes; the hover
+   *  zone is measured off them. */
+  shellRef: MutableRefObject<HTMLElement | null>
+  registerTrigger: (node: HTMLElement) => () => void
   /** Internal: true while the rail is being drag-resized (disables the
    *  width spring so the panel tracks the pointer 1:1). */
   isResizing: boolean
@@ -154,6 +153,33 @@ function useIsMobile(breakpoint: number): boolean {
   return !!isMobile
 }
 
+/** Open on hover's zone: from the frame's edge to the sidebar's inner edge,
+ *  plus the strip past it, widened to the far side of a trigger sitting
+ *  right beside that edge (an inset topbar's, which rides the edge as the
+ *  sidebar opens), within the frame's height. */
+function inHoverZone(
+  event: PointerEvent,
+  side: SidebarSide,
+  frame: HTMLElement | null,
+  shell: HTMLElement | null,
+  triggers: Set<HTMLElement>,
+): boolean {
+  if (!frame || !shell) return false
+  const bounds = frame.getBoundingClientRect()
+  if (event.clientY < bounds.top || event.clientY > bounds.bottom) return false
+  const box = shell.getBoundingClientRect()
+  const inner = side === 'left' ? box.right : box.left
+  let reach = SIDEBAR_HOVER_STRIP
+  for (const trigger of triggers) {
+    const button = trigger.getBoundingClientRect()
+    const gap = side === 'left' ? button.left - inner : inner - button.right
+    if (gap >= 0 && gap <= SIDEBAR_HOVER_TRIGGER_GAP) reach = Math.max(reach, gap + button.width)
+  }
+  return side === 'left'
+    ? event.clientX >= bounds.left && event.clientX < inner + reach
+    : event.clientX <= bounds.right && event.clientX > inner - reach
+}
+
 // ─── SidebarProvider ─────────────────────────────────────────────────────────
 
 export interface SidebarProviderProps extends HTMLAttributes<HTMLDivElement> {
@@ -168,10 +194,11 @@ export interface SidebarProviderProps extends HTMLAttributes<HTMLDivElement> {
   shortcut?: string | null
   /** Viewport width (px) below which the sidebar renders as a drawer. */
   mobileBreakpoint?: number
-  /** While collapsed, reveal the sidebar as a floating overlay from the
-   *  edge — on hover (with intent delay) or on click of the edge strip.
-   *  Peeking never pins the sidebar or writes the cookie. @default "none" */
-  peek?: 'hover' | 'click' | 'none'
+  /** While collapsed, open the sidebar when the pointer reaches its edge or
+   *  the trigger beside it, and close it a beat after the pointer leaves.
+   *  `open` then says whether it is kept open, and the trigger switches
+   *  between the two. Hovering never writes the cookie. @default false */
+  openOnHover?: boolean
   width?: string
   widthMobile?: string
 }
@@ -185,7 +212,7 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
       persist = true,
       shortcut: shortcutProp,
       mobileBreakpoint = 768,
-      peek = 'none',
+      openOnHover = false,
       width: widthProp = SIDEBAR_WIDTH,
       widthMobile = SIDEBAR_WIDTH_MOBILE,
       className,
@@ -247,33 +274,42 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
       else setOpen(prev => !prev)
     }, [isMobile, setOpen])
 
-    // Collapsed-peek overlay state. Pinning the sidebar open (or disabling
-    // the mode) always dismisses the peek — including a PENDING intent
-    // timer, or a hover armed just before the pin would fire setIsPeeking on
-    // an open sidebar (the effect's deps never re-run for the late timer).
-    const [isPeeking, setIsPeeking] = useState(false)
-    const peekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    // Open on hover. Keeping it open ends the hover; the zone arms only once
+    // the pointer has been outside it, so collapsing from the trigger or the
+    // rail under the pointer doesn't open it straight back.
+    const [hoverOpen, setHoverOpen] = useState(false)
     useEffect(() => {
-      if (open || peek === 'none') {
-        if (peekTimerRef.current) clearTimeout(peekTimerRef.current)
-        peekTimerRef.current = null
-        setIsPeeking(false)
+      if (open || !openOnHover) setHoverOpen(false)
+    }, [open, openOnHover])
+    const shellRef = useRef<HTMLElement | null>(null)
+    const triggers = useRef(new Set<HTMLElement>())
+    const registerTrigger = useCallback((node: HTMLElement) => {
+      triggers.current.add(node)
+      return () => {
+        triggers.current.delete(node)
       }
-    }, [open, peek])
-    const cancelPeekTimer = useCallback(() => {
-      if (peekTimerRef.current) clearTimeout(peekTimerRef.current)
-      peekTimerRef.current = null
     }, [])
-    const schedulePeek = useCallback(() => {
-      cancelPeekTimer()
-      peekTimerRef.current = setTimeout(() => setIsPeeking(true), 150)
-    }, [cancelPeekTimer])
-    const scheduleDismissPeek = useCallback(() => {
-      cancelPeekTimer()
-      peekTimerRef.current = setTimeout(() => setIsPeeking(false), 250)
-    }, [cancelPeekTimer])
-    useEffect(() => cancelPeekTimer, [cancelPeekTimer])
-    const peekOrigin = useRef<MorphOrigin>({})
+    useEffect(() => {
+      if (!openOnHover || open || isMobile || isResizing) return
+      let armed = false
+      let close: ReturnType<typeof setTimeout> | undefined
+      const onPointerMove = (event: PointerEvent) => {
+        if (event.pointerType !== 'mouse') return
+        if (!inHoverZone(event, side, wrapperRef.current, shellRef.current, triggers.current)) {
+          armed = true
+          if (hoverOpen) close ??= setTimeout(() => setHoverOpen(false), 300)
+          return
+        }
+        clearTimeout(close)
+        close = undefined
+        if (armed) setHoverOpen(true)
+      }
+      document.addEventListener('pointermove', onPointerMove)
+      return () => {
+        document.removeEventListener('pointermove', onPointerMove)
+        clearTimeout(close)
+      }
+    }, [openOnHover, open, isMobile, isResizing, hoverOpen, side])
 
     // The bare shortcut key toggles the sidebar app-wide. Bound to the
     // provider's lifetime (not a docs-only global), skipped while typing, and
@@ -336,7 +372,7 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
 
     const value = useMemo<SidebarContextValue>(
       () => ({
-        state: open ? 'expanded' : 'collapsed',
+        state: open || hoverOpen ? 'expanded' : 'collapsed',
         open,
         setOpen,
         openMobile,
@@ -350,13 +386,11 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
         side,
         registerSide,
         shortcut,
-        peek,
-        isPeeking,
-        setIsPeeking,
-        schedulePeek,
-        scheduleDismissPeek,
-        cancelPeekTimer,
-        peekOrigin,
+        openOnHover,
+        hoverOpen,
+        setHoverOpen,
+        shellRef,
+        registerTrigger,
         isResizing,
         setIsResizing,
       }),
@@ -372,11 +406,9 @@ const SidebarProvider = forwardRef<HTMLDivElement, SidebarProviderProps>(
         side,
         registerSide,
         shortcut,
-        peek,
-        isPeeking,
-        schedulePeek,
-        scheduleDismissPeek,
-        cancelPeekTimer,
+        openOnHover,
+        hoverOpen,
+        registerTrigger,
         isResizing,
       ],
     )
@@ -531,45 +563,6 @@ export interface SidebarShellProps extends MotionSafeDivProps {
   railTooltipOpen?: boolean
 }
 
-/** Internal: the collapsed sidebar floated out as a card, grown out of what
- *  armed it. Its edge inset matches where the PINNED rail's content sits, so
- *  pinning from a peek never shifts the rows sideways. */
-function SidebarPeek({ side, variant, children }: { side: SidebarSide; variant: SidebarVariant; children: ReactNode }) {
-  const { isPeeking, width, peekOrigin } = useSidebar()
-  const [mounted, setMounted] = useState(isPeeking)
-  if (isPeeking && !mounted) setMounted(true)
-  const morph = useMorph(isPeeking, peekOrigin, { tier: 'moderate' }, () => setMounted(false))
-  const shape = useShape()
-  const level = Math.min(useSurface() + 1, 8)
-  if (!isPeeking && !mounted) return null
-
-  const floating = variant === 'floating'
-
-  return (
-    <div
-      ref={morph.popupRef}
-      data-sidebar="peek"
-      className={cn(
-        'absolute inset-y-2 z-50 flex flex-col',
-        side === 'left' ? (floating ? 'left-2' : 'left-0') : floating ? 'right-2' : 'right-0',
-      )}
-      style={{ width: `calc(${width} - ${floating ? '1rem' : '0.5rem'})` }}
-    >
-      <SurfaceProvider value={level}>
-        <MorphSurface
-          morph={morph}
-          bg={SURFACE_BG[level]}
-          shadow={SURFACE_SHADOW[3]}
-          radius={shape.container}
-          className={cn('flex min-h-0 flex-1 flex-col overflow-hidden', shape.container)}
-        >
-          {children}
-        </MorphSurface>
-      </SurfaceProvider>
-    </div>
-  )
-}
-
 /** Internal: the expanded/collapsed desktop rail. An in-flow sticky column
  *  animates its width (this is what reflows the inset) while the fixed-width
  *  panel inside slides out under overflow clipping — container-relative, so
@@ -577,81 +570,17 @@ function SidebarPeek({ side, variant, children }: { side: SidebarSide; variant: 
  *  Ships the resize/collapse rail handle on its inner edge by default. */
 const SidebarShell = forwardRef<HTMLDivElement, SidebarShellProps>(
   ({ side, variant, bordered = true, rail = true, railTooltipOpen, className, children, ...props }, ref) => {
-    const {
-      open,
-      width,
-      mobileBreakpoint,
-      isMobile,
-      isResizing,
-      peek,
-      isPeeking,
-      setIsPeeking,
-      schedulePeek,
-      scheduleDismissPeek,
-      cancelPeekTimer,
-      peekOrigin,
-    } = useSidebar()
+    const { open: kept, hoverOpen, width, mobileBreakpoint, isMobile, isResizing, shellRef } = useSidebar()
+    const open = kept || hoverOpen
     const shape = useShape()
-    const shellRef = useRef<HTMLDivElement | null>(null)
 
-    // Collapsed-peek: the edge strip reveals the sidebar as a floating
-    // overlay without pinning it. Hover mode uses small intent/leave delays;
-    // both modes dismiss on Escape or an outside press.
-    // `!isResizing`: a drag can preview the collapsed state mid-gesture; the
-    // shell must not swap to the peek strip then, or it would unmount the
-    // rail holding the pointer capture and kill the drag.
-    const peekEnabled = peek !== 'none' && !open && !isResizing
-    useEffect(() => {
-      if (!(peekEnabled && isPeeking)) return
-      const onKeyDown = (event: KeyboardEvent) => {
-        if (event.key === 'Escape') setIsPeeking(false)
-      }
-      const onPointerDown = (event: PointerEvent) => {
-        if (!shellRef.current?.contains(event.target as Node)) setIsPeeking(false)
-      }
-      // Hover mode holds the peek by geometric containment, not
-      // enter/leave: a portalled tooltip or menu covering the card steals
-      // the hit-test and fires pointerleave on the shell even though the
-      // cursor never left the sidebar. Dismissal is armed only when the
-      // pointer's position actually crosses out of the overlay's box (with
-      // a little margin), and disarmed the moment it crosses back.
-      let wasInside = true
-      const onPointerMove = (event: PointerEvent) => {
-        const overlay = shellRef.current?.querySelector('[data-sidebar="peek"]') ?? shellRef.current
-        if (!overlay) return
-        const box = overlay.getBoundingClientRect()
-        const inside =
-          event.clientX >= box.left - 8 &&
-          event.clientX <= box.right + 8 &&
-          event.clientY >= box.top - 8 &&
-          event.clientY <= box.bottom + 8
-        if (inside) {
-          // Unconditional (not transition-gated): another surface's leave —
-          // the hover-peek trigger's, say — may have armed a dismissal while
-          // the pointer was already inside the box.
-          wasInside = true
-          cancelPeekTimer()
-        } else if (wasInside) {
-          wasInside = false
-          scheduleDismissPeek()
-        }
-      }
-      document.addEventListener('keydown', onKeyDown)
-      document.addEventListener('pointerdown', onPointerDown)
-      if (peek === 'hover') document.addEventListener('pointermove', onPointerMove)
-      return () => {
-        document.removeEventListener('keydown', onKeyDown)
-        document.removeEventListener('pointerdown', onPointerDown)
-        document.removeEventListener('pointermove', onPointerMove)
-      }
-    }, [peekEnabled, isPeeking, setIsPeeking, peek, cancelPeekTimer, scheduleDismissPeek])
     const substrate = useSurface()
     const floatingLevel = Math.min(substrate + 1, 8)
     // Drag-resize needs the panel glued to the pointer; the spring resumes
     // for open/close. Reduced motion snaps instead of sliding — the state
     // change stays legible without the 256px of travel. The open/close ride
     // the SLOW tier: a whole column moving is the largest thing this
-    // component animates (the sheet and peek stay on moderate — drawers
+    // component animates (the sheet stays on moderate — drawers
     // settle precisely, per the tier notes).
     const reduceMotion = useReducedMotion() ?? false
     // Mid-drag open flips — the collapse preview and its drag-back rescue —
@@ -663,19 +592,6 @@ const SidebarShell = forwardRef<HTMLDivElement, SidebarShellProps>(
     const [dragFlip, setDragFlip] = useState(false)
     const prevOpenRef = useRef(open)
     const openFlipped = prevOpenRef.current !== open
-    // Pinning open from an active peek: the panel is already fully on screen
-    // as the overlay card, so while the width spring makes room the shell
-    // must not clip — otherwise the visible sidebar wipes in from a mask it
-    // never left. Detected synchronously (the provider clears isPeeking an
-    // effect later); the state hold keeps the clip off through the spring.
-    const [pinFromPeekHold, setPinFromPeekHold] = useState(false)
-    const pinnedFromPeek = (openFlipped && open && isPeeking) || pinFromPeekHold
-    useEffect(() => {
-      if (!(open && isPeeking)) return
-      setPinFromPeekHold(true)
-      const id = setTimeout(() => setPinFromPeekHold(false), exitFallbackMs(spring.slow))
-      return () => clearTimeout(id)
-    }, [open, isPeeking])
     useEffect(() => {
       const flipped = prevOpenRef.current !== open
       prevOpenRef.current = open
@@ -716,12 +632,7 @@ const SidebarShell = forwardRef<HTMLDivElement, SidebarShellProps>(
           // No bare `group` here: an unnamed group on the whole rail would
           // fire every descendant's group-hover (Button fills, icon strokes)
           // on rail hover. Named groups (menu-item etc.) handle row states.
-          'peer shrink-0 sticky top-0 h-svh',
-          // While peek is armed the 0-width shell must not clip the edge
-          // strip or the overlay card — and the shell must rise above the
-          // inset (a later sibling) so the card paints over it. Pinning from
-          // a peek keeps both through the width spring for the same reason.
-          peekEnabled || pinnedFromPeek ? 'z-40' : 'overflow-hidden',
+          'peer shrink-0 sticky top-0 h-svh overflow-hidden',
           // Flex order (not DOM order) decides the side, so consumers can
           // keep Sidebar before SidebarInset regardless of `side`.
           side === 'right' && 'order-last',
@@ -738,129 +649,71 @@ const SidebarShell = forwardRef<HTMLDivElement, SidebarShellProps>(
         initial={false}
         animate={{ width: open ? width : '0rem' }}
         transition={widthTransition}
-        // Hover-mode dismissal lives on the shell root: the pointer can land
-        // on the overlay without ever crossing it (the card slides in under
-        // a stationary cursor), so per-element leave events are unreliable —
-        // leaving the shell subtree is the signal that matters.
-        onPointerEnter={peekEnabled && peek === 'hover' ? cancelPeekTimer : undefined}
-        // While PEEKED, dismissal belongs to the geometric watcher above —
-        // leave events lie whenever portalled content (tooltip, menu) covers
-        // the card. This leave handler only retires a pending peek-arm when
-        // the cursor departs before the intent delay lands.
-        onPointerLeave={
-          peekEnabled && peek === 'hover'
-            ? () => {
-                if (!isPeeking) cancelPeekTimer()
-              }
-            : undefined
-        }
         {...props}
       >
-        {peekEnabled ? (
-          <>
-            {/* Edge strip: the collapsed sidebar's reveal affordance. A thin
-                hairline brightens on hover; hover mode peeks after a short
-                intent delay, click mode on press. */}
-            <button
-              type="button"
-              aria-label="Peek sidebar"
-              aria-expanded={isPeeking}
+        <motion.div
+          className={cn(
+            'absolute inset-y-0 flex h-full flex-col',
+            side === 'left' ? 'left-0' : 'right-0',
+            // Floating floats its card inside a full gutter; inset only needs
+            // the vertical inset (horizontal room belongs to the nav rows).
+            variant === 'floating' && 'p-2',
+            variant === 'inset' && 'py-2',
+          )}
+          style={{ width }}
+          initial={false}
+          animate={{ x: open ? '0%' : side === 'left' ? '-100%' : '100%' }}
+          transition={widthTransition}
+          // Not mid-drag: the rail inside holds the pointer through a collapse preview.
+          {...(open || isResizing ? {} : { inert: '' })}
+        >
+          {variant === 'floating' ? (
+            <div
+              data-sidebar="sidebar"
+              className={cn('flex h-full w-full min-h-0 flex-col', shape.container, surfaceClasses(floatingLevel, 3))}
+            >
+              <SurfaceProvider value={floatingLevel}>{children}</SurfaceProvider>
+            </div>
+          ) : (
+            <div
+              data-sidebar="sidebar"
               className={cn(
-                'group/peek-strip absolute inset-y-0 z-40 w-3 cursor-pointer outline-none',
-                side === 'left' ? 'left-0' : 'right-0',
+                'flex h-full w-full min-h-0 flex-col',
+                bordered &&
+                  variant === 'sidebar' &&
+                  (side === 'left' ? 'border-r border-border' : 'border-l border-border'),
               )}
-              onPointerEnter={
-                peek === 'hover'
-                  ? event => {
-                      if (event.pointerType !== 'mouse') return
-                      peekOrigin.current = { trigger: event.currentTarget }
-                      schedulePeek()
-                    }
+            >
+              {children}
+            </div>
+          )}
+          {rail && (
+            <SidebarRail
+              tooltipOpen={railTooltipOpen}
+              className={cn(
+                // The floating card sits inside the panel's p-2 gutter, so the
+                // grab strip (and its hover hairline) moves in to straddle the
+                // card's edge instead of the panel's.
+                variant === 'floating' &&
+                  (side === 'left' ? 'right-1 after:right-[3.5px]' : 'left-1 after:left-[3.5px]'),
+                // Cards are vertically inset and rounded — the hover hairline
+                // hugs the card's straight run: fully transparent through the
+                // corner radius, then fading in over 24px (mirrored at the
+                // bottom). The radius rides the shape system via CSS vars.
+                variant !== 'sidebar' &&
+                  'after:inset-y-2 after:[mask-image:linear-gradient(to_bottom,transparent_var(--rail-fade-start),black_var(--rail-fade-end),black_calc(100%-var(--rail-fade-end)),transparent_calc(100%-var(--rail-fade-start)))]',
+              )}
+              style={
+                variant !== 'sidebar'
+                  ? ({
+                      '--rail-fade-start': `${shape.bgRadius >= 20 ? 24 : 12}px`,
+                      '--rail-fade-end': `${(shape.bgRadius >= 20 ? 24 : 12) + 24}px`,
+                    } as CSSProperties)
                   : undefined
               }
-              onClick={event => {
-                peekOrigin.current = { trigger: event.currentTarget }
-                cancelPeekTimer()
-                setIsPeeking(true)
-              }}
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  'absolute inset-y-0 w-px bg-border opacity-0 transition-opacity duration-fast group-hover/peek-strip:opacity-100 group-focus-visible/peek-strip:opacity-100',
-                  side === 'left' ? 'left-0' : 'right-0',
-                )}
-              />
-            </button>
-            <SidebarPeek side={side} variant={variant}>
-              {children}
-            </SidebarPeek>
-          </>
-        ) : (
-          <motion.div
-            className={cn(
-              'absolute inset-y-0 flex h-full flex-col',
-              side === 'left' ? 'left-0' : 'right-0',
-              // Floating floats its card inside a full gutter; inset only needs
-              // the vertical inset (horizontal room belongs to the nav rows).
-              variant === 'floating' && 'p-2',
-              variant === 'inset' && 'py-2',
-            )}
-            style={{ width }}
-            initial={false}
-            animate={{ x: open ? '0%' : side === 'left' ? '-100%' : '100%' }}
-            transition={widthTransition}
-            // Not mid-drag: the rail inside holds the pointer through a collapse preview.
-            {...(open || isResizing ? {} : { inert: '' })}
-          >
-            {variant === 'floating' ? (
-              <div
-                data-sidebar="sidebar"
-                className={cn('flex h-full w-full min-h-0 flex-col', shape.container, surfaceClasses(floatingLevel, 3))}
-              >
-                <SurfaceProvider value={floatingLevel}>{children}</SurfaceProvider>
-              </div>
-            ) : (
-              <div
-                data-sidebar="sidebar"
-                className={cn(
-                  'flex h-full w-full min-h-0 flex-col',
-                  bordered &&
-                    variant === 'sidebar' &&
-                    (side === 'left' ? 'border-r border-border' : 'border-l border-border'),
-                )}
-              >
-                {children}
-              </div>
-            )}
-            {rail && (
-              <SidebarRail
-                tooltipOpen={railTooltipOpen}
-                className={cn(
-                  // The floating card sits inside the panel's p-2 gutter, so the
-                  // grab strip (and its hover hairline) moves in to straddle the
-                  // card's edge instead of the panel's.
-                  variant === 'floating' &&
-                    (side === 'left' ? 'right-1 after:right-[3.5px]' : 'left-1 after:left-[3.5px]'),
-                  // Cards are vertically inset and rounded — the hover hairline
-                  // hugs the card's straight run: fully transparent through the
-                  // corner radius, then fading in over 24px (mirrored at the
-                  // bottom). The radius rides the shape system via CSS vars.
-                  variant !== 'sidebar' &&
-                    'after:inset-y-2 after:[mask-image:linear-gradient(to_bottom,transparent_var(--rail-fade-start),black_var(--rail-fade-end),black_calc(100%-var(--rail-fade-end)),transparent_calc(100%-var(--rail-fade-start)))]',
-                )}
-                style={
-                  variant !== 'sidebar'
-                    ? ({
-                        '--rail-fade-start': `${shape.bgRadius >= 20 ? 24 : 12}px`,
-                        '--rail-fade-end': `${(shape.bgRadius >= 20 ? 24 : 12) + 24}px`,
-                      } as CSSProperties)
-                    : undefined
-                }
-              />
-            )}
-          </motion.div>
-        )}
+            />
+          )}
+        </motion.div>
       </motion.div>
     )
   },
@@ -889,32 +742,26 @@ function useShortcutKey(): string {
 
 /** Ghost icon button calling toggleSidebar(). The icon mirrors the
  *  sidebar's side, and its tooltip names the action with the toggle
- *  keystroke by default. */
+ *  keystroke by default. With `openOnHover` it switches between open and on
+ *  hover (a dashed glyph), and the hover zone reaches its far side when it
+ *  sits beside the sidebar's edge. */
 const SidebarTrigger = forwardRef<HTMLButtonElement, SidebarTriggerProps>(
   ({ onClick, size, children, ...props }, ref) => {
-    const {
-      toggleSidebar,
-      open,
-      openMobile,
-      isMobile,
-      side,
-      peek,
-      isPeeking,
-      schedulePeek,
-      cancelPeekTimer,
-      peekOrigin,
-    } = useSidebar()
+    const { toggleSidebar, open, openMobile, isMobile, side, openOnHover, registerTrigger } = useSidebar()
     const shortcutKey = useShortcutKey()
-    // With hover-peek enabled, the COLLAPSED trigger is a peek affordance
-    // too: resting on it floats the rail out exactly like the edge strip —
-    // same shared intent timer, so moving from the trigger into the peeked
-    // card (or back) cancels the pending dismissal.
-    const hoverPeek = peek === 'hover' && !isMobile && !open
-    const PanelLeftIcon = useIcon('panel-left')
-    const PanelRightIcon = useIcon('panel-right')
-    const TriggerIcon = side === 'right' ? PanelRightIcon : PanelLeftIcon
+    const hoverMode = openOnHover && !isMobile
+    const TriggerIcon = useIcon(`panel-${side}${hoverMode && !open ? '-dashed' : ''}`)
     const iconSize = useSizeVariant() === 'compact' ? ('icon-compact' as const) : ('icon' as const)
     const collapsed = isMobile ? !openMobile : !open
+    const label = hoverMode
+      ? open
+        ? 'Show sidebar on hover'
+        : 'Keep sidebar open'
+      : collapsed
+        ? 'Expand sidebar'
+        : 'Collapse sidebar'
+    const node = useRef<HTMLButtonElement | null>(null)
+    useEffect(() => (node.current ? registerTrigger(node.current) : undefined), [registerTrigger])
 
     return (
       <Tooltip
@@ -924,47 +771,25 @@ const SidebarTrigger = forwardRef<HTMLButtonElement, SidebarTriggerProps>(
             {/* A flex row escapes the surface's text-box trim, so the label
                 re-applies it — otherwise the shortcut row would sit taller
                 than a tooltip without a chip. */}
-            <span className="[text-box:trim-both_cap_alphabetic]">
-              {collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            </span>
+            <span className="[text-box:trim-both_cap_alphabetic]">{label}</span>
             <ShortcutKbd>{shortcutKey}</ShortcutKbd>
           </span>
         }
       >
         <Button
-          ref={ref}
+          ref={(element: HTMLButtonElement | null) => {
+            node.current = element
+            if (typeof ref === 'function') ref(element)
+            else if (ref) ref.current = element
+          }}
           variant="ghost"
           size={size ?? iconSize}
           data-sidebar="trigger"
-          aria-label="Toggle Sidebar"
+          aria-label={hoverMode ? label : 'Toggle Sidebar'}
           onClick={event => {
             onClick?.(event)
             toggleSidebar()
           }}
-          onPointerEnter={
-            hoverPeek
-              ? (event: React.PointerEvent<HTMLButtonElement>) => {
-                  if (event.pointerType !== 'mouse') return
-                  if (isPeeking) cancelPeekTimer()
-                  else {
-                    peekOrigin.current = { trigger: event.currentTarget }
-                    schedulePeek()
-                  }
-                }
-              : undefined
-          }
-          // While PEEKED the shell's geometric watcher owns dismissal — a
-          // leave fired here can be the peek card sliding over a stationary
-          // cursor (layout-driven boundary event, no accompanying move to
-          // disarm it), which would flicker the peek closed and open again.
-          // This leave only retires a pending intent timer.
-          onPointerLeave={
-            hoverPeek
-              ? () => {
-                  if (!isPeeking) cancelPeekTimer()
-                }
-              : undefined
-          }
           {...props}
         >
           {children ?? <TriggerIcon />}
@@ -987,16 +812,29 @@ export interface SidebarRailProps extends HTMLAttributes<HTMLButtonElement> {
  *  its tooltip explains both with the toggle keystroke. Hovering it
  *  brightens the edge border. */
 const SidebarRail = forwardRef<HTMLButtonElement, SidebarRailProps>(({ className, tooltipOpen, ...props }, ref) => {
-  const { toggleSidebar, setOpen, setWidth, side, setIsResizing } = useSidebar()
+  const { toggleSidebar, open, setOpen, setHoverOpen, setWidth, side, setIsResizing } = useSidebar()
   const shortcutKey = useShortcutKey()
   const railRef = useRef<HTMLButtonElement | null>(null)
-  const dragRef = useRef<{ startX: number; startWidth: number; moved: boolean; collapsed: boolean } | null>(null)
+  const dragRef = useRef<{
+    startX: number
+    startWidth: number
+    moved: boolean
+    collapsed: boolean
+    /** Kept open at the press; open on hover, the rail collapses and drags the hover, never keeping it open. */
+    kept: boolean
+  } | null>(null)
   const [dragging, setDragging] = useState(false)
 
   const onPointerDown = (event: React.PointerEvent<HTMLButtonElement>) => {
     const panel = railRef.current?.closest('[data-slot="sidebar"]') as HTMLElement | null
     if (!panel) return
-    dragRef.current = { startX: event.clientX, startWidth: panel.offsetWidth, moved: false, collapsed: false }
+    dragRef.current = {
+      startX: event.clientX,
+      startWidth: panel.offsetWidth,
+      moved: false,
+      collapsed: false,
+      kept: open,
+    }
     event.currentTarget.setPointerCapture(event.pointerId)
   }
 
@@ -1019,13 +857,13 @@ const SidebarRail = forwardRef<HTMLButtonElement, SidebarRailProps>(({ className
       if (!drag.collapsed) {
         drag.collapsed = true
         setWidth(`${SIDEBAR_MIN_WIDTH}px`)
-        setOpen(false)
+        ;(drag.kept ? setOpen : setHoverOpen)(false)
       }
       return
     }
     if (drag.collapsed) {
       drag.collapsed = false
-      setOpen(true)
+      ;(drag.kept ? setOpen : setHoverOpen)(true)
     }
     const next = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, raw))
     setWidth(`${next}px`)
@@ -1038,7 +876,10 @@ const SidebarRail = forwardRef<HTMLButtonElement, SidebarRailProps>(({ className
     setDragging(false)
     setIsResizing(false)
     // A press that never turned into a drag is the collapse click.
-    if (drag && !drag.moved) toggleSidebar()
+    if (drag && !drag.moved) {
+      if (drag.kept) toggleSidebar()
+      else setHoverOpen(false)
+    }
   }
 
   // A cancelled pointer (touch interruption, capture loss) ends the drag

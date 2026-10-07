@@ -167,7 +167,7 @@ only what is specific to it:
 | `Search` | — (local; after beUI's morphing search, see [Morph sources](#morph-sources)) | `components/search/index.tsx` | pill or icon button springing its own width in place (`spring.slow`), growing over its neighbors (`align`); with `items`, Autocomplete suggestions ooze out of the field via the morph layer (goo on `spring.goo`, `effect`/`tier`) with Command's rows; Escape closes → clears → collapses; blur collapses when empty; `shortcut`; `<search>` landmark + form, `onSubmit` |
 | `Select` | `registry/base/select.tsx` | `components/select/index.tsx` | members re-declared one per line (the parser drops members whose type spans lines); upstream's uncontrolled `defaultValue` verified and kept rather than rerouted through `useControllableState`; expando statics `.Trigger/.Content/.Item/.Group/.Label/.Separator`; the popup morphs out of its trigger (morph layer, goo on `spring.goo`; `from` / `effect` / `hideSource` / `tier` on `Select.Content`), replacing the `scaleY` wrapper and the `actionsRef` deferred unmount |
 | `Sheet` | — (local; replaces beUI's bottom sheet and drawer, see [Morph sources](#morph-sources)) | `components/sheet/index.tsx` | Base UI Drawer (swipe to dismiss, snap points, `Drawer.Viewport` for the swipe) with the morph growing from the sheet's own edge; a swipe-dismissed sheet slides on off its edge from the release point (the morph's `exit`); `side`, `snapPoints`, `defaultSnapPoint`; Dialog's parts and `DialogState` (Base UI's Drawer parts are Dialog's); statics as Dialog's plus `.Provider` / `.Indent` |
-| `Sidebar` | `registry/base/sidebar.tsx` (+ `registry/default/sidebar-core.tsx`, `sidebar-menu.tsx`; `app/globals.css` `.scroll-divider`) | `components/sidebar/index.tsx` (+ `sidebar-core.tsx`, `sidebar-menu.tsx`, `sidebar.css`) | the mobile sheet is the DS's `Sheet` (goo from its edge, swipe to dismiss) instead of a Dialog with a framer slide; the collapsed peek grows out of the edge strip or the hovered trigger through the morph layer (goo on `spring.goo`, the source kept in the context's `peekOrigin`) instead of sliding in; the active row backgrounds are `GooIndicator`s and the hover highlight the liquid `FluidHoverHighlight`; uncontrolled selection (`value` on the buttons, `value` / `defaultValue` / `onValueChange` on `Sidebar`) and collapsible rows (`Sidebar.MenuItem collapsible`, below); statics `.Provider/.Trigger/.Rail/.Inset/.Input/.Header/.Content/.Footer/.Separator/.Group/.GroupLabel/.GroupAction/.GroupActions/.GroupContent/.Menu/.MenuItem/.MenuButton/.MenuAction/.MenuActions/.MenuBadge/.MenuSkeleton/.MenuSub/.MenuSubItem/.MenuSubButton` through a `SidebarComponent` cast; `fontVariationSettings` → `weight-*`, `text-[Npx]` → type roles, hex focus ring → `ring-focus-ring`, `duration-80\|160\|240` → tiers |
+| `Sidebar` | `registry/base/sidebar.tsx` (+ `registry/default/sidebar-core.tsx`, `sidebar-menu.tsx`; `app/globals.css` `.scroll-divider`) | `components/sidebar/index.tsx` (+ `sidebar-core.tsx`, `sidebar-menu.tsx`, `sidebar.css`) | the mobile sheet is the DS's `Sheet` (goo from its edge, swipe to dismiss) instead of a Dialog with a framer slide; no collapsed peek: `openOnHover` on the provider opens the sidebar in flow while the pointer is between its edge and the far side of a trigger beside it, the trigger switching between open and on hover (`panel-*-dashed` glyphs added to the icon context); the active row backgrounds are `GooIndicator`s and the hover highlight the liquid `FluidHoverHighlight`; uncontrolled selection (`value` on the buttons, `value` / `defaultValue` / `onValueChange` on `Sidebar`) and collapsible rows (`Sidebar.MenuItem collapsible`, below); statics `.Provider/.Trigger/.Rail/.Inset/.Input/.Header/.Content/.Footer/.Separator/.Group/.GroupLabel/.GroupAction/.GroupActions/.GroupContent/.Menu/.MenuItem/.MenuButton/.MenuAction/.MenuActions/.MenuBadge/.MenuSkeleton/.MenuSub/.MenuSubItem/.MenuSubButton` through a `SidebarComponent` cast; `fontVariationSettings` → `weight-*`, `text-[Npx]` → type roles, hex focus ring → `ring-focus-ring`, `duration-80\|160\|240` → tiers |
 | `Slider` | `registry/base/slider.tsx` | `components/slider/index.tsx` | `var(--color-accent)` → `var(--accent)` (no `--color-*` aliases here); uncontrolled support on the public wrapper, with both engines still fully controlled; `SliderProps extends Omit<SliderEngineProps, "value" \| "onChange">`; React 18 ref types (`MutableRefObject`); indexed reads of the value/step/pip arrays asserted |
 | `Switch` | `registry/base/switch.tsx` | `components/switch/index.tsx` | uncontrolled support; every in-body read goes through the resolved `isChecked` and a `toggle()` that also calls `onToggle`; the thumb is a `GooIndicator` in Base UI's Thumb (stretches as it travels), dragged x held in state |
 | `Table` | `registry/default/table.tsx` | `components/table/index.tsx` | statics `.Header/.Body/.Row/.Head/.Cell`; `TableProps` / `TableRowProps` exported |
@@ -181,11 +181,11 @@ only what is specific to it:
 
 | Item | Upstream | Local | Specific modifications |
 |---|---|---|---|
-| `SidebarApp` | the app-sidebar.tsx and page.tsx FF's preset generator emits for `sa1FQfCxH6` (`lib/preset/sidebar-install.ts` @ `c367a0d066bc10e663b3d269bc40539ea8417b25`, later than the pin: the generator postdates it) | `blocks/sidebar-app/index.tsx` (+ `nav-data.ts`) | the selected thread rides `Sidebar`'s `value` and shows in the topbar; the switcher keeps its own pick (`defaultCheckedIndex`); the footer's raw icon buttons are the ghost `Button`; `variant`, `side`, `peek`, `contained` props |
-| — | `registry/blocks/sidebar-workspace-header.tsx` | `blocks/sidebar-app/workspace-header.tsx` | `fontVariationSettings` → `weight-semibold`, `text-[13px]` / `text-[10px]` → `text-body` / `text-micro-compact`; `defaultCheckedIndex` passed through |
+| `SidebarApp` | the app-sidebar.tsx and page.tsx FF's preset generator emits for `sa1FQfCxH6` (`lib/preset/sidebar-install.ts` @ `c367a0d066bc10e663b3d269bc40539ea8417b25`, later than the pin: the generator postdates it) | `blocks/sidebar-app/index.tsx` (+ `nav-data.ts`) | the selected thread rides `Sidebar`'s `value` and shows in the topbar; the switcher keeps its own pick (`defaultCheckedIndex`); the footer's raw icon buttons are the ghost `Button`; `variant`, `side`, `openOnHover`, `contained` props |
+| — | `registry/blocks/sidebar-workspace-header.tsx` | `blocks/sidebar-app/workspace-header.tsx` | `fontVariationSettings` → `weight-semibold`, `text-[13px]` / `text-[10px]` → `text-body` / `text-micro-compact`; `defaultCheckedIndex` passed through; the peek-only trigger over the tile dropped |
 | — | `registry/blocks/sidebar-user-footer.tsx` | `blocks/sidebar-app/user-footer.tsx` | `text-[13px]` → `text-body` |
 | — | `registry/blocks/sidebar-app/search-field.tsx` | `blocks/sidebar-app/search-field.tsx` | `text-[11px]` → `text-micro` |
-| — | `registry/blocks/sidebar-app/inset-topbar.tsx` | `blocks/sidebar-app/inset-topbar.tsx` | `delay-200 duration-160` → `delay-slow duration-moderate` |
+| — | `registry/blocks/sidebar-app/inset-topbar.tsx` | `blocks/sidebar-app/inset-topbar.tsx` | the trigger's peek-time fade dropped (the sidebar opens on hover in flow, so the trigger stays) |
 | — | `registry/default/lib/sidebar-menu-grid.ts` | `blocks/sidebar-app/menu-grid.ts` | the width reads `--anchor-width` only; the `-ml-1` shift dropped (it would move the morph surface's content off its background) |
 
 `Select` in `modo.components.tsx` is not an item: modo's docs chrome renders its Select slot
@@ -200,13 +200,11 @@ design system's own Select. The
 app shell that needs its provider). Each aside is an inset `Sidebar` with its
 own provider, and `global.css` turns the content between them into the inset
 card (the lib's grid columns become `auto`, so they follow the sidebars' width
-springs). The trigger in the card's corner, `[` for the nav and `]` for the
-panel, switch a side between open and on hover: on hover it stays hidden
-until the pointer reaches the column under its trigger (from the window's edge
-to the trigger's far edge, so a browser's own edge hover sidebar stays out of
-the way), then opens (no peek card) until the pointer leaves it and its
-trigger.
-`DocsNav` owns those keys, so a demo sidebar in the content keeps them only
+springs). Each provider has `openOnHover`, and its `Sidebar.Trigger` sits in
+the card's corner: the trigger, `[` for the nav and `]` for the panel, switch
+a side between open and on hover, and on hover it opens once the pointer is
+in the column under the trigger (so a browser's own edge hover sidebar stays
+out of the way). `DocsNav` owns those keys, so a demo sidebar in the content keeps them only
 while it has focus. Below md each side is a drawer; the panel starts on hover
 below xl. A section of links is a collapsible `Sidebar.Group` with one
 `Sidebar.Menu`, so the current page, the TOC's current heading and the hover
@@ -467,7 +465,7 @@ tables become the prop docs instead). Other per-item deviations:
 | Button | Extra Sizes / Active / As-child examples, for API-table props the FF page has no section for. |
 | Dialog | "With a sidebar" replaced by "Surfaces inside a dialog" (a Select popover lifting off the dialog's own level) — the same point about composing inside an `xl` panel, with items this port ships. |
 | Sidebar | Layouts split into three examples; "Callouts" (docs-only cards), "Inside a dialog", the "No icon rail" prose (folded into the TSDoc) and "Functional and perfectly aligned" (an alignment-guides overlay) skipped; "Mobile drawer" added. Frames pass `mobileBreakpoint={0}` like FF's, so a rail stays a rail inside them. |
-| SidebarApp | One block page for FF's preset playground: the preset itself (collapsed), open, hover peek, floating on the right. |
+| SidebarApp | One block page for FF's preset playground: the preset itself (collapsed), open, open on hover, floating on the right. |
 | Dropdown | "Create from the query" skipped: adding a row to the list is real consumer state, which an uncontrolled panel cannot stand in for. |
 | InputMessage | Playground skipped; the transcript around the Attachments / Send Handler demos dropped, since `ChatMessage` is not ported. |
 | FluidHover | The two scripted-cursor demos are dropped — they exist only to film the mechanism. |

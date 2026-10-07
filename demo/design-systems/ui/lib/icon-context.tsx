@@ -9,6 +9,8 @@
  * - lucide-react v1 + React 18 types: `IconComponentProps.size` /
  *   `strokeWidth` widened to `number | string` (lucide icons' propTypes
  *   accept both, and @types/react 18 compares propTypes).
+ * - `panel-left-dashed` / `panel-right-dashed`: the sidebar trigger's glyph
+ *   while the sidebar opens on hover.
  */
 
 import {
@@ -49,7 +51,9 @@ import {
   Paintbrush,
   Palette,
   PanelLeft,
+  PanelLeftDashed,
   PanelRight,
+  PanelRightDashed,
   Pause,
   Pencil,
   Pipette,
@@ -133,7 +137,9 @@ export type IconName =
   | 'corner-down-right'
   | 'corner-down-left'
   | 'panel-left'
+  | 'panel-left-dashed'
   | 'panel-right'
+  | 'panel-right-dashed'
   | 'chevrons-up-down'
   | 'more-horizontal'
   | 'more-vertical'
@@ -193,7 +199,9 @@ export const defaultIcons: Record<IconName, IconComponent> = {
   'corner-down-right': CornerDownRight,
   'corner-down-left': CornerDownLeft,
   'panel-left': PanelLeft,
+  'panel-left-dashed': PanelLeftDashed,
   'panel-right': PanelRight,
+  'panel-right-dashed': PanelRightDashed,
   'chevrons-up-down': ChevronsUpDown,
   'more-horizontal': Ellipsis,
   'more-vertical': EllipsisVertical,

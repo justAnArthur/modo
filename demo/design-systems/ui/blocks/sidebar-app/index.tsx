@@ -13,7 +13,7 @@
  * Local changes: the selected thread rides the Sidebar's `value` (the rows
  * carry `value`s) and the topbar shows it; the switcher keeps its own pick
  * (`defaultCheckedIndex`); the footer's icon buttons are the DS's ghost
- * `Button`; `variant`, `side`, `peek` and `contained` are props.
+ * `Button`; `variant`, `side`, `openOnHover` and `contained` are props.
  */
 
 import { useState } from 'react'
@@ -36,8 +36,8 @@ interface SidebarAppProps {
   variant?: 'sidebar' | 'floating' | 'inset'
   /** The edge it sits on. Defaults to `'left'`. */
   side?: 'left' | 'right'
-  /** What the collapsed edge does: nothing, or float the sidebar back out on hover or on a click. Defaults to `'none'`. */
-  peek?: 'none' | 'hover' | 'click'
+  /** Open the collapsed sidebar while the pointer is at its edge or on the topbar's trigger (see Sidebar). Defaults to `false`. */
+  openOnHover?: boolean
   /** Fill the parent box instead of the viewport, as the examples do. Defaults to `false`. */
   contained?: boolean
 }
@@ -177,7 +177,7 @@ function AppSidebar({ variant, side, className, value, onValueChange }: AppSideb
  *
  * Every overlay grows out of what opened it: the switcher, the user menu
  * and the row menus are Dropdowns, the labels on the buttons are Tooltips,
- * a collapsed sidebar with `peek` floats back out of its edge, and below
+ * a collapsed sidebar with `openOnHover` slides open from its edge, and below
  * the `md` breakpoint the sidebar is a Sheet growing out of the left edge.
  *
  * @example {@include ./examples.mdx}
@@ -186,13 +186,17 @@ export default function SidebarApp({
   defaultOpen = false,
   variant = 'inset',
   side = 'left',
-  peek = 'none',
+  openOnHover = false,
   contained = false,
 }: SidebarAppProps) {
   const [thread, setThread] = useState(NAV_SECTIONS[0]?.items[0]?.label ?? '')
 
   return (
-    <Sidebar.Provider defaultOpen={defaultOpen} peek={peek} className={contained ? 'h-full min-h-0' : undefined}>
+    <Sidebar.Provider
+      defaultOpen={defaultOpen}
+      openOnHover={openOnHover}
+      className={contained ? 'h-full min-h-0' : undefined}
+    >
       <AppSidebar
         variant={variant}
         side={side}

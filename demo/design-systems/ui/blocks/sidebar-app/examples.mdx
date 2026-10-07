@@ -16,12 +16,12 @@ The preset as it ships: collapsed. Press the trigger (or `[`) and the sidebar sl
   <SidebarApp contained defaultOpen />
 </div>
 
-# Peek on hover
+# Open on hover
 
-`peek="hover"`: rest on the left edge or on the trigger and the collapsed sidebar oozes out of it; leave and it melts back. The trigger in its header pins it open.
+`openOnHover`: move to the left edge or onto the topbar's trigger and the collapsed sidebar opens; leave it and it closes. Press the trigger to keep it open, again to go back to on hover.
 
 <div className="h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
-  <SidebarApp contained peek="hover" />
+  <SidebarApp contained openOnHover />
 </div>
 
 # Floating on the right

@@ -105,7 +105,7 @@ interface SidebarProps
   side?: 'left' | 'right'
   /** `'sidebar'` sits flush with an inner border, `'floating'` lifts it onto its own card one surface level up, `'inset'` makes the main region the card. Defaults to `'sidebar'`. */
   variant?: 'sidebar' | 'floating' | 'inset'
-  /** `'offcanvas'` collapses it away (rail, trigger, shortcut, peek, mobile drawer); `'none'` pins it open, with no rail or drawer — for a sidebar inside a dialog. Defaults to `'offcanvas'`. */
+  /** `'offcanvas'` collapses it away (rail, trigger, shortcut, open on hover, mobile drawer); `'none'` pins it open, with no rail or drawer — for a sidebar inside a dialog. Defaults to `'offcanvas'`. */
   collapsible?: 'offcanvas' | 'none'
   /** The `sidebar` variant's inner-edge border. Defaults to `true`. */
   bordered?: boolean
@@ -159,25 +159,30 @@ type SidebarComponent = ForwardRefExoticComponent<SidebarProps & RefAttributes<H
  * Everything that moves here moves in the morph style (see Morph). The
  * active row and the hover highlight are liquid: a new selection melts
  * across from the old one, and the highlight drips from row to row, into a
- * row's sub-menu too. Collapsed, the sidebar peeks out of the edge strip, or
- * out of the trigger it was hovered from, with the goo neck, and melts back
- * into it. On mobile it is a `Sheet` growing out of its edge that you swipe
- * away. The menus in the header, the footer and on each row are Dropdowns,
- * and the tooltips are Tooltips, so they grow out of their triggers too.
+ * row's sub-menu too. On mobile it is a `Sheet` growing out of its edge
+ * that you swipe away. The menus in the header, the footer and on each row
+ * are Dropdowns, and the tooltips are Tooltips, so they grow out of their
+ * triggers too.
  *
  * Wrap the page in `Sidebar.Provider`, then put the `Sidebar` and a
  * `Sidebar.Inset` (the main region) inside it. The provider holds the open
  * state (`open` / `defaultOpen` / `onOpenChange`, kept in the `sidebar_state`
  * cookie unless `persist={false}`), the `width` and `widthMobile`, the
- * `mobileBreakpoint` under which it becomes a drawer, the `peek` mode
- * (`'hover'` or `'click'`: the collapsed sidebar floats out from its edge
- * without pinning) and the bare `shortcut` key (`[` for a left sidebar,
+ * `mobileBreakpoint` under which it becomes a drawer, `openOnHover` (below)
+ * and the bare `shortcut` key (`[` for a left sidebar,
  * `]` for a right one; `null` turns it off). It fills the viewport; pass
  * `className="h-full min-h-0"` to fill a bounded frame instead.
  *
  * Drag the rail on the inner edge to resize the sidebar (160–360px); throw
  * it at the edge to collapse, or click it. There is no icon-only rail on
- * purpose: a collapsed sidebar peeks out whole instead.
+ * purpose: a collapsed sidebar opens whole on hover instead.
+ *
+ * With `openOnHover`, collapsing leaves the sidebar on hover: it opens, in
+ * flow, while the pointer is between its edge and the far side of a
+ * `Sidebar.Trigger` beside it (or a thin strip at the edge), and closes a
+ * beat after the pointer leaves. `open` is then whether it is kept open: the
+ * trigger switches between the two and draws a dashed glyph while on hover,
+ * and the rail collapses or resizes the hover without keeping it open.
  *
  * ## Rows
  *

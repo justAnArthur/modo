@@ -11,11 +11,14 @@
  *   → `text-body` / `text-micro-compact`; `duration-80` → `duration-fast`.
  * - `defaultCheckedIndex` passed through to the menu, so a switcher keeps its
  *   own pick (the Dropdown's uncontrolled selection).
+ * - No peek trigger: the sidebar opens on hover in flow (the provider's
+ *   `openOnHover`), the topbar's trigger stays beside it, so the tile no
+ *   longer cross-fades with a trigger over the row.
  */
 
 import { type ReactNode } from 'react'
 import { DropdownContent, DropdownMenu, DropdownTrigger } from '../../components/dropdown'
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarTrigger, useSidebar } from '../../components/sidebar'
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '../../components/sidebar'
 import { useIcon } from '../../lib/icon-context'
 import { useShape } from '../../lib/shape-context'
 import { useSize } from '../../lib/size-context'
@@ -23,16 +26,8 @@ import { cn } from '../../lib/utils'
 import { SIDEBAR_MENU_POPUP } from './menu-grid'
 
 // ---------------------------------------------------------------------------
-// Workspace brand row for a sidebar header.
-//
-// While the sidebar is only PEEKING (a collapsed rail floated out by
-// `peek="hover"` / `peek="click"`), the overlay itself covers the pointer's
-// one way to pin the sidebar open — so a SidebarTrigger takes the tile's
-// slot: a sibling positioned over the row (the menu-action pattern), never a
-// button nested inside the row button. The trigger and the tile CROSS-FADE in
-// place — neither element ever moves, only opacity — and the row's constant
-// pl-8 keeps the name pinned on the rows' 32px text axis while they swap.
-// Without peek enabled the trigger simply never shows.
+// Workspace brand row for a sidebar header. The row's pl-8 keeps the name on
+// the rows' 32px text axis, the tile in the leading slot.
 // ---------------------------------------------------------------------------
 
 export interface SidebarWorkspaceHeaderProps {
@@ -60,28 +55,14 @@ export function SidebarWorkspaceHeader({
 }: SidebarWorkspaceHeaderProps) {
   const iconSize = useSize().icon
   const ChevronDown = useIcon('chevron-down')
-  const { isPeeking } = useSidebar()
 
   // The tile sits absolutely in the row's leading slot — 20px at left-1.5
   // centres it on the rows' 16px leading icon axis.
   const tileSlot = (
-    <span
-      aria-hidden
-      className={`pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2 transition-opacity duration-fast ${
-        isPeeking ? 'opacity-0' : 'opacity-100'
-      }`}
-    >
+    <span aria-hidden className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2">
       {tile}
     </span>
   )
-  // No hover/press fill on this trigger (the Button's first child is its bg
-  // layer): its box is off-axis from the tile slot it overlays, so a
-  // background reads as a second, non-concentric rectangle behind the glyph.
-  // [&_svg]:size-4 matches the topbar trigger's 16px glyph — icon-compact
-  // would otherwise draw this one at 14px.
-  const triggerFade = `[&>span:first-child]:hidden [&_svg]:size-4 transition-opacity duration-fast ${
-    isPeeking ? 'opacity-100' : 'pointer-events-none opacity-0'
-  }`
   const nameSpan = <span className="min-w-0 truncate text-body weight-semibold text-foreground">{name}</span>
 
   if (!menu) {
@@ -89,12 +70,6 @@ export function SidebarWorkspaceHeader({
     // track the traveling hover background.
     return (
       <div className="relative flex h-8 items-center pl-8 pr-2">
-        <SidebarTrigger
-          size="icon-compact"
-          aria-hidden={!isPeeking || undefined}
-          tabIndex={isPeeking ? undefined : -1}
-          className={`absolute left-1 top-1/2 -translate-y-1/2 ${triggerFade}`}
-        />
         {tileSlot}
         {nameSpan}
       </div>
@@ -106,12 +81,6 @@ export function SidebarWorkspaceHeader({
     // or a mid-drag width) — the text keeps whatever room is left.
     <SidebarMenu aria-label="Workspace" className="@container">
       <SidebarMenuItem>
-        <SidebarTrigger
-          size="icon-compact"
-          aria-hidden={!isPeeking || undefined}
-          tabIndex={isPeeking ? undefined : -1}
-          className={`absolute left-1 top-1/2 z-20 -translate-y-1/2 ${triggerFade}`}
-        />
         <DropdownMenu>
           <DropdownTrigger
             render={
