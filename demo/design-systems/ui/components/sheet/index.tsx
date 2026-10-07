@@ -52,8 +52,6 @@ const SWIPE: Record<SheetSide, 'up' | 'right' | 'down' | 'left'> = {
   left: 'left',
 }
 
-// Floating off its edge by a spacing step; top and bottom sheets cap their
-// width and center on wide screens, side sheets cap theirs.
 const PLACEMENT: Record<SheetSide, string> = {
   top: 'inset-x-2 top-2 mx-auto max-w-[36rem] max-h-[calc(100dvh-4rem)]',
   bottom: 'inset-x-2 bottom-2 mx-auto max-w-[36rem] max-h-[calc(100dvh-4rem)]',
@@ -92,7 +90,6 @@ const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(
       effect,
       hideSource,
       tier,
-      // Swiped away, it slides on off its edge from where the finger let go.
       exit: swiped ? { effect: 'slide', from: side } : undefined,
     })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
@@ -223,7 +220,7 @@ function Sheet({
             }}
             swipeDirection={SWIPE[side]}
             snapPoints={snapPoints}
-            defaultSnapPoint={defaultSnapPoint ?? snapPoints?.[0]}
+            defaultSnapPoint={defaultSnapPoint}
             modal={modal}
           >
             {children}

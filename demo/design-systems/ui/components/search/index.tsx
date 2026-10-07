@@ -294,7 +294,7 @@ function Search({
     <CommandListRoot
       items={suggestions}
       value={query}
-      onValueChange={next => setQuery(next)}
+      onValueChange={setQuery}
       open={open}
       onOpenChange={setSuggesting}
     >

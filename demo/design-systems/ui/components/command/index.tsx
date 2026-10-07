@@ -87,7 +87,7 @@ function CommandListRoot({ items, ...props }: CommandListRootProps) {
         items={items}
         itemToStringValue={item => item.label}
         filter={(item, query) => contains([item.label, ...(item.keywords ?? [])].join(' '), query)}
-        onItemHighlighted={(item, details) => setHighlight(item === undefined ? null : details.index)}
+        onItemHighlighted={(item, details) => setHighlight(item ? details.index : null)}
       />
     </CommandHighlight.Provider>
   )

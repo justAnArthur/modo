@@ -128,7 +128,6 @@ interface Box {
   height: number
 }
 
-/** One shape of the toast, sprung to its box: the pill or the body, as background or shadow. */
 function Shape({ box, className, shapeRef }: { box: Box; className: string; shapeRef?: Ref<HTMLDivElement> }) {
   return (
     <motion.div
@@ -176,7 +175,8 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
 
   // The header and the body content keep their natural size (the header is
   // `w-max`, outside the pill), so measuring them never feeds back the
-  // animated shapes.
+  // animated shapes. A body that appears later (a promise's result) is
+  // observed from then on.
   useLayoutEffect(() => {
     const measure = () =>
       setSize({
@@ -189,7 +189,7 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
     for (const el of [header.current, body.current]) if (el) observer.observe(el)
     measure()
     return () => observer.disconnect()
-  }, [])
+  }, [hasBody])
 
   useLayoutEffect(() => {
     if (!ending || !root.current) return
@@ -332,7 +332,10 @@ const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
     const press = (event: React.MouseEvent<HTMLButtonElement>) => {
       onClick?.(event)
       if (promise) {
-        toast.promise(promise(), { loading: { title, description }, success: success ?? {}, error: error ?? {} })
+        // The error toast is the report; the rejection Base UI hands back would only surface unhandled.
+        toast
+          .promise(promise(), { loading: { title, description }, success: success ?? {}, error: error ?? {} })
+          .catch(() => {})
         return
       }
       toast.show({ title, description, type, timeout, action })
