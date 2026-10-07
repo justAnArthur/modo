@@ -16,6 +16,10 @@
  *   (`lib/use-morph.ts`, goo on `spring.moderate`): the edge strip or the
  *   hovered trigger, recorded in the context's `peekOrigin`, and melts back
  *   into it on dismissal, replacing the card's slide in from off the edge.
+ * - What is folded or collapsed away is `inert`: a folded `SidebarGroup`, and
+ *   the rail panel of a collapsed sidebar without peek. Their rows were still
+ *   tab stops while clipped away (React 18 has no `inert` prop type, hence
+ *   the spreads).
  */
 
 import { motion, useReducedMotion } from 'motion/react'
@@ -527,13 +531,9 @@ export interface SidebarShellProps extends MotionSafeDivProps {
   railTooltipOpen?: boolean
 }
 
-/** Internal: the collapsed sidebar floated out as a card. It grows out of
- *  whatever armed it (the edge strip, or the trigger it was hovered from)
- *  through the morph layer and melts back into it on dismissal, so it stays
- *  mounted until that exit lands. Its edge inset matches where the PINNED
- *  rail's content sits, so pinning from a peek never shifts the rows
- *  sideways: floating pins into a card inset by the same gutter; inset and
- *  sidebar pin flush to the edge. */
+/** Internal: the collapsed sidebar floated out as a card, grown out of what
+ *  armed it. Its edge inset matches where the PINNED rail's content sits, so
+ *  pinning from a peek never shifts the rows sideways. */
 function SidebarPeek({ side, variant, children }: { side: SidebarSide; variant: SidebarVariant; children: ReactNode }) {
   const { isPeeking, width, peekOrigin } = useSidebar()
   const [mounted, setMounted] = useState(isPeeking)
@@ -543,22 +543,17 @@ function SidebarPeek({ side, variant, children }: { side: SidebarSide; variant: 
   const level = Math.min(useSurface() + 1, 8)
   if (!isPeeking && !mounted) return null
 
+  const floating = variant === 'floating'
+
   return (
     <div
       ref={morph.popupRef}
       data-sidebar="peek"
       className={cn(
         'absolute inset-y-2 z-50 flex flex-col',
-        side === 'left'
-          ? variant === 'floating'
-            ? 'left-2'
-            : 'left-0'
-          : variant === 'floating'
-            ? 'right-2'
-            : 'right-0',
+        side === 'left' ? (floating ? 'left-2' : 'left-0') : floating ? 'right-2' : 'right-0',
       )}
-      // Structural: the card is the rail's width, less its gutter.
-      style={{ width: `calc(${width} - ${variant === 'floating' ? '1rem' : '0.5rem'})` }}
+      style={{ width: `calc(${width} - ${floating ? '1rem' : '0.5rem'})` }}
     >
       <SurfaceProvider value={level}>
         <MorphSurface
@@ -815,6 +810,8 @@ const SidebarShell = forwardRef<HTMLDivElement, SidebarShellProps>(
             initial={false}
             animate={{ x: open ? '0%' : side === 'left' ? '-100%' : '100%' }}
             transition={widthTransition}
+            // Not mid-drag: the rail inside holds the pointer through a collapse preview.
+            {...(open || isResizing ? {} : { inert: '' })}
           >
             {variant === 'floating' ? (
               <div
@@ -1327,7 +1324,7 @@ const SidebarGroup = forwardRef<HTMLDivElement, SidebarGroupProps>(
                 if (open) setSettled(true)
               }}
             >
-              <div ref={contentRef} className="flex w-full min-w-0 flex-col">
+              <div ref={contentRef} className="flex w-full min-w-0 flex-col" {...(open ? {} : { inert: '' })}>
                 {rest}
               </div>
             </motion.div>

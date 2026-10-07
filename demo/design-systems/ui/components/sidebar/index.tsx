@@ -69,12 +69,6 @@ import {
   SidebarSelection,
 } from './sidebar-menu'
 
-// ─── Mobile sheet ────────────────────────────────────────────────────────────
-//
-// The DS's Sheet: Base UI Drawer (swipe to dismiss, scroll lock, focus trap
-// and restore, Esc + outside-press dismissal) with the panel growing out of
-// its edge through the morph layer, so no exit needs holding open here.
-
 function SidebarSheet({ side, children }: { side: SidebarSide; children: ReactNode }) {
   const { openMobile, setOpenMobile, widthMobile } = useSidebar()
   return (
@@ -86,7 +80,6 @@ function SidebarSheet({ side, children }: { side: SidebarSide; children: ReactNo
         data-side={side}
         tier="moderate"
         className="gap-0 overflow-hidden p-0"
-        // Structural: the drawer is the provider's mobile width.
         style={{ width: widthMobile }}
       >
         {children}
@@ -249,7 +242,7 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
       defaultValue,
       onValueChange as ((value: string | undefined) => void) | undefined,
     )
-    const selection = useMemo(() => ({ value, select: (next: string) => setValue(next) }), [value, setValue])
+    const selection = useMemo(() => ({ value, select: setValue }), [value, setValue])
     const children = <SidebarSelection.Provider value={selection}>{parts}</SidebarSelection.Provider>
 
     // The provider mirrors the side into the default shortcut ("[" / "]")
@@ -357,8 +350,6 @@ const SidebarContent = forwardRef<HTMLDivElement, SidebarContentProps>(
 )
 SidebarContent.displayName = 'SidebarContent'
 
-// Compound statics: `<Sidebar.Provider>`, `<Sidebar.Menu>`, … (typed by the
-// SidebarComponent cast on the forwardRef above).
 Object.assign(Sidebar, {
   Provider: SidebarProvider,
   Trigger: SidebarTrigger,

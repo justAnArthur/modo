@@ -82,19 +82,19 @@ function DocsNavItem({ href, active, children }: { href: string; active?: boolea
 }
 
 function DocsNavSection({ title, children }: { title: string; children?: ReactNode }) {
-  const links = Children.toArray(children).every(child => isValidElement(child) && child.type === DocsNavItem)
-  if (!links) {
+  const onlyLinks = Children.toArray(children).every(child => isValidElement(child) && child.type === DocsNavItem)
+  if (onlyLinks) {
     return (
-      <Sidebar.Group>
+      <Sidebar.Group collapsible>
         <Sidebar.GroupLabel>{title}</Sidebar.GroupLabel>
-        <div className="px-2">{children}</div>
+        <Sidebar.Menu>{children}</Sidebar.Menu>
       </Sidebar.Group>
     )
   }
   return (
-    <Sidebar.Group collapsible>
+    <Sidebar.Group>
       <Sidebar.GroupLabel>{title}</Sidebar.GroupLabel>
-      <Sidebar.Menu>{children}</Sidebar.Menu>
+      <div className="px-2">{children}</div>
     </Sidebar.Group>
   )
 }
@@ -119,7 +119,6 @@ export function ThemeSwitcher() {
 
   useEffect(() => {
     const sync = () => setPreference(window.__uiTheme?.get() ?? 'system')
-    sync()
     window.addEventListener('ui:themechange', sync)
     return () => window.removeEventListener('ui:themechange', sync)
   }, [])

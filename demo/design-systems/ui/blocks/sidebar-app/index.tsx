@@ -82,7 +82,6 @@ function AppSidebar({ variant, side, className, value, onValueChange }: AppSideb
             <Sidebar.MenuItem>
               <Sidebar.MenuButton icon={PlusIcon}>
                 New
-                {/* The shortcut chip, revealed on row hover. */}
                 <span className="ml-auto inline-flex opacity-0 transition-opacity duration-fast group-hover/menu-item:opacity-100 group-focus-within/menu-item:opacity-100">
                   <kbd className="font-sans text-micro text-muted-foreground">⇧⌘O</kbd>
                 </span>

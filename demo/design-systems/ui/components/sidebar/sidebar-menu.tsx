@@ -24,6 +24,8 @@
  *   `SidebarMenuSub` without `open` follows it. FF's docs held that state in
  *   the page.
  * - Refs written by hand are typed `MutableRefObject` (React 18).
+ * - A folded `SidebarMenuSub` is `inert`: an active sub-row inside it stayed a
+ *   tab stop while `aria-hidden` and clipped away.
  */
 
 import { cva, type VariantProps } from 'class-variance-authority'
@@ -609,7 +611,7 @@ export interface SidebarMenuItemProps extends LiHTMLAttributes<HTMLLIElement> {
 function useMenuRow(
   rowRef: MutableRefObject<HTMLLIElement | null>,
   isSubRow = false,
-  sub?: { collapsible?: boolean; open?: boolean; defaultOpen?: boolean; onOpenChange?: (open: boolean) => void },
+  sub?: Pick<SidebarMenuItemProps, 'collapsible' | 'open' | 'defaultOpen' | 'onOpenChange'>,
 ) {
   const scope = useContext(MenuScopeContext)
   const registerRow = scope?.registerRow
@@ -679,7 +681,7 @@ function useMenuRow(
 
   const [open, setOpen] = useControllableState(sub?.open, sub?.defaultOpen ?? false, sub?.onOpenChange)
   const subOpen = sub?.collapsible ? open : undefined
-  const toggleSub = useCallback(() => setOpen(!open), [setOpen, open])
+  const toggleSub = useCallback(() => setOpen(prev => !prev), [setOpen])
 
   return useMemo(
     () => ({
@@ -946,8 +948,7 @@ const SidebarMenuButton = forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
     // status="active" implies the row-active treatment, unless a `value`
     // hands the choice to the sidebar's selection; an explicit dot overrides
     // the status-derived one.
-    const effectiveActive =
-      value === undefined ? isActive || status === 'active' : isActive || selection?.value === value
+    const effectiveActive = isActive || (value === undefined ? status === 'active' : selection?.value === value)
 
     const setActive = item?.setActive
     useIsoLayoutEffect(() => {
@@ -1016,9 +1017,7 @@ const SidebarMenuButton = forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
         )}
         <MenuRowLabel content={content} lit={lit} emphasized={effectiveActive} textClass={textClass} />
         {status === 'unread' && <span className="sr-only">, unread</span>}
-        {/* A collapsible row's chevron rides the label's trailing edge: at
-            rest it only shows on a closed row, so an open tree isn't a column
-            of arrows. One glyph, sprung 90° to point down while open. */}
+        {/* At rest the chevron shows only on a closed row, so an open tree isn't a column of arrows. */}
         {collapsible && (
           <span className="ml-auto -mr-0.5 flex size-6 shrink-0 items-center justify-center">
             <motion.span className="inline-flex" animate={{ rotate: subOpen ? 90 : 0 }} transition={spring.fast}>
@@ -1073,7 +1072,7 @@ const SidebarMenuButton = forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
         style: {
           ...gutterVars,
           ...(collapsible ? ({ '--row-gutter': 'var(--row-gutter-hover)' } as CSSProperties) : {}),
-          ...(style ?? {}),
+          ...style,
         },
       },
       inner,
@@ -1286,16 +1285,14 @@ SidebarMenuSkeleton.displayName = 'SidebarMenuSkeleton'
 // ─── SidebarMenuSub ──────────────────────────────────────────────────────────
 
 export interface SidebarMenuSubProps extends HTMLAttributes<HTMLUListElement> {
-  /** Built-in measured-height collapse. Omitted, the sub-menu is always
-   *  visible; wire it to state (with a toggling SidebarMenuButton) for a
-   *  collapsible tree. */
+  /** Built-in measured-height collapse. Omitted, the sub-menu follows its
+   *  `collapsible` row's state, or stays visible without one. */
   open?: boolean
 }
 
 const SidebarMenuSub = forwardRef<HTMLUListElement, SidebarMenuSubProps>(
   ({ className, open: openProp, children, ...props }, ref) => {
     const containerRef = useRef<HTMLUListElement | null>(null)
-    // Without its own `open`, a sub-menu follows its collapsible row.
     const row = useContext(MenuItemContext)
     const open = openProp ?? row?.subOpen ?? true
     // The sub-menu is NOT its own highlight scope: its rows register with the
@@ -1361,6 +1358,7 @@ const SidebarMenuSub = forwardRef<HTMLUListElement, SidebarMenuSubProps>(
           data-sidebar="menu-sub"
           data-state={open ? 'open' : 'closed'}
           aria-hidden={open ? undefined : true}
+          {...(open ? {} : { inert: '' })}
           className={cn(
             // ml-[15px] (a margin, not a translate, so the rows' measured
             // rects include it) + 1px border + pl-2 lands the sub-row label
