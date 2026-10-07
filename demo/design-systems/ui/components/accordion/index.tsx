@@ -15,6 +15,9 @@
  * - Standalone `Accordion` accepts `highlight` (the FF API table lists it on
  *   the root) and hands it to its items through context as their default;
  *   `AccordionItem`'s own `highlight` still wins.
+ * - `AccordionItem` hands its ref to Base UI's `Item` instead of overriding the
+ *   render function's ref, which carries the list-item registration the arrow
+ *   keys, Home and End read (without it they threw a TypeError).
  * - Prop JSDoc rewritten from the FF docs API tables; modo TSDoc and
  *   examples on `Accordion`.
  * - Compound statics `Accordion.Group/.Item/.Trigger/.Content` attached with
@@ -219,8 +222,6 @@ const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>((props, r
     setOpenItemRects(next)
   }, [])
 
-  // Local: controlled while `value` is set, else own state seeded from
-  // `defaultValue` — `onValueChange` reports either way (Base UI contract).
   const sp = props as AccordionGroupSingleProps
   const mp = props as AccordionGroupMultipleProps
   const [singleValue, setSingleValue] = useControllableState<string>(
@@ -246,9 +247,6 @@ const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>((props, r
     // Deliberately keyed on the joined string, not the (fresh) array.
     [openValuesKey],
   )
-
-  const handleSingleValueChange = setSingleValue
-  const handleMultipleValueChange = setMultipleValue
 
   useEffect(() => {
     measureItems()
@@ -296,8 +294,8 @@ const AccordionGroup = forwardRef<HTMLDivElement, AccordionGroupProps>((props, r
   const baseValue: string[] = openValuesList
 
   const baseOnValueChange = (next: string[]) => {
-    if (type === 'multiple') handleMultipleValueChange(next)
-    else handleSingleValueChange(next[0] ?? '')
+    if (type === 'multiple') setMultipleValue(next)
+    else setSingleValue(next[0] ?? '')
   }
 
   // Local: rows a morphing panel pushes around carry the hover highlight and
@@ -547,8 +545,6 @@ const Accordion = forwardRef<HTMLDivElement, AccordionProps>(
   ) => {
     void collapsible // Base UI's single-mode is always collapsible.
 
-    // Local: controlled while `value` is set, else own state seeded from
-    // `defaultValue` — `onValueChange` reports either way (Base UI contract).
     const [singleValue, setSingleValue] = useControllableState<string>(
       type === 'single' ? (value as string | undefined) : undefined,
       type === 'single' ? ((defaultValue as string | undefined) ?? '') : '',
@@ -562,14 +558,11 @@ const Accordion = forwardRef<HTMLDivElement, AccordionProps>(
 
     const openValues = new Set<string>(type === 'multiple' ? multipleValue : singleValue ? [singleValue] : [])
 
-    const handleSingleChange = setSingleValue
-    const handleMultipleChange = setMultipleValue
-
     const baseValue: string[] = [...openValues]
 
     const baseOnValueChange = (next: string[]) => {
-      if (type === 'multiple') handleMultipleChange(next)
-      else handleSingleChange(next[0] ?? '')
+      if (type === 'multiple') setMultipleValue(next)
+      else setSingleValue(next[0] ?? '')
     }
 
     const root = (
@@ -599,7 +592,6 @@ Accordion.displayName = 'Accordion'
 
 const StandaloneOpenContext = createContext<Set<string>>(new Set())
 
-// Local: the standalone root's `highlight`, the default for its items.
 const StandaloneHighlightContext = createContext<'trigger' | 'item' | undefined>(undefined)
 
 // ─── AccordionItem ───────────────────────────────────────────────────────────
@@ -646,6 +638,13 @@ const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(
     return (
       <AccordionItemContext.Provider value={{ index, value, isOpen, triggerRef, highlight, press }}>
         <AccordionPrimitive.Item
+          // Through Base UI, which merges it into the render function's ref
+          // with the list-item registration that arrow-key navigation reads.
+          ref={node => {
+            ;(internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+            if (typeof ref === 'function') ref(node)
+            else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
+          }}
           value={value}
           disabled={disabled}
           render={itemProps => {
@@ -653,11 +652,6 @@ const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(
             return (
               <div
                 {...restItem}
-                ref={node => {
-                  ;(internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node
-                  if (typeof ref === 'function') ref(node)
-                  else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
-                }}
                 data-fluid-hover-index={index}
                 // Positioned in a group too: the content's open tint covers
                 // the whole item (fluid hover adds positioned ancestors'
@@ -824,7 +818,8 @@ interface Rect {
 // The morph engine's rect interpolation (lib/use-morph.ts). `t` stops at 1:
 // the slow tier's bounce would push the rows below past their place and back.
 function grow(a: Rect, b: Rect, t: number): Rect {
-  const at = (from: number, to: number) => from + (to - from) * Math.min(1, t)
+  const p = Math.min(1, t)
+  const at = (from: number, to: number) => from + (to - from) * p
   const w = at(a.w, b.w)
   const h = at(a.h, b.h)
   return { x: at(a.x, b.x), y: at(a.y, b.y), w, h, r: Math.min(at(a.r, b.r), w / 2, h / 2) }
@@ -1040,8 +1035,6 @@ const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps>(
 
 AccordionContent.displayName = 'AccordionContent'
 
-// Compound statics: `<Accordion.Group>`, `<Accordion.Item>`, … (typed by the
-// AccordionComponent cast on the forwardRef above).
 Object.assign(Accordion, {
   Group: AccordionGroup,
   Item: AccordionItem,

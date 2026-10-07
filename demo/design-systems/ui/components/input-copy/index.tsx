@@ -111,8 +111,8 @@ function CopyDisc({ status }: { status: CopyStatus }) {
   const reduced = useReducedMotionConfig()
   const gooId = `copy-goo-${useId().replace(/:/g, '')}`
   const tone = useRef<'copied' | 'error'>('copied')
-  if (status !== 'idle') tone.current = status
   const on = status !== 'idle'
+  if (on) tone.current = status
 
   useLayoutEffect(() => {
     if (!on && progress.get() === 0) return

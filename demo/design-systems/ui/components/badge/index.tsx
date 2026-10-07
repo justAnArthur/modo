@@ -87,9 +87,8 @@ const { exit: _exit, ...enter } = spring.moderate
 
 /** The label as text, when it is text: the key its crossfade runs on. */
 function textOf(node: ReactNode) {
-  if (typeof node === 'string' || typeof node === 'number') return String(node)
-  if (Array.isArray(node) && node.every(part => typeof part === 'string' || typeof part === 'number'))
-    return node.join('')
+  const parts = Array.isArray(node) ? node : [node]
+  if (parts.every(part => typeof part === 'string' || typeof part === 'number')) return parts.join('')
 }
 
 /* Width morph (local): when the label or the variant changes, the content
@@ -162,8 +161,8 @@ interface BadgeProps
  * ladder — `size` pins it, otherwise it follows the surrounding SizeProvider
  * — and takes its corner radius from the shape context. Changes animate: a
  * new label or variant springs the width while the label crossfades, and a
- * new color fades in. The palette is also
- * exported as `badgeColors`, the class recipe as `badgeVariants`.
+ * new color fades in. The palette is also exported as `badgeColors`, the class
+ * recipe as `badgeVariants`.
  *
  * @example {@include ./examples.mdx}
  */
