@@ -20,7 +20,7 @@ import { remarkModoExamples } from './mdx-examples'
 export interface BundledItem {
   id: string
   tier: Tier
-  /** The group folder: `<tier>/<group>/<id>/index.tsx`. */
+  /** The group folders as a path: `<tier>/<group>/[<group>/…]<id>/index.tsx` → `<group>[/<group>…]`. */
   group?: string
   name: string
   description: string

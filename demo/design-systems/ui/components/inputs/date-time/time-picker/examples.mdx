@@ -1,0 +1,26 @@
+import TimePicker from './index'
+import { de } from 'react-day-picker/locale'
+
+# Basic
+
+The locale's clock: in English, 12-hour, the hours read with AM/PM.
+
+<div className="w-48 max-w-full">
+  <TimePicker defaultValue="15:33" />
+</div>
+
+# 24-hour clock
+
+A German locale writes 24-hour times.
+
+<div className="w-48 max-w-full">
+  <TimePicker locale={de} defaultValue="15:33" />
+</div>
+
+# Quarter hours
+
+`minuteStep={15}` leaves four minutes to pick from.
+
+<div className="w-48 max-w-full">
+  <TimePicker hourCycle="h23" minuteStep={15} placeholder="Start time" />
+</div>

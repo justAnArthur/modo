@@ -1,0 +1,29 @@
+import DateRangePicker from './index'
+import { de } from 'react-day-picker/locale'
+
+# Basic
+
+Click a start and an end; the days under the pointer preview the range.
+
+<div className="w-80 max-w-full">
+  <DateRangePicker placeholder="Pick a range" />
+</div>
+
+# With a range
+
+The field writes the range the way the locale does.
+
+<div className="w-80 max-w-full">
+  <DateRangePicker defaultValue={{ from: new Date(2026, 9, 9), to: new Date(2026, 9, 15) }} />
+</div>
+
+# German, this year only
+
+<div className="w-80 max-w-full">
+  <DateRangePicker
+    locale={de}
+    startMonth={new Date(2026, 0, 1)}
+    endMonth={new Date(2026, 11, 1)}
+    defaultValue={{ from: new Date(2026, 9, 9), to: new Date(2026, 9, 15) }}
+  />
+</div>

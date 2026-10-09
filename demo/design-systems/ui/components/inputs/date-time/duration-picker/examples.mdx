@@ -1,0 +1,16 @@
+import DurationPicker from './index'
+import { de } from 'react-day-picker/locale'
+
+# Basic
+
+<div className="w-60 max-w-full">
+  <DurationPicker defaultValue={{ hours: 1, minutes: 30 }} />
+</div>
+
+# German, up to 8 hours
+
+`maxHours` ends the hour column; `minuteStep` thins the minutes.
+
+<div className="w-60 max-w-full">
+  <DurationPicker locale={de} maxHours={8} minuteStep={15} placeholder="Dauer" />
+</div>

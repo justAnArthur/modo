@@ -22,6 +22,7 @@
  *   tab stops while clipped away (React 18 has no `inert` prop type, hence
  *   the spreads).
  * - `SidebarInput`'s field ladder is the shared `lib/field-classes.ts` recipe.
+ * - `useIsMobile` moved to `lib/use-is-mobile.ts`, shared with the pickers.
  */
 
 import { motion, useReducedMotion } from 'motion/react'
@@ -54,6 +55,7 @@ import { useSize, useSizeVariant } from '../../../lib/size-context'
 import { exitFallbackMs, spring } from '../../../lib/springs'
 import { surfaceClasses } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
+import { useIsMobile } from '../../../lib/use-is-mobile'
 import { cn } from '../../../lib/utils'
 import { Button, type ButtonProps } from '../../button'
 import { Tooltip } from '../../overlays/tooltip'
@@ -139,20 +141,6 @@ export function useSidebar(): SidebarContextValue {
   const ctx = useContext(SidebarContext)
   if (!ctx) throw new Error('useSidebar must be used within a SidebarProvider')
   return ctx
-}
-
-// Starts undefined so the server and first client render agree (both treat it
-// as desktop); the media query corrects it in an effect before interaction.
-function useIsMobile(breakpoint: number): boolean {
-  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined)
-  useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`)
-    const onChange = () => setIsMobile(mql.matches)
-    onChange()
-    mql.addEventListener('change', onChange)
-    return () => mql.removeEventListener('change', onChange)
-  }, [breakpoint])
-  return !!isMobile
 }
 
 /** Open on hover's zone: from the frame's edge to the sidebar's inner edge,

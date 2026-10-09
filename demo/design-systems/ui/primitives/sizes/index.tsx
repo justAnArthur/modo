@@ -34,8 +34,9 @@ import { SizeContext, type SizeVariant, sizeMap } from '../../lib/size-context'
  * the component > nearest `SizeProvider` > `'default'`. Button, Badge,
  * Select, Tabs, TabsSubtle, Dropdown, CheckboxGroup, RadioGroup, Input,
  * InputGroup, InputCopy, InputMessage, Table, Switch, Slider, Accordion, Card,
- * ColorPicker and ThinkingIndicator all take that per-component `size`. Type follows the
- * ladder too: compact drops each type role one notch.
+ * ColorPicker, ThinkingIndicator, Calendar and the date and time pickers all
+ * take that per-component `size`. Type follows the ladder too: compact drops
+ * each type role one notch.
  *
  * Also exported from this item: `useSize(override?)`, `useSizeVariant(override?)`,
  * `useSizeContext()` (`{ size, setSize }` inside a provider), `useTypeScale(override?)`,
