@@ -17,8 +17,8 @@
  */
 
 import { type ReactNode } from 'react'
-import { DropdownContent, DropdownMenu, DropdownTrigger } from '../../components/dropdown'
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '../../components/sidebar'
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '../../components/navigation/sidebar'
+import { DropdownContent, DropdownMenu, DropdownTrigger } from '../../components/overlays/dropdown'
 import { useIcon } from '../../lib/icon-context'
 import { useShape } from '../../lib/shape-context'
 import { useSize } from '../../lib/size-context'

@@ -1,0 +1,89 @@
+import Sheet from './index'
+import Button from '../../button'
+
+# Bottom sheet
+
+The sheet oozes up out of the bottom edge. Swipe it back down, press outside or hit Escape to send it back.
+
+<Sheet>
+  <Sheet.Trigger render={<Button variant="secondary">Open sheet</Button>} />
+  <Sheet.Content>
+    <Sheet.Header>
+      <Sheet.Title>Share project</Sheet.Title>
+      <Sheet.Description>Anyone with the link can view it.</Sheet.Description>
+    </Sheet.Header>
+    <Sheet.Footer>
+      <Sheet.Close render={<Button variant="ghost">Cancel</Button>} />
+      <Sheet.Close render={<Button>Copy link</Button>} />
+    </Sheet.Footer>
+  </Sheet.Content>
+</Sheet>
+
+# Sides
+
+`side` attaches the sheet to any edge; it grows from that edge and is swiped back toward it.
+
+<div className="flex flex-wrap items-center justify-center gap-3">
+  <Sheet side="right">
+    <Sheet.Trigger render={<Button variant="secondary">Right</Button>} />
+    <Sheet.Content>
+      <Sheet.Title>Filters</Sheet.Title>
+      <Sheet.Description>A side sheet takes the full height and caps its width.</Sheet.Description>
+    </Sheet.Content>
+  </Sheet>
+  <Sheet side="left">
+    <Sheet.Trigger render={<Button variant="secondary">Left</Button>} />
+    <Sheet.Content>
+      <Sheet.Title>Navigation</Sheet.Title>
+      <Sheet.Description>Swipe left to dismiss.</Sheet.Description>
+    </Sheet.Content>
+  </Sheet>
+  <Sheet side="top">
+    <Sheet.Trigger render={<Button variant="secondary">Top</Button>} />
+    <Sheet.Content>
+      <Sheet.Title>Announcement</Sheet.Title>
+      <Sheet.Description>Swipe up to dismiss.</Sheet.Description>
+    </Sheet.Content>
+  </Sheet>
+</div>
+
+# From the trigger
+
+`from="trigger"` grows the sheet out of the button instead of the edge; once open it behaves like any sheet.
+
+<Sheet>
+  <Sheet.Trigger render={<Button variant="secondary">From the button</Button>} />
+  <Sheet.Content from="trigger">
+    <Sheet.Title>From the button</Sheet.Title>
+    <Sheet.Description>The surface melts out of the trigger and settles at the bottom edge.</Sheet.Description>
+  </Sheet.Content>
+</Sheet>
+
+# Snap points
+
+A top or bottom sheet can rest at `snapPoints`: here 40% of the window, then nearly all of it. Drag the handle between them.
+
+<Sheet snapPoints={[0.4, 0.9]}>
+  <Sheet.Trigger render={<Button variant="secondary">Open with snap points</Button>} />
+  <Sheet.Content className="min-h-[90dvh]">
+    <Sheet.Title>Two heights</Sheet.Title>
+    <Sheet.Description>Swipe up to expand, down to fold back or dismiss.</Sheet.Description>
+  </Sheet.Content>
+</Sheet>
+
+# Indent
+
+Wrap the page in `Sheet.Indent` under a `Sheet.Provider` and it eases back while a sheet is open.
+
+<Sheet.Provider>
+  <Sheet.Indent className="flex w-full flex-col items-center gap-3 rounded-xl bg-surface-2 p-8">
+    <span className="text-caption text-muted-foreground">The page behind the sheet</span>
+    <Sheet>
+      <Sheet.Trigger render={<Button variant="secondary">Open sheet</Button>} />
+      <Sheet.Content>
+        <Sheet.Title>On top of the page</Sheet.Title>
+        <Sheet.Description>The page scales back a little while this is open.</Sheet.Description>
+      </Sheet.Content>
+    </Sheet>
+  </Sheet.Indent>
+</Sheet.Provider>

@@ -11,7 +11,7 @@
  */
 
 import { type ReactNode } from 'react'
-import { SidebarTrigger } from '../../components/sidebar'
+import { SidebarTrigger } from '../../components/navigation/sidebar'
 import { cn } from '../../lib/utils'
 
 // The main region's topbar, its trigger first.

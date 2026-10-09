@@ -18,9 +18,9 @@
 
 import { useState } from 'react'
 import Button from '../../components/button'
-import { DropdownContent, DropdownMenu, DropdownTrigger, MenuItem } from '../../components/dropdown'
-import Sidebar from '../../components/sidebar'
-import Tooltip from '../../components/tooltip'
+import Sidebar from '../../components/navigation/sidebar'
+import { DropdownContent, DropdownMenu, DropdownTrigger, MenuItem } from '../../components/overlays/dropdown'
+import Tooltip from '../../components/overlays/tooltip'
 import { useIcon } from '../../lib/icon-context'
 import { cn } from '../../lib/utils'
 import { SidebarInsetTopbar } from './inset-topbar'

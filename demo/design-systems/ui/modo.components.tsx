@@ -4,14 +4,14 @@
  */
 
 import { Check, CodeXml, Copy, Link2, Monitor, Moon, Sun } from 'lucide-react'
-import { Children, isValidElement, type ReactNode, useEffect, useState } from 'react'
-import FluidSelect from './components/select'
+import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useState } from 'react'
+import FluidSelect from './components/inputs/select'
 import Sidebar, {
   SIDEBAR_KEYBOARD_SHORTCUT,
   SIDEBAR_KEYBOARD_SHORTCUT_RIGHT,
   type SidebarSide,
   useSidebar,
-} from './components/sidebar'
+} from './components/navigation/sidebar'
 import { cn } from './lib/utils'
 
 const icons = { code: CodeXml, copy: Copy, check: Check, link: Link2 }
@@ -148,8 +148,20 @@ function useDocsShortcut(key: string, toggle: () => void) {
   }, [key, toggle])
 }
 
+/** How deep a nav element sits: a tier is a section, a group folder a section inside it. */
+const NavDepth = createContext(0)
+
 function DocsNavItem({ href, active, children }: { href: string; active?: boolean; children?: ReactNode }) {
   const { setOpenMobile } = useSidebar()
+  if (useContext(NavDepth) === 2) {
+    return (
+      <Sidebar.MenuSubItem>
+        <Sidebar.MenuSubButton href={href} isActive={active} onClick={() => setOpenMobile(false)}>
+          {children}
+        </Sidebar.MenuSubButton>
+      </Sidebar.MenuSubItem>
+    )
+  }
   return (
     <Sidebar.MenuItem>
       <Sidebar.MenuButton isActive={active} render={<a href={href} />} onClick={() => setOpenMobile(false)}>
@@ -160,12 +172,18 @@ function DocsNavItem({ href, active, children }: { href: string; active?: boolea
 }
 
 function DocsNavSection({ title, children }: { title: string; children?: ReactNode }) {
-  const onlyLinks = Children.toArray(children).every(child => isValidElement(child) && child.type === DocsNavItem)
+  const depth = useContext(NavDepth)
+  if (depth === 1) return <DocsNavGroup title={title}>{children}</DocsNavGroup>
+  const onlyLinks = Children.toArray(children).every(
+    child => isValidElement(child) && (child.type === DocsNavItem || child.type === DocsNavSection),
+  )
   if (onlyLinks) {
     return (
       <Sidebar.Group collapsible>
         <Sidebar.GroupLabel>{title}</Sidebar.GroupLabel>
-        <Sidebar.Menu>{children}</Sidebar.Menu>
+        <NavDepth.Provider value={1}>
+          <Sidebar.Menu>{children}</Sidebar.Menu>
+        </NavDepth.Provider>
       </Sidebar.Group>
     )
   }
@@ -174,6 +192,25 @@ function DocsNavSection({ title, children }: { title: string; children?: ReactNo
       <Sidebar.GroupLabel>{title}</Sidebar.GroupLabel>
       <div className="px-2">{children}</div>
     </Sidebar.Group>
+  )
+}
+
+/** A group folder inside a tier: a collapsible row, opened while it holds the current page. */
+function DocsNavGroup({ title, children }: { title: string; children?: ReactNode }) {
+  const current = Children.toArray(children).some(
+    child => isValidElement<{ active?: boolean }>(child) && child.props.active,
+  )
+  const [open, setOpen] = useState(current)
+  useEffect(() => {
+    if (current) setOpen(true)
+  }, [current])
+  return (
+    <Sidebar.MenuItem collapsible open={open} onOpenChange={setOpen}>
+      <Sidebar.MenuButton>{title}</Sidebar.MenuButton>
+      <NavDepth.Provider value={2}>
+        <Sidebar.MenuSub>{children}</Sidebar.MenuSub>
+      </NavDepth.Provider>
+    </Sidebar.MenuItem>
   )
 }
 
