@@ -25,7 +25,8 @@ import { defineConfig, presetWind4 } from 'unocss'
  * - Sources are scanned from disk (`content.filesystem`) because items reach
  *   the browser pre-bundled by modo, and example code lives only in the raw
  *   TSDoc of each index.tsx or in the .mdx it includes. The pipeline include
- *   covers `.ts` too (the default pipeline skips it).
+ *   covers `.ts` too (the default pipeline skips it): it filters both the
+ *   filesystem scan and the sources modo hands Uno on a dev rebuild.
  */
 
 const root = dirname(fileURLToPath(import.meta.url))
