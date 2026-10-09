@@ -91,7 +91,7 @@ Rules:
 
 ## docs (TSDoc)
 
-- An item is `<tier>/[<group>/]<name>/index.tsx`: a default-exported component plus a JSDoc block.
+- An item is `<tier>/[<group>/…]<name>/index.tsx`: a default-exported component plus a JSDoc block.
   - The block anchors to the default export's declaration (function or const), wherever `export default` sits.
   - The parser extracts `name`, `description`, `props` and `examples`.
 - **One place per kind:** the TSDoc comment is the item's only prose (summary paragraph = page lead, the rest = body). Examples live in a co-located `examples.mdx`, included with `@example {@include ./examples.mdx}`. Reserve inline `@example` code for a few short cases.
@@ -160,8 +160,8 @@ Rules:
   - A bare shorthand like `--radius` joins its prefix family.
   - In a group file, an unprefixed var belongs to that group (`--sm` in `spacing.css`); a var whose prefix names another group goes there (`--radius-sm` in `colors.css`).
 - `<tier>/<name>/index.tsx` — the item. Tiers are `primitives/`, `components/` and `blocks/`, auto-discovered.
-  - Optional group folder: `<tier>/<group>/<name>/index.tsx`. A folder without an `index.tsx` is a group; groups don't nest.
-  - A group is a nested sidebar `Section` and a headed section of the tier overview (`form-controls` → "Form controls"). Ungrouped items come first, then groups by folder name.
+  - Optional group folders: `<tier>/<group>/<name>/index.tsx`, nesting further (`components/inputs/date-time/calendar/`). A folder without an `index.tsx` is a group.
+  - A group is a nested sidebar `Section` and a headed section of the tier overview (`form-controls` → "Form controls"), a nested group one level deeper in both. Each level lists its own items first, then its groups by folder name.
   - The id stays `<name>`, so urls, bundle keys and `tier:id` don't change; ids stay unique per tier across groups.
   - Compound parts hang off the default export (`Card.Header = …`; TypeScript types the assignments). For a forwardRef const, cast the `Object.assign` result to a type with the parts.
   - Examples may use compound JSX.

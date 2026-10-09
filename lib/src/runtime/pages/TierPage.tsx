@@ -1,7 +1,7 @@
 import { type ItemEntry, items } from 'virtual:modo-items'
 import type { Tier } from '../../lib/tiers'
 import { Heading } from '../anchor'
-import { byGroup } from '../groups'
+import { groupTree } from '../groups'
 import { ExamplePreview } from '../items/preview'
 import { Inlines, splitLead } from '../markdown'
 import { cap, count } from '../text'
@@ -29,13 +29,39 @@ export function TierPage({ tier }: { tier: Tier }) {
           Nothing in <code>{tier}/</code> yet.
         </p>
       ) : (
-        byGroup(list).map(g => (
-          <section key={g.title ?? ''} data-modo="section">
-            {g.title ? <Heading level={2} label={g.title} modo="section-title" /> : null}
-            <Cards tier={tier} list={g.items} />
-          </section>
-        ))
+        <Groups tier={tier} tree={groupTree(list)} level={2} />
       )}
+    </>
+  )
+}
+
+/** A tier's own items, then a headed section per group, nested groups one heading level down. */
+function Groups({
+  tier,
+  tree,
+  level,
+}: {
+  tier: Tier
+  tree: ReturnType<typeof groupTree<ItemEntry>>
+  level: 2 | 3 | 4
+}) {
+  return (
+    <>
+      {tree.items.length > 0 ? (
+        level === 2 ? (
+          <section data-modo="section">
+            <Cards tier={tier} list={tree.items} />
+          </section>
+        ) : (
+          <Cards tier={tier} list={tree.items} />
+        )
+      ) : null}
+      {tree.groups.map(g => (
+        <section key={g.title} data-modo="section">
+          <Heading level={level} label={g.title} modo="section-title" />
+          <Groups tier={tier} tree={g} level={level === 2 ? 3 : 4} />
+        </section>
+      ))}
     </>
   )
 }

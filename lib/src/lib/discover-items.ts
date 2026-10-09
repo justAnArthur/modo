@@ -3,26 +3,22 @@ import { resolve } from 'node:path'
 
 export interface DiscoveredItem {
   id: string
-  /** The group folder the item sits in, if any. */
+  /** The group folders the item sits in, as a path (`inputs/date-time`), if any. */
   group?: string
   dir: string
 }
 
 /**
- * The items of one tier dir: `<id>/index.tsx`, or one level down in a group
- * folder, `<group>/<id>/index.tsx`. A folder without an `index.tsx` is a group.
+ * The items of one tier dir: `<id>/index.tsx`, or down in group folders,
+ * `<group>/[<group>/…]<id>/index.tsx`. A folder without an `index.tsx` is a
+ * group; an item's own folders are not searched.
  */
-export function discoverItems(tierDir: string): DiscoveredItem[] {
+export function discoverItems(tierDir: string, group?: string): DiscoveredItem[] {
   const found: DiscoveredItem[] = []
   for (const name of subdirs(tierDir)) {
     const dir = resolve(tierDir, name)
-    if (isItem(dir)) {
-      found.push({ id: name, dir })
-      continue
-    }
-    for (const id of subdirs(dir)) {
-      if (isItem(resolve(dir, id))) found.push({ id, group: name, dir: resolve(dir, id) })
-    }
+    if (isItem(dir)) found.push({ id: name, group, dir })
+    else found.push(...discoverItems(dir, group ? `${group}/${name}` : name))
   }
   return found
 }
