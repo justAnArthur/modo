@@ -149,6 +149,7 @@ function MonthPicker({
         />
       }
       initialFocus={input}
+      popupClassName="w-[max(var(--anchor-width,0px),14rem)]"
       id={id}
       from={from}
       effect={effect}
@@ -156,14 +157,14 @@ function MonthPicker({
       tier={tier}
       className={className}
     >
-      <div className={cn(dividedColumns, 'h-56 justify-center')}>
+      <div className={cn(dividedColumns, 'h-56')}>
         <ScrollColumn
           label={fieldLabel(locale, 'month')}
           options={months}
           value={value?.getMonth() ?? null}
           follow={value?.getMonth() ?? today.getMonth()}
           onValueChange={m => pick(new Date(year, m, 1))}
-          className="w-32 shrink-0"
+          className="min-w-0 flex-1"
         />
         <ScrollColumn
           label={fieldLabel(locale, 'year')}
@@ -171,7 +172,7 @@ function MonthPicker({
           value={value?.getFullYear() ?? null}
           follow={year}
           onValueChange={y => pick(new Date(y, value?.getMonth() ?? today.getMonth(), 1))}
-          className="w-20 shrink-0"
+          className="min-w-0 flex-1"
         />
       </div>
     </PickerShell>
