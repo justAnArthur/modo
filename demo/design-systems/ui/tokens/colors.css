@@ -67,9 +67,11 @@
 
   /* ── Brand blue ──
      FF's one chromatic accent: the switch's on-track, the copy field's hover
-     highlight, drop-target and selected-swatch rings. */
+     highlight, drop-target and selected-swatch rings. Local addition:
+     --brand-foreground, text on a brand fill (a calendar's picked day). */
   --brand: oklch(0.693 0.16 265);
   --brand-hover: oklch(0.649 0.164 264.76);
+  --brand-foreground: oklch(1 0 0);
 
   /* ── Focus indicator ──
      Every component focus ring reads it (`ring-focus-ring`,
