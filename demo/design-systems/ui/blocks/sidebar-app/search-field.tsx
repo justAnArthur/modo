@@ -11,7 +11,7 @@
  */
 
 import { type ComponentProps } from 'react'
-import { SidebarInput } from '../../components/sidebar'
+import { SidebarInput } from '../../components/navigation/sidebar'
 import { useIcon } from '../../lib/icon-context'
 import { useSize } from '../../lib/size-context'
 

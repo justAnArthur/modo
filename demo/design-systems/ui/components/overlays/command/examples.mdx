@@ -1,0 +1,113 @@
+import Command from './index'
+import Button from '../../button'
+import Elevated from '../../../primitives/surface'
+import { Calculator, Calendar, CreditCard, Moon, Settings, Smile, Sun, User } from 'lucide-react'
+
+# Basic
+
+Press the button or ⌘K (Ctrl+K): the panel oozes out of the button. Type to filter, move with the arrows, and Enter or a press runs the command.
+
+<Command>
+  <Command.Trigger
+    render={
+      <Button variant="secondary">
+        Search commands
+        <Command.Shortcut className="ml-3">⌘K</Command.Shortcut>
+      </Button>
+    }
+  />
+  <Command.Content
+    items={[
+      {
+        label: 'Suggestions',
+        items: [
+          { label: 'Calendar', icon: Calendar, keywords: ['events', 'schedule'] },
+          { label: 'Search emoji', icon: Smile },
+          { label: 'Calculator', icon: Calculator, disabled: true },
+        ],
+      },
+      {
+        label: 'Settings',
+        items: [
+          { label: 'Profile', icon: User, shortcut: '⌘P' },
+          { label: 'Billing', icon: CreditCard, shortcut: '⌘B', keywords: ['money', 'invoice'] },
+          { label: 'Settings', icon: Settings, shortcut: '⌘S' },
+        ],
+      },
+    ]}
+  />
+</Command>
+
+# Flat list
+
+Items without groups are one list. Keywords match too: try "dark".
+
+<Command hotkey={false}>
+  <Command.Trigger render={<Button variant="tertiary">Change theme</Button>} />
+  <Command.Content
+    placeholder="Pick a theme…"
+    label="Theme"
+    items={[
+      { label: 'Light', icon: Sun, keywords: ['day', 'bright'] },
+      { label: 'Dark', icon: Moon, keywords: ['night', 'dim'] },
+      { label: 'System', icon: Settings, keywords: ['auto', 'os'] },
+    ]}
+  />
+</Command>
+
+# Morph sources
+
+`from` and `effect` are Dialog's: the panel can grow from the press point, or unfold in place without the goo neck.
+
+<div className="flex flex-wrap items-center justify-center gap-3">
+  <Command hotkey={false}>
+    <Command.Trigger render={<Button variant="secondary">From the pointer</Button>} />
+    <Command.Content
+      from="pointer"
+      effect="morph"
+      items={[
+        { label: 'Calendar', icon: Calendar },
+        { label: 'Profile', icon: User },
+        { label: 'Settings', icon: Settings },
+      ]}
+    />
+  </Command>
+  <Command hotkey={false}>
+    <Command.Trigger render={<Button variant="secondary">From its center</Button>} />
+    <Command.Content
+      from="center"
+      effect="morph"
+      items={[
+        { label: 'Calendar', icon: Calendar },
+        { label: 'Profile', icon: User },
+        { label: 'Settings', icon: Settings },
+      ]}
+    />
+  </Command>
+</div>
+
+# In the page
+
+`Command.Palette` is the field and the list without the dialog, for a palette that stays on the page. It brings no surface of its own.
+
+<Elevated offset={2} className="w-full max-w-md overflow-hidden rounded-xl">
+  <Command.Palette
+    placeholder="Search settings…"
+    items={[
+      {
+        label: 'Account',
+        items: [
+          { label: 'Profile', icon: User, shortcut: '⌘P' },
+          { label: 'Billing', icon: CreditCard, shortcut: '⌘B' },
+        ],
+      },
+      {
+        label: 'Appearance',
+        items: [
+          { label: 'Light theme', icon: Sun },
+          { label: 'Dark theme', icon: Moon },
+        ],
+      },
+    ]}
+  />
+</Elevated>

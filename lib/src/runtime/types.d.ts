@@ -16,6 +16,8 @@ declare module 'virtual:modo-items' {
   export type ItemEntry = {
     id: string
     tier: import('../lib/tiers').Tier
+    /** The group folder: `<tier>/<group>/<id>/index.tsx`. */
+    group?: string
     name: string
     description: string
     props: import('../lib/tsdoc').ParsedProp[]

@@ -1,5 +1,7 @@
-import { items } from 'virtual:modo-items'
+import { type ItemEntry, items } from 'virtual:modo-items'
 import type { Tier } from '../../lib/tiers'
+import { Heading } from '../anchor'
+import { byGroup } from '../groups'
 import { ExamplePreview } from '../items/preview'
 import { Inlines, splitLead } from '../markdown'
 import { cap, count } from '../text'
@@ -27,24 +29,35 @@ export function TierPage({ tier }: { tier: Tier }) {
           Nothing in <code>{tier}/</code> yet.
         </p>
       ) : (
-        <Bento>
-          {list.map((it, i) => (
-            <BentoCard
-              key={it.id}
-              href={`/docs/${tier}/${it.id}`}
-              title={it.name}
-              description={<Lead source={it.description} />}
-              // Blocks are page-sized, so they take the whole row; elsewhere
-              // every fifth cell widens so the grid reads as a bento.
-              span={tier === 'blocks' ? 'full' : i % 5 === 0 ? 'wide' : undefined}
-              zoom={tier === 'blocks' ? 0.7 : undefined}
-            >
-              <ExamplePreview itemId={`${tier}:${it.id}`} />
-            </BentoCard>
-          ))}
-        </Bento>
+        byGroup(list).map(g => (
+          <section key={g.title ?? ''} data-modo="section">
+            {g.title ? <Heading level={2} label={g.title} modo="section-title" /> : null}
+            <Cards tier={tier} list={g.items} />
+          </section>
+        ))
       )}
     </>
+  )
+}
+
+function Cards({ tier, list }: { tier: Tier; list: ItemEntry[] }) {
+  return (
+    <Bento>
+      {list.map((it, i) => (
+        <BentoCard
+          key={it.id}
+          href={`/docs/${tier}/${it.id}`}
+          title={it.name}
+          description={<Lead source={it.description} />}
+          // Blocks are page-sized, so they take the whole row; elsewhere
+          // every fifth cell widens so the grid reads as a bento.
+          span={tier === 'blocks' ? 'full' : i % 5 === 0 ? 'wide' : undefined}
+          zoom={tier === 'blocks' ? 0.7 : undefined}
+        >
+          <ExamplePreview itemId={`${tier}:${it.id}`} />
+        </BentoCard>
+      ))}
+    </Bento>
   )
 }
 

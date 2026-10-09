@@ -1,0 +1,38 @@
+import AlertDialog from './index'
+import Button from '../../button'
+
+# Confirm a destructive step
+
+A press outside does nothing; the answer is Cancel, Delete or Escape.
+
+<AlertDialog>
+  <AlertDialog.Trigger render={<Button variant="secondary">Delete project</Button>} />
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Delete this project?</AlertDialog.Title>
+      <AlertDialog.Description>Its pages and history go with it. This can't be undone.</AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Close render={<Button variant="ghost">Cancel</Button>} />
+      <AlertDialog.Close render={<Button>Delete</Button>} />
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog>
+
+# From the pointer
+
+The same morph options as Dialog: here a circle grows from where you pressed.
+
+<AlertDialog>
+  <AlertDialog.Trigger render={<Button variant="secondary">Sign out</Button>} />
+  <AlertDialog.Content from="pointer" effect="morph">
+    <AlertDialog.Header>
+      <AlertDialog.Title>Sign out?</AlertDialog.Title>
+      <AlertDialog.Description>You'll need to sign in again on this device.</AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Close render={<Button variant="ghost">Stay</Button>} />
+      <AlertDialog.Close render={<Button>Sign out</Button>} />
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog>

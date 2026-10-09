@@ -1,0 +1,512 @@
+// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
+/*
+ * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
+ * `registry/base/tabs-subtle.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
+ * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
+ * Local modifications: `"use client"` dropped; `@/lib/*` and `@/hooks/*`
+ * imports rewritten to `../../../lib/*` (`SizeProvider` to
+ * `../../../primitives/sizes`), `framer-motion` to `motion/react`; uncontrolled mode added — `selectedIndex` and `onSelect` are
+ * optional, with a `defaultSelectedIndex` twin backed by
+ * `useControllableState`; panels may now be written inside `<TabsSubtle>` —
+ * the root partitions its children, renders only the tabs inside the tab list
+ * and the `TabsSubtlePanel`s as its siblings right after it (the root element
+ * IS the `role="tablist"`, so panels cannot nest in it), and a panel with no
+ * `selectedIndex` / `idPrefix` of its own reads both from the TabsSubtle
+ * context, with the prefix falling back to a `useId()` one; a panel rendered
+ * outside `<TabsSubtle>` keeps taking them as props, exactly as upstream;
+ * React 18 types: the tab list's ref write goes through `MutableRefObject`; modo
+ * docs — TSDoc with FF's docs/API text, `TabsSubtle.Item` / `TabsSubtle.Panel`
+ * statics (typed via a cast on the root), default export.
+ * Styling reads DS tokens (AGENTS.md styling): inline `fontVariationSettings`
+ * → `weight-*`; the hex focus-ring fallback → `ring-focus-ring` /
+ * `border-focus-ring`; `duration-80|120|160` and tier-length JS durations →
+ * `duration-<tier>` / `spring.*`.
+ * The selected and hover pills are `GooIndicator`s (`lib/goo-indicator.tsx`,
+ * local): they melt from tab to tab instead of sliding; the hover pill now
+ * always returns to the selected tab as it fades.
+ */
+
+import { Tabs } from '@base-ui/react/tabs'
+import { AnimatePresence, motion } from 'motion/react'
+import {
+  Children,
+  createContext,
+  type ForwardRefExoticComponent,
+  forwardRef,
+  type HTMLAttributes,
+  isValidElement,
+  type ReactNode,
+  type RefAttributes,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from 'react'
+import { GooIndicator } from '../../../lib/goo-indicator'
+import type { IconComponent } from '../../../lib/icon-context'
+import { useShape } from '../../../lib/shape-context'
+import { type SizeVariant, useSize } from '../../../lib/size-context'
+import { spring } from '../../../lib/springs'
+import { useControllableState } from '../../../lib/use-controllable-state'
+import { useFluidHover } from '../../../lib/use-fluid-hover'
+import { cn } from '../../../lib/utils'
+import { SizeProvider } from '../../../primitives/sizes'
+
+interface TabsSubtleContextValue {
+  registerTab: (index: number, element: HTMLElement | null) => void
+  hoveredIndex: number | null
+  selectedIndex: number
+  idPrefix: string | undefined
+  activeLabel: boolean
+}
+
+const TabsSubtleContext = createContext<TabsSubtleContextValue | null>(null)
+
+const isPanel = (child: ReactNode) => isValidElement(child) && child.type === TabsSubtlePanel
+
+function useTabsSubtle() {
+  const ctx = useContext(TabsSubtleContext)
+  if (!ctx) throw new Error('useTabsSubtle must be used within a TabsSubtle')
+  return ctx
+}
+
+interface TabsSubtleProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
+  /** TabsSubtle.Item children, and optionally the TabsSubtle.Panel children they select. */
+  children: ReactNode
+  /** Index of the currently selected tab. Controlled — pair it with `onSelect`. */
+  selectedIndex?: number
+  /** Selected tab on first render when uncontrolled. Defaults to `0`. */
+  defaultSelectedIndex?: number
+  /** Called when a tab is selected. */
+  onSelect?: (index: number) => void
+  /** Prefix for ARIA IDs linking tabs to panels. Defaults to a generated one when panels are nested inside. */
+  idPrefix?: string
+  /** When true, only the selected tab shows its text label. Requires icons on tabs. Defaults to `false`. */
+  activeLabel?: boolean
+  /** Pins the tabs to one step of the size ladder (default 36px, compact 28px). Defaults to the surrounding SizeProvider. */
+  size?: SizeVariant
+}
+
+type TabsSubtleComponent = ForwardRefExoticComponent<TabsSubtleProps & RefAttributes<HTMLDivElement>> & {
+  Item: typeof TabsSubtleItem
+  Panel: typeof TabsSubtlePanel
+}
+
+/**
+ * Tab navigation with smooth pill animations.
+ *
+ * A borderless tab strip: the selected pill melts from tab to tab like a drop
+ * (the liquid indicators in Morph), a lighter hover pill previews the next one, and the active label animates to semibold
+ * without shifting. With `activeLabel`, tabs collapse to their icon and the
+ * selected one expands its label to a measured width. Base UI owns
+ * `role="tablist"`, the roving tabindex and Arrow/Home/End navigation
+ * (manual activation — arrows move, Enter or Space selects). Uncontrolled with
+ * `defaultSelectedIndex`, or controlled with `selectedIndex` + `onSelect`.
+ *
+ * The root element is the tab list itself, so nested `TabsSubtle.Panel`
+ * children are lifted out and rendered as its siblings, wired to the tabs
+ * through a generated id prefix; panels rendered outside still take
+ * `selectedIndex` and `idPrefix` as props.
+ *
+ * Statics:
+ * - `TabsSubtle.Item` — one tab: `index`, `label`, optional `icon`.
+ * - `TabsSubtle.Panel` — content for the tab with the same `index`.
+ *
+ * @example {@include ./examples.mdx}
+ */
+const TabsSubtle = forwardRef<HTMLDivElement, TabsSubtleProps>(
+  (
+    {
+      children,
+      selectedIndex: selectedIndexProp,
+      defaultSelectedIndex = 0,
+      onSelect: onSelectProp,
+      idPrefix,
+      activeLabel = false,
+      size,
+      className,
+      ...props
+    },
+    ref,
+  ) => {
+    const [selectedIndex, onSelect] = useControllableState(selectedIndexProp, defaultSelectedIndex, onSelectProp)
+
+    // the root IS the tab list, so panels written inside it are rendered right after it
+    const childList = Children.toArray(children)
+    const panels = childList.filter(isPanel)
+    const tabs = childList.filter(child => !isPanel(child))
+    const generatedIdPrefix = useId()
+    const resolvedIdPrefix = idPrefix ?? (panels.length > 0 ? generatedIdPrefix : undefined)
+
+    const containerRef = useRef<HTMLDivElement>(null)
+    const isMouseInside = useRef(false)
+    const shape = useShape()
+
+    const {
+      activeIndex: hoveredIndex,
+      setActiveIndex: setHoveredIndex,
+      itemRects: tabRects,
+      handlers,
+      registerItem,
+      measureItems: measureTabs,
+    } = useFluidHover(containerRef, { axis: 'x' })
+
+    // Track tab elements locally so we can observe their individual resizes
+    const tabElementsRef = useRef(new Map<number, HTMLElement>())
+    const registerTab = useCallback(
+      (index: number, element: HTMLElement | null) => {
+        registerItem(index, element)
+        if (element) {
+          tabElementsRef.current.set(index, element)
+        } else {
+          tabElementsRef.current.delete(index)
+        }
+      },
+      [registerItem],
+    )
+
+    useEffect(() => {
+      measureTabs()
+    }, [measureTabs, children])
+
+    // Observe individual tab buttons for resize (label expand/collapse in activeLabel mode)
+    useEffect(() => {
+      const elements = tabElementsRef.current
+      if (elements.size === 0) return
+      const ro = new ResizeObserver(() => measureTabs())
+      elements.forEach(el => ro.observe(el))
+      return () => ro.disconnect()
+    }, [measureTabs, children])
+
+    // Wrap handlers to track isMouseInside
+    const handleMouseMove = useCallback(
+      (e: React.MouseEvent) => {
+        isMouseInside.current = true
+        handlers.onMouseMove(e)
+      },
+      [handlers],
+    )
+
+    const handleMouseLeave = useCallback(() => {
+      isMouseInside.current = false
+      handlers.onMouseLeave()
+    }, [handlers])
+
+    const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
+
+    const selectedRect = tabRects[selectedIndex]
+    const hoverRect = hoveredIndex !== null ? tabRects[hoveredIndex] : null
+    const focusRect = focusedIndex !== null ? tabRects[focusedIndex] : null
+    const isHoveringSelected = hoveredIndex === selectedIndex
+    const isHovering = hoveredIndex !== null && !isHoveringSelected
+
+    const root = (
+      <TabsSubtleContext.Provider
+        value={{
+          registerTab,
+          hoveredIndex,
+          selectedIndex,
+          idPrefix: resolvedIdPrefix,
+          activeLabel,
+        }}
+      >
+        {/* Root is merged into List via `render` so a single <div> is emitted,
+            matching the previous DOM structure. Base UI owns role="tablist",
+            roving tabindex, and Arrow/Home/End keyboard navigation.
+            `activateOnFocus={false}` keeps manual activation: arrows move
+            focus, Enter/Space selects. */}
+        <Tabs.Root
+          value={selectedIndex}
+          onValueChange={value => {
+            if (typeof value === 'number') onSelect(value)
+          }}
+          render={
+            <Tabs.List
+              activateOnFocus={false}
+              ref={(node: HTMLDivElement | null) => {
+                // React 18 types: `useRef<T>(null)` is a read-only RefObject.
+                ;(containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+                if (typeof ref === 'function') ref(node)
+                else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
+              }}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={handleMouseLeave}
+              onFocus={(e: React.FocusEvent<HTMLDivElement>) => {
+                const indexAttr = (e.target as HTMLElement)
+                  .closest('[data-fluid-hover-index]')
+                  ?.getAttribute('data-fluid-hover-index')
+                if (indexAttr != null) {
+                  const idx = Number(indexAttr)
+                  setHoveredIndex(idx)
+                  setFocusedIndex((e.target as HTMLElement).matches(':focus-visible') ? idx : null)
+                }
+              }}
+              onBlur={(e: React.FocusEvent<HTMLDivElement>) => {
+                if (containerRef.current?.contains(e.relatedTarget as Node)) return
+                setFocusedIndex(null)
+                if (isMouseInside.current) return
+                setHoveredIndex(null)
+              }}
+              className={cn(
+                // -mx-1 px-1 / -my-1 py-1 give the 2px-outset focus ring room
+                // to draw without being clipped by overflow-x-auto. The
+                // max-width allows for the negative margins: fit-content
+                // parents size against the margin box (8px narrower than the
+                // border box), so a plain max-w-full would clamp the list 8px
+                // too small and clip the first/last tab's ring.
+                'relative flex items-center select-none overflow-x-auto max-w-[calc(100%_+_8px)] scrollbar-hide -mx-1 px-1 -my-1 py-1',
+                className,
+              )}
+              {...props}
+            >
+              {selectedRect && (
+                <GooIndicator
+                  rect={selectedRect}
+                  className={cn('bg-active', shape.bg)}
+                  opacity={isHovering ? 0.8 : 1}
+                />
+              )}
+
+              {/* the hover pill rests on the selected tab, so it drips back into it as it fades */}
+              {selectedRect && (
+                <GooIndicator
+                  rect={isHovering && hoverRect ? hoverRect : selectedRect}
+                  className={cn('bg-active', shape.bg)}
+                  transition={spring.fast}
+                  opacity={isHovering ? 0.4 : 0}
+                />
+              )}
+
+              {/* Focus ring */}
+              <AnimatePresence>
+                {focusRect && (
+                  <motion.div
+                    className={cn('absolute pointer-events-none z-20 border border-focus-ring', shape.focusRing)}
+                    initial={false}
+                    animate={{
+                      left: focusRect.left - 2,
+                      top: focusRect.top - 2,
+                      width: focusRect.width + 4,
+                      height: focusRect.height + 4,
+                    }}
+                    exit={{ opacity: 0, transition: spring.fast.exit }}
+                    transition={{
+                      ...spring.fast,
+                      opacity: { duration: spring.fast.duration },
+                    }}
+                  />
+                )}
+              </AnimatePresence>
+
+              {tabs}
+            </Tabs.List>
+          }
+        />
+        {panels}
+      </TabsSubtleContext.Provider>
+    )
+
+    // A size prop pins every tab to one ladder step.
+    return size ? <SizeProvider size={size}>{root}</SizeProvider> : root
+  },
+) as TabsSubtleComponent
+
+TabsSubtle.displayName = 'TabsSubtle'
+
+interface TabsSubtleItemProps extends HTMLAttributes<HTMLButtonElement> {
+  /** Icon displayed in the tab. */
+  icon?: IconComponent
+  /** Text label for the tab. */
+  label: string
+  /** Position index within the tab list. */
+  index: number
+}
+
+const TabsSubtleItem = forwardRef<HTMLButtonElement, TabsSubtleItemProps>(
+  ({ icon: Icon, label, index, className, ...props }, ref) => {
+    const internalRef = useRef<HTMLButtonElement | null>(null)
+    // The collapsing label animates to a MEASURED layout width, not "auto":
+    // framer resolves an "auto" target from the element's *visual*
+    // (transformed) size, so under a scaled ancestor (e.g. /demo's card) the
+    // spring overshoots to scale-x the real width and snaps when "auto"
+    // lands. offsetWidth and ResizeObserver are transform-immune — same
+    // setup as the accordions' height animation.
+    const [labelWidth, setLabelWidth] = useState<number | null>(null)
+    const labelRoRef = useRef<ResizeObserver | null>(null)
+    const measureLabel = useCallback((el: HTMLSpanElement | null) => {
+      labelRoRef.current?.disconnect()
+      labelRoRef.current = null
+      if (!el) return
+      const update = () => setLabelWidth(el.offsetWidth)
+      update()
+      labelRoRef.current = new ResizeObserver(update)
+      labelRoRef.current.observe(el)
+    }, [])
+    const shape = useShape()
+    const sizeClasses = useSize()
+    const { registerTab, hoveredIndex, selectedIndex, idPrefix, activeLabel } = useTabsSubtle()
+
+    useEffect(() => {
+      registerTab(index, internalRef.current)
+      return () => registerTab(index, null)
+    }, [index, registerTab])
+
+    const isSelected = selectedIndex === index
+    const isActive = hoveredIndex === index || isSelected
+    const collapseLabel = activeLabel && !!Icon
+    const showLabel = !collapseLabel || isSelected
+
+    const labelContent = (
+      // Both stacked spans carry the text-box trim so the invisible bold
+      // sizer and the visible label keep identical boxes.
+      <span ref={measureLabel} className={cn('inline-grid whitespace-nowrap', sizeClasses.text)}>
+        <span
+          className="col-start-1 row-start-1 invisible [text-box:trim-both_cap_alphabetic] weight-semibold"
+          aria-hidden="true"
+        >
+          {label}
+        </span>
+        <span
+          className={cn(
+            'col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast [text-box:trim-both_cap_alphabetic]',
+            isActive ? 'text-foreground' : 'text-muted-foreground',
+            isSelected ? 'weight-semibold' : 'weight-normal',
+          )}
+        >
+          {label}
+        </span>
+      </span>
+    )
+
+    return (
+      // Base UI Tab renders a native <button type="button"> and wires
+      // role="tab", aria-selected, roving tabindex, and activation for us.
+      // id/aria-controls are only overridden when an idPrefix is supplied so
+      // externally rendered TabsSubtlePanel elements stay linked.
+      <Tabs.Tab
+        ref={(node: HTMLElement | null) => {
+          const button = node as HTMLButtonElement | null
+          internalRef.current = button
+          if (typeof ref === 'function') ref(button)
+          else if (ref) (ref as React.MutableRefObject<HTMLButtonElement | null>).current = button
+        }}
+        value={index}
+        data-fluid-hover-index={index}
+        id={idPrefix ? `${idPrefix}-tab-${index}` : undefined}
+        aria-controls={idPrefix ? `${idPrefix}-panel-${index}` : undefined}
+        aria-label={collapseLabel && !showLabel ? label : undefined}
+        className={cn(
+          // Fixed heights (was py-2 around a 19.5px line box ≈ 35.5px) so the
+          // text-box trim on the label doesn't shrink the tab. Standalone
+          // pills sit directly on the ladder's control height.
+          'relative z-10 flex items-center cursor-pointer bg-transparent border-none outline-none',
+          sizeClasses.control,
+          sizeClasses.px,
+          !collapseLabel && sizeClasses.gap,
+          shape.bg,
+          className,
+        )}
+        {...props}
+      >
+        {Icon && (
+          <Icon
+            size={sizeClasses.icon}
+            strokeWidth={isActive ? 2 : 1.5}
+            className={cn(
+              'shrink-0 transition-[color,stroke-width] duration-fast',
+              isActive ? 'text-foreground' : 'text-muted-foreground',
+            )}
+          />
+        )}
+        {collapseLabel ? (
+          <AnimatePresence initial={false}>
+            {showLabel && (
+              <motion.span
+                key="label"
+                className="overflow-hidden"
+                // Until the measurement lands, let CSS resolve the width
+                // instead of handing framer "auto": framer resolves an "auto"
+                // target from the element's *visual* size, so under a scaled
+                // ancestor (the /demo card, ~1.76x) it writes back a layout
+                // width that much too wide, then springs back down when the
+                // measured value arrives — the selected tab visibly pulses on
+                // arrival. Plain CSS auto is the true layout width, and the
+                // measured number that follows matches it exactly.
+                style={labelWidth == null ? { width: 'auto' } : undefined}
+                initial={{ width: 0, opacity: 0, marginLeft: 0 }}
+                animate={{
+                  ...(labelWidth != null ? { width: labelWidth } : null),
+                  opacity: 1,
+                  // Matches the ladder's icon-to-label gap (gap-2 / gap-1.5).
+                  marginLeft: sizeClasses.variant === 'compact' ? 6 : 8,
+                }}
+                exit={{ width: 0, opacity: 0, marginLeft: 0 }}
+                transition={{
+                  ...spring.fast,
+                  opacity: { duration: spring.fast.exit.duration },
+                }}
+              >
+                {labelContent}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        ) : (
+          labelContent
+        )}
+      </Tabs.Tab>
+    )
+  },
+)
+
+TabsSubtleItem.displayName = 'TabsSubtleItem'
+
+interface TabsSubtlePanelProps extends HTMLAttributes<HTMLDivElement> {
+  /** Index of this panel; rendered only when it matches the selected tab. */
+  index: number
+  /** Currently selected tab index. Defaults to the enclosing TabsSubtle's selection. */
+  selectedIndex?: number
+  /** Must match the TabsSubtle idPrefix. Defaults to the enclosing TabsSubtle's prefix. */
+  idPrefix?: string
+  /** Panel content, only rendered when selected. */
+  children: ReactNode
+}
+
+// Written either inside <TabsSubtle> (the root lifts it out of the tab list
+// and it reads the selection from context) or outside it, next to the tabs
+// (then it takes `selectedIndex` and `idPrefix` as props, as upstream). Either
+// way it cannot use Base UI's Tabs.Panel — which needs the Tabs.Root context,
+// and that root is merged into the tab list — so it stays a plain tabpanel
+// linked to its tab through the shared idPrefix.
+const TabsSubtlePanel = forwardRef<HTMLDivElement, TabsSubtlePanelProps>(
+  ({ index, selectedIndex, idPrefix, children, className, ...props }, ref) => {
+    const ctx = useContext(TabsSubtleContext)
+    const resolvedSelectedIndex = selectedIndex ?? ctx?.selectedIndex ?? -1
+    const resolvedIdPrefix = idPrefix ?? ctx?.idPrefix
+    const isSelected = resolvedSelectedIndex === index
+
+    return (
+      <div
+        ref={ref}
+        id={resolvedIdPrefix ? `${resolvedIdPrefix}-panel-${index}` : undefined}
+        role="tabpanel"
+        aria-labelledby={resolvedIdPrefix ? `${resolvedIdPrefix}-tab-${index}` : undefined}
+        hidden={!isSelected}
+        tabIndex={-1}
+        className={cn('outline-none', className)}
+        {...props}
+      >
+        {isSelected && children}
+      </div>
+    )
+  },
+)
+
+TabsSubtlePanel.displayName = 'TabsSubtlePanel'
+
+Object.assign(TabsSubtle, { Item: TabsSubtleItem, Panel: TabsSubtlePanel })
+
+export type { TabsSubtleItemProps, TabsSubtlePanelProps, TabsSubtleProps }
+export { TabsSubtle, TabsSubtleItem, TabsSubtlePanel }
+export default TabsSubtle
