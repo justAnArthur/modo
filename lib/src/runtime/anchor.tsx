@@ -1,5 +1,5 @@
 import { shell } from 'virtual:modo-shell'
-import { createContext, type ReactNode, useContext, useId, useMemo } from 'react'
+import { createContext, type ReactNode, useContext, useLayoutEffect, useMemo, useState } from 'react'
 
 export function slug(text: string): string {
   return text
@@ -8,30 +8,29 @@ export function slug(text: string): string {
     .replace(/^-|-$/g, '')
 }
 
-interface PageIds {
-  used: Set<string>
-  byInstance: Map<string, string>
-}
-
-const PageIdsContext = createContext<PageIds>({ used: new Set(), byInstance: new Map() })
+const PageIdsContext = createContext(new Set<string>())
 
 /** A fresh id registry per page, so no two headings on it share an anchor. */
 export function PageIdScope({ children }: { children: ReactNode }) {
-  const ids = useMemo<PageIds>(() => ({ used: new Set(), byInstance: new Map() }), [])
-  return <PageIdsContext.Provider value={ids}>{children}</PageIdsContext.Provider>
+  const used = useMemo(() => new Set<string>(), [])
+  return <PageIdsContext.Provider value={used}>{children}</PageIdsContext.Provider>
 }
 
-// Claimed per component instance (useId), so a StrictMode double render
-// gets the same id back instead of `-2`.
+// Claimed on commit, in document order: a render that never commits (React 18
+// StrictMode renders a mount twice, with a fresh useId each time) can't take
+// an id and push the committed heading to `-2`.
 function useUniqueId(base: string): string {
-  const ids = useContext(PageIdsContext)
-  const instance = useId()
-  let id = ids.byInstance.get(instance)
-  if (id) return id
-  id = base
-  for (let n = 2; ids.used.has(id); n++) id = `${base}-${n}`
-  ids.used.add(id)
-  ids.byInstance.set(instance, id)
+  const used = useContext(PageIdsContext)
+  const [id, setId] = useState(base)
+  useLayoutEffect(() => {
+    let claimed = base
+    for (let n = 2; used.has(claimed); n++) claimed = `${base}-${n}`
+    used.add(claimed)
+    setId(claimed)
+    return () => {
+      used.delete(claimed)
+    }
+  }, [used, base])
   return id
 }
 

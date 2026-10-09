@@ -26,18 +26,26 @@ export function Toc() {
   const [active, setActive] = useState<string | null>(null)
 
   useEffect(() => {
-    const els = [...document.querySelectorAll<HTMLElement>('[data-modo="content"] :is(h2, h3, h4)[id]')]
-    setHeadings(els.map(el => ({ id: el.id, label: label(el), level: Number(el.tagName[1]) })))
-
+    const content = document.querySelector('[data-modo="content"]')!
+    let els: HTMLElement[] = []
     let frame = 0
     const update = () => setActive(els.filter(el => el.getBoundingClientRect().top <= ACTIVE_OFFSET).at(-1)?.id ?? null)
+    const scan = () => {
+      els = [...content.querySelectorAll<HTMLElement>(':is(h2, h3, h4)[id]')]
+      setHeadings(els.map(el => ({ id: el.id, label: label(el), level: Number(el.tagName[1]) })))
+      update()
+    }
     const onScroll = () => {
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(update)
     }
-    update()
+    scan()
+    // A repeated heading takes its `-2` id after this first scan (claimed on commit).
+    const ids = new MutationObserver(scan)
+    ids.observe(content, { subtree: true, attributeFilter: ['id'] })
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => {
+      ids.disconnect()
       cancelAnimationFrame(frame)
       window.removeEventListener('scroll', onScroll)
     }
