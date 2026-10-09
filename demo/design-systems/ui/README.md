@@ -158,7 +158,7 @@ only what is specific to it:
 | — | `registry/default/menu-item.tsx` | `components/overlays/dropdown/menu-item.tsx` | a row with no `checked` derives it from a self-managed panel and toggles the panel's state; `sourceIndex` carries the authored index so selection survives filter re-indexing |
 | — | `registry/default/dropdown-search.tsx` | `components/overlays/dropdown/dropdown-search.tsx` | `filter` mode: `value`/`onValueChange` optional, the field reads and writes the query held by the panel (`DropdownFilterContext`) |
 | `InputCopy` | `registry/default/input-copy.tsx` | `components/inputs/input-copy/index.tsx` | `@/registry/radix/tooltip` → `../../overlays/tooltip`; `useRef<ReturnType<typeof setTimeout> \| null>(null)` (React 18 overloads); defaults spelled into the prop prose; the tooltip comment's "Radix" reads "Base UI"; the copied state morphs: the glyph's two sheets melt through the goo filter into a status-tinted disc behind the check (✕ on failure) and split back |
-| `InputGroup` | `registry/default/input-group.tsx` | `components/inputs/input-group/index.tsx` | `InputField` uncontrolled mode (`InputHTMLAttributes`' own `defaultValue` omitted in favour of the local one); static `.Field` |
+| `Input`, `Label`, `InputGroup` | `registry/default/input-group.tsx` | `components/inputs/input/index.tsx` | `InputField` split into `Input` (the ringed box, standalone: own hover outside a group, `invalid`, `size`) and `Label` (a plain `<label>`, rendered through `Field.Label` in a field), composed back by `InputGroup.Field`; item renamed `input`, `Input` the default export; uncontrolled mode (`InputHTMLAttributes`' own `defaultValue` omitted in favour of the local one); static `.Field` |
 | `InputMessage` | `registry/default/input-message.tsx` | `components/inputs/input-message/index.tsx` | uncontrolled twins for value, files, queue and status (below); `FilePreviewTile` turned into a `forwardRef` (it exits inside `<AnimatePresence mode="popLayout">`, which measures through a ref); guards on `queue[0]`, `history[i]`, `suggestions[i]` and the `moveQueued` swap; FF's Playground section skipped and the surrounding transcript dropped (`ChatMessage` is not ported) |
 | — | `registry/default/file-thumbnail.tsx` | `components/inputs/input-message/file-thumbnail.tsx` | the lazy `import("pdfjs-dist")` is kept as-is — verified against modo's esbuild settings, it lands in a ~790 kB chunk fetched only when a PDF is attached; the worker still comes from jsDelivr, so no bundler-side worker config is needed; the `@next/next/no-img-element` eslint-disable dropped |
 | `Popover` | — (local; after beUI's gooey popover and motion-primitives' morphing popover, see [Morph sources](#morph-sources)) | `components/overlays/popover/index.tsx` | Base UI Popover with the morph layer (goo by default); `openOnHover` on the trigger; statics `.Trigger/.Content/.Title/.Description/.Close` |
@@ -235,7 +235,8 @@ becomes the one block.
 | primitives | `code` (Code) | — (local, sugar-high) | — |
 | primitives | `morph` (Morph) | — (local, `lib/use-morph.ts`) | — |
 | components | accordion, button, checkbox-group, combobox, dialog, dropdown, radio-group, select, slider, switch, tabs, tabs-subtle, tooltip | `registry/base/<id>.tsx` | same slug |
-| components | badge, card, color-picker, input-copy, input-group, input-message, table, thinking-indicator | `registry/default/<id>.tsx` | same slug |
+| components | badge, card, color-picker, input-copy, input-message, table, thinking-indicator | `registry/default/<id>.tsx` | same slug |
+| components | `input` (Input, Label, InputGroup) | `registry/default/input-group.tsx` | input-group |
 | components | alert-dialog, command, context-menu, popover, preview-card, search, sheet, toast | — (local, see [Morph sources](#morph-sources)) | — |
 | components | sidebar | `base/sidebar.tsx` + `default/sidebar-core.tsx` + `default/sidebar-menu.tsx` | sidebar |
 | blocks | `sidebar-app` (SidebarApp) | the preset generator's output + `blocks/sidebar-*` | sidebar, preset `sa1FQfCxH6` |
@@ -374,7 +375,7 @@ was added and the item's own state props became optional.
 | Accordion, Accordion.Group | `value` | `defaultValue` (semantics fixed, below) | — (`onValueChange` now also fires uncontrolled) |
 | CheckboxGroup | `checkedIndices` (now optional) | `defaultCheckedIndices` (`Set` or array) | `onCheckedIndicesChange` |
 | Dropdown, Dropdown.Content | `checkedIndex`, `checkedIndices` | `defaultCheckedIndex`, `defaultCheckedIndices` | `onCheckedIndexChange`, `onCheckedIndicesChange` |
-| InputGroup.Field | `value`, `onChange` (now optional) | `defaultValue` | — |
+| Input, InputGroup.Field | `value`, `onChange` (now optional) | `defaultValue` | — |
 | InputMessage | `value`, `files`, `queue`, `status` | `defaultValue`, `defaultFiles`, `defaultQueue`, `defaultStatus` | `onValueChange` optional; `onStatusChange` added |
 | RadioGroup | `selectedIndex`, `value` | `defaultSelectedIndex`, `defaultValue` | `onSelectedIndexChange` (`onValueChange` now also fires uncontrolled) |
 | Slider | `value`, `onChange` (now optional) | `defaultValue` | — |
