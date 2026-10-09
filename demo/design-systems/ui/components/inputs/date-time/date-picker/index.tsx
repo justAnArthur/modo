@@ -6,11 +6,11 @@
  */
 
 import { endOfMonth, format, type Locale, set } from 'date-fns'
-import { useRef } from 'react'
+import { type RefObject, useRef } from 'react'
 import { dateMatchModifiers, type Matcher } from 'react-day-picker'
-import { defaultLocale, type HourCycle, hourCycleOf, parseDateText, parseTimeText } from '../../../lib/date-locale'
-import type { SizeVariant } from '../../../lib/size-context'
-import { useControllableState } from '../../../lib/use-controllable-state'
+import { defaultLocale, type HourCycle, hourCycleOf, parseDateText, parseTimeText } from '../../../../lib/date-locale'
+import type { SizeVariant } from '../../../../lib/size-context'
+import { useControllableState } from '../../../../lib/use-controllable-state'
 import Calendar from '../calendar'
 import { PickerInput, PickerShell } from '../picker-shell'
 import { TimeColumns } from '../time-columns'
@@ -24,7 +24,7 @@ interface DatePickerProps {
   onValueChange?: (value: Date | null) => void
   /** Adds hour and minute columns, and the time to the field. Defaults to `false`. */
   withTime?: boolean
-  /** The clock for the time: `'h12'` / `'h11'` add an AM/PM column. Defaults to the locale's. */
+  /** The clock for the time: on `'h12'` / `'h11'` the hours read with AM/PM. Defaults to the locale's. */
   hourCycle?: HourCycle
   /** Steps between the minute column's options. Defaults to `1`. */
   minuteStep?: number
@@ -50,8 +50,20 @@ interface DatePickerProps {
   onOpenChange?: (open: boolean) => void
   /** Text direction of the panel; `'rtl'` mirrors it. */
   dir?: 'ltr' | 'rtl'
+  /** Which side of the days the month and year columns stand on. Defaults to `'end'`. */
+  columnsSide?: 'start' | 'end'
+  /** Which side of the days the hour and minute columns stand on, outside the month and year columns when they share it. Defaults to `'end'`. */
+  timeColumnsSide?: 'start' | 'end'
   /** Id of the field, for a `Label`'s `htmlFor`. */
   id?: string
+  /** Where the panel grows from (see Morph): the field, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'` (the field). */
+  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
+  /** How the panel grows (see Morph), as Combobox's list does: with the liquid goo neck, a plain morph, a slide or a fade. `'morph'` with `hideSource` opens it in place over the field. Defaults to `'goo'`. */
+  effect?: 'goo' | 'morph' | 'slide' | 'fade'
+  /** Hide the field while open, so it reads as turning into the panel. Defaults to `false`. */
+  hideSource?: boolean
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
+  tier?: 'moderate' | 'slow'
   /** Classes for the field. */
   className?: string
 }
@@ -63,14 +75,17 @@ const keepTime = (day: Date, from: Date | null) =>
 /**
  * A date field that opens a scrolling calendar, with an optional time.
  *
- * Pressing the field turns it into its panel: the date as text, selected and
- * ready to type over, above a Calendar whose months scroll past with month
- * and year columns beside them. Typing reads the date in the locale's own
- * formats ("9.10.2026", "9 Oct 2026", "October 9, 2026") and scrolls the
- * calendar to it; picking a day commits it and closes the panel. `withTime`
- * adds the time beside the date and hour and minute columns (plus AM/PM on a
- * 12-hour clock), and keeps the panel open while you set both. On a phone the
- * panel is a bottom sheet, its columns turned into strips above the days.
+ * Pressing the field opens its panel the way Combobox opens its list (goo out
+ * of the field; `effect="morph"` with `hideSource` turns the field into it in
+ * place): the date as text, selected and ready to type over, above a Calendar
+ * whose months scroll past with month and year columns beside them. Typing
+ * reads the date in the locale's own formats ("9.10.2026", "9 Oct 2026",
+ * "October 9, 2026") and scrolls the calendar to it; picking a day commits it
+ * and closes the panel. `withTime` adds the time beside the date and hour and
+ * minute columns (the hours read with AM/PM on a 12-hour clock), and keeps the
+ * panel open while you set both. `columnsSide` and `timeColumnsSide` stand
+ * either set of columns before or after the days. On a phone the panel is a
+ * bottom sheet, its columns turned into strips above the days.
  *
  * Localized through `locale`, a react-day-picker locale: month and weekday
  * names, the formats shown and read, the week's first day and the clock all
@@ -96,7 +111,13 @@ function DatePicker({
   defaultOpen = false,
   onOpenChange,
   dir,
+  columnsSide,
+  timeColumnsSide,
   id,
+  from,
+  effect,
+  hideSource,
+  tier,
   className,
 }: DatePickerProps) {
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
@@ -166,6 +187,10 @@ function DatePicker({
       initialFocus={dateInput}
       id={id}
       dir={dir}
+      from={from}
+      effect={effect}
+      hideSource={hideSource}
+      tier={tier}
       className={className}
     >
       <Calendar
@@ -180,6 +205,8 @@ function DatePicker({
         startMonth={startMonth}
         endMonth={endMonth}
         dir={dir}
+        columnsSide={columnsSide}
+        extraColumnsSide={timeColumnsSide}
         extraColumns={
           withTime
             ? orientation => (

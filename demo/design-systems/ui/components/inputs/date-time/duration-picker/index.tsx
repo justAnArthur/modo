@@ -6,11 +6,12 @@
  */
 
 import { type Duration, formatDuration, type Locale } from 'date-fns'
-import { useMemo, useRef } from 'react'
-import { defaultLocale, fieldLabel } from '../../../lib/date-locale'
-import { ScrollColumn } from '../../../lib/scroll-column'
-import type { SizeVariant } from '../../../lib/size-context'
-import { useControllableState } from '../../../lib/use-controllable-state'
+import { type RefObject, useMemo, useRef } from 'react'
+import { defaultLocale, fieldLabel } from '../../../../lib/date-locale'
+import { dividedColumns, ScrollColumn } from '../../../../lib/scroll-column'
+import type { SizeVariant } from '../../../../lib/size-context'
+import { useControllableState } from '../../../../lib/use-controllable-state'
+import { cn } from '../../../../lib/utils'
 import { PickerInput, PickerShell } from '../picker-shell'
 import { pad } from '../time-columns'
 
@@ -43,6 +44,14 @@ interface DurationPickerProps {
   onOpenChange?: (open: boolean) => void
   /** Id of the field, for a `Label`'s `htmlFor`. */
   id?: string
+  /** Where the panel grows from (see Morph): the field, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'` (the field). */
+  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
+  /** How the panel grows (see Morph), as Combobox's list does: with the liquid goo neck, a plain morph, a slide or a fade. `'morph'` with `hideSource` opens it in place over the field. Defaults to `'goo'`. */
+  effect?: 'goo' | 'morph' | 'slide' | 'fade'
+  /** Hide the field while open, so it reads as turning into the panel. Defaults to `false`. */
+  hideSource?: boolean
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
+  tier?: 'moderate' | 'slow'
   /** Classes for the field. */
   className?: string
 }
@@ -75,6 +84,10 @@ function DurationPicker({
   defaultOpen = false,
   onOpenChange,
   id,
+  from,
+  effect,
+  hideSource,
+  tier,
   className,
 }: DurationPickerProps) {
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
@@ -138,9 +151,13 @@ function DurationPicker({
       }
       initialFocus={input}
       id={id}
+      from={from}
+      effect={effect}
+      hideSource={hideSource}
+      tier={tier}
       className={className}
     >
-      <div className="flex h-56 justify-center">
+      <div className={cn(dividedColumns, 'h-56 justify-center')}>
         <ScrollColumn
           label={fieldLabel(locale, 'hour')}
           options={hourOptions}
@@ -153,7 +170,7 @@ function DurationPicker({
           options={minuteOptions}
           value={value ? minutes : null}
           onValueChange={m => setValue({ hours, minutes: m })}
-          className="w-16 shrink-0 border-s border-border"
+          className="w-16 shrink-0"
         />
       </div>
     </PickerShell>

@@ -6,11 +6,12 @@
  */
 
 import { addYears, endOfYear, format, type Locale, startOfMonth, startOfYear } from 'date-fns'
-import { useMemo, useRef } from 'react'
-import { defaultLocale, fieldLabel, parseMonthText } from '../../../lib/date-locale'
-import { ScrollColumn } from '../../../lib/scroll-column'
-import type { SizeVariant } from '../../../lib/size-context'
-import { useControllableState } from '../../../lib/use-controllable-state'
+import { type RefObject, useMemo, useRef } from 'react'
+import { defaultLocale, fieldLabel, parseMonthText } from '../../../../lib/date-locale'
+import { dividedColumns, ScrollColumn } from '../../../../lib/scroll-column'
+import type { SizeVariant } from '../../../../lib/size-context'
+import { useControllableState } from '../../../../lib/use-controllable-state'
+import { cn } from '../../../../lib/utils'
 import { PickerInput, PickerShell } from '../picker-shell'
 
 interface MonthPickerProps {
@@ -42,6 +43,14 @@ interface MonthPickerProps {
   onOpenChange?: (open: boolean) => void
   /** Id of the field, for a `Label`'s `htmlFor`. */
   id?: string
+  /** Where the panel grows from (see Morph): the field, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'` (the field). */
+  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
+  /** How the panel grows (see Morph), as Combobox's list does: with the liquid goo neck, a plain morph, a slide or a fade. `'morph'` with `hideSource` opens it in place over the field. Defaults to `'goo'`. */
+  effect?: 'goo' | 'morph' | 'slide' | 'fade'
+  /** Hide the field while open, so it reads as turning into the panel. Defaults to `false`. */
+  hideSource?: boolean
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
+  tier?: 'moderate' | 'slow'
   /** Classes for the field. */
   className?: string
 }
@@ -71,6 +80,10 @@ function MonthPicker({
   defaultOpen = false,
   onOpenChange,
   id,
+  from,
+  effect,
+  hideSource,
+  tier,
   className,
 }: MonthPickerProps) {
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
@@ -137,9 +150,13 @@ function MonthPicker({
       }
       initialFocus={input}
       id={id}
+      from={from}
+      effect={effect}
+      hideSource={hideSource}
+      tier={tier}
       className={className}
     >
-      <div className="flex h-56 justify-center">
+      <div className={cn(dividedColumns, 'h-56 justify-center')}>
         <ScrollColumn
           label={fieldLabel(locale, 'month')}
           options={months}
@@ -154,7 +171,7 @@ function MonthPicker({
           value={value?.getFullYear() ?? null}
           follow={year}
           onValueChange={y => pick(new Date(y, value?.getMonth() ?? today.getMonth(), 1))}
-          className="w-20 shrink-0 border-s border-border"
+          className="w-20 shrink-0"
         />
       </div>
     </PickerShell>

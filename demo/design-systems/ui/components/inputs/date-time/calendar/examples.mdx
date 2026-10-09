@@ -19,6 +19,12 @@ A react-day-picker locale names the months and weekdays and starts the week on i
 
 <Calendar mode="single" locale={de} selected={new Date(2026, 9, 9)} />
 
+# Columns first
+
+`columnsSide="start"` stands the year and month columns before the days.
+
+<Calendar mode="single" columnsSide="start" selected={new Date(2026, 9, 9)} />
+
 # Narrow
 
 Without room for the columns, they turn into strips above the days.

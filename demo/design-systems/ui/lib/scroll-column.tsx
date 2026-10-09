@@ -1,7 +1,7 @@
 /*
  * Local addition (not part of Fluid Functionalism): the scrolling option list
  * the date and time pickers stack beside their calendar (months, years,
- * hours, minutes, AM/PM), or lay out as a strip above it on a narrow panel.
+ * hours, minutes), or lay out as a strip above it on a narrow panel.
  */
 
 import { type KeyboardEvent, type ReactNode, useEffect, useRef } from 'react'
@@ -44,6 +44,9 @@ function centre(list: HTMLElement, item: HTMLElement, behavior: ScrollBehavior) 
     behavior,
   })
 }
+
+/** For a row of columns: a hairline between neighbours. */
+const dividedColumns = 'flex [&>*+*]:border-s [&>*]:border-border'
 
 const STEP: Record<string, number> = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }
 
@@ -193,7 +196,7 @@ function ScrollColumnItem<T extends number | string>({
       data-fluid-hover-index={index}
       onClick={onSelect}
       className={cn(
-        'relative z-[1] flex shrink-0 items-center justify-center px-3 tabular-nums whitespace-nowrap outline-none',
+        'relative z-[1] flex shrink-0 items-center justify-center px-2 tabular-nums whitespace-nowrap outline-none',
         'transition-[color,background-color] duration-fast focus-visible:ring-1 focus-visible:ring-focus-ring',
         'disabled:opacity-50 disabled:pointer-events-none',
         sizeClasses.segmentItem,
@@ -215,4 +218,4 @@ function ScrollColumnItem<T extends number | string>({
 }
 
 export type { ScrollColumnOption, ScrollColumnProps }
-export { ScrollColumn }
+export { dividedColumns, ScrollColumn }

@@ -40,6 +40,8 @@ function useMonthWindow(start: Date, end: Date, anchor: Date) {
 
   const [first, setFirst] = useState(() => clamp(addMonths(startOfMonth(anchor), -Math.floor(WINDOW / 2))))
   const [visible, setVisible] = useState<string[]>([])
+  // The month taking up most of the view: the one the columns mark.
+  const [current, setCurrent] = useState<string>()
   const scrollerRef = useRef<HTMLDivElement>(null)
   const firstRef = useRef(first)
   firstRef.current = first
@@ -89,10 +91,17 @@ function useMonthWindow(start: Date, end: Date, anchor: Date) {
     if (!scroller) return
     const top = scroller.scrollTop
     const bottom = top + scroller.clientHeight
-    const inView = [...scroller.querySelectorAll<HTMLElement>('[data-calendar-month]')]
-      .filter(el => el.offsetTop < bottom && el.offsetTop + el.offsetHeight > top)
-      .map(el => el.dataset.calendarMonth ?? '')
+    const shown = [...scroller.querySelectorAll<HTMLElement>('[data-calendar-month]')]
+      .map(el => ({
+        key: el.dataset.calendarMonth ?? '',
+        height: Math.min(bottom, el.offsetTop + el.offsetHeight) - Math.max(top, el.offsetTop),
+      }))
+      .filter(m => m.height > 0)
+    const inView = shown.map(m => m.key)
     setVisible(prev => (prev.join() === inView.join() ? prev : inView))
+    setCurrent(
+      shown.reduce<(typeof shown)[number] | undefined>((a, m) => (a && a.height >= m.height ? a : m), undefined)?.key,
+    )
     if (settling.current) return
 
     const margin = scroller.clientHeight
@@ -146,7 +155,7 @@ function useMonthWindow(start: Date, end: Date, anchor: Date) {
     [moveWindow],
   )
 
-  return { first, count, visible, scrollerRef, measure, jumpTo, recentre, centreDay }
+  return { first, count, visible, current, scrollerRef, measure, jumpTo, recentre, centreDay }
 }
 
 export { monthKey, useMonthWindow }

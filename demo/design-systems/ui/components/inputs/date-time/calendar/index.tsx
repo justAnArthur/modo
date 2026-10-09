@@ -18,12 +18,12 @@ import {
 } from 'date-fns'
 import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { type DayButtonProps, DayPicker, type DayPickerProps, type DayProps, type MonthProps } from 'react-day-picker'
-import { defaultLocale, fieldLabel } from '../../../lib/date-locale'
-import { ScrollColumn } from '../../../lib/scroll-column'
-import { useShape } from '../../../lib/shape-context'
-import { type SizeVariant, useSize } from '../../../lib/size-context'
-import { cn } from '../../../lib/utils'
-import { SizeProvider } from '../../../primitives/sizes'
+import { defaultLocale, fieldLabel } from '../../../../lib/date-locale'
+import { dividedColumns, ScrollColumn } from '../../../../lib/scroll-column'
+import { useShape } from '../../../../lib/shape-context'
+import { type SizeVariant, useSize } from '../../../../lib/size-context'
+import { cn } from '../../../../lib/utils'
+import { SizeProvider } from '../../../../primitives/sizes'
 import { monthKey, useMonthWindow } from './use-month-window'
 
 const WEEKEND = { dayOfWeek: [0, 6] }
@@ -98,11 +98,12 @@ function DayButton({ day: _, modifiers, className, ...props }: DayButtonProps) {
  *
  * Months run on in one list, each under its name, with the weekday row pinned
  * above them; weekends read red and today carries a dot. The month column
- * bands the months on screen and the year column follows the year being read,
- * so either works as a scrollbar you can click: a month or a year scrolls the
- * calendar there. The picked day, month and year show a filled pill or a dot.
- * When the calendar is too narrow for the columns, they turn into strips above
- * it. The list renders a window of months and moves it as you scroll, so the
+ * marks the month being read and the year column its year, so either works
+ * as a scrollbar you can click: a month or a year scrolls the calendar there.
+ * The picked day, month and year show a filled pill or a dot. The columns
+ * stand after the days by default; `columnsSide="start"` puts them before
+ * (and `extraColumnsSide` places any extra ones). When the calendar is too
+ * narrow for them, they turn into strips above it. The list renders a window of months and moves it as you scroll, so the
  * range is as long as `startMonth` / `endMonth` allow (100 years back and 50
  * ahead by default).
  *
@@ -117,7 +118,9 @@ function DayButton({ day: _, modifiers, className, ...props }: DayButtonProps) {
 function Calendar({
   locale = defaultLocale,
   size,
+  columnsSide = 'end',
   extraColumns,
+  extraColumnsSide = 'end',
   className,
   ...props
 }: DayPickerProps & {
@@ -125,8 +128,12 @@ function Calendar({
   locale?: Locale
   /** Pins the calendar to one step of the size ladder (36px days, compact 28px). Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
-  /** More columns after month and year, given the layout's orientation — the date picker's hours and minutes. */
+  /** Which side of the days the month and year columns stand on; the month column keeps next to the days. Defaults to `'end'`. */
+  columnsSide?: 'start' | 'end'
+  /** More columns, given the layout's orientation — the date picker's hours and minutes. */
   extraColumns?: (orientation: 'vertical' | 'horizontal') => ReactNode
+  /** Which side of the days the extra columns stand on, outside the month and year columns when they share it. Defaults to `'end'`. */
+  extraColumnsSide?: 'start' | 'end'
   /** Classes for the calendar's box. */
   className?: string
 }) {
@@ -140,9 +147,9 @@ function Calendar({
   const { jumpTo, visible } = scroll
 
   // Before the first measure, the month the list opens on.
-  const topKey = visible[0] ?? monthKey(anchor)
-  const yearInView = Number(topKey.slice(0, 4))
-  const monthInView = Number(topKey.slice(5, 7)) - 1
+  const currentKey = scroll.current ?? monthKey(anchor)
+  const yearInView = Number(currentKey.slice(0, 4))
+  const monthInView = Number(currentKey.slice(5, 7)) - 1
 
   // A pick from outside the calendar (typed into a picker's field) scrolls to it.
   const pickedTime = picked?.getTime()
@@ -214,33 +221,42 @@ function Calendar({
 
   const jumpToYear = useCallback((year: number) => jumpTo(new Date(year, monthInView, 1)), [jumpTo, monthInView])
   const orientation = wide ? 'vertical' : 'horizontal'
-  const column = wide ? 'w-16 shrink-0 border-s border-border' : 'w-full border-b border-border'
+  const column = wide ? 'w-16 shrink-0' : 'w-full'
 
-  const columns = (
-    <>
-      <ScrollColumn
-        label={fieldLabel(locale, 'month')}
-        options={months}
-        value={picked && isSameYear(picked, new Date(yearInView, 0, 1)) ? picked.getMonth() : null}
-        follow={monthInView}
-        inView={m => visible.includes(monthKey(new Date(yearInView, m, 1)))}
-        onValueChange={m => jumpTo(new Date(yearInView, m, 1))}
-        orientation={orientation}
-        className={column}
-      />
-      <ScrollColumn
-        label={fieldLabel(locale, 'year')}
-        options={years}
-        value={picked?.getFullYear() ?? null}
-        follow={yearInView}
-        inView={y => y === yearInView}
-        onValueChange={jumpToYear}
-        orientation={orientation}
-        className={column}
-      />
-      {extraColumns?.(orientation)}
-    </>
+  const monthColumn = (
+    <ScrollColumn
+      key="month"
+      label={fieldLabel(locale, 'month')}
+      options={months}
+      value={picked && isSameYear(picked, new Date(yearInView, 0, 1)) ? picked.getMonth() : null}
+      follow={monthInView}
+      inView={m => m === monthInView}
+      onValueChange={m => jumpTo(new Date(yearInView, m, 1))}
+      orientation={orientation}
+      className={column}
+    />
   )
+  const yearColumn = (
+    <ScrollColumn
+      key="year"
+      label={fieldLabel(locale, 'year')}
+      options={years}
+      value={picked?.getFullYear() ?? null}
+      follow={yearInView}
+      inView={y => y === yearInView}
+      onValueChange={jumpToYear}
+      orientation={orientation}
+      className={column}
+    />
+  )
+  const extras = extraColumns?.(orientation)
+  // Outward from the days: the month column, the year column, then the extras.
+  const before = [extraColumnsSide === 'start' && extras, columnsSide === 'start' && [yearColumn, monthColumn]]
+  const after = [columnsSide === 'end' && [monthColumn, yearColumn], extraColumnsSide === 'end' && extras]
+  const side = (place: 'start' | 'end') =>
+    wide
+      ? cn(dividedColumns, 'h-full shrink-0 border-border', place === 'start' ? 'border-e' : 'border-s')
+      : 'order-first flex w-full flex-col [&>*]:border-b [&>*]:border-border'
 
   const grid = (
     <div className={cn('flex min-h-0 shrink-0 flex-col', wide ? 'h-full' : 'flex-1 self-center')}>
@@ -314,9 +330,10 @@ function Calendar({
         className,
       )}
     >
+      {/* Strips are reordered by CSS, not in the tree, so turning doesn't remount the grid. */}
+      {before.some(Boolean) ? <div className={side('start')}>{before}</div> : null}
       {grid}
-      {/* Reordered by CSS, not in the tree, so turning doesn't remount the grid. */}
-      <div className={wide ? 'flex h-full shrink-0' : 'order-first flex w-full flex-col'}>{columns}</div>
+      {after.some(Boolean) ? <div className={side('end')}>{after}</div> : null}
     </div>
   )
 

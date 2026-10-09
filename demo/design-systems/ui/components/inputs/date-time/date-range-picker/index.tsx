@@ -6,11 +6,11 @@
  */
 
 import { endOfMonth, format, type Locale } from 'date-fns'
-import { useRef, useState } from 'react'
+import { type RefObject, useRef, useState } from 'react'
 import { type DateRange, dateMatchModifiers, type Matcher } from 'react-day-picker'
-import { defaultLocale, parseDateText } from '../../../lib/date-locale'
-import type { SizeVariant } from '../../../lib/size-context'
-import { useControllableState } from '../../../lib/use-controllable-state'
+import { defaultLocale, parseDateText } from '../../../../lib/date-locale'
+import type { SizeVariant } from '../../../../lib/size-context'
+import { useControllableState } from '../../../../lib/use-controllable-state'
 import Calendar from '../calendar'
 import { PickerInput, PickerShell } from '../picker-shell'
 
@@ -43,8 +43,18 @@ interface DateRangePickerProps {
   onOpenChange?: (open: boolean) => void
   /** Text direction of the panel; `'rtl'` mirrors it. */
   dir?: 'ltr' | 'rtl'
+  /** Which side of the days the month and year columns stand on. Defaults to `'end'`. */
+  columnsSide?: 'start' | 'end'
   /** Id of the field, for a `Label`'s `htmlFor`. */
   id?: string
+  /** Where the panel grows from (see Morph): the field, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'` (the field). */
+  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
+  /** How the panel grows (see Morph), as Combobox's list does: with the liquid goo neck, a plain morph, a slide or a fade. `'morph'` with `hideSource` opens it in place over the field. Defaults to `'goo'`. */
+  effect?: 'goo' | 'morph' | 'slide' | 'fade'
+  /** Hide the field while open, so it reads as turning into the panel. Defaults to `false`. */
+  hideSource?: boolean
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
+  tier?: 'moderate' | 'slow'
   /** Classes for the field. */
   className?: string
 }
@@ -76,7 +86,13 @@ function DateRangePicker({
   defaultOpen = false,
   onOpenChange,
   dir,
+  columnsSide,
   id,
+  // `from` is also the range's start, below.
+  from: growFrom,
+  effect,
+  hideSource,
+  tier,
   className,
 }: DateRangePickerProps) {
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
@@ -167,6 +183,10 @@ function DateRangePicker({
       initialFocus={fromInput}
       id={id}
       dir={dir}
+      from={growFrom}
+      effect={effect}
+      hideSource={hideSource}
+      tier={tier}
       className={className}
     >
       <Calendar
@@ -180,6 +200,7 @@ function DateRangePicker({
         startMonth={startMonth}
         endMonth={endMonth}
         dir={dir}
+        columnsSide={columnsSide}
       />
     </PickerShell>
   )

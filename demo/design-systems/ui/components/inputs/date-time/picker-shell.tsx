@@ -4,29 +4,38 @@
  * pickers import it.
  *
  * The field is a text field on the field ladder (`lib/field-classes.ts`)
- * showing the formatted value. Pressed, it turns into the panel in place, the
- * way ColorPicker.Popover's panel does (Base UI Popover + the morph layer), so
- * the panel's header lands where the field was. On a phone-width screen the
+ * showing the formatted value. Pressed, it opens its panel through Base UI's
+ * Popover and the morph layer, with Combobox's options: goo out of the field
+ * by default, or in place over it (`effect="morph"` with `hideSource`), the
+ * panel's header landing where the field was. On a phone-width screen the
  * panel is the Sheet item instead, from the bottom edge.
  */
 
 import { Popover } from '@base-ui/react/popover'
 import { type ButtonHTMLAttributes, forwardRef, type ReactNode, type RefObject, useCallback, useState } from 'react'
-import { fieldIconClasses, fieldVariants } from '../../lib/field-classes'
-import { type IconName, useIcon } from '../../lib/icon-context'
-import { MorphSurface } from '../../lib/morph-layers'
-import { useShape } from '../../lib/shape-context'
-import { type SizeVariant, useSize } from '../../lib/size-context'
-import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
-import { SurfaceProvider, useSurface } from '../../lib/surface-context'
-import { useControllableState } from '../../lib/use-controllable-state'
-import { useIsMobile } from '../../lib/use-is-mobile'
-import { inPlaceOffset, useMorph, useMorphOrigin } from '../../lib/use-morph'
-import { cn } from '../../lib/utils'
-import { SizeProvider } from '../../primitives/sizes'
-import Button from '../button'
-import Input, { type InputProps } from '../inputs/input'
-import Sheet from '../overlays/sheet'
+import { fieldIconClasses, fieldVariants } from '../../../lib/field-classes'
+import { type IconName, useIcon } from '../../../lib/icon-context'
+import { MorphSurface } from '../../../lib/morph-layers'
+import { useShape } from '../../../lib/shape-context'
+import { type SizeVariant, useSize } from '../../../lib/size-context'
+import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
+import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
+import { useControllableState } from '../../../lib/use-controllable-state'
+import { useIsMobile } from '../../../lib/use-is-mobile'
+import {
+  inPlaceOffset,
+  type MorphEffect,
+  type MorphFrom,
+  type MorphTier,
+  opensInPlace,
+  useMorph,
+  useMorphOrigin,
+} from '../../../lib/use-morph'
+import { cn } from '../../../lib/utils'
+import { SizeProvider } from '../../../primitives/sizes'
+import Button from '../../button'
+import Sheet from '../../overlays/sheet'
+import Input, { type InputProps } from '../input'
 
 interface PickerShellProps {
   open?: boolean
@@ -52,11 +61,16 @@ interface PickerShellProps {
   className?: string
   /** Classes for the panel on a desktop: its width. */
   popupClassName?: string
+  /** The desktop panel's morph (see Morph); a phone's sheet grows from its edge. */
+  from?: MorphFrom
+  effect?: MorphEffect
+  hideSource?: boolean
+  tier?: MorphTier
   /** The panel body under the header. */
   children: ReactNode
 }
 
-/** The field and its panel: a popover in place of the field, or a bottom sheet on a phone. */
+/** The field and its panel: a popover out of the field (or in place of it), or a bottom sheet on a phone. */
 function PickerShell({ open: openProp, defaultOpen = false, onOpenChange, size, ...props }: PickerShellProps) {
   const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
   const mobile = useIsMobile(640)
@@ -133,7 +147,7 @@ function PanelHeader({
   const X = useIcon('x')
   const sizeClasses = useSize()
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 border-b border-border pb-1">
       <div className="flex min-w-0 flex-1 items-center">{header}</div>
       <Button variant="ghost" size="icon-sm" aria-label={closeLabel} onClick={close}>
         <X size={sizeClasses.icon} strokeWidth={1.5} />
@@ -150,11 +164,15 @@ function PickerPopover({
   closeLabel,
   dir,
   popupClassName,
+  from,
+  effect,
+  hideSource,
+  tier = 'moderate',
   children,
   ...field
 }: PanelProps) {
   const { origin, capture } = useMorphOrigin()
-  const morph = useMorph(open, origin, { effect: 'morph', hideSource: true, tier: 'moderate' })
+  const morph = useMorph(open, origin, { from, effect, hideSource, tier })
   const shape = useShape()
   const level = Math.min(useSurface() + 2, 8)
 
@@ -171,7 +189,12 @@ function PickerPopover({
     <Popover.Root open={open} onOpenChange={handleOpenChange} modal={false}>
       <Popover.Trigger disabled={field.disabled} render={<PickerField {...field} />} />
       <Popover.Portal>
-        <Popover.Positioner side="bottom" align="start" sideOffset={inPlaceOffset} className="z-50 outline-none">
+        <Popover.Positioner
+          side="bottom"
+          align="start"
+          sideOffset={opensInPlace({ effect, hideSource }) ? inPlaceOffset : 6}
+          className="z-50 outline-none"
+        >
           <Popover.Popup ref={morph.popupRef} initialFocus={initialFocus} className="relative outline-none">
             <SurfaceProvider value={level}>
               <MorphSurface
@@ -195,7 +218,15 @@ function PickerPopover({
 }
 
 function PickerSheet({ open, setOpen, header, closeLabel, dir, children, ...field }: PanelProps) {
-  const { initialFocus: _desktopOnly, popupClassName: _width, ...fieldProps } = field
+  const {
+    initialFocus: _focus,
+    popupClassName: _width,
+    from: _from,
+    effect: _effect,
+    hideSource: _hide,
+    tier: _tier,
+    ...fieldProps
+  } = field
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <Sheet.Trigger disabled={field.disabled} render={<PickerField {...fieldProps} />} />

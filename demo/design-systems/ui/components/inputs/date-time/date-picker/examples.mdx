@@ -27,10 +27,26 @@ The locale sets the names, the formats shown and read ("12.10.2026"), and the we
 
 # 12-hour clock
 
-`hourCycle="h12"` adds an AM/PM column; `minuteStep` thins the minutes.
+`hourCycle="h12"` reads the hours with AM/PM; `minuteStep` thins the minutes.
 
 <div className="w-72 max-w-full">
   <DatePicker withTime hourCycle="h12" minuteStep={5} defaultValue={new Date(2026, 9, 9, 15, 35)} />
+</div>
+
+# Columns on both sides
+
+`columnsSide="start"` puts the month and year before the days; the time stays after them.
+
+<div className="w-72 max-w-full">
+  <DatePicker withTime columnsSide="start" defaultValue={new Date(2026, 9, 9, 15, 33)} />
+</div>
+
+# In place
+
+`effect="morph"` with `hideSource` turns the field itself into the panel.
+
+<div className="w-72 max-w-full">
+  <DatePicker effect="morph" hideSource defaultValue={new Date(2026, 9, 9)} />
 </div>
 
 # Right to left
