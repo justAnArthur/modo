@@ -54,9 +54,6 @@ function centre(list: HTMLElement, item: HTMLElement, behavior: ScrollBehavior) 
 /** For a row of columns: a hairline between neighbours. */
 const dividedColumns = 'flex [&>*+*]:border-s [&>*]:border-border'
 
-/** For a stack of strips: a hairline between neighbours. */
-const dividedStrips = 'flex flex-col [&>*+*]:border-t [&>*]:border-border'
-
 const STEP: Record<string, number> = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }
 
 function ScrollColumn<T extends number | string>({
@@ -244,4 +241,4 @@ function ScrollColumnItem<T extends number | string>({
 }
 
 export type { ScrollColumnOption, ScrollColumnProps }
-export { dividedColumns, dividedStrips, ScrollColumn }
+export { dividedColumns, ScrollColumn }
