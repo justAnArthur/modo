@@ -1,6 +1,6 @@
 /*
  * Local addition (not part of Fluid Functionalism): a duration field with
- * scrolling hour and minute columns. Props after utegsk/ui's DurationPicker
+ * scrolling hour and minute strips. Props after utegsk/ui's DurationPicker
  * (`maxHours`, `minuteStep`), its value a date-fns `Duration` instead of
  * decimal hours.
  */
@@ -8,12 +8,11 @@
 import { type Duration, formatDuration, type Locale } from 'date-fns'
 import { type RefObject, useMemo, useRef } from 'react'
 import { defaultLocale, fieldLabel } from '../../../../lib/date-locale'
-import { dividedColumns, ScrollColumn } from '../../../../lib/scroll-column'
+import { dividedStrips } from '../../../../lib/scroll-column'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
-import { cn } from '../../../../lib/utils'
 import { PickerInput, PickerShell } from '../picker-shell'
-import { pad } from '../time-columns'
+import { LabelledStrip, pad } from '../time-columns'
 
 interface DurationPickerProps {
   /** The picked duration, a date-fns `Duration` (`{ hours, minutes }`); `null` when empty. */
@@ -22,9 +21,9 @@ interface DurationPickerProps {
   defaultValue?: Duration | null
   /** Called with the new duration, or `null` when the field is cleared. */
   onValueChange?: (value: Duration | null) => void
-  /** The longest duration's hours: the hour column runs from 0 to it. Defaults to `99`. */
+  /** The longest duration's hours: the hour strip runs from 0 to it. Defaults to `99`. */
   maxHours?: number
-  /** Steps between the minute column's options. Defaults to `1`. */
+  /** Steps between the minute strip's options. Defaults to `1`. */
   minuteStep?: number
   /** A react-day-picker / date-fns locale: the field spells the duration out in it ("1 Stunde 30 Minuten"). Defaults to `enUS`. */
   locale?: Locale
@@ -63,8 +62,8 @@ const TYPED = /^\s*(\d{1,3})(?::(\d{1,2}))?\s*$/
  * A field for a length of time, in hours and minutes.
  *
  * The field spells the duration out in the locale ("1 hour 30 minutes"); its
- * panel has it as `H:mm` to type over, above an hour column (0 to `maxHours`)
- * and a minute column stepping by `minuteStep`. The value is a date-fns
+ * panel has it as `H:mm` to type over, above an hour strip (0 to `maxHours`)
+ * and a minute strip stepping by `minuteStep`. The value is a date-fns
  * `Duration`, `{ hours, minutes }`, ready for `formatDuration` or date math.
  *
  * @example {@include ./examples.mdx}
@@ -150,6 +149,7 @@ function DurationPicker({
         />
       }
       initialFocus={input}
+      popupClassName="w-[max(var(--anchor-width,0px),20rem)]"
       id={id}
       from={from}
       effect={effect}
@@ -157,20 +157,18 @@ function DurationPicker({
       tier={tier}
       className={className}
     >
-      <div className={cn(dividedColumns, 'h-56 justify-center')}>
-        <ScrollColumn
+      <div className={dividedStrips}>
+        <LabelledStrip
           label={fieldLabel(locale, 'hour')}
           options={hourOptions}
           value={value ? hours : null}
           onValueChange={h => setValue({ hours: h, minutes })}
-          className="w-16 shrink-0"
         />
-        <ScrollColumn
+        <LabelledStrip
           label={fieldLabel(locale, 'minute')}
           options={minuteOptions}
           value={value ? minutes : null}
           onValueChange={m => setValue({ hours, minutes: m })}
-          className="w-16 shrink-0"
         />
       </div>
     </PickerShell>

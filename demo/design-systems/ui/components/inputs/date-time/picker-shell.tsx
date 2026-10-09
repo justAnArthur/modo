@@ -252,16 +252,20 @@ interface PickerInputProps extends Omit<InputProps, 'value' | 'defaultValue' | '
 /**
  * A header input: shows the formatted value, selects it all on focus, and
  * commits what is typed as soon as it reads as a value (marking it invalid
- * until then). Leaving it restores the formatted value.
+ * until then). Leaving it restores the formatted value. Hover and focus fill
+ * it without the field ring.
  */
 const PickerInput = forwardRef<HTMLInputElement, PickerInputProps>(
-  ({ formatted, onText, onEnter, onFocus, onBlur, onKeyDown, ...props }, ref) => {
+  ({ formatted, onText, onEnter, onFocus, onBlur, onKeyDown, className, ...props }, ref) => {
     const [draft, setDraft] = useState<string | null>(null)
     const [invalid, setInvalid] = useState(false)
     return (
       <Input
         ref={ref}
         {...props}
+        // The header is already framed by the panel: hover and focus change
+        // the fill only (an invalid entry keeps its destructive ring).
+        className={cn('hover:ring-transparent focus-within:ring-transparent data-[active]:ring-transparent', className)}
         value={draft ?? formatted}
         invalid={invalid}
         onChange={text => {

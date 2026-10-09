@@ -34,19 +34,28 @@ interface ScrollColumnProps<T extends number | string> {
   className?: string
 }
 
-/** Scrolls `list` so `item` sits in its middle, on whichever axis it scrolls. */
+/**
+ * Scrolls `list` so `item` sits in its middle, on whichever axis it scrolls.
+ * Measured in layout pixels: a panel still scaled by its opening morph
+ * reports shrunken client rects.
+ */
 function centre(list: HTMLElement, item: HTMLElement, behavior: ScrollBehavior) {
   const l = list.getBoundingClientRect()
   const i = item.getBoundingClientRect()
+  const sx = l.width / list.offsetWidth || 1
+  const sy = l.height / list.offsetHeight || 1
   list.scrollTo({
-    top: list.scrollTop + i.top - l.top - (l.height - i.height) / 2,
-    left: list.scrollLeft + i.left - l.left - (l.width - i.width) / 2,
+    top: list.scrollTop + (i.top - l.top) / sy - (list.clientHeight - item.offsetHeight) / 2,
+    left: list.scrollLeft + (i.left - l.left) / sx - (list.clientWidth - item.offsetWidth) / 2,
     behavior,
   })
 }
 
 /** For a row of columns: a hairline between neighbours. */
 const dividedColumns = 'flex [&>*+*]:border-s [&>*]:border-border'
+
+/** For a stack of strips: a hairline between neighbours. */
+const dividedStrips = 'flex flex-col [&>*+*]:border-t [&>*]:border-border'
 
 const STEP: Record<string, number> = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }
 
@@ -81,6 +90,21 @@ function ScrollColumn<T extends number | string>({
     centred.current = true
     axis.current = horizontal
   }, [follow, horizontal])
+
+  // A resize (the panel settling its width, a strip turning into a column)
+  // moves the followed option off centre: put it back at once.
+  const followed = useRef(follow)
+  followed.current = follow
+  useEffect(() => {
+    const list = listRef.current
+    if (!list) return
+    const observer = new ResizeObserver(() => {
+      const item = list.querySelector<HTMLElement>(`[data-value="${followed.current}"]`)
+      if (item && !pointerInside.current) centre(list, item, 'instant')
+    })
+    observer.observe(list)
+    return () => observer.disconnect()
+  }, [])
 
   // A run of banded options reads as one band: only its ends are rounded.
   const banded = options.map(o => inView?.(o.value) ?? false)
@@ -202,7 +226,9 @@ function ScrollColumnItem<T extends number | string>({
         sizeClasses.segmentItem,
         sizeClasses.text,
         shape.item,
-        band && 'bg-selected',
+        // FF's tint for a passive region (Accordion's open row); the pick is Select's checked row.
+        band && !selected && 'bg-accent/20 dark:bg-accent/12',
+        selected && 'bg-active',
         band && band !== 'single' && 'rounded-none',
         band === 'start' && (horizontal ? 'rounded-s-lg' : 'rounded-t-lg'),
         band === 'end' && (horizontal ? 'rounded-e-lg' : 'rounded-b-lg'),
@@ -218,4 +244,4 @@ function ScrollColumnItem<T extends number | string>({
 }
 
 export type { ScrollColumnOption, ScrollColumnProps }
-export { dividedColumns, ScrollColumn }
+export { dividedColumns, dividedStrips, ScrollColumn }

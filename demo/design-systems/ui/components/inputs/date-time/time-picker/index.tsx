@@ -1,16 +1,15 @@
 /*
  * Local addition (not part of Fluid Functionalism): a time-of-day field with
- * scrolling hour and minute columns. Props after utegsk/ui's TimePicker
+ * scrolling hour and minute strips. Props after utegsk/ui's TimePicker
  * (`hourCycle`, a string value), kept in line with the other pickers here.
  */
 
 import { format, type Locale, set } from 'date-fns'
 import { type RefObject, useRef } from 'react'
 import { defaultLocale, type HourCycle, hourCycleOf, parseTimeText } from '../../../../lib/date-locale'
-import { dividedColumns } from '../../../../lib/scroll-column'
+import { dividedStrips } from '../../../../lib/scroll-column'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
-import { cn } from '../../../../lib/utils'
 import { PickerInput, PickerShell } from '../picker-shell'
 import { pad, type Time, TimeColumns } from '../time-columns'
 
@@ -23,7 +22,7 @@ interface TimePickerProps {
   onValueChange?: (value: string | null) => void
   /** The clock shown: on `'h12'` / `'h11'` the hours read with AM/PM. Defaults to the locale's. */
   hourCycle?: HourCycle
-  /** Steps between the minute column's options. Defaults to `1`. */
+  /** Steps between the minute strip's options. Defaults to `1`. */
   minuteStep?: number
   /** A react-day-picker / date-fns locale: the time's format and the AM/PM names. Defaults to `enUS`. */
   locale?: Locale
@@ -62,11 +61,11 @@ const toTime = (value: string | null): Time | null => {
 const toValue = ({ hours, minutes }: Time) => `${pad(hours)}:${pad(minutes)}`
 
 /**
- * A time-of-day field with scrolling hour and minute columns.
+ * A time-of-day field with scrolling hour and minute strips.
  *
  * The panel opens with the time as text, selected and ready to type over
- * ("15:33", "3:33 PM"), above an hour column and a minute column; on a
- * 12-hour clock the hours read with AM/PM. Each column keeps its pick in the middle and
+ * ("15:33", "3:33 PM"), above an hour strip and a minute strip; on a
+ * 12-hour clock the hours read with AM/PM. Each strip keeps its pick in the middle and
  * marks it with a dot. The value is `"HH:mm"` on a 24-hour clock whatever the
  * locale shows, the same as a native time input's.
  *
@@ -132,6 +131,7 @@ function TimePicker({
         />
       }
       initialFocus={input}
+      popupClassName="w-[max(var(--anchor-width,0px),20rem)]"
       id={id}
       from={from}
       effect={effect}
@@ -139,14 +139,15 @@ function TimePicker({
       tier={tier}
       className={className}
     >
-      <div className={cn(dividedColumns, 'h-56 justify-center')}>
+      <div className={dividedStrips}>
         <TimeColumns
           value={time}
           onValueChange={next => setValue(toValue(next))}
           hourCycle={hourCycle ?? hourCycleOf(locale)}
           minuteStep={minuteStep}
           locale={locale}
-          orientation="vertical"
+          orientation="horizontal"
+          labelled
         />
       </div>
     </PickerShell>

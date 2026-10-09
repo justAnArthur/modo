@@ -64,7 +64,7 @@ export default defineConfig({
         foreground: 'var(--accent-foreground)',
         hover: 'var(--accent-hover)',
       },
-      brand: { DEFAULT: 'var(--brand)', hover: 'var(--brand-hover)', foreground: 'var(--brand-foreground)' },
+      brand: { DEFAULT: 'var(--brand)', hover: 'var(--brand-hover)' },
       'focus-ring': 'var(--focus-ring)',
       // The tint-direction triplet as a color, so `bg-overlay/8` is the
       // rgb(var(--overlay) / 0.08) ramp.

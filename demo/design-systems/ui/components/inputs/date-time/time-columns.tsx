@@ -7,7 +7,7 @@
 import { format, type Locale } from 'date-fns'
 import { useMemo } from 'react'
 import { fieldLabel, type HourCycle } from '../../../lib/date-locale'
-import { ScrollColumn } from '../../../lib/scroll-column'
+import { ScrollColumn, type ScrollColumnProps } from '../../../lib/scroll-column'
 import { cn } from '../../../lib/utils'
 
 interface Time {
@@ -22,12 +22,23 @@ interface TimeColumnsProps {
   minuteStep: number
   locale: Locale
   orientation: 'vertical' | 'horizontal'
+  /** Names each strip before it, for a panel made of strips alone. Defaults to `false`. */
+  labelled?: boolean
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
 /** Columns for the hour (with its AM/PM on a 12-hour clock) and the minute; a row of them divides itself. */
-function TimeColumns({ value, onValueChange, hourCycle, minuteStep, locale, orientation }: TimeColumnsProps) {
+function TimeColumns({
+  value,
+  onValueChange,
+  hourCycle,
+  minuteStep,
+  locale,
+  orientation,
+  labelled = false,
+}: TimeColumnsProps) {
+  const Column = labelled ? LabelledStrip : ScrollColumn
   const twelve = hourCycle === 'h12' || hourCycle === 'h11'
   const hours = value?.hours ?? null
   const minutes = value?.minutes ?? 0
@@ -55,7 +66,7 @@ function TimeColumns({ value, onValueChange, hourCycle, minuteStep, locale, orie
 
   return (
     <>
-      <ScrollColumn
+      <Column
         label={fieldLabel(locale, 'hour')}
         options={hourOptions}
         value={hours}
@@ -63,7 +74,7 @@ function TimeColumns({ value, onValueChange, hourCycle, minuteStep, locale, orie
         orientation={orientation}
         className={vertical ? cn('shrink-0', twelve ? 'w-15' : 'w-12') : 'w-full'}
       />
-      <ScrollColumn
+      <Column
         label={fieldLabel(locale, 'minute')}
         options={minuteOptions}
         value={hours === null ? null : minutes}
@@ -75,5 +86,17 @@ function TimeColumns({ value, onValueChange, hourCycle, minuteStep, locale, orie
   )
 }
 
+/** A horizontal ScrollColumn with its name before it ("Hour", "Minute"), for a panel of strips. */
+function LabelledStrip<T extends number | string>({ label, className: _, ...props }: ScrollColumnProps<T>) {
+  return (
+    <div className="flex items-center">
+      <span aria-hidden className="w-16 shrink-0 ps-3 text-caption text-muted-foreground">
+        {label.charAt(0).toLocaleUpperCase() + label.slice(1)}
+      </span>
+      <ScrollColumn {...props} label={label} orientation="horizontal" className="min-w-0 flex-1" />
+    </div>
+  )
+}
+
 export type { Time }
-export { pad, TimeColumns }
+export { LabelledStrip, pad, TimeColumns }

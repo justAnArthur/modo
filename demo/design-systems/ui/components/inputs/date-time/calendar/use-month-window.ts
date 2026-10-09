@@ -83,7 +83,9 @@ function useMonthWindow(start: Date, end: Date, anchor: Date) {
     if (!scroller || !day) return
     const s = scroller.getBoundingClientRect()
     const d = day.getBoundingClientRect()
-    scroller.scrollTop += d.top - s.top - (s.height - d.height) / 2
+    // In layout pixels: the panel may still be scaled by its opening morph.
+    const scale = s.height / scroller.offsetHeight || 1
+    scroller.scrollTop += (d.top - s.top) / scale - (scroller.clientHeight - day.offsetHeight) / 2
   }, [])
 
   const measure = useCallback(() => {

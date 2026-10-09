@@ -27,7 +27,6 @@ import { SizeProvider } from '../../../../primitives/sizes'
 import { monthKey, useMonthWindow } from './use-month-window'
 
 const WEEKEND = { dayOfWeek: [0, 6] }
-const isWeekend = (date: Date) => date.getDay() === 0 || date.getDay() === 6
 
 /** The day picked for the columns' dot and the first scroll: a single date, or a range's start. */
 function pickedDate(props: DayPickerProps): Date | undefined {
@@ -50,9 +49,11 @@ function Day({ day: _, modifiers, className, ...props }: DayProps) {
       {...props}
       className={cn(
         'relative p-0',
-        !modifiers.hidden && modifiers.range_middle && 'bg-brand/15',
-        !modifiers.hidden && modifiers.preview && !modifiers.selected && 'bg-brand/8',
-        (start || end) && 'before:absolute before:inset-y-0 before:bg-brand/15',
+        // FF's fills: a committed span is `bg-active` (Checkbox's merged
+        // rows), the preview one step lighter at `bg-hover`.
+        !modifiers.hidden && modifiers.range_middle && 'bg-active',
+        !modifiers.hidden && modifiers.preview && !modifiers.selected && 'bg-hover',
+        (start || end) && 'before:absolute before:inset-y-0 before:bg-active',
         start && 'before:start-1/2 before:end-0',
         end && 'before:start-0 before:end-1/2',
         className,
@@ -82,10 +83,12 @@ function DayButton({ day: _, modifiers, className, ...props }: DayButtonProps) {
         sizeClasses.variant === 'compact' ? 'size-7' : 'size-9',
         sizeClasses.text,
         shape.item,
-        modifiers.weekend && 'text-destructive',
+        // FF keeps red for errors: weekends step back to the muted text.
+        modifiers.weekend && 'text-muted-foreground',
         modifiers.today &&
           'after:absolute after:bottom-1 after:left-1/2 after:size-1 after:-translate-x-1/2 after:rounded-full after:bg-current',
-        pill ? 'bg-brand text-brand-foreground weight-semibold hover:bg-brand-hover' : 'enabled:hover:bg-hover',
+        // Foreground is FF's primary (its primary button's fill), text-background on it.
+        pill ? 'bg-foreground text-background weight-semibold hover:bg-foreground/90' : 'enabled:hover:bg-hover',
         className,
       )}
     />
@@ -97,7 +100,7 @@ function DayButton({ day: _, modifiers, className, ...props }: DayButtonProps) {
  * and year columns to jump by.
  *
  * Months run on in one list, each under its name, with the weekday row pinned
- * above them; weekends read red and today carries a dot. The month column
+ * above them; weekends step back to the muted text and today carries a dot. The month column
  * marks the month being read and the year column its year, so either works
  * as a scrollbar you can click: a month or a year scrolls the calendar there.
  * The picked day, month and year show a filled pill or a dot. The columns
@@ -267,7 +270,7 @@ function Calendar({
             className={cn(
               'flex items-center justify-center text-caption',
               sizeClasses.variant === 'compact' ? 'w-7' : 'w-9',
-              isWeekend(day) ? 'text-destructive' : 'text-muted-foreground',
+              'text-muted-foreground',
             )}
           >
             {format(day, 'EEEEEE', { locale })}
