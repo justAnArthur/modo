@@ -133,7 +133,7 @@ Rules:
   - Entries in ONE esbuild build (`splitting: true`, react external): every item (`items/<tier>/<id>`), every `shell.*` / `panel.items[].component` module (`usr/<name>`) and the `examples` module (`scope/examples`).
   - Output goes to `<DS>/.modo-tmp/build/`. Shared modules (contexts, providers) land in one chunk, so they cross items and the chrome.
   - A failing entry is isolated, dropped and reported once as `[modo:bundle]`. Stale outputs are swept.
-  - In dev, a source change under the DS root rebuilds and reloads.
+  - In dev, a source change under the DS root rebuilds and reloads. It also re-transforms every stylesheet, so a scanner (Tailwind `@source`) sees new files, and hands the file to UnoCSS's extractor (Uno's `content.filesystem` watcher misses files created after startup).
 - **Shell inheritance:**
   - The chrome looks for user components per slot, matched by name plus required props. Primitives: Button, Link, Code, Icon. Components: Select, Sidebar Root/Item/Section.
   - Unmatched slots fall back to the lib's Plain components; `modo.config.ts: shell` pins slots.
