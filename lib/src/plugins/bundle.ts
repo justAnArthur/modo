@@ -5,6 +5,7 @@ import esbuild, { type BuildOptions, type Message, type Metafile } from 'esbuild
 import remarkGfm from 'remark-gfm'
 import { loadModoConfig } from '../lib/config.loader'
 import { discoverCssForFile } from '../lib/discover-css'
+import { discoverItems } from '../lib/discover-items'
 import type { SiteConfig } from '../lib/schema'
 import { TIERS, type Tier } from '../lib/tiers'
 import { type ParsedExample, type ParsedItem, parseItemSource } from '../lib/tsdoc'
@@ -19,6 +20,8 @@ import { remarkModoExamples } from './mdx-examples'
 export interface BundledItem {
   id: string
   tier: Tier
+  /** The group folder: `<tier>/<group>/<id>/index.tsx`. */
+  group?: string
   name: string
   description: string
   props: ParsedItem['props']
@@ -92,11 +95,15 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     for (const tier of TIERS) {
       const tierDir = resolve(userRoot, tier)
       if (!existsSync(tierDir)) continue
-      for (const id of readdirSync(tierDir).sort()) {
-        const itemDir = resolve(tierDir, id)
-        if (!statSync(itemDir).isDirectory()) continue
+      const seen = new Set<string>()
+      for (const { id, group, dir: itemDir } of discoverItems(tierDir)) {
+        // Ids key urls and bundle entries per tier, so a group can't repeat one.
+        if (seen.has(id)) {
+          errors.push(`${relative(userRoot, itemDir)}: another ${tier} item is already named "${id}"; skipped`)
+          continue
+        }
+        seen.add(id)
         const file = resolve(itemDir, 'index.tsx')
-        if (!existsSync(file)) continue
         const p = parseItemSource(readFileSync(file, 'utf8'), {
           readFile: path => {
             try {
@@ -115,6 +122,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
           key: `items/${tier}/${id}`,
           id,
           tier,
+          group,
           name: p.name || id,
           description: p.description,
           props: p.props,

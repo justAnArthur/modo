@@ -46,7 +46,14 @@ export function itemsPlugin(options: Options): Plugin {
         const docImports = items.flatMap((it, i) =>
           it.exampleDocs.map((doc, j) => `import __x${i}_${j} from ${JSON.stringify(doc)};`),
         )
-        const meta = items.map(({ id, tier, name, description, props }) => ({ id, tier, name, description, props }))
+        const meta = items.map(({ id, tier, group, name, description, props }) => ({
+          id,
+          tier,
+          group,
+          name,
+          description,
+          props,
+        }))
         // Named exports of the `examples` module, in scope in every example.
         const scopeCode = scope
           ? [

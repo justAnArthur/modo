@@ -1,5 +1,9 @@
 import { describe, expect, test } from 'bun:test'
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { buildGroup, parseCss } from '../src/lib/css'
+import { discoverItems } from '../src/lib/discover-items'
 import { compileExampleBody, isCompiledExample } from '../src/lib/example'
 import { parseItemSource } from '../src/lib/tsdoc'
 
@@ -85,5 +89,22 @@ describe('parseCss', () => {
 describe('compileExampleBody', () => {
   test('one-line siblings compile', () => {
     expect(isCompiledExample(compileExampleBody('<b>a</b> <b>b</b>'))).toBe(true)
+  })
+})
+
+describe('discoverItems', () => {
+  test('items sit in the tier or one group folder down', () => {
+    const tier = mkdtempSync(join(tmpdir(), 'modo-tier-'))
+    for (const dir of ['button', 'overlays/dialog', 'overlays/sheet', 'overlays/notes', 'deep/a/b']) {
+      mkdirSync(join(tier, dir), { recursive: true })
+    }
+    for (const dir of ['button', 'overlays/dialog', 'overlays/sheet', 'deep/a/b']) {
+      writeFileSync(join(tier, dir, 'index.tsx'), '')
+    }
+    expect(discoverItems(tier).map(({ id, group }) => ({ id, group }))).toEqual([
+      { id: 'button', group: undefined },
+      { id: 'dialog', group: 'overlays' },
+      { id: 'sheet', group: 'overlays' },
+    ])
   })
 })

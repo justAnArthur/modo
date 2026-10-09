@@ -3,6 +3,7 @@ import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import { TIERS } from '../lib/tiers'
+import { byGroup } from './groups'
 import { usePath, withBase } from './router'
 import { cap } from './text'
 
@@ -48,11 +49,16 @@ function NavSection({
   basePath?: string
   /** Section landing page, listed first — the per-item links follow. */
   overview?: string
-  items: ReadonlyArray<{ id: string; name: string }>
+  items: ReadonlyArray<{ id: string; name: string; group?: string }>
   isActive: (href: string) => boolean
 }) {
   const { Item, Section } = shell.Sidebar
   const href = (id: string) => (basePath ? `${basePath}/${id}` : id)
+  const link = (it: { id: string; name: string }) => (
+    <Item key={it.id} href={withBase(href(it.id))} active={isActive(href(it.id))}>
+      {it.name}
+    </Item>
+  )
   return (
     <Section title={title}>
       {overview ? (
@@ -60,11 +66,15 @@ function NavSection({
           All {title.toLowerCase()}
         </Item>
       ) : null}
-      {items.map(it => (
-        <Item key={it.id} href={withBase(href(it.id))} active={isActive(href(it.id))}>
-          {it.name}
-        </Item>
-      ))}
+      {byGroup(items).map(g =>
+        g.title ? (
+          <Section key={g.title} title={g.title}>
+            {g.items.map(link)}
+          </Section>
+        ) : (
+          g.items.map(link)
+        ),
+      )}
     </Section>
   )
 }

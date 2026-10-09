@@ -17,7 +17,7 @@ Usage:
   modo init <dir> <name>   Scaffold it in <dir>/<name>
   modo dev                 Start the docs dev server
   modo build               Build the docs site into ./dist
-  modo add <kind> <name>   Add a primitive, component, block or token
+  modo add <kind> <name>   Add a primitive, component, block or token (<group>/<name> groups an item)
   modo check               Validate modo.config.ts
 
 Options:
@@ -105,8 +105,8 @@ function flag(args: string[], name: string): string | undefined {
   return i >= 0 ? args[i + 1] : undefined
 }
 
-// An item is <tier>/<id>/index.tsx with its examples beside it; a token
-// group is a flat tokens/<id>.css.
+// An item is <tier>/[<group>/]<id>/index.tsx with its examples beside it; a
+// token group is a flat tokens/<id>.css.
 const TIERS: Record<string, string> = { primitive: 'primitives', component: 'components', block: 'blocks' }
 
 async function runAdd(args: string[]) {
@@ -114,7 +114,11 @@ async function runAdd(args: string[]) {
   if (!kind || !name || !(kind in TIERS || kind === 'token')) {
     throw new Error('add requires `<kind> <name>`, kind one of primitive, component, block, token')
   }
-  const id = kebab(name)
+  // `overlays/dialog` puts the item in a group folder; groups don't nest.
+  const path = name.split('/').map(kebab)
+  if (path.length > 2) throw new Error('add takes `<name>` or `<group>/<name>`')
+  const id = path.at(-1)!
+  const dir = path.join('/')
   const fill = (stub: string) =>
     readFileSync(resolve(templatesRoot, 'stubs', stub), 'utf8')
       .replaceAll('__NAME__', id)
@@ -123,8 +127,8 @@ async function runAdd(args: string[]) {
     kind === 'token'
       ? { [`tokens/${id}.css`]: fill('token.css') }
       : {
-          [`${TIERS[kind]}/${id}/index.tsx`]: fill('item.tsx'),
-          [`${TIERS[kind]}/${id}/examples.mdx`]: fill('examples.mdx'),
+          [`${TIERS[kind]}/${dir}/index.tsx`]: fill('item.tsx'),
+          [`${TIERS[kind]}/${dir}/examples.mdx`]: fill('examples.mdx'),
         }
 
   for (const [rel, text] of Object.entries(files)) {
