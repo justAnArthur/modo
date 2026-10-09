@@ -67,6 +67,7 @@ Two vocabularies:
   - `text-syntax-*` (code highlighting), `font-mono`;
   - `spring.*` and `--duration-*`;
   - the morph layer (`lib/use-morph.ts` + `MorphSurface`, docs `primitives/morph`) and the liquid indicators (`lib/goo-indicator.tsx`): overlays grow from their source and travelling indicators melt between items through them, never through hand-rolled animation.
+  - the field ladder (`lib/field-classes.ts`): a text field puts `fieldVariants` on the box around its control and stamps `data-active` / `data-invalid` / `data-disabled` (a leading icon takes `fieldIconClasses`), never its own hover, focus or invalid fills.
 
 Rules:
 

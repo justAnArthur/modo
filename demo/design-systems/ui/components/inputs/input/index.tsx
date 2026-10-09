@@ -5,16 +5,18 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications: `"use client"` dropped; `@/lib/*` and `@/hooks/*` imports
  * rewritten to `../../../lib/*` (`SizeProvider` to `../../../primitives/sizes`);
- * `InputField` split into `Input` (the ringed box, usable on its own: own
- * hover when outside a group, `invalid`, `size`, ref on the `<input>`) and
+ * `InputField` split into `Input` (the ringed box, usable on its own:
+ * `invalid`, `size`, ref on the `<input>`) and
  * `Label` (a plain `<label>`, rendered through `Field.Label` inside a field),
  * which `InputGroup.Field` composes; item renamed `input`, `Input` the
  * default export; uncontrolled mode added — `value` and `onChange` are
  * optional, with a `defaultValue` twin (`InputHTMLAttributes`' own
  * `defaultValue` omitted in its favour) backed by `useControllableState`;
- * the input's `onFocus` / `onBlur` compose with the focus tracking instead of
- * replacing it; modo docs — TSDoc with FF's docs/API text,
- * `InputGroup.Field` static (typed via a cast on the root).
+ * the field ladder (the box's bg/ring per state, the icon's stroke) moved
+ * from per-render JS state to the shared `lib/field-classes.ts` recipe on
+ * data attributes, where an invalid field keeps its destructive ring at
+ * rest too; modo docs — TSDoc with FF's docs/API text, `InputGroup.Field`
+ * static (typed via a cast on the root).
  * Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  * `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`;
  * `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
@@ -34,8 +36,8 @@ import {
   useContext,
   useMemo,
   useRef,
-  useState,
 } from 'react'
+import { fieldIconClasses, fieldVariants } from '../../../lib/field-classes'
 import type { IconComponent } from '../../../lib/icon-context'
 import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
@@ -58,7 +60,7 @@ function useInputGroup() {
 }
 
 // Set by InputGroup.Field: the group's fluid hover lights the whole field
-// (label included), so the Input takes its hover from there.
+// (label included), and the Input shows it as `data-active`.
 const FieldStateContext = createContext<{ active: boolean } | null>(null)
 
 interface InputProps
@@ -116,8 +118,6 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       disabled,
       size,
       className,
-      onFocus,
-      onBlur,
       ...props
     },
     ref,
@@ -127,35 +127,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
     const inputRef = useRef<HTMLInputElement | null>(null)
     const field = useContext(FieldStateContext)
-    const [isHovered, setIsHovered] = useState(false)
-    const [isFocused, setIsFocused] = useState(false)
     const shape = useShape()
     const sizeClasses = useSize(size)
     const compact = sizeClasses.variant === 'compact'
-
-    const isActive = field ? field.active : isHovered
-    const iconActive = isActive || isFocused
-
-    // Input container classes
-    let bgClass: string
-    let ringClass: string
-
-    if (disabled) {
-      bgClass = 'bg-transparent'
-      ringClass = 'ring-border'
-    } else if (invalid) {
-      bgClass = isFocused ? 'bg-card' : isActive ? 'bg-destructive-light/60' : 'bg-transparent'
-      ringClass = isFocused || isActive ? 'ring-destructive/50' : 'ring-transparent'
-    } else if (isFocused) {
-      bgClass = 'bg-card'
-      ringClass = 'ring-border'
-    } else if (isActive) {
-      bgClass = 'bg-muted/50'
-      ringClass = 'ring-border'
-    } else {
-      bgClass = 'bg-transparent'
-      ringClass = 'ring-transparent'
-    }
 
     return (
       <div
@@ -167,31 +141,22 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           e.preventDefault()
           inputRef.current?.focus()
         }}
-        onMouseEnter={field ? undefined : () => setIsHovered(true)}
-        onMouseLeave={field ? undefined : () => setIsHovered(false)}
+        data-active={field?.active || undefined}
+        data-invalid={invalid || undefined}
+        data-disabled={disabled || undefined}
         className={cn(
+          fieldVariants(),
           // Fixed height (was py-2 around the line box) so the field sits
           // exactly on the ladder's control height.
-          `flex items-center cursor-text ${sizeClasses.gap} ${shape.input} ${
-            compact ? 'px-2' : 'px-2.5'
-          } ${sizeClasses.control} ring-1 transition-all duration-fast`,
-          bgClass,
-          ringClass,
-          // Inside a field, the field root dims label and input together.
-          disabled && !field && 'opacity-50 pointer-events-none',
+          'flex items-center',
+          sizeClasses.gap,
+          shape.input,
+          compact ? 'px-2' : 'px-2.5',
+          sizeClasses.control,
           className,
         )}
       >
-        {Icon && (
-          <Icon
-            size={sizeClasses.icon}
-            strokeWidth={iconActive ? 2 : 1.5}
-            className={cn(
-              'shrink-0 transition-[color,stroke-width] duration-fast',
-              iconActive ? 'text-foreground' : 'text-muted-foreground',
-            )}
-          />
-        )}
+        {Icon && <Icon size={sizeClasses.icon} strokeWidth={1.5} className={fieldIconClasses} />}
         {/* Base UI's own Input is this Field.Control: on its own it is a
             plain input, inside a Field.Root it joins the field's wiring. */}
         <Field.Control
@@ -206,14 +171,6 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           type="text"
           value={value}
           onChange={e => onChange(e.target.value)}
-          onFocus={e => {
-            setIsFocused(true)
-            onFocus?.(e)
-          }}
-          onBlur={e => {
-            setIsFocused(false)
-            onBlur?.(e)
-          }}
           disabled={disabled}
           aria-invalid={invalid || undefined}
           className={cn(
@@ -249,6 +206,8 @@ const Label = forwardRef<HTMLLabelElement, LabelProps>(({ children, invalid, siz
       className={cn(
         'inline-grid',
         sizeClasses.text,
+        // Inside a disabled field, Field.Label stamps `data-disabled`.
+        'data-[disabled]:opacity-50',
         // One notch tighter than the ladder's control padding — the field
         // ring is invisible at rest, so the roomier inset reads as a gap.
         compact ? 'pl-2' : 'pl-2.5',
@@ -356,7 +315,8 @@ const InputField = forwardRef<HTMLDivElement, InputFieldProps>(
         }}
         invalid={!!error}
         disabled={disabled}
-        className={cn('flex flex-col gap-1 cursor-text', disabled && 'opacity-50 pointer-events-none', className)}
+        // The label and the input each dim themselves.
+        className={cn('flex flex-col gap-1 cursor-text', disabled && 'pointer-events-none', className)}
       >
         {/* sr-only when hidden so the field keeps its accessible name and
             the htmlFor wiring. */}
