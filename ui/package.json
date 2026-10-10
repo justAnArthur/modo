@@ -1,7 +1,7 @@
 {
   "name": "@justanarthur/modo-ui",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Fluid Functionalism (Base UI flavor, MIT © 2026 Micka Touillaud) ported to UnoCSS: motion springs, fluid hover, a two-step size ladder and an eight-level elevated surface system. Documented with modo.",
   "license": "MIT",
   "keywords": [
