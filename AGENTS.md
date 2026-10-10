@@ -10,7 +10,7 @@ modo turns a design system (DS) into its own docs site. The lib brings no conten
   - `filled/` — the minimal reference.
   - `shadcn/` — shadcn/ui pulled with the real CLI (Tailwind v4).
   - `fluid-functionalism/` — the @fluid registry layer on its own shadcn foundation.
-  - `ui/` — Fluid Functionalism (Base UI) on UnoCSS: springs, fluid hover, size ladder, surface elevation.
+  - `ui/` — Fluid Functionalism (Base UI) on UnoCSS: springs, fluid hover, size ladder, surface elevation. Its own guide is `ui/AGENTS.md`, its design language `ui/DESIGN.md`, its rules shown as bad / good pairs on the `primitives/craft` page; building in it follows the `modo-ui` skill (`.claude/skills/modo-ui`).
   - `mui/` — adapters over `@mui/material`; `scripts/extract-tokens.ts` extracts the default theme into token files.
 
 ## code style (sparse)
