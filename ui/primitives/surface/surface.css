@@ -3,7 +3,7 @@
  * Surface elevation module: the 8-level surface ladder and its 1:1 shadow
  * recipes, plus the per-scheme selection of the active --shadow-N alias.
  *
- * Extracted from tokens/colors.css and global.css — the elevation system
+ * Extracted from tokens/colors.css and base.css — the elevation system
  * belongs to this primitive, not the global token set.
  * Source: mickadesign/fluid-functionalism `app/globals.css` §1–2 at commit
  * b3587bdbd83fc66c2a6aae3817ffb856cb09260b — MIT License

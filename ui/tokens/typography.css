@@ -8,11 +8,11 @@
  *
  * Local changes:
  * - The family is Inter Variable from @fontsource-variable/inter/opsz
- *   (imported in global.css) instead of upstream's self-hosted
+ *   (imported in base.css) instead of upstream's self-hosted
  *   InterVariable.ttf. The opsz build matters: the `--weight-*` ladder sets
  *   both the wght and opsz axes.
  * - The role sizes are renamed `--fs-*` → `--text-*` and read by the
- *   `text-<role>[-compact]` rule in uno.config.ts. They hold both columns of
+ *   `text-<role>[-compact]` utility in preset.ts. They hold both columns of
  *   `typeScale` in lib/size-context.tsx (keep the two in sync), so a
  *   component's `compact ? … : …` picks a token on either side. Upstream's
  *   site-chrome extras — the 22px mobile display step and the
@@ -27,7 +27,7 @@
  *   rules: headings in foreground, text muted.
  * - Upstream's `fontWeights` (lib/font-weight.ts, fontVariationSettings
  *   strings) become the `--weight-*` variation settings, read by the
- *   `weight-*` rule in uno.config.ts. Each derives its wght from
+ *   `weight-*` utility in preset.ts. Each derives its wght from
  *   `--font-weight-*`, the plain font-weight form the docs chrome reads.
  */
 

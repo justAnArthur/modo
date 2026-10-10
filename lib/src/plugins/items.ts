@@ -1,8 +1,9 @@
 import { resolve, sep } from 'node:path'
-import { normalizePath, type Plugin } from 'vite'
+import { isCSSRequest, normalizePath, type Plugin } from 'vite'
 import type { Bundler } from './bundle'
 import { cssModule } from './css-module'
 import { emitRoutes } from './static-routes'
+import { unoExtractor } from './uno'
 
 interface Options {
   userRoot: string
@@ -94,6 +95,7 @@ export function itemsPlugin(options: Options): Plugin {
       // items import shared code outside the tier dirs.
       s.watcher.add(options.userRoot)
       const tmp = resolve(options.userRoot, '.modo-tmp') + sep
+      const extractUno = unoExtractor(s)
       let timer: ReturnType<typeof setTimeout> | null = null
       s.watcher.on('all', (event, file) => {
         if (!file.startsWith(options.userRoot + sep) || file.startsWith(tmp)) return
@@ -101,15 +103,20 @@ export function itemsPlugin(options: Options): Plugin {
         // which files an item injects.
         const cssMoved = file.endsWith('.css') && (event === 'add' || event === 'unlink')
         if (!(SOURCE_EXT.test(file) || cssMoved) || file.includes(`${sep}node_modules${sep}`)) return
+        if (event === 'add' || event === 'change') extractUno(file)
         if (timer) clearTimeout(timer)
         timer = setTimeout(() => {
           timer = null
           // Rebuild lazily: the reloaded page's virtual-module requests await
           // it. Outputs keep their names across builds, so drop Vite's cached
-          // transforms of them too (.modo-tmp is not watched).
+          // transforms of them too (.modo-tmp is not watched). Stylesheets
+          // too: a scanning CSS tool (Tailwind's `@source`) rescans only when
+          // its stylesheet is re-transformed, which a new file never triggers.
           bundler.invalidate()
           for (const [id, mod] of s.moduleGraph.idToModuleMap) {
-            if (id.startsWith('\0virtual:modo-') || id.startsWith(outPrefix)) s.moduleGraph.invalidateModule(mod)
+            if (id.startsWith('\0virtual:modo-') || id.startsWith(outPrefix) || isCSSRequest(id)) {
+              s.moduleGraph.invalidateModule(mod)
+            }
           }
           s.ws.send({ type: 'full-reload' })
         }, 100)

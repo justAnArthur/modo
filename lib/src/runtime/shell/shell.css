@@ -478,11 +478,14 @@
   border-radius: var(--modo-radius-lg);
 }
 
+/* A demo wider than the stage starts at its left edge and is clipped on the
+   right, on this axis only: inline popovers still drop below the stage. */
 [data-modo="example-card-stage"] {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
+  justify-content: safe center;
+  overflow-x: clip;
   gap: var(--space-3, 12px);
   min-height: 10rem;
   padding: var(--space-6, 32px);
@@ -555,6 +558,12 @@
 
 [data-modo="toc-label"][data-level="4"] {
   padding-inline-start: var(--space-5, 24px);
+}
+
+/* A table wider than its column (long names, types, literals) scrolls in
+   place instead of widening the page. */
+[data-modo="prop-table-scroll"] {
+  overflow-x: auto;
 }
 
 [data-modo="prop-table"] {

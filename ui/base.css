@@ -6,15 +6,17 @@
  * b3587bdbd83fc66c2a6aae3817ffb856cb09260b — MIT License © 2026 Micka
  * Touillaud — fluidfunctionalism.com. Translated from Tailwind v4 CSS to
  * plain CSS for UnoCSS (uno.config.ts); vite.ts injects the UnoCSS
- * stylesheet ahead of this file.
+ * stylesheet ahead of this file. The docs site imports it from global.css;
+ * the package ships it inside dist/base.css and dist/styles.css.
  *
  * Where upstream's sections went:
  * - §1 design tokens → tokens/colors.css; the surface ladder and shadow
  *   recipes → primitives/surface/surface.css. All HEX migrated to oklch.
  * - §2 theme switching → the color-scheme / --overlay block below (the
  *   shadow re-pointing lives in surface.css).
- * - §3 `@theme inline` → uno.config.ts `theme`; the `--fs-*` roles and
- *   `@utility text-*` → tokens/typography.css (`--text-*`) + a uno rule.
+ * - §3 `@theme inline` → preset.ts `theme`; the `--fs-*` roles and
+ *   `@utility text-*` → tokens/typography.css (`--text-*`) + preset.ts
+ *   `utilities`.
  * - §4–6 → below: html/body base, `@layer base` (text wrap, inline code chip,
  *   :focus-visible fallback), html.transitioning, native scrollbars,
  *   .scrollbar-hide, shimmer + spinner keyframes, .scroll-fade(-x).
@@ -159,15 +161,6 @@ html.transitioning *::after {
   a:focus-visible {
     border-radius: 2px;
   }
-}
-
-/* modo's structural shell.css draws an unlayered `*:focus-visible` outline,
-   which would outrank the layered fallback above and every component's own
-   ring (a second ring on every control). Reverting both properties to the
-   layered cascade hands focus styling back to @layer base and the utilities. */
-*:focus-visible {
-  outline: revert-layer;
-  outline-offset: revert-layer;
 }
 
 /* ── Native scrollbar theme (upstream §5) ──
@@ -400,76 +393,4 @@ html.transitioning *::after {
     animation-range-start: 0, calc(100% - var(--scroll-fade-size));
     animation-range-end: var(--scroll-fade-size), 100%;
   }
-}
-
-/* ── modo docs chrome ──
-   The lib ships structure only; these give its hooks the design system's
-   look, tokens only. Both asides are inset Sidebars (`DocsNav` in
-   modo.components.tsx), which bring their own look. */
-
-:root {
-  /* A fixed length: the lib's 72ch resolves per element, so the lead,
-     captions and paragraphs each ended at a different width. */
-  --modo-measure: 45rem;
-}
-
-/* One reading column on every page: the article (example cards and prop
-   tables included), and an overview's header and grid, keep to the measure,
-   centered in the content area. */
-[data-modo="content"] > * {
-  max-width: var(--modo-measure);
-  margin-inline: auto;
-}
-
-/* The inset layout, as Sidebar.Inset draws it: both asides are inset
-   Sidebars (DocsNav) and the content is the card between them. Each aside's
-   column follows its sidebar's width spring, so hiding one reflows the card;
-   below md both are drawers and the card takes the row. */
-[data-modo="app"] {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-rows: none;
-  grid-template-areas: "sidebar content panel";
-}
-
-[data-modo="sidebar"],
-[data-modo="panel"] {
-  position: sticky;
-  top: 0;
-  /* Over the card: the corner triggers overlap it. */
-  z-index: 1;
-  height: 100vh;
-  max-height: none;
-  /* The Sidebar scrolls its own rows. */
-  overflow: visible;
-}
-
-[data-modo="content"] {
-  margin: var(--space-2);
-  /* The inset topbar's band, where the corner triggers sit. */
-  padding-top: calc(3rem + var(--space-2));
-  border-radius: var(--radius-xl);
-  background-color: var(--surface-2);
-  box-shadow: var(--shadow-2);
-  transition: margin var(--duration-fast);
-}
-
-/* Flush with an open sidebar: its rows keep their own gutter. */
-@media (min-width: 768px) {
-  [data-modo="app"]:has(> [data-modo="sidebar"] [data-slot="sidebar"][data-state="expanded"]) > [data-modo="content"] {
-    margin-left: 0;
-  }
-
-  [data-modo="app"]:has(> [data-modo="panel"] [data-slot="sidebar"][data-state="expanded"]) > [data-modo="content"] {
-    margin-right: 0;
-  }
-}
-
-/* The lib drops the TOC below xl; here the panel is a sidebar at any width. */
-[data-modo="toc"] {
-  display: block;
-}
-
-/* The code panel under an example is flush with the frame, not a card in a card. */
-[data-modo="example-code"] > * {
-  border-radius: 0;
 }

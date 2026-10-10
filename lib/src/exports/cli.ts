@@ -23,6 +23,7 @@ Usage:
 Options:
   --config <file>          dev, build, check: the config file (default modo.config.ts)
   --base <path>            build: public path the site is served under (default /)
+  --out <dir>              build: the output dir (default ./dist)
   --help, -h               Show this help
   --version, -v            Print version
 `
@@ -89,11 +90,12 @@ async function runInit(args: string[]) {
 async function runVite(mode: 'dev' | 'build', args: string[] = []) {
   const cwd = process.cwd()
   const configPath = configOf(args)
+  const out = flag(args, '--out')
   await loadModoConfig(configPath)
   process.env.MODO_USER_ROOT = cwd
   process.env.MODO_CONFIG_PATH = configPath
   process.chdir(runtimeRoot)
-  await importViteAndRun(runtimeRoot, mode, flag(args, '--base'))
+  await importViteAndRun(runtimeRoot, mode, flag(args, '--base'), out && resolve(cwd, out))
 }
 
 function configOf(args: string[]): string {
@@ -145,7 +147,7 @@ async function runCheck(args: string[]) {
   process.stdout.write(`OK — ${configPath} is valid (name="${cfg.name}")\n`)
 }
 
-async function importViteAndRun(rt: string, mode: 'dev' | 'build', base?: string) {
+async function importViteAndRun(rt: string, mode: 'dev' | 'build', base?: string, outDir?: string) {
   const configFile = join(rt, 'vite.config.ts')
   const vite = await import('vite')
   if (mode === 'dev') {
@@ -154,7 +156,7 @@ async function importViteAndRun(rt: string, mode: 'dev' | 'build', base?: string
     server.printUrls()
     return
   }
-  await vite.build({ configFile, base })
+  await vite.build({ configFile, base, build: { outDir } })
 }
 
 function kebab(s: string): string {

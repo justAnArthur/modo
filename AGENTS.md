@@ -5,12 +5,12 @@ modo turns a design system (DS) into its own docs site. The lib brings no conten
 ## layout
 
 - `lib/` — the npm package `@justanarthur/modo` (bin `modo`): public API and schemas (`src/lib`), Vite plugins (`src/plugins`), the renderer, a plain Vite SPA with its structural CSS (`src/runtime`), scaffold templates, the CLI.
+- `ui/` — the npm package `@justanarthur/modo-ui`: Fluid Functionalism (Base UI) on UnoCSS (springs, fluid hover, size ladder, surface elevation), a DS that is also published. `bun run build` writes the components, types and stylesheets to `dist/` (`index.ts` barrel, `bunup.config.ts`, `scripts/build-css.ts`); its docs build with `--out`, so they never touch `dist/`. `preset.ts` is the single source of the theme and token utilities: `uno.config.ts`, the shipped UnoCSS preset and the generated `tailwind.css` all read it. `base.css` holds the theme and base styles shipped to consumers; `global.css` imports it and adds the docs chrome. Its own guide is `ui/AGENTS.md`, its design language `ui/DESIGN.md`, its rules shown as bad / good pairs on the `primitives/craft` page; building in it follows the `modo-ui` skill (`.claude/skills/modo-ui`).
 - `demo/` — the harness. `scripts/run-design-systems.ts` runs the lib's CLI once per DS (one dev server per port, or one static build each) and splices in the demo-switcher. `components/demo-switcher/` renders `shell.Select` to navigate between peers.
-- `demo/design-systems/<name>/` — one workspace package per DS, each with its own deps:
+- `demo/design-systems/<name>/` — one workspace package per DS, each with its own deps (the runner also picks up `ui/`):
   - `filled/` — the minimal reference.
   - `shadcn/` — shadcn/ui pulled with the real CLI (Tailwind v4).
   - `fluid-functionalism/` — the @fluid registry layer on its own shadcn foundation.
-  - `ui/` — Fluid Functionalism (Base UI) on UnoCSS: springs, fluid hover, size ladder, surface elevation.
   - `mui/` — adapters over `@mui/material`; `scripts/extract-tokens.ts` extracts the default theme into token files.
 
 ## code style (sparse)
@@ -126,7 +126,7 @@ Rules:
 
 ## lib conventions
 
-- **Workspaces:** bun. The root `package.json` `workspaces` lists `lib`, `demo` and `demo/design-systems/*`.
+- **Workspaces:** bun. The root `package.json` `workspaces` lists `lib`, `demo`, `demo/design-systems/*` and `ui`.
 - **Lib package:**
   - ESM, `react-jsx`, `jsxImportSource: 'react'`.
   - bunup builds `dist/` from `src/exports/*`; the runtime and plugins ship as source, unbundled.
@@ -135,7 +135,7 @@ Rules:
   - Entries in ONE esbuild build (`splitting: true`, react external): every item (`items/<tier>/<id>`), every `shell.*` / `panel.items[].component` module (`usr/<name>`) and the `examples` module (`scope/examples`).
   - Output goes to `<DS>/.modo-tmp/build/`. Shared modules (contexts, providers) land in one chunk, so they cross items and the chrome.
   - A failing entry is isolated, dropped and reported once as `[modo:bundle]`. Stale outputs are swept.
-  - In dev, a source change under the DS root rebuilds and reloads.
+  - In dev, a source change under the DS root rebuilds and reloads. It also re-transforms every stylesheet, so a scanner (Tailwind `@source`) sees new files, and hands the file to UnoCSS's extractor (Uno's `content.filesystem` watcher misses files created after startup).
 - **Shell inheritance:**
   - The chrome looks for user components per slot, matched by name plus required props. Primitives: Button, Link, Code, Icon. Components: Select, Sidebar Root/Item/Section.
   - Unmatched slots fall back to the lib's Plain components; `modo.config.ts: shell` pins slots.
@@ -181,7 +181,7 @@ Rules:
 
 ## commits
 
-- Conventional commits drive releases: any commit scoped to the lib (`lib`, `modo`, `@justanarthur/modo`) bumps and publishes it, `refactor`/`docs`/`chore` included (`feat`/`perf` minor, `!` major, the rest patch); other scopes and unscoped commits don't. `[skip bump]` in the message suppresses it. Details in `.github/AGENTS.md`.
+- Conventional commits drive releases: any commit scoped to the lib (`lib`, `modo`, `@justanarthur/modo`) bumps and publishes it, and one scoped to ui (`ui`, `modo-ui`, `@justanarthur/modo-ui`) bumps and publishes `@justanarthur/modo-ui`, `refactor`/`docs`/`chore` included (`feat`/`perf` minor, `!` major, the rest patch); other scopes (`demo`) and unscoped commits don't. `[skip bump]` in the message suppresses it. Details in `.github/AGENTS.md`.
 
 ## chrome hooks (data-modo attrs)
 
@@ -190,7 +190,7 @@ Rules:
 - page: `page-eyebrow`, `page-title`, `page-lead`, `prose`, `section`, `section-title`, `anchor`, `hero`, `hero-stats`.
 - overviews: `bento`, `bento-card` (`data-span="wide|full"`), `bento-stage`, `bento-meta`, `bento-title`, `bento-count`, `bento-desc`, `bento-empty`, `token-preview`, `token-chip`.
 - examples: `example-card`, `example-card-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`, `code-block`, `code-actions`, `icon-label`.
-- tables and tokens: `prop-table`, `token-list`, `token-row`, `token-name`, `token-meta`, `swatch` (`data-kind`).
+- tables and tokens: `prop-table-scroll`, `prop-table`, `token-list`, `token-row`, `token-name`, `token-meta`, `swatch` (`data-kind`).
 - colors: `color-grid`, `color-stack`, `color-tile` (`data-flush` when it matches the page), `color-tile-name`, `color-tile-value`, `color-tile-pair`.
 - foundations: `token-label`; typography `type-elements`, `type-element`, `type-families`, `type-family`, `type-family-sample`, `type-glyph`, `type-scale`, `type-step`, `type-sample`, `type-weights`, `type-weight`, `type-preview`; radius `radius-grid`, `radius-tile`, `radius-shape`; spacing `space-scale`, `space-step`, `space-bar`, `space-preview`; motion `motion-list`, `motion-row`, `motion-track`, `motion-dot`, `motion-curve`, `motion-preview`, `motion-bar`.
 
