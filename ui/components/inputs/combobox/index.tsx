@@ -40,10 +40,16 @@
  *   `render={<Elevated/>}`, re-providing it with `SurfaceProvider`.
  * - `effect="morph"` with `hideSource` opens the list in place over its
  *   trigger: the positioner's `sideOffset` becomes the engine's `inPlaceOffset`.
+ * - The fields' ladder is the shared `lib/field-classes.ts` recipe (the local
+ *   `fieldVariants` cva moved there, still exported here as
+ *   `comboboxFieldVariants`; its default is now `borderless`, the fields pass
+ *   `bordered`): `error` stamps `data-invalid` instead of overriding the ring
+ *   per state, so an invalid field also tints its lit fill; the leading icon
+ *   darkens and thickens on hover too, not only on focus.
  */
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox'
-import { cva, type VariantProps } from 'class-variance-authority'
+import type { VariantProps } from 'class-variance-authority'
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
 import {
   createContext,
@@ -61,6 +67,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { fieldIconClasses, fieldVariants } from '../../../lib/field-classes'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
@@ -444,30 +451,6 @@ const popupShape = shapeMap.rounded
 // "always" for this; ComboboxRoot's prop type still says boolean.
 const ALWAYS_HIGHLIGHT = 'always' as unknown as boolean
 
-const fieldVariants = cva(
-  [
-    'group flex items-center ring-1 cursor-text',
-    'transition-all duration-fast',
-    'data-[disabled]:opacity-50 data-[disabled]:pointer-events-none',
-  ],
-  {
-    variants: {
-      variant: {
-        // Framed at rest; the fills step up on hover and focus like an
-        // input field.
-        bordered: 'ring-border bg-transparent hover:bg-muted/50 focus-within:bg-card',
-        // Invisible at rest — the InputGroup field ladder: muted fill +
-        // ring on hover, card fill when focused.
-        borderless:
-          'ring-transparent bg-transparent hover:bg-muted/50 hover:ring-border focus-within:bg-card focus-within:ring-border',
-      },
-    },
-    defaultVariants: {
-      variant: 'bordered',
-    },
-  },
-)
-
 // The clear and chevron buttons share one quiet style; they sit inside the
 // field's ring so they need no frame of their own.
 const fieldButtonClass =
@@ -554,24 +537,19 @@ const ComboboxInput = forwardRef<HTMLInputElement, ComboboxInputProps>(
             field (icon to chevron), not just the text input. */}
         <ComboboxPrimitive.InputGroup
           ref={anchorRef}
+          data-invalid={!!error || undefined}
           className={cn(
-            fieldVariants({ variant }),
+            fieldVariants({ variant: variant ?? 'bordered' }),
+            'flex items-center',
             sizeClasses.control,
             sizeClasses.gap,
             compact ? 'px-2' : 'px-2.5',
             compact ? 'min-w-[128px]' : 'min-w-[160px]',
             shape.input,
-            error && 'ring-destructive/50 hover:ring-destructive/50 focus-within:ring-destructive/50',
             className,
           )}
         >
-          {Icon && (
-            <Icon
-              size={sizeClasses.icon}
-              strokeWidth={1.5}
-              className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-fast group-focus-within:text-foreground group-focus-within:stroke-[2]"
-            />
-          )}
+          {Icon && <Icon size={sizeClasses.icon} strokeWidth={1.5} className={fieldIconClasses} />}
           <ComboboxPrimitive.Input
             ref={ref}
             placeholder={placeholder}
@@ -657,11 +635,13 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
           // wrap and unwrap, instead of snapping a row taller or shorter.
           render={<motion.div style={{ height: rowHeight.height }} />}
           // Chips stamps no state attributes of its own (InputGroup does);
-          // the field ladder and the chevron read these.
+          // the field ladder (`lib/field-classes.ts`) and the chevron read these.
           data-disabled={disabled || undefined}
+          data-invalid={!!error || undefined}
           data-popup-open={open || undefined}
           className={cn(
-            fieldVariants({ variant }),
+            fieldVariants({ variant: variant ?? 'bordered' }),
+            'flex items-center',
             // The spring above owns the height; leaving it in transition-all
             // would have the 80ms CSS ease drag behind every spring frame.
             'transition-[color,background-color,border-radius,box-shadow,opacity]',
@@ -675,18 +655,13 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
             compact ? 'px-2' : 'px-2.5',
             compact ? 'min-w-[128px]' : 'min-w-[160px]',
             shape.input,
-            error && 'ring-destructive/50 hover:ring-destructive/50 focus-within:ring-destructive/50',
             className,
           )}
         >
           {Icon && (
             // A row-height box keeps the icon centered on the first line.
             <span className={cn('flex shrink-0 items-center', compact ? 'h-5' : 'h-6')}>
-              <Icon
-                size={sizeClasses.icon}
-                strokeWidth={1.5}
-                className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-fast group-focus-within:text-foreground group-focus-within:stroke-[2]"
-              />
+              <Icon size={sizeClasses.icon} strokeWidth={1.5} className={fieldIconClasses} />
             </span>
           )}
           <div

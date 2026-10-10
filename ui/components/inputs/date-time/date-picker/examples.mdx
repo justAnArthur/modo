@@ -1,0 +1,88 @@
+import DatePicker from './index'
+import { ar, de } from 'react-day-picker/locale'
+
+# Basic
+
+Press the field: the date is selected to type over, and the calendar scrolls beneath it.
+
+<div className="w-72 max-w-full">
+  <DatePicker placeholder="Pick a date" />
+</div>
+
+# With time
+
+`withTime` adds the time to the field and hour and minute columns to the panel.
+
+<div className="w-72 max-w-full">
+  <DatePicker withTime defaultValue={new Date(2026, 9, 9, 15, 33)} />
+</div>
+
+# German
+
+The locale sets the names, the formats shown and read ("12.10.2026"), and the week's first day.
+
+<div className="w-72 max-w-full">
+  <DatePicker locale={de} withTime defaultValue={new Date(2026, 9, 9, 15, 33)} />
+</div>
+
+# 12-hour clock
+
+`hourCycle="h12"` reads the hours with AM/PM; `minuteStep` thins the minutes.
+
+<div className="w-72 max-w-full">
+  <DatePicker withTime hourCycle="h12" minuteStep={5} defaultValue={new Date(2026, 9, 9, 15, 35)} />
+</div>
+
+# Columns on both sides
+
+`columnsSide="start"` puts the month and year before the days; the time stays after them.
+
+<div className="w-72 max-w-full">
+  <DatePicker withTime columnsSide="start" defaultValue={new Date(2026, 9, 9, 15, 33)} />
+</div>
+
+# In place
+
+`effect="morph"` with `hideSource` turns the field itself into the panel.
+
+<div className="w-72 max-w-full">
+  <DatePicker effect="morph" hideSource defaultValue={new Date(2026, 9, 9)} />
+</div>
+
+# Right to left
+
+`dir="rtl"` mirrors the panel for an Arabic locale.
+
+<div className="w-72 max-w-full">
+  <DatePicker locale={ar} dir="rtl" defaultValue={new Date(2026, 9, 9)} />
+</div>
+
+# Disabled days and bounds
+
+`disabled` takes react-day-picker matchers; `startMonth` and `endMonth` bound the calendar and its year column.
+
+<div className="w-72 max-w-full">
+  <DatePicker
+    placeholder="Weekdays in 2026"
+    disabled={{ dayOfWeek: [0, 6] }}
+    startMonth={new Date(2026, 0, 1)}
+    endMonth={new Date(2026, 11, 1)}
+  />
+</div>
+
+# Invalid and disabled
+
+`invalid` turns the field destructive; `disabled={true}` turns it off.
+
+<div className="flex w-72 max-w-full flex-col gap-2">
+  <DatePicker invalid defaultValue={new Date(2026, 9, 9)} />
+  <DatePicker disabled defaultValue={new Date(2026, 9, 9)} />
+</div>
+
+# Compact
+
+`size="compact"` pins the field and its panel to the compact step.
+
+<div className="w-60 max-w-full">
+  <DatePicker size="compact" defaultValue={new Date(2026, 9, 9)} />
+</div>

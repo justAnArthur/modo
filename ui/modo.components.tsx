@@ -148,12 +148,12 @@ function useDocsShortcut(key: string, toggle: () => void) {
   }, [key, toggle])
 }
 
-/** How deep a nav element sits: a tier is a section, a group folder a section inside it. */
+/** How deep a nav element sits: a tier is a section, a group folder a section inside it, a nested group deeper still. */
 const NavDepth = createContext(0)
 
 function DocsNavItem({ href, active, children }: { href: string; active?: boolean; children?: ReactNode }) {
   const { setOpenMobile } = useSidebar()
-  if (useContext(NavDepth) === 2) {
+  if (useContext(NavDepth) >= 2) {
     return (
       <Sidebar.MenuSubItem>
         <Sidebar.MenuSubButton href={href} isActive={active} onClick={() => setOpenMobile(false)}>
@@ -173,7 +173,7 @@ function DocsNavItem({ href, active, children }: { href: string; active?: boolea
 
 function DocsNavSection({ title, children }: { title: string; children?: ReactNode }) {
   const depth = useContext(NavDepth)
-  if (depth === 1) return <DocsNavGroup title={title}>{children}</DocsNavGroup>
+  if (depth >= 1) return <DocsNavGroup title={title}>{children}</DocsNavGroup>
   const onlyLinks = Children.toArray(children).every(
     child => isValidElement(child) && (child.type === DocsNavItem || child.type === DocsNavSection),
   )
@@ -195,11 +195,18 @@ function DocsNavSection({ title, children }: { title: string; children?: ReactNo
   )
 }
 
-/** A group folder inside a tier: a collapsible row, opened while it holds the current page. */
-function DocsNavGroup({ title, children }: { title: string; children?: ReactNode }) {
-  const current = Children.toArray(children).some(
-    child => isValidElement<{ active?: boolean }>(child) && child.props.active,
+/** Whether a nav subtree holds the current page, nested groups included. */
+const holdsActive = (children: ReactNode): boolean =>
+  Children.toArray(children).some(
+    child =>
+      isValidElement<{ active?: boolean; children?: ReactNode }>(child) &&
+      (child.props.active || holdsActive(child.props.children)),
   )
+
+/** A group folder inside a tier (or inside another group): a collapsible row, opened while it holds the current page. */
+function DocsNavGroup({ title, children }: { title: string; children?: ReactNode }) {
+  const depth = useContext(NavDepth)
+  const current = holdsActive(children)
   const [open, setOpen] = useState(current)
   useEffect(() => {
     if (current) setOpen(true)
@@ -207,7 +214,7 @@ function DocsNavGroup({ title, children }: { title: string; children?: ReactNode
   return (
     <Sidebar.MenuItem collapsible open={open} onOpenChange={setOpen}>
       <Sidebar.MenuButton>{title}</Sidebar.MenuButton>
-      <NavDepth.Provider value={2}>
+      <NavDepth.Provider value={depth + 1}>
         <Sidebar.MenuSub>{children}</Sidebar.MenuSub>
       </NavDepth.Provider>
     </Sidebar.MenuItem>

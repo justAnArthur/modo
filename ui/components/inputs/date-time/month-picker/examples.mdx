@@ -1,0 +1,16 @@
+import MonthPicker from './index'
+import { de } from 'react-day-picker/locale'
+
+# Basic
+
+<div className="w-60 max-w-full">
+  <MonthPicker defaultValue={new Date(2026, 9, 1)} />
+</div>
+
+# German, card expiry
+
+`startMonth` and `endMonth` bound the years.
+
+<div className="w-60 max-w-full">
+  <MonthPicker locale={de} placeholder="Ablaufdatum" startMonth={new Date(2026, 9, 1)} endMonth={new Date(2036, 11, 1)} />
+</div>

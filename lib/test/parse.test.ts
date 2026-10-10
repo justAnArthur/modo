@@ -6,6 +6,7 @@ import { buildGroup, parseCss } from '../src/lib/css'
 import { discoverItems } from '../src/lib/discover-items'
 import { compileExampleBody, isCompiledExample } from '../src/lib/example'
 import { parseItemSource } from '../src/lib/tsdoc'
+import { groupTree } from '../src/runtime/groups'
 
 describe('parseItemSource', () => {
   test("a prop's doc is not the item's", () => {
@@ -93,7 +94,7 @@ describe('compileExampleBody', () => {
 })
 
 describe('discoverItems', () => {
-  test('items sit in the tier or one group folder down', () => {
+  test('items sit in the tier or down in group folders', () => {
     const tier = mkdtempSync(join(tmpdir(), 'modo-tier-'))
     for (const dir of ['button', 'overlays/dialog', 'overlays/sheet', 'overlays/notes', 'deep/a/b']) {
       mkdirSync(join(tier, dir), { recursive: true })
@@ -103,8 +104,25 @@ describe('discoverItems', () => {
     }
     expect(discoverItems(tier).map(({ id, group }) => ({ id, group }))).toEqual([
       { id: 'button', group: undefined },
+      { id: 'b', group: 'deep/a' },
       { id: 'dialog', group: 'overlays' },
       { id: 'sheet', group: 'overlays' },
     ])
+  })
+})
+
+describe('groupTree', () => {
+  test('own items first, then groups by folder, nested', () => {
+    const list = [
+      { id: 'select', group: 'inputs' },
+      { id: 'calendar', group: 'inputs/date-time' },
+      { id: 'button' },
+      { id: 'dialog', group: 'overlays' },
+    ]
+    const tree = groupTree(list)
+    expect(tree.items.map(it => it.id)).toEqual(['button'])
+    expect(tree.groups.map(g => g.title)).toEqual(['Inputs', 'Overlays'])
+    expect(tree.groups[0]?.items.map(it => it.id)).toEqual(['select'])
+    expect(tree.groups[0]?.groups.map(g => [g.title, g.items.map(it => it.id)])).toEqual([['Date time', ['calendar']]])
   })
 })
