@@ -29,20 +29,52 @@
  *   Base UI's Thumb: it stretches into a liquid drop as it travels. Its x is
  *   React state while dragging (the indicator snaps to it) instead of a
  *   motion value set per move.
+ * - `description` (a muted line under the label, wired as
+ *   `aria-describedby`; the label then stays at full contrast and medium
+ *   weight) and `trackSide` (`"end"` pushes the track to the far edge) are
+ *   local additions, for settings rows.
+ * - `Switch.Group` (local addition): switches as a settings list in one
+ *   outlined fieldset, after an outlined `Card.Group` (shared frame,
+ *   hairlines dropped around the fluid hover highlight). A switch inside
+ *   reads the group from context: track at the end, roomier padding, its
+ *   position from `lib/row-index.tsx`.
  */
 
 import { Switch as SwitchPrimitive } from '@base-ui/react/switch'
 import type { Transition } from 'motion/react'
-import { forwardRef, type HTMLAttributes, useCallback, useId, useRef, useState } from 'react'
+import {
+  Children,
+  createContext,
+  type ForwardRefExoticComponent,
+  forwardRef,
+  type HTMLAttributes,
+  isValidElement,
+  type ReactNode,
+  type RefAttributes,
+  useCallback,
+  useContext,
+  useId,
+  useRef,
+  useState,
+} from 'react'
+import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { GooIndicator } from '../../../lib/goo-indicator'
+import { IndexedRows, useRowIndex } from '../../../lib/row-index'
+import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
 import { useControllableState } from '../../../lib/use-controllable-state'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
+import { SizeProvider } from '../../../primitives/sizes'
 
 interface SwitchProps extends HTMLAttributes<HTMLDivElement> {
   /** Text label displayed next to the switch. */
   label: string
+  /** Secondary text under the label: what turning the switch on does. With one, the label stays at full contrast. */
+  description?: ReactNode
+  /** The side of the label the track sits on; `"end"` pushes it to the row's far edge, as in a settings list (always, inside a `Switch.Group`). Defaults to `"start"`. */
+  trackSide?: 'start' | 'end'
   /** Whether the switch is on (controlled). Omit it to let the switch keep its own state, seeded from `defaultChecked`. */
   checked?: boolean
   /** Whether the switch starts on when uncontrolled. Defaults to `false`. */
@@ -57,6 +89,18 @@ interface SwitchProps extends HTMLAttributes<HTMLDivElement> {
   thumbTransition?: Transition
   /** Pins the switch to one step of the size ladder (see Sizes). Defaults to the surrounding SizeProvider, else `"default"`. */
   size?: SizeVariant
+}
+
+interface SwitchGroupContextValue {
+  registerItem: (index: number, element: HTMLElement | null) => void
+  activeIndex: number | null
+  count: number
+}
+
+const SwitchGroupContext = createContext<SwitchGroupContextValue | null>(null)
+
+type SwitchComponent = ForwardRefExoticComponent<SwitchProps & RefAttributes<HTMLDivElement>> & {
+  Group: typeof SwitchGroup
 }
 
 // Track/thumb geometry per ladder step. The hover pill-extend and press
@@ -97,7 +141,16 @@ const DRAG_DEAD_ZONE = 2
  * Works controlled (`checked` + `onToggle`, exactly as upstream) or
  * uncontrolled (`defaultChecked`, with `onCheckedChange` reporting each
  * change). `size` pins it to one step of the size ladder; otherwise it
- * follows the surrounding SizeProvider.
+ * follows the surrounding SizeProvider. `description` adds a muted line under
+ * the label and `trackSide="end"` moves the track to the row's far edge.
+ *
+ * Statics:
+ * - `Switch.Group` — switches as a settings list in one outlined frame: each
+ *   `Switch` inside becomes a row with its track at the far edge, hairlines
+ *   divide the rows and a fluid hover highlight melts between them, dropping
+ *   the hairlines it touches (as in an outlined Card.Group); a disabled row
+ *   gets no highlight. Every switch keeps its own state. `size` pins every
+ *   row; name the group with `aria-label` or `aria-labelledby`.
  *
  * @example {@include ./examples.mdx}
  */
@@ -105,6 +158,8 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
   (
     {
       label,
+      description,
+      trackSide = 'start',
       checked,
       defaultChecked = false,
       onToggle,
@@ -123,6 +178,15 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
       onToggle?.()
     }, [setChecked, onToggle])
     const labelId = useId()
+    const descriptionId = useId()
+    const group = useContext(SwitchGroupContext)
+    const index = useRowIndex()
+    const rowRef = useRef<HTMLDivElement | null>(null)
+    // A disabled row takes no clicks, so the group's highlight never lands on it.
+    useRegisterFluidHoverItem(disabled ? undefined : group?.registerItem, index, rowRef)
+    const end = trackSide === 'end' || !!group
+    // In a group: a hairline toward the next row, dropped where it would cut the highlight.
+    const divider = !!group && index < group.count - 1 && group.activeIndex !== index && group.activeIndex !== index + 1
     const [hovered, setHovered] = useState(false)
     const [pressed, setPressed] = useState(false)
     const sizeClasses = useSize(size)
@@ -228,12 +292,17 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
 
     return (
       <div
-        ref={ref}
+        ref={node => {
+          rowRef.current = node
+          if (typeof ref === 'function') ref(node)
+          else if (ref) ref.current = node
+        }}
         className={cn(
           'relative z-10 flex items-center cursor-pointer select-none touch-none',
           sizeClasses.gap,
           sizeClasses.px,
           sizeClasses.variant === 'compact' ? 'py-1' : 'py-2',
+          group && (sizeClasses.variant === 'compact' ? 'px-3 py-2.5' : 'px-4 py-3.5'),
           disabled && 'opacity-50 pointer-events-none',
           className,
         )}
@@ -255,10 +324,12 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
         <SwitchPrimitive.Root
           checked={isChecked}
           aria-labelledby={labelId}
+          aria-describedby={description ? descriptionId : undefined}
           disabled={disabled}
           tabIndex={0}
           className={cn(
             'relative shrink-0 rounded-full outline-none cursor-pointer',
+            end && 'order-last',
             'transition-colors duration-fast',
             'focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
             isChecked ? (hovered ? 'bg-brand-hover' : 'bg-brand') : hovered ? 'bg-accent-hover' : 'bg-accent',
@@ -281,26 +352,90 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
         </SwitchPrimitive.Root>
 
         {/* Label */}
-        <span
-          id={labelId}
-          className={cn(
-            // text-box trim recenters the letterforms against the track; the
-            // track is taller than the label, so layout doesn't change.
-            '[text-box:trim-both_cap_alphabetic] transition-[color] duration-fast',
-            sizeClasses.text,
-            isChecked ? 'text-foreground' : 'text-muted-foreground',
+        <span className={cn('flex min-w-0 flex-col gap-1', end && 'flex-1')}>
+          <span
+            id={labelId}
+            className={cn(
+              // text-box trim recenters the letterforms against the track; the
+              // track is taller than the label, so layout doesn't change.
+              '[text-box:trim-both_cap_alphabetic] transition-[color] duration-fast',
+              sizeClasses.text,
+              description ? 'text-foreground weight-medium' : isChecked ? 'text-foreground' : 'text-muted-foreground',
+            )}
+          >
+            {label}
+          </span>
+          {description && (
+            <span
+              id={descriptionId}
+              className={cn(
+                'leading-relaxed text-muted-foreground',
+                sizeClasses.variant === 'compact' ? 'text-caption-compact' : 'text-caption',
+              )}
+            >
+              {description}
+            </span>
           )}
-        >
-          {label}
         </span>
+
+        {divider && <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-border/60" />}
       </div>
     )
   },
-)
+) as SwitchComponent
 
 Switch.displayName = 'Switch'
 
-export type { SwitchProps }
-export { Switch }
+interface SwitchGroupProps extends HTMLAttributes<HTMLFieldSetElement> {
+  /** `Switch` rows. */
+  children: ReactNode
+  /** Pins every row to one step of the size ladder (see Sizes). Defaults to the surrounding SizeProvider. */
+  size?: SizeVariant
+}
+
+// `Switch.Group`: the frame, hairlines and fluid hover around switch rows.
+const SwitchGroup = forwardRef<HTMLFieldSetElement, SwitchGroupProps>(
+  ({ children, size, className, ...props }, ref) => {
+    const containerRef = useRef<HTMLFieldSetElement | null>(null)
+    const hover = useFluidHover(containerRef, { gapClick: false })
+    const shape = useShape()
+    const count = Children.toArray(children).filter(isValidElement).length
+
+    const group = (
+      <SwitchGroupContext.Provider value={{ registerItem: hover.registerItem, activeIndex: hover.activeIndex, count }}>
+        <fieldset
+          ref={node => {
+            containerRef.current = node
+            if (typeof ref === 'function') ref(node)
+            else if (ref) ref.current = node
+          }}
+          onMouseEnter={hover.handlers.onMouseEnter}
+          onMouseMove={hover.handlers.onMouseMove}
+          onMouseLeave={hover.handlers.onMouseLeave}
+          onClick={hover.handlers.onClick}
+          className={cn(
+            'relative flex min-w-0 flex-col overflow-hidden border border-border/60 select-none',
+            shape.container,
+            className,
+          )}
+          {...props}
+        >
+          <FluidHoverHighlight hover={hover} className={cn('z-0', shape.container)} />
+          <IndexedRows>{children}</IndexedRows>
+        </fieldset>
+      </SwitchGroupContext.Provider>
+    )
+
+    // A size prop pins every row in the group to one ladder step.
+    return size ? <SizeProvider size={size}>{group}</SizeProvider> : group
+  },
+)
+
+SwitchGroup.displayName = 'SwitchGroup'
+
+Object.assign(Switch, { Group: SwitchGroup })
+
+export type { SwitchGroupProps, SwitchProps }
+export { Switch, SwitchGroup }
 
 export default Switch

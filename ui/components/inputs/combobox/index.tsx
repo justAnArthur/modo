@@ -236,7 +236,7 @@ function toValues(v: string | readonly string[] | undefined): string[] {
  * (the input keeps focus while the arrows move a highlight through the rows),
  * the positioning and the hidden form input stay with Base UI. On top of that
  * sit the fluid-hover highlight, the merged selection background of
- * `CheckboxGroup`, and a list that oozes out of the field and back through the
+ * `Checkbox.Group`, and a list that oozes out of the field and back through the
  * shared morph (see Morph), goo by default. `multiple` turns the picks into a
  * `string[]` and pairs with `Combobox.Chips`: one chip per pick, Backspace in
  * an empty field drops the last one. Uncontrolled with `defaultValue`, or
@@ -955,7 +955,7 @@ const ComboboxList = forwardRef<HTMLDivElement, ComboboxListProps>(({ className,
   // wrong row, and the correcting pass then springs it across the list.
   // Single mode glides ONE marker between rows (a value change springs it
   // to the picked row). Multiple mode paints one block per contiguous run
-  // of checked rows — merging and splitting like CheckboxGroup as picks
+  // of checked rows — merging and splitting like Checkbox.Group as picks
   // bridge or break a run.
   const firstChecked = checkedIndices[0]
   const checkedRect = isMeasured && !multiple && firstChecked !== undefined ? (itemRects[firstChecked] ?? null) : null

@@ -1,0 +1,32 @@
+import Radio from './index'
+
+# Basic
+
+One option at a time; the selected background follows the pick.
+
+<Radio.Group defaultSelectedIndex={0}>
+  {['Option A', 'Option B', 'Option C'].map(label => (
+    <Radio key={label} label={label} />
+  ))}
+</Radio.Group>
+
+# Compact
+
+`size="compact"` pins every row to the 28px step of the size ladder.
+
+<Radio.Group size="compact" defaultSelectedIndex={1}>
+  {['Option A', 'Option B', 'Option C'].map(label => (
+    <Radio key={label} label={label} />
+  ))}
+</Radio.Group>
+
+# By value
+
+Give rows a `value` and select by it; the group then renders Base UI radios
+for form integration.
+
+<Radio.Group defaultValue="weekly">
+  <Radio value="daily" label="Daily digest" />
+  <Radio value="weekly" label="Weekly summary" />
+  <Radio value="never" label="Never" />
+</Radio.Group>

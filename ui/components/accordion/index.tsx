@@ -5,8 +5,8 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*`,
- *   `@/hooks/*` and `@/components/ui/fluid-hover-highlight` → `../../../lib/*`,
- *   except `SizeProvider` → `../../../primitives/sizes`.
+ *   `@/hooks/*` and `@/components/ui/fluid-hover-highlight` → `../../lib/*`,
+ *   except `SizeProvider` → `../../primitives/sizes`.
  * - Open state (Accordion and AccordionGroup) runs through
  *   `useControllableState`, the Base UI contract: `value` controls, otherwise
  *   the accordion keeps its own state from `defaultValue` and still reports
@@ -64,18 +64,18 @@ import {
 // SSR-safe layout effect (client components still server-render in Next).
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
-import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
-import { useIcon } from '../../../lib/icon-context'
-import { GooFilter } from '../../../lib/morph-layers'
-import { useReduceMotion } from '../../../lib/reduced-motion'
-import { useShape } from '../../../lib/shape-context'
-import { type SizeVariant, useSize } from '../../../lib/size-context'
-import { spring } from '../../../lib/springs'
-import { useControllableState } from '../../../lib/use-controllable-state'
-import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
-import { GOO_BLUR_RATIO } from '../../../lib/use-morph'
-import { cn } from '../../../lib/utils'
-import { SizeProvider } from '../../../primitives/sizes'
+import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { useIcon } from '../../lib/icon-context'
+import { GooFilter } from '../../lib/morph-layers'
+import { useReduceMotion } from '../../lib/reduced-motion'
+import { useShape } from '../../lib/shape-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
+import { spring } from '../../lib/springs'
+import { useControllableState } from '../../lib/use-controllable-state'
+import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
+import { GOO_BLUR_RATIO } from '../../lib/use-morph'
+import { cn } from '../../lib/utils'
+import { SizeProvider } from '../../primitives/sizes'
 
 // ─── Contexts ────────────────────────────────────────────────────────────────
 

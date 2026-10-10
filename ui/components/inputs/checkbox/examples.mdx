@@ -1,0 +1,30 @@
+import Checkbox from './index'
+
+# Basic
+
+A standalone checkbox keeps its own state; pass `checked` and `onCheckedChange` to control it.
+
+<div className="flex flex-col">
+  <Checkbox label="Accept the terms" />
+  <Checkbox label="Subscribe to the newsletter" defaultChecked />
+</div>
+
+# Group
+
+`Checkbox.Group` stacks checkboxes: contiguous picks share one merged background, and the rows are numbered in order.
+
+<Checkbox.Group defaultCheckedIndices={[0]}>
+  {['Apples', 'Bananas', 'Cherries', 'Dates'].map(label => (
+    <Checkbox key={label} label={label} />
+  ))}
+</Checkbox.Group>
+
+# Compact
+
+`size="compact"` pins every row to the 28px step of the size ladder.
+
+<Checkbox.Group size="compact" defaultCheckedIndices={[1, 2]}>
+  {['Apples', 'Bananas', 'Cherries', 'Dates'].map(label => (
+    <Checkbox key={label} label={label} />
+  ))}
+</Checkbox.Group>

@@ -16,10 +16,10 @@ controlled + uncontrolled.
 | An action | `Button` (`primary` / `secondary` / `tertiary` / `ghost`; `icon` sizes; `loading`; `asChild` for links) |
 | A status or category label | `Badge` (`solid` / `dot`, 17 colors; changes animate) |
 | A text field, with label and error | `InputGroup` + `InputGroup.Field` |
-| A read-only value to copy | `InputCopy` |
+| A read-only value to copy | `Copy` |
 | A chat or prompt composer | `InputMessage` (attachments, queue, send/stop) |
-| One of a few options, all visible | `RadioGroup`, or `TabsSubtle` for a view switch |
-| Several of a few options | `CheckboxGroup` |
+| One of a few options, all visible | `Radio.Group`, or `TabsSubtle` for a view switch |
+| Several of a few options | `Checkbox.Group` |
 | One of many options | `Select`; typed filtering → `Combobox` (`multiple`, `creatable`) |
 | An on/off setting | `Switch` |
 | A number in a range | `Slider` (pips by default, compact = dense fill + range) |
@@ -75,14 +75,14 @@ controlled + uncontrolled.
 
 | Item | Statics | Systems | Notes |
 |---|---|---|---|
-| `CheckboxGroup` | `.Item` | L H G C | Contiguous checks melt into one run (`useSelectionRuns` + merge/split blocks). |
-| `RadioGroup` | `.Item` | L H G C | Selected background is a `GooIndicator`; index or value mode. |
+| `Checkbox` | `.Group` | L H G C | Contiguous checks melt into one run (`useSelectionRuns` + merge/split blocks). |
+| `Radio` | `.Group` | L H G C | Selected background is a `GooIndicator`; index or value mode. |
 | `Select` | `.Trigger .Content .Item .Group .Label .Separator` | L S H M | Popup morphs out of the trigger; the check draws itself as the pick lands. |
 | `Combobox` | `.Input .Chips .Content .List .Item .Empty` | L S H M | `multiple`, chips, `creatable`. |
 | `Switch` | — | L G C | Thumb is a `GooIndicator` that stretches as it travels; on = `bg-brand`. |
 | `Slider` | — | L C | Default: pips + scrubber; compact: fill, range, value. |
 | `InputGroup` | `.Field` | L H W C | Fields share one hover; error state on Base UI Field. |
-| `InputCopy` | — | L M | Click anywhere to copy; the glyph melts into a status disc behind the check. |
+| `Copy` | — | L M | Click anywhere to copy; the glyph melts into a status disc behind the check. |
 | `InputMessage` | — | L S C | Composer: auto-resize, actions, attachments, queue, status. |
 | `ColorPicker` | `.Popover` | L S M | HEX / RGB / HSL / OKLCH, alpha, swatches, eyedropper. |
 | `Search` | — | L S M C | Grows its own width in place (`spring.slow`) over its neighbours; suggestions ooze out; Escape closes → clears → collapses. |
@@ -152,7 +152,7 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 | A menu with rows | `components/overlays/context-menu/index.tsx` (rows from `dropdown/menu-item.tsx`) |
 | A control that grows in place | `components/inputs/search/index.tsx` |
 | A strip with a traveling indicator | `components/navigation/tabs-subtle/index.tsx`, `tabs/index.tsx`; or the template in [authoring.md](authoring.md) |
-| Multi-select with merged runs | `components/inputs/checkbox-group/index.tsx` |
-| A state morph inside a control | `components/button/index.tsx` (`useLoadingMorph`), `inputs/input-copy/index.tsx` (glyph goo) |
+| Multi-select with merged runs | `components/inputs/checkbox/index.tsx` |
+| A state morph inside a control | `components/button/index.tsx` (`useLoadingMorph`), `copy/index.tsx` (glyph goo) |
 | A hook-free docs stage for an interactive example | `components/badge/change-demo.tsx`, `components/button/loading-demo.tsx` |
 | A goo composition of opaque shapes | `components/overlays/toast/index.tsx`, `thinking-indicator` (`variant="goo"`) |

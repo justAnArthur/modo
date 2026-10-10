@@ -203,7 +203,7 @@ const hovering = hoverRect !== undefined && hovered !== selected
   coverage and refills with the fill's own token.
 - A square fill has no radius to melt and simply slides.
 - Contiguous multi-selection: `useSelectionRuns(checked)` → `useMergeSplitBlocks(runs, itemRects,
-  shape.mergedRadius)` → `<SelectionBackgrounds blocks={blocks} />` (see `checkbox-group`).
+  shape.mergedRadius)` → `<SelectionBackgrounds blocks={blocks} />` (see `inputs/checkbox`).
 
 ## Weight without reflow
 
@@ -257,7 +257,7 @@ const leave = { type: 'tween' as const, ...spring.fast.exit, ease: 'easeIn' as c
 
 The named eases are the one sanctioned exception to "no easing": they pair with a tier's duration for
 a filter tween. Keep the accessible label stable and announce the new state from a visually hidden
-`aria-live="polite"` span. `InputCopy` goes further (the glyph melts into a status disc); match the
+`aria-live="polite"` span. `Copy` goes further (the glyph melts into a status disc); match the
 component you extend.
 
 ## Morphing overlays

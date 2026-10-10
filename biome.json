@@ -51,7 +51,7 @@
   ],
   "overrides": [
     {
-      "includes": ["lib/package.json"],
+      "includes": ["lib/package.json", "ui/package.json"],
       "formatter": {
         "enabled": false
       }
