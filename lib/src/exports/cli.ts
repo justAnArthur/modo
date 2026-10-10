@@ -16,7 +16,7 @@ Usage:
   modo init <name>         Scaffold a design system in ./<name>
   modo init <dir> <name>   Scaffold it in <dir>/<name>
   modo dev                 Start the docs dev server
-  modo build               Build the docs site into ./dist (or --out)
+  modo build               Build the docs site into ./dist
   modo add <kind> <name>   Add a primitive, component, block or token (<group>/[<group>/]<name> groups an item)
   modo check               Validate modo.config.ts
 

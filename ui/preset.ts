@@ -155,10 +155,10 @@ export const utilities: Record<string, Record<string, string>> = Object.fromEntr
 // `filesystem` files their pipeline filter rejects, which has no `.js`. In the
 // repo these dirs hold no .js, so the docs site scans the source itself.
 const dist = dirname(fileURLToPath(import.meta.url))
-const DIRS = ['shared', 'primitives', 'components', 'blocks']
+export const COMPONENT_DIRS = ['shared', 'primitives', 'components', 'blocks']
 
 export function modoUiContent(): string {
-  return DIRS.map(dir => join(dist, dir))
+  return COMPONENT_DIRS.map(dir => join(dist, dir))
     .filter(dir => existsSync(dir))
     .flatMap(dir =>
       readdirSync(dir, { recursive: true, encoding: 'utf8' })

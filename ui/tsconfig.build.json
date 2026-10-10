@@ -1,5 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["index.ts", "preset.ts", "lib", "primitives", "components", "blocks"],
-  "exclude": ["node_modules", ".modo-tmp", "dist", "**/*.mdx"]
+  "include": ["index.ts", "preset.ts", "lib", "primitives", "components", "blocks"]
 }
