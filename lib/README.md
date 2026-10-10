@@ -27,6 +27,7 @@ modo add component overlays/dialog  # components/overlays/dialog/: a group folde
 modo check                  # validate modo.config.ts
 modo build                  # static site in ./dist, every route its own page
 modo build --base /my-ds/   # …served under a sub-path, e.g. a GitHub Pages project site
+modo build --out docs-dist  # …into another dir, when ./dist holds your package build
 ```
 
 Run `npx @justanarthur/modo`, not `npx modo`: the unscoped `modo` on npm is someone else's package. The CLI reads `modo.config.ts` from the project root (`--config <file>` for another); the [scaffolded config](https://github.com/justAnArthur/modo/blob/main/lib/templates/default/modo.config.ts) is a starting point.
