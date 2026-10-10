@@ -1,4 +1,4 @@
-import InputCopy from './index'
+import Copy from './index'
 
 # Basic
 
@@ -6,7 +6,7 @@ Icon-only: the value fills the row and the copy glyph sits at the
 trailing edge, with a tooltip on hover.
 
 <div className="w-72">
-  <InputCopy value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json" />
+  <Copy value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json" />
 </div>
 
 # Copied morph
@@ -17,8 +17,8 @@ two seconds; a failed copy turns the disc red behind a ✕. The compact step
 keeps the same disc.
 
 <div className="flex w-72 flex-col gap-4">
-  <InputCopy value="bun add @base-ui/react motion" />
-  <InputCopy variant="button" size="compact" value="bun add @base-ui/react motion" />
+  <Copy value="bun add @base-ui/react motion" />
+  <Copy variant="button" size="compact" value="bun add @base-ui/react motion" />
 </div>
 
 # With Label
@@ -27,7 +27,7 @@ keeps the same disc.
 accessible name, so a screen reader announces "Copy Install command".
 
 <div className="w-72">
-  <InputCopy
+  <Copy
     label="Install command"
     value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json"
   />
@@ -40,7 +40,7 @@ slot is pre-sized to the widest state ("Copied"), so the row never
 reflows when the state flips.
 
 <div className="w-72">
-  <InputCopy
+  <Copy
     variant="button"
     value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json"
   />
@@ -52,11 +52,11 @@ reflows when the state flips.
 in either variant.
 
 <div className="flex flex-col gap-4 w-72">
-  <InputCopy
+  <Copy
     align="left"
     value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json"
   />
-  <InputCopy
+  <Copy
     variant="button"
     align="left"
     value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json"
@@ -69,7 +69,7 @@ Dims the row to 50% and drops pointer events, so the value stays readable
 but nothing can be copied.
 
 <div className="w-72">
-  <InputCopy label="Invite code" value="ABCD-1234-EFGH" disabled />
+  <Copy label="Invite code" value="ABCD-1234-EFGH" disabled />
 </div>
 
 # Copy Callback
@@ -79,7 +79,7 @@ share. The handler below is an empty arrow (examples hold no state of
 their own); in an app it would be where you bump a counter.
 
 <div className="w-72">
-  <InputCopy
+  <Copy
     label="Share link"
     value="https://fluidfunctionalism.com/r/input-copy"
     onCopy={() => {}}

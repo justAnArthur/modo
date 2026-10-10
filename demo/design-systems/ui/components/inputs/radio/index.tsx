@@ -14,8 +14,7 @@
  * that every `RadioItem` selection calls (after its own `onValueChange` /
  * `onSelect`), so items need no `selected` / `onSelect` of their own; arrow-key
  * focus guarded for `noUncheckedIndexedAccess`; modo docs — TSDoc with FF's
- * docs/API text, `RadioGroup.Item` static (typed via a cast on the root),
- * default export.
+ * docs/API text, statics typed via a cast on the root, default export.
  * Styling reads DS tokens (AGENTS.md styling): inline `fontVariationSettings`
  * → `weight-*`; the hex focus-ring fallback → `ring-focus-ring` /
  * `border-focus-ring`; `duration-80|120|160` and tier-length JS durations →
@@ -23,6 +22,9 @@
  * `dark:border-neutral-500` → `border-control`.
  * The selected background is a `GooIndicator` (`lib/goo-indicator.tsx`): it
  * melts from row to row instead of sliding.
+ * Renamed for modo (item `radio`): `RadioItem` → `Radio`, the default
+ * export; `RadioGroup` → its `Radio.Group` static. A row's `index` is
+ * optional: the group numbers its rows in order (`lib/row-index.tsx`).
  */
 
 import { Radio as RadioPrimitive } from '@base-ui/react/radio'
@@ -44,6 +46,7 @@ import {
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { GooIndicator } from '../../../lib/goo-indicator'
+import { IndexedRows, useRowIndex } from '../../../lib/row-index'
 import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
@@ -70,12 +73,12 @@ const RadioGroupContext = createContext<RadioGroupContextValue | null>(null)
 
 function useRadioGroupContext() {
   const ctx = useContext(RadioGroupContext)
-  if (!ctx) throw new Error('useRadioGroup must be used within a RadioGroup')
+  if (!ctx) throw new Error('Radio must be used within a Radio.Group')
   return ctx
 }
 
 interface RadioGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect' | 'defaultValue'> {
-  /** RadioGroup.Item children. */
+  /** `Radio` rows. */
   children: ReactNode
   /** Index of the currently selected item. Controlled — pair it with `onSelectedIndexChange` (or per-item `onSelect`). */
   selectedIndex?: number
@@ -93,30 +96,7 @@ interface RadioGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect
   size?: SizeVariant
 }
 
-type RadioGroupComponent = ForwardRefExoticComponent<RadioGroupProps & RefAttributes<HTMLDivElement>> & {
-  Item: typeof RadioItem
-}
-
-/**
- * Radio button group with fluid hover and animated selection.
- *
- * Each row is a `RadioGroup.Item` with a stable `index`. The selected
- * background melts to the chosen row, a fluid hover highlight melts between
- * rows (the liquid indicators in Morph), the dot scales in, and the label animates to semibold without shifting
- * its width. Arrow keys, Home and End move focus and select, with a roving
- * tabindex on the selected row. Select by index — uncontrolled with
- * `defaultSelectedIndex`, controlled with `selectedIndex` +
- * `onSelectedIndexChange` — or by item `value` (`defaultValue` / `value` +
- * `onValueChange`), which also renders Base UI radios for form integration.
- * FF's per-item `selected` / `onSelect` still work and override the group for
- * their row.
- *
- * Statics:
- * - `RadioGroup.Item` — one radio row: `label`, `index`, and optional `value`,
- *   `selected`, `onSelect`.
- *
- * @example {@include ./examples.mdx}
- */
+// `Radio.Group`: the list, its selection, hover highlight and focus ring.
 const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
   (
     {
@@ -256,13 +236,13 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
           )}
         </AnimatePresence>
 
-        {children}
+        <IndexedRows>{children}</IndexedRows>
       </div>
     )
 
     // If `value` is provided (controlled-by-value mode), always wrap with the
     // Base UI RadioGroup primitive — even when `onValueChange` is absent. The
-    // inner `<RadioPrimitive.Root>` rendered by each RadioItem requires a
+    // inner `<RadioPrimitive.Root>` rendered by each Radio requires a
     // parent RadioGroup context; without it, Base UI crashes on context reads.
     // The wrapper just doesn't forward changes when the consumer doesn't ask
     // to be notified.
@@ -301,15 +281,15 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
       </RadioGroupContext.Provider>,
     )
   },
-) as RadioGroupComponent
+)
 
 RadioGroup.displayName = 'RadioGroup'
 
-interface RadioItemProps extends HTMLAttributes<HTMLDivElement> {
+interface RadioProps extends HTMLAttributes<HTMLDivElement> {
   /** Text label for the radio item. */
   label: string
-  /** Position index within the group. */
-  index: number
+  /** Position within the `Radio.Group`: the row's `selectedIndex`. Defaults to its order among the group's rows. */
+  index?: number
   /** Whether this item is selected. Defaults to the group's selection. */
   selected?: boolean
   /** Called when this item is selected (the group's change callbacks fire too). */
@@ -318,12 +298,37 @@ interface RadioItemProps extends HTMLAttributes<HTMLDivElement> {
   value?: string
 }
 
-const RadioItem = forwardRef<HTMLDivElement, RadioItemProps>(
-  ({ label, index, selected, onSelect, value, className, ...props }, ref) => {
+type RadioComponent = ForwardRefExoticComponent<RadioProps & RefAttributes<HTMLDivElement>> & {
+  Group: typeof RadioGroup
+}
+
+/**
+ * Radio buttons with fluid hover and animated selection.
+ *
+ * Each `Radio` is one row of a `Radio.Group`. The selected background melts
+ * to the chosen row, a fluid hover highlight melts between rows (the liquid
+ * indicators in Morph), the dot scales in, and the label animates to
+ * semibold without shifting its width. Arrow keys, Home and End move focus
+ * and select, with a roving tabindex on the selected row. The group numbers
+ * its rows in order, so they need no `index`. FF's per-row `selected` /
+ * `onSelect` still work and override the group for their row.
+ *
+ * Statics:
+ * - `Radio.Group` — the list. Select by index — uncontrolled with
+ *   `defaultSelectedIndex`, controlled with `selectedIndex` +
+ *   `onSelectedIndexChange` — or by row `value` (`defaultValue` / `value` +
+ *   `onValueChange`), which also renders Base UI radios for form
+ *   integration; `size` pins every row to one step of the size ladder.
+ *
+ * @example {@include ./examples.mdx}
+ */
+const Radio = forwardRef<HTMLDivElement, RadioProps>(
+  ({ label, index: indexProp, selected, onSelect, value, className, ...props }, ref) => {
     const internalRef = useRef<HTMLDivElement>(null)
     const hasMounted = useRef(false)
     const { registerItem, activeIndex, selectedIndex, selectedValue, onValueChange, hasSelection, selectIndex } =
       useRadioGroupContext()
+    const index = useRowIndex(indexProp)
 
     useRegisterFluidHoverItem(registerItem, index, internalRef)
 
@@ -450,12 +455,12 @@ const RadioItem = forwardRef<HTMLDivElement, RadioItemProps>(
       </div>
     )
   },
-)
+) as RadioComponent
 
-RadioItem.displayName = 'RadioItem'
+Radio.displayName = 'Radio'
 
-Object.assign(RadioGroup, { Item: RadioItem })
+Object.assign(Radio, { Group: RadioGroup })
 
-export type { RadioGroupProps, RadioItemProps }
-export { RadioGroup, RadioItem }
-export default RadioGroup
+export type { RadioGroupProps, RadioProps }
+export { Radio, RadioGroup }
+export default Radio

@@ -6,18 +6,19 @@
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react`; `@/lib/{utils,icon-context,shape-context,
- *   size-context,springs}` rewritten to `../../../lib/*` (the `@/lib/font-weight`
+ *   size-context,springs}` rewritten to `../../lib/*` (the `@/lib/font-weight`
  *   import went with the inline `fontVariationSettings`, below);
- *   `@/registry/radix/tooltip` → `../../overlays/tooltip`.
+ *   `@/registry/radix/tooltip` → `../overlays/tooltip`.
  * - React 18 types: `useRef<ReturnType<typeof setTimeout>>(null)` →
  *   `useRef<ReturnType<typeof setTimeout> | null>(null)` (React 19 allows the
  *   1-arg null form, React 18's overloads don't).
- * - `InputCopyProps`: member docs replaced by the FF docs API-table text with the
+ * - `CopyProps`: member docs replaced by the FF docs API-table text with the
  *   defaults spelled into the prose (modo reads defaults from the description, not
  *   from the destructuring), and `className` re-declared so it is documented.
  * - The tooltip comment's "Radix closes it on pointer down" reads "Base UI" here —
  *   this port's Tooltip is the Base UI flavor; behaviour is the same.
- * - modo item: TSDoc from the FF "InputCopy" docs page. Upstream's exports are kept.
+ * - modo item: TSDoc from the FF "InputCopy" docs page. Renamed `Copy` (item
+ *   `copy`, outside the inputs group): `InputCopy*` exports → `Copy*`.
  * - Styling reads DS tokens (AGENTS.md styling): inline
  *   `fontVariationSettings` → `weight-*`; the hex focus-ring fallback →
  *   `ring-focus-ring` / `border-focus-ring`; literal colors → color tokens;
@@ -43,18 +44,18 @@ import {
   useRef,
   useState,
 } from 'react'
-import { type IconComponent, useIcon } from '../../../lib/icon-context'
-import { GooFilter } from '../../../lib/morph-layers'
-import { useReduceMotion } from '../../../lib/reduced-motion'
-import { useShape } from '../../../lib/shape-context'
-import { type SizeVariant, useSize } from '../../../lib/size-context'
-import { spring } from '../../../lib/springs'
-import { GOO_BLUR_RATIO } from '../../../lib/use-morph'
-import { cn } from '../../../lib/utils'
-import { Tooltip } from '../../overlays/tooltip'
+import { type IconComponent, useIcon } from '../../lib/icon-context'
+import { GooFilter } from '../../lib/morph-layers'
+import { useReduceMotion } from '../../lib/reduced-motion'
+import { useShape } from '../../lib/shape-context'
+import { type SizeVariant, useSize } from '../../lib/size-context'
+import { spring } from '../../lib/springs'
+import { GOO_BLUR_RATIO } from '../../lib/use-morph'
+import { cn } from '../../lib/utils'
+import { Tooltip } from '../overlays/tooltip'
 
-type InputCopyVariant = 'icon' | 'button'
-type InputCopyAlign = 'right' | 'left'
+type CopyVariant = 'icon' | 'button'
+type CopyAlign = 'right' | 'left'
 type CopyStatus = 'idle' | 'copied' | 'error'
 
 interface Rect {
@@ -83,7 +84,7 @@ const LAYER = { at: DISC_RECT.x - BLUR * 3, size: DISC + BLUR * 6 }
 // the layer's opacity, applied after the goo filter, which needs opaque shapes.
 const TONE_BG = { copied: 'bg-status-success', error: 'bg-status-error' }
 const TONE_TEXT = { copied: 'text-status-success', error: 'text-status-error' }
-const CHECK_STROKE: Record<InputCopyVariant, string> = {
+const CHECK_STROKE: Record<CopyVariant, string> = {
   icon: '[&_svg]:stroke-[1.5] [&_svg]:transition-[stroke-width] [&_svg]:duration-fast group-hover:[&_svg]:stroke-[2]',
   button: '[&_svg]:stroke-[2]',
 }
@@ -160,7 +161,7 @@ function CopyGlyph({
 }: {
   status: CopyStatus
   copyCount: number
-  variant: InputCopyVariant
+  variant: CopyVariant
   CopyIcon: IconComponent
 }) {
   return (
@@ -220,7 +221,7 @@ function CopyGlyph({
   )
 }
 
-interface InputCopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
+interface CopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   /** The text value to display and copy to clipboard. */
   value: string
   /** Optional label displayed above the input. */
@@ -230,9 +231,9 @@ interface InputCopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'
   /** Disables the input and copy button. Defaults to `false`. */
   disabled?: boolean
   /** Icon-only with tooltip, or button with visible label. Defaults to `"icon"`. */
-  variant?: InputCopyVariant
+  variant?: CopyVariant
   /** Position of the copy action relative to the value. Defaults to `"right"`. */
-  align?: InputCopyAlign
+  align?: CopyAlign
   /** Pins the field to one step of the size ladder (default 36px, compact 28px — see Sizes). Omitted, it follows the surrounding SizeProvider. */
   size?: SizeVariant
   /** Extra classes for the wrapper around the label and the field. */
@@ -257,7 +258,7 @@ interface InputCopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'
  *
  * @example {@include ./examples.mdx}
  */
-const InputCopy = forwardRef<HTMLDivElement, InputCopyProps>(
+const Copy = forwardRef<HTMLDivElement, CopyProps>(
   ({ value, label, onCopy, disabled, variant = 'icon', align = 'right', size, className, ...props }, ref) => {
     const CopyIcon = useIcon('copy')
     // "copied" and "error" both occupy the same animation slot on the button
@@ -474,8 +475,8 @@ const InputCopy = forwardRef<HTMLDivElement, InputCopyProps>(
   },
 )
 
-InputCopy.displayName = 'InputCopy'
+Copy.displayName = 'Copy'
 
-export type { InputCopyAlign, InputCopyProps, InputCopyVariant }
-export { InputCopy }
-export default InputCopy
+export type { CopyAlign, CopyProps, CopyVariant }
+export { Copy }
+export default Copy

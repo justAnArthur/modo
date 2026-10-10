@@ -22,3 +22,56 @@ size ladder. `defaultChecked` starts it on.
   <Switch size="compact" label="Auto-save" defaultChecked />
   <Switch size="compact" label="Show hidden files" />
 </div>
+
+# Description
+
+`description` adds a muted line under the label, and `trackSide="end"` pushes the track to the far edge, as in a settings row.
+
+<Switch
+  className="w-80 max-w-full"
+  trackSide="end"
+  label="Auto-update"
+  description="Install updates in the background and restart when idle"
+/>
+
+# Group
+
+`Switch.Group` frames switches as a settings list: each one becomes a row with its track at the far edge. Here beside a label column, as on a settings page; on a narrow page the label stacks above it.
+
+<div className="@container w-full max-w-3xl">
+  <div className="grid gap-3 @xl:grid-cols-[10rem_1fr] @xl:gap-6">
+    <p id="automation" className="text-body weight-medium text-foreground [text-box:trim-both_cap_alphabetic] @xl:pt-4">
+      Automation
+    </p>
+    <Switch.Group aria-labelledby="automation">
+      <Switch
+        label="Remove Task OUT with old contracts"
+        description="When an old contract is removed automatically, its Task OUT is removed too"
+      />
+      <Switch
+        label="Block billing until damage is inspected"
+        description="A contract can't be marked as billed while a damage inspection is required"
+      />
+    </Switch.Group>
+  </div>
+</div>
+
+# Group states
+
+Every switch in a group keeps its own state; a disabled row gets no highlight. Rows work without a description too.
+
+<Switch.Group aria-label="Notifications" className="w-96 max-w-full">
+  <Switch label="Email" defaultChecked />
+  <Switch label="Push notifications" />
+  <Switch label="SMS" description="Not available in your region" disabled />
+</Switch.Group>
+
+# Compact group
+
+`size` on the group pins every row to one step of the size ladder.
+
+<Switch.Group size="compact" aria-label="Editor" className="w-80 max-w-full">
+  <Switch label="Auto-save" description="Save after every change" defaultChecked />
+  <Switch label="Format on save" />
+  <Switch label="Show hidden files" />
+</Switch.Group>

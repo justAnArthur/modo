@@ -1,5 +1,5 @@
-import CheckboxGroup from '../../components/inputs/checkbox-group'
-import RadioGroup from '../../components/inputs/radio-group'
+import Checkbox from '../../components/inputs/checkbox'
+import Radio from '../../components/inputs/radio'
 import Switch from '../../components/inputs/switch'
 import Tabs from '../../components/navigation/tabs'
 import TabsSubtle from '../../components/navigation/tabs-subtle'
@@ -114,11 +114,11 @@ The thumb melts across its track, the radio pick flows between rows, and the hov
     <Switch label="Wi-Fi" />
     <Switch label="Bluetooth" defaultChecked />
   </div>
-  <RadioGroup defaultSelectedIndex={0} className="w-48">
-    {['Daily', 'Weekly', 'Monthly'].map((label, i) => (
-      <RadioGroup.Item key={label} index={i} label={label} />
+  <Radio.Group defaultSelectedIndex={0} className="w-48">
+    {['Daily', 'Weekly', 'Monthly'].map(label => (
+      <Radio key={label} label={label} />
     ))}
-  </RadioGroup>
+  </Radio.Group>
   <div className="w-48 rounded-xl border border-border/60">
     <FluidHover className="p-2" items={['Inbox', 'Drafts', 'Sent', 'Archive']} />
   </div>
@@ -128,8 +128,8 @@ The thumb melts across its track, the radio pick flows between rows, and the hov
 
 Check Bananas: it grows out of its row and melts the picks above and below into one. Uncheck it to pinch them apart.
 
-<CheckboxGroup defaultCheckedIndices={[0, 2]}>
-  {['Apples', 'Bananas', 'Cherries', 'Dates'].map((label, i) => (
-    <CheckboxGroup.Item key={label} index={i} label={label} />
+<Checkbox.Group defaultCheckedIndices={[0, 2]}>
+  {['Apples', 'Bananas', 'Cherries', 'Dates'].map(label => (
+    <Checkbox key={label} label={label} />
   ))}
-</CheckboxGroup>
+</Checkbox.Group>

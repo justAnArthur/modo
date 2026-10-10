@@ -311,7 +311,7 @@ interface DropdownProps extends HTMLAttributes<HTMLDivElement> {
   defaultCheckedIndex?: number
   /** Called with the newly checked row, or `undefined` when nothing is checked. */
   onCheckedIndexChange?: (index: number | undefined) => void
-  /** Multiple selection: the checked rows. Rows become checkbox items and contiguous runs share one merged background (see CheckboxGroup). */
+  /** Multiple selection: the checked rows. Rows become checkbox items and contiguous runs share one merged background (see Checkbox.Group). */
   checkedIndices?: number[]
   /** Uncontrolled twin of `checkedIndices`: the panel toggles rows itself. */
   defaultCheckedIndices?: number[]
@@ -662,7 +662,7 @@ interface DropdownContentProps {
   onCheckedIndexChange?: (index: number | undefined) => void
   /** Multiple selection: the checked rows. Rows become checkbox items that
    *  keep the menu open when toggled, and contiguous runs share one merged
-   *  background (see CheckboxGroup). */
+   *  background (see Checkbox.Group). */
   checkedIndices?: number[]
   /** Uncontrolled twin of `checkedIndices`: the popup toggles rows itself. */
   defaultCheckedIndices?: number[]

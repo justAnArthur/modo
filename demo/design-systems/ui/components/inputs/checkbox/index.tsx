@@ -14,7 +14,7 @@
  * `onToggle` are optional and fall back to that context (a toggle always
  * reports to the group as well); arrow-key focus guarded for
  * `noUncheckedIndexedAccess`; modo docs — TSDoc with FF's docs/API text,
- * `CheckboxGroup.Item` static (typed via a cast on the root), default export.
+ * statics typed via a cast on the root, default export.
  * Styling reads DS tokens (AGENTS.md styling): inline `fontVariationSettings`
  * → `weight-*`; the hex focus-ring fallback → `ring-focus-ring` /
  * `border-focus-ring`; `rounded-[Npx]` → radius tokens; `duration-80|120|160`
@@ -22,6 +22,12 @@
  * `border-neutral-400` / `dark:border-neutral-500` → `border-control`.
  * The inline run grouping is the shared `useSelectionRuns`; the merged
  * backgrounds melt and split through the goo (`lib/use-merge-split.tsx`).
+ * Renamed for modo (item `checkbox`): `CheckboxItem` → `Checkbox`, the
+ * default export, which also stands alone (its own state from
+ * `defaultChecked`, `onCheckedChange` on every toggle, a pointer hover and
+ * a focus ring of its own, a `size`); `CheckboxGroup` → its `Checkbox.Group`
+ * static. A row's `index` is optional: the group numbers its rows in order
+ * (`lib/row-index.tsx`).
  */
 
 import { Checkbox as CheckboxPrimitive } from '@base-ui/react/checkbox'
@@ -40,6 +46,7 @@ import {
   useState,
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
+import { IndexedRows, useRowIndex } from '../../../lib/row-index'
 import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
@@ -60,14 +67,8 @@ interface CheckboxGroupContextValue {
 
 const CheckboxGroupContext = createContext<CheckboxGroupContextValue | null>(null)
 
-function useCheckboxGroup() {
-  const ctx = useContext(CheckboxGroupContext)
-  if (!ctx) throw new Error('useCheckboxGroup must be used within a CheckboxGroup')
-  return ctx
-}
-
 interface CheckboxGroupProps extends HTMLAttributes<HTMLDivElement> {
-  /** CheckboxGroup.Item children. */
+  /** `Checkbox` rows. */
   children: ReactNode
   /** Set of checked item indices; drives the merged background across contiguous picks. Controlled — pair it with `onCheckedIndicesChange` (or per-item `onToggle`). */
   checkedIndices?: Set<number>
@@ -79,30 +80,7 @@ interface CheckboxGroupProps extends HTMLAttributes<HTMLDivElement> {
   size?: SizeVariant
 }
 
-type CheckboxGroupComponent = ForwardRefExoticComponent<CheckboxGroupProps & RefAttributes<HTMLDivElement>> & {
-  Item: typeof CheckboxItem
-}
-
-/**
- * Checkbox group with merged backgrounds for contiguous selections.
- *
- * Each row is a `CheckboxGroup.Item` with a stable `index`. Contiguous checked
- * rows share one background: a checked row's background grows out of its
- * center and melts into its neighbours, an unchecked one pinches off and
- * shrinks away (the liquid indicators in Morph). A fluid hover highlight melts
- * from row to row, and Arrow Up/Down,
- * Home and End move focus while Space or Enter toggles. The checked label
- * animates to semibold without shifting its width. The group is uncontrolled
- * with `defaultCheckedIndices`, or controlled with `checkedIndices` plus
- * `onCheckedIndicesChange` — FF's per-item `checked` / `onToggle` still work
- * and override the group state for their row.
- *
- * Statics:
- * - `CheckboxGroup.Item` — one checkbox row: `label`, `index`, and optional
- *   `checked` / `onToggle`.
- *
- * @example {@include ./examples.mdx}
- */
+// `Checkbox.Group`: the list, its checked set, hover highlight and focus ring.
 const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
   (
     {
@@ -229,7 +207,7 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
             )}
           </AnimatePresence>
 
-          {children}
+          <IndexedRows>{children}</IndexedRows>
         </div>
       </CheckboxGroupContext.Provider>
     )
@@ -237,45 +215,98 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
     // A size prop pins every row in the group to one ladder step.
     return size ? <SizeProvider size={size}>{group}</SizeProvider> : group
   },
-) as CheckboxGroupComponent
+)
 
 CheckboxGroup.displayName = 'CheckboxGroup'
 
-interface CheckboxItemProps extends HTMLAttributes<HTMLDivElement> {
+interface CheckboxProps extends HTMLAttributes<HTMLDivElement> {
   /** Text label for the checkbox. */
   label: string
-  /** Position index within the group. */
-  index: number
-  /** Whether this item is checked. Defaults to the group's checked set. */
+  /** Whether the checkbox is checked (controlled). Defaults to the group's checked set inside a `Checkbox.Group`, else its own state. */
   checked?: boolean
-  /** Called when this item is toggled (the group's `onCheckedIndicesChange` fires too). */
+  /** Whether a standalone checkbox starts checked (uncontrolled). Defaults to `false`. */
+  defaultChecked?: boolean
+  /** Called with the new state whenever the checkbox is toggled, in a group or not. */
+  onCheckedChange?: (checked: boolean) => void
+  /** Called when the checkbox is toggled (a group's `onCheckedIndicesChange` fires too). */
   onToggle?: () => void
+  /** Position within a `Checkbox.Group`: the row's key in `checkedIndices`. Defaults to its order among the group's rows. */
+  index?: number
+  /** Pins the checkbox to one step of the size ladder (see Sizes). Defaults to the surrounding SizeProvider (a group's `size`). */
+  size?: SizeVariant
 }
 
-const CheckboxItem = forwardRef<HTMLDivElement, CheckboxItemProps>(
-  ({ label, index, checked: checkedProp, onToggle: onToggleProp, className, ...props }, ref) => {
+type CheckboxComponent = ForwardRefExoticComponent<CheckboxProps & RefAttributes<HTMLDivElement>> & {
+  Group: typeof CheckboxGroup
+}
+
+/**
+ * Checkbox with a self-drawing check, alone or in a group with merged
+ * backgrounds for contiguous picks.
+ *
+ * The whole row is the hit target; Space or Enter toggles it, the check mark
+ * draws itself in, and the checked label animates to semibold without
+ * shifting its width. A standalone checkbox keeps its own state from
+ * `defaultChecked`, or is controlled with `checked`; `onCheckedChange`
+ * reports every toggle.
+ *
+ * In a `Checkbox.Group`, contiguous checked rows share one background: a
+ * checked row's background grows out of its center and melts into its
+ * neighbours, an unchecked one pinches off and shrinks away (the liquid
+ * indicators in Morph). A fluid hover highlight melts from row to row, and
+ * Arrow Up/Down, Home and End move focus. The group numbers its rows in
+ * order, so they need no `index`; pass one to key a row explicitly.
+ *
+ * Statics:
+ * - `Checkbox.Group` — the list: uncontrolled with `defaultCheckedIndices`
+ *   (a Set or an array of row indices), or controlled with `checkedIndices`
+ *   plus `onCheckedIndicesChange`; `size` pins every row to one step of the
+ *   size ladder. A row's own `checked` / `onToggle` still override the group
+ *   for that row.
+ *
+ * @example {@include ./examples.mdx}
+ */
+const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
+  (
+    {
+      label,
+      checked: checkedProp,
+      defaultChecked = false,
+      onCheckedChange,
+      onToggle: onToggleProp,
+      index: indexProp,
+      size,
+      className,
+      ...props
+    },
+    ref,
+  ) => {
     const internalRef = useRef<HTMLDivElement>(null)
     const hasMounted = useRef(false)
-    const { registerItem, activeIndex, checkedIndices, setItemChecked } = useCheckboxGroup()
+    const group = useContext(CheckboxGroupContext)
+    const index = useRowIndex(indexProp)
+    const [ownChecked, setOwnChecked] = useControllableState(checkedProp, defaultChecked, onCheckedChange)
+    const [hovered, setHovered] = useState(false)
 
-    // Local: an explicit `checked` wins; otherwise the group's set decides.
-    // A toggle flips the state this row shows and reports it to the group.
-    const checked = checkedProp ?? checkedIndices.has(index)
+    // Local: an explicit `checked` wins; otherwise the group's set (or, alone,
+    // the row's own state) decides. A toggle reports to the group as well.
+    const checked = checkedProp ?? (group ? group.checkedIndices.has(index) : ownChecked)
     const onToggle = () => {
       onToggleProp?.()
-      setItemChecked(index, !checked)
+      group?.setItemChecked(index, !checked)
+      setOwnChecked(!checked)
     }
 
-    useRegisterFluidHoverItem(registerItem, index, internalRef)
+    useRegisterFluidHoverItem(group?.registerItem, index, internalRef)
 
     useEffect(() => {
       hasMounted.current = true
     }, [])
 
-    const isActive = activeIndex === index
+    const isActive = group ? group.activeIndex === index : hovered
     const skipAnimation = !hasMounted.current
     const shape = useShape()
-    const sizeClasses = useSize()
+    const sizeClasses = useSize(size)
     const compact = sizeClasses.variant === 'compact'
 
     return (
@@ -291,6 +322,10 @@ const CheckboxItem = forwardRef<HTMLDivElement, CheckboxItemProps>(
         aria-checked={checked}
         aria-label={label}
         onClick={onToggle}
+        onPointerEnter={e => {
+          if (e.pointerType === 'mouse') setHovered(true)
+        }}
+        onPointerLeave={() => setHovered(false)}
         onMouseDown={e => {
           // Clicking the 15px checkbox square would natively focus the hidden
           // primitive (nearest focusable ancestor of the click target), after
@@ -315,6 +350,8 @@ const CheckboxItem = forwardRef<HTMLDivElement, CheckboxItemProps>(
           // Fixed height (was py-1.5 around a 19.5px line box ≈ 31.5px) so the
           // text-box trim on the label doesn't shrink the row.
           `relative z-10 flex ${sizeClasses.control} items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.px} cursor-pointer outline-none`,
+          // The group draws one travelling focus ring; alone, the row rings itself.
+          !group && 'focus-visible:ring-1 focus-visible:ring-focus-ring',
           className,
         )}
         {...props}
@@ -418,12 +455,12 @@ const CheckboxItem = forwardRef<HTMLDivElement, CheckboxItemProps>(
       </div>
     )
   },
-)
+) as CheckboxComponent
 
-CheckboxItem.displayName = 'CheckboxItem'
+Checkbox.displayName = 'Checkbox'
 
-Object.assign(CheckboxGroup, { Item: CheckboxItem })
+Object.assign(Checkbox, { Group: CheckboxGroup })
 
-export type { CheckboxGroupProps, CheckboxItemProps }
-export { CheckboxGroup, CheckboxItem }
-export default CheckboxGroup
+export type { CheckboxGroupProps, CheckboxProps }
+export { Checkbox, CheckboxGroup }
+export default Checkbox

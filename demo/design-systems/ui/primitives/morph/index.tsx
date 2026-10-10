@@ -90,7 +90,7 @@ interface MorphProps {
  * ## Liquid indicators
  *
  * The same goo moves everything that travels between items: the active tab
- * of Tabs and TabsSubtle, the Switch thumb, RadioGroup's selection and the
+ * of Tabs and TabsSubtle, the Switch thumb, Radio.Group's selection and the
  * fluid hover highlight of every list (Select, Dropdown, Combobox, Card,
  * Accordion, FluidHover). The indicator springs to its new item and leaves
  * a blob behind. The blob lingers for a third of the spring, then follows
@@ -98,7 +98,7 @@ interface MorphProps {
  * stretched drop that lets go. A long move tears it into a drop and a
  * droplet that catches up and is absorbed.
  *
- * Merged selections (CheckboxGroup, a multiple Dropdown) melt the same way:
+ * Merged selections (Checkbox.Group, a multiple Dropdown) melt the same way:
  * a checked row grows out of its center and flows into its checked
  * neighbours, and an unchecked one pinches off and shrinks away.
  *

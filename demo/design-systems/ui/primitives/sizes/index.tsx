@@ -32,8 +32,8 @@ import { SizeContext, type SizeVariant, sizeMap } from '../../lib/size-context'
  * `SizeProvider` and every sized component inside follows — menus included,
  * since React context crosses portals. Precedence is explicit `size` prop on
  * the component > nearest `SizeProvider` > `'default'`. Button, Badge,
- * Select, Tabs, TabsSubtle, Dropdown, CheckboxGroup, RadioGroup, Input,
- * InputGroup, InputCopy, InputMessage, Table, Switch, Slider, Accordion, Card,
+ * Select, Tabs, TabsSubtle, Dropdown, Checkbox, Radio, Input,
+ * InputGroup, Copy, InputMessage, Table, Switch, Slider, Accordion, Card,
  * ColorPicker, ThinkingIndicator, Calendar and the date and time pickers all
  * take that per-component `size`. Type follows the ladder too: compact drops
  * each type role one notch.

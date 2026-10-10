@@ -4,7 +4,7 @@
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
  * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*` →
- *   `../../lib/*`.
+ *   `../../../lib/*`.
  * - Prop JSDoc kept from upstream (it matches the FF docs API table);
  *   modo TSDoc and examples on `ThinkingIndicator`. The `.shimmer-text` rule
  *   the label rides lives in global.css.
@@ -23,12 +23,12 @@
 
 import { AnimatePresence, motion } from 'motion/react'
 import { forwardRef, type HTMLAttributes, useEffect, useId, useState } from 'react'
-import { GooFilter } from '../../lib/morph-layers'
-import { useReduceMotion } from '../../lib/reduced-motion'
-import { type SizeVariant, useSize } from '../../lib/size-context'
-import { spring } from '../../lib/springs'
-import { GOO_BLUR_RATIO } from '../../lib/use-morph'
-import { cn } from '../../lib/utils'
+import { GooFilter } from '../../../lib/morph-layers'
+import { useReduceMotion } from '../../../lib/reduced-motion'
+import { type SizeVariant, useSize } from '../../../lib/size-context'
+import { spring } from '../../../lib/springs'
+import { GOO_BLUR_RATIO } from '../../../lib/use-morph'
+import { cn } from '../../../lib/utils'
 
 const circleA = 'M 12 8 C 14.21 8 16 9.79 16 12 C 16 14.21 14.21 16 12 16 C 9.79 16 8 14.21 8 12 C 8 9.79 9.79 8 12 8 Z'
 
