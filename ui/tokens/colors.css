@@ -11,7 +11,7 @@
  * --dm-*) are kept as-is — they are alpha contracts, not palette colors.
  *
  * Every color token is written ONCE, as light-dark(light, dark). Which side
- * renders is driven by `color-scheme` (set in global.css): :root follows the
+ * renders is driven by `color-scheme` (set in base.css): :root follows the
  * OS, and a `.light` or `.dark` class pins it. The block is declared on
  * `:root, .light, .dark` — not just `:root` — because light-dark() inside a
  * custom property resolves against the color-scheme of the element the
@@ -22,7 +22,7 @@
  * primitives/surface/surface.css. The one token that cannot ride
  * light-dark() here — the --overlay RGB triplet (consumed as
  * rgb(var(--overlay) / α), an alpha contract) — is re-pointed per scheme in
- * global.css.
+ * base.css.
  */
 
 :root,
@@ -112,7 +112,7 @@
   /* ── Surface-relative interactive overlays (work on any elevation) ──
      --overlay is the tint-direction triplet — black for light surfaces,
      white for dark. Components consume it as rgb(var(--overlay) / α), so it
-     stays an RGB triplet and switches per theme in global.css. --hover and
+     stays an RGB triplet and switches per theme in base.css. --hover and
      --active are the pre-mixed conveniences. */
   --overlay: 0 0 0;
   --hover: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.06));

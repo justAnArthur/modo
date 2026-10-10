@@ -1,0 +1,396 @@
+/* biome-ignore-all lint: vendored upstream code keeps its own values (see the header) */
+/*
+ * UI theme plumbing and base styles.
+ *
+ * Source: mickadesign/fluid-functionalism `app/globals.css` at commit
+ * b3587bdbd83fc66c2a6aae3817ffb856cb09260b — MIT License © 2026 Micka
+ * Touillaud — fluidfunctionalism.com. Translated from Tailwind v4 CSS to
+ * plain CSS for UnoCSS (uno.config.ts); vite.ts injects the UnoCSS
+ * stylesheet ahead of this file. The docs site imports it from global.css;
+ * the package ships it inside dist/base.css and dist/styles.css.
+ *
+ * Where upstream's sections went:
+ * - §1 design tokens → tokens/colors.css; the surface ladder and shadow
+ *   recipes → primitives/surface/surface.css. All HEX migrated to oklch.
+ * - §2 theme switching → the color-scheme / --overlay block below (the
+ *   shadow re-pointing lives in surface.css).
+ * - §3 `@theme inline` → preset.ts `theme`; the `--fs-*` roles and
+ *   `@utility text-*` → tokens/typography.css (`--text-*`) + preset.ts
+ *   `utilities`.
+ * - §4–6 → below: html/body base, `@layer base` (text wrap, inline code chip,
+ *   :focus-visible fallback), html.transitioning, native scrollbars,
+ *   .scrollbar-hide, shimmer + spinner keyframes, .scroll-fade(-x).
+ *
+ * Local value changes: the inline code chip and the shimmer stops read color
+ * tokens instead of upstream's hex (light code chip `--muted`, dark
+ * `--surface-4`; shimmer dim → bright runs `--muted-foreground` →
+ * `--foreground` in light and `--accent` → `--muted-foreground` in dark).
+ *
+ * Dropped: the Tailwind directives (`@import "tailwindcss"`,
+ * `@custom-variant`), the self-hosted Inter @font-face (replaced by
+ * @fontsource-variable/inter/opsz), the Radix-only scroll-lock margin fix
+ * (`body[data-scroll-locked]`), the reserved shadcn-compare colors, and the
+ * docs-site-only CSS (.xl-fade-*, .inview-fade-block, .scroll-divider — only
+ * the omitted Sidebar uses it — .bento-*, .shiki).
+ *
+ * Layers: UnoCSS (`outputToCssLayers`) declares `@layer properties, theme,
+ * base, default` first, and its reset lives in `base`. The `@layer base`
+ * rules here join that layer after the reset, so the reset loses to them and
+ * every utility (`default`) still wins — the same arrangement as Tailwind's
+ * base/utilities layers upstream.
+ *
+ * The switch blocks double their class selector (.light.light / .dark.dark)
+ * because user CSS is injected BEFORE tokens/*.css and item CSS — the
+ * doubled selector (0,2,0) must out-specify the shared `:root, .light,
+ * .dark` token blocks (0,1,0) so the re-pointed values win regardless of
+ * stylesheet order.
+ */
+
+@import "@fontsource-variable/inter/opsz.css";
+
+/* ── Theme switching (upstream §2) ──
+   `color-scheme` is what flips every light-dark() token; the classes work on
+   <html> (vite.ts puts the stored preference there, or the OS one under
+   'system') and on any subtree (forced-theme previews). The only value that can't ride light-dark() here
+   is the --overlay RGB triplet, consumed as rgb(var(--overlay) / α). */
+
+:root {
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --overlay: 255 255 255;
+  }
+}
+
+.light.light {
+  color-scheme: light;
+  --overlay: 0 0 0;
+}
+
+.dark.dark {
+  color-scheme: dark;
+  --overlay: 255 255 255;
+}
+
+/* ── Base styles (upstream §4) ── */
+
+/* No explicit overflow here: scrollbar-gutter applies to the viewport when
+   set on the root, and an explicit `overflow-y: auto` would stop dialog
+   scroll locks (`body { overflow: hidden }`) from propagating to the
+   viewport. */
+html {
+  scrollbar-gutter: stable;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100vh;
+  overscroll-behavior-y: none;
+  background-color: var(--background);
+  /* Explicit text color so unstyled text follows the theme (and so the UA's
+     color-scheme-driven canvastext default never shows through). */
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  /* Inherited by everything (portals included) — a `subpixel-antialiased`
+     utility on a subtree is the only way to opt back out. */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* @layer base so a utility can still win: unlayered, these outrank
+   `truncate` on the text-wrap-mode longhand (white-space is a shorthand for
+   white-space-collapse + text-wrap-mode), which silently un-truncates every
+   <p> that asks for it. */
+@layer base {
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Inline code chips: bare <code> in prose gets its own ground. Excludes
+     code inside <pre>. Base layer, so a page can still override with
+     utilities. */
+  code:not(pre code) {
+    background: light-dark(var(--muted), var(--surface-4));
+    border-radius: 4px;
+    padding: 1px 4px;
+    font-size: var(--text-caption, 12px);
+    color: var(--foreground, inherit);
+  }
+}
+
+/* Theme-toggle cross-fade: ShapeProvider (and any theme switcher) adds
+   `.transitioning` around a class swap so colors and corners tween instead of
+   snapping. */
+html.transitioning *,
+html.transitioning *::before,
+html.transitioning *::after {
+  transition:
+    border-radius 180ms ease-in-out,
+    background-color 180ms ease-in-out,
+    color 180ms ease-in-out,
+    border-color 180ms ease-in-out,
+    fill 180ms ease-in-out,
+    stroke 180ms ease-in-out !important;
+}
+
+/* Focus fallback — natively focusable elements no component styles (scroll
+   containers Chrome makes tabbable, prose links, demo boxes) get the same
+   token ring as the components instead of the UA default. Lives in
+   @layer base so `outline-none` (a utility) still wins — components that
+   draw their own ring aren't double-ringed. The radius rides
+   --shape-input-radius (published by ShapeProvider); 8px = the rounded-mode
+   default. */
+@layer base {
+  :focus-visible {
+    outline: 1px solid var(--focus-ring);
+    outline-offset: 2px;
+    border-radius: var(--shape-input-radius, 8px);
+  }
+
+  /* Prose links are inline text boxes — the shape-system radius reads
+     pill-ish at text height, so their ring takes a tight 2px corner. */
+  a:focus-visible {
+    border-radius: 2px;
+  }
+}
+
+/* ── Native scrollbar theme (upstream §5) ──
+   Matches the ScrollArea thumb language (narrow, low-contrast, darkens on
+   hover) so surfaces that fall back to native scrollbars stay consistent
+   with the custom scrollbar. Rides the surface-relative overlay ramp (rest
+   8%, hover 12%, drag 16%) — adapts to dark mode through --overlay. Only on
+   fine pointers; touch devices keep their overlay momentum bars. Chromium
+   121+ renders scrollbar-color and ignores the ::-webkit-* block, so both
+   ramps must stay in sync. */
+
+@media (pointer: fine) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--overlay) / 0.08) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    /* Transparent borders + content-box clip leave a ~4px visible thumb
+       inside the 10px hit area; the asymmetric edge-side border slides it
+       2px away from the edge, matching the ScrollArea thumb's nudge. */
+    background-color: rgb(var(--overlay) / 0.08);
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 9999px;
+  }
+
+  ::-webkit-scrollbar-thumb:vertical {
+    border-left-width: 1px;
+    border-right-width: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:horizontal {
+    border-top-width: 1px;
+    border-bottom-width: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--overlay) / 0.12);
+  }
+
+  ::-webkit-scrollbar-thumb:active {
+    background-color: rgb(var(--overlay) / 0.16);
+  }
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Utilities (upstream §6) ── */
+
+/* shimmer-text (thinking-indicator) */
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+.shimmer-text {
+  color: transparent;
+  background: linear-gradient(
+    90deg,
+    light-dark(var(--muted-foreground), var(--accent)) 0%,
+    light-dark(var(--muted-foreground), var(--accent)) 35%,
+    light-dark(var(--foreground), var(--muted-foreground)) 50%,
+    light-dark(var(--muted-foreground), var(--accent)) 65%,
+    light-dark(var(--muted-foreground), var(--accent)) 100%
+  );
+  background-size: 300% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Spinner keyframes (Button's loading state). */
+
+@keyframes spinner-move {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+@keyframes spinner-dash {
+  0%,
+  100% {
+    stroke-dasharray: 15 85;
+  }
+  50% {
+    stroke-dasharray: 40 60;
+  }
+}
+
+/* scroll-fade — vendored equivalent of shadcn's scroll-fade utility. A
+   mask-image dissolves the content toward the edges that have more to
+   scroll. CSS scroll-driven animations make it scroll-aware: the true
+   start/end edge stays crisp until you scroll past it. Browsers without
+   scroll-driven animations fall back to a static fade on both edges. Apply
+   to a scroll container, or to a ScrollArea via `viewportClassName`. */
+
+@property --sf-start {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+@property --sf-end {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+
+@keyframes sf-reveal-start {
+  from {
+    --sf-start: 1;
+  }
+  to {
+    --sf-start: 0;
+  }
+}
+@keyframes sf-reveal-end {
+  from {
+    --sf-end: 0;
+  }
+  to {
+    --sf-end: 1;
+  }
+}
+
+.scroll-fade,
+.scroll-fade-x {
+  --scroll-fade-size: 48px;
+}
+
+/* Static fallback: fade both edges. */
+.scroll-fade {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--scroll-fade-size),
+    #000 calc(100% - var(--scroll-fade-size)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 var(--scroll-fade-size),
+    #000 calc(100% - var(--scroll-fade-size)),
+    transparent 100%
+  );
+}
+.scroll-fade-x {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--scroll-fade-size),
+    #000 calc(100% - var(--scroll-fade-size)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--scroll-fade-size),
+    #000 calc(100% - var(--scroll-fade-size)),
+    transparent 100%
+  );
+}
+
+/* Scroll-aware: the start/end edge stays solid until there's content past it. */
+@supports (animation-timeline: scroll()) {
+  .scroll-fade {
+    mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, var(--sf-start)) 0,
+      #000 var(--scroll-fade-size),
+      #000 calc(100% - var(--scroll-fade-size)),
+      rgba(0, 0, 0, var(--sf-end)) 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, var(--sf-start)) 0,
+      #000 var(--scroll-fade-size),
+      #000 calc(100% - var(--scroll-fade-size)),
+      rgba(0, 0, 0, var(--sf-end)) 100%
+    );
+    animation:
+      sf-reveal-start both linear,
+      sf-reveal-end both linear;
+    animation-timeline: scroll(self), scroll(self);
+    animation-range-start: 0, calc(100% - var(--scroll-fade-size));
+    animation-range-end: var(--scroll-fade-size), 100%;
+  }
+  .scroll-fade-x {
+    mask-image: linear-gradient(
+      to right,
+      rgba(0, 0, 0, var(--sf-start)) 0,
+      #000 var(--scroll-fade-size),
+      #000 calc(100% - var(--scroll-fade-size)),
+      rgba(0, 0, 0, var(--sf-end)) 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      rgba(0, 0, 0, var(--sf-start)) 0,
+      #000 var(--scroll-fade-size),
+      #000 calc(100% - var(--scroll-fade-size)),
+      rgba(0, 0, 0, var(--sf-end)) 100%
+    );
+    animation:
+      sf-reveal-start both linear,
+      sf-reveal-end both linear;
+    animation-timeline: scroll(self inline), scroll(self inline);
+    animation-range-start: 0, calc(100% - var(--scroll-fade-size));
+    animation-range-end: var(--scroll-fade-size), 100%;
+  }
+}

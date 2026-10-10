@@ -3,7 +3,7 @@
   --radius: 0.625rem;
 
   /* Small-box corners between wind4's xs (2px) and md (6px) steps, read by
-     the `rounded-box|glyph` rule in uno.config.ts: checkbox squares and
+     the `rounded-box|glyph` utility in preset.ts: checkbox squares and
      keycaps, and the composer's stop glyph. */
   --radius-box: 5px;
   --radius-glyph: 3px;

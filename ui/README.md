@@ -20,6 +20,75 @@ a liquid "goo" neck by default. That layer is local code (`lib/use-morph.ts`,
 `lib/morph-layers.tsx`, documented by `primitives/morph`), with techniques
 taken from three more MIT projects (see [Morph sources](#morph-sources)).
 
+## Install
+
+```sh
+npm install @justanarthur/modo-ui
+```
+
+React 18 or later is a peer dependency. Import components from the package
+root, or one item per subpath (`@justanarthur/modo-ui/components/button`,
+`@justanarthur/modo-ui/components/overlays/dialog`, …):
+
+```tsx
+import { Button, Switch } from '@justanarthur/modo-ui'
+```
+
+### Styles
+
+Pick one of three ways in. The components are styled with utility classes,
+so either take them prebuilt or let your own Tailwind or UnoCSS generate them
+by scanning the package's `dist/`. Scanning emits each class once, beside your
+own.
+
+**Prebuilt**: no CSS tooling needed. It includes the reset, the tokens, the
+base styles and every utility the components use:
+
+```ts
+import '@justanarthur/modo-ui/styles.css'
+```
+
+**Tailwind CSS v4**: the theme, the token utilities, the `dark:` variant and
+`@source` for the components ship in one file:
+
+```css
+@import "tailwindcss";
+@import "@justanarthur/modo-ui/tailwind.css";
+```
+
+**UnoCSS** (`presetWind4`): add the preset and the components' content, then
+import the tokens and base styles:
+
+```ts
+// uno.config.ts
+import presetModoUi, { modoUiContent } from '@justanarthur/modo-ui/unocss'
+import { defineConfig, presetWind4 } from 'unocss'
+
+export default defineConfig({
+  presets: [presetWind4(), presetModoUi()],
+  content: { inline: [modoUiContent] },
+})
+```
+
+```ts
+import 'virtual:uno.css'
+import '@justanarthur/modo-ui/base.css'
+```
+
+`tokens.css` holds the CSS variables alone.
+
+### Theme
+
+Every color is a `light-dark()` token, so `color-scheme` picks the side: it
+follows the OS until `<html>` (or any subtree) carries `light` or `dark`.
+`dark:` utilities match inside a `.dark` ancestor, so set the class whenever
+you pin dark mode:
+
+```ts
+document.documentElement.classList.toggle('dark', dark)
+document.documentElement.classList.toggle('light', !dark)
+```
+
 ## Source
 
 - Repository: `github.com/mickadesign/fluid-functionalism`
@@ -34,7 +103,8 @@ taken from three more MIT projects (see [Morph sources](#morph-sources)).
 Every vendored file opens with a plain `/* */` header. The header names the
 upstream path and commit, carries the MIT notice, and lists every local
 modification. The vendored code below the header keeps upstream's formatting.
-Files written for this port (`uno.config.ts`, `vite.ts`, `modo.components.tsx`,
+Files written for this port (`preset.ts`, `uno.config.ts`, `vite.ts`, `index.ts`,
+`scripts/build-css.ts`, `modo.components.tsx`,
 `lib/use-controllable-state.ts`, `primitives/code/index.tsx`, the morph files
 in `lib/` (`use-morph.ts`, `reduced-motion.ts`, `morph-layers.tsx`, `morph-part.tsx`, `goo-indicator.tsx`,
 `slot.ts`) and `primitives/morph/index.tsx`, `blocks/sidebar-app/index.tsx`,
@@ -62,8 +132,11 @@ positioning) are ported.
 | Path | What it holds |
 |---|---|
 | `tokens/*.css` | Colors, typography (`--font-sans`, `--text-*`), motion (`--duration-*`), radius and spacing. |
-| `global.css` | Theme switching, base styles, focus fallback, scrollbars, shimmer/spinner keyframes and `.scroll-fade`. |
-| `uno.config.ts`, `vite.ts` | The UnoCSS setup (see below). |
+| `base.css` | Theme switching, base styles, focus fallback, scrollbars, shimmer/spinner keyframes and `.scroll-fade`. Shipped in the package. |
+| `global.css` | The docs site's stylesheet (`modo.config.ts` `css`): imports `base.css`, then the modo-only focus revert and the docs chrome. |
+| `preset.ts` | The UnoCSS preset (theme and token utilities), shipped as `@justanarthur/modo-ui/unocss`. |
+| `uno.config.ts`, `vite.ts` | The UnoCSS setup of the docs site and the prebuilt CSS (see below). |
+| `index.ts`, `bunup.config.ts`, `scripts/build-css.ts` | The package build: `bun run build` writes the components, their types and the stylesheets to `dist/`. The docs site builds with `bun run build:docs` into `docs-dist/`. |
 | `lib/` | FF's shared system files (upstream `lib/`, `hooks/` and the fluid-hover highlight, flat, upstream names), imported relatively by items. modo only scans the tier folders, so it never mistakes them for items. |
 | `modo.components.tsx` | Components only the docs site uses: the `Icon`, `Select` and `DocsNav` shell-slot adapters and the `ThemeSwitcher` panel item, picked in `modo.config.ts` by export name (`./modo.components.tsx#Select`). |
 | `primitives/<id>/` | FF's "System" pages: `index.tsx` (component + TSDoc prose) and `examples.mdx`, pulled in by `@example {@include ./examples.mdx}`. |
@@ -103,10 +176,10 @@ positioning) are ported.
 | Upstream | Local |
 |---|---|
 | `app/globals.css` §1 tokens | `tokens/colors.css`, with HEX converted to oklch. The surface ladder and shadows live in `primitives/surface/surface.css`. Local addition: the `--status-*` roles (toast states), by reference to the badge palette, `--destructive` and `--brand`. |
-| `app/globals.css` §2 theme switching | `global.css` (`color-scheme`, `--overlay`) and `surface.css` (`--shadow-N` per scheme) |
-| `app/globals.css` §3 `@theme inline` | `uno.config.ts` `theme` |
-| `app/globals.css` `--fs-*` + `@utility text-*` | `tokens/typography.css` `--text-*` and a rule in `uno.config.ts` |
-| `app/globals.css` §4–6 | `global.css` |
+| `app/globals.css` §2 theme switching | `base.css` (`color-scheme`, `--overlay`) and `surface.css` (`--shadow-N` per scheme) |
+| `app/globals.css` §3 `@theme inline` | `preset.ts` `theme` |
+| `app/globals.css` `--fs-*` + `@utility text-*` | `tokens/typography.css` `--text-*` and `preset.ts` `utilities` |
+| `app/globals.css` §4–6 | `base.css` |
 | `registry/default/lib/springs.ts` (as CSS) | `tokens/motion.css` (plus `--duration-goo` / `--duration-goo-exit`) |
 
 ### Items
@@ -173,7 +246,7 @@ only what is specific to it:
 | `Table` | `registry/default/table.tsx` | `components/table/index.tsx` | statics `.Header/.Body/.Row/.Head/.Cell`; `TableProps` / `TableRowProps` exported |
 | `Tabs` | `registry/base/tabs.tsx` | `components/navigation/tabs/index.tsx` | `defaultSelectedIndex` added as the index-mode twin of the existing `defaultValue`; indicator and hover pill are `GooIndicator`s (the hover pill returns to the active tab as it fades); statics `.List/.Item/.Panel` |
 | `TabsSubtle` | `registry/base/tabs-subtle.tsx` | `components/navigation/tabs-subtle/index.tsx` | uncontrolled mode; panels may be authored inside the root (below); the tab list's ref write goes through `MutableRefObject`; selected and hover pills are `GooIndicator`s; statics `.Item/.Panel` |
-| `ThinkingIndicator` | `registry/default/thinking-indicator.tsx` | `components/thinking-indicator/index.tsx` | upstream prop JSDoc kept (it already matches the FF API table); the `.shimmer-text` rule it rides lives in `global.css`; local `variant="goo"` (three dots merging and splitting through `GooFilter`, plain label; default stays `shimmer`); reduced motion also follows MotionConfig |
+| `ThinkingIndicator` | `registry/default/thinking-indicator.tsx` | `components/thinking-indicator/index.tsx` | upstream prop JSDoc kept (it already matches the FF API table); the `.shimmer-text` rule it rides lives in `base.css`; local `variant="goo"` (three dots merging and splitting through `GooFilter`, plain label; default stays `shimmer`); reduced motion also follows MotionConfig |
 | `Toast` | — (local; after Sileo, see [Morph sources](#morph-sources)) | `components/overlays/toast/index.tsx` | Base UI Toast (queue, timers, swipe, announcements) with Sileo's pill melting into a body through the shared `GooFilter`; autopilot expand/collapse, six states on the `--status-*` tokens, promise toasts; `Toast` is the provider + viewport, `Toast.Trigger` shows one, `useToast()` the imperative API |
 | `Tooltip` | `registry/base/tooltip.tsx` | `components/overlays/tooltip/index.tsx` | `className`/`children` docs filled in; statics `.Provider` / `.PortalContainer`; the slide + fade replaced by the morph layer (goo from the trigger on `spring.goo`, `from` / `effect` / `tier` props; `followCursor` tooltips fade); a hand-off between grouped tooltips skips the morph (Base UI's `data-instant`) |
 
@@ -275,13 +348,15 @@ and the Radix-only scroll-lock margin fix (`body[data-scroll-locked]`).
 `surface.css` does keep the inset shadow variants (`--shadow-light-2-inset`,
 `--shadow-light-3-inset` and the per-scheme `--shadow-2-inset` /
 `--shadow-3-inset` aliases), but no ported item consumes them and
-`uno.config.ts` maps no utility to them.
+`preset.ts` maps no utility to them.
 
 ## Tailwind → UnoCSS
 
-`uno.config.ts` uses `presetWind4` (UnoCSS's Tailwind v4 preset) with
+`uno.config.ts` uses `presetWind4` (UnoCSS's Tailwind v4 preset) and
+`preset.ts` (the theme and token utilities the package ships) with
 `outputToCssLayers`. `vite.ts` adds the UnoCSS Vite plugin to modo's Vite
-config.
+config. `scripts/build-css.ts` runs the same config over `dist/` for the
+prebuilt `styles.css`, and turns `preset.ts` into `tailwind.css`.
 
 - **Dark mode.** `dark: 'class'` produces `.dark .dark\:x`, the same "inside a
   `.dark` ancestor" contract as FF's `@custom-variant dark (&:is(.dark *))`.
@@ -295,7 +370,8 @@ config.
 - **Load order.** The same plugin prepends `import 'virtual:uno.css'` to
   modo's `\0virtual:modo-config-css` module, so UnoCSS's
   `@layer properties, theme, base, default` statement lands before
-  `global.css` and fixes the order of the layer its `@layer base` rules join.
+  `global.css` (and the `base.css` it imports) and fixes the order of the
+  layer its `@layer base` rules join.
   `vite.ts` is loaded by Node with type stripping, so it may only use erasable
   TypeScript and hands `uno.config.ts` to UnoCSS by absolute path.
 - **Colors.** Theme colors point at the CSS variables directly (for example
@@ -317,7 +393,7 @@ config.
   `font-variation-settings` (the Inter weight ladder) are added through
   `theme.property`.
 - **Layers.** UnoCSS declares `@layer properties, theme, base, default` and
-  puts its reset in `base`. `global.css`'s `@layer base` rules join that layer
+  puts its reset in `base`. `base.css`'s `@layer base` rules join that layer
   after the reset, so utilities (in `default`) still win. This is the same
   arrangement as Tailwind's base/utilities split.
 - **Content.** UnoCSS scans `{lib,primitives,components,blocks}/**/*.{ts,tsx,mdx}`
@@ -483,7 +559,7 @@ tables become the prop docs instead). Other per-item deviations:
   `.dark` class on a subtree still forces that scheme, which is what the
   forced-theme previews use.
 - `transition-[…]` with a CSS property outside wind4's list needs a
-  `theme.property` entry in `uno.config.ts`.
+  `theme.property` entry in `preset.ts`.
 - Cross-item context (a `SizeProvider` example shrinking a Button, a surface
   level crossing from Dialog into Dropdown) depends on modo bundling the whole
   design system in **one** esbuild build with `splitting: true`, so a shared
@@ -507,13 +583,13 @@ The runner kills stray `modo dev` processes, splices a temporary
 upward. To run the package on its own, without the switcher:
 
 ```sh
-cd demo/design-systems/ui && MODO_PORT=5180 bunx modo dev
+cd ui && MODO_PORT=5180 bunx modo dev
 ```
 
 ## How to verify
 
 ```sh
-cd demo/design-systems/ui && bunx tsc -p . --noEmit
+cd ui && bunx tsc -p . --noEmit
 ```
 
 modo reports parser and build problems itself, as `[modo:bundle]` lines in

@@ -7,7 +7,7 @@
  *   `../../lib/*`.
  * - Prop JSDoc kept from upstream (it matches the FF docs API table);
  *   modo TSDoc and examples on `ThinkingIndicator`. The `.shimmer-text` rule
- *   the label rides lives in global.css.
+ *   the label rides lives in base.css.
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`;
  *   `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
