@@ -1,0 +1,138 @@
+import Craft from './index'
+import { BoldTabs, IconCopy, PlainPopover, RowHover, ScalePress, SnapSwitch } from './demos'
+import Button from '../../components/button'
+import InputCopy from '../../components/inputs/input-copy'
+import Switch from '../../components/inputs/switch'
+import TabsSubtle from '../../components/navigation/tabs-subtle'
+import Popover from '../../components/overlays/popover'
+import FluidHover from '../fluid-hover'
+import Elevated from '../surface'
+
+# Weight without reflow
+
+Click through the tabs on each side and watch the labels next to the one you picked.
+
+<Craft
+  bad={<BoldTabs labels={['Overview', 'Activity', 'Settings']} />}
+  badNote="The selected label gets wider, so every tab after it shifts."
+  good={
+    <TabsSubtle defaultSelectedIndex={0}>
+      {['Overview', 'Activity', 'Settings'].map((label, i) => (
+        <TabsSubtle.Item key={label} index={i} label={label} />
+      ))}
+    </TabsSubtle>
+  }
+  goodNote="An invisible semibold copy holds the width, and the weight is paired with an optical size. Nothing moves."
+/>
+
+# Hover that never blinks
+
+Sweep the pointer slowly down each list, through the gaps between rows.
+
+<Craft
+  bad={<RowHover items={['Profile', 'Billing', 'Team', 'Notifications']} />}
+  badNote="Each row lights itself, so the light blinks off in every gap and jumps from row to row."
+  good={<FluidHover className="w-56 p-1" items={['Profile', 'Billing', 'Team', 'Notifications']} />}
+  goodNote="One highlight sits on the nearest row and melts to the next. A click in a gap lands on the lit row."
+/>
+
+# Press that keeps its shape
+
+Press and hold the short button and the wide one on each side.
+
+<Craft
+  bad={<ScalePress />}
+  badNote="A scale warps with width: the wide button loses 10px sideways and under 2px vertically."
+  good={
+    <div className="flex w-64 flex-col items-start gap-3">
+      <Button>Save</Button>
+      <Button className="w-full">Continue to checkout</Button>
+    </div>
+  }
+  goodNote="The fill shrinks exactly 1px per side at any width, releasing slower than it presses."
+/>
+
+# Copy from anywhere
+
+Copy the value on each side.
+
+<Craft
+  bad={<IconCopy value="npm i @justanarthur/modo" />}
+  badNote="Only a 28px icon copies, and its feedback snaps from one glyph to the other."
+  good={
+    <div className="w-64">
+      <InputCopy value="npm i @justanarthur/modo" />
+    </div>
+  }
+  goodNote="The whole field is the target, and the glyph melts into a check on a success disc."
+/>
+
+# Overlays come from somewhere
+
+Open and close the panel on each side.
+
+<Craft
+  bad={<PlainPopover label="Details" title="Shipping" description="Arrives in 2–3 working days." />}
+  badNote="The panel pops in beside the button with nothing linking the two, and vanishes the same way."
+  good={
+    <Popover>
+      <Popover.Trigger render={<Button variant="secondary">Details</Button>} />
+      <Popover.Content className="w-60">
+        <Popover.Title>Shipping</Popover.Title>
+        <Popover.Description>Arrives in 2–3 working days.</Popover.Description>
+      </Popover.Content>
+    </Popover>
+  }
+  goodNote="The panel melts out of the button through a liquid neck, lets go, and closes back into it."
+/>
+
+# Indicators travel
+
+Toggle each switch a few times.
+
+<Craft
+  bad={<SnapSwitch label="Notifications" />}
+  badNote="The thumb teleports from one end to the other. There is no movement to read the change from."
+  good={<Switch label="Notifications" />}
+  goodNote="The thumb travels on a spring and stretches as it goes, so the change reads at a glance."
+/>
+
+# Surfaces lift at any depth
+
+A menu inside a dialog, on each side. Check it in both themes.
+
+<Craft
+  bad={
+    <div className="flex w-60 flex-col gap-3 rounded-xl bg-surface-5 p-4 shadow-surface-5">
+      <span className="text-subtitle weight-semibold text-foreground">Move to</span>
+      <div className="flex flex-col rounded-xl bg-surface-5 p-1">
+        <span className="flex h-9 items-center px-2 text-body text-foreground">Inbox</span>
+        <span className="flex h-9 items-center px-2 text-body text-foreground">Archive</span>
+        <span className="flex h-9 items-center px-2 text-body text-foreground">Trash</span>
+      </div>
+    </div>
+  }
+  badNote="The menu paints a fixed level. Inside the dialog it lands on the dialog's own level and melts into it."
+  good={
+    <Elevated offset={4} className="flex w-60 flex-col gap-3 rounded-xl p-4">
+      <span className="text-subtitle weight-semibold text-foreground">Move to</span>
+      <Elevated offset={2} shadowLevel={3} className="flex flex-col rounded-xl p-1">
+        <span className="flex h-9 items-center px-2 text-body text-foreground">Inbox</span>
+        <span className="flex h-9 items-center px-2 text-body text-foreground">Archive</span>
+        <span className="flex h-9 items-center px-2 text-body text-foreground">Trash</span>
+      </Elevated>
+    </Elevated>
+  }
+  goodNote="The menu lifts 2 levels above whatever it sits on, so it reads as a menu at any depth."
+/>
+
+# The ring is for the keyboard
+
+Click each button, then press Tab to reach it from the keyboard.
+
+<Craft
+  bad={<Button variant="secondary" className="focus:ring-1 focus:ring-focus-ring">Save draft</Button>}
+  badNote="The ring shows on every click and stays there, so a mouse user sees a stuck outline."
+  good={<Button variant="secondary">Save draft</Button>}
+  goodNote="The ring appears only when focus comes from the keyboard, where it tells you where you are."
+/>
