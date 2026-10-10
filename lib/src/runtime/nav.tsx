@@ -2,8 +2,9 @@ import { config } from 'virtual:modo-config'
 import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
+import type { ReactNode } from 'react'
 import { TIERS } from '../lib/tiers'
-import { byGroup } from './groups'
+import { groupTree } from './groups'
 import { usePath, withBase } from './router'
 import { cap } from './text'
 
@@ -66,15 +67,20 @@ function NavSection({
           All {title.toLowerCase()}
         </Item>
       ) : null}
-      {byGroup(items).map(g =>
-        g.title ? (
-          <Section key={g.title} title={g.title}>
-            {g.items.map(link)}
-          </Section>
-        ) : (
-          g.items.map(link)
-        ),
-      )}
+      {groups(groupTree(items))}
     </Section>
   )
+
+  // A plain function, not a component: a host's Section may inspect its
+  // children for Items and Sections.
+  function groups(tree: ReturnType<typeof groupTree<(typeof items)[number]>>): ReactNode[] {
+    return [
+      ...tree.items.map(link),
+      ...tree.groups.map(g => (
+        <Section key={g.title} title={g.title}>
+          {groups(g)}
+        </Section>
+      )),
+    ]
+  }
 }

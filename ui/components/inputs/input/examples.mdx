@@ -1,0 +1,54 @@
+import Input, { InputGroup, Label } from './index'
+import { Mail, Search } from 'lucide-react'
+
+# Basic
+
+A single input with a leading icon.
+
+<div className="w-72 max-w-full">
+  <Input placeholder="Search teamspaces..." icon={Search} />
+</div>
+
+# With a Label
+
+`Label` pairs with the input through `htmlFor` and `id`.
+
+<div className="flex flex-col gap-1 w-72 max-w-full">
+  <Label htmlFor="input-email">Email</Label>
+  <Input id="input-email" placeholder="you@example.com" icon={Mail} />
+</div>
+
+# Invalid
+
+`invalid` turns the field destructive.
+
+<div className="flex flex-col gap-1 w-72 max-w-full">
+  <Label htmlFor="input-invalid" invalid>
+    Email
+  </Label>
+  <Input id="input-invalid" placeholder="you@example.com" icon={Mail} defaultValue="bad@" invalid />
+</div>
+
+# Group
+
+`InputGroup` stacks labelled fields; the hover highlight follows the pointer from field to field.
+
+<InputGroup>
+  <InputGroup.Field index={0} label="Name" placeholder="Your name" />
+  <InputGroup.Field index={1} label="Email" placeholder="you@example.com" icon={Mail} />
+</InputGroup>
+
+# Group Error
+
+An `error` message renders below the field and marks it invalid.
+
+<InputGroup>
+  <InputGroup.Field
+    index={0}
+    label="Email"
+    placeholder="you@example.com"
+    icon={Mail}
+    defaultValue="bad@"
+    error="Please enter a valid email address."
+  />
+</InputGroup>

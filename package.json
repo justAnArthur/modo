@@ -7,10 +7,11 @@
   "workspaces": [
     "lib",
     "demo",
-    "demo/design-systems/*"
+    "demo/design-systems/*",
+    "ui"
   ],
   "scripts": {
-    "build": "bun --filter '@justanarthur/modo' build",
+    "build": "bun --filter '@justanarthur/modo' build && bun --filter '@justanarthur/modo-ui' build",
     "dev": "bun --filter '@modo/demo' dev",
     "check": "bun --filter '*' check",
     "test": "bun --filter '@justanarthur/modo' test",

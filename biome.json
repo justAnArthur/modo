@@ -40,7 +40,7 @@
   "plugins": [
     {
       "path": "./biome/arbitrary-values.grit",
-      "includes": ["**/demo/**", "**/lib/templates/**"]
+      "includes": ["**/demo/**", "ui/**", "**/lib/templates/**"]
     },
     "./biome/literal-colors.grit",
     {

@@ -5,12 +5,12 @@ modo turns a design system (DS) into its own docs site. The lib brings no conten
 ## layout
 
 - `lib/` — the npm package `@justanarthur/modo` (bin `modo`): public API and schemas (`src/lib`), Vite plugins (`src/plugins`), the renderer, a plain Vite SPA with its structural CSS (`src/runtime`), scaffold templates, the CLI.
+- `ui/` — the npm package `@justanarthur/modo-ui`: Fluid Functionalism (Base UI) on UnoCSS (springs, fluid hover, size ladder, surface elevation), a DS that is also published. `bun run build` writes the components, types and stylesheets to `dist/` (`index.ts` barrel, `bunup.config.ts`, `scripts/build-css.ts`); its docs build with `--out`, so they never touch `dist/`. `preset.ts` is the single source of the theme and token utilities: `uno.config.ts`, the shipped UnoCSS preset and the generated `tailwind.css` all read it. `base.css` holds the theme and base styles shipped to consumers; `global.css` imports it and adds the docs chrome. Its own guide is `ui/AGENTS.md`, its design language `ui/DESIGN.md`, its rules shown as bad / good pairs on the `primitives/craft` page; building in it follows the `modo-ui` skill (`.claude/skills/modo-ui`).
 - `demo/` — the harness. `scripts/run-design-systems.ts` runs the lib's CLI once per DS (one dev server per port, or one static build each) and splices in the demo-switcher. `components/demo-switcher/` renders `shell.Select` to navigate between peers.
-- `demo/design-systems/<name>/` — one workspace package per DS, each with its own deps:
+- `demo/design-systems/<name>/` — one workspace package per DS, each with its own deps (the runner also picks up `ui/`):
   - `filled/` — the minimal reference.
   - `shadcn/` — shadcn/ui pulled with the real CLI (Tailwind v4).
   - `fluid-functionalism/` — the @fluid registry layer on its own shadcn foundation.
-  - `ui/` — Fluid Functionalism (Base UI) on UnoCSS: springs, fluid hover, size ladder, surface elevation.
   - `mui/` — adapters over `@mui/material`; `scripts/extract-tokens.ts` extracts the default theme into token files.
 
 ## code style (sparse)
@@ -67,6 +67,8 @@ Two vocabularies:
   - `text-syntax-*` (code highlighting), `font-mono`;
   - `spring.*` and `--duration-*`;
   - the morph layer (`lib/use-morph.ts` + `MorphSurface`, docs `primitives/morph`) and the liquid indicators (`lib/goo-indicator.tsx`): overlays grow from their source and travelling indicators melt between items through them, never through hand-rolled animation.
+  - the field ladder (`lib/field-classes.ts`): a text field puts `fieldVariants` on the box around its control and stamps `data-active` / `data-invalid` / `data-disabled` (a leading icon takes `fieldIconClasses`), never its own hover, focus or invalid fills.
+  - dates and times (`components/inputs/date-time/`): pickers sit on react-day-picker, styled through its `classNames` and custom components (never its stylesheet); they take a react-day-picker / date-fns `locale`, open through the group's `picker-shell.tsx`, and list months, years, hours and minutes in a `ScrollColumn` (`lib/scroll-column.tsx`).
 
 Rules:
 
@@ -89,7 +91,7 @@ Rules:
 
 ## docs (TSDoc)
 
-- An item is `<tier>/[<group>/]<name>/index.tsx`: a default-exported component plus a JSDoc block.
+- An item is `<tier>/[<group>/…]<name>/index.tsx`: a default-exported component plus a JSDoc block.
   - The block anchors to the default export's declaration (function or const), wherever `export default` sits.
   - The parser extracts `name`, `description`, `props` and `examples`.
 - **One place per kind:** the TSDoc comment is the item's only prose (summary paragraph = page lead, the rest = body). Examples live in a co-located `examples.mdx`, included with `@example {@include ./examples.mdx}`. Reserve inline `@example` code for a few short cases.
@@ -124,7 +126,7 @@ Rules:
 
 ## lib conventions
 
-- **Workspaces:** bun. The root `package.json` `workspaces` lists `lib`, `demo` and `demo/design-systems/*`.
+- **Workspaces:** bun. The root `package.json` `workspaces` lists `lib`, `demo`, `demo/design-systems/*` and `ui`.
 - **Lib package:**
   - ESM, `react-jsx`, `jsxImportSource: 'react'`.
   - bunup builds `dist/` from `src/exports/*`; the runtime and plugins ship as source, unbundled.
@@ -158,8 +160,8 @@ Rules:
   - A bare shorthand like `--radius` joins its prefix family.
   - In a group file, an unprefixed var belongs to that group (`--sm` in `spacing.css`); a var whose prefix names another group goes there (`--radius-sm` in `colors.css`).
 - `<tier>/<name>/index.tsx` — the item. Tiers are `primitives/`, `components/` and `blocks/`, auto-discovered.
-  - Optional group folder: `<tier>/<group>/<name>/index.tsx`. A folder without an `index.tsx` is a group; groups don't nest.
-  - A group is a nested sidebar `Section` and a headed section of the tier overview (`form-controls` → "Form controls"). Ungrouped items come first, then groups by folder name.
+  - Optional group folders: `<tier>/<group>/<name>/index.tsx`, nesting further (`components/inputs/date-time/calendar/`). A folder without an `index.tsx` is a group.
+  - A group is a nested sidebar `Section` and a headed section of the tier overview (`form-controls` → "Form controls"), a nested group one level deeper in both. Each level lists its own items first, then its groups by folder name.
   - The id stays `<name>`, so urls, bundle keys and `tier:id` don't change; ids stay unique per tier across groups.
   - Compound parts hang off the default export (`Card.Header = …`; TypeScript types the assignments). For a forwardRef const, cast the `Object.assign` result to a type with the parts.
   - Examples may use compound JSX.
@@ -179,7 +181,7 @@ Rules:
 
 ## commits
 
-- Conventional commits drive releases: any commit scoped to the lib (`lib`, `modo`, `@justanarthur/modo`) bumps and publishes it, `refactor`/`docs`/`chore` included (`feat`/`perf` minor, `!` major, the rest patch); other scopes and unscoped commits don't. `[skip bump]` in the message suppresses it. Details in `.github/AGENTS.md`.
+- Conventional commits drive releases: any commit scoped to the lib (`lib`, `modo`, `@justanarthur/modo`) bumps and publishes it, and one scoped to ui (`ui`, `modo-ui`, `@justanarthur/modo-ui`) bumps and publishes `@justanarthur/modo-ui`, `refactor`/`docs`/`chore` included (`feat`/`perf` minor, `!` major, the rest patch); other scopes (`demo`) and unscoped commits don't. `[skip bump]` in the message suppresses it. Details in `.github/AGENTS.md`.
 
 ## chrome hooks (data-modo attrs)
 

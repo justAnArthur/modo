@@ -1,0 +1,34 @@
+import Calendar from './index'
+import { de } from 'react-day-picker/locale'
+
+# Single day
+
+Scroll through the months, or jump with the month and year columns.
+
+<Calendar mode="single" selected={new Date(2026, 9, 9)} />
+
+# Range
+
+`mode="range"` picks a span of days.
+
+<Calendar mode="range" selected={{ from: new Date(2026, 9, 9), to: new Date(2026, 9, 15) }} />
+
+# German
+
+A react-day-picker locale names the months and weekdays and starts the week on its first day.
+
+<Calendar mode="single" locale={de} selected={new Date(2026, 9, 9)} />
+
+# Columns first
+
+`columnsSide="start"` stands the year and month columns before the days.
+
+<Calendar mode="single" columnsSide="start" selected={new Date(2026, 9, 9)} />
+
+# Narrow
+
+Without room for the columns, they turn into strips above the days.
+
+<div className="w-72 max-w-full">
+  <Calendar mode="single" selected={new Date(2026, 9, 9)} />
+</div>

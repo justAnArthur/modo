@@ -13,3 +13,4 @@ dist
 .peers.json
 .zcode
 .worktrees/
+docs-dist

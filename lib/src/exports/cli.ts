@@ -17,12 +17,13 @@ Usage:
   modo init <dir> <name>   Scaffold it in <dir>/<name>
   modo dev                 Start the docs dev server
   modo build               Build the docs site into ./dist
-  modo add <kind> <name>   Add a primitive, component, block or token (<group>/<name> groups an item)
+  modo add <kind> <name>   Add a primitive, component, block or token (<group>/[<group>/]<name> groups an item)
   modo check               Validate modo.config.ts
 
 Options:
   --config <file>          dev, build, check: the config file (default modo.config.ts)
   --base <path>            build: public path the site is served under (default /)
+  --out <dir>              build: the output dir (default ./dist)
   --help, -h               Show this help
   --version, -v            Print version
 `
@@ -89,11 +90,12 @@ async function runInit(args: string[]) {
 async function runVite(mode: 'dev' | 'build', args: string[] = []) {
   const cwd = process.cwd()
   const configPath = configOf(args)
+  const out = flag(args, '--out')
   await loadModoConfig(configPath)
   process.env.MODO_USER_ROOT = cwd
   process.env.MODO_CONFIG_PATH = configPath
   process.chdir(runtimeRoot)
-  await importViteAndRun(runtimeRoot, mode, flag(args, '--base'))
+  await importViteAndRun(runtimeRoot, mode, flag(args, '--base'), out && resolve(cwd, out))
 }
 
 function configOf(args: string[]): string {
@@ -105,7 +107,7 @@ function flag(args: string[], name: string): string | undefined {
   return i >= 0 ? args[i + 1] : undefined
 }
 
-// An item is <tier>/[<group>/]<id>/index.tsx with its examples beside it; a
+// An item is <tier>/[<group>/…]<id>/index.tsx with its examples beside it; a
 // token group is a flat tokens/<id>.css.
 const TIERS: Record<string, string> = { primitive: 'primitives', component: 'components', block: 'blocks' }
 
@@ -114,9 +116,8 @@ async function runAdd(args: string[]) {
   if (!kind || !name || !(kind in TIERS || kind === 'token')) {
     throw new Error('add requires `<kind> <name>`, kind one of primitive, component, block, token')
   }
-  // `overlays/dialog` puts the item in a group folder; groups don't nest.
+  // `overlays/dialog` puts the item in a group folder, `inputs/date-time/calendar` in a nested one.
   const path = name.split('/').map(kebab)
-  if (path.length > 2) throw new Error('add takes `<name>` or `<group>/<name>`')
   const id = path.at(-1)!
   const dir = path.join('/')
   const fill = (stub: string) =>
@@ -146,7 +147,7 @@ async function runCheck(args: string[]) {
   process.stdout.write(`OK — ${configPath} is valid (name="${cfg.name}")\n`)
 }
 
-async function importViteAndRun(rt: string, mode: 'dev' | 'build', base?: string) {
+async function importViteAndRun(rt: string, mode: 'dev' | 'build', base?: string, outDir?: string) {
   const configFile = join(rt, 'vite.config.ts')
   const vite = await import('vite')
   if (mode === 'dev') {
@@ -155,7 +156,7 @@ async function importViteAndRun(rt: string, mode: 'dev' | 'build', base?: string
     server.printUrls()
     return
   }
-  await vite.build({ configFile, base })
+  await vite.build({ configFile, base, build: { outDir } })
 }
 
 function kebab(s: string): string {

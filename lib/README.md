@@ -23,10 +23,11 @@ npx @justanarthur/modo init my-ds
 # inside the project
 modo dev                    # dev server
 modo add primitive badge    # primitives/badge/index.tsx + examples.mdx (also component, block, token)
-modo add component overlays/dialog  # components/overlays/dialog/: a group folder
+modo add component overlays/dialog  # components/overlays/dialog/: a group folder (groups nest: inputs/date-time/calendar)
 modo check                  # validate modo.config.ts
 modo build                  # static site in ./dist, every route its own page
 modo build --base /my-ds/   # …served under a sub-path, e.g. a GitHub Pages project site
+modo build --out docs-dist  # …into another dir, when ./dist holds your package build
 ```
 
 Run `npx @justanarthur/modo`, not `npx modo`: the unscoped `modo` on npm is someone else's package. The CLI reads `modo.config.ts` from the project root (`--config <file>` for another); the [scaffolded config](https://github.com/justAnArthur/modo/blob/main/lib/templates/default/modo.config.ts) is a starting point.
@@ -43,7 +44,7 @@ export default defineConfig({
 })
 ```
 
-Tokens, primitives, components and blocks are discovered by directory (`tokens/`, `primitives/`, `components/`, `blocks/`). An item folder may sit one level down in a group folder (`components/overlays/dialog/`); the group becomes a sidebar sub-section and a heading on the tier overview. `examples` points at a module whose named exports (e.g. `export { Plus, Search } from 'lucide-react'`) are in scope in every `@example`, next to your items.
+Tokens, primitives, components and blocks are discovered by directory (`tokens/`, `primitives/`, `components/`, `blocks/`). An item folder may sit down in group folders (`components/overlays/dialog/`, nested `components/inputs/date-time/calendar/`); each group becomes a sidebar sub-section and a heading on the tier overview. `examples` points at a module whose named exports (e.g. `export { Plus, Search } from 'lucide-react'`) are in scope in every `@example`, next to your items.
 
 The CLI accepts any user content — `modo` ships no design tokens, no React components, and no copy. You own the visual layer end-to-end.
 
