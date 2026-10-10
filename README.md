@@ -15,7 +15,7 @@ proven against real-world design systems — see `demo/design-systems/` and `ui/
 - **filled** — minimal reference DS
 - **shadcn/ui** — pulled with the real shadcn CLI (Tailwind v4), reorganized into modo structure
 - **fluid-functionalism** — the `@fluid` registry layer (motion springs, fluid hover) on its own shadcn foundation
-- **ui** — Fluid Functionalism (Base UI) on UnoCSS: springs, fluid hover, size ladder, surface elevation. Published as [`@justanarthur/modo-ui`](./ui#install)
+- **ui** — Fluid Functionalism (Base UI) on UnoCSS: springs, fluid hover, size ladder, surface elevation, plus a morph layer (overlays grow out of their trigger, indicators melt between items). Published as [`@justanarthur/modo-ui`](./ui#install). it ships its design language as [`DESIGN.md`](ui/DESIGN.md), an agent guide in [`AGENTS.md`](ui/AGENTS.md) with the [`modo-ui` skill](.claude/skills/modo-ui/SKILL.md), and a Craft page of bad / good pairs
 - **MUI** — adapters over `@mui/material`, default theme extracted into token files
 
 ## getting started

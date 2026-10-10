@@ -105,7 +105,7 @@ upstream path and commit, carries the MIT notice, and lists every local
 modification. The vendored code below the header keeps upstream's formatting.
 Files written for this port (`preset.ts`, `uno.config.ts`, `vite.ts`, `index.ts`,
 `scripts/build-css.ts`, `modo.components.tsx`,
-`lib/use-controllable-state.ts`, `primitives/code/index.tsx`, the morph files
+`lib/use-controllable-state.ts`, `primitives/code/index.tsx`, `primitives/craft/*`, the morph files
 in `lib/` (`use-morph.ts`, `reduced-motion.ts`, `morph-layers.tsx`, `morph-part.tsx`, `goo-indicator.tsx`,
 `slot.ts`) and `primitives/morph/index.tsx`, `blocks/sidebar-app/index.tsx`,
 and the local components marked "— (local)" below) use this repo's style: single quotes and no semicolons.
@@ -131,6 +131,8 @@ positioning) are ported.
 
 | Path | What it holds |
 |---|---|
+| `AGENTS.md` | The ui-specific guide for coding agents (where things live, the rules that matter most, the checks); `CLAUDE.md` imports it. |
+| `DESIGN.md` | The design language in Google's [DESIGN.md](https://github.com/google-labs-code/design.md) format: the tokens as front matter, the rules as prose. Agents building here follow the `modo-ui` skill (`.claude/skills/modo-ui` at the repo root). |
 | `tokens/*.css` | Colors, typography (`--font-sans`, `--text-*`), motion (`--duration-*`), radius and spacing. |
 | `base.css` | Theme switching, base styles, focus fallback, scrollbars, shimmer/spinner keyframes and `.scroll-fade`. Shipped in the package. |
 | `global.css` | The docs site's stylesheet (`modo.config.ts` `css`): imports `base.css`, then the modo-only focus revert and the docs chrome. |
@@ -215,6 +217,7 @@ only what is specific to it:
 | `Motion` | `registry/default/lib/springs.ts` + `app/docs/motion/page.tsx` | `primitives/motion/index.tsx` | `Motion` is local demo code (FF ships none): it plays one tier's enter spring and exit tween on its children, adding `defaultShow`, `sameExit` and `reducedMotion`; `spring` / `exitFallbackMs` re-exported from the vendored `springs.ts`; the ball-on-track and fake-modal visuals become show/hide of arbitrary children |
 | `Morph` | — (local; see [Morph sources](#morph-sources)) | `primitives/morph/index.tsx` | a docs stage like `Motion`: a trigger and a panel playing one `from` × `effect` pair over `lib/use-morph.ts`; static `.Part` (= `MorphPart`); also documents the liquid indicators (`lib/goo-indicator.tsx`) |
 | `Code` | — (local; FF has no code item) | `primitives/code/index.tsx` | sugar-high tokens colored by the `--syntax-*` tokens, one surface step above its substrate; also the docs chrome's Code slot |
+| `Craft` | — (local; after the before/after pairs on fluidfunctionalism.com/docs/skill) | `primitives/craft/index.tsx` (+ `demos.tsx`) | a docs stage: a bad and a good version side by side with a one-line verdict each; the bad sides live in `demos.tsx` and break one rule each on purpose, the good sides are this package's items |
 
 #### components
 
@@ -313,6 +316,7 @@ becomes the one block.
 | primitives | `motion` (Motion) | `lib/springs.ts` | motion |
 | primitives | `code` (Code) | — (local, sugar-high) | — |
 | primitives | `morph` (Morph) | — (local, `lib/use-morph.ts`) | — |
+| primitives | `craft` (Craft) | — (local, bad/good pairs) | skill (before/after) |
 | components | accordion, button, checkbox-group, combobox, dialog, dropdown, radio-group, select, slider, switch, tabs, tabs-subtle, tooltip | `registry/base/<id>.tsx` | same slug |
 | components | badge, card, color-picker, input-copy, input-message, table, thinking-indicator | `registry/default/<id>.tsx` | same slug |
 | components | `input` (Input, Label, InputGroup) | `registry/default/input-group.tsx` | input-group |
