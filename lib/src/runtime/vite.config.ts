@@ -6,6 +6,7 @@ import { loadModoConfig } from '../lib/config.loader'
 import { createBundler } from '../plugins/bundle'
 import { configPlugin } from '../plugins/config'
 import { itemsPlugin } from '../plugins/items'
+import { pagesPlugin } from '../plugins/pages'
 import { shellPlugin } from '../plugins/shell'
 import { tokensPlugin } from '../plugins/tokens'
 
@@ -45,6 +46,7 @@ export default defineConfig(async () => {
       configPlugin({ userRoot: USER_ROOT, configPath: CONFIG_PATH }),
       tokensPlugin({ userRoot: USER_ROOT }),
       itemsPlugin({ userRoot: USER_ROOT, bundler }),
+      pagesPlugin({ bundler }),
       shellPlugin({ libDir: LIB_DIR, bundler }),
       react(),
     ],

@@ -11,6 +11,7 @@ import type { SiteConfig } from '../lib/schema'
 import { TIERS, type Tier } from '../lib/tiers'
 import type { ParsedExample, ParsedItem } from '../lib/tsdoc'
 import { remarkModoExamples } from './mdx-examples'
+import { pageEntries, pagesMdx } from './pages'
 
 // One esbuild build for the whole design system: every item, every shell /
 // panel module and the `examples` scope module are entry points of the same
@@ -147,6 +148,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     }
 
     for (const it of parsed) for (const doc of it.exampleDocs) keyFor(doc, `examples/${it.tier}/${it.id}`)
+    for (const page of pageEntries(userRoot, config)) keyFor(page.file, page.key)
 
     const extraPaths = [
       ...Object.values(config?.shell ?? {}),
@@ -275,7 +277,7 @@ function baseOptions(userRoot: string, outdir: string): BuildOptions {
       ].join('\n'),
     },
     loader: { '.ts': 'ts', '.tsx': 'tsx', '.css': 'empty', '.svg': 'dataurl' },
-    plugins: [mdx({ remarkPlugins: [remarkGfm, remarkModoExamples], jsxImportSource: 'react' })],
+    plugins: [pagesMdx, mdx({ remarkPlugins: [remarkGfm, remarkModoExamples], jsxImportSource: 'react' })],
     jsx: 'automatic',
     jsxImportSource: 'react',
     logLevel: 'silent',

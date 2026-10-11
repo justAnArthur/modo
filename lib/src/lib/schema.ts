@@ -37,6 +37,8 @@ export interface SiteConfig {
   vite?: string
   /** A module whose named exports are in scope in every example (icons, helpers). Item names win on collision. */
   examples?: string
+  /** The folder of free-form `.mdx` pages, relative to the project root. Defaults to `pages`. */
+  pages?: string
 }
 
 const ref = z.string().optional()
@@ -57,5 +59,6 @@ export const siteConfigSchema = z
     css: z.string().optional(),
     vite: z.string().optional(),
     examples: z.string().optional(),
+    pages: z.string().optional(),
   })
   .strict() satisfies z.ZodType<SiteConfig>
