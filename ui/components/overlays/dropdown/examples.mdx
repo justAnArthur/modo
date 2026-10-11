@@ -1,6 +1,7 @@
 import Dropdown from './index'
 import Button from '../../button'
-import { Bell, ChevronDown, Clock, Lock, Mail, Monitor, Palette, Settings, Shield, SquareLibrary, Star, Users } from 'lucide-react'
+import Dialog from '../dialog'
+import { Bell, ChevronDown, Clock, Copy, Ellipsis, Lock, LogOut, Mail, Monitor, Palette, Pencil, Settings, Shield, SquareLibrary, Star, Trash2, User, Users } from 'lucide-react'
 
 # Basic
 
@@ -117,3 +118,177 @@ themselves, so a filtered-away pick is still checked when it comes back.
     <Dropdown.Empty>No labels found</Dropdown.Empty>
   </Dropdown.Content>
 </Dropdown.Menu>
+
+# Children items
+
+Rows written shadcn-style: the content as children and no `index` — each row
+takes its place in document order, conditional rows included. `shortcut`
+adds a muted caption at the end, `inset` lines a text-only row up with the
+rows that have an icon, and `onSelect` runs on a pick by pointer or keyboard.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger asChild>
+    <Button variant="ghost" size="icon" aria-label="Row actions"><Ellipsis /></Button>
+  </Dropdown.Trigger>
+  <Dropdown.Content align="end">
+    <Dropdown.Item icon={Pencil} shortcut="⌘E">Edit</Dropdown.Item>
+    <Dropdown.Item icon={Copy} shortcut="⌘D">Duplicate</Dropdown.Item>
+    <Dropdown.Item inset>Move to…</Dropdown.Item>
+    <Dropdown.Item disabled inset>Archive</Dropdown.Item>
+    <Dropdown.Separator />
+    <Dropdown.Item icon={Trash2} shortcut="⌫">Delete</Dropdown.Item>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Groups and labels
+
+`Dropdown.Group` holds a run of related rows; a `Dropdown.Label` inside it
+names the group for assistive tech. Labels and separators break the row
+order, so nothing selected melts across them.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="secondary" leadingIcon={User}>Account</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Group>
+      <Dropdown.Label>My account</Dropdown.Label>
+      <Dropdown.Item icon={User}>Profile</Dropdown.Item>
+      <Dropdown.Item icon={Settings}>Settings</Dropdown.Item>
+    </Dropdown.Group>
+    <Dropdown.Separator />
+    <Dropdown.Group>
+      <Dropdown.Label inset>Team</Dropdown.Label>
+      <Dropdown.Item inset>Invite members</Dropdown.Item>
+      <Dropdown.Item inset>New team</Dropdown.Item>
+    </Dropdown.Group>
+    <Dropdown.Separator />
+    <Dropdown.Item icon={LogOut}>Log out</Dropdown.Item>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Shortcut
+
+`Dropdown.Shortcut` is the trailing caption on its own, for rows that lay
+out their own content.
+
+<Dropdown className="w-64">
+  <Dropdown.Item>
+    <Mail />
+    New message
+    <Dropdown.Shortcut>⌘N</Dropdown.Shortcut>
+  </Dropdown.Item>
+  <Dropdown.Item>
+    <Bell />
+    Mute thread
+    <Dropdown.Shortcut>⇧⌘M</Dropdown.Shortcut>
+  </Dropdown.Item>
+</Dropdown>
+
+# Submenu
+
+A `Dropdown.Sub` holds a trigger row and its panel. ArrowRight, a press or a
+resting pointer opens it, ArrowLeft or Escape closes it; it grows out of its
+row, which stays lit while it is open, and nests as deep as you like.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="secondary">Options</Button>} />
+  <Dropdown.Content keepMounted>
+    <Dropdown.Item icon={User}>Profile</Dropdown.Item>
+    <Dropdown.Sub>
+      <Dropdown.SubTrigger icon={Palette}>Theme</Dropdown.SubTrigger>
+      <Dropdown.SubContent keepMounted>
+        <Dropdown.RadioGroup defaultValue="system">
+          <Dropdown.RadioItem value="light">Light</Dropdown.RadioItem>
+          <Dropdown.RadioItem value="dark">Dark</Dropdown.RadioItem>
+          <Dropdown.RadioItem value="system">System</Dropdown.RadioItem>
+        </Dropdown.RadioGroup>
+      </Dropdown.SubContent>
+    </Dropdown.Sub>
+    <Dropdown.Sub>
+      <Dropdown.SubTrigger icon={Users}>Invite users</Dropdown.SubTrigger>
+      <Dropdown.SubContent>
+        <Dropdown.Item icon={Mail}>Email</Dropdown.Item>
+        <Dropdown.Item icon={Copy}>Copy link</Dropdown.Item>
+        <Dropdown.Separator />
+        <Dropdown.Sub>
+          <Dropdown.SubTrigger inset>More</Dropdown.SubTrigger>
+          <Dropdown.SubContent>
+            <Dropdown.Item>Slack</Dropdown.Item>
+            <Dropdown.Item>Teams</Dropdown.Item>
+          </Dropdown.SubContent>
+        </Dropdown.Sub>
+      </Dropdown.SubContent>
+    </Dropdown.Sub>
+    <Dropdown.Separator />
+    <Dropdown.Item icon={LogOut}>Log out</Dropdown.Item>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Checkbox items
+
+`Dropdown.CheckboxItem` toggles itself — `defaultChecked`, or `checked` with
+`onCheckedChange` — and keeps the menu open. Touching checked rows share one
+background, as in a multiple selection. Uncontrolled rows live inside the
+popup, so `keepMounted` keeps their state across opens.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="secondary" trailingIcon={ChevronDown}>Columns</Button>} />
+  <Dropdown.Content align="end" keepMounted>
+    <Dropdown.Label>Visible columns</Dropdown.Label>
+    <Dropdown.CheckboxItem defaultChecked>Name</Dropdown.CheckboxItem>
+    <Dropdown.CheckboxItem defaultChecked>Email</Dropdown.CheckboxItem>
+    <Dropdown.CheckboxItem>Role</Dropdown.CheckboxItem>
+    <Dropdown.CheckboxItem defaultChecked>Status</Dropdown.CheckboxItem>
+    <Dropdown.CheckboxItem disabled>Created</Dropdown.CheckboxItem>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Radio group
+
+`Dropdown.RadioGroup` picks one of its `Dropdown.RadioItem` rows by `value`
+(`defaultValue`, or `value` with `onValueChange`). Picking one closes the
+menu.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="secondary" trailingIcon={ChevronDown}>Language</Button>} />
+  <Dropdown.Content keepMounted>
+    <Dropdown.RadioGroup defaultValue="sk">
+      <Dropdown.Label>Language</Dropdown.Label>
+      <Dropdown.RadioItem value="sk">Slovenčina</Dropdown.RadioItem>
+      <Dropdown.RadioItem value="cs">Čeština</Dropdown.RadioItem>
+      <Dropdown.RadioItem value="en">English</Dropdown.RadioItem>
+      <Dropdown.RadioItem value="de" disabled>Deutsch</Dropdown.RadioItem>
+    </Dropdown.RadioGroup>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Inside a dialog
+
+A menu lifts 2 surface levels above whatever it opens over — a dialog
+included — and so does its submenu above the menu.
+
+<Dialog>
+  <Dialog.Trigger render={<Button variant="tertiary">Open dialog</Button>} />
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Share document</Dialog.Title>
+      <Dialog.Description>Pick who can see it.</Dialog.Description>
+    </Dialog.Header>
+    <Dropdown.Menu>
+      <Dropdown.Trigger render={<Button variant="secondary" trailingIcon={ChevronDown}>Access</Button>} />
+      <Dropdown.Content keepMounted>
+        <Dropdown.RadioGroup defaultValue="team">
+          <Dropdown.RadioItem value="private" icon={Lock}>Only me</Dropdown.RadioItem>
+          <Dropdown.RadioItem value="team" icon={Users}>My team</Dropdown.RadioItem>
+        </Dropdown.RadioGroup>
+        <Dropdown.Separator />
+        <Dropdown.Sub>
+          <Dropdown.SubTrigger icon={Shield}>Advanced</Dropdown.SubTrigger>
+          <Dropdown.SubContent keepMounted>
+            <Dropdown.CheckboxItem defaultChecked>Allow comments</Dropdown.CheckboxItem>
+            <Dropdown.CheckboxItem>Allow downloads</Dropdown.CheckboxItem>
+          </Dropdown.SubContent>
+        </Dropdown.Sub>
+      </Dropdown.Content>
+    </Dropdown.Menu>
+  </Dialog.Content>
+</Dialog>
