@@ -54,7 +54,9 @@ const PADDING_Y: Record<SizeVariant, string> = {
  * the same size, so the two stack in a form without a seam. It is
  * uncontrolled with `defaultValue`, or controlled with `value` + `onChange`,
  * fills the width of its container, and joins a Base UI `Field` when placed
- * inside one. Pair it with a `Label` (see Input) through `htmlFor` / `id`.
+ * inside one. Pair it with a `Label` (see Input) through `htmlFor` / `id`,
+ * or put it in an `InputGroup.Field` to label it, join the group's hover and
+ * take the field's error.
  *
  * @example {@include ./examples.mdx}
  */
@@ -131,8 +133,8 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           render={<textarea rows={minRows} {...props} />}
           value={value}
           onChange={e => onChange(e.target.value)}
-          disabled={disabled}
-          aria-invalid={invalid || undefined}
+          disabled={box.disabled}
+          aria-invalid={box.invalid || undefined}
           className={cn(
             'block w-full resize-none rounded-none bg-transparent text-foreground placeholder:text-muted-foreground outline-none font-[inherit]',
             box.size.text,

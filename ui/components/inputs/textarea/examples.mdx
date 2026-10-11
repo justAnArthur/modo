@@ -1,5 +1,5 @@
 import Textarea from './index'
-import Input, { Label } from '../input'
+import Input, { InputGroup, Label } from '../input'
 
 # Basic
 
@@ -50,6 +50,17 @@ One row lines up with an Input of the same size, so the two stack without a seam
     <Textarea id="textarea-form-body" minRows={1} placeholder="Add details" />
   </div>
 </div>
+
+# In a group
+
+Inside `InputGroup.Field` the textarea joins the group's hover, and the field's `error` turns it destructive.
+
+<InputGroup>
+  <InputGroup.Field index={0} label="Name" placeholder="Your name" />
+  <InputGroup.Field index={1} label="Feedback" error="Tell us a little more.">
+    <Textarea defaultValue="Nice" />
+  </InputGroup.Field>
+</InputGroup>
 
 # Compact
 
