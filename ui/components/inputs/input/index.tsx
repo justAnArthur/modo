@@ -27,7 +27,8 @@
  * text, sized from the ladder, lit with the field), `readOnly` (the
  * field's read-only look), `required` and both read from a surrounding
  * `Field` (see Field); `InputAction`, a small icon button that sits inside
- * the box (a password reveal, a clear).
+ * the box (a password reveal, a clear); a `type` swap keeps the caret and
+ * selection (browsers reset them to the start).
  * Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  * `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`;
  * `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
@@ -46,6 +47,7 @@ import {
   type ReactNode,
   type RefAttributes,
   useContext,
+  useLayoutEffect,
   useMemo,
   useRef,
 } from 'react'
@@ -108,6 +110,8 @@ interface InputProps
   readOnly?: boolean
   /** Marks the input required. Defaults to the surrounding Field's `required`. */
   required?: boolean
+  /** The input's type. Swapping it (a password reveal) keeps the caret and the selection where they were. Defaults to `"text"`. */
+  type?: string
   /** Pins the input to one step of the size ladder (default 36px, compact 28px). Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
   /** Classes for the ringed box around the input. */
@@ -128,8 +132,10 @@ interface InputProps
  * `startAdornment` and `endAdornment` hold what sits beside the text: a
  * prefix or a unit, an icon, or an `InputAction` (a password reveal, a
  * clear). They light with the field like its leading icon, and icons in
- * them take the ladder's glyph size. `readOnly` keeps the value selectable
- * while the fill stays down.
+ * them take the ladder's glyph size. Swapping `type` keeps the caret and the
+ * selection where they were, so a password reveal is just an `InputAction`
+ * that flips `type` between `"password"` and `"text"`. `readOnly` keeps the
+ * value selectable while the fill stays down.
  *
  * Also exported from this item:
  * - `InputAction` — a small icon button inside the field, 4px inside its
@@ -165,6 +171,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       disabled,
       readOnly,
       required,
+      type = 'text',
+      onSelect,
       size,
       className,
       ...props
@@ -177,6 +185,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputRef = useRef<HTMLInputElement | null>(null)
     const box = useFieldBox({ variant, invalid, disabled, readOnly, required, size })
     const { size: sizeClasses, props: boxProps } = box
+    const keepSelection = useSelectionAcrossType(inputRef, type)
 
     return (
       <div
@@ -207,7 +216,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             if (typeof ref === 'function') ref(input)
             else if (ref) ref.current = input
           }}
-          type="text"
+          type={type}
+          onSelect={e => {
+            keepSelection(e.currentTarget)
+            onSelect?.(e)
+          }}
           value={value}
           onChange={e => onChange(e.target.value)}
           disabled={box.disabled}
@@ -229,6 +242,39 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 )
 
 Input.displayName = 'Input'
+
+/**
+ * Browsers put the caret back at the start when an input's `type` changes.
+ * Records the selection as it moves (call the returned function from
+ * `onSelect`) and puts it back once a new `type` has committed, while the
+ * input still has focus, so a password reveal leaves the caret where it was.
+ */
+function useSelectionAcrossType(input: { current: HTMLInputElement | null }, type: string) {
+  const selection = useRef<[number | null, number | null]>([null, null])
+  const lastType = useRef(type)
+
+  useLayoutEffect(() => {
+    if (lastType.current === type) return
+    lastType.current = type
+    const el = input.current
+    const [start, end] = selection.current
+    if (!el || start === null || el.ownerDocument.activeElement !== el) return
+    const restore = () => {
+      // Types without a selection API (email, number) throw; their caret stays where the browser put it.
+      try {
+        el.setSelectionRange(start, end)
+      } catch {}
+    }
+    restore()
+    // Chrome resets the selection once more after the swap, past this effect; restore again on the next frame.
+    const frame = requestAnimationFrame(restore)
+    return () => cancelAnimationFrame(frame)
+  }, [input, type])
+
+  return (el: HTMLInputElement) => {
+    selection.current = [el.selectionStart, el.selectionEnd]
+  }
+}
 
 interface InputAdornmentProps {
   /** What sits beside the text. Nothing renders when it is empty. */
