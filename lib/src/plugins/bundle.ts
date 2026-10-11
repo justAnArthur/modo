@@ -148,7 +148,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     }
 
     for (const it of parsed) for (const doc of it.exampleDocs) keyFor(doc, `examples/${it.tier}/${it.id}`)
-    for (const page of pageEntries(userRoot, config)) keyFor(page.file, page.key)
+    pageEntries(userRoot, config, keyFor)
 
     const extraPaths = [
       ...Object.values(config?.shell ?? {}),

@@ -91,10 +91,13 @@ pages/
   01-introduction.mdx    → /introduction
   changelog.mdx          → /changelog
   02-guides/
+    index.mdx            → /guides      the folder's landing page
     01-migration.mdx     → /guides/migration
+  03-návody/
+    začíname.mdx         → /návody/začíname
 ```
 
-- **Routes** are the file's path without `.mdx`: `/<slug>`, beside the lib's own `/docs/…` routes. A `docs` slug, or one another file already took (`setup.mdx` beside `01-setup.mdx`), is skipped with a warning. `modo build` writes each one as `<slug>/index.html`, so deep links work on a static host.
+- **Routes** are the file's path without `.mdx`: `/<slug>`, beside the lib's own `/docs/…` routes. A folder's `index.mdx` is the folder itself (`/guides`), listed first in its sidebar section; the top-level one is the home page. Non-ASCII letters and spaces work: links are escaped, urls decoded. A `docs` slug, or one another file already took (`setup.mdx` beside `01-setup.mdx`), is skipped with a warning. `modo build` writes each one as `<slug>/index.html`, so deep links work on a static host.
 - **Sidebar:** pages are listed under the design system's name, above Foundations and the tiers, in file-name order; a folder is a nested section (`02-guides` → "Guides"), listed after the pages beside it. A leading `01-` orders a file or folder and is dropped from its url and title.
 - **Frontmatter:** `title` names the page (else the file name: `getting-started` → "Getting started") and `description` is its lead.
 

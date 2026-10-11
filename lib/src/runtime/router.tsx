@@ -3,24 +3,29 @@ import { type ReactNode, useEffect, useSyncExternalStore } from 'react'
 import { PageIdScope } from './anchor'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { routes } from './routes'
+import { decodePath } from './url'
 
 const NAVIGATE = 'modo:navigate'
 // '' or the `--base` the site was built with, minus its trailing slash.
 const BASE = import.meta.env.BASE_URL.slice(0, -1)
 
-/** An app path (`/docs/...`) as a URL under the site's base. */
+/** An app path (`/docs/...`, a page's `/návody`) as a URL under the site's base, escaped. */
 export function withBase(path: string): string {
-  return BASE + path
+  return BASE + encodeURI(path)
 }
 
-/** A content link's href: root-relative ones are app paths, so they get the base. */
+/** A content link's href: root-relative ones are app paths, so they get the base (as written: it may be escaped already). */
 export function contentHref(href: string): string {
-  return href.startsWith('/') && !href.startsWith('//') ? withBase(href) : href
+  return href.startsWith('/') && !href.startsWith('//') ? BASE + href : href
 }
 
 // Static hosts redirect a route dir to its trailing-slash form.
 function appPath(pathname: string): string {
-  return pathname.slice(BASE.length).replace(/(.)\/$/, '$1') || '/'
+  return (
+    decodePath(pathname)
+      .slice(BASE.length)
+      .replace(/(.)\/$/, '$1') || '/'
+  )
 }
 
 function subscribe(onChange: () => void) {
@@ -50,7 +55,7 @@ export function Router(): ReactNode {
       const a = (e.target as HTMLElement | null)?.closest('a')
       if (!a || (a.target && a.target !== '_self')) return
       const url = new URL(a.href)
-      if (url.origin !== window.location.origin || !url.pathname.startsWith(`${BASE}/`)) return
+      if (url.origin !== window.location.origin || !decodePath(url.pathname).startsWith(`${BASE}/`)) return
       e.preventDefault()
       const samePage = appPath(url.pathname) === appPath(window.location.pathname)
       window.history.pushState({}, '', url)

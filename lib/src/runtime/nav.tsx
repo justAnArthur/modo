@@ -21,7 +21,8 @@ export function SidebarNav() {
           { id: '/', name: 'Overview' },
           ...pages.filter(p => p.slug !== 'index').map(p => ({ id: `/${p.slug}`, name: pageTitle(p), group: p.group })),
         ]}
-        isActive={isActive}
+        // Exact: a folder's landing page stays inactive on the pages under it.
+        isActive={href => path === href}
       />
       <NavSection
         title="Foundations"

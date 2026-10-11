@@ -34,15 +34,18 @@ const pageComponents: Record<string, unknown> = {
   h4: heading(4),
 }
 
-/** A free-form `pages/<slug>.mdx`, under its frontmatter `title` and `description`. */
+/** A free-form `pages/<slug>.mdx` (or `pages/<slug>/index.mdx`), under its frontmatter `title` and `description`. */
 export function ContentPage({ slug }: { slug: string }) {
   const page = pages.find(p => p.slug === slug)
   if (!page) return <NotFoundPage />
   const { group, frontmatter, Component } = page
+  // The folder above the page; a folder's own index.mdx (its slug has no file name) sits one up.
+  const folders = group?.split('/') ?? []
+  const eyebrow = folders.at(folders.length === slug.split('/').length ? -2 : -1)
   return (
     <article>
       <header>
-        {group ? <p data-modo="page-eyebrow">{groupTitle(group.split('/').at(-1)!)}</p> : null}
+        {eyebrow ? <p data-modo="page-eyebrow">{groupTitle(eyebrow)}</p> : null}
         <h1 data-modo="page-title">{pageTitle(page)}</h1>
         {typeof frontmatter.description === 'string' ? <p data-modo="page-lead">{frontmatter.description}</p> : null}
       </header>

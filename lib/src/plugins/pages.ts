@@ -16,22 +16,26 @@ import { emitRoutes } from './static-routes'
 // import items and share their contexts. The bundler discovers them through
 // `pageEntries`; the last discovery is what `pagesMdx` compiles and what
 // `virtual:modo-pages` lists.
-let current: DiscoveredPage[] = []
+let current: Array<DiscoveredPage & { key: string }> = []
 let lastSkipped = ''
 
-const keyOf = (page: DiscoveredPage) => `pages/${page.slug}`
-
-/** The pages as bundle entries: `pages/<slug>` → its `.mdx`. */
-export function pageEntries(userRoot: string, config: SiteConfig | null): Array<{ key: string; file: string }> {
+/**
+ * Adds the pages to the bundle's entries through its `keyFor` (`pages/<slug>`
+ * → its `.mdx`), keeping the key it settles on: a file already an entry keeps its own.
+ */
+export function pageEntries(
+  userRoot: string,
+  config: SiteConfig | null,
+  keyFor: (file: string, key: string) => string,
+): void {
   const { pages, skipped } = discoverPages(resolve(userRoot, config?.pages ?? 'pages'))
-  current = pages
+  current = pages.map(page => ({ ...page, key: keyFor(page.file, `pages/${page.slug}`) }))
   const report = skipped.join(', ')
   // The bundler reruns on every source change; say it once.
   if (report && report !== lastSkipped) {
     process.stderr.write(`[modo:pages] warning: skipped ${report} (a docs/ slug or one already taken)\n`)
   }
   lastSkipped = report
-  return pages.map(page => ({ key: keyOf(page), file: page.file }))
 }
 
 const compile = mdx({
@@ -61,7 +65,7 @@ export function pagesPlugin({ bundler }: { bundler: Bundler }): Plugin {
   const built = async () => {
     await bundler.get()
     return current
-      .map(page => ({ ...page, bundlePath: resolve(bundler.outdir, `${keyOf(page)}.mjs`) }))
+      .map(page => ({ ...page, bundlePath: resolve(bundler.outdir, `${page.key}.mjs`) }))
       .filter(page => existsSync(page.bundlePath))
   }
 
