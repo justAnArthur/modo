@@ -146,7 +146,7 @@ function DurationPicker({
       header={
         <PickerInput
           ref={input}
-          aria-label={placeholder ?? 'Duration'}
+          aria-label={placeholder || 'Duration'}
           placeholder="0:00"
           formatted={value ? `${hours}:${pad(minutes)}` : ''}
           onText={readDuration}

@@ -145,7 +145,7 @@ function MonthPicker({
       header={
         <PickerInput
           ref={input}
-          aria-label={placeholder ?? 'Month'}
+          aria-label={placeholder || 'Month'}
           placeholder={placeholder}
           formatted={formatted}
           onText={readMonth}

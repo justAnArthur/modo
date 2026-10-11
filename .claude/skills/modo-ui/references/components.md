@@ -121,7 +121,7 @@ controlled + uncontrolled.
 | `Accordion` | `.Group .Item .Trigger .Content` | L H M W C | Panel morphs out of its row; `highlight` `item` \| `trigger`. |
 | `Sidebar` | `.Provider .Trigger .Rail .Inset .Input .Header .Content .Footer .Separator .Group .GroupLabel .GroupAction .GroupActions .GroupContent .Menu .MenuItem .MenuButton .MenuAction .MenuActions .MenuBadge .MenuSkeleton .MenuSub .MenuSubItem .MenuSubButton` | L S H G C | Liquid active rows and hover; `openOnHover`; collapsible rows; mobile `Sheet`. |
 | `NavigationMenu` | `.List .Item .Trigger .Content .Link .Indicator` | L S H G M W C | One flyout morphs from its trigger, springs between items' sizes. |
-| `Pagination` | — | L H G W C | Template item: liquid current page, jump field, page-size Select, labels as props. |
+| `Pagination` | — | L H G W C | Template item: liquid current page, jump field, page-size Select, labels as props (`pageSizeAriaLabel` names the Select when the caption is empty). |
 
 ## components/overlays
 
