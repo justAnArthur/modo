@@ -79,6 +79,11 @@
       "source": "./lib/field-classes.ts",
       "default": "./dist/lib/field-classes.js"
     },
+    "./lib/field-variants": {
+      "types": "./dist/lib/field-variants.d.ts",
+      "source": "./lib/field-variants.ts",
+      "default": "./dist/lib/field-variants.js"
+    },
     "./lib/fluid-hover-highlight": {
       "types": "./dist/lib/fluid-hover-highlight.d.ts",
       "source": "./lib/fluid-hover-highlight.tsx",

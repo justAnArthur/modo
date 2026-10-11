@@ -23,6 +23,11 @@
  * `InputGroup.Field` takes children in place of its Input (a Textarea);
  * modo docs — TSDoc with FF's docs/API text, `InputGroup.Field`
  * static (typed via a cast on the root).
+ * Local additions: `startAdornment` / `endAdornment` (content beside the
+ * text, sized from the ladder, lit with the field), `readOnly` (the
+ * field's read-only look), `required` and both read from a surrounding
+ * `Field` (see Field); `InputAction`, a small icon button that sits inside
+ * the box (a password reveal, a clear).
  * Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  * `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`;
  * `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
@@ -31,6 +36,7 @@
 
 import { Field } from '@base-ui/react/field'
 import {
+  type ButtonHTMLAttributes,
   createContext,
   type ForwardRefExoticComponent,
   forwardRef,
@@ -44,13 +50,19 @@ import {
   useRef,
 } from 'react'
 import {
+  FIELD_ACTION,
+  FIELD_ACTION_RADIUS,
+  FIELD_ADORNMENT_ICON,
   FieldStateContext,
   type FieldVariant,
+  fieldActionClasses,
+  fieldAdornmentClasses,
   fieldIconClasses,
   focusControlOnPress,
   useFieldBox,
 } from '../../../lib/field-classes'
 import type { IconComponent } from '../../../lib/icon-context'
+import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
@@ -76,6 +88,10 @@ interface InputProps
   placeholder?: string
   /** Leading icon inside the input. */
   icon?: IconComponent
+  /** Content before the text, after `icon`: a prefix (`"https://"`), an icon element, an `InputAction`. Strings read as muted text; icons take the ladder's glyph size. */
+  startAdornment?: ReactNode
+  /** Content after the text: a unit (`"kg"`), a status icon, an `InputAction` such as a password reveal or a clear. */
+  endAdornment?: ReactNode
   /** Controlled input value. */
   value?: string
   /** Initial value when uncontrolled. Defaults to `''`. */
@@ -88,6 +104,10 @@ interface InputProps
   invalid?: boolean
   /** Disables the input. Defaults to `false`. */
   disabled?: boolean
+  /** Shows the value without letting it change: it can be selected and copied, the ring answers hover and focus, the fill never lifts. Defaults to `false`. */
+  readOnly?: boolean
+  /** Marks the input required. Defaults to the surrounding Field's `required`. */
+  required?: boolean
   /** Pins the input to one step of the size ladder (default 36px, compact 28px). Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
   /** Classes for the ringed box around the input. */
@@ -101,9 +121,22 @@ interface InputProps
  * ground with a hairline ring, focus onto the card ground, and its leading
  * icon thickens. `invalid` turns it destructive. It is uncontrolled with
  * `defaultValue`, or controlled with `value` + `onChange`, and fills the width
- * of its container. Pair it with a `Label` through `htmlFor` / `id`.
+ * of its container. Pair it with a `Label` through `htmlFor` / `id`, or put
+ * it in a Field, which labels it and hands it its error, disabled,
+ * read-only and required state.
+ *
+ * `startAdornment` and `endAdornment` hold what sits beside the text: a
+ * prefix or a unit, an icon, or an `InputAction` (a password reveal, a
+ * clear). They light with the field like its leading icon, and icons in
+ * them take the ladder's glyph size. `readOnly` keeps the value selectable
+ * while the fill stays down.
  *
  * Also exported from this item:
+ * - `InputAction` — a small icon button inside the field, 4px inside its
+ *   ring: `label` (its accessible name), `icon`, `size`, plus button props.
+ *   A press keeps the caret in the field.
+ * - `InputAdornment` — the wrapper the adornments render in, for a field of
+ *   your own built on the field box: `size`.
  * - `Label` — the field label, weight-stable and inset to line up with the
  *   input's text: `htmlFor`, `invalid`, `size`.
  * - `InputGroup` — stacks labelled fields and tracks the pointer across them,
@@ -122,12 +155,16 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
       icon: Icon,
+      startAdornment,
+      endAdornment,
       value: valueProp,
       defaultValue = '',
       onChange: onChangeProp,
       variant = 'borderless',
       invalid,
       disabled,
+      readOnly,
+      required,
       size,
       className,
       ...props
@@ -138,7 +175,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const [value, onChange] = useControllableState(valueProp, defaultValue, onChangeProp)
 
     const inputRef = useRef<HTMLInputElement | null>(null)
-    const box = useFieldBox({ variant, invalid, disabled, size })
+    const box = useFieldBox({ variant, invalid, disabled, readOnly, required, size })
     const { size: sizeClasses, props: boxProps } = box
 
     return (
@@ -158,6 +195,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
       >
         {Icon && <Icon size={sizeClasses.icon} strokeWidth={1.5} className={fieldIconClasses} />}
+        <InputAdornment size={size}>{startAdornment}</InputAdornment>
         {/* Base UI's own Input is this Field.Control: on its own it is a
             plain input, inside a Field.Root it joins the field's wiring. */}
         <Field.Control
@@ -173,20 +211,101 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           value={value}
           onChange={e => onChange(e.target.value)}
           disabled={box.disabled}
+          readOnly={box.readOnly}
+          required={box.required}
           aria-invalid={box.invalid || undefined}
           className={cn(
-            'w-full rounded-none bg-transparent text-foreground placeholder:text-muted-foreground outline-none font-[inherit]',
+            // min-w-0: adornments take their width first, the text field the rest.
+            'w-full min-w-0 rounded-none bg-transparent text-foreground placeholder:text-muted-foreground outline-none font-[inherit]',
             sizeClasses.text,
             'weight-normal',
           )}
           {...props}
         />
+        <InputAdornment size={size}>{endAdornment}</InputAdornment>
       </div>
     )
   },
 )
 
 Input.displayName = 'Input'
+
+interface InputAdornmentProps {
+  /** What sits beside the text. Nothing renders when it is empty. */
+  children?: ReactNode
+  /** Pins the adornment, and an `InputAction` inside it, to one step of the size ladder. Defaults to the surrounding SizeProvider. */
+  size?: SizeVariant
+  /** Classes for the wrapper. */
+  className?: string
+}
+
+/** Content beside a field's text, lit with the field: what `startAdornment` / `endAdornment` render in, for a field of your own on `useFieldBox`. */
+function InputAdornment({ children, size, className }: InputAdornmentProps) {
+  const sizeClasses = useSize(size)
+  if (children == null || children === false || children === '') return null
+  const node = (
+    <span
+      className={cn(
+        fieldAdornmentClasses,
+        FIELD_ADORNMENT_ICON[sizeClasses.variant],
+        sizeClasses.gap,
+        sizeClasses.text,
+        className,
+      )}
+    >
+      {children}
+    </span>
+  )
+  // A size pin reaches an InputAction inside.
+  return size ? <SizeProvider size={size}>{node}</SizeProvider> : node
+}
+
+interface InputActionProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
+  /** Names the action for assistive tech (its `aria-label`), e.g. "Show password". */
+  label: string
+  /** The glyph. Pass an icon component, or an icon element as `children`. */
+  icon?: IconComponent
+  /** An icon element, in place of `icon`. */
+  children?: ReactNode
+  /** Disables the action. Defaults to `false`. */
+  disabled?: boolean
+  /** Pins the action to one step of the size ladder (28px in a default field, 20px in a compact one). Defaults to the surrounding SizeProvider. */
+  size?: SizeVariant
+  /** Classes for the button. */
+  className?: string
+}
+
+/** A small icon button inside a field box: a password reveal, a clear, a copy. */
+const InputAction = forwardRef<HTMLButtonElement, InputActionProps>(
+  ({ label, icon: Icon, children, size, className, onMouseDown, ...props }, ref) => {
+    const sizeClasses = useSize(size)
+    const shape = useShape()
+
+    return (
+      <button
+        ref={ref}
+        type="button"
+        aria-label={label}
+        // Keep the caret where it was: the field stays focused through a press.
+        onMouseDown={e => {
+          onMouseDown?.(e)
+          e.preventDefault()
+        }}
+        className={cn(
+          fieldActionClasses,
+          FIELD_ACTION[sizeClasses.variant],
+          FIELD_ACTION_RADIUS[shape.variant],
+          className,
+        )}
+        {...props}
+      >
+        {Icon ? <Icon size={sizeClasses.icon} strokeWidth={1.5} /> : children}
+      </button>
+    )
+  },
+)
+
+InputAction.displayName = 'InputAction'
 
 interface LabelProps extends LabelHTMLAttributes<HTMLLabelElement> {
   /** Label text. */
@@ -361,6 +480,6 @@ InputField.displayName = 'InputField'
 
 Object.assign(InputGroup, { Field: InputField })
 
-export type { InputFieldProps, InputGroupProps, InputProps, LabelProps }
-export { Input, InputGroup, Label }
+export type { InputActionProps, InputAdornmentProps, InputFieldProps, InputGroupProps, InputProps, LabelProps }
+export { Input, InputAction, InputAdornment, InputGroup, Label }
 export default Input

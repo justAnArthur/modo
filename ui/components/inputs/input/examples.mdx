@@ -1,6 +1,7 @@
 import Input, { InputGroup, Label } from './index'
+import PasswordDemo from './password-demo'
 import Textarea from '../textarea'
-import { Mail, Search } from 'lucide-react'
+import { CircleCheck, Mail, Search } from 'lucide-react'
 
 # Basic
 
@@ -26,6 +27,42 @@ A single input with a leading icon.
 <div className="flex flex-col gap-1 w-72 max-w-full">
   <Label htmlFor="input-email">Email</Label>
   <Input id="input-email" placeholder="you@example.com" icon={Mail} />
+</div>
+
+# Adornments
+
+`startAdornment` and `endAdornment` hold a prefix, a unit or an icon beside the text. They light with the field, and icons take the ladder's glyph size.
+
+<div className="flex flex-col gap-3 w-72 max-w-full">
+  <Input variant="bordered" startAdornment="https://" placeholder="example.com" />
+  <Input variant="bordered" endAdornment="kg" defaultValue="72" />
+  <Input variant="bordered" icon={Mail} defaultValue="ada@example.com" endAdornment={<CircleCheck />} />
+</div>
+
+# Actions
+
+An `InputAction` sits 4px inside the ring. Here it reveals the password; a press keeps the caret in the field.
+
+<div className="flex flex-col gap-3 w-72 max-w-full">
+  <PasswordDemo variant="bordered" placeholder="Password" defaultValue="correct horse" />
+</div>
+
+# Compact adornments
+
+A compact field steps its adornments and actions down with it.
+
+<div className="flex flex-col gap-3 w-72 max-w-full">
+  <PasswordDemo size="compact" variant="bordered" placeholder="Password" />
+  <Input size="compact" variant="bordered" endAdornment="EUR" defaultValue="1,200" />
+</div>
+
+# Read-only
+
+`readOnly` keeps the value selectable and copyable; hover shows the ring, but the fill never lifts.
+
+<div className="flex flex-col gap-3 w-72 max-w-full">
+  <Input readOnly defaultValue="INV-2026-0042" />
+  <Input readOnly variant="bordered" icon={Mail} defaultValue="billing@example.com" />
 </div>
 
 # Invalid
