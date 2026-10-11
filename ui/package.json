@@ -134,6 +134,11 @@
       "source": "./lib/size-context.tsx",
       "default": "./dist/lib/size-context.js"
     },
+    "./lib/size-scale": {
+      "types": "./dist/lib/size-scale.d.ts",
+      "source": "./lib/size-scale.ts",
+      "default": "./dist/lib/size-scale.js"
+    },
     "./lib/slot": {
       "types": "./dist/lib/slot.d.ts",
       "source": "./lib/slot.ts",
