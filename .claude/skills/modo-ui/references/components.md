@@ -110,7 +110,7 @@ controlled + uncontrolled.
 | `InputMessage` | — | L S C | Composer: auto-resize, actions, attachments, queue, status. |
 | `ColorPicker` | `.Popover` | L S M | HEX / RGB / HSL / OKLCH, alpha, swatches, eyedropper. |
 | `Search` | — | L S M C | Grows its own width in place (`spring.slow`) over its neighbours; suggestions ooze out; Escape closes → clears → collapses. |
-| `Calendar`, `DatePicker`, `DateRangePicker`, `TimePicker`, `DurationPicker`, `MonthPicker` (`inputs/date-time`) | — | L S H M C | A field on the field ladder whose panel morphs out of it (a bottom `Sheet` under 640px); one scrolling month list with month / year columns; `DatePicker` `editable` (masked input), `labels`, `formatDate`, string values. |
+| `Calendar`, `DatePicker`, `DateRangePicker`, `TimePicker`, `DurationPicker`, `MonthPicker` (`inputs/date-time`) | — | L S H M C | A field on the field ladder whose panel morphs out of it (a bottom `Sheet` under 640px); one scrolling month list with month / year columns; every picker: `readOnly`, `labels`, `locale` as a date-fns Locale or BCP 47 tag, form props (`name` via hidden input, `required`, `onBlur`, `aria-*`, `controlProps`, `ref`); `DatePicker` `editable`, `hidden`, `unselectable`, `formatDate`, string values; `DateRangePicker` `editable`, `withTime`, `startInputProps` / `endInputProps`; `TimePicker` `formatTime`; `DurationPicker` `minHours` / `hourStep` / `formatValue`; `MonthPicker` `withYear` / `formatDate`. |
 
 ## components/navigation
 
