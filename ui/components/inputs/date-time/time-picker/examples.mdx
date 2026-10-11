@@ -24,3 +24,34 @@ A German locale writes 24-hour times.
 <div className="w-48 max-w-full">
   <TimePicker hourCycle="h23" minuteStep={15} placeholder="Start time" />
 </div>
+
+# The field follows the clock
+
+`hourCycle` sets the field's clock as well as the columns': "20:30" on `'h23'` in English, "8:30 PM" on `'h12'` in German.
+
+<div className="flex w-48 max-w-full flex-col gap-2">
+  <TimePicker hourCycle="h23" defaultValue="20:30" />
+  <TimePicker locale={de} hourCycle="h12" defaultValue="20:30" />
+</div>
+
+# Slovak, labels and format
+
+`locale="sk"` reads Slovak off Intl; `labels` names the columns and the panel's input, and `formatTime` writes the field's text from the `"HH:mm"` value.
+
+<div className="w-48 max-w-full">
+  <TimePicker
+    locale="sk"
+    placeholder="Čas"
+    formatTime={value => value + ' h'}
+    labels={{ time: 'Čas', hour: 'Hodina', minute: 'Minúta', close: 'Zavrieť' }}
+    defaultValue="15:30"
+  />
+</div>
+
+# Read only
+
+`readOnly` shows the time and never opens.
+
+<div className="w-48 max-w-full">
+  <TimePicker readOnly defaultValue="15:33" />
+</div>

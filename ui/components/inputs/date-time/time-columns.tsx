@@ -24,6 +24,8 @@ interface TimeColumnsProps {
   orientation: 'vertical' | 'horizontal'
   /** Columns share the row's width equally instead of keeping their narrow fixed widths. Defaults to `false`. */
   fill?: boolean
+  /** Accessible names of the columns. Default to the locale's names for the fields. */
+  labels?: { hour?: string; minute?: string }
 }
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -37,6 +39,7 @@ function TimeColumns({
   locale,
   orientation,
   fill = false,
+  labels,
 }: TimeColumnsProps) {
   const twelve = hourCycle === 'h12' || hourCycle === 'h11'
   const hours = value?.hours ?? null
@@ -68,7 +71,7 @@ function TimeColumns({
   return (
     <>
       <ScrollColumn
-        label={fieldLabel(locale, 'hour')}
+        label={labels?.hour ?? fieldLabel(locale, 'hour')}
         options={hourOptions}
         value={hours}
         onValueChange={h => onValueChange({ hours: h, minutes })}
@@ -76,7 +79,7 @@ function TimeColumns({
         className={width(twelve ? 'w-15' : 'w-12')}
       />
       <ScrollColumn
-        label={fieldLabel(locale, 'minute')}
+        label={labels?.minute ?? fieldLabel(locale, 'minute')}
         options={minuteOptions}
         value={hours === null ? null : minutes}
         onValueChange={m => onValueChange({ hours: hours ?? 0, minutes: m })}
