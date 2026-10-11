@@ -50,10 +50,20 @@ const shared = renderToStaticMarkup(compact) !== renderToStaticMarkup(button)
 console.error = error
 if (!shared) failures.push(`${BUTTON} ignores the SizeContext from ${SIZE}`)
 
+// Module state, not a context: the global toast() queue must be one instance too.
+const managers = chunks.reduce((sum, { code }) => sum + (code.match(/\bcreateToastManager\d*\(/g)?.length ?? 0), 0)
+if (managers !== 1) failures.push(`${managers} createToastManager calls in dist, expected 1`)
+const BARREL = '@justanarthur/modo-ui'
+const TOAST = '@justanarthur/modo-ui/components/overlays/toast'
+const { toast: barrelToast } = await import(BARREL)
+const { toast: entryToast } = await import(TOAST)
+if (barrelToast !== entryToast) failures.push('toast differs between the barrel and ./components/overlays/toast')
+
 console.log(`${contexts.length} contexts, ${calls} createContext calls in dist, one declaration each`)
 console.log(`${SIZE} -> ${relative(ROOT, fileURLToPath(import.meta.resolve(SIZE)))}`)
 console.log(`${BUTTON} -> ${relative(ROOT, fileURLToPath(import.meta.resolve(BUTTON)))}`)
 console.log(`Button under a compact SizeContext.Provider renders compact: ${shared}`)
+console.log(`toast(): ${managers} manager in dist, barrel === entry: ${barrelToast === entryToast}`)
 
 if (failures.length) {
   console.error(failures.join('\n'))
