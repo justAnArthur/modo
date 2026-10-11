@@ -374,6 +374,9 @@ TabsList.displayName = 'TabsList'
 
 /* ─────────────────────── TabItem ─────────────────────── */
 
+// Set as an attribute, outside React: React 18 and 19 disagree on the `inert` prop's value.
+const markInert = (el: HTMLElement | null) => el?.setAttribute('inert', '')
+
 interface TabItemProps extends ComponentPropsWithoutRef<typeof TabsPrimitive.Tab> {
   /** The tab's value, matched by `Tabs.Panel` and the root's `value`. */
   value: string
@@ -451,7 +454,7 @@ const TabItem = forwardRef<HTMLButtonElement, TabItemProps>(
           <span
             className={cn('col-start-1 row-start-1 invisible weight-semibold', labelLayout)}
             aria-hidden="true"
-            {...(!text && { inert: '' })}
+            ref={text ? undefined : markInert}
           >
             {label}
           </span>

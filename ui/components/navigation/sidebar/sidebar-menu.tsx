@@ -24,7 +24,8 @@
  *   `SidebarMenuSub` without `open` follows it. FF's docs held that state in
  *   the page.
  * - Refs written by hand are typed `MutableRefObject` (React 18).
- * - A folded `SidebarMenuSub` is `inert`: an active sub-row inside it stayed a
+ * - A folded `SidebarMenuSub` is `inert` (through `inertProps`, right on React 18
+ *   and 19): an active sub-row inside it stayed a
  *   tab stop while `aria-hidden` and clipped away.
  * - `sidebarMenuButtonVariants` lives in `./variants.ts` (no JSX, hooks or
  *   contexts), so server code can call it; re-exported here unchanged.
@@ -66,7 +67,7 @@ import { useControllableState } from '../../../lib/use-controllable-state'
 import { type ItemRect, useFluidHover } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
-import { resolveSlotTemplate, slotElement } from './sidebar-core'
+import { inertProps, resolveSlotTemplate, slotElement } from './sidebar-core'
 import { sidebarMenuButtonVariants } from './variants'
 
 export { sidebarMenuButtonVariants }
@@ -1343,7 +1344,7 @@ const SidebarMenuSub = forwardRef<HTMLUListElement, SidebarMenuSubProps>(
           data-sidebar="menu-sub"
           data-state={open ? 'open' : 'closed'}
           aria-hidden={open ? undefined : true}
-          {...(open ? {} : { inert: '' })}
+          {...inertProps(!open)}
           className={cn(
             // ml-[15px] (a margin, not a translate, so the rows' measured
             // rects include it) + 1px border + pl-2 lands the sub-row label

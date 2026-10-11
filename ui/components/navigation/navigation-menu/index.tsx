@@ -9,7 +9,7 @@
  */
 
 import { NavigationMenu as NavigationMenuPrimitive } from '@base-ui/react/navigation-menu'
-import { motion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import {
   type ComponentPropsWithoutRef,
   createContext,
@@ -37,6 +37,7 @@ import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { type ItemRect, type UseFluidHoverReturn, useFluidHover } from '../../../lib/use-fluid-hover'
+import { useKeyboardNavGate } from '../../../lib/use-keyboard-nav-gate'
 import { useMorph, useMorphOrigin } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
@@ -231,7 +232,7 @@ function StripLabel({ emphasized, children }: { emphasized: boolean; children: R
 }
 
 const STRIP_ITEM =
-  'relative z-10 flex cursor-pointer select-none items-center bg-transparent text-muted-foreground no-underline outline-none transition-[color] duration-fast focus-visible:ring-1 focus-visible:ring-focus-ring data-[fluid-hover-active]:text-foreground'
+  'group/item relative z-10 flex cursor-pointer select-none items-center bg-transparent text-muted-foreground no-underline outline-none transition-[color] duration-fast focus-visible:ring-1 focus-visible:ring-focus-ring data-[fluid-hover-active]:text-foreground'
 
 /* ─────────────────────── Trigger ─────────────────────── */
 
@@ -270,9 +271,12 @@ const NavigationMenuTrigger = forwardRef<HTMLButtonElement, NavigationMenuTrigge
           transition={reduced ? { duration: 0 } : spring.moderate}
         >
           <Chevron
-            size={size.icon - 2}
-            strokeWidth={open ? 2 : 1.5}
-            className="transition-[stroke-width] duration-fast"
+            size={size.icon}
+            strokeWidth={1.5}
+            className={cn(
+              'transition-[stroke-width] duration-fast group-[[data-fluid-hover-active]]/item:stroke-2',
+              open && 'stroke-2',
+            )}
           />
         </motion.span>
       </NavigationMenuPrimitive.Trigger>
@@ -282,6 +286,26 @@ const NavigationMenuTrigger = forwardRef<HTMLButtonElement, NavigationMenuTrigge
 NavigationMenuTrigger.displayName = 'NavigationMenuTrigger'
 
 /* ─────────────────────── Content ─────────────────────── */
+
+/** The panel's one keyboard ring: 2px outside the focused row, springing between rows (as in Dropdown). */
+function FocusRing({ rect }: { rect: ItemRect | undefined }) {
+  const shape = useShape()
+  const reduced = useReduceMotion()
+  return (
+    <AnimatePresence>
+      {rect && (
+        <motion.div
+          aria-hidden="true"
+          className={cn('pointer-events-none absolute z-20 border border-focus-ring', shape.focusRing)}
+          initial={false}
+          animate={{ left: rect.left - 2, top: rect.top - 2, width: rect.width + 4, height: rect.height + 4 }}
+          exit={{ opacity: 0, transition: spring.fast.exit }}
+          transition={reduced ? { duration: 0 } : { ...spring.fast, opacity: { duration: spring.fast.duration } }}
+        />
+      )}
+    </AnimatePresence>
+  )
+}
 
 interface NavigationMenuContentProps extends ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Content> {
   /** Classes for the panel's content: its width and layout (a grid of links, a feature column). */
@@ -301,6 +325,9 @@ const NavigationMenuContent = forwardRef<HTMLDivElement, NavigationMenuContentPr
     const [element, setElement] = useState<HTMLDivElement | null>(null)
     const hover = useFluidHover(containerRef, { axis: 'xy' })
     const rows = useRegisterBySelector(containerRef, `[${ROW}]`, hover.registerItem)
+    // Only keyboard focus earns the ring: Tab or an arrow key, or focus that arrived as :focus-visible.
+    const { keyboardNavRef, trackKeyboardNav } = useKeyboardNavGate(open)
+    const [focused, setFocused] = useState<number | null>(null)
 
     // The open panel tells the shared frame its natural size, and keeps telling it as it changes.
     useLayoutEffect(() => {
@@ -326,12 +353,22 @@ const NavigationMenuContent = forwardRef<HTMLDivElement, NavigationMenuContentPr
         <NavigationMenuPrimitive.Content
           ref={setRefs}
           {...hover.handlers}
+          onKeyDown={event => {
+            if (event.key === 'Tab') keyboardNavRef.current = true
+            trackKeyboardNav(event)
+          }}
           onFocus={event => {
-            const index = rows.indexOf((event.target as HTMLElement).closest<HTMLElement>(`[${ROW}]`) as HTMLElement)
-            if (index >= 0) hover.setActiveIndex(index)
+            const target = event.target as HTMLElement
+            const index = rows.indexOf(target.closest<HTMLElement>(`[${ROW}]`) as HTMLElement)
+            if (index < 0) return
+            hover.setActiveIndex(index)
+            setFocused(keyboardNavRef.current || target.matches(':focus-visible') ? index : null)
+          }}
+          onBlur={event => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocused(null)
           }}
           className={cn(
-            'relative w-max p-1.5 transition-[opacity,transform] duration-moderate data-[ending-style]:duration-moderate-exit data-[starting-style]:opacity-0 data-[ending-style]:opacity-0',
+            'relative w-max p-1 transition-[opacity,transform] duration-moderate data-[ending-style]:duration-moderate-exit data-[starting-style]:opacity-0 data-[ending-style]:opacity-0',
             !reduced &&
               'data-[starting-style]:data-[activation-direction=right]:translate-x-4 data-[starting-style]:data-[activation-direction=left]:-translate-x-4 data-[ending-style]:data-[activation-direction=right]:-translate-x-4 data-[ending-style]:data-[activation-direction=left]:translate-x-4',
             className,
@@ -339,6 +376,7 @@ const NavigationMenuContent = forwardRef<HTMLDivElement, NavigationMenuContentPr
           {...props}
         >
           <FluidHoverHighlight hover={hover} className={shape.bg} />
+          <FocusRing rect={open && focused !== null ? hover.itemRects[focused] : undefined} />
           {children}
         </NavigationMenuPrimitive.Content>
       </InContentContext.Provider>
@@ -389,7 +427,7 @@ const NavigationMenuLink = forwardRef<HTMLAnchorElement, NavigationMenuLinkProps
         active={active}
         {...{ [ROW]: '' }}
         className={cn(
-          'group/row relative z-10 flex min-w-0 cursor-pointer items-start no-underline outline-none focus-visible:ring-1 focus-visible:ring-focus-ring',
+          'group/row relative z-10 flex min-w-0 cursor-pointer items-start no-underline outline-none',
           description ? 'py-2' : cn(size.control, 'items-center'),
           size.itemPx,
           size.gap,
@@ -445,6 +483,8 @@ interface NavigationMenuProps {
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
   /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
   effect?: 'goo' | 'morph' | 'slide' | 'fade'
+  /** Hide the trigger while open, so it reads as turning into the panel. Defaults to `false`. */
+  hideSource?: boolean
   /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'slow'`. */
   tier?: 'moderate' | 'slow'
   /** Pins the strip and its panels to one step of the size ladder (36px default, 28px compact). Defaults to the surrounding SizeProvider. */
@@ -492,6 +532,7 @@ function NavigationMenu({
   sideOffset = 12,
   from,
   effect,
+  hideSource,
   tier,
   size,
   className,
@@ -503,7 +544,7 @@ function NavigationMenu({
   const [list, setList] = useState<HTMLElement | null>(null)
   const [panelSize, setPanelSize] = useState<PanelSize | null>(null)
   const open = current !== null
-  const morph = useMorph(open, origin, { from, effect, tier })
+  const morph = useMorph(open, origin, { from, effect, hideSource, tier })
   const reduced = useReduceMotion()
   const shape = useShape()
   const level = Math.min(useSurface() + 2, 8)
