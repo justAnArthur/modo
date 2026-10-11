@@ -1,5 +1,8 @@
 import AlertDialog from './index'
 import Button from '../../button'
+import Toast, { toast } from '../toast'
+import Dialog from '../dialog'
+import Tooltip from '../tooltip'
 
 # Confirm a destructive step
 
@@ -19,6 +22,50 @@ A press outside does nothing; the answer is Cancel, Delete or Escape.
   </AlertDialog.Content>
 </AlertDialog>
 
+# Wait for the confirm
+
+`AlertDialog.Action`'s `onClick` returns a promise: the button folds into a spinner, Cancel greys out and Escape does nothing until it settles, then the dialog closes.
+
+<AlertDialog>
+  <AlertDialog.Trigger render={<Button variant="secondary">Archive workspace</Button>} />
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Archive this workspace?</AlertDialog.Title>
+      <AlertDialog.Description>Members lose access until it is restored.</AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action onClick={() => new Promise(resolve => setTimeout(resolve, 1600))}>Archive</AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog>
+
+# When it fails
+
+A rejected promise keeps the dialog open and hands the reason to `onError` — here a toast — so the person can try again or cancel.
+
+<Toast manager={toast} position="bottom-right">
+  <AlertDialog>
+    <AlertDialog.Trigger render={<Button variant="secondary">Delete account</Button>} />
+    <AlertDialog.Content>
+      <AlertDialog.Header>
+        <AlertDialog.Title>Delete your account?</AlertDialog.Title>
+        <AlertDialog.Description>Everything you made goes with it.</AlertDialog.Description>
+      </AlertDialog.Header>
+      <AlertDialog.Footer>
+        <AlertDialog.Cancel>Keep it</AlertDialog.Cancel>
+        <AlertDialog.Action
+          variant="destructive"
+          onClick={() => new Promise((resolve, reject) => setTimeout(() => reject(new Error('The server is busy')), 1400))}
+          onError={error => toast.error({ title: 'Could not delete', description: error.message })}
+        >
+          Delete
+        </AlertDialog.Action>
+      </AlertDialog.Footer>
+    </AlertDialog.Content>
+  </AlertDialog>
+</Toast>
+
 # From the pointer
 
 The same morph options as Dialog: here a circle grows from where you pressed.
@@ -36,3 +83,34 @@ The same morph options as Dialog: here a circle grows from where you pressed.
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog>
+
+# Inside a dialog
+
+Opened from a dialog, the alert lifts above it, and so does the tooltip on the button that opens it.
+
+<Dialog>
+  <Dialog.Trigger render={<Button variant="secondary">Project settings</Button>} />
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Project settings</Dialog.Title>
+      <Dialog.Description>Rename, transfer or delete this project.</Dialog.Description>
+    </Dialog.Header>
+    <Dialog.Footer>
+      <AlertDialog>
+        <Tooltip content="Removes it for everyone">
+          <AlertDialog.Trigger render={<Button variant="destructive">Delete project</Button>} />
+        </Tooltip>
+        <AlertDialog.Content>
+          <AlertDialog.Header>
+            <AlertDialog.Title>Delete this project?</AlertDialog.Title>
+            <AlertDialog.Description>Its pages and history go with it.</AlertDialog.Description>
+          </AlertDialog.Header>
+          <AlertDialog.Footer>
+            <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+            <AlertDialog.Action variant="destructive" onClick={() => new Promise(resolve => setTimeout(resolve, 1200))}>Delete</AlertDialog.Action>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
+      </AlertDialog>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog>
