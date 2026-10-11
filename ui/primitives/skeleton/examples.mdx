@@ -1,0 +1,51 @@
+import Skeleton from './index'
+import SizeProvider from '../sizes'
+
+# Blocks
+
+Give each block the size of what it stands in for: a picture, a title, a line of text.
+
+<div className="flex w-72 items-center gap-3">
+  <Skeleton className="size-9 rounded-full" />
+  <div className="flex flex-1 flex-col gap-2">
+    <Skeleton className="h-4 w-2/3" />
+    <Skeleton className="h-3 w-full" />
+  </div>
+</div>
+
+# Rows
+
+`rows` stacks row placeholders one control tall, so the list or table that replaces them lands on the same lines.
+
+<div className="w-80">
+  <Skeleton rows={4} />
+</div>
+
+# Bordered rows
+
+`bordered` frames the rows in a hairline container; the row corners nest inside the frame's.
+
+<div className="w-80">
+  <Skeleton rows={5} bordered />
+</div>
+
+# Compact
+
+Inside a compact region the rows step down to 28px with everything around them.
+
+<div className="w-80">
+  <SizeProvider size="compact">
+    <Skeleton rows={5} bordered />
+  </SizeProvider>
+</div>
+
+# A card loading
+
+Blocks compose into the shape of what is coming.
+
+<div className="flex w-72 flex-col gap-3 rounded-xl border border-border p-4">
+  <Skeleton className="aspect-video w-full" />
+  <Skeleton className="h-4 w-1/2" />
+  <Skeleton className="h-3 w-full" />
+  <Skeleton className="h-3 w-4/5" />
+</div>

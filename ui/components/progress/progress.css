@@ -1,0 +1,49 @@
+/*
+ * Local addition (not part of Fluid Functionalism): Progress's loops. The
+ * indeterminate bar sweeps a segment across the track (transform only); the
+ * spinner reuses Button's figure-eight keyframes from base.css. Both run on
+ * `--duration-loop`. Under reduced motion (Progress swaps the classes through
+ * useReduceMotion; the media query covers the first paint) nothing travels:
+ * the fill breathes in opacity instead.
+ */
+
+@keyframes progress-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@keyframes progress-breathe {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.progress-sweep {
+  animation: progress-sweep var(--duration-loop) ease-in-out infinite;
+}
+
+.progress-spin {
+  stroke-dasharray: 15 85;
+  animation:
+    spinner-move var(--duration-loop) linear infinite,
+    spinner-dash calc(var(--duration-loop) * 2) ease-in-out infinite;
+}
+
+.progress-breathe {
+  animation: progress-breathe var(--duration-loop) ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-sweep {
+    width: 100%;
+    animation: progress-breathe var(--duration-loop) ease-in-out infinite;
+  }
+  .progress-spin {
+    stroke-dasharray: none;
+    animation: progress-breathe var(--duration-loop) ease-in-out infinite;
+  }
+}
