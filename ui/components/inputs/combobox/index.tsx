@@ -81,16 +81,16 @@ import { type FieldVariant, fieldIconClasses, fieldVariants, useFieldBox } from 
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
-import { useReduceMotion } from '../../../lib/reduced-motion'
 import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
+import { useReduceMotion } from '../../../lib/reduced-motion'
 import { shapeMap, useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
+import { useControllableState } from '../../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../../lib/use-merge-split'
-import { useControllableState } from '../../../lib/use-controllable-state'
 import { inPlaceOffset, type MorphOrigin, opensInPlace, useMorph, useMorphOrigin } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import { ScrollArea } from '../../../primitives/scroll-area'
@@ -246,7 +246,7 @@ interface ComboboxProps {
   filter?: ((item: ComboboxItemData, query: string) => boolean) | null
   /** Controlled query, the field's text. Pair it with `onInputValueChange`. */
   inputValue?: string
-  /** Initial query, for an uncontrolled field. Defaults to `""`. */
+  /** Initial query, for an uncontrolled field. Defaults to the picked item's text in single mode, else `""`. */
   defaultInputValue?: string
   /** Called with the field's text on every keystroke, and when a pick or a close rewrites it. */
   onInputValueChange?: (inputValue: string) => void
@@ -338,7 +338,7 @@ function Combobox({
   name,
   required,
   inputValue: inputValueProp,
-  defaultInputValue = '',
+  defaultInputValue,
   onInputValueChange,
   loading = false,
   loadingLabel = 'Loading…',
@@ -350,7 +350,7 @@ function Combobox({
 }: ComboboxProps) {
   const isMultiple = !!multiple
   const [internalValues, setInternalValues] = useState<string[]>(() => toValues(defaultValue))
-  const [inputValue, setInputValue] = useControllableState(inputValueProp, defaultInputValue, onInputValueChange)
+  const [inputValue, setInputValue] = useControllableState(inputValueProp, defaultInputValue ?? '', onInputValueChange)
   const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
   const [highlight, setHighlight] = useState<Highlight | null>(null)
   // Items the create row made while no consumer owns the list.
@@ -597,8 +597,7 @@ function FieldControls({ clearable, compact, iconSize }: { clearable: boolean; c
   const pill = useShape().variant === 'pill'
   const { loading, readOnly } = useComboboxContext()
   const reduced = useReduceMotion()
-  const swap = (shown: boolean) =>
-    reduced ? { opacity: shown ? 1 : 0 } : shown ? SHOWN : HIDDEN
+  const swap = (shown: boolean) => (reduced ? { opacity: shown ? 1 : 0 } : shown ? SHOWN : HIDDEN)
   return (
     <>
       {clearable && !readOnly && (
@@ -661,9 +660,9 @@ const ComboboxInput = forwardRef<HTMLInputElement, ComboboxInputProps>(
     { className, variant = 'bordered', icon: Icon, placeholder = 'Search…', error, clearable = false, size, ...props },
     ref,
   ) => {
-    const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid: !!error, size })
+    const { anchorRef, readOnly } = useComboboxContext()
+    const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid: !!error, readOnly, size })
     const compact = sizeClasses.variant === 'compact'
-    const { anchorRef } = useComboboxContext()
 
     return (
       <div className="flex flex-col gap-1">
@@ -758,7 +757,7 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
     const XIcon = useIcon('x')
     const shape = useShape()
     const { anchorRef, open, disabled, inputValue, values, readOnly } = useComboboxContext()
-    const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid: !!error, disabled, size })
+    const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid: !!error, disabled, readOnly, size })
     const compact = sizeClasses.variant === 'compact'
     const rowHeight = useChipRowHeight(compact ? 8 : 12)
 

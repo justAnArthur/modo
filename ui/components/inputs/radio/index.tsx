@@ -268,7 +268,12 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
           }
         }}
         role="radiogroup"
-        className={cn('relative flex flex-col w-72 max-w-full select-none', className)}
+        aria-disabled={disabled || undefined}
+        className={cn(
+          'relative flex flex-col w-72 max-w-full select-none transition-[opacity] duration-fast',
+          disabled && 'opacity-50 pointer-events-none',
+          className,
+        )}
         {...props}
       >
         {selectedRect && <GooIndicator rect={selectedRect} className={cn('bg-active', shape.bg)} />}
@@ -569,7 +574,9 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
           // Fixed height (was py-1.5 around a 19.5px line box ≈ 31.5px) so the
           // text-box trim on the label doesn't shrink the row.
           `relative z-10 flex ${sizeClasses.control} items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.px} cursor-pointer outline-none transition-[opacity] duration-fast`,
-          disabled && 'opacity-50 pointer-events-none',
+          // A disabled group dims as a whole, selected background included.
+          disabled && 'pointer-events-none',
+          disabled && !groupDisabled && 'opacity-50',
           className,
         )}
         {...props}
