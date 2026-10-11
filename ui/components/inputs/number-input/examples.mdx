@@ -1,0 +1,56 @@
+import NumberInput from './index'
+import Field from '../field'
+
+# Number input
+
+Type a number, or step it with minus and plus. Hold a button to repeat; the arrow keys step too, Shift by ten.
+
+<div className="w-56 max-w-full">
+  <NumberInput variant="bordered" defaultValue={4} min={0} max={20} />
+</div>
+
+# Formats
+
+`format` takes `Intl.NumberFormat` options and `locale` the locale. Typing in the shown form parses back.
+
+<div className="flex flex-col gap-3 w-56 max-w-full">
+  <NumberInput variant="bordered" defaultValue={1234.5} format={{ style: 'currency', currency: 'EUR' }} locale="en-US" />
+  <NumberInput variant="bordered" defaultValue={1234.5} format={{ style: 'currency', currency: 'EUR' }} locale="sk-SK" />
+  <NumberInput variant="bordered" defaultValue={0.25} step={0.05} format={{ style: 'percent' }} />
+</div>
+
+# Units and scrubbing
+
+`endAdornment` holds a unit. With `scrub`, the start adornment is a handle: drag it sideways to change the value.
+
+<div className="flex flex-col gap-3 w-56 max-w-full">
+  <NumberInput variant="bordered" defaultValue={72} endAdornment="kg" />
+  <NumberInput variant="bordered" defaultValue={320} min={0} startAdornment="W" scrub stepper={false} />
+</div>
+
+# Compact
+
+The compact step shrinks the box, the text and the steppers together.
+
+<div className="w-44 max-w-full">
+  <NumberInput size="compact" variant="bordered" defaultValue={10} step={5} />
+</div>
+
+# In a Field
+
+Inside a Field it is labelled and takes the field's state: here invalid, with its message.
+
+<Field invalid className="w-56 max-w-full">
+  <Field.Label>Guests</Field.Label>
+  <NumberInput defaultValue={12} max={10} />
+  <Field.Error>The room seats ten.</Field.Error>
+</Field>
+
+# States
+
+Disabled dims the field and its steppers; read-only hides the steppers and keeps the value selectable.
+
+<div className="flex flex-col gap-3 w-56 max-w-full">
+  <NumberInput variant="bordered" defaultValue={3} disabled />
+  <NumberInput variant="bordered" defaultValue={3} readOnly />
+</div>

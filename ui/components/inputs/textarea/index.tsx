@@ -31,6 +31,10 @@ interface TextareaProps
   invalid?: boolean
   /** Disables the textarea. Defaults to `false`. */
   disabled?: boolean
+  /** Keeps the value selectable but not editable, with the field's read-only look. Defaults to the surrounding Field's `readOnly`. */
+  readOnly?: boolean
+  /** Marks the textarea required. Defaults to the surrounding Field's `required`. */
+  required?: boolean
   /** Pins the textarea to one step of the size ladder (36px default, 28px compact): its text and padding follow, so one row matches an Input. Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
   /** Classes for the ringed box around the textarea. */
@@ -71,6 +75,8 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       variant = 'borderless',
       invalid,
       disabled,
+      readOnly,
+      required,
       size,
       className,
       ...props
@@ -80,7 +86,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     const [value, onChange] = useControllableState(valueProp, defaultValue, onChangeProp)
 
     const textareaRef = useRef<HTMLTextAreaElement | null>(null)
-    const box = useFieldBox({ variant, invalid, disabled, size })
+    const box = useFieldBox({ variant, invalid, disabled, readOnly, required, size })
 
     const resize = useCallback(() => {
       const el = textareaRef.current
@@ -134,6 +140,8 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           value={value}
           onChange={e => onChange(e.target.value)}
           disabled={box.disabled}
+          readOnly={box.readOnly}
+          required={box.required}
           aria-invalid={box.invalid || undefined}
           className={cn(
             'block w-full resize-none rounded-none bg-transparent text-foreground placeholder:text-muted-foreground outline-none font-[inherit]',
