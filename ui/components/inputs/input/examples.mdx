@@ -9,6 +9,15 @@ A single input with a leading icon.
   <Input placeholder="Search teamspaces..." icon={Search} />
 </div>
 
+# Variants
+
+`borderless` is invisible until hovered or focused; `bordered` is framed at rest.
+
+<div className="flex flex-col gap-3 w-72 max-w-full">
+  <Input placeholder="Borderless" />
+  <Input variant="bordered" placeholder="Bordered" />
+</div>
+
 # With a Label
 
 `Label` pairs with the input through `htmlFor` and `id`.

@@ -1,0 +1,77 @@
+import Textarea from './index'
+import Input, { Label } from '../input'
+
+# Basic
+
+Type past the third line: the box grows with the text, then scrolls at eight rows.
+
+<div className="w-72 max-w-full">
+  <Textarea placeholder="Write a note..." />
+</div>
+
+# Variants
+
+`borderless` is invisible until hovered or focused; `bordered` is framed at rest.
+
+<div className="flex flex-col gap-3 w-72 max-w-full">
+  <Textarea minRows={2} placeholder="Borderless" />
+  <Textarea variant="bordered" minRows={2} placeholder="Bordered" />
+</div>
+
+# With a Label
+
+`Label` pairs with the textarea through `htmlFor` and `id`.
+
+<div className="flex flex-col gap-1 w-72 max-w-full">
+  <Label htmlFor="textarea-bio">Bio</Label>
+  <Textarea id="textarea-bio" placeholder="A few words about you" />
+</div>
+
+# Rows
+
+`minRows` sets the empty height and `maxRows` where growth stops. Equal values give a fixed box.
+
+<div className="flex flex-col gap-3 w-72 max-w-full">
+  <Textarea minRows={1} maxRows={4} placeholder="Starts at one row, grows to four" />
+  <Textarea minRows={4} maxRows={4} placeholder="Fixed at four rows" />
+</div>
+
+# In a form
+
+One row lines up with an Input of the same size, so the two stack without a seam.
+
+<div className="flex flex-col gap-3 w-72 max-w-full">
+  <div className="flex flex-col gap-1">
+    <Label htmlFor="textarea-form-title">Title</Label>
+    <Input id="textarea-form-title" placeholder="Short summary" />
+  </div>
+  <div className="flex flex-col gap-1">
+    <Label htmlFor="textarea-form-body">Description</Label>
+    <Textarea id="textarea-form-body" minRows={1} placeholder="Add details" />
+  </div>
+</div>
+
+# Compact
+
+`size="compact"` steps the text and padding down the size ladder.
+
+<div className="w-72 max-w-full">
+  <Textarea size="compact" minRows={2} placeholder="Dense note..." />
+</div>
+
+# Invalid
+
+`invalid` turns the field destructive.
+
+<div className="flex flex-col gap-1 w-72 max-w-full">
+  <Label htmlFor="textarea-invalid" invalid>
+    Message
+  </Label>
+  <Textarea id="textarea-invalid" defaultValue="Too short" invalid />
+</div>
+
+# Disabled
+
+<div className="w-72 max-w-full">
+  <Textarea defaultValue="Read only for now" disabled />
+</div>

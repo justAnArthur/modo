@@ -7,6 +7,7 @@
 import { format, type Locale, set } from 'date-fns'
 import { type RefObject, useRef } from 'react'
 import { defaultLocale, type HourCycle, hourCycleOf, parseTimeText } from '../../../../lib/date-locale'
+import type { FieldVariant } from '../../../../lib/field-classes'
 import { dividedColumns } from '../../../../lib/scroll-column'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
@@ -31,6 +32,8 @@ interface TimePickerProps {
   placeholder?: string
   /** Disables the field. Defaults to `false`. */
   disabled?: boolean
+  /** Framed at rest, or invisible until hovered or focused. Defaults to `"bordered"`. */
+  variant?: FieldVariant
   /** Marks the field invalid. Defaults to `false`. */
   invalid?: boolean
   /** Pins the field and its panel to one step of the size ladder. Defaults to the surrounding SizeProvider. */
@@ -81,6 +84,7 @@ function TimePicker({
   locale = defaultLocale,
   placeholder,
   disabled,
+  variant,
   invalid,
   size,
   open: openProp,
@@ -115,6 +119,7 @@ function TimePicker({
       open={open}
       onOpenChange={setOpen}
       size={size}
+      variant={variant}
       invalid={invalid}
       disabled={disabled}
       icon="clock"

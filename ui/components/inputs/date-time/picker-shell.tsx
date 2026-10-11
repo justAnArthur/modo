@@ -3,8 +3,9 @@
  * date and time picker shares. Not an item (a file in a group folder): the
  * pickers import it.
  *
- * The field is a text field on the field ladder (`lib/field-classes.ts`)
- * showing the formatted value. Pressed, it opens its panel through Base UI's
+ * The field is a text field on the shared field box (`useFieldBox` in
+ * `lib/field-classes.ts`, `bordered` unless the picker's `variant` says
+ * otherwise) showing the formatted value. Pressed, it opens its panel through Base UI's
  * Popover and the morph layer, with Combobox's options: goo out of the field
  * by default, or in place over it (`effect="morph"` with `hideSource`), the
  * panel's header landing where the field was. On a phone-width screen the
@@ -13,7 +14,7 @@
 
 import { Popover } from '@base-ui/react/popover'
 import { type ButtonHTMLAttributes, forwardRef, type ReactNode, type RefObject, useCallback, useState } from 'react'
-import { fieldIconClasses, fieldVariants } from '../../../lib/field-classes'
+import { type FieldVariant, fieldIconClasses, useFieldBox } from '../../../lib/field-classes'
 import { type IconName, useIcon } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
 import { useShape } from '../../../lib/shape-context'
@@ -42,6 +43,7 @@ interface PickerShellProps {
   defaultOpen?: boolean
   onOpenChange?: (open: boolean) => void
   size?: SizeVariant
+  variant?: FieldVariant
   invalid?: boolean
   disabled?: boolean
   /** The field's leading icon. */
@@ -90,17 +92,15 @@ type PanelProps = Omit<PickerShellProps, 'open' | 'defaultOpen' | 'onOpenChange'
 
 type PickerFieldProps = Pick<
   PanelProps,
-  'icon' | 'display' | 'placeholder' | 'invalid' | 'disabled' | 'id' | 'className'
+  'icon' | 'display' | 'placeholder' | 'variant' | 'invalid' | 'disabled' | 'id' | 'className'
 > &
   Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'>
 
 // Forwards its ref: Base UI anchors the panel to the field through it.
 const PickerField = forwardRef<HTMLButtonElement, PickerFieldProps>(
-  ({ icon, display, placeholder, invalid, disabled, id, className, ...props }, ref) => {
+  ({ icon, display, placeholder, variant = 'bordered', invalid, disabled, id, className, ...props }, ref) => {
     const Icon = useIcon(icon)
-    const shape = useShape()
-    const sizeClasses = useSize()
-    const compact = sizeClasses.variant === 'compact'
+    const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid, disabled })
 
     return (
       <button
@@ -109,17 +109,14 @@ const PickerField = forwardRef<HTMLButtonElement, PickerFieldProps>(
         id={id}
         disabled={disabled}
         aria-invalid={invalid || undefined}
-        data-invalid={invalid || undefined}
-        data-disabled={disabled || undefined}
+        {...boxProps}
         // Base UI's trigger props (open state, handlers, aria) arrive here.
         {...props}
         className={cn(
-          fieldVariants({ variant: 'bordered' }),
+          boxProps.className,
           'flex w-full min-w-0 items-center text-left cursor-pointer outline-none focus-visible:ring-focus-ring',
           sizeClasses.gap,
           sizeClasses.control,
-          compact ? 'px-2' : 'px-2.5',
-          shape.input,
           className,
         )}
       >

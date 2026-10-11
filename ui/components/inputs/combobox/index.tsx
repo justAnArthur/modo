@@ -45,11 +45,13 @@
  *   `comboboxFieldVariants`; its default is now `borderless`, the fields pass
  *   `bordered`): `error` stamps `data-invalid` instead of overriding the ring
  *   per state, so an invalid field also tints its lit fill; the leading icon
- *   darkens and thickens on hover too, not only on focus.
+ *   darkens and thickens on hover too, not only on focus. Both fields build
+ *   their box with the shared `useFieldBox` (ladder in the variant, state
+ *   attributes, radius, inset), as every text field does; `variant` is typed
+ *   `FieldVariant` (no `null`).
  */
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox'
-import type { VariantProps } from 'class-variance-authority'
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
 import {
   createContext,
@@ -67,7 +69,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { fieldIconClasses, fieldVariants } from '../../../lib/field-classes'
+import { type FieldVariant, fieldIconClasses, fieldVariants, useFieldBox } from '../../../lib/field-classes'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
@@ -462,10 +464,9 @@ const clearButtonClass = cn(fieldButtonClass, 'hover:bg-hover active:bg-active t
 const chipRemoveClass = cn(fieldButtonClass, 'rounded hover:bg-active')
 
 interface ComboboxFieldProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'value' | 'defaultValue' | 'onChange'>,
-    VariantProps<typeof fieldVariants> {
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' | 'value' | 'defaultValue' | 'onChange'> {
   /** Framed at rest, or invisible until hovered or focused. Defaults to `"bordered"`. */
-  variant?: 'bordered' | 'borderless' | null
+  variant?: FieldVariant
   /** Leading icon inside the field. */
   icon?: IconComponent
   /** Shown while nothing is typed or selected. Defaults to `"Search…"`. */
@@ -525,9 +526,11 @@ function FieldControls({ clearable, compact, iconSize }: { clearable: boolean; c
 }
 
 const ComboboxInput = forwardRef<HTMLInputElement, ComboboxInputProps>(
-  ({ className, variant, icon: Icon, placeholder = 'Search…', error, clearable = false, size, ...props }, ref) => {
-    const shape = useShape()
-    const sizeClasses = useSize(size)
+  (
+    { className, variant = 'bordered', icon: Icon, placeholder = 'Search…', error, clearable = false, size, ...props },
+    ref,
+  ) => {
+    const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid: !!error, size })
     const compact = sizeClasses.variant === 'compact'
     const { anchorRef } = useComboboxContext()
 
@@ -537,15 +540,13 @@ const ComboboxInput = forwardRef<HTMLInputElement, ComboboxInputProps>(
             field (icon to chevron), not just the text input. */}
         <ComboboxPrimitive.InputGroup
           ref={anchorRef}
-          data-invalid={!!error || undefined}
+          {...boxProps}
           className={cn(
-            fieldVariants({ variant: variant ?? 'bordered' }),
+            boxProps.className,
             'flex items-center',
             sizeClasses.control,
             sizeClasses.gap,
-            compact ? 'px-2' : 'px-2.5',
             compact ? 'min-w-[128px]' : 'min-w-[160px]',
-            shape.input,
             className,
           )}
         >
@@ -619,12 +620,15 @@ function useChipRowHeight(padY: number) {
 }
 
 const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
-  ({ className, variant, icon: Icon, placeholder = 'Search…', error, clearable = false, size, ...props }, ref) => {
+  (
+    { className, variant = 'bordered', icon: Icon, placeholder = 'Search…', error, clearable = false, size, ...props },
+    ref,
+  ) => {
     const XIcon = useIcon('x')
     const shape = useShape()
-    const sizeClasses = useSize(size)
-    const compact = sizeClasses.variant === 'compact'
     const { anchorRef, open, disabled, inputValue, values } = useComboboxContext()
+    const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid: !!error, disabled, size })
+    const compact = sizeClasses.variant === 'compact'
     const rowHeight = useChipRowHeight(compact ? 8 : 12)
 
     return (
@@ -636,11 +640,10 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
           render={<motion.div style={{ height: rowHeight.height }} />}
           // Chips stamps no state attributes of its own (InputGroup does);
           // the field ladder (`lib/field-classes.ts`) and the chevron read these.
-          data-disabled={disabled || undefined}
-          data-invalid={!!error || undefined}
+          {...boxProps}
           data-popup-open={open || undefined}
           className={cn(
-            fieldVariants({ variant: variant ?? 'bordered' }),
+            boxProps.className,
             'flex items-center',
             // The spring above owns the height; leaving it in transition-all
             // would have the 80ms CSS ease drag behind every spring frame.
@@ -652,9 +655,7 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
             '!items-start',
             compact ? 'min-h-7 py-1' : 'min-h-9 py-1.5',
             sizeClasses.gap,
-            compact ? 'px-2' : 'px-2.5',
             compact ? 'min-w-[128px]' : 'min-w-[160px]',
-            shape.input,
             className,
           )}
         >

@@ -16,6 +16,7 @@ controlled + uncontrolled.
 | An action | `Button` (`primary` / `secondary` / `tertiary` / `ghost`; `icon` sizes; `loading`; `asChild` for links) |
 | A status or category label | `Badge` (`solid` / `dot`, 17 colors; changes animate) |
 | A text field, with label and error | `InputGroup` + `InputGroup.Field` |
+| A multi-line text field | `Textarea` (+ `Label`) |
 | A read-only value to copy | `Copy` |
 | A chat or prompt composer | `InputMessage` (attachments, queue, send/stop) |
 | One of a few options, all visible | `Radio.Group`, or `TabsSubtle` for a view switch |
@@ -82,6 +83,7 @@ controlled + uncontrolled.
 | `Switch` | — | L G C | Thumb is a `GooIndicator` that stretches as it travels; on = `bg-brand`. |
 | `Slider` | — | L C | Default: pips + scrubber; compact: fill, range, value. |
 | `InputGroup` | `.Field` | L H W C | Fields share one hover; error state on Base UI Field. |
+| `Textarea` | — | L C | Multi-line Input on the field ladder; grows from `minRows` to `maxRows`, then scrolls. |
 | `Copy` | — | L M | Click anywhere to copy; the glyph melts into a status disc behind the check. |
 | `InputMessage` | — | L S C | Composer: auto-resize, actions, attachments, queue, status. |
 | `ColorPicker` | `.Popover` | L S M | HEX / RGB / HSL / OKLCH, alpha, swatches, eyedropper. |
