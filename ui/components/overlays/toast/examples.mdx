@@ -1,5 +1,6 @@
-import Toast from './index'
+import Toast, { toast } from './index'
 import Button from '../../button'
+import GlobalDemo from './global-demo'
 
 # States
 
@@ -12,6 +13,14 @@ Each state sets the icon and its color. A toast with a description melts from th
     <Toast.Trigger type="warning" title="Storage almost full" description="You've used 92% of your plan." render={<Button variant="secondary">Warning</Button>} />
     <Toast.Trigger type="info" title="New version" render={<Button variant="secondary">Info</Button>} />
   </div>
+</Toast>
+
+# From anywhere
+
+Mount one `Toast` with `manager={toast}` near the root, then call `toast()` from any handler or module, inside React or not. Each call returns a handle to `update` or `dismiss` it; titles and descriptions take any node, `icon` swaps the glyph and `action` adds a button.
+
+<Toast manager={toast} position="bottom-right">
+  <GlobalDemo />
 </Toast>
 
 # Promise
