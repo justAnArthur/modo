@@ -24,8 +24,13 @@ components/<group>/<name>/
   index.tsx          the item: default export + TSDoc + props interface
   examples.mdx       its examples, included by `@example {@include ./examples.mdx}`
   <part>.tsx         optional helpers (a row, a docs stage), imported by index.tsx
+  variants.ts        optional: class tables and pure helpers (no JSX, hooks or contexts), a build
+                     entry of its own that server code can call; index.tsx re-exports it
   <name>.css         optional, auto-injected; structure only (visuals through tokens)
 ```
+
+Free-form pages (an introduction, a migration guide) are not items: they are `.mdx` files in the
+package's `pages/` (see `lib/README.md`, Pages).
 
 Groups are `inputs`, `navigation`, `overlays`; ungrouped items are core display pieces. The id stays
 `<name>`, so moving between groups changes no URL. Imports: `lib/*` relatively (`../../../lib/…` from a
@@ -64,16 +69,24 @@ Then add its row to `README.md`'s file map (and the tier mapping table for a new
 
 ## Props interface
 
-modo's parser (`lib/src/lib/tsdoc.ts`) reads props from a same-file `interface <Item>Props`:
+modo reads an item through the TypeScript compiler (`lib/src/lib/docs.ts`):
 
-- **Only members declared in the body count.** Inherited members (`extends HTMLAttributes<…>`) are
-  invisible in the table; re-declare the ones a reader needs (`className`, `children`, `disabled`).
-- **One member per line.** A member whose type spans lines is dropped. Hoist a long union to a type
-  alias (`type BadgeColor = …`) and reference it.
-- **Every member has a description.** End with "Defaults to \`x\`." when there is a default: the table
-  reads the default from that sentence. `@values a, b` names allowed values when the type can't.
-- **The item is the file's default export**, a `function X(…)` or `const X = forwardRef<HTMLDivElement,
-  XProps>(…)`; the forwardRef's first type argument holds no `<` or `,`.
+- **The item is the file's default export**, followed to its declaration: a `function X(props: XProps)`,
+  a `forwardRef<El, XProps>(…)`, or any component-typed value. The props type is the render function's
+  parameter annotation, the `forwardRef` type argument, or the component's type.
+- **Inherited members show.** `extends`, `Omit` / `Pick` / `Partial` and intersections resolve across
+  files and from modo-documented packages; a member's type may span lines. React's DOM attributes
+  (`@types/react`) and other libraries' typings (Base UI, react-day-picker) stay out: re-declare the ones
+  a reader needs (`className`, `children`, `disabled`) with a description.
+- **Every member has a description.** The Default column takes the destructured default first, then
+  `@default x`, then a closing "Defaults to \`x\`." sentence. `@values a, b` names allowed values when
+  the type can't.
+- **Re-export items.** An item file may only re-export a component (`export { default } from 'pkg/…'`,
+  `export { X as default } from './x'`, `import X …; export default X`): the page reads the TSDoc, props
+  and `@example {@include}` at the declaration (includes relative to that file); a package specifier
+  resolves through its `source` export condition, else its `types`. `{@inheritDoc <ref>}` (a specifier
+  or an in-scope name) puts the base's description and examples before the item's own; the props
+  table is still the item's full props.
 - Shared prop prose is shared verbatim: the morph options (`from`, `effect`, `hideSource`, `tier`) copy
   their docs from [motion.md](motion.md#morphing-overlays); `size` reads "Pins … to one step of the size
   ladder (36px default, 28px compact). Defaults to the surrounding SizeProvider."
@@ -421,7 +434,7 @@ The mechanical pass every ported item went through (README › Items):
 5. Add `default*` twins through `useControllableState` for every controlled-only prop.
 6. React 18: `MutableRefObject` casts where a forwarded ref is written, `useRef<T | null>(null)`,
    `forwardRef` for components that receive refs.
-7. Re-declare the props interface one member per line with the FF docs API-table text; write the TSDoc
+7. Write the FF docs API-table text on the props interface (re-declare the members a reader needs); write the TSDoc
    from the FF docs page; one `# <FF section title>` example per docs section in `examples.mdx`
    (Playground and API Reference are never ported).
 8. Header comment listing every change; README file-map row.
