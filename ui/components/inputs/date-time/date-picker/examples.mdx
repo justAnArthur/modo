@@ -1,4 +1,5 @@
 import DatePicker from './index'
+import { Label } from '../../input'
 import { ar, de } from 'react-day-picker/locale'
 
 # Basic
@@ -85,4 +86,57 @@ The locale sets the names, the formats shown and read ("12.10.2026"), and the we
 
 <div className="w-60 max-w-full">
   <DatePicker size="compact" defaultValue={new Date(2026, 9, 9)} />
+</div>
+
+# Editable
+
+`editable` makes the field a text input: type the digits and the separators fall into place, with the rest of the mask muted after the caret. The calendar icon opens the panel. A day that can't exist, or one left half typed, turns the field destructive with a caption.
+
+<div className="flex w-72 max-w-full flex-col gap-1">
+  <Label htmlFor="editable-date">Date of birth</Label>
+  <DatePicker id="editable-date" editable defaultValue={new Date(1990, 4, 17)} />
+</div>
+
+# Editable with time
+
+With `withTime` the mask takes the time too, on a 24-hour clock; the locale sets the order ("17.05.1990, 14:30").
+
+<div className="w-72 max-w-full">
+  <DatePicker editable withTime locale={de} defaultValue={new Date(1990, 4, 17, 14, 30)} />
+</div>
+
+# Labels and format
+
+Every word comes from `labels`, and `formatDate` writes the field's text. `actions` adds Today and Clear under the calendar.
+
+<div className="w-72 max-w-full">
+  <DatePicker
+    locale={de}
+    actions
+    placeholder="Datum wählen"
+    formatDate={date => date.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}
+    labels={{ date: 'Datum', close: 'Schließen', today: 'Heute', clear: 'Leeren', calendar: 'Kalender öffnen', invalid: 'Ungültiges Datum' }}
+  />
+</div>
+
+# Invalid value
+
+A `value` that reads as no date (a malformed string, an Invalid Date) shows the invalid state and the `labels.invalid` caption.
+
+<div className="flex w-72 max-w-full flex-col gap-3">
+  <div>
+    <DatePicker defaultValue="2026-02-31-oops" />
+  </div>
+  <div>
+    <DatePicker editable defaultValue="not a date" />
+  </div>
+</div>
+
+# Read only
+
+`readOnly` shows the value but never opens or takes typing. `value` may be a string.
+
+<div className="flex w-72 max-w-full flex-col gap-2">
+  <DatePicker readOnly defaultValue="2026-10-09" />
+  <DatePicker readOnly editable defaultValue="2026-10-09" />
 </div>
