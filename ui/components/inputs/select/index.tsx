@@ -44,10 +44,12 @@
  * - `Select.Content` takes `side` / `align` / `sideOffset` (local).
  * - The keyboard focus ring is the shared `FocusRing` (`lib/focus-ring.tsx`,
  *   pinned to the popup's rounded shape), so it also snaps under reduced motion.
+ * - `triggerVariants` moved to `variants.ts` (server-callable, no JSX or hooks)
+ *   and re-exported here.
  */
 
 import { Select as SelectPrimitive } from '@base-ui/react/select'
-import { cva, type VariantProps } from 'class-variance-authority'
+import type { VariantProps } from 'class-variance-authority'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   Children,
@@ -81,6 +83,7 @@ import { inPlaceOffset, type MorphOrigin, opensInPlace, useMorph, useMorphOrigin
 import { cn } from '../../../lib/utils'
 import { ScrollArea } from '../../../primitives/scroll-area'
 import { SizeProvider } from '../../../primitives/sizes'
+import { triggerVariants } from './variants'
 
 // ---------------------------------------------------------------------------
 // Select context
@@ -327,26 +330,6 @@ SelectValue.displayName = 'SelectValue'
 // ---------------------------------------------------------------------------
 // SelectTrigger
 // ---------------------------------------------------------------------------
-
-const triggerVariants = cva(
-  [
-    'group inline-flex items-center justify-between outline-none cursor-pointer',
-    'transition-all duration-fast',
-    'disabled:opacity-50 disabled:pointer-events-none',
-    'focus-visible:ring-1 focus-visible:ring-focus-ring',
-  ],
-  {
-    variants: {
-      variant: {
-        bordered: 'border border-border bg-transparent text-foreground hover:bg-hover',
-        borderless: 'border border-transparent bg-transparent text-foreground hover:bg-hover',
-      },
-    },
-    defaultVariants: {
-      variant: 'bordered',
-    },
-  },
-)
 
 interface SelectTriggerProps
   extends Omit<HTMLAttributes<HTMLButtonElement>, 'children'>,

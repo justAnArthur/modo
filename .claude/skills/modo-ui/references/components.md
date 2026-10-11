@@ -168,6 +168,8 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 | `slot.ts` | `SlotProps`, `slotRender` | `render={<Button/>}` / `asChild` on any part that wraps a control. |
 | `popup.ts` | `popupScrollAreaClass`, `popupViewportClass`, `POPUP_NAV_KEYS`, `isDisabledRow` | Popup list scrolling and row rules. |
 | `use-keyboard-nav-gate.ts` | `useKeyboardNavGate` | Show a popup's ring only after keyboard use. |
+| `focus-ring.tsx` | `FocusRing` | The keyboard ring of a list panel: one rect springing between rows (`shape` pins the radius). |
+| `inert.ts` | `inertProps`, `markInert` | `inert` that works on React 18 and 19. |
 | `use-touch-primary.tsx` | `useTouchPrimary` | Skip pointer-only machinery on touch. |
 | `icon-context.tsx` | `useIcon`, `useIcons`, `IconProvider`, `IconName`, `IconComponent` | Icons. |
 | `utils.ts` | `cn` | Class merging that knows the local utilities. |
