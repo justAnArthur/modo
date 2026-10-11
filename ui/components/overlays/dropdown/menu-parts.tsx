@@ -6,11 +6,11 @@
  * `Menu.SubmenuRoot` / `Menu.SubmenuTrigger`). The rows are `MenuItem`; a
  * submenu is a panel of its own (fluid hover, keyboard ring, selection
  * backgrounds) that grows out of its trigger row through the morph engine.
- * `useMenuPanel` is the state both popups share.
+ * `useMenuPanel` is the state both popups share; both draw the shared
+ * keyboard ring (`lib/focus-ring.tsx`, pinned to the rounded shape).
  */
 
 import { Menu } from '@base-ui/react/menu'
-import { AnimatePresence, motion } from 'motion/react'
 import {
   type ComponentProps,
   createContext,
@@ -30,18 +30,17 @@ import {
   useState,
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
+import { FocusRing } from '../../../lib/focus-ring'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
 import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
-import { useReduceMotion } from '../../../lib/reduced-motion'
 import { RowOrderContext, useRowOrder, useRowSlot } from '../../../lib/row-order'
 import { shapeMap } from '../../../lib/shape-context'
 import { useSize } from '../../../lib/size-context'
-import { spring } from '../../../lib/springs'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
-import { type ItemRect, type UseFluidHoverReturn, useFluidHover } from '../../../lib/use-fluid-hover'
+import { type UseFluidHoverReturn, useFluidHover } from '../../../lib/use-fluid-hover'
 import { useKeyboardNavGate } from '../../../lib/use-keyboard-nav-gate'
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../../lib/use-merge-split'
 import { type MorphOrigin, useMorph, useMorphOrigin } from '../../../lib/use-morph'
@@ -196,24 +195,6 @@ function useMenuPanel(containerRef: RefObject<HTMLDivElement | null>, open: bool
     valueChecked,
     reportChecked,
   }
-}
-
-/** The keyboard ring: 2px outside the focused row, springing between rows. */
-function FocusRing({ rect }: { rect: ItemRect | null }) {
-  const reduced = useReduceMotion()
-  return (
-    <AnimatePresence>
-      {rect && (
-        <motion.div
-          className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
-          initial={false}
-          animate={{ left: rect.left - 2, top: rect.top - 2, width: rect.width + 4, height: rect.height + 4 }}
-          exit={{ opacity: 0, transition: spring.fast.exit }}
-          transition={reduced ? { duration: 0 } : { ...spring.fast, opacity: { duration: spring.fast.duration } }}
-        />
-      )}
-    </AnimatePresence>
-  )
 }
 
 // ---------------------------------------------------------------------------
@@ -636,7 +617,7 @@ const DropdownSubContent = forwardRef<HTMLDivElement, DropdownSubContentProps>(
                   <div ref={containerRef} className="relative flex flex-col p-1">
                     <SelectionBackgrounds blocks={blocks} />
                     <FluidHoverHighlight hover={panel.shownHover} hidden={!open} className={shape.bg} />
-                    <FocusRing rect={open ? panel.focusRect : null} />
+                    <FocusRing rect={open ? panel.focusRect : null} shape="rounded" />
                     <RowOrderContext.Provider value={panel.rowOrder}>
                       <DropdownContext.Provider value={ctx}>{children}</DropdownContext.Provider>
                     </RowOrderContext.Provider>
@@ -671,7 +652,6 @@ export {
   DropdownSub,
   DropdownSubContent,
   DropdownSubTrigger,
-  FocusRing,
   mergeRefs,
   ownEvent,
   renderPopupItem,

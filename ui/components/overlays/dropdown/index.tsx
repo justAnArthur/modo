@@ -95,6 +95,7 @@ import {
   useState,
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
+import { FocusRing } from '../../../lib/focus-ring'
 import { MorphSurface } from '../../../lib/morph-layers'
 import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
 import { RowOrderContext, useRowOrder, useRowSlot } from '../../../lib/row-order'
@@ -148,7 +149,6 @@ import {
   type DropdownSubProps,
   DropdownSubTrigger,
   type DropdownSubTriggerProps,
-  FocusRing,
   mergeRefs,
   ownEvent,
   renderPopupItem,
@@ -1027,7 +1027,7 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
                           <FluidHoverHighlight hover={panel.shownHover} from={checkedRect} className={shape.bg} />
 
                           {/* Focus ring, keyboard only */}
-                          <FocusRing rect={open ? panel.focusRect : null} />
+                          <FocusRing rect={open ? panel.focusRect : null} shape="rounded" />
 
                           {/* display: contents keeps items direct flex children of the
                     wrapper so fluid hover measurement and gap layout still work,

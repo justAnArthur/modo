@@ -42,6 +42,8 @@
  * - `Select.Value` (local): the trigger's value slot as a part, so a trigger
  *   can take it as children (shadcn's `<SelectValue placeholder>`).
  * - `Select.Content` takes `side` / `align` / `sideOffset` (local).
+ * - The keyboard focus ring is the shared `FocusRing` (`lib/focus-ring.tsx`,
+ *   pinned to the popup's rounded shape), so it also snaps under reduced motion.
  */
 
 import { Select as SelectPrimitive } from '@base-ui/react/select'
@@ -63,6 +65,7 @@ import {
   useState,
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
+import { FocusRing } from '../../../lib/focus-ring'
 import type { IconComponent } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
 import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
@@ -645,27 +648,7 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
                       <FluidHoverHighlight hover={hover} hidden={!open} className={shape.bg} />
 
                       {/* Focus ring */}
-                      {open && (
-                        <AnimatePresence>
-                          {focusRect && (
-                            <motion.div
-                              className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
-                              initial={false}
-                              animate={{
-                                left: focusRect.left - 2,
-                                top: focusRect.top - 2,
-                                width: focusRect.width + 4,
-                                height: focusRect.height + 4,
-                              }}
-                              exit={{ opacity: 0, transition: spring.fast.exit }}
-                              transition={{
-                                ...spring.fast,
-                                opacity: { duration: spring.fast.duration },
-                              }}
-                            />
-                          )}
-                        </AnimatePresence>
-                      )}
+                      {open && <FocusRing rect={focusRect} shape="rounded" />}
 
                       <RowOrderContext.Provider value={rowOrder}>{children}</RowOrderContext.Provider>
                     </div>
