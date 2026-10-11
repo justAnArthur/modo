@@ -5,7 +5,14 @@
  */
 
 import { type Locale, set } from 'date-fns'
-import { forwardRef, type ReactNode, type RefObject, useRef } from 'react'
+import {
+  type ForwardRefExoticComponent,
+  forwardRef,
+  type ReactNode,
+  type RefAttributes,
+  type RefObject,
+  useRef,
+} from 'react'
 import {
   defaultLocale,
   formatTime,
@@ -109,7 +116,10 @@ const toValue = ({ hours, minutes }: Time) => `${pad(hours)}:${pad(minutes)}`
  *
  * @example {@include ./examples.mdx}
  */
-const TimePicker = forwardRef<HTMLButtonElement, TimePickerProps>(function TimePicker(
+const TimePicker: ForwardRefExoticComponent<TimePickerProps & RefAttributes<HTMLButtonElement>> = forwardRef<
+  HTMLButtonElement,
+  TimePickerProps
+>(function TimePicker(
   {
     value: valueProp,
     defaultValue = null,

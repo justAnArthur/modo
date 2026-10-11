@@ -6,7 +6,15 @@
  */
 
 import { addYears, endOfYear, format, type Locale, startOfMonth, startOfYear } from 'date-fns'
-import { forwardRef, type ReactNode, type RefObject, useMemo, useRef } from 'react'
+import {
+  type ForwardRefExoticComponent,
+  forwardRef,
+  type ReactNode,
+  type RefAttributes,
+  type RefObject,
+  useMemo,
+  useRef,
+} from 'react'
 import {
   defaultLocale,
   fieldLabel,
@@ -103,7 +111,10 @@ interface MonthPickerProps extends PickerControlProps {
  *
  * @example {@include ./examples.mdx}
  */
-const MonthPicker = forwardRef<HTMLButtonElement, MonthPickerProps>(function MonthPicker(
+const MonthPicker: ForwardRefExoticComponent<MonthPickerProps & RefAttributes<HTMLButtonElement>> = forwardRef<
+  HTMLButtonElement,
+  MonthPickerProps
+>(function MonthPicker(
   {
     value: valueProp,
     defaultValue = null,

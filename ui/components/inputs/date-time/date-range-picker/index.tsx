@@ -8,10 +8,12 @@
 
 import { endOfMonth, format, isValid, type Locale, set } from 'date-fns'
 import {
+  type ForwardRefExoticComponent,
   forwardRef,
   type InputHTMLAttributes,
   type ReactNode,
   type Ref,
+  type RefAttributes,
   type RefObject,
   useMemo,
   useRef,
@@ -190,7 +192,9 @@ const ACTIVE_END = { active: true, invalid: false, disabled: false }
  *
  * @example {@include ./examples.mdx}
  */
-const DateRangePicker = forwardRef<HTMLButtonElement | HTMLInputElement, DateRangePickerProps>(function DateRangePicker(
+const DateRangePicker: ForwardRefExoticComponent<
+  DateRangePickerProps & RefAttributes<HTMLButtonElement | HTMLInputElement>
+> = forwardRef<HTMLButtonElement | HTMLInputElement, DateRangePickerProps>(function DateRangePicker(
   {
     value: valueProp,
     defaultValue = null,

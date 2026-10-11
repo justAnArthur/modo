@@ -6,7 +6,15 @@
  */
 
 import { type Duration, formatDuration, type Locale } from 'date-fns'
-import { forwardRef, type ReactNode, type RefObject, useMemo, useRef } from 'react'
+import {
+  type ForwardRefExoticComponent,
+  forwardRef,
+  type ReactNode,
+  type RefAttributes,
+  type RefObject,
+  useMemo,
+  useRef,
+} from 'react'
 import { defaultLocale, fieldLabel, resolveLocale } from '../../../../lib/date-locale'
 import type { FieldVariant } from '../../../../lib/field-classes'
 import { dividedColumns, ScrollColumn } from '../../../../lib/scroll-column'
@@ -104,7 +112,10 @@ const TYPED = /^\s*(\d{1,3})(?::(\d{1,2}))?\s*$/
  *
  * @example {@include ./examples.mdx}
  */
-const DurationPicker = forwardRef<HTMLButtonElement, DurationPickerProps>(function DurationPicker(
+const DurationPicker: ForwardRefExoticComponent<DurationPickerProps & RefAttributes<HTMLButtonElement>> = forwardRef<
+  HTMLButtonElement,
+  DurationPickerProps
+>(function DurationPicker(
   {
     value: valueProp,
     defaultValue = null,
