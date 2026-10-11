@@ -42,7 +42,7 @@ export default function GlobalDemo() {
         variant="secondary"
         onClick={() => {
           const handle = toast.loading('Syncing…')
-          setTimeout(() => handle.update({ type: 'success', title: 'Synced', timeout: 4000 }), 1600)
+          setTimeout(() => handle.update({ type: 'success', title: 'Synced' }), 1600)
         }}
       >
         Loading, then update

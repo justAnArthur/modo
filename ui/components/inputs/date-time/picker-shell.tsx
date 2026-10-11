@@ -249,7 +249,14 @@ function PickerPopover({
   const level = Math.min(useSurface() + 2, 8)
 
   const handleOpenChange = useCallback(
-    (next: boolean, details: { trigger?: Element; event?: Event }) => {
+    (next: boolean, details: { reason?: string; trigger?: Element; event?: Event }) => {
+      // Pressing or focusing the editable field's own text is no reason to
+      // close: the panel belongs to that field.
+      if (!next && editor && (details.reason === 'outside-press' || details.reason === 'focus-out')) {
+        const event = details.event as (Event & { relatedTarget?: EventTarget | null }) | undefined
+        const target = (event?.relatedTarget ?? event?.target) as Node | null | undefined
+        if (target && fieldRef.current?.contains(target)) return
+      }
       // An editable field's panel grows out of the whole field, not its icon.
       if (next) capture(editor ? { event: details.event, trigger: fieldRef.current ?? undefined } : details)
       setOpen(next)

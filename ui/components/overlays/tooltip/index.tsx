@@ -25,7 +25,8 @@
  * - Compound parts (local, for hosts with a Radix-shaped API): the flat
  *   tooltip is split into `TooltipRoot` (state, origin, grouping fallback),
  *   `TooltipTrigger` (`render` / `asChild` through `lib/slot.ts`) and
- *   `TooltipContent` (`side`, `align`, offsets, the morph options). `Tooltip`
+ *   `TooltipContent` (`side`, `align`, offsets, the morph options, `render` /
+ *   `asChild` for the label's element, rest props on the popup). `Tooltip`
  *   without `content` acts as the root; with `content` it composes the three
  *   parts exactly as before. `TooltipProvider` also takes Base UI's names
  *   (`delay`, `closeDelay`, `timeout`) next to the Radix ones it had.
@@ -34,8 +35,10 @@
 import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip'
 import { type MotionValue, motion, useMotionValue } from 'motion/react'
 import {
+  cloneElement,
   createContext,
   forwardRef,
+  type HTMLAttributes,
   type MutableRefObject,
   type ReactElement,
   type ReactNode,
@@ -264,9 +267,13 @@ TooltipTrigger.displayName = 'TooltipTrigger'
 // Content
 // ---------------------------------------------------------------------------
 
-interface TooltipContentProps {
+interface TooltipContentProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'className'> {
   /** The label. */
   children?: ReactNode
+  /** An element to render the label as, inside the inverted surface; the label goes inside it. */
+  render?: ReactElement
+  /** Radix-style: the single child element is the label, rendered as-is inside the surface. Defaults to `false`. */
+  asChild?: boolean
   /** Preferred side of the trigger; flips when it would collide with the viewport edge. Defaults to `"top"`. */
   side?: TooltipSide
   /** Alignment against the trigger along that side. Defaults to `"center"`. */
@@ -301,6 +308,10 @@ const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
       from,
       effect = 'goo',
       tier = 'moderate',
+      render,
+      asChild,
+      style,
+      ...props
     },
     ref,
   ) => {
@@ -314,6 +325,11 @@ const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
       instant: popup => handedOff.current || popup.dataset.instant === 'delay',
     })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
+    const label = render
+      ? children === undefined
+        ? render
+        : cloneElement(render, undefined, children)
+      : (slotRender(undefined, asChild, children) ?? children)
 
     return (
       <TooltipPrimitive.Portal container={portalContainer ?? undefined}>
@@ -324,10 +340,12 @@ const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
           alignOffset={alignOffset}
           className={cn('z-50', positionerClassName)}
         >
+          {/* Other props (id, data-*, aria-*, handlers) land on the popup. */}
           <TooltipPrimitive.Popup
+            {...props}
             ref={morph.popupRef}
             className="relative outline-none"
-            render={<motion.div style={followCursor ? { [followCursor]: followOffset } : {}} />}
+            render={<motion.div style={{ ...style, ...(followCursor ? { [followCursor]: followOffset } : {}) }} />}
           >
             <MorphSurface
               morph={morph}
@@ -343,7 +361,7 @@ const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
                 className,
               )}
             >
-              {children}
+              {label}
             </MorphSurface>
           </TooltipPrimitive.Popup>
         </TooltipPrimitive.Positioner>
@@ -418,8 +436,9 @@ interface TooltipProps {
  * - `Tooltip.Trigger` — `TooltipTrigger`: the described element,
  *   `render={<Button/>}` or Radix-style `asChild`.
  * - `Tooltip.Content` — `TooltipContent`: the label: `side`, `align`,
- *   `sideOffset`, `alignOffset`, `positionerClassName`, and the morph options
- *   `from`, `effect`, `tier`.
+ *   `sideOffset`, `alignOffset`, `positionerClassName`, the morph options
+ *   `from`, `effect`, `tier`, and `render` or Radix-style `asChild` for the
+ *   label's own element; other props land on the popup.
  * - `Tooltip.Provider` — `TooltipProvider`: groups tooltips so moving from
  *   one trigger to an adjacent one skips the hover delay, and the morph: the
  *   next label shows in place. `delay`, `closeDelay`, `timeout`, or Radix's

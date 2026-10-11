@@ -647,7 +647,7 @@ function FieldControls({ clearable, compact, iconSize }: { clearable: boolean; c
             animate={swap(loading)}
             transition={loading ? swapEnter : swapLeave}
           >
-            <Loader size={iconSize} strokeWidth={1.5} className="animate-spin" />
+            <Loader size={iconSize} strokeWidth={1.5} className="animate-spin motion-reduce:animate-none" />
           </motion.span>
         </span>
       </ComboboxPrimitive.Trigger>
@@ -848,7 +848,14 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
                               compact ? 'h-5 text-caption-compact' : 'h-6 text-caption',
                             )}
                           >
-                            <span className={cn('truncate', readOnly && 'pr-1.5')}>{itemNode(item)}</span>
+                            <span
+                              className={cn(
+                                typeof itemNode(item) === 'string' ? 'truncate' : 'flex min-w-0 items-center',
+                                readOnly && 'pr-1.5',
+                              )}
+                            >
+                              {itemNode(item)}
+                            </span>
                             {!readOnly && (
                               <ComboboxPrimitive.ChipRemove
                                 aria-label={`Remove ${label}`}
@@ -980,7 +987,7 @@ const ComboboxContent = forwardRef<HTMLDivElement, ComboboxContentProps>(
                 {children}
                 {footer !== undefined && (
                   // Outside the scrolling list, so it stays put while the rows scroll.
-                  <div className="shrink-0 border-t border-border/60 p-1">
+                  <div className="shrink-0 border-t border-border p-1">
                     {typeof footer === 'function'
                       ? footer({ close: () => setOpen(false), query: inputValue.trim() })
                       : footer}
@@ -1201,7 +1208,11 @@ const ComboboxList = forwardRef<HTMLDivElement, ComboboxListProps>(({ className,
               sizeClasses.text,
             )}
           >
-            <Loader size={sizeClasses.icon} strokeWidth={1.5} className="shrink-0 animate-spin" />
+            <Loader
+              size={sizeClasses.icon}
+              strokeWidth={1.5}
+              className="shrink-0 animate-spin motion-reduce:animate-none"
+            />
             <span className="truncate [text-box:trim-both_cap_alphabetic]">{loadingLabel}</span>
           </div>
         )}
@@ -1293,7 +1304,17 @@ const ComboboxItem = forwardRef<HTMLDivElement, ComboboxItemProps>(
 
         {/* py-1/-my-1 keeps truncate's overflow:hidden from clipping
             ascenders/descenders outside the trimmed box. */}
-        <span className="flex-1 min-w-0 truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1">{children}</span>
+        {/* Nodes keep their own box; only text is trimmed and truncated. */}
+        <span
+          className={cn(
+            'flex-1 min-w-0',
+            typeof children === 'string' || typeof children === 'number'
+              ? 'truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1'
+              : 'flex items-center',
+          )}
+        >
+          {children}
+        </span>
 
         {/* Always-rendered fixed slot so the check appearing/disappearing
             never changes the row's intrinsic width. */}

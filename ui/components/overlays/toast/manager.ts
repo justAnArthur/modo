@@ -4,7 +4,9 @@
  * manager (`Toast.createToastManager`) carries every call to the `Toast`
  * mounted with `manager={toast}`; calls made before that `Toast` subscribes
  * (a child's mount effect runs before its parent's) wait in a queue and play
- * once it does, so no toast is lost on the first render.
+ * once it does, so no toast is lost on the first render. On the server (no
+ * `window`) nothing will ever subscribe, so calls there are dropped instead of
+ * queued for the life of the process.
  */
 
 import { type ToastManager, Toast as ToastPrimitive } from '@base-ui/react/toast'
@@ -96,9 +98,11 @@ function createQueuedManager(): ToastManager<ToastData> {
   let listeners = 0
   let queue: (() => void)[] = []
   let count = 0
+  // No window, no provider to come: drop the call rather than hold it forever.
+  const browser = () => typeof window !== 'undefined'
   const whenHeard = (run: () => void) => {
     if (listeners) run()
-    else queue.push(run)
+    else if (browser()) queue.push(run)
   }
 
   return {
@@ -124,7 +128,7 @@ function createQueuedManager(): ToastManager<ToastData> {
     promise: (promise, options) => {
       if (listeners) return manager.promise(promise, options)
       // The toast reports a rejection; the caller still gets the original promise.
-      queue.push(() => manager.promise(promise, options).catch(() => {}))
+      if (browser()) queue.push(() => manager.promise(promise, options).catch(() => {}))
       return promise
     },
   }
@@ -156,8 +160,8 @@ const toast = Object.assign((input: ToastInput) => show(input), {
   warning: (input: ToastInput) => show(input, 'warning'),
   /** An `info` toast. */
   info: (input: ToastInput) => show(input, 'info'),
-  /** A spinning `loading` toast that stays until updated or dismissed (unless given a `timeout`). */
-  loading: (input: ToastInput) => show({ timeout: 0, ...withType(input, 'loading') }),
+  /** A spinning `loading` toast. It stays while its type is `loading`; once updated to another type it leaves on its own `timeout` or the `Toast`'s. */
+  loading: (input: ToastInput) => show(withType(input, 'loading')),
   /** Runs `promise` behind a `loading` toast that turns into its `success` or `error` toast. Returns the promise. */
   promise: <T>(promise: Promise<T>, options: ToastPromiseOptions<T>) =>
     manager.promise(promise, {

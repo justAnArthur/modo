@@ -136,7 +136,7 @@ interface MaskedDateInputProps
   value: Date | null
   /** The value from outside can't be read as a date: keep what was typed and stay invalid. */
   externallyInvalid: boolean
-  /** A complete, real date; `null` once emptied; an Invalid Date when left incomplete or impossible. */
+  /** A complete, real date; `null` once emptied; an Invalid Date when left incomplete or impossible (Escape then brings back the last real date). */
   onValueChange: (value: Date | null) => void
   /** Whether what is typed can't be a date (impossible, or left incomplete). */
   onInvalidChange: (invalid: boolean) => void
@@ -175,6 +175,16 @@ const MaskedDateInput = forwardRef<HTMLInputElement, MaskedDateInputProps>(
     const [focused, setFocused] = useState(false)
     // Typed text the value can't hold (incomplete, impossible): kept until replaced.
     const keepText = useRef(false)
+    // The last real date, so Escape can bring it back after an invalid entry.
+    const lastValid = useRef<Date | null>(null)
+    if (value && isValid(value)) lastValid.current = value
+    // Whether the Invalid Date in `value` is one this field reported.
+    const emittedInvalid = useRef(false)
+
+    const emit = (next: Date | null) => {
+      emittedInvalid.current = next !== null && !isValid(next)
+      onValueChange(next)
+    }
 
     const digitsIn = (s: string) => Array.from(s, char => digitMap.get(char) ?? '').join('')
 
@@ -194,7 +204,7 @@ const MaskedDateInput = forwardRef<HTMLInputElement, MaskedDateInputProps>(
       if (!next) {
         keepText.current = false
         flag(false)
-        onValueChange(null)
+        emit(null)
         return
       }
       if (next.length < full) {
@@ -206,7 +216,7 @@ const MaskedDateInput = forwardRef<HTMLInputElement, MaskedDateInputProps>(
       flag(!ok)
       if (ok) {
         keepText.current = false
-        onValueChange(date)
+        emit(date)
       }
     }
 
@@ -234,11 +244,19 @@ const MaskedDateInput = forwardRef<HTMLInputElement, MaskedDateInputProps>(
         caretAfter(input, from + 1)
         return
       }
-      if (e.key === 'Escape' && text !== formatted) {
+      if (e.key === 'Escape') {
+        const restore = lastValid.current
+        const restored = restore ? formatMasked(restore, mask) : ''
+        // The picker hands an Invalid Date down as `null` + `externallyInvalid`.
+        const invalidNow = externallyInvalid || (value !== null && !isValid(value))
+        if (text === restored && !invalidNow) return
+        // Handled here: a surrounding Dialog must not close as well.
         e.preventDefault()
+        e.stopPropagation()
         keepText.current = false
-        setText(formatted)
+        setText(restored)
         flag(false)
+        if (invalidNow && emittedInvalid.current) emit(restore)
         return
       }
       if (e.key !== 'Backspace' && e.key !== 'Delete') return
@@ -262,7 +280,7 @@ const MaskedDateInput = forwardRef<HTMLInputElement, MaskedDateInputProps>(
         // Left incomplete or impossible: say so, and let a form see it.
         keepText.current = true
         flag(true)
-        onValueChange(new Date(Number.NaN))
+        emit(new Date(Number.NaN))
       }
       onBlur?.(e)
     }
