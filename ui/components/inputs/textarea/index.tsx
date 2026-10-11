@@ -1,0 +1,151 @@
+/*
+ * Local addition (not part of Fluid Functionalism): the multi-line twin of
+ * Input, on the same field box (`useFieldBox` in `lib/field-classes.ts`); the box grows with its text from `minRows` to `maxRows`, the way
+ * InputMessage's composer does.
+ */
+
+import { Field } from '@base-ui/react/field'
+import { forwardRef, type TextareaHTMLAttributes, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { type FieldVariant, focusControlOnPress, useFieldBox } from '../../../lib/field-classes'
+import type { SizeVariant } from '../../../lib/size-context'
+import { useControllableState } from '../../../lib/use-controllable-state'
+import { cn } from '../../../lib/utils'
+
+interface TextareaProps
+  extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'onChange' | 'value' | 'defaultValue' | 'rows'> {
+  /** Placeholder text. */
+  placeholder?: string
+  /** Controlled value. Pair with `onChange`. */
+  value?: string
+  /** Initial value when uncontrolled. Defaults to `''`. */
+  defaultValue?: string
+  /** Called with the new value on every change. */
+  onChange?: (value: string) => void
+  /** Rows shown when empty; the box never gets shorter. Defaults to `3`. */
+  minRows?: number
+  /** Rows the box grows to before it scrolls. Set it to `minRows` for a fixed height. Defaults to `8`. */
+  maxRows?: number
+  /** Framed at rest, or invisible until hovered or focused. Defaults to `"borderless"`. */
+  variant?: FieldVariant
+  /** Marks the value invalid: the field turns destructive and sets `aria-invalid`. Defaults to `false`. */
+  invalid?: boolean
+  /** Disables the textarea. Defaults to `false`. */
+  disabled?: boolean
+  /** Pins the textarea to one step of the size ladder (36px default, 28px compact): its text and padding follow, so one row matches an Input. Defaults to the surrounding SizeProvider. */
+  size?: SizeVariant
+  /** Classes for the ringed box around the textarea. */
+  className?: string
+}
+
+// Literal table: one row plus this padding lands on the ladder's control
+// height (20px leading + 8px × 2 = 36px, + 4px × 2 = 28px).
+const PADDING_Y: Record<SizeVariant, string> = {
+  default: 'py-2',
+  compact: 'py-1',
+}
+
+/**
+ * Multi-line text field that grows with what you type.
+ *
+ * It sits on the same ground as Input: bare text at rest (or framed, with
+ * `variant="bordered"`), a muted fill with a hairline ring on hover, the
+ * card ground on focus, a destructive ring when `invalid`. The box starts at `minRows`, grows line by line as text wraps,
+ * and scrolls once it reaches `maxRows`. One row lines up with an Input of
+ * the same size, so the two stack in a form without a seam. It is
+ * uncontrolled with `defaultValue`, or controlled with `value` + `onChange`,
+ * fills the width of its container, and joins a Base UI `Field` when placed
+ * inside one. Pair it with a `Label` (see Input) through `htmlFor` / `id`.
+ *
+ * @example {@include ./examples.mdx}
+ */
+const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+  (
+    {
+      value: valueProp,
+      defaultValue = '',
+      onChange: onChangeProp,
+      minRows = 3,
+      maxRows = 8,
+      variant = 'borderless',
+      invalid,
+      disabled,
+      size,
+      className,
+      ...props
+    },
+    ref,
+  ) => {
+    const [value, onChange] = useControllableState(valueProp, defaultValue, onChangeProp)
+
+    const textareaRef = useRef<HTMLTextAreaElement | null>(null)
+    const box = useFieldBox({ variant, invalid, disabled, size })
+
+    const resize = useCallback(() => {
+      const el = textareaRef.current
+      if (!el) return
+      el.style.height = 'auto'
+      const lineHeight = Number.parseFloat(getComputedStyle(el).lineHeight)
+      const max = lineHeight * Math.max(maxRows, minRows)
+      el.style.height = `${Math.min(Math.max(el.scrollHeight, lineHeight * minRows), max)}px`
+      el.style.overflowY = el.scrollHeight > max ? 'auto' : 'hidden'
+    }, [minRows, maxRows])
+
+    // Layout effect: the new height lands before paint, so a wrapped line
+    // never flashes a scrollbar. `value` and the size step aren't read here,
+    // but they change the content height `resize` measures.
+    useLayoutEffect(resize, [resize, value, box.size.variant])
+
+    // The first measure can run while an ancestor is still at (near-)zero
+    // width. Width-gated, so the observer never loops on its own height writes.
+    useEffect(() => {
+      const el = textareaRef.current
+      if (!el) return
+      let lastWidth = el.offsetWidth
+      const observer = new ResizeObserver(() => {
+        if (el.offsetWidth === lastWidth) return
+        lastWidth = el.offsetWidth
+        resize()
+      })
+      observer.observe(el)
+      return () => observer.disconnect()
+    }, [resize])
+
+    return (
+      // biome-ignore lint/a11y/noStaticElementInteractions: the textarea is the focusable control; the box only forwards pointer focus from its padding.
+      <div
+        onMouseDown={focusControlOnPress(textareaRef)}
+        {...box.props}
+        className={cn(box.props.className, 'flex', PADDING_Y[box.size.variant], className)}
+      >
+        {/* Field.Control rendered as a <textarea>: on its own a plain
+            textarea, inside a Field.Root it joins the field's wiring. The
+            rest props ride on the render element, since Field.Control types
+            its own as an <input>'s; Base UI merges the two. */}
+        <Field.Control
+          ref={(node: HTMLElement | null) => {
+            const textarea = node as HTMLTextAreaElement | null
+            textareaRef.current = textarea
+            if (typeof ref === 'function') ref(textarea)
+            else if (ref) ref.current = textarea
+          }}
+          render={<textarea rows={minRows} {...props} />}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          disabled={disabled}
+          aria-invalid={invalid || undefined}
+          className={cn(
+            'block w-full resize-none rounded-none bg-transparent text-foreground placeholder:text-muted-foreground outline-none font-[inherit]',
+            box.size.text,
+            'weight-normal',
+          )}
+        />
+      </div>
+    )
+  },
+)
+
+Textarea.displayName = 'Textarea'
+
+export type { TextareaProps }
+export { Textarea }
+export default Textarea

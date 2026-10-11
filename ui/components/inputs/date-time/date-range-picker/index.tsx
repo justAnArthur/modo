@@ -9,6 +9,7 @@ import { endOfMonth, format, type Locale } from 'date-fns'
 import { type RefObject, useRef, useState } from 'react'
 import { type DateRange, dateMatchModifiers, type Matcher } from 'react-day-picker'
 import { defaultLocale, parseDateText } from '../../../../lib/date-locale'
+import type { FieldVariant } from '../../../../lib/field-classes'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
 import Calendar from '../calendar'
@@ -31,6 +32,8 @@ interface DateRangePickerProps {
   startMonth?: Date
   /** The last month the calendar reaches. Defaults to 50 years ahead. */
   endMonth?: Date
+  /** Framed at rest, or invisible until hovered or focused. Defaults to `"bordered"`. */
+  variant?: FieldVariant
   /** Marks the field invalid. Defaults to `false`. */
   invalid?: boolean
   /** Pins the field and its panel to one step of the size ladder. Defaults to the surrounding SizeProvider. */
@@ -80,6 +83,7 @@ function DateRangePicker({
   disabled,
   startMonth,
   endMonth,
+  variant,
   invalid,
   size,
   open: openProp,
@@ -174,6 +178,7 @@ function DateRangePicker({
       open={open}
       onOpenChange={setOpen}
       size={size}
+      variant={variant}
       invalid={invalid}
       disabled={off}
       icon="calendar"

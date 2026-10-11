@@ -15,7 +15,10 @@
  * the field ladder (the box's bg/ring per state, the icon's stroke) moved
  * from per-render JS state to the shared `lib/field-classes.ts` recipe on
  * data attributes, where an invalid field keeps its destructive ring at
- * rest too; modo docs — TSDoc with FF's docs/API text, `InputGroup.Field`
+ * rest too, and the box itself (ladder, state attributes, radius, inset,
+ * focus on a press in its padding) is the shared `useFieldBox` /
+ * `focusControlOnPress`, which adds a `variant` prop (`borderless` default,
+ * as before; `bordered` framed at rest); modo docs — TSDoc with FF's docs/API text, `InputGroup.Field`
  * static (typed via a cast on the root).
  * Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  * `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`;
@@ -37,9 +40,8 @@ import {
   useMemo,
   useRef,
 } from 'react'
-import { fieldIconClasses, fieldVariants } from '../../../lib/field-classes'
+import { type FieldVariant, fieldIconClasses, focusControlOnPress, useFieldBox } from '../../../lib/field-classes'
 import type { IconComponent } from '../../../lib/icon-context'
-import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
@@ -75,6 +77,8 @@ interface InputProps
   defaultValue?: string
   /** Called when the input value changes. */
   onChange?: (value: string) => void
+  /** Framed at rest, or invisible until hovered or focused. Defaults to `"borderless"`. */
+  variant?: FieldVariant
   /** Marks the value invalid: the field turns destructive and sets `aria-invalid`. Defaults to `false`. */
   invalid?: boolean
   /** Disables the input. Defaults to `false`. */
@@ -114,6 +118,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       value: valueProp,
       defaultValue = '',
       onChange: onChangeProp,
+      variant = 'borderless',
       invalid,
       disabled,
       size,
@@ -127,31 +132,26 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
     const inputRef = useRef<HTMLInputElement | null>(null)
     const field = useContext(FieldStateContext)
-    const shape = useShape()
-    const sizeClasses = useSize(size)
-    const compact = sizeClasses.variant === 'compact'
+    const { size: sizeClasses, props: boxProps } = useFieldBox({
+      variant,
+      invalid,
+      disabled,
+      active: field?.active,
+      size,
+    })
 
     return (
       <div
-        onMouseDown={e => {
-          // The old wrapper was one big <label>, so a click anywhere (icon,
-          // padding) focused the input. Keep that, without disturbing the
-          // input's own caret placement.
-          if (e.target === inputRef.current) return
-          e.preventDefault()
-          inputRef.current?.focus()
-        }}
-        data-active={field?.active || undefined}
-        data-invalid={invalid || undefined}
-        data-disabled={disabled || undefined}
+        // The old wrapper was one big <label>, so a click anywhere (icon,
+        // padding) focused the input. Keep that.
+        onMouseDown={focusControlOnPress(inputRef)}
+        {...boxProps}
         className={cn(
-          fieldVariants(),
+          boxProps.className,
           // Fixed height (was py-2 around the line box) so the field sits
           // exactly on the ladder's control height.
           'flex items-center',
           sizeClasses.gap,
-          shape.input,
-          compact ? 'px-2' : 'px-2.5',
           sizeClasses.control,
           className,
         )}

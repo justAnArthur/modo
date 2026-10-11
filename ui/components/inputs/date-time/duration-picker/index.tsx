@@ -8,6 +8,7 @@
 import { type Duration, formatDuration, type Locale } from 'date-fns'
 import { type RefObject, useMemo, useRef } from 'react'
 import { defaultLocale, fieldLabel } from '../../../../lib/date-locale'
+import type { FieldVariant } from '../../../../lib/field-classes'
 import { dividedColumns, ScrollColumn } from '../../../../lib/scroll-column'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
@@ -32,6 +33,8 @@ interface DurationPickerProps {
   placeholder?: string
   /** Disables the field. Defaults to `false`. */
   disabled?: boolean
+  /** Framed at rest, or invisible until hovered or focused. Defaults to `"bordered"`. */
+  variant?: FieldVariant
   /** Marks the field invalid. Defaults to `false`. */
   invalid?: boolean
   /** Pins the field and its panel to one step of the size ladder. Defaults to the surrounding SizeProvider. */
@@ -78,6 +81,7 @@ function DurationPicker({
   locale = defaultLocale,
   placeholder,
   disabled,
+  variant,
   invalid,
   size,
   open: openProp,
@@ -133,6 +137,7 @@ function DurationPicker({
       open={open}
       onOpenChange={setOpen}
       size={size}
+      variant={variant}
       invalid={invalid}
       disabled={disabled}
       icon="clock"
