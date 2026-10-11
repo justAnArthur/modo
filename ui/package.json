@@ -69,6 +69,16 @@
       "source": "./blocks/*/index.tsx",
       "default": "./dist/blocks/*/index.js"
     },
+    "./components/*/variants": {
+      "types": "./dist/components/*/variants.d.ts",
+      "source": "./components/*/variants.ts",
+      "default": "./dist/components/*/variants.js"
+    },
+    "./blocks/*/variants": {
+      "types": "./dist/blocks/*/variants.d.ts",
+      "source": "./blocks/*/variants.ts",
+      "default": "./dist/blocks/*/variants.js"
+    },
     "./lib/date-locale": {
       "types": "./dist/lib/date-locale.d.ts",
       "source": "./lib/date-locale.ts",

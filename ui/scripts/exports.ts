@@ -5,6 +5,10 @@ import { join } from 'node:path'
 // of the build. A pattern export can't serve them: the `source` condition
 // points at the real file, and lib mixes `.ts` with `.tsx`. A new lib module
 // is exported by the next `bun run build`; commit the package.json it leaves.
+// It also writes `./components/*/variants` and `./blocks/*/variants`: an item's
+// server-callable class helpers (`variants.ts`, its own build entry), which
+// `./components/*` would map to a `variants/index.js` that doesn't exist. The
+// longer key wins over `./components/*` in Node's and Bun's pattern matching.
 
 type Conditions = Record<string, string>
 
@@ -26,10 +30,20 @@ const lib = globSync('lib/*.{ts,tsx}', { cwd: ROOT })
     return [`${LIB}${name}`, conditions] as const
   })
 
-// lib entries follow the item tiers; everything else keeps its place
-const rest = Object.entries(pkg.exports).filter(([key]) => !key.startsWith(LIB))
+const variants = ['components', 'blocks'].map(tier => {
+  const conditions: Conditions = {
+    types: `./dist/${tier}/*/variants.d.ts`,
+    source: `./${tier}/*/variants.ts`,
+    default: `./dist/${tier}/*/variants.js`,
+  }
+  return [`./${tier}/*/variants`, conditions] as const
+})
+const generated = new Set<string>(variants.map(([key]) => key))
+
+// variants and lib entries follow the item tiers; everything else keeps its place
+const rest = Object.entries(pkg.exports).filter(([key]) => !key.startsWith(LIB) && !generated.has(key))
 const at = rest.findIndex(([key]) => key === './blocks/*') + 1
-pkg.exports = Object.fromEntries([...rest.slice(0, at), ...lib, ...rest.slice(at)])
+pkg.exports = Object.fromEntries([...rest.slice(0, at), ...variants, ...lib, ...rest.slice(at)])
 
 // no trailing newline, as the release bump writes it
 const next = JSON.stringify(pkg, null, 2)
