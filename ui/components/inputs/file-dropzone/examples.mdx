@@ -1,0 +1,72 @@
+import FileDropzone from './index'
+import UploadDemo from './upload-demo'
+import Field from '../field'
+
+# Dropzone
+
+Drag files over the zone, or click it (or press Enter on it) to pick them. The line changes while files are in the air, and turns destructive for a type the zone won't take.
+
+<UploadDemo multiple accept=".pdf,image/*" maxSize={5000000} description="PDF or images, up to 5 MB each, three at most" />
+
+# Single file
+
+Without `multiple` the zone takes one file; more than one is turned away while still in the air.
+
+<div className="w-96 max-w-full">
+  <FileDropzone accept="image/*" description="PNG or JPG" />
+</div>
+
+# Compact
+
+The compact step tightens the padding and steps the text down.
+
+<div className="w-80 max-w-full">
+  <FileDropzone size="compact" label="Drop a CSV or click to browse" accept=".csv" />
+</div>
+
+# Translated
+
+Every line is a prop.
+
+<div className="w-96 max-w-full">
+  <FileDropzone
+    multiple
+    label="Presuňte súbory sem alebo kliknite"
+    activeLabel="Pustite a pridajte"
+    rejectLabel="Tieto súbory nemožno pridať"
+    description="PDF, najviac 10 MB"
+    accept=".pdf"
+  />
+</div>
+
+# States
+
+Invalid takes the field's destructive ring; disabled dims the zone; read-only takes no files.
+
+<div className="flex flex-col gap-3 w-96 max-w-full">
+  <Field invalid>
+    <Field.Label>Contract</Field.Label>
+    <FileDropzone accept=".pdf" />
+    <Field.Error>Attach the signed contract.</Field.Error>
+  </Field>
+  <FileDropzone disabled label="Uploads are paused" />
+  <FileDropzone readOnly label="No file attached" />
+</div>
+
+# File rows
+
+A row shows one file: its glyph or thumbnail, the name, the size or a status line, and a remove button. `status` sets the glyph, and `progress` fills the bar while uploading.
+
+<div className="flex flex-col w-96 max-w-full">
+  <FileDropzone.Row name="Quarterly report.pdf" fileSize={2480000} type="application/pdf" status="done" onRemove={() => {}} />
+  <FileDropzone.Row name="Site photo.jpg" fileSize={5320000} type="image/jpeg" status="uploading" progress={64} onRemove={() => {}} />
+  <FileDropzone.Row name="Budget.xlsx" fileSize={84000} status="error" error="Upload failed. Try again." onRemove={() => {}} />
+  <FileDropzone.Row name="Contract draft.docx" fileSize={1200000} description="Uploaded yesterday" />
+</div>
+
+# Compact rows
+
+<div className="flex flex-col w-80 max-w-full">
+  <FileDropzone.Row size="compact" name="Invoice 0042.pdf" fileSize={182000} locale="sk-SK" onRemove={() => {}} />
+  <FileDropzone.Row size="compact" name="Receipt.png" fileSize={940000} type="image/png" status="uploading" onRemove={() => {}} />
+</div>
