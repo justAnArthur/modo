@@ -53,6 +53,21 @@
  *   only closing the menu.
  * - `effect="morph"` with `hideSource` opens the menu in place over its
  *   trigger: the positioner's `sideOffset` becomes the engine's `inPlaceOffset`.
+ * - shadcn DropdownMenu parity (local parts in `menu-parts.tsx`, numbering in
+ *   `row-order.tsx`): children-based rows with an optional `index` (both
+ *   panels provide `RowOrderContext`), `Dropdown.Group`, `Dropdown.Shortcut`,
+ *   value-keyed `Dropdown.CheckboxItem` and `Dropdown.RadioGroup` /
+ *   `Dropdown.RadioItem` (their checked rows join the merged selection
+ *   background), and submenus (`Dropdown.Sub` / `.SubTrigger` /
+ *   `.SubContent`). `Dropdown.Label` takes `inset` and names a surrounding
+ *   group (`Menu.GroupLabel`); labels and separators take a place in the row
+ *   order so selection runs never melt across them.
+ * - `Dropdown.Trigger` also takes Radix-style `asChild` (`lib/slot.ts`).
+ * - The popup panel shares `useMenuPanel` with `Dropdown.SubContent`: a
+ *   keyboard focus ring gated on keyboard use (as in Select), the highlight
+ *   pinned on a submenu trigger while its submenu is open, and handlers that
+ *   ignore events bubbling up (through the portal) from a submenu. Its
+ *   `renderMenuItem` is the shared `renderPopupItem`.
  */
 
 import type { MenuTriggerProps } from '@base-ui/react/menu'
@@ -107,11 +122,39 @@ import {
 import {
   DropdownContext,
   type DropdownContextValue,
+  DropdownShortcut,
+  type DropdownShortcutProps,
+  INSET_PX,
   MenuItem,
+  type MenuItemProps,
   type MenuItemRenderOptions,
   useDropdown,
   useDropdownMaybe,
 } from './menu-item'
+import {
+  DropdownCheckboxItem,
+  type DropdownCheckboxItemProps,
+  DropdownGroup,
+  DropdownGroupContext,
+  type DropdownGroupProps,
+  DropdownRadioGroup,
+  type DropdownRadioGroupProps,
+  DropdownRadioItem,
+  type DropdownRadioItemProps,
+  DropdownSub,
+  DropdownSubContent,
+  type DropdownSubContentProps,
+  type DropdownSubProps,
+  DropdownSubTrigger,
+  type DropdownSubTriggerProps,
+  FocusRing,
+  mergeRefs,
+  ownEvent,
+  renderPopupItem,
+  useMenuPanel,
+  useValueChecked,
+} from './menu-parts'
+import { RowOrderContext, useRowOrder, useRowSlot } from './row-order'
 
 // Dropdown opts out of the global pill/rounded shape context — popover surfaces
 // look cleaner with the smaller "rounded" radii regardless of how the rest of
@@ -332,6 +375,14 @@ type DropdownComponent = ForwardRefExoticComponent<DropdownProps & RefAttributes
   Separator: typeof DropdownSeparator
   Search: typeof DropdownSearch
   Empty: typeof DropdownEmpty
+  Group: typeof DropdownGroup
+  Shortcut: typeof DropdownShortcut
+  CheckboxItem: typeof DropdownCheckboxItem
+  RadioGroup: typeof DropdownRadioGroup
+  RadioItem: typeof DropdownRadioItem
+  Sub: typeof DropdownSub
+  SubTrigger: typeof DropdownSubTrigger
+  SubContent: typeof DropdownSubContent
 }
 
 /**
@@ -351,11 +402,35 @@ type DropdownComponent = ForwardRefExoticComponent<DropdownProps & RefAttributes
  * the query too, keeping only the rows whose `label` matches and showing
  * `Dropdown.Empty` when none do.
  *
- * Statics: Dropdown.Menu (the popup root: open, defaultOpen, onOpenChange,
- * disabled), Dropdown.Trigger (render), Dropdown.Content (the popup panel:
- * side, align, sideOffset and the morph options from, effect, hideSource, tier),
- * Dropdown.Item (a row: index, label, icon, checked, onSelect, disabled),
- * Dropdown.Label, Dropdown.Separator, Dropdown.Search and Dropdown.Empty.
+ * Rows also come shadcn-style: children instead of a `label`, no `index` (a
+ * row takes its place in document order, so the hover, the keyboard ring and
+ * the selection backgrounds still find it, inside groups and behind
+ * conditions alike), `inset` to line up with rows that have an icon and a
+ * trailing `shortcut`. `Dropdown.CheckboxItem` and `Dropdown.RadioGroup` /
+ * `Dropdown.RadioItem` select by their own state and value instead of by
+ * index, their checked rows melting into one background like a multiple
+ * selection. A `Dropdown.Sub` opens a submenu from its trigger row (ArrowRight,
+ * a press, or a resting pointer) that grows out of that row and lifts above
+ * the menu, with a highlight and a keyboard ring of its own. Every popup
+ * lifts 2 surface levels off whatever it opens over, a Dialog included.
+ *
+ * Statics:
+ * - `Dropdown.Menu` — the popup root: `open`, `defaultOpen`, `onOpenChange`, `disabled`, `size`.
+ * - `Dropdown.Trigger` — the trigger: `render` or `asChild`.
+ * - `Dropdown.Content` — the popup panel: `side`, `align`, `sideOffset`, the
+ *   index selection, and the morph options `from`, `effect`, `hideSource`, `tier`.
+ * - `Dropdown.Item` — a row: `label` or `children`, `index`, `icon`, `inset`,
+ *   `shortcut`, `checked`, `onSelect`, `closeOnClick`, `disabled`.
+ * - `Dropdown.CheckboxItem` — a row toggling itself: `checked`, `defaultChecked`, `onCheckedChange`.
+ * - `Dropdown.RadioGroup` / `Dropdown.RadioItem` — one choice by value: `value`,
+ *   `defaultValue`, `onValueChange` on the group, `value` on each row.
+ * - `Dropdown.Group` / `Dropdown.Label` — a named run of rows and its caption (`inset`).
+ * - `Dropdown.Separator` — a rule between runs.
+ * - `Dropdown.Shortcut` — a muted caption at a row's end.
+ * - `Dropdown.Sub` / `Dropdown.SubTrigger` / `Dropdown.SubContent` — a submenu:
+ *   its state, its trigger row (`openOnHover`, `delay`), its panel (`side`,
+ *   `align`, `sideOffset`, `alignOffset`, `from`, `effect`, `tier`).
+ * - `Dropdown.Search` / `Dropdown.Empty` — a filter field and its no-match row.
  *
  * @example {@include ./examples.mdx}
  */
@@ -380,6 +455,8 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
     const { activeIndex, setActiveIndex, itemRects, handlers, registerItem } = hover
 
     const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
+    const rowOrder = useRowOrder()
+    const { valueChecked, reportChecked } = useValueChecked()
 
     const rows = usePanelRows(children)
     const selection = usePanelSelection(
@@ -398,8 +475,14 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
     const multiple = selection.multiple
     const checkedRect = !multiple && selection.checkedIndex != null ? itemRects[selection.checkedIndex] : null
     const focusRect = focusedIndex !== null ? itemRects[focusedIndex] : null
-    // Multiple: one merged block per contiguous run of checked rows.
-    const runs = useSelectionRuns(selection.checkedIndices ?? NO_INDICES)
+    // Multiple: one merged block per contiguous run of checked rows, value-
+    // checked rows (CheckboxItem, RadioItem) included.
+    const runs = useSelectionRuns(
+      useMemo(
+        () => [...(selection.checkedIndices ?? NO_INDICES), ...valueChecked],
+        [selection.checkedIndices, valueChecked],
+      ),
+    )
     const blocks = useMergeSplitBlocks(runs, itemRects, shape.bgRadius)
     const panelCtx = useMemo(
       () => ({
@@ -410,6 +493,7 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
         checkedIndices: selection.checkedIndices,
         selfManaged: selection.selfManaged,
         toggleIndex: selection.toggleIndex,
+        reportChecked,
       }),
       [
         registerItem,
@@ -419,118 +503,121 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
         selection.checkedIndices,
         selection.selfManaged,
         selection.toggleIndex,
+        reportChecked,
       ],
     )
     const panel = (
-      <DropdownContext.Provider value={panelCtx}>
-        <DropdownFilterContext.Provider value={rows.filterCtx}>
-          <Elevated
-            offset={2}
-            shadowLevel={3}
-            ref={node => {
-              ;(containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node
-              if (typeof ref === 'function') ref(node)
-              else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
-            }}
-            onMouseEnter={handlers.onMouseEnter}
-            onMouseMove={handlers.onMouseMove}
-            onMouseLeave={handlers.onMouseLeave}
-            onClick={handlers.onClick}
-            onFocus={e => {
-              const indexAttr = (e.target as HTMLElement)
-                .closest('[data-fluid-hover-index]')
-                ?.getAttribute('data-fluid-hover-index')
-              if (indexAttr != null) {
-                const idx = Number(indexAttr)
-                setActiveIndex(idx)
-                setFocusedIndex((e.target as HTMLElement).matches(':focus-visible') ? idx : null)
-              }
-            }}
-            onBlur={e => {
-              if (containerRef.current?.contains(e.relatedTarget as Node)) return
-              setFocusedIndex(null)
-              setActiveIndex(null)
-            }}
-            onKeyDown={e => {
-              const items = Array.from(
-                containerRef.current?.querySelectorAll(
-                  '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]',
-                ) ?? [],
-              ) as HTMLElement[]
-              const currentIdx = items.indexOf(e.target as HTMLElement)
-              if (currentIdx === -1) return
+      <RowOrderContext.Provider value={rowOrder}>
+        <DropdownContext.Provider value={panelCtx}>
+          <DropdownFilterContext.Provider value={rows.filterCtx}>
+            <Elevated
+              offset={2}
+              shadowLevel={3}
+              ref={node => {
+                ;(containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+                if (typeof ref === 'function') ref(node)
+                else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
+              }}
+              onMouseEnter={handlers.onMouseEnter}
+              onMouseMove={handlers.onMouseMove}
+              onMouseLeave={handlers.onMouseLeave}
+              onClick={handlers.onClick}
+              onFocus={e => {
+                const indexAttr = (e.target as HTMLElement)
+                  .closest('[data-fluid-hover-index]')
+                  ?.getAttribute('data-fluid-hover-index')
+                if (indexAttr != null) {
+                  const idx = Number(indexAttr)
+                  setActiveIndex(idx)
+                  setFocusedIndex((e.target as HTMLElement).matches(':focus-visible') ? idx : null)
+                }
+              }}
+              onBlur={e => {
+                if (containerRef.current?.contains(e.relatedTarget as Node)) return
+                setFocusedIndex(null)
+                setActiveIndex(null)
+              }}
+              onKeyDown={e => {
+                const items = Array.from(
+                  containerRef.current?.querySelectorAll(
+                    '[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]',
+                  ) ?? [],
+                ) as HTMLElement[]
+                const currentIdx = items.indexOf(e.target as HTMLElement)
+                if (currentIdx === -1) return
 
-              if (['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft'].includes(e.key)) {
-                e.preventDefault()
-                const next = ['ArrowDown', 'ArrowRight'].includes(e.key)
-                  ? (currentIdx + 1) % items.length
-                  : (currentIdx - 1 + items.length) % items.length
-                items[next]?.focus()
-              } else if (e.key === 'Home') {
-                e.preventDefault()
-                items[0]?.focus()
-              } else if (e.key === 'End') {
-                e.preventDefault()
-                items[items.length - 1]?.focus()
-              }
-            }}
-            role="group"
-            className={cn(`relative flex flex-col w-72 max-w-full  p-1 select-none`, className)}
-            {...props}
-          >
-            {/* Selected backgrounds — merged runs in multiple mode */}
-            {multiple && <SelectionBackgrounds blocks={blocks} />}
+                if (['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft'].includes(e.key)) {
+                  e.preventDefault()
+                  const next = ['ArrowDown', 'ArrowRight'].includes(e.key)
+                    ? (currentIdx + 1) % items.length
+                    : (currentIdx - 1 + items.length) % items.length
+                  items[next]?.focus()
+                } else if (e.key === 'Home') {
+                  e.preventDefault()
+                  items[0]?.focus()
+                } else if (e.key === 'End') {
+                  e.preventDefault()
+                  items[items.length - 1]?.focus()
+                }
+              }}
+              role="group"
+              className={cn(`relative flex flex-col w-72 max-w-full  p-1 select-none`, className)}
+              {...props}
+            >
+              {/* Selected backgrounds — merged runs in multiple mode and value-checked rows */}
+              <SelectionBackgrounds blocks={blocks} />
 
-            {/* Selected background */}
-            <AnimatePresence>
-              {checkedRect && (
-                <motion.div
-                  className={`absolute ${shape.bg} bg-active pointer-events-none`}
-                  initial={false}
-                  animate={{
-                    top: checkedRect.top,
-                    left: checkedRect.left,
-                    width: checkedRect.width,
-                    height: checkedRect.height,
-                    opacity: 1,
-                  }}
-                  exit={{ opacity: 0, transition: spring.moderate.exit }}
-                  transition={{
-                    ...spring.moderate,
-                    opacity: { duration: spring.fast.duration },
-                  }}
-                />
-              )}
-            </AnimatePresence>
+              {/* Selected background */}
+              <AnimatePresence>
+                {checkedRect && (
+                  <motion.div
+                    className={`absolute ${shape.bg} bg-active pointer-events-none`}
+                    initial={false}
+                    animate={{
+                      top: checkedRect.top,
+                      left: checkedRect.left,
+                      width: checkedRect.width,
+                      height: checkedRect.height,
+                      opacity: 1,
+                    }}
+                    exit={{ opacity: 0, transition: spring.moderate.exit }}
+                    transition={{
+                      ...spring.moderate,
+                      opacity: { duration: spring.fast.duration },
+                    }}
+                  />
+                )}
+              </AnimatePresence>
 
-            {/* Hover background */}
-            <FluidHoverHighlight hover={hover} from={checkedRect} className={shape.bg} />
+              {/* Hover background */}
+              <FluidHoverHighlight hover={hover} from={checkedRect} className={shape.bg} />
 
-            {/* Focus ring */}
-            <AnimatePresence>
-              {focusRect && (
-                <motion.div
-                  className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
-                  initial={false}
-                  animate={{
-                    left: focusRect.left - 2,
-                    top: focusRect.top - 2,
-                    width: focusRect.width + 4,
-                    height: focusRect.height + 4,
-                  }}
-                  exit={{ opacity: 0, transition: spring.fast.exit }}
-                  transition={{
-                    ...spring.fast,
-                    opacity: { duration: spring.fast.duration },
-                  }}
-                />
-              )}
-            </AnimatePresence>
+              {/* Focus ring */}
+              <AnimatePresence>
+                {focusRect && (
+                  <motion.div
+                    className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
+                    initial={false}
+                    animate={{
+                      left: focusRect.left - 2,
+                      top: focusRect.top - 2,
+                      width: focusRect.width + 4,
+                      height: focusRect.height + 4,
+                    }}
+                    exit={{ opacity: 0, transition: spring.fast.exit }}
+                    transition={{
+                      ...spring.fast,
+                      opacity: { duration: spring.fast.duration },
+                    }}
+                  />
+                )}
+              </AnimatePresence>
 
-            {rows.content}
-          </Elevated>
-        </DropdownFilterContext.Provider>
-      </DropdownContext.Provider>
+              {rows.content}
+            </Elevated>
+          </DropdownFilterContext.Provider>
+        </DropdownContext.Provider>
+      </RowOrderContext.Provider>
     )
 
     // A size prop pins every row in the panel to one ladder step.
@@ -626,15 +713,31 @@ DropdownMenu.displayName = 'DropdownMenu'
 // ---------------------------------------------------------------------------
 // DropdownTrigger
 //
-// Base UI's Menu.Trigger, re-exported under the library name. Composes via
-// the `render` prop, so any element can be the trigger:
+// Base UI's Menu.Trigger under the library name. Composes via the `render`
+// prop, or Radix-style `asChild` onto its single child, so any element can
+// be the trigger:
 //
 //   <DropdownTrigger render={<Button variant="secondary">Open</Button>} />
+//   <DropdownTrigger asChild><Button variant="secondary">Open</Button></DropdownTrigger>
 // ---------------------------------------------------------------------------
 
-type DropdownTriggerProps = MenuTriggerProps
+type DropdownTriggerProps = MenuTriggerProps & {
+  /** Compose onto the single child instead of `render`. Defaults to `false`. */
+  asChild?: boolean
+}
 
-const DropdownTrigger = Menu.Trigger
+const DropdownTrigger = forwardRef<HTMLButtonElement, DropdownTriggerProps>(
+  ({ asChild, render, children, ...props }, ref) =>
+    asChild && isValidElement(children) ? (
+      <Menu.Trigger ref={ref} render={children as ReactElement<Record<string, unknown>>} {...props} />
+    ) : (
+      <Menu.Trigger ref={ref} render={render} {...props}>
+        {children}
+      </Menu.Trigger>
+    ),
+)
+
+DropdownTrigger.displayName = 'DropdownTrigger'
 
 // ---------------------------------------------------------------------------
 // DropdownContent (popup panel)
@@ -682,6 +785,8 @@ interface DropdownContentProps {
   hideSource?: boolean
   /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
   tier?: 'moderate' | 'slow'
+  /** Keep the rows mounted (hidden) while the menu is closed, so rows that run their own state — `Dropdown.CheckboxItem defaultChecked`, `Dropdown.RadioGroup defaultValue`, an uncontrolled `Dropdown.Sub` — keep it across opens. Defaults to `false`. */
+  keepMounted?: boolean
 }
 
 const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
@@ -702,6 +807,7 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
       effect,
       hideSource,
       tier = 'moderate',
+      keepMounted = false,
     },
     ref,
   ) => {
@@ -712,8 +818,9 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
     const level = Math.min(useSurface() + 2, 8)
     const containerRef = useRef<HTMLDivElement>(null)
 
-    const hover = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
-    const { activeIndex, setActiveIndex, itemRects, handlers, registerItem, remeasure } = hover
+    const panel = useMenuPanel(containerRef, open)
+    const { hover, focusRow, setFocusedIndex } = panel
+    const { setActiveIndex, itemRects, handlers, registerItem, remeasure } = hover
 
     const rows = usePanelRows(children)
     const selection = usePanelSelection(
@@ -773,83 +880,51 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
 
     const multiple = selection.multiple
     const checkedRect = !multiple && selection.checkedIndex != null ? itemRects[selection.checkedIndex] : null
-    // Multiple: one merged block per contiguous run of checked rows.
-    const runs = useSelectionRuns(selection.checkedIndices ?? NO_INDICES)
+    // Multiple: one merged block per contiguous run of checked rows, value-
+    // checked rows (CheckboxItem, RadioItem) included.
+    const runs = useSelectionRuns(
+      useMemo(
+        () => [...(selection.checkedIndices ?? NO_INDICES), ...panel.valueChecked],
+        [selection.checkedIndices, panel.valueChecked],
+      ),
+    )
     const blocks = useMergeSplitBlocks(runs, open ? itemRects : NO_RECTS, shape.bgRadius)
     // Inside the popup, Base UI's Menu.Item / Menu.RadioItem own the role,
     // aria-checked, tabIndex, roving highlight, typeahead, and Enter/Space/
     // click activation. Keyboard activation reaches only the primitive's own
     // onClick, so the row's activation rides there. The render div carries the
     // Fluid Functionalism visuals and the fluid-hover registration.
-    const renderMenuItem = useCallback(
-      ({
-        radio,
-        checkbox,
-        checked,
-        value,
-        disabled,
-        label,
-        closeOnClick,
-        onClick,
-        element,
-        children,
-      }: MenuItemRenderOptions) =>
-        checkbox ? (
-          <Menu.CheckboxItem
-            checked={!!checked}
-            disabled={disabled}
-            label={label}
-            closeOnClick={closeOnClick}
-            onClick={onClick}
-            render={element}
-          >
-            {children}
-          </Menu.CheckboxItem>
-        ) : radio ? (
-          <Menu.RadioItem
-            value={value}
-            disabled={disabled}
-            label={label}
-            closeOnClick={closeOnClick}
-            onClick={onClick}
-            render={element}
-          >
-            {children}
-          </Menu.RadioItem>
-        ) : (
-          <Menu.Item disabled={disabled} label={label} closeOnClick={closeOnClick} onClick={onClick} render={element}>
-            {children}
-          </Menu.Item>
-        ),
-      [],
-    )
+    // (`renderPopupItem`, shared with Dropdown.SubContent.)
 
     const contentCtx = useMemo(
       () => ({
         registerItem,
-        activeIndex,
+        activeIndex: panel.lit,
         checkedIndex: selection.checkedIndex,
         multiple,
         checkedIndices: selection.checkedIndices,
         inMenu: true,
-        renderMenuItem,
+        renderMenuItem: renderPopupItem,
         selfManaged: selection.selfManaged,
         toggleIndex: selection.toggleIndex,
+        pin: panel.pin,
+        reportChecked: panel.reportChecked,
       }),
       [
         registerItem,
-        activeIndex,
+        panel.lit,
         selection.checkedIndex,
         multiple,
         selection.checkedIndices,
         selection.selfManaged,
         selection.toggleIndex,
-        renderMenuItem,
+        panel.pin,
+        panel.reportChecked,
       ],
     )
 
     return (
-      <Menu.Portal>
+      <Menu.Portal keepMounted={keepMounted}>
         <Menu.Positioner
           side={side}
           align={align}
@@ -861,10 +936,18 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
               <DropdownSearchHostContext.Provider value={searchHost}>
                 <Menu.Popup
                   ref={morph.popupRef}
-                  onKeyDownCapture={redirectTypingToSearch}
-                  onMouseEnter={handlers.onMouseEnter}
-                  onMouseMove={handlers.onMouseMove}
-                  onClick={handlers.onClick}
+                  onKeyDownCapture={e => {
+                    // A submenu's keys bubble here through the portal.
+                    if (!ownEvent(e)) return
+                    panel.trackKeyboardNav(e)
+                    redirectTypingToSearch(e)
+                  }}
+                  onMouseEnter={() => {
+                    handlers.onMouseEnter()
+                    setFocusedIndex(null)
+                  }}
+                  onMouseMove={e => ownEvent(e) && handlers.onMouseMove(e)}
+                  onClick={e => ownEvent(e) && handlers.onClick(e)}
                   onMouseLeave={() => {
                     handlers.onMouseLeave()
                     // The pointer's session is over; a focused search field
@@ -872,14 +955,10 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
                     if (isSearchField(document.activeElement)) highlightFirst()
                   }}
                   onFocus={e => {
-                    const indexAttr = (e.target as HTMLElement)
-                      .closest('[data-fluid-hover-index]')
-                      ?.getAttribute('data-fluid-hover-index')
-                    // Keyboard navigation moves the hover background only — no
-                    // ring: in a menu the highlighted row is the focus indicator.
-                    if (indexAttr != null) {
-                      setActiveIndex(Number(indexAttr))
-                    } else if (isSearchField(e.target)) {
+                    // Keyboard navigation moves the hover background, and the
+                    // ring once the keyboard earned it (useKeyboardNavGate).
+                    if (!ownEvent(e) || focusRow(e)) return
+                    if (isSearchField(e.target)) {
                       // The search field: the first row (what Enter picks)
                       // carries the highlight while it has focus.
                       highlightFirst()
@@ -893,7 +972,8 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
                   onBlur={e => {
                     // The popup itself takes focus when the pointer leaves a row; only a
                     // departure from the whole popup ends the hover session.
-                    if (e.currentTarget.contains(e.relatedTarget as Node)) return
+                    if (!ownEvent(e) || e.currentTarget.contains(e.relatedTarget as Node)) return
+                    setFocusedIndex(null)
                     setActiveIndex(null)
                   }}
                   className="relative select-none outline-none"
@@ -918,8 +998,8 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
                         viewportClassName={cn(popupViewportClass, !searchMounted && 'scroll-fade')}
                       >
                         <div ref={containerRef} className="relative flex flex-col p-1">
-                          {/* Selected backgrounds — merged runs in multiple mode */}
-                          {multiple && <SelectionBackgrounds blocks={blocks} />}
+                          {/* Selected backgrounds — merged runs in multiple mode and value-checked rows */}
+                          <SelectionBackgrounds blocks={blocks} />
 
                           {/* Selected background */}
                           <AnimatePresence>
@@ -943,15 +1023,20 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
                             )}
                           </AnimatePresence>
 
-                          {/* Hover background */}
-                          <FluidHoverHighlight hover={hover} from={checkedRect} className={shape.bg} />
+                          {/* Hover background (pinned on an open submenu's trigger) */}
+                          <FluidHoverHighlight hover={panel.shownHover} from={checkedRect} className={shape.bg} />
+
+                          {/* Focus ring, keyboard only */}
+                          <FocusRing rect={open ? panel.focusRect : null} />
 
                           {/* display: contents keeps items direct flex children of the
                     wrapper so fluid hover measurement and gap layout still work,
                     while the group provides the radio value context. */}
-                          <Menu.RadioGroup value={selection.checkedIndex ?? null} className="contents">
-                            {rows.content}
-                          </Menu.RadioGroup>
+                          <RowOrderContext.Provider value={panel.rowOrder}>
+                            <Menu.RadioGroup value={selection.checkedIndex ?? null} className="contents">
+                              {rows.content}
+                            </Menu.RadioGroup>
+                          </RowOrderContext.Provider>
                         </div>
                       </ScrollArea>
                     </MorphSurface>
@@ -972,19 +1057,32 @@ DropdownContent.displayName = 'DropdownContent'
 // DropdownLabel
 // ---------------------------------------------------------------------------
 
-const DropdownLabel = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => {
+interface DropdownLabelProps extends HTMLAttributes<HTMLDivElement> {
+  /** The caption. */
+  children?: ReactNode
+  /** Indents the caption to the label column of rows with an icon. Defaults to `false`. */
+  inset?: boolean
+  /** Extra classes. */
+  className?: string
+}
+
+const DropdownLabel = forwardRef<HTMLDivElement, DropdownLabelProps>(({ className, inset, ...props }, ref) => {
   // Group labels are the caption role of the type scale — see /docs/sizes.
-  const compact = useSize().variant === 'compact'
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        'px-2 py-1.5 shrink-0 text-muted-foreground',
-        compact ? 'text-caption-compact' : 'text-caption',
-        className,
-      )}
-      {...props}
-    />
+  const size = useSize()
+  const own = useRef<HTMLDivElement>(null)
+  // A place in the row order, so a selection run never melts across it.
+  useRowSlot(own, undefined, true)
+  const classes = cn(
+    'py-1.5 shrink-0 text-muted-foreground',
+    inset ? INSET_PX[size.variant] : 'px-2',
+    size.variant === 'compact' ? 'text-caption-compact' : 'text-caption',
+    className,
+  )
+  // Inside a Dropdown.Group it names the group.
+  return useContext(DropdownGroupContext) ? (
+    <Menu.GroupLabel ref={mergeRefs(own, ref)} className={classes} {...props} />
+  ) : (
+    <div ref={mergeRefs(own, ref)} className={classes} {...props} />
   )
 })
 
@@ -994,9 +1092,18 @@ DropdownLabel.displayName = 'DropdownLabel'
 // DropdownSeparator
 // ---------------------------------------------------------------------------
 
-const DropdownSeparator = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <div ref={ref} role="separator" className={cn('my-1 -mx-1 h-px shrink-0 bg-border/60', className)} {...props} />
-))
+const DropdownSeparator = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => {
+  const own = useRef<HTMLDivElement>(null)
+  useRowSlot(own, undefined, true)
+  return (
+    <div
+      ref={mergeRefs(own, ref)}
+      role="separator"
+      className={cn('my-1 -mx-1 h-px shrink-0 bg-border/60', className)}
+      {...props}
+    />
+  )
+})
 
 DropdownSeparator.displayName = 'DropdownSeparator'
 
@@ -1009,20 +1116,52 @@ Object.assign(Dropdown, {
   Separator: DropdownSeparator,
   Search: DropdownSearch,
   Empty: DropdownEmpty,
+  Group: DropdownGroup,
+  Shortcut: DropdownShortcut,
+  CheckboxItem: DropdownCheckboxItem,
+  RadioGroup: DropdownRadioGroup,
+  RadioItem: DropdownRadioItem,
+  Sub: DropdownSub,
+  SubTrigger: DropdownSubTrigger,
+  SubContent: DropdownSubContent,
 })
 
 // DropdownContextValue and MenuItemRenderOptions are already re-exported
 // above next to their import — repeating them here is a duplicate-export
 // build error.
-export type { DropdownContentProps, DropdownMenuProps, DropdownProps, DropdownSearchProps, DropdownTriggerProps }
+export type {
+  DropdownCheckboxItemProps,
+  DropdownContentProps,
+  DropdownGroupProps,
+  DropdownLabelProps,
+  DropdownMenuProps,
+  DropdownProps,
+  DropdownRadioGroupProps,
+  DropdownRadioItemProps,
+  DropdownSearchProps,
+  DropdownShortcutProps,
+  DropdownSubContentProps,
+  DropdownSubProps,
+  DropdownSubTriggerProps,
+  DropdownTriggerProps,
+  MenuItemProps,
+}
 export {
   Dropdown,
+  DropdownCheckboxItem,
   DropdownContent,
   DropdownEmpty,
+  DropdownGroup,
   DropdownLabel,
   DropdownMenu,
+  DropdownRadioGroup,
+  DropdownRadioItem,
   DropdownSearch,
   DropdownSeparator,
+  DropdownShortcut,
+  DropdownSub,
+  DropdownSubContent,
+  DropdownSubTrigger,
   DropdownTrigger,
   MenuItem,
 }
