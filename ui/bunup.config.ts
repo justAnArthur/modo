@@ -18,7 +18,14 @@ export default defineConfig([
     name: 'components',
     // lib/* in the same build: splitting keeps one instance of each context
     // for the items and for hosts importing `@justanarthur/modo-ui/lib/*`
-    entry: ['index.ts', '{primitives,components,blocks}/**/index.tsx', 'lib/*.{ts,tsx}'],
+    // `variants.ts` beside an item holds its server-callable class helpers: an
+    // entry of its own, so it lands in a module without `"use client"`
+    entry: [
+      'index.ts',
+      '{primitives,components,blocks}/**/index.tsx',
+      '{components,blocks}/**/variants.ts',
+      'lib/*.{ts,tsx}',
+    ],
     // scripts/use-client.ts adds `"use client"` to the modules that need it
     target: 'browser',
   },
