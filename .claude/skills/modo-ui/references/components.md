@@ -132,14 +132,14 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 |---|---|---|
 | `Popover` | `.Trigger .Content .Title .Description .Close` | The reference morphing overlay. `openOnHover`, `side`, `align`, `sideOffset` (= the neck, 12), `anchor`, `alignOffset`, `collisionPadding`, `initialFocus`/`finalFocus`; `onOpenChange` details. |
 | `PreviewCard` | `.Trigger .Content` | Hover card from a link; `delay`, `closeDelay`. |
-| `Tooltip` | `.Root .Trigger .Content .Provider .PortalContainer` | Inverted; flat (`content`) or compound; grouped hand-off is instant; `followCursor` fades; provider takes Radix delay names. |
+| `Tooltip` | `.Root .Trigger .Content .Provider .PortalContainer` | Inverted; flat (`content`) or compound; grouped hand-off is instant; `followCursor` fades; provider takes Radix delay names; `collisionPadding` / `alignOffset` reach the positioner. |
 | `Dropdown` | `.Menu .Trigger .Content .Item .CheckboxItem .RadioGroup .RadioItem .Group .Label .Separator .Shortcut .Sub .SubTrigger .SubContent .Search .Empty` | Inline or popup; rows by `label` or children (optional `index`, `icon`, `inset`, `shortcut`, cancelable `onSelect(event)`); `filter` search; checked index / indices or value-keyed checkbox / radio rows, merged backgrounds; submenus morph from their row; keyboard ring; `asChild` trigger; `keepMounted`. |
 | `ContextMenu` | `.Trigger .Content .Item .Label .Separator` | Grows from the press point; rows are Dropdown's `MenuItem`. |
 | `Command` | `.Trigger .Content .Palette .Shortcut` | ⌘K; grouped commands; one fluid highlight follows Base UI's. |
-| `Dialog` | `.Trigger .Content .Header .Footer .Title .Description .Close` | `size` `sm` \| `lg` \| `xl`, `position`, `showCloseButton`; backdrop fades with the morph; scopes `Morph.Part`; `onOpenChange` details (`reason`, `cancel()`; also AlertDialog, Sheet, Command). |
+| `Dialog` | `.Trigger .Content .Header .Footer .Title .Description .Close` | `size` `sm` \| `lg` \| `xl`, `position`, `showCloseButton`; backdrop fades with the morph; scopes `Morph.Part`; `onOpenChange` details (`reason`, `cancel()`; also AlertDialog, Sheet, Command); `disablePointerDismissal`; `initialFocus` / `finalFocus` / `popupClassName` on the content. |
 | `AlertDialog` | as Dialog + `.Action .Cancel` | Always modal, no outside dismissal, no ✕ by default; Action awaits a promise (loading, locked, stays open on reject). Built by composing Dialog's parts. |
-| `Sheet` | Dialog's + `.Provider .Indent` | Base UI Drawer; grows from its edge; a swipe-dismiss slides on from the release point. |
-| `Toast` | `.Trigger`; `useToast()`; global `toast()` | Pill melts into a body; six `--status-*` states; promise toasts; `<Toast manager={toast}>` renders `toast()` calls from anywhere. |
+| `Sheet` | Dialog's + `.Provider .Indent` | Base UI Drawer; grows from its edge; a swipe-dismiss slides on from the release point; `Sheet.Content` `side` overrides the root's; `popupClassName` sizes it. |
+| `Toast` | `.Trigger .Action .Close`; `useToast()`; global `toast()` | Pill melts into a body; six `--status-*` states; promise toasts; `<Toast manager={toast}>` renders `toast()` calls from anywhere; `.Action` / `.Close` for a custom action node. |
 
 ## blocks
 

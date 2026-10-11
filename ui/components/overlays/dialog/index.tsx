@@ -35,6 +35,10 @@
  *   `event`, `cancel()`), as Popover does: the handler runs before the state
  *   changes, so `details.cancel()` keeps the dialog as it is (emulates
  *   Radix's `onEscapeKeyDown` / `onPointerDownOutside` / `onInteractOutside`).
+ * - `Dialog` takes `disablePointerDismissal`; `Dialog.Content` types and
+ *   forwards `initialFocus` / `finalFocus` to the popup (a custom
+ *   `finalFocus` turns the morph's own focus return off) and takes
+ *   `popupClassName`, merged after the popup's width classes.
  *   One-argument handlers keep working. `DialogState` reports through it for
  *   AlertDialog, Sheet and Command too; `createDialogChangeDetails` builds
  *   the same shape for a change the library makes itself.
@@ -43,6 +47,7 @@
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { motion } from 'motion/react'
 import {
+  type ComponentProps,
   createContext,
   forwardRef,
   type HTMLAttributes,
@@ -130,9 +135,17 @@ interface DialogContentProps extends HTMLAttributes<HTMLDivElement> {
   hideSource?: boolean
   /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'slow'`. */
   tier?: 'moderate' | 'slow'
+  /** Where focus goes when the dialog opens: a ref, `false` to leave it, `true` for the default, or a function of how it opened (`'mouse'`, `'touch'`, `'pen'`, `'keyboard'`). Defaults to the first tabbable element in the panel. */
+  initialFocus?: DialogPopupProps['initialFocus']
+  /** Where focus goes when the dialog closes: a ref, `false` to leave it, `true` for the default, or a function of how it closed. Defaults to the trigger. */
+  finalFocus?: DialogPopupProps['finalFocus']
+  /** Classes for the positioned popup box around the surface, merged after its width (`w-[calc(100%-2rem)]` capped by `size`), so `w-max` or `max-w-[60rem]` sizes the panel. `className` styles the surface's content box. */
+  popupClassName?: string
   /** Dialog content. Everything inside reads the dialog's surface level as its substrate. */
   children?: ReactNode
 }
+
+type DialogPopupProps = ComponentProps<typeof DialogPrimitive.Popup>
 
 const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
   (
@@ -147,6 +160,9 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
       effect,
       hideSource,
       tier,
+      initialFocus,
+      finalFocus,
+      popupClassName,
       ...props
     },
     ref,
@@ -159,7 +175,15 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
     // width only, the padding stays put (see Sizes).
     const compact = useSize().variant === 'compact'
     const { open, origin } = useDialogState()
-    const morph = useMorph(open, origin, { from, effect, hideSource, tier })
+    const morph = useMorph(open, origin, {
+      from,
+      effect,
+      hideSource,
+      tier,
+      // A custom `finalFocus` places focus itself; the morph's own return
+      // to the trigger would undo it.
+      returnFocus: typeof finalFocus === 'boolean' ? finalFocus : finalFocus === undefined,
+    })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
 
     return (
@@ -171,6 +195,8 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
         <DialogPrimitive.Popup
           ref={morph.popupRef}
           {...props}
+          initialFocus={initialFocus}
+          finalFocus={finalFocus}
           className={cn(
             container ? 'absolute' : 'fixed',
             'left-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 focus:outline-none',
@@ -178,6 +204,7 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
             size === 'sm' && (compact ? 'max-w-[360px]' : 'max-w-[400px]'),
             size === 'lg' && (compact ? 'max-w-[480px]' : 'max-w-[540px]'),
             size === 'xl' && (compact ? 'max-w-[800px]' : 'max-w-[880px]'),
+            popupClassName,
           )}
         >
           <SurfaceProvider value={dialogLevel}>
@@ -339,6 +366,8 @@ interface DialogProps {
   onOpenChange?: (open: boolean, details: DialogOpenChangeDetails) => void
   /** Traps focus and locks page scroll while open. Defaults to `true`. */
   modal?: boolean
+  /** Ignore presses outside the panel: only Escape and the dialog's own closes dismiss it. Defaults to `false`. */
+  disablePointerDismissal?: boolean
   /** The trigger and the content — `Dialog.Trigger` plus a `Dialog.Content`. */
   children?: ReactNode
 }
@@ -365,7 +394,8 @@ interface DialogProps {
  * - `Dialog.Trigger` — the control that opens it. `render={<Button/>}` or
  *   Radix-style `asChild` with a single child both work.
  * - `Dialog.Content` — the panel: `size`, `position`, `showCloseButton`,
- *   `container`, and the morph options `from`, `effect`, `hideSource`,
+ *   `container`, `initialFocus`, `finalFocus`, `popupClassName` (sizes the
+ *   popup box), and the morph options `from`, `effect`, `hideSource`,
  *   `tier`.
  * - `Dialog.Header` / `Dialog.Footer` — the stacked title block, and the
  *   right-aligned action row.
@@ -377,11 +407,11 @@ interface DialogProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Dialog({ children, open, defaultOpen, onOpenChange, modal }: DialogProps) {
+function Dialog({ children, open, defaultOpen, onOpenChange, modal, disablePointerDismissal }: DialogProps) {
   return (
     <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
       {root => (
-        <DialogPrimitive.Root {...root} modal={modal}>
+        <DialogPrimitive.Root {...root} modal={modal} disablePointerDismissal={disablePointerDismissal}>
           {children}
         </DialogPrimitive.Root>
       )}
