@@ -26,6 +26,32 @@ indicator dot.
   <Badge variant="dot" color="rose">Poetry</Badge>
 </div>
 
+# Outline
+
+`variant="outline"` is the dot badge's neutral frame without the dot: a label
+that carries no status.
+
+<div className="flex flex-wrap items-center gap-2">
+  <Badge variant="outline">Draft</Badge>
+  <Badge variant="outline">v2.4</Badge>
+  <Badge variant="outline" size="compact">Archived</Badge>
+</div>
+
+# Status mapping
+
+Hosts with a shadcn-style badge map its variants onto a hue: default and
+secondary → `gray`, destructive → `red`, success → `green`, outline →
+`variant="outline"`. The tint stays a wash with foreground text, never a solid
+fill.
+
+<div className="flex flex-wrap items-center gap-2">
+  <Badge color="gray">Default</Badge>
+  <Badge color="gray">Secondary</Badge>
+  <Badge color="red">Destructive</Badge>
+  <Badge color="green">Success</Badge>
+  <Badge variant="outline">Outline</Badge>
+</div>
+
 # Colors
 
 All seventeen palette colors, solid and dot.
