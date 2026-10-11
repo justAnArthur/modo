@@ -25,6 +25,11 @@
  * Renamed for modo (item `radio`): `RadioItem` → `Radio`, the default
  * export; `RadioGroup` → its `Radio.Group` static. A row's `index` is
  * optional: the group numbers its rows in order (`lib/row-index.tsx`).
+ * Local: `label` is optional and takes any node; a `Radio` without one is a
+ * bare circle, Base UI's Radio.Root itself (focus, arrow keys, `id` /
+ * `<label htmlFor>`, `aria-label(ledby)`), laid out however the caller likes
+ * inside a value-mode group, which then draws no rows of its own (no hover,
+ * selected background or ring). `disabled` on a row or the whole group.
  */
 
 import { Radio as RadioPrimitive } from '@base-ui/react/radio'
@@ -41,11 +46,13 @@ import {
   type RefAttributes,
   useContext,
   useEffect,
+  useId,
   useRef,
   useState,
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { GooIndicator } from '../../../lib/goo-indicator'
+import { isDisabledRow } from '../../../lib/popup'
 import { IndexedRows, useRowIndex } from '../../../lib/row-index'
 import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
@@ -67,6 +74,8 @@ interface RadioGroupContextValue {
   hasSelection: boolean
   /** Local: selects a row by index, through `onSelectedIndexChange`. */
   selectIndex: (index: number) => void
+  /** Local: the whole group is disabled. */
+  disabled: boolean
 }
 
 const RadioGroupContext = createContext<RadioGroupContextValue | null>(null)
@@ -78,7 +87,7 @@ function useRadioGroupContext() {
 }
 
 interface RadioGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect' | 'defaultValue'> {
-  /** `Radio` rows. */
+  /** `Radio` rows, or bare radios (no `label`) in a layout of your own (see Bare). */
   children: ReactNode
   /** Index of the currently selected item. Controlled — pair it with `onSelectedIndexChange` (or per-item `onSelect`). */
   selectedIndex?: number
@@ -92,6 +101,12 @@ interface RadioGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect
   defaultValue?: string
   /** Called with the selected item's `value` when it changes (value mode). */
   onValueChange?: (value: string) => void
+  /** Disables every radio in the group. Defaults to `false`. */
+  disabled?: boolean
+  /** Form field name for the selected `value` (value mode): a hidden input carries it. */
+  name?: string
+  /** Marks the group required in a form (value mode). Defaults to `false`. */
+  required?: boolean
   /** Pins the group's rows to one step of the size ladder (default 36px, compact 28px). Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
 }
@@ -107,6 +122,9 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
       value: valueProp,
       defaultValue,
       onValueChange: onValueChangeProp,
+      disabled = false,
+      name,
+      required,
       size,
       className,
       ...props
@@ -128,7 +146,7 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
     const childValues = Children.toArray(children)
       .filter(isValidElement)
       .map(child => (child.props as { value?: string }).value)
-    const hover = useFluidHover(containerRef)
+    const hover = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
     const { activeIndex, setActiveIndex, itemRects, handlers, registerItem } = hover
 
     const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
@@ -144,6 +162,49 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
     const focusRect = focusedIndex !== null ? itemRects[focusedIndex] : null
     const selectedRect = resolvedSelectedIndex >= 0 ? itemRects[resolvedSelectedIndex] : null
     const shape = useShape()
+
+    // Bare radios lay themselves out: no direct child is a labelled row, so
+    // the group draws no rows and leaves the arrow keys to Base UI's group.
+    const hasRows = Children.toArray(children).some(
+      child => isValidElement(child) && (child.props as { label?: ReactNode }).label !== undefined,
+    )
+    const setRef = (node: HTMLDivElement | null) => {
+      ;(containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+      if (typeof ref === 'function') ref(node)
+      else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
+    }
+
+    if (!hasRows) {
+      const bare = (
+        <RadioGroupContext.Provider
+          value={{
+            registerItem,
+            activeIndex,
+            selectedIndex: null,
+            selectedValue: value,
+            onValueChange,
+            hasSelection,
+            selectIndex,
+            disabled,
+          }}
+        >
+          <RadioGroupPrimitive
+            ref={setRef}
+            // `null`: nothing picked yet, still controlled.
+            value={value ?? null}
+            onValueChange={v => onValueChange(v as string)}
+            disabled={disabled}
+            name={name}
+            required={required}
+            className={cn('relative flex flex-col gap-2', className)}
+            {...(props as HTMLAttributes<HTMLDivElement>)}
+          >
+            {children}
+          </RadioGroupPrimitive>
+        </RadioGroupContext.Provider>
+      )
+      return size ? <SizeProvider size={size}>{bare}</SizeProvider> : bare
+    }
 
     const content = (
       <div
@@ -176,7 +237,7 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
           // carries role="radio", so a bare [role="radio"] selector matches
           // twice per row and arrows land on the invisible control.
           const items = Array.from(
-            containerRef.current?.querySelectorAll('[data-fluid-hover-index]') ?? [],
+            containerRef.current?.querySelectorAll('[data-fluid-hover-index]:not([aria-disabled="true"])') ?? [],
           ) as HTMLElement[]
           const currentIdx = items.indexOf(e.target as HTMLElement)
           if (currentIdx === -1) return
@@ -260,9 +321,17 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
             onValueChange,
             hasSelection,
             selectIndex,
+            disabled,
           }}
         >
-          <RadioGroupPrimitive value={value} onValueChange={v => onValueChange(v as string)} render={content} />
+          <RadioGroupPrimitive
+            value={value}
+            onValueChange={v => onValueChange(v as string)}
+            disabled={disabled}
+            name={name}
+            required={required}
+            render={content}
+          />
         </RadioGroupContext.Provider>,
       )
     }
@@ -275,6 +344,7 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
           selectedIndex: selectedIndex ?? null,
           hasSelection,
           selectIndex,
+          disabled,
         }}
       >
         {content}
@@ -286,20 +356,67 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
 RadioGroup.displayName = 'RadioGroup'
 
 interface RadioProps extends HTMLAttributes<HTMLDivElement> {
-  /** Text label for the radio item. */
-  label: string
+  /** Label beside the circle, any node. Omit it for a bare circle in a layout of your own (see Bare): it then needs a `value`, and a name from `aria-label`, `aria-labelledby` or a `<label htmlFor>` pointing at its `id`. */
+  label?: ReactNode
   /** Position within the `Radio.Group`: the row's `selectedIndex`. Defaults to its order among the group's rows. */
   index?: number
   /** Whether this item is selected. Defaults to the group's selection. */
   selected?: boolean
   /** Called when this item is selected (the group's change callbacks fire too). */
   onSelect?: () => void
-  /** Optional value forwarded to the underlying Base UI primitive for form integration. */
+  /** The item's value in a value-mode group, forwarded to the underlying Base UI radio for forms. A bare radio needs one. */
   value?: string
+  /** Dims the radio and ignores presses; the hover and the arrow keys skip it. Defaults to the group's `disabled`. */
+  disabled?: boolean
 }
 
 type RadioComponent = ForwardRefExoticComponent<RadioProps & RefAttributes<HTMLDivElement>> & {
   Group: typeof RadioGroup
+}
+
+interface RadioCircleProps {
+  selected: boolean
+  /** Lit: the border darkens. */
+  active: boolean
+  compact: boolean
+  /** Already selected at mount: the dot is there, not scaled in. */
+  skipAnimation: boolean
+}
+
+/** The circle's insides: the border and the dot that scales in. */
+function RadioCircle({ selected, active, compact, skipAnimation }: RadioCircleProps) {
+  return (
+    <>
+      {/* Border */}
+      <div
+        className={cn(
+          'absolute inset-0 rounded-full border-solid transition-all duration-fast',
+          selected
+            ? 'border-[1.5px] border-transparent'
+            : active
+              ? 'border-[1.5px] border-control'
+              : 'border-[1.5px] border-border',
+        )}
+      />
+      {/* Dot */}
+      <AnimatePresence>
+        {selected && (
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center"
+            initial={{
+              opacity: skipAnimation ? 1 : 0,
+              scale: skipAnimation ? 1 : 0.3,
+            }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.3, transition: { duration: 0.04 } }}
+            transition={spring.fast}
+          >
+            <div className={cn('rounded-full bg-foreground', compact ? 'w-[7px] h-[7px]' : 'w-[8px] h-[8px]')} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  )
 }
 
 /**
@@ -313,30 +430,50 @@ type RadioComponent = ForwardRefExoticComponent<RadioProps & RefAttributes<HTMLD
  * its rows in order, so they need no `index`. FF's per-row `selected` /
  * `onSelect` still work and override the group for their row.
  *
+ * Without a `label` a radio is just the circle: Base UI's radio, picked by
+ * its `value`, named by a `<label htmlFor>` pointing at its `id` or by
+ * `aria-label`. Lay bare radios out however you like inside the group (a
+ * row with a description, a grid of cards); the group then draws no rows of
+ * its own and Base UI moves focus and selection with the arrow keys.
+ *
  * Statics:
  * - `Radio.Group` — the list. Select by index — uncontrolled with
  *   `defaultSelectedIndex`, controlled with `selectedIndex` +
  *   `onSelectedIndexChange` — or by row `value` (`defaultValue` / `value` +
  *   `onValueChange`), which also renders Base UI radios for form
- *   integration; `size` pins every row to one step of the size ladder.
+ *   integration (`name`, `required`); `disabled` turns every radio off;
+ *   `size` pins every row to one step of the size ladder.
  *
  * @example {@include ./examples.mdx}
  */
 const Radio = forwardRef<HTMLDivElement, RadioProps>(
-  ({ label, index: indexProp, selected, onSelect, value, className, ...props }, ref) => {
+  ({ label, index: indexProp, selected, onSelect, value, disabled: disabledProp, className, ...props }, ref) => {
     const internalRef = useRef<HTMLDivElement>(null)
     const hasMounted = useRef(false)
-    const { registerItem, activeIndex, selectedIndex, selectedValue, onValueChange, hasSelection, selectIndex } =
-      useRadioGroupContext()
+    const {
+      registerItem,
+      activeIndex,
+      selectedIndex,
+      selectedValue,
+      onValueChange,
+      hasSelection,
+      selectIndex,
+      disabled: groupDisabled,
+    } = useRadioGroupContext()
     const index = useRowIndex(indexProp)
+    const labelId = useId()
+    const [hovered, setHovered] = useState(false)
+    const bare = label === undefined
+    const disabled = disabledProp ?? groupDisabled
 
-    useRegisterFluidHoverItem(registerItem, index, internalRef)
+    // A bare radio is no row: it joins neither the hover nor the numbering.
+    useRegisterFluidHoverItem(bare ? undefined : registerItem, index, internalRef)
 
     useEffect(() => {
       hasMounted.current = true
     }, [])
 
-    const isActive = activeIndex === index
+    const isActive = bare ? hovered : activeIndex === index
     const skipAnimation = !hasMounted.current
     const shape = useShape()
     const sizeClasses = useSize()
@@ -347,6 +484,7 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
         : (selected ?? selectedIndex === index)
 
     const handleSelect = () => {
+      if (disabled) return
       if (value !== undefined) {
         onValueChange?.(value)
       }
@@ -354,20 +492,58 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
       selectIndex(index)
     }
 
+    const setRef = (node: HTMLDivElement | null) => {
+      ;(internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+      if (typeof ref === 'function') ref(node)
+      else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
+    }
+    const circle = (
+      <RadioCircle selected={isSelected} active={isActive} compact={compact} skipAnimation={skipAnimation} />
+    )
+
+    if (bare) {
+      return (
+        <RadioPrimitive.Root
+          ref={setRef}
+          render={<div />}
+          value={value}
+          disabled={disabled}
+          // Base UI's group picks it; this reports the row's own `onSelect`.
+          onClick={() => {
+            if (!disabled) onSelect?.()
+          }}
+          onPointerEnter={e => {
+            if (e.pointerType === 'mouse') setHovered(true)
+          }}
+          onPointerLeave={() => setHovered(false)}
+          className={cn(
+            'relative inline-flex shrink-0 cursor-pointer rounded-full outline-none transition-[opacity] duration-fast',
+            'focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+            compact ? 'size-3.5' : 'size-4',
+            disabled && 'opacity-50 pointer-events-none',
+            className,
+          )}
+          // The root renders a div (`render`); its handlers are typed for Base UI's span.
+          {...(props as HTMLAttributes<HTMLSpanElement>)}
+        >
+          {circle}
+        </RadioPrimitive.Root>
+      )
+    }
+
     return (
       <div
-        ref={node => {
-          ;(internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node
-          if (typeof ref === 'function') ref(node)
-          else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
-        }}
+        ref={setRef}
         data-fluid-hover-index={index}
+        data-disabled={disabled || undefined}
         // Roving tabindex: selected item is the tab stop; with no selection the
         // first item takes it so the group stays keyboard-reachable.
-        tabIndex={isSelected ? 0 : !hasSelection && index === 0 ? 0 : -1}
+        tabIndex={disabled ? -1 : isSelected ? 0 : !hasSelection && index === 0 ? 0 : -1}
         role="radio"
         aria-checked={isSelected}
-        aria-label={label}
+        aria-disabled={disabled || undefined}
+        aria-label={typeof label === 'string' ? label : undefined}
+        aria-labelledby={typeof label !== 'string' ? labelId : undefined}
         onClick={handleSelect}
         onMouseDown={e => {
           // Clicking the 15px radio circle would natively focus the hidden
@@ -392,42 +568,14 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
         className={cn(
           // Fixed height (was py-1.5 around a 19.5px line box ≈ 31.5px) so the
           // text-box trim on the label doesn't shrink the row.
-          `relative z-10 flex ${sizeClasses.control} items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.px} cursor-pointer outline-none`,
+          `relative z-10 flex ${sizeClasses.control} items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.px} cursor-pointer outline-none transition-[opacity] duration-fast`,
+          disabled && 'opacity-50 pointer-events-none',
           className,
         )}
         {...props}
       >
         {/* Radio circle */}
-        <div className={cn('relative shrink-0', compact ? 'w-[14px] h-[14px]' : 'w-[16px] h-[16px]')}>
-          {/* Border */}
-          <div
-            className={cn(
-              'absolute inset-0 rounded-full border-solid transition-all duration-fast',
-              isSelected
-                ? 'border-[1.5px] border-transparent'
-                : isActive
-                  ? 'border-[1.5px] border-control'
-                  : 'border-[1.5px] border-border',
-            )}
-          />
-          {/* Dot */}
-          <AnimatePresence>
-            {isSelected && (
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center"
-                initial={{
-                  opacity: skipAnimation ? 1 : 0,
-                  scale: skipAnimation ? 1 : 0.3,
-                }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.3, transition: { duration: 0.04 } }}
-                transition={spring.fast}
-              >
-                <div className={cn('rounded-full bg-foreground', compact ? 'w-[7px] h-[7px]' : 'w-[8px] h-[8px]')} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        <div className={cn('relative shrink-0', compact ? 'w-[14px] h-[14px]' : 'w-[16px] h-[16px]')}>{circle}</div>
 
         {/* Label */}
         {/* Both stacked spans carry the text-box trim so the invisible bold
@@ -440,6 +588,7 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
             {label}
           </span>
           <span
+            id={labelId}
             className={cn(
               'col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast [text-box:trim-both_cap_alphabetic]',
               isSelected || isActive ? 'text-foreground' : 'text-muted-foreground',
@@ -451,7 +600,9 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
         </span>
 
         {/* Hidden Base UI Radio input for accessibility */}
-        {value !== undefined && <RadioPrimitive.Root value={value} className="sr-only" tabIndex={-1} aria-hidden />}
+        {value !== undefined && (
+          <RadioPrimitive.Root value={value} disabled={disabled} className="sr-only" tabIndex={-1} aria-hidden />
+        )}
       </div>
     )
   },
