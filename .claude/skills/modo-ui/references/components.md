@@ -42,7 +42,7 @@ controlled + uncontrolled.
 | Right-click / long-press actions | `ContextMenu` |
 | ⌘K palette | `Command` |
 | A search box | `Search` (pill or icon that grows in place; suggestions) |
-| A small floating panel | `Popover` (`openOnHover` for hover panels) |
+| A small floating panel | `Popover` (`openOnHover` for hover panels; `anchor` + `--anchor-width` to sit under a field; `onOpenChange(open, details)` to tell or cancel the reason) |
 | A preview behind a link | `PreviewCard` |
 | A short hint | `Tooltip` |
 | A blocking task | `Dialog` (`sm` / `lg` / `xl`) |
@@ -81,7 +81,7 @@ controlled + uncontrolled.
 
 | Item | Path | Statics | Systems | Notes |
 |---|---|---|---|---|
-| `Button` | `components/button` | — | L C | Press shrinks the fill 1px/side; icons thicken; `loading` folds into a circle (box unchanged); `active` forces pressed. `outline` = `tertiary`; `destructive` / `success` are hue text on a wash, never solid; `link` is underlined text on the control height; `xs` → compact. `buttonVariants` in `variants.ts`. Serves the chrome's Button slot. |
+| `Button` | `components/button` | — | L C | Press shrinks the fill 1px/side; icons thicken; `loading` folds into a circle (box unchanged); `active` forces pressed. `outline` = `tertiary`; `destructive` / `success` are hue text on a wash, never solid; `link` is underlined text on the control height; `xs` → compact. `buttonVariants` in `variants.ts` (size aliases; `surface: true` styles an `<a>` as a button — static, prefer `asChild`); `loading` keeps focus. Serves the chrome's Button slot. |
 | `Badge` | `components/badge` | — | L | `variant` `solid` \| `dot` \| `outline` (neutral hairline, no color), `color`, `size`; a new label springs width and blur-crossfades. `badgeVariants` in `variants.ts`. |
 | `Card` | `components/card` | `.Group .Header .Title .Description .Action .Content .Footer .Media .Image .Eyebrow .Feature .Button .Divider` | L H W | Transparent and borderless (`border="outlined"` frames a standalone card); only clickable cards join the group's hover; stretched link; `.Divider` is a full-bleed hairline between parts. |
 | `Avatar` | `components/avatar` | `.Image .Fallback` | L | One control tall; circle or square; fallback after a `delay`; 1px inset image edge; image fades in. |
@@ -101,6 +101,7 @@ controlled + uncontrolled.
 | `Slider` | — | L C | Default: pips + scrubber; compact: fill, range, value. |
 | `InputGroup` | `.Field` | L H W C | Fields share one hover; error state on Base UI Field. |
 | `Input` | — | L C | The ringed box on its own; `startAdornment` / `endAdornment`, `readOnly`, `required`; `InputAction` (icon button inside the ring), `InputAdornment`. |
+| `Label` | — | L | Field label inset to the field's text; invalid, size; Field.Label renders it. |
 | `Field` | `.Label .Description .Error .Control` | L C | Base UI Field; no form library; state reaches field controls. |
 | `NumberInput` | — | L C | NumberField; steppers inside the ring, Intl format, scrub. |
 | `FileDropzone` | `.Row` | L C M | Drag accept / partial / reject state; files handed over, none kept; rows with status and progress. |
@@ -129,7 +130,7 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 
 | Item | Statics | Notes |
 |---|---|---|
-| `Popover` | `.Trigger .Content .Title .Description .Close` | The reference morphing overlay. `openOnHover`, `side`, `align`, `sideOffset` (= the neck, 12). |
+| `Popover` | `.Trigger .Content .Title .Description .Close` | The reference morphing overlay. `openOnHover`, `side`, `align`, `sideOffset` (= the neck, 12), `anchor`, `alignOffset`, `collisionPadding`, `initialFocus`/`finalFocus`; `onOpenChange` details. |
 | `PreviewCard` | `.Trigger .Content` | Hover card from a link; `delay`, `closeDelay`. |
 | `Tooltip` | `.Root .Trigger .Content .Provider .PortalContainer` | Inverted; flat (`content`) or compound; grouped hand-off is instant; `followCursor` fades; provider takes Radix delay names. |
 | `Dropdown` | `.Menu .Trigger .Content .Item .CheckboxItem .RadioGroup .RadioItem .Group .Label .Separator .Shortcut .Sub .SubTrigger .SubContent .Search .Empty` | Inline or popup; rows by `label` or children (optional `index`, `icon`, `inset`, `shortcut`, cancelable `onSelect(event)`); `filter` search; checked index / indices or value-keyed checkbox / radio rows, merged backgrounds; submenus morph from their row; keyboard ring; `asChild` trigger; `keepMounted`. |
