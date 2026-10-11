@@ -2,13 +2,14 @@
  * Local addition (not part of Fluid Functionalism): a number field on Base
  * UI's NumberField, drawn on the shared field box (`useFieldBox` in
  * `lib/field-classes.ts`) like Input, with its steppers as field actions
- * (`FIELD_ACTION` in `lib/field-variants.ts`).
+ * (`FIELD_ACTION_BOX` / `FIELD_ACTION_END` in `lib/field-variants.ts`).
  */
 
 import { NumberField } from '@base-ui/react/number-field'
 import { forwardRef, type ReactNode, useRef } from 'react'
 import {
-  FIELD_ACTION,
+  FIELD_ACTION_BOX,
+  FIELD_ACTION_END,
   FIELD_ACTION_RADIUS,
   type FieldVariant,
   fieldActionClasses,
@@ -133,7 +134,7 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     const Minus = useIcon('minus')
     const Plus = useIcon('plus')
     const Arrows = useIcon('chevrons-up-down')
-    const stepClasses = cn(fieldActionClasses, FIELD_ACTION[box.size.variant], FIELD_ACTION_RADIUS[shape.variant])
+    const stepClasses = cn(fieldActionClasses, FIELD_ACTION_BOX[box.size.variant], FIELD_ACTION_RADIUS[shape.variant])
 
     const start = startAdornment != null && (
       <InputAdornment size={size}>
@@ -189,10 +190,13 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           {stepper && !box.readOnly && (
             // The steppers sit side by side, the last 4px inside the ring.
             <span className="flex shrink-0 items-center">
-              <NumberField.Decrement aria-label={decrementLabel} className={cn(stepClasses, 'mr-0')}>
+              <NumberField.Decrement aria-label={decrementLabel} className={stepClasses}>
                 <Minus size={box.size.icon} strokeWidth={1.5} />
               </NumberField.Decrement>
-              <NumberField.Increment aria-label={incrementLabel} className={cn(stepClasses, 'ml-0')}>
+              <NumberField.Increment
+                aria-label={incrementLabel}
+                className={cn(stepClasses, FIELD_ACTION_END[box.size.variant])}
+              >
                 <Plus size={box.size.icon} strokeWidth={1.5} />
               </NumberField.Increment>
             </span>

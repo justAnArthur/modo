@@ -15,6 +15,8 @@ import { cn } from './utils'
 // component); every name stays importable from here.
 export {
   FIELD_ACTION,
+  FIELD_ACTION_BOX,
+  FIELD_ACTION_END,
   FIELD_ACTION_RADIUS,
   FIELD_ADORNMENT_ICON,
   FIELD_PX,
