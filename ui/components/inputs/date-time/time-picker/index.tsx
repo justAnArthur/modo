@@ -178,7 +178,7 @@ const TimePicker = forwardRef<HTMLButtonElement, TimePickerProps>(function TimeP
       header={
         <PickerInput
           ref={input}
-          aria-label={labels?.time ?? placeholder ?? 'Time'}
+          aria-label={labels?.time || placeholder || 'Time'}
           placeholder={placeholder}
           formatted={formatted}
           onText={readTime}

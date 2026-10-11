@@ -71,7 +71,8 @@
  */
 
 import type { MenuTriggerProps } from '@base-ui/react/menu'
-import { Menu } from '@base-ui/react/menu'
+// Aliased: a bare `Menu` import makes the .d.ts bundler rename the `Menu` static too
+import { Menu as BaseMenu } from '@base-ui/react/menu'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   Children,
@@ -692,7 +693,7 @@ function DropdownMenu({
   // React context crosses portals) to one ladder step.
   const root = (
     <DropdownMenuContext.Provider value={ctx}>
-      <Menu.Root
+      <BaseMenu.Root
         open={open}
         onOpenChange={handleOpenChange}
         disabled={disabled}
@@ -701,7 +702,7 @@ function DropdownMenu({
         modal={false}
       >
         {children}
-      </Menu.Root>
+      </BaseMenu.Root>
     </DropdownMenuContext.Provider>
   )
 
@@ -729,11 +730,11 @@ type DropdownTriggerProps = MenuTriggerProps & {
 const DropdownTrigger = forwardRef<HTMLButtonElement, DropdownTriggerProps>(
   ({ asChild, render, children, ...props }, ref) =>
     asChild && isValidElement(children) ? (
-      <Menu.Trigger ref={ref} render={children as ReactElement<Record<string, unknown>>} {...props} />
+      <BaseMenu.Trigger ref={ref} render={children as ReactElement<Record<string, unknown>>} {...props} />
     ) : (
-      <Menu.Trigger ref={ref} render={render} {...props}>
+      <BaseMenu.Trigger ref={ref} render={render} {...props}>
         {children}
-      </Menu.Trigger>
+      </BaseMenu.Trigger>
     ),
 )
 
@@ -749,7 +750,7 @@ DropdownTrigger.displayName = 'DropdownTrigger'
 // `checkedIndex`.
 // ---------------------------------------------------------------------------
 
-type MenuPositionerProps = ComponentProps<typeof Menu.Positioner>
+type MenuPositionerProps = ComponentProps<typeof BaseMenu.Positioner>
 
 interface DropdownContentProps {
   /** `Dropdown.Item` rows, plus `Dropdown.Label`, `Dropdown.Separator`, `Dropdown.Search`, `Dropdown.Empty`. */
@@ -924,8 +925,8 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
     )
 
     return (
-      <Menu.Portal keepMounted={keepMounted}>
-        <Menu.Positioner
+      <BaseMenu.Portal keepMounted={keepMounted}>
+        <BaseMenu.Positioner
           side={side}
           align={align}
           sideOffset={opensInPlace({ effect, hideSource }) ? inPlaceOffset : sideOffset}
@@ -934,7 +935,7 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
           <DropdownContext.Provider value={contentCtx}>
             <DropdownFilterContext.Provider value={rows.filterCtx}>
               <DropdownSearchHostContext.Provider value={searchHost}>
-                <Menu.Popup
+                <BaseMenu.Popup
                   ref={morph.popupRef}
                   onKeyDownCapture={e => {
                     // A submenu's keys bubble here through the portal.
@@ -1033,20 +1034,20 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
                     wrapper so fluid hover measurement and gap layout still work,
                     while the group provides the radio value context. */}
                           <RowOrderContext.Provider value={panel.rowOrder}>
-                            <Menu.RadioGroup value={selection.checkedIndex ?? null} className="contents">
+                            <BaseMenu.RadioGroup value={selection.checkedIndex ?? null} className="contents">
                               {rows.content}
-                            </Menu.RadioGroup>
+                            </BaseMenu.RadioGroup>
                           </RowOrderContext.Provider>
                         </div>
                       </ScrollArea>
                     </MorphSurface>
                   </SurfaceProvider>
-                </Menu.Popup>
+                </BaseMenu.Popup>
               </DropdownSearchHostContext.Provider>
             </DropdownFilterContext.Provider>
           </DropdownContext.Provider>
-        </Menu.Positioner>
-      </Menu.Portal>
+        </BaseMenu.Positioner>
+      </BaseMenu.Portal>
     )
   },
 )
@@ -1080,7 +1081,7 @@ const DropdownLabel = forwardRef<HTMLDivElement, DropdownLabelProps>(({ classNam
   )
   // Inside a Dropdown.Group it names the group.
   return useContext(DropdownGroupContext) ? (
-    <Menu.GroupLabel ref={mergeRefs(own, ref)} className={classes} {...props} />
+    <BaseMenu.GroupLabel ref={mergeRefs(own, ref)} className={classes} {...props} />
   ) : (
     <div ref={mergeRefs(own, ref)} className={classes} {...props} />
   )

@@ -24,6 +24,27 @@ in the corner comes with `Dialog.Content`.
   </Dialog.Content>
 </Dialog>
 
+# Keep it open
+
+`onOpenChange` hears why the dialog is closing (`details.reason`) and can keep it open with `details.cancel()`. Here a press outside is ignored; Escape and the buttons still close it.
+
+<Dialog
+  onOpenChange={(open, details) => {
+    if (details.reason === 'outside-press') details.cancel()
+  }}
+>
+  <Dialog.Trigger render={<Button variant="tertiary">Open sticky dialog</Button>} />
+  <Dialog.Content size="sm">
+    <Dialog.Header>
+      <Dialog.Title>Unsaved changes</Dialog.Title>
+      <Dialog.Description>A press outside won't close this one.</Dialog.Description>
+    </Dialog.Header>
+    <Dialog.Footer>
+      <Dialog.Close render={<Button variant="ghost">Close</Button>} />
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog>
+
 # Sizes
 
 3 widths: `sm` for a confirmation, `lg` for a short form, `xl` for a

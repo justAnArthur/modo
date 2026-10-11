@@ -57,6 +57,15 @@ const untyped = chunks
   .filter(file => !file.startsWith('dist/shared/') && !existsSync(join(ROOT, file.replace(/\.js$/, '.d.ts'))))
 for (const file of untyped) failures.push(`${file} has no .d.ts beside it`)
 
+// The .d.ts bundler renames a clashing import (`Menu` -> `Menu2`) and every
+// same-named identifier in that module with it, static keys included, so
+// `Dropdown.Menu` would be typed as `Dropdown.Menu2`. Alias the import instead.
+const typings = globSync('dist/**/*.d.ts', { cwd: ROOT })
+const renamed = typings.flatMap(file =>
+  [...read(file).matchAll(/^\s+([A-Z][A-Za-z]+[0-9]+): typeof/gm)].map(match => `${file}: ${match[1]}`),
+)
+for (const hit of renamed) failures.push(`${hit} is a renamed static (alias the clashing import)`)
+
 // Module state, not a context: the global toast() queue must be one instance too.
 const managers = chunks.reduce((sum, { code }) => sum + (code.match(/\bcreateToastManager\d*\(/g)?.length ?? 0), 0)
 if (managers !== 1) failures.push(`${managers} createToastManager calls in dist, expected 1`)
@@ -72,6 +81,7 @@ console.log(`${BUTTON} -> ${relative(ROOT, fileURLToPath(import.meta.resolve(BUT
 console.log(`Button under a compact SizeContext.Provider renders compact: ${shared}`)
 console.log(`toast(): ${managers} manager in dist, barrel === entry: ${barrelToast === entryToast}`)
 console.log(`.d.ts beside every entry: ${untyped.length === 0}`)
+console.log(`statics renamed by the .d.ts bundler: ${renamed.length}`)
 
 if (failures.length) {
   console.error(failures.join('\n'))

@@ -26,6 +26,9 @@
  *   with their descriptions, so modo's parser lists them. The track-styling
  *   props (`trackClassName`, `trackStyle`, `fillClassName`, `fillStyle`,
  *   `hideFill`, `thumbColor`, `thumbBorderColor`) are still inherited.
+ * - `aria-label` (local addition) names the thumbs ahead of `label`, so a
+ *   slider without a visible label prefix still has an accessible name; it
+ *   is no longer spread onto the role-less root div.
  * - TSDoc with the FF docs page's examples added above `Slider`;
  *   `export default Slider` added.
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
@@ -344,6 +347,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
       thumbColor,
       thumbBorderColor,
       className,
+      'aria-label': ariaLabel,
       ...props
     },
     ref,
@@ -694,10 +698,12 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
     // --- Per-thumb accessible names ---
     // aria-label on Root lands on a role-less div and never reaches the
     // thumb's input, so each Thumb gets its own label.
+    // `aria-label` names the thumbs ahead of the visible `label` (local addition).
     const thumbAriaLabel = (index: number): string | undefined => {
-      if (!isRange) return label
-      if (!label) return index === 0 ? 'Minimum' : 'Maximum'
-      return index === 0 ? `${label} minimum` : `${label} maximum`
+      const name = ariaLabel || label
+      if (!isRange) return name
+      if (!name) return index === 0 ? 'Minimum' : 'Maximum'
+      return index === 0 ? `${name} minimum` : `${name} maximum`
     }
 
     // --- Value display component ---
@@ -1047,6 +1053,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
       formatValue = String,
       disabled = false,
       className,
+      'aria-label': ariaLabel,
       ...props
     },
     ref,
@@ -1370,7 +1377,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
               </SliderPrimitive.Track>
               <SliderPrimitive.Thumb
                 index={0}
-                aria-label={label}
+                aria-label={ariaLabel || label}
                 className="block outline-none"
                 onFocus={e => {
                   if ((e.currentTarget as HTMLElement).matches(':focus-visible')) setIsFocused(true)
@@ -1612,6 +1619,8 @@ interface SliderProps extends Omit<SliderEngineProps, 'value' | 'onChange'> {
   formatValue?: (v: number) => string
   /** Accessible label for the slider, also shown as prefix in the value display. */
   label?: string
+  /** Accessible name of the thumb(s) when it should differ from `label`, e.g. no visible `label` at all. Defaults to `label`. */
+  'aria-label'?: string
   /** Disables all interaction. Defaults to `false`. */
   disabled?: boolean
 }

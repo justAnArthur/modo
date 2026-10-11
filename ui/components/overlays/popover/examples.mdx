@@ -36,6 +36,23 @@ With `openOnHover` the trigger opens it on hover too; a tap still toggles it on 
   </Popover.Content>
 </Popover>
 
+# Any element as the trigger
+
+`render` takes any element, and the trigger's children fill it when it has none of its own. Pass `nativeButton={false}` when it isn't a `<button>`: Base UI adds the role and the keyboard handling.
+
+<Popover>
+  <Popover.Trigger
+    nativeButton={false}
+    render={<span className="cursor-pointer weight-medium text-foreground underline decoration-border underline-offset-4" />}
+  >
+    Ada Lovelace
+  </Popover.Trigger>
+  <Popover.Content>
+    <Popover.Title>Ada Lovelace</Popover.Title>
+    <Popover.Description>Wrote the first published program.</Popover.Description>
+  </Popover.Content>
+</Popover>
+
 # Sides
 
 Each side keeps the neck between trigger and panel; near a viewport edge the panel flips.

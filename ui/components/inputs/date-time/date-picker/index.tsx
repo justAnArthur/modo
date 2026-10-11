@@ -256,7 +256,7 @@ const DatePicker = forwardRef<HTMLButtonElement | HTMLInputElement, DatePickerPr
     setRaw(next)
   }
   const showInvalid = unreadable || typedInvalid
-  const dateLabel = labels?.date ?? placeholder ?? 'Date'
+  const dateLabel = labels?.date || placeholder || 'Date'
   const invalidCaption = labels?.invalid === undefined ? 'Invalid date' : labels.invalid
   // `true` turns the field off; any other matcher picks out days.
   const off = typeof disabled === 'boolean' && disabled

@@ -266,7 +266,9 @@ interface PopoverProps {
  *
  * Statics:
  * - `Popover.Trigger` — the control that opens it: `render={<Button/>}` or
- *   `asChild`; `openOnHover`, `delay`, `closeDelay`.
+ *   `asChild`; `openOnHover`, `delay`, `closeDelay`. Children fill a render
+ *   element that has none of its own (`render={<span/>}` + children), and
+ *   `nativeButton={false}` tells Base UI it isn't a `<button>`.
  * - `Popover.Content` — the panel: `side`, `align` (the trigger's `start`,
  *   `center` or `end`), `sideOffset`, `alignOffset`, `anchor` (position it
  *   against another element than the trigger, which it then grows from),

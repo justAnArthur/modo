@@ -51,6 +51,23 @@ An `action` puts a button in the body.
   />
 </Toast>
 
+Any node works as the action: `Toast.Action` and `Toast.Close` are the toast's own buttons, so a custom row needs no Base UI import.
+
+<Toast position="bottom-right">
+  <Toast.Trigger
+    type="action"
+    title="Invite sent"
+    description="Ada can join the workspace for the next 7 days."
+    action={
+      <div className="flex gap-2">
+        <Toast.Action>Copy link</Toast.Action>
+        <Toast.Close>Dismiss</Toast.Close>
+      </div>
+    }
+    render={<Button variant="secondary">Invite</Button>}
+  />
+</Toast>
+
 # Positions
 
 `position` puts the stack in a corner or centered on an edge; the pill sits on that side and the body opens away from the edge.

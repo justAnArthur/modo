@@ -196,7 +196,7 @@ const MonthPicker = forwardRef<HTMLButtonElement, MonthPickerProps>(function Mon
       header={
         <PickerInput
           ref={input}
-          aria-label={labels?.field ?? placeholder ?? 'Month'}
+          aria-label={labels?.field || placeholder || 'Month'}
           placeholder={placeholder}
           formatted={formatted}
           onText={readMonth}

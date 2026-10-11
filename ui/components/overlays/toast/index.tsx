@@ -16,6 +16,9 @@
  * and descriptions take any node, `icon` replaces the state's glyph and
  * `action` takes a button's `{ label, onClick }` or any node. The state
  * glyphs come from the icon set (`useIcons`), so an `IconProvider` swaps them.
+ * `Toast.Action` / `Toast.Close` wrap Base UI's parts as compact Buttons
+ * (`render` / `asChild` as the slot shape), so a custom action node needs no
+ * `@base-ui/react/toast` import.
  */
 
 import { type ToastManager, Toast as ToastPrimitive } from '@base-ui/react/toast'
@@ -35,7 +38,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { type IconComponent, type IconName, useIcons } from '../../../lib/icon-context'
+import { type IconComponent, type IconName, useIcon, useIcons } from '../../../lib/icon-context'
 import { GooFilter } from '../../../lib/morph-layers'
 import { useReduceMotion } from '../../../lib/reduced-motion'
 import { useShape } from '../../../lib/shape-context'
@@ -46,7 +49,7 @@ import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { GOO_BLUR_RATIO, holdExit } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import Button from '../../button'
+import Button, { type ButtonProps } from '../../button'
 import {
   type ToastActionOptions,
   type ToastData,
@@ -361,6 +364,8 @@ const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
       asChild,
       children,
       onClick,
+      // The element is the control itself (cloned, no Base UI button), so there is nothing to tell.
+      nativeButton: _nativeButton,
       ...props
     },
     ref,
@@ -388,6 +393,64 @@ const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
   },
 )
 ToastTrigger.displayName = 'ToastTrigger'
+
+type ToastButtonVariant = NonNullable<ButtonProps['variant']>
+
+interface ToastActionProps extends SlotProps {
+  /** The Button's variant when there is no `render` element. Defaults to `'secondary'`. */
+  variant?: ToastButtonVariant
+}
+
+/**
+ * A button inside a toast (a custom `action` node or `description`), on Base UI's
+ * `Toast.Action`: a compact Button by default, or `render` / `asChild`. A toast shown with
+ * `action: { label, onClick }` already renders one.
+ */
+const ToastAction = forwardRef<HTMLButtonElement, ToastActionProps>(
+  ({ render, asChild, children, variant = 'secondary', ...props }, ref) => {
+    const child = asChild && isValidElement(children) ? children : undefined
+    const el = render ?? child ?? <Button size="compact" variant={variant} />
+    // Base UI renders the action only when it has children, so they go to the part, not the element.
+    const label = child
+      ? (child.props as { children?: ReactNode }).children
+      : (children ?? (el.props as { children?: ReactNode }).children)
+    return (
+      <ToastPrimitive.Action ref={ref} render={el} {...props}>
+        {label}
+      </ToastPrimitive.Action>
+    )
+  },
+)
+ToastAction.displayName = 'ToastAction'
+
+interface ToastCloseProps extends SlotProps {
+  /** The Button's variant when there is no `render` element. Defaults to `'ghost'`. */
+  variant?: ToastButtonVariant
+}
+
+/**
+ * Dismisses the toast it sits in (a custom `action` node or `description`), on Base UI's
+ * `Toast.Close`: a compact Button around `children`, an ✕ labelled `Close` without them, or
+ * `render` / `asChild`.
+ */
+const ToastClose = forwardRef<HTMLButtonElement, ToastCloseProps>(
+  ({ render, asChild, children, variant = 'ghost', ...props }, ref) => {
+    const XIcon = useIcon('x')
+    const el =
+      slotRender(render, asChild, children) ??
+      (children === undefined ? (
+        <Button size="icon-compact" variant={variant} aria-label="Close">
+          <XIcon />
+        </Button>
+      ) : (
+        <Button size="compact" variant={variant}>
+          {children}
+        </Button>
+      ))
+    return <ToastPrimitive.Close ref={ref} render={el} {...props} />
+  },
+)
+ToastClose.displayName = 'ToastClose'
 
 interface ToastProps {
   /** Where toasts stack; the pill sits on that side and the body opens away from the edge. Defaults to `'top-right'`. */
@@ -430,6 +493,9 @@ interface ToastProps {
  * and `action` is a button (`{ label, onClick }`) or any node.
  *
  * Statics:
+ * - `Toast.Action` / `Toast.Close` — a button and a dismiss for a custom
+ *   `action` node (or a description): compact Buttons by default (the close
+ *   an ✕ without children), or `render` / `asChild`.
  * - `Toast.Trigger` — a control that shows a toast when pressed:
  *   `render={<Button/>}` or `asChild`, with the toast's `title`,
  *   `description`, `type`, `timeout`, `action`, or a `promise` with its
@@ -456,9 +522,13 @@ function Toast({ position = 'top-right', limit = 3, timeout = 6000, manager, chi
 }
 
 Toast.Trigger = ToastTrigger
+Toast.Action = ToastAction
+Toast.Close = ToastClose
 
 export type {
   ToastActionOptions,
+  ToastActionProps,
+  ToastCloseProps,
   ToastHandle,
   ToastInput,
   ToastOptions,
@@ -469,6 +539,6 @@ export type {
   ToastTriggerProps,
   ToastType,
 }
-export { Toast, ToastTrigger, toast, useToast }
+export { Toast, ToastAction, ToastClose, ToastTrigger, toast, useToast }
 
 export default Toast

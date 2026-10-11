@@ -199,7 +199,7 @@ const DurationPicker = forwardRef<HTMLButtonElement, DurationPickerProps>(functi
       header={
         <PickerInput
           ref={input}
-          aria-label={labels?.duration ?? placeholder ?? 'Duration'}
+          aria-label={labels?.duration || placeholder || 'Duration'}
           placeholder="0:00"
           formatted={value ? `${hours}:${pad(minutes)}` : ''}
           onText={readDuration}
