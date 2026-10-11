@@ -33,7 +33,13 @@ import type { SlotProps } from '../../../lib/slot'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
 import { ScrollArea } from '../../../primitives/scroll-area'
-import { DialogContent, DialogState, DialogTrigger } from '../dialog'
+import {
+  createDialogChangeDetails,
+  DialogContent,
+  type DialogOpenChangeDetails,
+  DialogState,
+  DialogTrigger,
+} from '../dialog'
 
 /** One command: the label the query matches, plus what the row shows and does. */
 interface CommandItem {
@@ -308,7 +314,7 @@ CommandContent.displayName = 'CommandContent'
 
 interface CommandScopeProps {
   open: boolean
-  onOpenChange: (next: boolean, details: { trigger?: Element; event?: Event }) => void
+  onOpenChange: (next: boolean, details: DialogOpenChangeDetails) => void
   hotkey: string | false
   children?: ReactNode
 }
@@ -330,7 +336,7 @@ function CommandScope({ open, onOpenChange, hotkey, children }: CommandScopeProp
       if (event.defaultPrevented || !(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== hotkey) return
       event.preventDefault()
       // Opened from the keyboard, it still grows out of its trigger.
-      change.current(!open, { trigger: trigger.current ?? undefined })
+      change.current(!open, createDialogChangeDetails('none', event, trigger.current ?? undefined))
     }
     // Only one palette answers a press: an open one listens in the capture
     // phase, so it closes before a closed one can open.
@@ -338,7 +344,10 @@ function CommandScope({ open, onOpenChange, hotkey, children }: CommandScopeProp
     return () => window.removeEventListener('keydown', onKey, open)
   }, [hotkey, open])
 
-  const ctx = useMemo(() => ({ trigger, close: () => change.current(false, {}), session }), [session])
+  const ctx = useMemo(
+    () => ({ trigger, close: () => change.current(false, createDialogChangeDetails('imperative-action')), session }),
+    [session],
+  )
 
   return (
     <CommandContext.Provider value={ctx}>
@@ -354,8 +363,8 @@ interface CommandProps {
   open?: boolean
   /** Initial open state, for an uncontrolled palette. Defaults to `false`. */
   defaultOpen?: boolean
-  /** Called when the palette opens or closes. */
-  onOpenChange?: (open: boolean) => void
+  /** Called when the palette opens or closes, with Base UI's Dialog change details (`reason`, `event`, `cancel()`); the hotkey reports `'none'` and a run command `'imperative-action'`. */
+  onOpenChange?: (open: boolean, details: DialogOpenChangeDetails) => void
   /** The key that toggles the palette with ⌘ (Ctrl elsewhere); `false` leaves the keyboard alone. Defaults to `'k'`. */
   hotkey?: string | false
   /** The trigger and the panel: `Command.Trigger` plus a `Command.Content`. */

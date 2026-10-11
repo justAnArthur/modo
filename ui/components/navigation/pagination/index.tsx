@@ -242,8 +242,10 @@ interface PaginationProps {
   lastLabel?: string
   /** Accessible name of the page field, with `variant="input"`. Defaults to `'Page'`. */
   pageLabel?: string
-  /** Text before the page-size Select, also its accessible name; an empty string shows none. Defaults to `'Rows per page'`. */
+  /** Text before the page-size Select, also its accessible name unless `pageSizeAriaLabel` is set; an empty string shows none. Defaults to `'Rows per page'`. */
   pageSizeLabel?: string
+  /** Accessible name of the page-size Select, for when it should differ from the visible `pageSizeLabel` (or that is empty). Defaults to `pageSizeLabel`, else `'Rows per page'`. */
+  pageSizeAriaLabel?: string
   /** Pins the strip to one step of the size ladder (36px default, 28px compact). Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
   /** Classes for the `nav` root. */
@@ -316,6 +318,7 @@ function Pagination({
   lastLabel = 'Last page',
   pageLabel = 'Page',
   pageSizeLabel = 'Rows per page',
+  pageSizeAriaLabel,
   size: sizeProp,
   className,
 }: PaginationProps) {
@@ -371,7 +374,10 @@ function Pagination({
             <span className={cn('whitespace-nowrap text-muted-foreground', size.text)}>{pageSizeLabel}</span>
           )}
           <Select value={String(rows)} onValueChange={value => setRows(Number(value))} disabled={disabled}>
-            <Select.Trigger aria-label={pageSizeLabel || undefined} className="min-w-0 tabular-nums" />
+            <Select.Trigger
+              aria-label={pageSizeAriaLabel || pageSizeLabel || 'Rows per page'}
+              className="min-w-0 tabular-nums"
+            />
             <Select.Content>
               {pageSizes.map((option, i) => (
                 <Select.Item key={option} index={i} value={String(option)}>

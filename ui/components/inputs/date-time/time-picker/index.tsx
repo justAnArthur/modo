@@ -128,7 +128,7 @@ function TimePicker({
       header={
         <PickerInput
           ref={input}
-          aria-label={placeholder ?? 'Time'}
+          aria-label={placeholder || 'Time'}
           placeholder={placeholder}
           formatted={formatted}
           onText={readTime}

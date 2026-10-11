@@ -36,6 +36,12 @@
  *     `Table.Row` keeps that part tabular.
  *   - `containerClassName` for the hover container around the `<table>`
  *     (e.g. `overflow-x-auto`).
+ *   - Body rows without an `index` are numbered in document order
+ *     (`lib/row-order`, as in Dropdown): the table numbers them across its
+ *     bodies, `Table.Header` / `Table.Footer` rows stay out, and an explicit
+ *     `index` still wins. So a wrapper rendering rows needs no counter.
+ *   - Stacked cells align their content to the start (`items-start`), so a
+ *     value keeps its own width instead of stretching across the card.
  */
 
 import { motion } from 'motion/react'
@@ -55,6 +61,7 @@ import {
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
 import { type IconName, useIcon } from '../../lib/icon-context'
 import { useReduceMotion } from '../../lib/reduced-motion'
+import { RowOrderContext, useRowOrder, useRowSlot } from '../../lib/row-order'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
 import { useControllableState } from '../../lib/use-controllable-state'
@@ -134,9 +141,9 @@ type TableComponent = ForwardRefExoticComponent<TableProps & RefAttributes<HTMLT
  * - `Table.Body` — `<tbody>`.
  * - `Table.Footer` — `<tfoot>`, for totals: its rows render semibold and stay
  *   out of the hover.
- * - `Table.Row` — `<tr>`: give body rows an `index`, starting at 0, so they
- *   join the hover highlight; omit it on header and footer rows.
- *   `stacked={false}` keeps the row tabular.
+ * - `Table.Row` — `<tr>`: body rows join the hover highlight, numbered in
+ *   document order (an explicit `index`, from 0, still wins); header and
+ *   footer rows stay out. `stacked={false}` keeps the row tabular.
  * - `Table.Head` — `<th>`: `sortDirection` (`'asc'`, `'desc'` or `false`),
  *   `defaultSortDirection`, `onSort`.
  * - `Table.Cell` — `<td>`: `label`, shown above the value while stacked.
@@ -155,6 +162,8 @@ const Table = forwardRef<HTMLTableElement, TableProps>(
 
     const hover = useFluidHover(containerRef)
     const { activeIndex, handlers, registerItem } = hover
+    // Local: body rows without an `index` take their place in document order.
+    const rowOrder = useRowOrder()
 
     const contextValue = useMemo(() => ({ registerItem, activeIndex, stacked }), [registerItem, activeIndex, stacked])
 
@@ -172,7 +181,7 @@ const Table = forwardRef<HTMLTableElement, TableProps>(
           <FluidHoverHighlight hover={hover} />
 
           <table ref={ref} className={cn('w-full border-collapse', sizeClasses.text, className)} {...props}>
-            {children}
+            <RowOrderContext.Provider value={rowOrder}>{children}</RowOrderContext.Provider>
           </table>
         </div>
       </TableContext.Provider>
@@ -197,9 +206,11 @@ const TableHeader = forwardRef<HTMLTableSectionElement, TableHeaderProps>(
     const stacked = useStacked(own)
     return (
       <TableSectionContext.Provider value="header">
-        <StackedContext.Provider value={own ?? null}>
-          <thead ref={ref} className={cn(stacked && 'hidden md:table-header-group', className)} {...props} />
-        </StackedContext.Provider>
+        <RowOrderContext.Provider value={null}>
+          <StackedContext.Provider value={own ?? null}>
+            <thead ref={ref} className={cn(stacked && 'hidden md:table-header-group', className)} {...props} />
+          </StackedContext.Provider>
+        </RowOrderContext.Provider>
       </TableSectionContext.Provider>
     )
   },
@@ -220,7 +231,9 @@ TableBody.displayName = 'TableBody'
 const TableFooter = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
     <TableSectionContext.Provider value="footer">
-      <tfoot ref={ref} className={cn('[&_td]:text-foreground', className)} {...props} />
+      <RowOrderContext.Provider value={null}>
+        <tfoot ref={ref} className={cn('[&_td]:text-foreground', className)} {...props} />
+      </RowOrderContext.Provider>
     </TableSectionContext.Provider>
   ),
 )
@@ -251,18 +264,20 @@ TableCaption.displayName = 'TableCaption'
 // ── TableRow ─────────────────────────────────────────────
 
 interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
-  /** Position among the body rows, from 0: joins the row to the hover highlight. Omit it on header and footer rows. */
+  /** Position among the body rows, from 0. Body rows are numbered in document order without it; set it only to pin a row's place. Header and footer rows never join the hover. */
   index?: number
   /** `false` keeps this row tabular on small screens in a `stacked` table. Defaults to the table's `stacked`. */
   stacked?: boolean
 }
 
 const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(
-  ({ index, stacked: own, className, style, ...props }, ref) => {
+  ({ index: indexProp, stacked: own, className, style, ...props }, ref) => {
     const internalRef = useRef<HTMLTableRowElement>(null)
     const ctx = useContext(TableContext)
     const section = useContext(TableSectionContext)
     const stacked = useStacked(own)
+    // Local: an unindexed body row takes its document-order place; header and footer reset the order to none.
+    const { index } = useRowSlot(internalRef, indexProp)
 
     useRegisterFluidHoverItem(ctx?.registerItem, index, internalRef)
 
@@ -432,7 +447,7 @@ const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(({ label, cla
       className={cn(
         'text-muted-foreground transition-colors duration-fast group-[.is-active]/row:text-foreground',
         sizeClasses.variant === 'compact' ? 'px-2.5 py-[5px]' : 'px-3 py-2',
-        stacked && 'flex flex-col md:table-cell',
+        stacked && 'flex flex-col items-start md:table-cell',
         className,
       )}
       {...props}

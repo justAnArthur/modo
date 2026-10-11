@@ -30,11 +30,17 @@
  *   without `content` acts as the root; with `content` it composes the three
  *   parts exactly as before. `TooltipProvider` also takes Base UI's names
  *   (`delay`, `closeDelay`, `timeout`) next to the Radix ones it had.
+ *   `collisionPadding` on `TooltipContent` and the flat `Tooltip` (which
+ *   also takes `alignOffset` now) reaches the positioner.
+ *   `TooltipTrigger` drops the slot's `nativeButton` (Base UI's tooltip
+ *   trigger has no button semantics), and its `render` element takes the
+ *   children when it has none of its own (`slotRender`).
  */
 
 import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip'
 import { type MotionValue, motion, useMotionValue } from 'motion/react'
 import {
+  type ComponentProps,
   cloneElement,
   createContext,
   forwardRef,
@@ -127,6 +133,7 @@ function TooltipProvider({
 // ---------------------------------------------------------------------------
 
 type TooltipSide = 'top' | 'right' | 'bottom' | 'left'
+type TooltipCollisionPadding = ComponentProps<typeof TooltipPrimitive.Positioner>['collisionPadding']
 type TooltipAlign = 'start' | 'center' | 'end'
 
 interface TooltipState {
@@ -236,7 +243,8 @@ type TooltipTriggerProps = SlotProps
 
 /** The element the tooltip describes: `render={<Button/>}`, Radix-style `asChild`, or a plain button around `children`. */
 const TooltipTrigger = forwardRef<HTMLButtonElement, TooltipTriggerProps>(
-  ({ render, asChild, children, onPointerMove, ...props }, ref) => {
+  // `nativeButton` is dropped: Base UI's Tooltip.Trigger has no button semantics to adjust.
+  ({ render, asChild, children, onPointerMove, nativeButton: _nativeButton, ...props }, ref) => {
     const { delay, closeDelay, followCursor, followOffset } = useTooltipState('Tooltip.Trigger')
     const el = slotRender(render, asChild, children)
 
@@ -282,6 +290,8 @@ interface TooltipContentProps extends Omit<HTMLAttributes<HTMLDivElement>, 'chil
   sideOffset?: number
   /** Shift in pixels along the alignment axis. Defaults to `0`. */
   alignOffset?: number
+  /** Space kept between the label and the edge of its collision boundary, in px or per side. Defaults to Base UI's `5`. */
+  collisionPadding?: TooltipCollisionPadding
   /** Classes for the label's surface. */
   className?: string
   /** Classes for the portalled positioner — a z utility here lifts the tooltip above other fixed layers (default z-50). */
@@ -303,6 +313,7 @@ const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
       align = 'center',
       sideOffset = 8,
       alignOffset = 0,
+      collisionPadding,
       className,
       positionerClassName,
       from,
@@ -338,6 +349,7 @@ const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
           align={align}
           sideOffset={sideOffset}
           alignOffset={alignOffset}
+          collisionPadding={collisionPadding}
           className={cn('z-50', positionerClassName)}
         >
           {/* Other props (id, data-*, aria-*, handlers) land on the popup. */}
@@ -386,6 +398,10 @@ interface TooltipProps {
   align?: TooltipAlign
   /** Distance in pixels between the tooltip and the trigger. Defaults to `8`. */
   sideOffset?: number
+  /** Shift in pixels along the alignment axis. Defaults to `0`. */
+  alignOffset?: number
+  /** Space kept between the tooltip and the edge of its collision boundary, in px or per side. Defaults to Base UI's `5`. */
+  collisionPadding?: TooltipCollisionPadding
   /** Hover delay before this tooltip opens, in ms. Defaults to 200, or to the ambient TooltipProvider's delay when one is present. */
   delayDuration?: number
   /** Base UI name for `delayDuration`. */
@@ -436,7 +452,7 @@ interface TooltipProps {
  * - `Tooltip.Trigger` — `TooltipTrigger`: the described element,
  *   `render={<Button/>}` or Radix-style `asChild`.
  * - `Tooltip.Content` — `TooltipContent`: the label: `side`, `align`,
- *   `sideOffset`, `alignOffset`, `positionerClassName`, the morph options
+ *   `sideOffset`, `alignOffset`, `collisionPadding`, `positionerClassName`, the morph options
  *   `from`, `effect`, `tier`, and `render` or Radix-style `asChild` for the
  *   label's own element; other props land on the popup.
  * - `Tooltip.Provider` — `TooltipProvider`: groups tooltips so moving from
@@ -454,6 +470,8 @@ function Tooltip({
   side,
   align,
   sideOffset,
+  alignOffset,
+  collisionPadding,
   delayDuration,
   delay,
   closeDelay,
@@ -485,6 +503,8 @@ function Tooltip({
         side={side}
         align={align}
         sideOffset={sideOffset}
+        alignOffset={alignOffset}
+        collisionPadding={collisionPadding}
         className={className}
         positionerClassName={contentClassName}
         from={from}

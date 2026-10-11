@@ -30,6 +30,10 @@ Setting `defaultPageSize` (or `pageSize`) adds a Select of `pageSizes`, the layo
 
 <Pagination pageCount={8} variant="input" defaultPageSize={20} />
 
+With `pageSizeLabel=""` the caption goes and `pageSizeAriaLabel` still names the Select.
+
+<Pagination pageCount={8} variant="input" defaultPageSize={20} pageSizeLabel="" pageSizeAriaLabel="Rows per page" />
+
 # Translated labels
 
 Every label is a prop: the buttons' names, the field's name and the page-size caption.

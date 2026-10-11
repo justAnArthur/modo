@@ -5,7 +5,9 @@
  * between the two, so the panel morphs exactly like Dialog's. `Action` runs a
  * confirm that may return a promise: the button folds into Button's loading
  * circle, and the dialog cannot be dismissed until it settles. `Cancel` is a
- * Close that steps aside while the action runs.
+ * Close that steps aside while the action runs. `onOpenChange` gets Base
+ * UI's change details like Dialog's (an action's own close reports
+ * `'imperative-action'`), and `details.cancel()` keeps it open.
  */
 
 import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog'
@@ -26,6 +28,7 @@ import {
 import { type SlotProps, slotRender } from '../../../lib/slot'
 import Button, { type ButtonProps } from '../../button'
 import {
+  createDialogChangeDetails,
   DialogClose,
   DialogContent,
   type DialogContentProps,
@@ -78,7 +81,19 @@ const isThenable = (value: unknown): value is PromiseLike<unknown> =>
 /** The confirm button: runs `onClick`, waits on the promise it returns, then closes. */
 const AlertDialogAction = forwardRef<HTMLButtonElement, AlertDialogActionProps>(
   (
-    { onClick, onError, pending: pendingProp, variant = 'primary', render, asChild, children, disabled, ...props },
+    {
+      onClick,
+      onError,
+      pending: pendingProp,
+      variant = 'primary',
+      render,
+      asChild,
+      children,
+      disabled,
+      // The element is the control itself (cloned, no Base UI button), so there is nothing to tell.
+      nativeButton: _nativeButton,
+      ...props
+    },
     ref,
   ) => {
     const { setPending, close } = useContext(AlertDialogPendingContext)
@@ -163,13 +178,16 @@ const AlertDialogCancel = forwardRef<HTMLButtonElement, AlertDialogCancelProps>(
 )
 AlertDialogCancel.displayName = 'AlertDialogCancel'
 
+/** What `onOpenChange` receives besides the open state: Base UI's AlertDialog change details. */
+type AlertDialogOpenChangeDetails = AlertDialogPrimitive.Root.ChangeEventDetails
+
 interface AlertDialogProps {
   /** Controlled open state. */
   open?: boolean
   /** Initial open state, for an uncontrolled alert dialog. Defaults to `false`. */
   defaultOpen?: boolean
-  /** Called when the dialog opens or closes. Not called for a dismissal blocked while an action runs. */
-  onOpenChange?: (open: boolean) => void
+  /** Called when the dialog opens or closes, with Base UI's change details: `reason` (`'escape-key'`, `'close-press'`, `'imperative-action'` for an action's own close, …), the `event`, and `cancel()` to keep it as it is. Not called for a dismissal blocked while an action runs. */
+  onOpenChange?: (open: boolean, details: AlertDialogOpenChangeDetails) => void
   /** The trigger and the content — `AlertDialog.Trigger` plus an `AlertDialog.Content`. */
   children?: ReactNode
 }
@@ -220,7 +238,7 @@ function AlertDialog({ children, open, defaultOpen, onOpenChange }: AlertDialogP
   return (
     <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
       {root => {
-        closeRef.current = () => root.onOpenChange(false, {})
+        closeRef.current = () => root.onOpenChange(false, createDialogChangeDetails('imperative-action'))
         return (
           <AlertDialogPendingContext.Provider value={ctx}>
             <AlertDialogPrimitive.Root
@@ -252,7 +270,7 @@ AlertDialog.Close = DialogClose
 AlertDialog.Action = AlertDialogAction
 AlertDialog.Cancel = AlertDialogCancel
 
-export type { AlertDialogActionProps, AlertDialogCancelProps, AlertDialogProps }
+export type { AlertDialogActionProps, AlertDialogCancelProps, AlertDialogOpenChangeDetails, AlertDialogProps }
 export { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent }
 
 export default AlertDialog
