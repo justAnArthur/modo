@@ -281,10 +281,12 @@ interface CheckboxBoxProps {
   compact: boolean
   /** Already checked at mount: the check is there, not drawn in. */
   skipAnimation: boolean
+  /** A bare box keeps its border when marked: a lone check would read as a bullet. */
+  bare: boolean
 }
 
 /** The box's insides: the border, the self-drawing check and the dash. */
-function CheckboxBox({ checked, indeterminate, active, compact, skipAnimation }: CheckboxBoxProps) {
+function CheckboxBox({ checked, indeterminate, active, compact, skipAnimation, bare }: CheckboxBoxProps) {
   const Minus = useIcon('minus')
   const reduced = useReduceMotion()
   const marked = checked || indeterminate
@@ -297,7 +299,9 @@ function CheckboxBox({ checked, indeterminate, active, compact, skipAnimation }:
           'absolute inset-0 border-solid transition-all duration-fast',
           compact ? 'rounded-sm' : 'rounded-box',
           marked
-            ? 'border-[1.5px] border-transparent'
+            ? bare
+              ? 'border-[1.5px] border-control'
+              : 'border-[1.5px] border-transparent'
             : active
               ? 'border-[1.5px] border-control'
               : 'border-[1.5px] border-border',
@@ -467,6 +471,7 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
         active={isActive}
         compact={compact}
         skipAnimation={skipAnimation}
+        bare={label === undefined && !group}
       />
     )
 

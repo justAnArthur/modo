@@ -1,5 +1,7 @@
 import DatePicker from './index'
 import { Label } from '../../input'
+import Button from '../../../button'
+import Dialog from '../../../overlays/dialog'
 import { ar, de } from 'react-day-picker/locale'
 
 # Basic
@@ -140,3 +142,25 @@ A `value` that reads as no date (a malformed string, an Invalid Date) shows the 
   <DatePicker readOnly defaultValue="2026-10-09" />
   <DatePicker readOnly editable defaultValue="2026-10-09" />
 </div>
+
+# Inside a dialog
+
+The panel lifts above the dialog. Escape in the field first undoes a half-typed date (the dialog stays), then closes the dialog.
+
+<Dialog>
+  <Dialog.Trigger render={<Button variant="secondary">Edit contract</Button>} />
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Edit contract</Dialog.Title>
+      <Dialog.Description>Type the start date, or pick it from the calendar.</Dialog.Description>
+    </Dialog.Header>
+    <div className="flex flex-col gap-1">
+      <Label htmlFor="dialog-start">Start date</Label>
+      <DatePicker id="dialog-start" editable defaultValue="2026-10-09" />
+    </div>
+    <Dialog.Footer>
+      <Dialog.Close render={<Button variant="ghost">Cancel</Button>} />
+      <Button>Save</Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog>

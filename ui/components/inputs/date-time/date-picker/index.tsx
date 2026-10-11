@@ -12,7 +12,7 @@
  * optional row under the calendar (`actions`) picks today or clears.
  */
 
-import { endOfMonth, format, isValid, type Locale, set, startOfDay } from 'date-fns'
+import { endOfMonth, format, isValid, type Locale, parseISO, set, startOfDay } from 'date-fns'
 import { type ReactNode, type RefObject, useRef, useState } from 'react'
 import { dateMatchModifiers, type Matcher } from 'react-day-picker'
 import { defaultLocale, type HourCycle, hourCycleOf, parseDateText, parseTimeText } from '../../../../lib/date-locale'
@@ -40,14 +40,14 @@ interface DatePickerLabels {
   today?: string
   /** The `actions` row's button that empties the field. Defaults to `"Clear"`. */
   clear?: string
-  /** Caption under a field holding no real date; `null` keeps only the destructive ring. Defaults to `"Invalid date"`. */
+  /** Caption under a field holding no real date, rendered as the field's next sibling; `null` keeps only the destructive ring. Defaults to `"Invalid date"`. */
   invalid?: ReactNode
 }
 
 interface DatePickerProps {
-  /** The picked date (and time, with `withTime`); `null` when empty. A string is read as a date; one that reads as none shows the invalid state. */
+  /** The picked date (and time, with `withTime`); `null` when empty. A string is read as a date: a bare `"2026-10-09"` as that day at local midnight, a full timestamp as written; one that reads as none shows the invalid state. */
   value?: Date | string | null
-  /** Initial date, for an uncontrolled picker. Defaults to `null`. */
+  /** Initial date, for an uncontrolled picker; a string reads as `value`'s does. Defaults to `null`. */
   defaultValue?: Date | string | null
   /** Called with the new date, or `null` when the field is cleared. An `editable` field left with an incomplete or impossible date reports an Invalid Date (`isNaN(date.getTime())`), so a form can reject it. */
   onValueChange?: (value: Date | null) => void
@@ -109,9 +109,16 @@ interface DatePickerProps {
   className?: string
 }
 
-/** A value as a date: `null` when empty, an Invalid Date when it reads as none. */
-const toDate = (value: Date | string | null) =>
-  value === null || value === '' ? null : value instanceof Date ? value : new Date(value)
+/**
+ * A value as a date: `null` when empty, an Invalid Date when it reads as
+ * none. A bare `yyyy-MM-dd` is that day at local midnight (`new Date` would
+ * read it as UTC midnight: the day before, west of UTC).
+ */
+function toDate(value: Date | string | null) {
+  if (value === null || value === '') return null
+  if (value instanceof Date) return value
+  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? parseISO(value) : new Date(value)
+}
 
 /** Keeps `from`'s time of day on a newly picked day. */
 const keepTime = (day: Date, from: Date | null) =>
@@ -144,6 +151,12 @@ const keepTime = (day: Date, from: Date | null) =>
  * names, the formats shown and read, the week's first day and the clock all
  * follow it, and `dir="rtl"` mirrors the panel. Every word it shows or
  * announces comes from `labels`, and `formatDate` writes the field's text.
+ *
+ * The invalid caption renders as the field's next sibling rather than inside
+ * a wrapper, so the field keeps its place in a flex row or grid exactly as
+ * before and an input being typed into never remounts when the caption comes
+ * and goes. Lay the picker in a column (or wrap it) where the caption should
+ * sit under the field.
  *
  * @example {@include ./examples.mdx}
  */
