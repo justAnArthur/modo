@@ -206,7 +206,7 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "bun scripts/exports.ts && rm -rf dist && NODE_ENV=production bunup && bun scripts/build-css.ts",
+    "build": "bun scripts/exports.ts && rm -rf dist && NODE_ENV=production bunup && bun scripts/use-client.ts && bun scripts/build-css.ts",
     "build:docs": "modo build --out docs-dist",
     "dev": "modo dev",
     "check": "tsc --noEmit",
