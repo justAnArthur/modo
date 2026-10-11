@@ -16,7 +16,10 @@ export default defineConfig([
   {
     ...shared,
     name: 'components',
-    entry: ['index.ts', '{primitives,components,blocks}/**/index.tsx'],
+    // lib/* in the same build: splitting keeps one instance of each context
+    // for the items and for hosts importing `@justanarthur/modo-ui/lib/*`
+    entry: ['index.ts', '{primitives,components,blocks}/**/index.tsx', 'lib/*.{ts,tsx}'],
+    // scripts/use-client.ts adds `"use client"` to the modules that need it
     target: 'browser',
   },
   { ...shared, name: 'preset', entry: ['preset.ts'], target: 'node' },

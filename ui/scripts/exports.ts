@@ -1,0 +1,36 @@
+import { globSync, readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+// Writes one `./lib/<name>` export per lib/*.ts(x) into package.json, ahead
+// of the build. A pattern export can't serve them: the `source` condition
+// points at the real file, and lib mixes `.ts` with `.tsx`. A new lib module
+// is exported by the next `bun run build`; commit the package.json it leaves.
+
+type Conditions = Record<string, string>
+
+const ROOT = join(import.meta.dirname, '..')
+const PACKAGE = join(ROOT, 'package.json')
+const LIB = './lib/'
+
+const pkg = JSON.parse(readFileSync(PACKAGE, 'utf8')) as { exports: Record<string, Conditions | string> }
+
+const lib = globSync('lib/*.{ts,tsx}', { cwd: ROOT })
+  .sort()
+  .map(file => {
+    const name = file.slice('lib/'.length).replace(/\.tsx?$/, '')
+    const conditions: Conditions = {
+      types: `./dist/lib/${name}.d.ts`,
+      source: `./${file}`,
+      default: `./dist/lib/${name}.js`,
+    }
+    return [`${LIB}${name}`, conditions] as const
+  })
+
+// lib entries follow the item tiers; everything else keeps its place
+const rest = Object.entries(pkg.exports).filter(([key]) => !key.startsWith(LIB))
+const at = rest.findIndex(([key]) => key === './blocks/*') + 1
+pkg.exports = Object.fromEntries([...rest.slice(0, at), ...lib, ...rest.slice(at)])
+
+// no trailing newline, as the release bump writes it
+const next = JSON.stringify(pkg, null, 2)
+if (next !== readFileSync(PACKAGE, 'utf8')) writeFileSync(PACKAGE, next)
