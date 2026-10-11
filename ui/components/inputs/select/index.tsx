@@ -440,7 +440,17 @@ interface SelectContentProps {
 
 const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
   (
-    { from, effect, hideSource, tier = 'moderate', side = 'bottom', align = 'start', sideOffset = 6, className, children },
+    {
+      from,
+      effect,
+      hideSource,
+      tier = 'moderate',
+      side = 'bottom',
+      align = 'start',
+      sideOffset = 6,
+      className,
+      children,
+    },
     ref,
   ) => {
     const { open, value, origin } = useSelectContext()

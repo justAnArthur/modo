@@ -1,4 +1,5 @@
 import Radio from './index'
+import { Label } from '../input'
 
 # Basic
 
@@ -30,3 +31,47 @@ for form integration.
   <Radio value="weekly" label="Weekly summary" />
   <Radio value="never" label="Never" />
 </Radio.Group>
+
+# Bare
+
+A `Radio` without a `label` is just the circle, picked by its `value`. Lay bare radios out however you like inside a value-mode group, here with a description line each; the group draws no rows of its own and the arrow keys move between the circles.
+
+<Radio.Group defaultValue="standard" aria-label="Shipping" className="w-80 max-w-full gap-3">
+  <div className="flex items-start gap-3">
+    <Radio id="ship-standard" value="standard" className="mt-0.5" />
+    <div className="flex flex-col gap-1">
+      <Label htmlFor="ship-standard">Standard</Label>
+      <span className="text-caption text-muted-foreground">4–6 business days</span>
+    </div>
+  </div>
+  <div className="flex items-start gap-3">
+    <Radio id="ship-express" value="express" className="mt-0.5" />
+    <div className="flex flex-col gap-1">
+      <Label htmlFor="ship-express">Express</Label>
+      <span className="text-caption text-muted-foreground">1–2 business days</span>
+    </div>
+  </div>
+  <div className="flex items-start gap-3">
+    <Radio id="ship-pickup" value="pickup" disabled className="mt-0.5" />
+    <div className="flex flex-col gap-1">
+      <Label htmlFor="ship-pickup">Pick up in store</Label>
+      <span className="text-caption text-muted-foreground">Not available for this order</span>
+    </div>
+  </div>
+</Radio.Group>
+
+# Disabled
+
+`disabled` on a row dims it and the hover and arrow keys skip it; on the group it turns every radio off.
+
+<div className="flex flex-col gap-3">
+  <Radio.Group defaultValue="monthly">
+    <Radio value="monthly" label="Monthly" />
+    <Radio value="yearly" label="Yearly (coming soon)" disabled />
+    <Radio value="lifetime" label="Lifetime" />
+  </Radio.Group>
+  <Radio.Group defaultValue="monthly" disabled>
+    <Radio value="monthly" label="Monthly" />
+    <Radio value="yearly" label="Yearly" />
+  </Radio.Group>
+</div>
