@@ -40,7 +40,7 @@ import { useSize } from '../../../lib/size-context'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
-import { type UseFluidHoverReturn, useFluidHover } from '../../../lib/use-fluid-hover'
+import { type ItemRect, type UseFluidHoverReturn, useFluidHover } from '../../../lib/use-fluid-hover'
 import { useKeyboardNavGate } from '../../../lib/use-keyboard-nav-gate'
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../../lib/use-merge-split'
 import { type MorphOrigin, useMorph, useMorphOrigin } from '../../../lib/use-morph'
@@ -166,7 +166,7 @@ function useMenuPanel(containerRef: RefObject<HTMLDivElement | null>, open: bool
 
   const lit = activeIndex ?? pinned
   const shownHover = useMemo(() => ({ ...hover, activeIndex: lit }), [hover, lit])
-  const focusRect = isMeasured && focusedIndex !== null ? (itemRects[focusedIndex] ?? null) : null
+  const focusRect: ItemRect | null = isMeasured && focusedIndex !== null ? (itemRects[focusedIndex] ?? null) : null
 
   /** A row took focus: light it, and ring it when the keyboard moved it. */
   const focusRow = useCallback(
