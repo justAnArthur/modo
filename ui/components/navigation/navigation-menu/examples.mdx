@@ -1,0 +1,109 @@
+import NavigationMenu from './index'
+import { BookOpen, Boxes, Code, LifeBuoy, Newspaper, Palette, Rocket, Users } from 'lucide-react'
+
+# Basic
+
+Hover or press a trigger: the panel melts out of it. Move to the next trigger and the one panel springs to the new content, which slides in from that side.
+
+<div className="flex min-h-[320px] w-full justify-center">
+  <NavigationMenu>
+    <NavigationMenu.List>
+      <NavigationMenu.Indicator />
+      <NavigationMenu.Item value="product">
+        <NavigationMenu.Trigger>Product</NavigationMenu.Trigger>
+        <NavigationMenu.Content className="grid w-[26rem] grid-cols-2 gap-1">
+          <NavigationMenu.Link href="#components" icon={Boxes} description="Every control, on one size ladder.">Components</NavigationMenu.Link>
+          <NavigationMenu.Link href="#themes" icon={Palette} description="Tokens for light, dark and your brand.">Themes</NavigationMenu.Link>
+          <NavigationMenu.Link href="#motion" icon={Rocket} description="Springs, goo and fluid hover.">Motion</NavigationMenu.Link>
+          <NavigationMenu.Link href="#code" icon={Code} description="Typed, documented, tree-shaken.">For developers</NavigationMenu.Link>
+        </NavigationMenu.Content>
+      </NavigationMenu.Item>
+      <NavigationMenu.Item value="resources">
+        <NavigationMenu.Trigger>Resources</NavigationMenu.Trigger>
+        <NavigationMenu.Content className="flex w-64 flex-col">
+          <NavigationMenu.Link href="#docs" icon={BookOpen}>Documentation</NavigationMenu.Link>
+          <NavigationMenu.Link href="#blog" icon={Newspaper}>Blog</NavigationMenu.Link>
+          <NavigationMenu.Link href="#community" icon={Users}>Community</NavigationMenu.Link>
+          <NavigationMenu.Link href="#support" icon={LifeBuoy}>Support</NavigationMenu.Link>
+        </NavigationMenu.Content>
+      </NavigationMenu.Item>
+      <NavigationMenu.Item>
+        <NavigationMenu.Link href="#pricing">Pricing</NavigationMenu.Link>
+      </NavigationMenu.Item>
+    </NavigationMenu.List>
+  </NavigationMenu>
+</div>
+
+# Current page
+
+`active` on a link marks the current page: the indicator rests under it while no panel is open, and travels to whichever item opens.
+
+<div className="flex min-h-[240px] w-full justify-center">
+  <NavigationMenu>
+    <NavigationMenu.List>
+      <NavigationMenu.Indicator />
+      <NavigationMenu.Item>
+        <NavigationMenu.Link href="#home">Home</NavigationMenu.Link>
+      </NavigationMenu.Item>
+      <NavigationMenu.Item>
+        <NavigationMenu.Link href="#projects" active>Projects</NavigationMenu.Link>
+      </NavigationMenu.Item>
+      <NavigationMenu.Item value="team">
+        <NavigationMenu.Trigger>Team</NavigationMenu.Trigger>
+        <NavigationMenu.Content className="flex w-56 flex-col">
+          <NavigationMenu.Link href="#members">Members</NavigationMenu.Link>
+          <NavigationMenu.Link href="#roles">Roles</NavigationMenu.Link>
+          <NavigationMenu.Link href="#invites">Invites</NavigationMenu.Link>
+        </NavigationMenu.Content>
+      </NavigationMenu.Item>
+    </NavigationMenu.List>
+  </NavigationMenu>
+</div>
+
+# Effects
+
+The morph options of every overlay: here the panel grows as a plain morph on the moderate tier.
+
+<div className="flex min-h-[240px] w-full justify-center">
+  <NavigationMenu effect="morph" tier="moderate">
+    <NavigationMenu.List>
+      <NavigationMenu.Item value="docs">
+        <NavigationMenu.Trigger>Docs</NavigationMenu.Trigger>
+        <NavigationMenu.Content className="flex w-56 flex-col">
+          <NavigationMenu.Link href="#start">Getting started</NavigationMenu.Link>
+          <NavigationMenu.Link href="#guides">Guides</NavigationMenu.Link>
+          <NavigationMenu.Link href="#api">API reference</NavigationMenu.Link>
+        </NavigationMenu.Content>
+      </NavigationMenu.Item>
+      <NavigationMenu.Item value="company">
+        <NavigationMenu.Trigger>Company</NavigationMenu.Trigger>
+        <NavigationMenu.Content className="flex w-48 flex-col">
+          <NavigationMenu.Link href="#about">About</NavigationMenu.Link>
+          <NavigationMenu.Link href="#careers">Careers</NavigationMenu.Link>
+        </NavigationMenu.Content>
+      </NavigationMenu.Item>
+    </NavigationMenu.List>
+  </NavigationMenu>
+</div>
+
+# Compact
+
+`size="compact"` steps the strip and its panels down the size ladder.
+
+<div className="flex min-h-[240px] w-full justify-center">
+  <NavigationMenu size="compact">
+    <NavigationMenu.List>
+      <NavigationMenu.Indicator />
+      <NavigationMenu.Item value="product">
+        <NavigationMenu.Trigger>Product</NavigationMenu.Trigger>
+        <NavigationMenu.Content className="flex w-56 flex-col">
+          <NavigationMenu.Link href="#components" icon={Boxes} description="Every control.">Components</NavigationMenu.Link>
+          <NavigationMenu.Link href="#themes" icon={Palette} description="Tokens and modes.">Themes</NavigationMenu.Link>
+        </NavigationMenu.Content>
+      </NavigationMenu.Item>
+      <NavigationMenu.Item>
+        <NavigationMenu.Link href="#pricing">Pricing</NavigationMenu.Link>
+      </NavigationMenu.Item>
+    </NavigationMenu.List>
+  </NavigationMenu>
+</div>
