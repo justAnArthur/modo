@@ -13,6 +13,7 @@
 
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover'
 import {
+  type ComponentProps,
   createContext,
   forwardRef,
   type HTMLAttributes,
@@ -73,14 +74,39 @@ const PopoverClose = forwardRef<HTMLButtonElement, SlotProps>(({ render, asChild
 })
 PopoverClose.displayName = 'PopoverClose'
 
+type PositionerProps = ComponentProps<typeof PopoverPrimitive.Positioner>
+type PopupProps = ComponentProps<typeof PopoverPrimitive.Popup>
+
+/** What the panel is positioned against: an element, a ref to one, a virtual element (`{ getBoundingClientRect }`), or a function returning either. */
+type PopoverAnchor = PositionerProps['anchor']
+
+/** Resolves an `anchor` to the element the panel grows from; a virtual or missing anchor gives `null`. */
+function anchorElement(anchor: PopoverAnchor): HTMLElement | null {
+  const resolved = typeof anchor === 'function' ? anchor() : anchor
+  const el = resolved && 'current' in resolved ? resolved.current : resolved
+  return el instanceof HTMLElement ? el : null
+}
+
 interface PopoverContentProps extends HTMLAttributes<HTMLDivElement> {
-  /** Side of the trigger the panel opens on; it flips when there is no room. Defaults to `'bottom'`. */
+  /** Side of the anchor the panel opens on; it flips when there is no room. Defaults to `'bottom'`. */
   side?: 'top' | 'right' | 'bottom' | 'left'
   /** Alignment along that side. Defaults to `'center'`, or `'start'` when the panel opens in place (`effect="morph"` with `hideSource`). */
   align?: 'start' | 'center' | 'end'
-  /** Gap between trigger and panel in px — the length of the goo neck. Ignored when the panel opens in place over its trigger (`effect="morph"` with `hideSource`). Defaults to `12`. */
+  /** Gap between anchor and panel in px — the length of the goo neck. Ignored when the panel opens in place over its trigger (`effect="morph"` with `hideSource`). Defaults to `12`. */
   sideOffset?: number
-  /** Where the panel grows from (see Morph): the pressed trigger, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
+  /** Shift along the aligned edge in px, after `align` (a number, or Base UI's function of side, align and sizes). Defaults to `0`. */
+  alignOffset?: PositionerProps['alignOffset']
+  /** What the panel is positioned against instead of the trigger: an element, a ref to one, a virtual element (`{ getBoundingClientRect }`) or a function returning either. An element anchor is also where the panel grows from, and sets `--anchor-width` / `--anchor-height` for sizing the panel to it. Defaults to the trigger. */
+  anchor?: PopoverAnchor
+  /** Space kept between the panel and the edge of its collision boundary, in px or per side. Defaults to `5`. */
+  collisionPadding?: PositionerProps['collisionPadding']
+  /** The area the panel must stay inside: an element, several, or a rect. Defaults to `'clipping-ancestors'`. */
+  collisionBoundary?: PositionerProps['collisionBoundary']
+  /** Where focus goes when the panel opens: a ref, `false` to leave it, `true` for the default, or a function of how it opened (`'mouse'`, `'touch'`, `'pen'`, `'keyboard'`). Defaults to the panel itself. */
+  initialFocus?: PopupProps['initialFocus']
+  /** Where focus goes when the panel closes: a ref, `false` to leave it, `true` for the default, or a function of how it closed. Defaults to the trigger. */
+  finalFocus?: PopupProps['finalFocus']
+  /** Where the panel grows from (see Morph): the pressed trigger, the press point, its own center, a viewport edge, or a ref to any element. Defaults to the `anchor` when it is an element, otherwise `'trigger'`. */
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
   /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
   effect?: 'goo' | 'morph' | 'slide' | 'fade'
@@ -102,6 +128,12 @@ const PopoverContent = forwardRef<HTMLDivElement, PopoverContentProps>(
       side = 'bottom',
       align,
       sideOffset = 12,
+      alignOffset,
+      anchor,
+      collisionPadding,
+      collisionBoundary,
+      initialFocus,
+      finalFocus,
       from,
       effect,
       hideSource,
@@ -114,7 +146,29 @@ const PopoverContent = forwardRef<HTMLDivElement, PopoverContentProps>(
     ref,
   ) => {
     const { open, origin } = useContext(PopoverContext)
-    const morph = useMorph(open, origin, { from, effect, hideSource, tier })
+    // An element anchor is the morph's source, read as the morph starts (a
+    // ref fills after this render). A virtual anchor has no box to grow
+    // from, so the panel grows from the trigger.
+    const anchorSource = useMemo<RefObject<HTMLElement | null> | undefined>(
+      () =>
+        anchor
+          ? {
+              get current() {
+                return anchorElement(anchor) ?? origin.current?.trigger ?? null
+              },
+            }
+          : undefined,
+      [anchor, origin],
+    )
+    const morph = useMorph(open, origin, {
+      from: from ?? anchorSource,
+      effect,
+      hideSource,
+      tier,
+      // A custom `finalFocus` places focus itself; the morph's own return
+      // to the trigger would undo it.
+      returnFocus: typeof finalFocus === 'boolean' ? finalFocus : finalFocus === undefined,
+    })
     const inPlace = opensInPlace({ effect, hideSource })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
     const shape = useShape()
@@ -127,9 +181,19 @@ const PopoverContent = forwardRef<HTMLDivElement, PopoverContentProps>(
           side={side}
           align={align ?? (inPlace ? 'start' : 'center')}
           sideOffset={inPlace ? inPlaceOffset : sideOffset}
+          alignOffset={alignOffset}
+          anchor={anchor}
+          collisionPadding={collisionPadding}
+          collisionBoundary={collisionBoundary}
           className="z-50 outline-none"
         >
-          <PopoverPrimitive.Popup ref={morph.popupRef} className="relative outline-none" {...props}>
+          <PopoverPrimitive.Popup
+            ref={morph.popupRef}
+            initialFocus={initialFocus}
+            finalFocus={finalFocus}
+            className="relative outline-none"
+            {...props}
+          >
             <SurfaceProvider value={level}>
               <MorphSurface
                 morph={morph}
@@ -200,8 +264,10 @@ interface PopoverProps {
  * - `Popover.Trigger` — the control that opens it: `render={<Button/>}` or
  *   `asChild`; `openOnHover`, `delay`, `closeDelay`.
  * - `Popover.Content` — the panel: `side`, `align` (the trigger's `start`,
- *   `center` or `end`), `sideOffset` and the morph options `from`,
- *   `effect`, `hideSource`, `tier`.
+ *   `center` or `end`), `sideOffset`, `alignOffset`, `anchor` (position it
+ *   against another element than the trigger, which it then grows from),
+ *   `collisionPadding`, `collisionBoundary`, `initialFocus`, `finalFocus`
+ *   and the morph options `from`, `effect`, `hideSource`, `tier`.
  * - `Popover.Title` / `Popover.Description` — its labelled heading and
  *   supporting line, wired for screen readers.
  * - `Popover.Close` — closes it; same `render` / `asChild` shape.

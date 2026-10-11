@@ -1,6 +1,7 @@
 import Popover from './index'
 import Button from '../../button'
 import { InputGroup } from '../../inputs/input'
+import AnchoredDemo from './anchored-demo'
 
 # Edit profile
 
@@ -126,3 +127,35 @@ Each side keeps the neck between trigger and panel; near a viewport edge the pan
     </Popover.Content>
   </Popover>
 </div>
+
+# Anchored to a field
+
+`anchor` positions the panel against another element than its trigger, here
+the whole field around the icon, and the panel grows out of that box.
+`--anchor-width` sizes it to the field. `initialFocus` moves focus to the
+first result when it opens from the keyboard, and `finalFocus` hands it back
+to the text, so typing goes on.
+`AnchoredDemo` is a docs stage that holds the refs and the picked value:
+
+```tsx
+const field = useRef(null)
+const input = useRef(null)
+const first = useRef(null)
+
+<div ref={field}>
+  <Popover>
+    <Input ref={input} endAdornment={<Popover.Trigger render={<InputAction label="Recent searches" icon={History} />} />} />
+    <Popover.Content
+      anchor={field}
+      align="start"
+      initialFocus={type => (type === 'keyboard' ? first.current : true)}
+      finalFocus={input}
+      className="w-[var(--anchor-width)] max-w-none"
+    >
+      …
+    </Popover.Content>
+  </Popover>
+</div>
+```
+
+<AnchoredDemo />
