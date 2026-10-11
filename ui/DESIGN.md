@@ -558,15 +558,21 @@ shared systems above (look and motion). Ready-made patterns to reach for before 
   1px brand ring that springs between rows; pointer focus never shows it.
 - **Selection** — checkbox and radio rows melt their selected backgrounds into one run; tabs and
   subtle tabs carry an elevated (+3) or translucent indicator that melts between items; the selected
-  label goes `weight-semibold`.
+  label goes `weight-semibold`. Checkbox, radio and switch also come bare (no label): just the box,
+  circle or track, with a 1px focus ring offset 2px, for tables and hand-laid forms. An indeterminate
+  checkbox shows a dash that blurs into the check. A loading control keeps its box: the combobox
+  chevron blurs into a spinner in the same slot.
 - **Overlays** — popup surfaces at +2 with `shadow-surface-3`, dialogs at +4, `rounded-xl` containers,
-  12px goo neck between trigger and panel, content padding 16px (popover) or 24px (dialog).
+  12px goo neck between trigger and panel, content padding 16px (popover) or 24px (dialog). A confirm
+  that runs a task folds its button into the loading circle and holds the dialog until it settles.
 - **Tooltips** — inverted (`bg-foreground` / `text-background`), caption at `weight-medium`, morph from
-  the trigger, a hand-off between grouped tooltips is instant.
+  the trigger, a hand-off between grouped tooltips is instant; the same label whether written flat or
+  as Trigger + Content parts.
 - **Badges** — 24px (20px compact), caption medium, a 15% wash of the color into the background with
   foreground text; dot variant keeps a neutral outline; `outline` is that frame without the dot, and
   no color.
-- **Toasts** — a status pill that melts into a body; status color as text on a 16% wash.
+- **Toasts** — a status pill that melts into a body; status color as text on a 16% wash. Shown from
+  anywhere through the global `toast()`; a custom icon sits in the same status disc.
 - **Cards** — transparent and borderless, inheriting the substrate; hairline dividers and the fluid
   hover do the framing; only clickable cards join the hover. `border="outlined"` gives a standalone
   card the outlined group's hairline frame; `Card.Divider` is a full-bleed hairline between its parts.

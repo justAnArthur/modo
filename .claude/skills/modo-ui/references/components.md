@@ -27,7 +27,10 @@ controlled + uncontrolled.
 | One of a few options, all visible | `Radio.Group`, or `TabsSubtle` for a view switch |
 | Several of a few options | `Checkbox.Group` |
 | One of many options | `Select`; typed filtering → `Combobox` (`multiple`, `creatable`) |
+| Remote options | `Combobox` `filter={null}` + `loading` + `Combobox.Content` `footer` |
+| A typed date | `DatePicker` `editable` (masked input; the calendar still opens) |
 | An on/off setting | `Switch` |
+| A bare control beside your own label | `Checkbox` / `Radio` / `Switch` without `label` (a table cell, a hand-laid form) |
 | A number in a range | `Slider` (pips by default, compact = dense fill + range) |
 | A color | `ColorPicker` (inline) or `ColorPicker.Popover` |
 | Switching views | `Tabs` (segmented, elevated indicator) or `TabsSubtle` (pills) |
@@ -45,7 +48,7 @@ controlled + uncontrolled.
 | A blocking task | `Dialog` (`sm` / `lg` / `xl`) |
 | A confirm that must be answered | `AlertDialog` |
 | A panel on an edge, swipeable | `Sheet` (`side`, `snapPoints`) |
-| A transient notice | `Toast` (`useToast()`, six states, promise toasts) |
+| A transient notice | `Toast` (`toast()` anywhere with `<Toast manager={toast}>`, or `useToast()`; six states, promise toasts) |
 | Grouped content, clickable tiles | `Card` / `Card.Group` (`columns` grid with xy hover) |
 | Tabular data | `Table` (sortable heads, `stacked` below md, `Table.Empty`) |
 | Content still loading | `Skeleton` (one block sized like the content, or `rows`) |
@@ -90,11 +93,11 @@ controlled + uncontrolled.
 
 | Item | Statics | Systems | Notes |
 |---|---|---|---|
-| `Checkbox` | `.Group` | L H G C | Contiguous checks melt into one run (`useSelectionRuns` + merge/split blocks). |
-| `Radio` | `.Group` | L H G C | Selected background is a `GooIndicator`; index or value mode. |
-| `Select` | `.Trigger .Content .Item .Group .Label .Separator` | L S H M | Popup morphs out of the trigger; the check draws itself as the pick lands. |
-| `Combobox` | `.Input .Chips .Content .List .Item .Empty` | L S H M | `multiple`, chips, `creatable`. |
-| `Switch` | — | L G C | Thumb is a `GooIndicator` that stretches as it travels; on = `bg-brand`. |
+| `Checkbox` | `.Group` | L H G C | Contiguous checks melt into one run (`useSelectionRuns` + merge/split blocks); bare box when no label; `indeterminate`. |
+| `Radio` | `.Group` | L H G C | Selected background is a `GooIndicator`; index or value mode; bare radios (by value) when no label. |
+| `Select` | `.Trigger .Value .Content .Item .Group .Label .Separator` | L S H M | Popup morphs out of the trigger; the check draws itself as the pick lands; rows auto-numbered (`index` optional). |
+| `Combobox` | `.Input .Chips .Content .List .Item .Empty` | L S H M | `multiple`, chips, `creatable`; `loading`, controlled `inputValue`, `filter={null}`, `readOnly`, `Content` `footer`. |
+| `Switch` | — | L G C | Thumb is a `GooIndicator` that stretches as it travels; on = `bg-brand`; bare track when no label. |
 | `Slider` | — | L C | Default: pips + scrubber; compact: fill, range, value. |
 | `InputGroup` | `.Field` | L H W C | Fields share one hover; error state on Base UI Field. |
 | `Input` | — | L C | The ringed box on its own; `startAdornment` / `endAdornment`, `readOnly`, `required`; `InputAction` (icon button inside the ring), `InputAdornment`. |
@@ -106,6 +109,7 @@ controlled + uncontrolled.
 | `InputMessage` | — | L S C | Composer: auto-resize, actions, attachments, queue, status. |
 | `ColorPicker` | `.Popover` | L S M | HEX / RGB / HSL / OKLCH, alpha, swatches, eyedropper. |
 | `Search` | — | L S M C | Grows its own width in place (`spring.slow`) over its neighbours; suggestions ooze out; Escape closes → clears → collapses. |
+| `Calendar`, `DatePicker`, `DateRangePicker`, `TimePicker`, `DurationPicker`, `MonthPicker` (`inputs/date-time`) | — | L S H M C | A field on the field ladder whose panel morphs out of it (a bottom `Sheet` under 640px); one scrolling month list with month / year columns; `DatePicker` `editable` (masked input), `labels`, `formatDate`, string values. |
 
 ## components/navigation
 
@@ -127,14 +131,14 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 |---|---|---|
 | `Popover` | `.Trigger .Content .Title .Description .Close` | The reference morphing overlay. `openOnHover`, `side`, `align`, `sideOffset` (= the neck, 12). |
 | `PreviewCard` | `.Trigger .Content` | Hover card from a link; `delay`, `closeDelay`. |
-| `Tooltip` | `.Provider .PortalContainer` | Inverted; grouped hand-off is instant; `followCursor` fades. |
+| `Tooltip` | `.Root .Trigger .Content .Provider .PortalContainer` | Inverted; flat (`content`) or compound; grouped hand-off is instant; `followCursor` fades; provider takes Radix delay names. |
 | `Dropdown` | `.Menu .Trigger .Content .Item .CheckboxItem .RadioGroup .RadioItem .Group .Label .Separator .Shortcut .Sub .SubTrigger .SubContent .Search .Empty` | Inline or popup; rows by `label` or children (optional `index`, `icon`, `inset`, `shortcut`, cancelable `onSelect(event)`); `filter` search; checked index / indices or value-keyed checkbox / radio rows, merged backgrounds; submenus morph from their row; keyboard ring; `asChild` trigger; `keepMounted`. |
 | `ContextMenu` | `.Trigger .Content .Item .Label .Separator` | Grows from the press point; rows are Dropdown's `MenuItem`. |
 | `Command` | `.Trigger .Content .Palette .Shortcut` | ⌘K; grouped commands; one fluid highlight follows Base UI's. |
 | `Dialog` | `.Trigger .Content .Header .Footer .Title .Description .Close` | `size` `sm` \| `lg` \| `xl`, `position`, `showCloseButton`; backdrop fades with the morph; scopes `Morph.Part`. |
-| `AlertDialog` | as Dialog | Always modal, no outside dismissal, no ✕ by default. Built by composing Dialog's parts. |
+| `AlertDialog` | as Dialog + `.Action .Cancel` | Always modal, no outside dismissal, no ✕ by default; Action awaits a promise (loading, locked, stays open on reject). Built by composing Dialog's parts. |
 | `Sheet` | Dialog's + `.Provider .Indent` | Base UI Drawer; grows from its edge; a swipe-dismiss slides on from the release point. |
-| `Toast` | `.Trigger`; `useToast()` | Pill melts into a body; six `--status-*` states; promise toasts. |
+| `Toast` | `.Trigger`; `useToast()`; global `toast()` | Pill melts into a body; six `--status-*` states; promise toasts; `<Toast manager={toast}>` renders `toast()` calls from anywhere. |
 
 ## blocks
 
@@ -176,6 +180,7 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 | A modal overlay | `components/overlays/dialog/index.tsx`; reuse its parts like `alert-dialog/index.tsx` does |
 | A menu with rows | `components/overlays/context-menu/index.tsx` (rows from `dropdown/menu-item.tsx`) |
 | A control that grows in place | `components/inputs/search/index.tsx` |
+| A masked text input | `components/inputs/date-time/date-picker/masked-date-input.tsx` |
 | A control on the field box | `components/inputs/number-input/index.tsx` (`useFieldBox`, field actions) |
 | A strip with a traveling indicator | `components/navigation/tabs-subtle/index.tsx`, `tabs/index.tsx`; or the template in [authoring.md](authoring.md) |
 | Multi-select with merged runs | `components/inputs/checkbox/index.tsx` |
