@@ -1,4 +1,5 @@
 import Input, { InputGroup, Label } from './index'
+import Textarea from '../textarea'
 import { Mail, Search } from 'lucide-react'
 
 # Basic
@@ -45,6 +46,17 @@ A single input with a leading icon.
 <InputGroup>
   <InputGroup.Field index={0} label="Name" placeholder="Your name" />
   <InputGroup.Field index={1} label="Email" placeholder="you@example.com" icon={Mail} />
+</InputGroup>
+
+# Group with a Textarea
+
+A field's children replace its Input: a `Textarea` joins the group's hover and takes the field's error.
+
+<InputGroup>
+  <InputGroup.Field index={0} label="Subject" placeholder="What's it about?" />
+  <InputGroup.Field index={1} label="Message">
+    <Textarea placeholder="Write your message" />
+  </InputGroup.Field>
 </InputGroup>
 
 # Group Error

@@ -18,7 +18,10 @@
  * rest too, and the box itself (ladder, state attributes, radius, inset,
  * focus on a press in its padding) is the shared `useFieldBox` /
  * `focusControlOnPress`, which adds a `variant` prop (`borderless` default,
- * as before; `bordered` framed at rest); modo docs — TSDoc with FF's docs/API text, `InputGroup.Field`
+ * as before; `bordered` framed at rest); the field's state context moved
+ * to `lib/field-classes.ts` and carries the error and disabled state too, so
+ * `InputGroup.Field` takes children in place of its Input (a Textarea);
+ * modo docs — TSDoc with FF's docs/API text, `InputGroup.Field`
  * static (typed via a cast on the root).
  * Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  * `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`;
@@ -40,7 +43,13 @@ import {
   useMemo,
   useRef,
 } from 'react'
-import { type FieldVariant, fieldIconClasses, focusControlOnPress, useFieldBox } from '../../../lib/field-classes'
+import {
+  FieldStateContext,
+  type FieldVariant,
+  fieldIconClasses,
+  focusControlOnPress,
+  useFieldBox,
+} from '../../../lib/field-classes'
 import type { IconComponent } from '../../../lib/icon-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
@@ -60,10 +69,6 @@ function useInputGroup() {
   if (!ctx) throw new Error('useInputGroup must be used within an InputGroup')
   return ctx
 }
-
-// Set by InputGroup.Field: the group's fluid hover lights the whole field
-// (label included), and the Input shows it as `data-active`.
-const FieldStateContext = createContext<{ active: boolean } | null>(null)
 
 interface InputProps
   extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'value' | 'defaultValue' | 'size'> {
@@ -107,7 +112,9 @@ interface InputProps
  * - `InputGroup.Field` — one labelled Input in a group, wired as a Base UI
  *   `Field` (label, control and error message linked for assistive tech):
  *   `index` (its position, for the fluid hover), `label`, `labelHidden`,
- *   `error` (a message below the input; marks it invalid), plus Input's props.
+ *   `error` (a message below the input; marks it invalid), plus Input's props;
+ *   children replace the Input with another field control, such as a
+ *   Textarea, which joins the group's hover and takes the error.
  *
  * @example {@include ./examples.mdx}
  */
@@ -131,14 +138,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const [value, onChange] = useControllableState(valueProp, defaultValue, onChangeProp)
 
     const inputRef = useRef<HTMLInputElement | null>(null)
-    const field = useContext(FieldStateContext)
-    const { size: sizeClasses, props: boxProps } = useFieldBox({
-      variant,
-      invalid,
-      disabled,
-      active: field?.active,
-      size,
-    })
+    const box = useFieldBox({ variant, invalid, disabled, size })
+    const { size: sizeClasses, props: boxProps } = box
 
     return (
       <div
@@ -171,8 +172,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           type="text"
           value={value}
           onChange={e => onChange(e.target.value)}
-          disabled={disabled}
-          aria-invalid={invalid || undefined}
+          disabled={box.disabled}
+          aria-invalid={box.invalid || undefined}
           className={cn(
             'w-full rounded-none bg-transparent text-foreground placeholder:text-muted-foreground outline-none font-[inherit]',
             sizeClasses.text,
@@ -289,11 +290,13 @@ interface InputFieldProps extends Omit<InputProps, 'invalid' | 'size' | 'classNa
   index: number
   /** Error message shown below the input. */
   error?: string
+  /** A control in place of the built-in Input, e.g. a Textarea: it joins the group's hover and takes the field's error and disabled state. Input's props then go on it, not on the field. */
+  children?: ReactNode
   className?: string
 }
 
 const InputField = forwardRef<HTMLDivElement, InputFieldProps>(
-  ({ label, labelHidden, index, error, disabled, className, ...props }, ref) => {
+  ({ label, labelHidden, index, error, disabled, children, className, ...props }, ref) => {
     const internalRef = useRef<HTMLDivElement>(null)
     const { registerItem, activeIndex } = useInputGroup()
     const sizeClasses = useSize()
@@ -301,7 +304,10 @@ const InputField = forwardRef<HTMLDivElement, InputFieldProps>(
 
     useRegisterFluidHoverItem(registerItem, index, internalRef)
 
-    const fieldState = useMemo(() => ({ active: activeIndex === index }), [activeIndex, index])
+    const fieldState = useMemo(
+      () => ({ active: activeIndex === index, invalid: !!error, disabled: !!disabled }),
+      [activeIndex, index, error, disabled],
+    )
 
     return (
       // Base UI Field wires the accessibility plumbing: Field.Label's htmlFor
@@ -329,7 +335,7 @@ const InputField = forwardRef<HTMLDivElement, InputFieldProps>(
         />
 
         <FieldStateContext.Provider value={fieldState}>
-          <Input invalid={!!error} disabled={disabled} {...props} />
+          {children ?? <Input invalid={!!error} disabled={disabled} {...props} />}
         </FieldStateContext.Provider>
 
         {/* Error message — `match` pins it visible while our controlled

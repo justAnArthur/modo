@@ -6,7 +6,7 @@
  */
 
 import { cva } from 'class-variance-authority'
-import type { MouseEvent, RefObject } from 'react'
+import { createContext, type MouseEvent, type RefObject, useContext } from 'react'
 import { useShape } from './shape-context'
 import { type SizeVariant, useSize } from './size-context'
 import { cn } from './utils'
@@ -68,6 +68,14 @@ export interface FieldBoxOptions {
   size?: SizeVariant
 }
 
+/**
+ * State a field wrapper (InputGroup.Field) hands to whatever control it
+ * holds: lit by the group's fluid hover, its error, its disabled state.
+ * `useFieldBox` reads it, so any field built on the box joins in; the
+ * control's own props win.
+ */
+export const FieldStateContext = createContext<{ active: boolean; invalid: boolean; disabled: boolean } | null>(null)
+
 // Literal table: one notch tighter than the ladder's `px`, since the ring is
 // invisible at rest and the roomier inset would read as a gap.
 const FIELD_PX: Record<SizeVariant, string> = {
@@ -80,18 +88,25 @@ const FIELD_PX: Record<SizeVariant, string> = {
  * variant, the state attributes it reads, the shape's input radius and the
  * horizontal inset. Spread `props` on the element around the control (or the
  * control itself, for a button field); the height stays with the item, from
- * the returned `size`.
+ * the returned `size`. Inside InputGroup.Field, unset `active` / `invalid` /
+ * `disabled` come from the field (`FieldStateContext`).
  */
 export function useFieldBox({ variant, invalid, disabled, active, size }: FieldBoxOptions) {
+  const field = useContext(FieldStateContext)
   const shape = useShape()
   const sizeClasses = useSize(size)
+  const isInvalid = invalid ?? field?.invalid ?? false
+  const isDisabled = disabled ?? field?.disabled ?? false
 
   return {
     size: sizeClasses,
+    /** Resolved with the field's state, for the control's `aria-invalid` / `disabled`. */
+    invalid: isInvalid,
+    disabled: isDisabled,
     props: {
-      'data-active': active || undefined,
-      'data-invalid': invalid || undefined,
-      'data-disabled': disabled || undefined,
+      'data-active': (active ?? field?.active) || undefined,
+      'data-invalid': isInvalid || undefined,
+      'data-disabled': isDisabled || undefined,
       className: cn(fieldVariants({ variant }), shape.input, FIELD_PX[sizeClasses.variant]),
     },
   }
