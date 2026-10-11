@@ -113,6 +113,7 @@ pages/
 
 - React 18+, as a peer: modo renders with your project's own React.
 - Vite comes with modo, which runs its own Vite app; you don't install or configure it.
+- Node 18+ (or Bun 1.x). A `vite: './vite.ts'` extension is imported natively, which needs Node 22.18+ for TypeScript (type stripping); on older Node, write it as `vite.mjs` / `vite.js`.
 - Bun 1.x recommended for development; npm-compatible for publishing
 
 ## License
