@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { buildGroup, parseCss } from '../src/lib/css'
 import { discoverItems } from '../src/lib/discover-items'
+import { parseItemSource } from '../src/lib/docs'
 import { compileExampleBody, isCompiledExample } from '../src/lib/example'
-import { parseItemSource } from '../src/lib/tsdoc'
 import { groupTree } from '../src/runtime/groups'
 
 describe('parseItemSource', () => {
