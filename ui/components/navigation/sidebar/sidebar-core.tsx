@@ -20,11 +20,13 @@
  * - What is folded or collapsed away is `inert`: a folded `SidebarGroup`, and
  *   the rail panel of a collapsed sidebar. Their rows were still
  *   tab stops while clipped away (React 18 has no `inert` prop type, hence
- *   the spreads). `inertProps` picks the value per React major: 18 passes
- *   `inert` through as an unknown attribute (a string), 19 reads it as a
- *   boolean prop and drops `''`.
+ *   the spreads). `inertProps` (`lib/inert.ts`) picks the value per React
+ *   major: 18 passes `inert` through as an unknown attribute (a string), 19
+ *   reads it as a boolean prop and drops `''`.
  * - `SidebarInput`'s field ladder is the shared `lib/field-classes.ts` recipe.
  * - `useIsMobile` moved to `lib/use-is-mobile.ts`, shared with the pickers.
+ * - The `SIDEBAR_*` constants live in `./variants.ts` (no JSX, hooks or
+ *   contexts, so server code can read them) and are re-exported here.
  */
 
 import { motion, useReducedMotion } from 'motion/react'
@@ -49,10 +51,10 @@ import {
   useMemo,
   useRef,
   useState,
-  version,
 } from 'react'
 import { fieldVariants } from '../../../lib/field-classes'
 import { useIcon } from '../../../lib/icon-context'
+import { inertProps } from '../../../lib/inert'
 import { useShape } from '../../../lib/shape-context'
 import { useSize, useSizeVariant } from '../../../lib/size-context'
 import { exitFallbackMs, spring } from '../../../lib/springs'
@@ -62,37 +64,36 @@ import { useIsMobile } from '../../../lib/use-is-mobile'
 import { cn } from '../../../lib/utils'
 import { Button, type ButtonProps } from '../../button'
 import { Tooltip } from '../../overlays/tooltip'
-
-// `inert` that renders on React 18 (an unknown attribute: a string) and 19 (a boolean prop).
-const INERT = (Number.parseInt(version, 10) >= 19 ? true : '') as unknown as boolean
-
-/** Spread onto an element to make it inert while `on`. */
-export function inertProps(on: boolean) {
-  return on ? { inert: INERT } : {}
-}
+import {
+  SIDEBAR_COLLAPSE_SLOP,
+  SIDEBAR_COOKIE_MAX_AGE,
+  SIDEBAR_COOKIE_NAME,
+  SIDEBAR_HOVER_STRIP,
+  SIDEBAR_HOVER_TRIGGER_GAP,
+  SIDEBAR_KEYBOARD_SHORTCUT,
+  SIDEBAR_KEYBOARD_SHORTCUT_RIGHT,
+  SIDEBAR_MAX_WIDTH,
+  SIDEBAR_MIN_WIDTH,
+  SIDEBAR_WIDTH,
+  SIDEBAR_WIDTH_MOBILE,
+} from './variants'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-export const SIDEBAR_COOKIE_NAME = 'sidebar_state'
-export const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
-export const SIDEBAR_WIDTH = '16rem'
-export const SIDEBAR_WIDTH_MOBILE = '18rem'
-/** Bare-key toggle defaults: "[" for a left sidebar, "]" for a right one.
- *  Bare (no ⌘/Ctrl) so the browser's history shortcuts stay untouched. */
-export const SIDEBAR_KEYBOARD_SHORTCUT = '['
-export const SIDEBAR_KEYBOARD_SHORTCUT_RIGHT = ']'
-/** Drag-resize clamp for the built-in rail handle (px). */
-export const SIDEBAR_MIN_WIDTH = 160
-export const SIDEBAR_MAX_WIDTH = 360
-/** Dragging this far past the minimum width collapses the sidebar instead of
- *  bottoming out — the same "throw it at the edge to dismiss" affordance
- *  native apps use. */
-export const SIDEBAR_COLLAPSE_SLOP = 56
-/** Open on hover: the strip past the sidebar's inner edge that opens it, and
- *  how close a trigger must sit to that edge to widen the strip to its own
- *  far side (px). */
-export const SIDEBAR_HOVER_STRIP = 12
-export const SIDEBAR_HOVER_TRIGGER_GAP = 24
+// Plain values, in `./variants.ts` so server code can read them.
+export {
+  SIDEBAR_COLLAPSE_SLOP,
+  SIDEBAR_COOKIE_MAX_AGE,
+  SIDEBAR_COOKIE_NAME,
+  SIDEBAR_HOVER_STRIP,
+  SIDEBAR_HOVER_TRIGGER_GAP,
+  SIDEBAR_KEYBOARD_SHORTCUT,
+  SIDEBAR_KEYBOARD_SHORTCUT_RIGHT,
+  SIDEBAR_MAX_WIDTH,
+  SIDEBAR_MIN_WIDTH,
+  SIDEBAR_WIDTH,
+  SIDEBAR_WIDTH_MOBILE,
+} from './variants'
 
 // ─── Context ─────────────────────────────────────────────────────────────────
 

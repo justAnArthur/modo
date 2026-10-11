@@ -99,6 +99,11 @@
       "source": "./lib/fluid-hover-highlight.tsx",
       "default": "./dist/lib/fluid-hover-highlight.js"
     },
+    "./lib/focus-ring": {
+      "types": "./dist/lib/focus-ring.d.ts",
+      "source": "./lib/focus-ring.tsx",
+      "default": "./dist/lib/focus-ring.js"
+    },
     "./lib/goo-indicator": {
       "types": "./dist/lib/goo-indicator.d.ts",
       "source": "./lib/goo-indicator.tsx",
@@ -108,6 +113,11 @@
       "types": "./dist/lib/icon-context.d.ts",
       "source": "./lib/icon-context.tsx",
       "default": "./dist/lib/icon-context.js"
+    },
+    "./lib/inert": {
+      "types": "./dist/lib/inert.d.ts",
+      "source": "./lib/inert.ts",
+      "default": "./dist/lib/inert.js"
     },
     "./lib/morph-layers": {
       "types": "./dist/lib/morph-layers.d.ts",

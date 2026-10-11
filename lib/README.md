@@ -81,6 +81,34 @@ Toggle each to feel the pace.
 
 An `@example` that is only `{@include ./x.mdx}` is compiled into the same build as your items (real imports, shared contexts). Each `# Title` names an example and the JSX block below it becomes a live example with Show code / Copy. For prose too long for the comment, `{@include ./x.md}` inlines a Markdown file; `{@includeCode ./x}` inlines a file as a code block. Includes are not recursive; a missing file is a build warning.
 
+### Props
+
+Props are read with the TypeScript compiler, from the render function's parameter annotation, a `forwardRef<El, Props>(…)`, or the component's type. Inherited members count (`extends`, `Omit` / `Pick` / `Partial`, intersections, across files and packages) when they are declared in your sources, in a package documented with modo, or in the package the docs came from; React's DOM attributes and other libraries' typings (Base UI, react-day-picker) stay out unless you re-declare them. Each member's JSDoc is its description. The Default column takes the destructured default, else `@default x`, else a closing ``Defaults to `x`.`` sentence.
+
+### Re-exported items
+
+An item file may re-export a component instead of declaring one: `export { default } from 'pkg/button'`, `export { Button as default } from './button'`, `import Button from 'pkg/button'; export default Button`, or a relative path. modo follows the default export to its declaration and reads the TSDoc, the props and `@example {@include ./examples.mdx}` there (includes resolve relative to that file). A package specifier resolves through its `source` export condition, else its `types` (`.d.ts`); the bundle uses `source` too, so the component exists once. The page is named after the name the item file binds, else the target's.
+
+```tsx
+// components/button/index.tsx — documents the package's Button as this DS's item
+export { default } from '@acme/ui/components/button'
+```
+
+To add to a component's docs rather than take them as they are, write your own TSDoc with `{@inheritDoc <ref>}`, where `<ref>` is a module specifier (its default export) or a name in the file's scope. The base's description and examples come first, then your prose and examples; inherited examples render the base component, and the props table lists your item's full props.
+
+```tsx
+import Base from '@acme/ui/components/button'
+
+/**
+ * {@inheritDoc @acme/ui/components/button}
+ *
+ * In this product, one primary button per view.
+ *
+ * @example {@include ./examples.mdx}
+ */
+export default function Button(props: ButtonProps) { return <Base {...props} /> }
+```
+
 ## Pages
 
 Free-form pages (an introduction, installation, a changelog, a migration guide, a playground) are `.mdx` files in `pages/` (`pages: './docs'` in the config moves the folder):

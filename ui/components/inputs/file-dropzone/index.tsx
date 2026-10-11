@@ -289,8 +289,8 @@ FileDropzone.displayName = 'FileDropzone'
 Object.assign(FileDropzone, { Row: FileRow })
 
 export type { FileRowProps, FileRowStatus } from './file-row'
-export type { FileRejection, FileRejectionReason } from './variants'
-export { acceptsFile, formatFileSize, sortFiles } from './variants'
+export type { DragVerdict, FileRejection, FileRejectionReason } from './variants'
+export { acceptsFile, dragVerdict, formatFileSize, sortFiles } from './variants'
 export type { FileDropzoneProps }
 export { FileDropzone, FileRow }
 export default FileDropzone

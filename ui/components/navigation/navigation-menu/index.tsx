@@ -5,11 +5,12 @@
  * every item: moving to another trigger springs its size to the new content
  * while the content crossfades in from the side it came from. The strip has
  * one fluid hover highlight, and `NavigationMenu.Indicator` is a liquid
- * marker (`lib/goo-indicator.tsx`) under the open or current item.
+ * marker (`lib/goo-indicator.tsx`) under the open or current item. A panel
+ * draws one keyboard ring (`lib/focus-ring.tsx`, on the surrounding shape).
  */
 
 import { NavigationMenu as NavigationMenuPrimitive } from '@base-ui/react/navigation-menu'
-import { AnimatePresence, motion } from 'motion/react'
+import { motion } from 'motion/react'
 import {
   type ComponentPropsWithoutRef,
   createContext,
@@ -26,6 +27,7 @@ import {
   useState,
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
+import { FocusRing } from '../../../lib/focus-ring'
 import { GooIndicator } from '../../../lib/goo-indicator'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
@@ -286,26 +288,6 @@ const NavigationMenuTrigger = forwardRef<HTMLButtonElement, NavigationMenuTrigge
 NavigationMenuTrigger.displayName = 'NavigationMenuTrigger'
 
 /* ─────────────────────── Content ─────────────────────── */
-
-/** The panel's one keyboard ring: 2px outside the focused row, springing between rows (as in Dropdown). */
-function FocusRing({ rect }: { rect: ItemRect | undefined }) {
-  const shape = useShape()
-  const reduced = useReduceMotion()
-  return (
-    <AnimatePresence>
-      {rect && (
-        <motion.div
-          aria-hidden="true"
-          className={cn('pointer-events-none absolute z-20 border border-focus-ring', shape.focusRing)}
-          initial={false}
-          animate={{ left: rect.left - 2, top: rect.top - 2, width: rect.width + 4, height: rect.height + 4 }}
-          exit={{ opacity: 0, transition: spring.fast.exit }}
-          transition={reduced ? { duration: 0 } : { ...spring.fast, opacity: { duration: spring.fast.duration } }}
-        />
-      )}
-    </AnimatePresence>
-  )
-}
 
 interface NavigationMenuContentProps extends ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Content> {
   /** Classes for the panel's content: its width and layout (a grid of links, a feature column). */
