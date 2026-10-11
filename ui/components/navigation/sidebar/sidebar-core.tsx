@@ -20,7 +20,9 @@
  * - What is folded or collapsed away is `inert`: a folded `SidebarGroup`, and
  *   the rail panel of a collapsed sidebar. Their rows were still
  *   tab stops while clipped away (React 18 has no `inert` prop type, hence
- *   the spreads).
+ *   the spreads). `inertProps` picks the value per React major: 18 passes
+ *   `inert` through as an unknown attribute (a string), 19 reads it as a
+ *   boolean prop and drops `''`.
  * - `SidebarInput`'s field ladder is the shared `lib/field-classes.ts` recipe.
  * - `useIsMobile` moved to `lib/use-is-mobile.ts`, shared with the pickers.
  */
@@ -47,6 +49,7 @@ import {
   useMemo,
   useRef,
   useState,
+  version,
 } from 'react'
 import { fieldVariants } from '../../../lib/field-classes'
 import { useIcon } from '../../../lib/icon-context'
@@ -59,6 +62,14 @@ import { useIsMobile } from '../../../lib/use-is-mobile'
 import { cn } from '../../../lib/utils'
 import { Button, type ButtonProps } from '../../button'
 import { Tooltip } from '../../overlays/tooltip'
+
+// `inert` that renders on React 18 (an unknown attribute: a string) and 19 (a boolean prop).
+const INERT = (Number.parseInt(version, 10) >= 19 ? true : '') as unknown as boolean
+
+/** Spread onto an element to make it inert while `on`. */
+export function inertProps(on: boolean) {
+  return on ? { inert: INERT } : {}
+}
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -655,7 +666,7 @@ const SidebarShell = forwardRef<HTMLDivElement, SidebarShellProps>(
           animate={{ x: open ? '0%' : side === 'left' ? '-100%' : '100%' }}
           transition={widthTransition}
           // Not mid-drag: the rail inside holds the pointer through a collapse preview.
-          {...(open || isResizing ? {} : { inert: '' })}
+          {...inertProps(!(open || isResizing))}
         >
           {variant === 'floating' ? (
             <div
@@ -1151,7 +1162,7 @@ const SidebarGroup = forwardRef<HTMLDivElement, SidebarGroupProps>(
                 if (open) setSettled(true)
               }}
             >
-              <div ref={contentRef} className="flex w-full min-w-0 flex-col" {...(open ? {} : { inert: '' })}>
+              <div ref={contentRef} className="flex w-full min-w-0 flex-col" {...inertProps(!open)}>
                 {rest}
               </div>
             </motion.div>
