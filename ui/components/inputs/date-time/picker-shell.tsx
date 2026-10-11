@@ -10,10 +10,24 @@
  * by default, or in place over it (`effect="morph"` with `hideSource`), the
  * panel's header landing where the field was. On a phone-width screen the
  * panel is the Sheet item instead, from the bottom edge.
+ *
+ * With an `editor` (DatePicker's `editable`) the field is a box around that
+ * text control instead of a button, and only its leading icon, an
+ * `InputAction`, opens the panel; the panel still anchors to and grows out
+ * of the whole field. `readOnly` shows the value and never opens.
  */
 
 import { Popover } from '@base-ui/react/popover'
-import { type ButtonHTMLAttributes, forwardRef, type ReactNode, type RefObject, useCallback, useState } from 'react'
+import {
+  type ButtonHTMLAttributes,
+  forwardRef,
+  type ReactElement,
+  type ReactNode,
+  type RefObject,
+  useCallback,
+  useRef,
+  useState,
+} from 'react'
 import { type FieldVariant, fieldIconClasses, useFieldBox } from '../../../lib/field-classes'
 import { type IconName, useIcon } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
@@ -36,7 +50,7 @@ import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
 import Button from '../../button'
 import Sheet from '../../overlays/sheet'
-import Input, { type InputProps } from '../input'
+import Input, { InputAction, InputAdornment, type InputProps } from '../input'
 
 interface PickerShellProps {
   open?: boolean
@@ -49,7 +63,7 @@ interface PickerShellProps {
   /** The field's leading icon. */
   icon: IconName
   /** The formatted value; empty shows the placeholder. */
-  display: string
+  display: ReactNode
   placeholder?: string
   /** The panel header's inputs; the shell adds the close button after them. */
   header: ReactNode
@@ -68,13 +82,23 @@ interface PickerShellProps {
   effect?: MorphEffect
   hideSource?: boolean
   tier?: MorphTier
+  /** The field's own text control (an editable picker): the field becomes a box around it, and its icon a button that opens the panel. */
+  editor?: ReactNode
+  /** Accessible name of that icon button. Defaults to `"Open calendar"`. */
+  triggerLabel?: string
+  /** Shows the value and never opens. */
+  readOnly?: boolean
   /** The panel body under the header. */
   children: ReactNode
 }
 
 /** The field and its panel: a popover out of the field (or in place of it), or a bottom sheet on a phone. */
 function PickerShell({ open: openProp, defaultOpen = false, onOpenChange, size, ...props }: PickerShellProps) {
-  const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
+  const [open, setOpenState] = useControllableState(openProp, defaultOpen, onOpenChange)
+  const setOpen = (next: boolean) => {
+    if (next && props.readOnly) return
+    setOpenState(next)
+  }
   const mobile = useIsMobile(640)
   const shell = mobile ? (
     <PickerSheet open={open} setOpen={setOpen} {...props} />
@@ -92,15 +116,15 @@ type PanelProps = Omit<PickerShellProps, 'open' | 'defaultOpen' | 'onOpenChange'
 
 type PickerFieldProps = Pick<
   PanelProps,
-  'icon' | 'display' | 'placeholder' | 'variant' | 'invalid' | 'disabled' | 'id' | 'className'
+  'icon' | 'display' | 'placeholder' | 'variant' | 'invalid' | 'disabled' | 'readOnly' | 'id' | 'className'
 > &
   Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'>
 
 // Forwards its ref: Base UI anchors the panel to the field through it.
 const PickerField = forwardRef<HTMLButtonElement, PickerFieldProps>(
-  ({ icon, display, placeholder, variant = 'bordered', invalid, disabled, id, className, ...props }, ref) => {
+  ({ icon, display, placeholder, variant = 'bordered', invalid, disabled, readOnly, id, className, ...props }, ref) => {
     const Icon = useIcon(icon)
-    const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid, disabled })
+    const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid, disabled, readOnly })
 
     return (
       <button
@@ -131,6 +155,54 @@ const PickerField = forwardRef<HTMLButtonElement, PickerFieldProps>(
   },
 )
 PickerField.displayName = 'PickerField'
+
+type EditableFieldProps = Pick<
+  PanelProps,
+  'icon' | 'variant' | 'invalid' | 'disabled' | 'readOnly' | 'className' | 'editor' | 'triggerLabel'
+> & {
+  /** Wraps the icon button in the panel's trigger. */
+  trigger: (button: ReactNode) => ReactNode
+}
+
+/** An editable picker's field: its text control, led by the icon button that opens the panel. */
+const EditableField = forwardRef<HTMLDivElement, EditableFieldProps>(
+  (
+    {
+      icon,
+      variant = 'bordered',
+      invalid,
+      disabled,
+      readOnly,
+      className,
+      editor,
+      triggerLabel = 'Open calendar',
+      trigger,
+    },
+    ref,
+  ) => {
+    const Icon = useIcon(icon)
+    const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid, disabled, readOnly })
+    return (
+      <div
+        ref={ref}
+        {...boxProps}
+        className={cn(
+          boxProps.className,
+          'flex w-full min-w-0 items-center',
+          sizeClasses.gap,
+          sizeClasses.control,
+          className,
+        )}
+      >
+        <InputAdornment>
+          {trigger(<InputAction label={triggerLabel} icon={Icon} disabled={disabled || readOnly} />)}
+        </InputAdornment>
+        {editor}
+      </div>
+    )
+  },
+)
+EditableField.displayName = 'EditableField'
 
 function PanelHeader({
   header,
@@ -166,8 +238,11 @@ function PickerPopover({
   hideSource,
   tier = 'moderate',
   children,
+  editor,
+  triggerLabel,
   ...field
 }: PanelProps) {
+  const fieldRef = useRef<HTMLDivElement>(null)
   const { origin, capture } = useMorphOrigin()
   const morph = useMorph(open, origin, { from, effect, hideSource, tier })
   const shape = useShape()
@@ -175,18 +250,30 @@ function PickerPopover({
 
   const handleOpenChange = useCallback(
     (next: boolean, details: { trigger?: Element; event?: Event }) => {
-      if (next) capture(details)
+      // An editable field's panel grows out of the whole field, not its icon.
+      if (next) capture(editor ? { event: details.event, trigger: fieldRef.current ?? undefined } : details)
       setOpen(next)
     },
-    [capture, setOpen],
+    [capture, setOpen, editor],
   )
 
   return (
     // Non-modal: the page keeps scrolling and the panel follows its field.
     <Popover.Root open={open} onOpenChange={handleOpenChange} modal={false}>
-      <Popover.Trigger disabled={field.disabled} render={<PickerField {...field} />} />
+      {editor ? (
+        <EditableField
+          ref={fieldRef}
+          {...field}
+          editor={editor}
+          triggerLabel={triggerLabel}
+          trigger={button => <Popover.Trigger disabled={field.disabled} render={button as ReactElement} />}
+        />
+      ) : (
+        <Popover.Trigger disabled={field.disabled} render={<PickerField {...field} />} />
+      )}
       <Popover.Portal>
         <Popover.Positioner
+          anchor={editor ? fieldRef : undefined}
           side="bottom"
           align="start"
           sideOffset={opensInPlace({ effect, hideSource }) ? inPlaceOffset : 6}
@@ -214,7 +301,7 @@ function PickerPopover({
   )
 }
 
-function PickerSheet({ open, setOpen, header, closeLabel, dir, children, ...field }: PanelProps) {
+function PickerSheet({ open, setOpen, header, closeLabel, dir, children, editor, triggerLabel, ...field }: PanelProps) {
   const {
     initialFocus: _focus,
     popupClassName: _width,
@@ -226,7 +313,16 @@ function PickerSheet({ open, setOpen, header, closeLabel, dir, children, ...fiel
   } = field
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <Sheet.Trigger disabled={field.disabled} render={<PickerField {...fieldProps} />} />
+      {editor ? (
+        <EditableField
+          {...fieldProps}
+          editor={editor}
+          triggerLabel={triggerLabel}
+          trigger={button => <Sheet.Trigger disabled={field.disabled} render={button as ReactElement} />}
+        />
+      ) : (
+        <Sheet.Trigger disabled={field.disabled} render={<PickerField {...fieldProps} />} />
+      )}
       <Sheet.Content className="gap-2 p-3 pt-3">
         <div dir={dir} className="flex min-h-0 flex-col gap-2">
           <PanelHeader header={header} closeLabel={closeLabel} close={() => setOpen(false)} />

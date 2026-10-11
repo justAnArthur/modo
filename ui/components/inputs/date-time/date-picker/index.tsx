@@ -3,26 +3,64 @@
  * scrolling Calendar (react-day-picker). Props after shadcn's date picker
  * and utegsk/ui's DatePicker (`withTime`, `hourCycle`), kept in line with the
  * other pickers here.
+ *
+ * `editable` (after utegsk/ui's): the field is a numeric text input over the
+ * locale's date mask (`masked-date-input.tsx`), and its calendar icon is the
+ * button that opens the panel. `value` also takes a string; one that reads as
+ * no date, like an Invalid Date, shows the invalid state and its caption.
+ * Every label is a prop (`labels`), the field's text a `formatDate`, and an
+ * optional row under the calendar (`actions`) picks today or clears.
  */
 
-import { endOfMonth, format, type Locale, set } from 'date-fns'
-import { type RefObject, useRef } from 'react'
+import { endOfMonth, format, isValid, type Locale, set, startOfDay } from 'date-fns'
+import { type ReactNode, type RefObject, useRef, useState } from 'react'
 import { dateMatchModifiers, type Matcher } from 'react-day-picker'
 import { defaultLocale, type HourCycle, hourCycleOf, parseDateText, parseTimeText } from '../../../../lib/date-locale'
 import type { FieldVariant } from '../../../../lib/field-classes'
-import type { SizeVariant } from '../../../../lib/size-context'
+import { type SizeVariant, useSize } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
+import { cn } from '../../../../lib/utils'
+import Button from '../../../button'
 import Calendar from '../calendar'
 import { PickerInput, PickerShell } from '../picker-shell'
 import { TimeColumns } from '../time-columns'
+import { MaskedDateInput } from './masked-date-input'
+
+/** Every word the picker shows or announces, for translating it. */
+interface DatePickerLabels {
+  /** Names the date field (and the panel's date input). Defaults to the `placeholder`, else `"Date"`. */
+  date?: string
+  /** Names the panel's time input. Defaults to `"Time"`. */
+  time?: string
+  /** Names the calendar button of an `editable` field. Defaults to `"Open calendar"`. */
+  calendar?: string
+  /** Names the panel's close button. Defaults to `"Close"`. */
+  close?: string
+  /** The `actions` row's button that picks today. Defaults to `"Today"`. */
+  today?: string
+  /** The `actions` row's button that empties the field. Defaults to `"Clear"`. */
+  clear?: string
+  /** Caption under a field holding no real date; `null` keeps only the destructive ring. Defaults to `"Invalid date"`. */
+  invalid?: ReactNode
+}
 
 interface DatePickerProps {
-  /** The picked date (and time, with `withTime`); `null` when empty. */
-  value?: Date | null
+  /** The picked date (and time, with `withTime`); `null` when empty. A string is read as a date; one that reads as none shows the invalid state. */
+  value?: Date | string | null
   /** Initial date, for an uncontrolled picker. Defaults to `null`. */
-  defaultValue?: Date | null
-  /** Called with the new date, or `null` when the field is cleared. */
+  defaultValue?: Date | string | null
+  /** Called with the new date, or `null` when the field is cleared. An `editable` field left with an incomplete or impossible date reports an Invalid Date (`isNaN(date.getTime())`), so a form can reject it. */
   onValueChange?: (value: Date | null) => void
+  /** The field is a text input to type the date into, in the locale's numeric order ("09.10.2026", "10/09/2026"); its calendar icon opens the panel. Defaults to `false`. */
+  editable?: boolean
+  /** The field's text for a date, in place of the locale's medium format: `(date) => …`. */
+  formatDate?: (date: Date) => ReactNode
+  /** Every word the picker shows or announces (`date`, `time`, `calendar`, `close`, `today`, `clear`, `invalid`), for translating it. Defaults to English. */
+  labels?: DatePickerLabels
+  /** Adds a row under the calendar with Today and Clear. Defaults to `false`. */
+  actions?: boolean
+  /** Shows the value but never opens or takes typing. Defaults to `false`. */
+  readOnly?: boolean
   /** Adds hour and minute columns, and the time to the field. Defaults to `false`. */
   withTime?: boolean
   /** The clock for the time: on `'h12'` / `'h11'` the hours read with AM/PM. Defaults to the locale's. */
@@ -71,6 +109,10 @@ interface DatePickerProps {
   className?: string
 }
 
+/** A value as a date: `null` when empty, an Invalid Date when it reads as none. */
+const toDate = (value: Date | string | null) =>
+  value === null || value === '' ? null : value instanceof Date ? value : new Date(value)
+
 /** Keeps `from`'s time of day on a newly picked day. */
 const keepTime = (day: Date, from: Date | null) =>
   set(day, { hours: from?.getHours() ?? 0, minutes: from?.getMinutes() ?? 0, seconds: 0, milliseconds: 0 })
@@ -90,9 +132,18 @@ const keepTime = (day: Date, from: Date | null) =>
  * either set of columns before or after the days. On a phone the panel is a
  * bottom sheet, its columns turned into strips above the days.
  *
+ * `editable` turns the field into a text input: type the digits and the
+ * locale's separators fall into place ("09.10.2026" in German,
+ * "10/09/2026" in English), with the rest of the mask muted after the caret;
+ * the calendar icon opens the panel. A date that can't exist, or one left
+ * half typed, turns the field destructive with a caption under it, and so
+ * does a `value` that reads as no date. `actions` adds Today and Clear under
+ * the calendar.
+ *
  * Localized through `locale`, a react-day-picker locale: month and weekday
  * names, the formats shown and read, the week's first day and the clock all
- * follow it, and `dir="rtl"` mirrors the panel.
+ * follow it, and `dir="rtl"` mirrors the panel. Every word it shows or
+ * announces comes from `labels`, and `formatDate` writes the field's text.
  *
  * @example {@include ./examples.mdx}
  */
@@ -100,6 +151,11 @@ function DatePicker({
   value: valueProp,
   defaultValue = null,
   onValueChange,
+  editable = false,
+  formatDate,
+  labels,
+  actions = false,
+  readOnly = false,
   withTime = false,
   hourCycle,
   minuteStep = 1,
@@ -124,9 +180,22 @@ function DatePicker({
   tier,
   className,
 }: DatePickerProps) {
-  const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
+  const [raw, setValue] = useControllableState<Date | string | null>(
+    valueProp,
+    defaultValue,
+    onValueChange as ((value: Date | string | null) => void) | undefined,
+  )
   const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
+  const [typedInvalid, setTypedInvalid] = useState(false)
+  const sizeClasses = useSize(size)
   const dateInput = useRef<HTMLInputElement>(null)
+  const date = toDate(raw)
+  const unreadable = date !== null && !isValid(date)
+  // The picked date, when there is a real one.
+  const value = unreadable ? null : date
+  const showInvalid = unreadable || typedInvalid
+  const dateLabel = labels?.date ?? placeholder ?? 'Date'
+  const invalidCaption = labels?.invalid === undefined ? 'Invalid date' : labels.invalid
   // `true` turns the field off; any other matcher picks out days.
   const off = typeof disabled === 'boolean' && disabled
   const days = off ? undefined : disabled
@@ -158,7 +227,7 @@ function DatePicker({
     <>
       <PickerInput
         ref={dateInput}
-        aria-label={placeholder ?? 'Date'}
+        aria-label={dateLabel}
         placeholder={placeholder}
         formatted={value ? format(value, 'PP', { locale }) : ''}
         onText={readDate}
@@ -167,7 +236,7 @@ function DatePicker({
       />
       {withTime && (
         <PickerInput
-          aria-label="Time"
+          aria-label={labels?.time ?? 'Time'}
           formatted={value ? format(value, 'p', { locale }) : ''}
           onText={readTime}
           onEnter={() => setOpen(false)}
@@ -177,19 +246,40 @@ function DatePicker({
     </>
   )
 
-  return (
+  const editor = editable ? (
+    <MaskedDateInput
+      id={id}
+      aria-label={dateLabel}
+      aria-invalid={invalid || showInvalid || undefined}
+      value={value}
+      externallyInvalid={unreadable}
+      onValueChange={setValue}
+      onInvalidChange={setTypedInvalid}
+      locale={locale}
+      withTime={withTime}
+      allowed={allowed}
+      disabled={off}
+      readOnly={readOnly}
+    />
+  ) : undefined
+
+  const shell = (
     <PickerShell
       open={open}
       onOpenChange={setOpen}
       size={size}
       variant={variant}
-      invalid={invalid}
+      invalid={invalid || showInvalid}
       disabled={off}
+      readOnly={readOnly}
       icon="calendar"
-      display={value ? format(value, withTime ? 'PP, p' : 'PP', { locale }) : ''}
+      display={value ? (formatDate?.(value) ?? format(value, withTime ? 'PP, p' : 'PP', { locale })) : ''}
       placeholder={placeholder}
       header={header}
       initialFocus={dateInput}
+      editor={editor}
+      triggerLabel={labels?.calendar ?? 'Open calendar'}
+      closeLabel={labels?.close}
       id={id}
       dir={dir}
       from={from}
@@ -227,11 +317,56 @@ function DatePicker({
             : undefined
         }
       />
+      {actions && (
+        <div className="flex items-center justify-between gap-1 border-t border-border pt-1">
+          <Button
+            variant="ghost"
+            size={sizeClasses.variant === 'compact' ? 'xs' : 'compact'}
+            disabled={!allowed(startOfDay(new Date()))}
+            onClick={() => {
+              const today = startOfDay(new Date())
+              setValue(withTime ? keepTime(today, value) : today)
+              if (!withTime) setOpen(false)
+            }}
+          >
+            {labels?.today ?? 'Today'}
+          </Button>
+          <Button
+            variant="ghost"
+            size={sizeClasses.variant === 'compact' ? 'xs' : 'compact'}
+            disabled={raw === null}
+            onClick={() => {
+              setValue(null)
+              setTypedInvalid(false)
+            }}
+          >
+            {labels?.clear ?? 'Clear'}
+          </Button>
+        </div>
+      )}
     </PickerShell>
+  )
+
+  // The caption is a sibling, so the field (and a focused input in it) never remounts as it comes and goes.
+  return (
+    <>
+      {shell}
+      {showInvalid && invalidCaption !== null && (
+        <p
+          role="alert"
+          className={cn(
+            'mt-1 weight-medium text-destructive',
+            sizeClasses.variant === 'compact' ? 'text-caption-compact' : 'text-caption',
+          )}
+        >
+          {invalidCaption}
+        </p>
+      )}
+    </>
   )
 }
 
-export type { DatePickerProps }
+export type { DatePickerLabels, DatePickerProps }
 export { DatePicker }
 
 export default DatePicker

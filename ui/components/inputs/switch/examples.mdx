@@ -1,4 +1,5 @@
 import Switch from './index'
+import { Label } from '../input'
 
 # Basic
 
@@ -75,3 +76,19 @@ Every switch in a group keeps its own state; a disabled row gets no highlight. R
   <Switch label="Format on save" />
   <Switch label="Show hidden files" />
 </Switch.Group>
+
+# Bare
+
+Without a `label` the switch is the track alone: point a `<label htmlFor>` at its `id`, or name it with `aria-label`. The thumb still drags.
+
+<div className="flex flex-col gap-3">
+  <div className="flex items-center gap-3">
+    <Switch id="bare-wifi" defaultChecked />
+    <Label htmlFor="bare-wifi">Wi-Fi</Label>
+  </div>
+  <div className="flex items-center gap-4">
+    <Switch aria-label="Airplane mode" />
+    <Switch aria-label="Bluetooth" size="compact" defaultChecked />
+    <Switch aria-label="Hotspot" disabled />
+  </div>
+</div>

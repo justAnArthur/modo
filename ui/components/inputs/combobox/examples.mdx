@@ -1,4 +1,6 @@
 import Combobox from './index'
+import RemoteDemo from './remote-demo'
+import Badge from '../../badge'
 import { Clock, Globe, Lock, Mail, Search, Star, Users } from 'lucide-react'
 
 # Basic
@@ -197,6 +199,72 @@ fades the whole thing and stops the popup opening.
         {(item) => (
           <Combobox.Item key={item.value} value={item.value}>
             {item.label}
+          </Combobox.Item>
+        )}
+      </Combobox.List>
+    </Combobox.Content>
+  </Combobox>
+</div>
+
+# Remote items
+
+For items that come from a server: own the query with `inputValue` and `onInputValueChange`, pass `filter={null}` so the list shows exactly what you hand it, and set `loading` while a page is on its way. The chevron blurs into a spinner and a status row sits under the list; `footer` on `Combobox.Content` pins a "Load more" under it.
+
+<RemoteDemo />
+
+# Node labels
+
+An object item's `label` may be any node; its `textValue` is what filters, fills the field and names its chip.
+
+<div className="w-72 max-w-full">
+  <Combobox
+    multiple
+    defaultValue={['paid']}
+    items={[
+      { value: 'draft', textValue: 'Draft', label: <Badge variant="dot" color="gray">Draft</Badge> },
+      { value: 'sent', textValue: 'Sent', label: <Badge variant="dot" color="blue">Sent</Badge> },
+      { value: 'paid', textValue: 'Paid', label: <Badge variant="dot" color="green">Paid</Badge> },
+      { value: 'overdue', textValue: 'Overdue', label: <Badge variant="dot" color="red">Overdue</Badge> },
+    ]}
+  >
+    <Combobox.Chips placeholder="Filter by status…" />
+    <Combobox.Content>
+      <Combobox.Empty>No status found.</Combobox.Empty>
+      <Combobox.List>
+        {(item) => (
+          <Combobox.Item key={item.value} value={item.value}>
+            {item.label}
+          </Combobox.Item>
+        )}
+      </Combobox.List>
+    </Combobox.Content>
+  </Combobox>
+</div>
+
+# Read only
+
+`readOnly` shows the picks and takes no input: the popup stays shut, and the clear and chip ✕ go.
+
+<div className="flex w-72 max-w-full flex-col gap-2">
+  <Combobox readOnly defaultValue="sveltekit" items={[{ value: 'next', label: 'Next.js' }, { value: 'sveltekit', label: 'SvelteKit' }]}>
+    <Combobox.Input clearable />
+    <Combobox.Content>
+      <Combobox.List>
+        {(item) => (
+          <Combobox.Item key={item.value} value={item.value}>
+            {item.label}
+          </Combobox.Item>
+        )}
+      </Combobox.List>
+    </Combobox.Content>
+  </Combobox>
+  <Combobox readOnly multiple defaultValue={['Apples', 'Pears']} items={['Apples', 'Pears', 'Plums']}>
+    <Combobox.Chips />
+    <Combobox.Content>
+      <Combobox.List>
+        {(item) => (
+          <Combobox.Item key={item} value={item}>
+            {item}
           </Combobox.Item>
         )}
       </Combobox.List>
