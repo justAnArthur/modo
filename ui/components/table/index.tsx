@@ -24,6 +24,8 @@
  *   - `Table.Footer` (`<tfoot>`, its rows stay out of the hover and keep their
  *     border), `Table.Caption` (`<caption>` below the table) and `Table.Empty`
  *     (one row across every column for an empty or loading state).
+ *   - Footer rows keep their border when the first body row is lit (an
+ *     unindexed row elsewhere still hides it, as upstream).
  *   - Sortable heads: `Table.Head` `sortDirection` / `defaultSortDirection` /
  *     `onSort` renders a button with `aria-sort` whose arrow crossfades
  *     between up-down, up and down (the icon swap recipe in the skill's
@@ -269,7 +271,7 @@ const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(
     const hideBorder =
       activeIdx !== null &&
       ((isBodyRow && (index === activeIdx || index === activeIdx - 1)) ||
-        (!isBodyRow && section === 'header' && activeIdx === 0))
+        (!isBodyRow && section !== 'footer' && activeIdx === 0))
 
     const row = (
       <tr
@@ -340,7 +342,11 @@ function SortGlyph({
       animate={shown ? SHOWN : reduced ? { opacity: 0 } : HIDDEN}
       transition={shown ? enter : leave}
     >
-      <Icon size={size} strokeWidth={current ? 2 : 1.5} />
+      <Icon
+        size={size}
+        strokeWidth={1.5}
+        className={cn('transition-[stroke-width] duration-fast group-hover/sort:stroke-2', current && 'stroke-2')}
+      />
     </motion.span>
   )
 }
@@ -359,7 +365,6 @@ const TableHead = forwardRef<HTMLTableCellElement, TableHeadProps>(
     const sizeClasses = useSize()
     const [direction, setDirection] = useControllableState(sortDirection, defaultSortDirection ?? false, onSort)
     const sortable = sortDirection !== undefined || defaultSortDirection !== undefined || onSort !== undefined
-    const iconSize = sizeClasses.icon - 2
 
     return (
       <th
@@ -391,7 +396,13 @@ const TableHead = forwardRef<HTMLTableCellElement, TableHeadProps>(
               )}
             >
               {SORT_ICONS.map(([glyphDirection, glyph]) => (
-                <SortGlyph key={glyph} direction={glyphDirection} glyph={glyph} current={direction} size={iconSize} />
+                <SortGlyph
+                  key={glyph}
+                  direction={glyphDirection}
+                  glyph={glyph}
+                  current={direction}
+                  size={sizeClasses.icon}
+                />
               ))}
             </span>
           </button>
