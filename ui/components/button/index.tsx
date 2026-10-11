@@ -24,6 +24,9 @@
  *   swapping. The spinner centres on the button, not on the label. `aria-busy` while loading.
  *   The root's `transition-colors` → `transition-[color,opacity]`, so the disabled dim fades
  *   in step instead of jumping (the root draws no background or border of its own).
+ *   A loading button stays focusable (Base UI's `focusableWhenDisabled`, so
+ *   `aria-disabled`, not `disabled`) and ignores presses; with `asChild` it
+ *   sets `aria-disabled` and swallows clicks itself.
  * - `buttonVariants` and the size aliases moved to `variants.ts` (server-callable, no
  *   JSX or hooks) and re-exported from here; it resolves the size aliases itself and
  *   takes `surface` (the fill as root classes, for an anchor host; see `variants.ts`).
@@ -72,7 +75,7 @@ interface ButtonProps
   size?: 'default' | 'compact' | 'icon' | 'icon-compact' | 'xs' | 'sm' | 'md' | 'lg' | 'icon-sm' | 'icon-lg'
   /** Merge props onto the child element instead of rendering a `<button>` — the single React-element child becomes the rendered element (slot-style). Defaults to `false`. */
   asChild?: boolean
-  /** Folds the button into a circle around a spinner and disables it; the button keeps its box, so nothing around it moves. Defaults to `false`. */
+  /** Folds the button into a circle around a spinner and blocks presses; the button keeps its box, so nothing around it moves, and keeps focus (`aria-disabled`, not `disabled`). Defaults to `false`. */
   loading?: boolean
   /** Icon displayed before the label. */
   leadingIcon?: IconComponent
@@ -239,6 +242,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             style?: React.CSSProperties
             ref?: React.Ref<HTMLButtonElement>
             'aria-busy'?: boolean
+            'aria-disabled'?: boolean | 'true' | 'false'
+            onClick?: React.MouseEventHandler<HTMLButtonElement>
           }>)
         : null
     const label = asChildElement ? asChildElement.props.children : children
@@ -348,18 +353,32 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         iconRight: !isIconOnly && !!TrailingIcon,
       }),
       shape.button,
+      // A loading button is disabled through aria-disabled (it keeps focus),
+      // which the variants' `disabled:` styles don't see.
+      'aria-disabled:opacity-50 aria-disabled:pointer-events-none',
       active && variant === 'link' && 'decoration-current',
       className,
     )
 
     if (asChildElement) {
       const childProps = asChildElement.props
+      const onClick = props.onClick ?? childProps.onClick
       return cloneElement(
         asChildElement,
         {
           ...props,
           ref,
           'aria-busy': loading || undefined,
+          'aria-disabled': loading || props['aria-disabled'] || childProps['aria-disabled'],
+          // A pending action blocks a second press (and a link's navigation).
+          onClick: (event: React.MouseEvent<HTMLButtonElement>) => {
+            if (loading) {
+              event.preventDefault()
+              event.stopPropagation()
+              return
+            }
+            onClick?.(event)
+          },
           className: cn(rootClassName, childProps.className),
           style: { ...style, ...childProps.style },
         },
@@ -374,6 +393,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref as React.Ref<HTMLButtonElement>}
         className={rootClassName}
         disabled={disabled || loading}
+        // While loading, Base UI disables it with aria-disabled instead of
+        // the attribute, so a keyboard user keeps focus on it; it still
+        // ignores presses.
+        focusableWhenDisabled={loading}
         aria-busy={loading || undefined}
         style={style}
         {...props}

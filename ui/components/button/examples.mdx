@@ -74,8 +74,10 @@ the button; the hidden label keeps its width.
 
 Press one. The surface folds into a circle around the spinner while the
 button keeps its box, so its neighbors never move, and springs back when
-loading ends. `LoadingDemo` is a docs stage: a Button whose `loading` holds
-for two seconds after a press.
+loading ends. It keeps focus while it loads (`aria-disabled`, not
+`disabled`), so press one with Enter and focus is still there when it is
+done; presses in between are ignored. `LoadingDemo` is a docs stage: a
+Button whose `loading` holds for two seconds after a press.
 
 <div className="flex w-fit max-w-full flex-col gap-3">
   <div className="flex flex-wrap items-center gap-2">
