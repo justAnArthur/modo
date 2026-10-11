@@ -11,21 +11,33 @@
  *   accept both, and @types/react 18 compares propTypes).
  * - `panel-left-dashed` / `panel-right-dashed`: the sidebar trigger's glyph
  *   while the sidebar opens on hover.
+ * - Names for the @utegsk/ui layer (pagination, sorting, status, password
+ *   reveal, file dropzone, indeterminate): `chevron-left`, `chevron-up`, `chevrons-left`, `chevrons-right`, `arrow-up-down`, `circle-alert`, `triangle-alert`, `circle-check`, `info`, `circle-question-mark`, `trash`, `eye`, `eye-off`, `timer`, `arrow-right-from-line`, `arrow-right-to-line`, `funnel-x`, `flag`, `loader-circle`, `minus`, `upload`, `file`.
  */
 
 import {
   ArrowDown,
   ArrowLeft,
   ArrowRight,
+  ArrowRightFromLine,
+  ArrowRightToLine,
   ArrowUp,
+  ArrowUpDown,
   Bell,
   Brain,
   Calendar,
   Check,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   ChevronsUpDown,
+  ChevronUp,
   Circle,
+  CircleAlert,
+  CircleCheck,
+  CircleQuestionMark,
   Clock,
   Copy,
   CornerDownLeft,
@@ -33,19 +45,27 @@ import {
   Dot,
   Ellipsis,
   EllipsisVertical,
+  Eye,
+  EyeOff,
+  File,
+  Flag,
   Folder,
+  FunnelX,
   Globe,
   Heart,
   Home,
   ImageIcon,
   Inbox,
+  Info,
   Lightbulb,
   Link,
   Loader,
+  LoaderCircle,
   Lock,
   Mail,
   Menu,
   MessageCircle,
+  Minus,
   Monitor,
   Moon,
   Paintbrush,
@@ -71,6 +91,10 @@ import {
   SquareLibrary,
   Star,
   Sun,
+  Timer,
+  Trash2,
+  TriangleAlert,
+  Upload,
   User,
   Users,
   X,
@@ -146,8 +170,52 @@ export type IconName =
   | 'calendar'
   | 'folder'
   | 'sliders-horizontal'
+  | 'chevron-left'
+  | 'chevron-up'
+  | 'chevrons-left'
+  | 'chevrons-right'
+  | 'arrow-up-down'
+  | 'circle-alert'
+  | 'triangle-alert'
+  | 'circle-check'
+  | 'info'
+  | 'circle-question-mark'
+  | 'trash'
+  | 'eye'
+  | 'eye-off'
+  | 'timer'
+  | 'arrow-right-from-line'
+  | 'arrow-right-to-line'
+  | 'funnel-x'
+  | 'flag'
+  | 'loader-circle'
+  | 'minus'
+  | 'upload'
+  | 'file'
 
 export const defaultIcons: Record<IconName, IconComponent> = {
+  'chevron-left': ChevronLeft,
+  'chevron-up': ChevronUp,
+  'chevrons-left': ChevronsLeft,
+  'chevrons-right': ChevronsRight,
+  'arrow-up-down': ArrowUpDown,
+  'circle-alert': CircleAlert,
+  'triangle-alert': TriangleAlert,
+  'circle-check': CircleCheck,
+  info: Info,
+  'circle-question-mark': CircleQuestionMark,
+  trash: Trash2,
+  eye: Eye,
+  'eye-off': EyeOff,
+  timer: Timer,
+  'arrow-right-from-line': ArrowRightFromLine,
+  'arrow-right-to-line': ArrowRightToLine,
+  'funnel-x': FunnelX,
+  flag: Flag,
+  'loader-circle': LoaderCircle,
+  minus: Minus,
+  upload: Upload,
+  file: File,
   'chevron-right': ChevronRight,
   'chevron-down': ChevronDown,
   pipette: Pipette,
