@@ -76,6 +76,18 @@ export const FIELD_ACTION: Record<SizeVariant, string> = {
   compact: 'size-5 -mx-1 [&_svg]:size-3.5',
 }
 
+/** A field action's box alone, without `FIELD_ACTION`'s margins, for actions set side by side (a stepper pair). */
+export const FIELD_ACTION_BOX: Record<SizeVariant, string> = {
+  default: 'size-7 [&_svg]:size-4',
+  compact: 'size-5 [&_svg]:size-3.5',
+}
+
+/** The margin that pulls the last of several side-by-side actions to 4px inside the ring. */
+export const FIELD_ACTION_END: Record<SizeVariant, string> = {
+  default: '-mr-1.5',
+  compact: '-mr-1',
+}
+
 /** A field action's corners, concentric with the box's (8px box, 4px gap) or round in pill mode. */
 export const FIELD_ACTION_RADIUS: Record<ShapeVariant, string> = {
   rounded: 'rounded-sm',

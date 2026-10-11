@@ -3,7 +3,6 @@
  * picked or uploaded files, shown by FileDropzone's page as `FileDropzone.Row`.
  */
 
-import { Progress } from '@base-ui/react/progress'
 import { AnimatePresence, motion } from 'motion/react'
 import type { ReactNode } from 'react'
 import { FIELD_ACTION_RADIUS } from '../../../lib/field-variants'
@@ -14,6 +13,7 @@ import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
 import { cn } from '../../../lib/utils'
 import Button from '../../button'
+import Progress, { Spinner } from '../../progress'
 import { formatFileSize } from './variants'
 
 /** Where a file is in its upload: `idle` (picked), `uploading`, `done` or `error`. */
@@ -34,8 +34,10 @@ interface FileRowProps {
   icon?: IconComponent
   /** Where the file is in its upload; sets the status glyph and the progress bar. Defaults to `"idle"`. */
   status?: FileRowStatus
-  /** Upload progress from 0 to 100, shown as a bar while `status` is `"uploading"`. Omitted, the bar is indeterminate. */
+  /** Upload progress from 0 to 100, shown as a bar while `status` is `"uploading"` (see Progress). Omitted, the bar sweeps. */
   progress?: number
+  /** Accessible name of the upload's bar. Defaults to `"Uploading"`. */
+  uploadingLabel?: string
   /** The line under the name in place of the size, e.g. "Uploaded 2 min ago". */
   description?: ReactNode
   /** An error message in place of the size line; the row reads as failed. */
@@ -60,13 +62,18 @@ interface FileRowProps {
 const THUMB = { default: 'size-8', compact: 'size-7' }
 const ROW_PAD = { default: 'py-1.5', compact: 'py-1' }
 
-function StatusGlyph({ status, size }: { status: FileRowStatus; size: number }) {
+// Literal table: the spinner at the ladder's glyph size.
+const SPINNER = { default: 'size-4', compact: 'size-3.5' }
+
+function StatusGlyph({ status, size }: { status: FileRowStatus; size: SizeVariant }) {
   const Done = useIcon('circle-check')
   const Failed = useIcon('circle-alert')
-  const Spinner = useIcon('loader-circle')
+  const reduced = useReduceMotion()
+  const icon = useSize(size).icon
 
   return (
-    <span className="inline-grid shrink-0 place-items-center">
+    // Decorative: the bar carries the progress, the meta line the error.
+    <span aria-hidden="true" className="inline-grid shrink-0 place-items-center">
       <AnimatePresence initial={false} mode="popLayout">
         {status !== 'idle' && (
           <motion.span
@@ -77,45 +84,19 @@ function StatusGlyph({ status, size }: { status: FileRowStatus; size: number }) 
               status === 'error' && 'text-destructive',
               status === 'uploading' && 'text-muted-foreground',
             )}
-            initial={{ opacity: 0, scale: 0.6 }}
+            // Under reduced motion the glyphs only fade.
+            initial={{ opacity: 0, scale: reduced ? 1 : 0.6 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8, transition: spring.fast.exit }}
+            exit={{ opacity: 0, scale: reduced ? 1 : 0.8, transition: spring.fast.exit }}
             transition={spring.fast}
           >
-            {status === 'done' && <Done size={size} strokeWidth={2} />}
-            {status === 'error' && <Failed size={size} strokeWidth={2} />}
-            {status === 'uploading' && (
-              <Spinner size={size} strokeWidth={2} className="animate-spin motion-reduce:animate-none" />
-            )}
+            {status === 'done' && <Done size={icon} strokeWidth={2} />}
+            {status === 'error' && <Failed size={icon} strokeWidth={2} />}
+            {status === 'uploading' && <Spinner className={SPINNER[size]} />}
           </motion.span>
         )}
       </AnimatePresence>
     </span>
-  )
-}
-
-function UploadProgress({ value, label }: { value?: number; label: string }) {
-  const reduced = useReduceMotion()
-  const known = value != null
-
-  return (
-    <Progress.Root value={known ? value : null} aria-label={label} className="mt-1">
-      <Progress.Track className="relative block h-0.5 overflow-hidden rounded-full bg-muted">
-        {/* Scale, not width: the fill grows on the compositor. */}
-        {/* Unknown progress: the whole track breathes instead of pretending to a share. */}
-        <span className={cn('absolute inset-0 transition-opacity duration-moderate', !known && 'opacity-40')}>
-          <motion.span
-            className={cn(
-              'absolute inset-0 origin-left rounded-full bg-foreground',
-              !known && 'animate-pulse motion-reduce:animate-none',
-            )}
-            initial={false}
-            animate={{ scaleX: known ? Math.min(Math.max(value, 0), 100) / 100 : 1 }}
-            transition={reduced ? { duration: 0 } : spring.moderate}
-          />
-        </span>
-      </Progress.Track>
-    </Progress.Root>
   )
 }
 
@@ -133,6 +114,7 @@ function FileRow({
   error,
   onRemove,
   removeLabel = 'Remove file',
+  uploadingLabel = 'Uploading',
   actions,
   locale,
   disabled = false,
@@ -200,10 +182,10 @@ function FileRow({
             {meta}
           </span>
         )}
-        {shown === 'uploading' && <UploadProgress value={progress} label={name} />}
+        {shown === 'uploading' && <Progress value={progress ?? null} aria-label={uploadingLabel} className="mt-1" />}
       </div>
 
-      <StatusGlyph status={shown} size={size.icon} />
+      <StatusGlyph status={shown} size={size.variant} />
       {actions}
       {onRemove && (
         <Button variant="ghost" size="icon-compact" aria-label={removeLabel} disabled={disabled} onClick={onRemove}>

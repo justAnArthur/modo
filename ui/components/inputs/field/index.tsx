@@ -24,6 +24,9 @@ import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
 import { Label } from '../input'
 
+/** When native validity is checked. */
+type FieldValidationMode = 'onSubmit' | 'onBlur' | 'onChange'
+
 interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   /** The field's parts: `Field.Label`, a control, `Field.Description`, `Field.Error`. */
   children?: ReactNode
@@ -41,6 +44,8 @@ interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   dirty?: boolean
   /** Whether the control has been visited, for a form library that tracks it (sets `data-touched`). */
   touched?: boolean
+  /** When Base UI checks the control's native validity (`required`, `pattern`, `type`): on form submit, on blur, or on every change. A failure turns the field destructive and an empty `Field.Error` shows the browser's message. Defaults to `"onSubmit"`. */
+  validationMode?: FieldValidationMode
   /** Pins the field and its control to one step of the size ladder (36px default, 28px compact). Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
   /** Classes for the root. */
@@ -122,9 +127,9 @@ function FieldError({ children, match, className }: FieldErrorProps) {
         'transition-opacity duration-fast data-[starting-style]:opacity-0 data-[ending-style]:opacity-0 data-[ending-style]:duration-fast-exit',
         className,
       )}
-    >
-      {hasMessage ? children : undefined}
-    </BaseField.Error>
+      // An explicit `children: undefined` would hide Base UI's own message.
+      {...(hasMessage ? { children } : {})}
+    />
   )
 }
 
@@ -139,6 +144,22 @@ interface FieldControlProps {
 
 function FieldControl({ render, asChild, children }: FieldControlProps) {
   return <BaseField.Control render={slotRender(render, asChild, children)} />
+}
+
+interface ProvideFieldStateProps {
+  invalid: boolean
+  disabled: boolean
+  readOnly: boolean
+  required: boolean
+  children?: ReactNode
+}
+
+function ProvideFieldState({ invalid, disabled, readOnly, required, children }: ProvideFieldStateProps) {
+  const state = useMemo(
+    () => ({ active: false, invalid, disabled, readOnly, required }),
+    [invalid, disabled, readOnly, required],
+  )
+  return <FieldStateContext.Provider value={state}>{children}</FieldStateContext.Provider>
 }
 
 type FieldComponent = ForwardRefExoticComponent<FieldProps & RefAttributes<HTMLDivElement>> & {
@@ -160,6 +181,9 @@ type FieldComponent = ForwardRefExoticComponent<FieldProps & RefAttributes<HTMLD
  * with the text in the box. The field holds no validation of its own:
  * `invalid` and the error's message come from yours (a form library's field
  * state, a server response), and `Field.Error` shows while it has a message.
+ * A native failure (`required`, `pattern`, `type="email"`) caught by Base UI's
+ * validation turns it destructive too, and an empty `Field.Error` then shows
+ * the browser's message.
  * Behavior comes from Base UI's Field.
  *
  * InputGroup.Field is the preset for a group of text fields: a label and an
@@ -186,11 +210,6 @@ const Field = forwardRef<HTMLDivElement, FieldProps>(
     { invalid = false, disabled = false, readOnly = false, required = false, size, className, children, ...props },
     ref,
   ) => {
-    const state = useMemo(
-      () => ({ active: false, invalid, disabled, readOnly, required }),
-      [invalid, disabled, readOnly, required],
-    )
-
     const field = (
       // Base UI wires the plumbing: Field.Label's htmlFor targets the
       // control, Description and Error ids land in its aria-describedby, and
@@ -200,9 +219,24 @@ const Field = forwardRef<HTMLDivElement, FieldProps>(
         invalid={invalid}
         disabled={disabled}
         className={cn('flex min-w-0 flex-col gap-1', className)}
+        // The render function sees Base UI's validity, so a native failure
+        // (`required`, `pattern`, a type mismatch) turns the label and the box
+        // destructive too, not only the `invalid` prop.
+        render={(rootProps, rootState) => (
+          <div {...rootProps}>
+            <ProvideFieldState
+              invalid={invalid || rootState.valid === false}
+              disabled={disabled}
+              readOnly={readOnly}
+              required={required}
+            >
+              {rootProps.children}
+            </ProvideFieldState>
+          </div>
+        )}
         {...props}
       >
-        <FieldStateContext.Provider value={state}>{children}</FieldStateContext.Provider>
+        {children}
       </BaseField.Root>
     )
 
@@ -214,6 +248,14 @@ Field.displayName = 'Field'
 
 Object.assign(Field, { Label: FieldLabel, Description: FieldDescription, Error: FieldError, Control: FieldControl })
 
-export type { FieldControlProps, FieldDescriptionProps, FieldErrorMatch, FieldErrorProps, FieldLabelProps, FieldProps }
+export type {
+  FieldControlProps,
+  FieldDescriptionProps,
+  FieldErrorMatch,
+  FieldErrorProps,
+  FieldLabelProps,
+  FieldProps,
+  FieldValidationMode,
+}
 export { Field, FieldControl, FieldDescription, FieldError, FieldLabel }
 export default Field
