@@ -166,7 +166,7 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 | `morph-part.tsx` | `MorphPart`, `MorphPartScope`, `MorphPartInOverlay` | Shared trigger ↔ panel parts. |
 | `reduced-motion.ts` | `useReduceMotion` | The one reduced-motion read. |
 | `use-controllable-state.ts` | `useControllableState` | `value` / `defaultValue` / `onChange` in one line. |
-| `slot.ts` | `SlotProps`, `slotRender` | `render={<Button/>}` / `asChild` on any part that wraps a control. |
+| `slot.ts` | `SlotProps`, `slotRender` | `render={<Button/>}` / `asChild` on any part that wraps a control; children fill a `render` element that has none; `nativeButton={false}` for a non-button element. |
 | `popup.ts` | `popupScrollAreaClass`, `popupViewportClass`, `POPUP_NAV_KEYS`, `isDisabledRow` | Popup list scrolling and row rules. |
 | `use-keyboard-nav-gate.ts` | `useKeyboardNavGate` | Show a popup's ring only after keyboard use. |
 | `focus-ring.tsx` | `FocusRing` | The keyboard ring of a list panel: one rect springing between rows (`shape` pins the radius). |

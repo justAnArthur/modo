@@ -361,6 +361,8 @@ const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
       asChild,
       children,
       onClick,
+      // The element is the control itself (cloned, no Base UI button), so there is nothing to tell.
+      nativeButton: _nativeButton,
       ...props
     },
     ref,

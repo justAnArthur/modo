@@ -30,6 +30,9 @@
  *   without `content` acts as the root; with `content` it composes the three
  *   parts exactly as before. `TooltipProvider` also takes Base UI's names
  *   (`delay`, `closeDelay`, `timeout`) next to the Radix ones it had.
+ *   `TooltipTrigger` drops the slot's `nativeButton` (Base UI's tooltip
+ *   trigger has no button semantics), and its `render` element takes the
+ *   children when it has none of its own (`slotRender`).
  */
 
 import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip'
@@ -236,7 +239,8 @@ type TooltipTriggerProps = SlotProps
 
 /** The element the tooltip describes: `render={<Button/>}`, Radix-style `asChild`, or a plain button around `children`. */
 const TooltipTrigger = forwardRef<HTMLButtonElement, TooltipTriggerProps>(
-  ({ render, asChild, children, onPointerMove, ...props }, ref) => {
+  // `nativeButton` is dropped: Base UI's Tooltip.Trigger has no button semantics to adjust.
+  ({ render, asChild, children, onPointerMove, nativeButton: _nativeButton, ...props }, ref) => {
     const { delay, closeDelay, followCursor, followOffset } = useTooltipState('Tooltip.Trigger')
     const el = slotRender(render, asChild, children)
 

@@ -78,7 +78,19 @@ const isThenable = (value: unknown): value is PromiseLike<unknown> =>
 /** The confirm button: runs `onClick`, waits on the promise it returns, then closes. */
 const AlertDialogAction = forwardRef<HTMLButtonElement, AlertDialogActionProps>(
   (
-    { onClick, onError, pending: pendingProp, variant = 'primary', render, asChild, children, disabled, ...props },
+    {
+      onClick,
+      onError,
+      pending: pendingProp,
+      variant = 'primary',
+      render,
+      asChild,
+      children,
+      disabled,
+      // The element is the control itself (cloned, no Base UI button), so there is nothing to tell.
+      nativeButton: _nativeButton,
+      ...props
+    },
     ref,
   ) => {
     const { setPending, close } = useContext(AlertDialogPendingContext)
