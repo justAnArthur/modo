@@ -1,4 +1,4 @@
-import { globSync, readFileSync } from 'node:fs'
+import { existsSync, globSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createElement } from 'react'
@@ -50,6 +50,13 @@ const shared = renderToStaticMarkup(compact) !== renderToStaticMarkup(button)
 console.error = error
 if (!shared) failures.push(`${BUTTON} ignores the SizeContext from ${SIZE}`)
 
+// bunup drops an entry's .d.ts without a word when the declarations import the
+// root barrel back (a cycle), so every built entry must have its types beside it.
+const untyped = chunks
+  .map(({ file }) => file)
+  .filter(file => !file.startsWith('dist/shared/') && !existsSync(join(ROOT, file.replace(/\.js$/, '.d.ts'))))
+for (const file of untyped) failures.push(`${file} has no .d.ts beside it`)
+
 // Module state, not a context: the global toast() queue must be one instance too.
 const managers = chunks.reduce((sum, { code }) => sum + (code.match(/\bcreateToastManager\d*\(/g)?.length ?? 0), 0)
 if (managers !== 1) failures.push(`${managers} createToastManager calls in dist, expected 1`)
@@ -64,6 +71,7 @@ console.log(`${SIZE} -> ${relative(ROOT, fileURLToPath(import.meta.resolve(SIZE)
 console.log(`${BUTTON} -> ${relative(ROOT, fileURLToPath(import.meta.resolve(BUTTON)))}`)
 console.log(`Button under a compact SizeContext.Provider renders compact: ${shared}`)
 console.log(`toast(): ${managers} manager in dist, barrel === entry: ${barrelToast === entryToast}`)
+console.log(`.d.ts beside every entry: ${untyped.length === 0}`)
 
 if (failures.length) {
   console.error(failures.join('\n'))
