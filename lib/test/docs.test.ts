@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, test } from 'bun:test'
-import { cpSync, existsSync, readdirSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readdirSync, symlinkSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 import { discoverItems } from '../src/lib/discover-items'
 import { createDocsService, type DocsService } from '../src/lib/docs'
@@ -189,5 +189,20 @@ describe('ui', () => {
       expect(p.description.length).toBeGreaterThan(0)
       for (const doc of p.exampleDocs) expect(existsSync(doc)).toBe(true)
     }
+  })
+
+  test.skipIf(!existsSync(root))('a host re-exporting a modo-ui item gets its docs', () => {
+    const host = resolve(HOST, '..', 'ui-host')
+    const scope = join(host, 'node_modules', '@justanarthur')
+    mkdirSync(scope, { recursive: true })
+    if (!existsSync(join(scope, 'modo-ui'))) symlinkSync(root, join(scope, 'modo-ui'), 'dir')
+    const file = join(host, 'components', 'select', 'index.tsx')
+    const service = createDocsService({
+      root: host,
+      overlay: new Map([[file, "export { default } from '@justanarthur/modo-ui/components/inputs/select'\n"]]),
+    })
+    const direct = join(root, 'components', 'inputs', 'select', 'index.tsx')
+    service.refresh([file, direct])
+    expect(service.parse(file)).toEqual(service.parse(direct))
   })
 })
