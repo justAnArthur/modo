@@ -97,6 +97,7 @@ import {
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { MorphSurface } from '../../../lib/morph-layers'
 import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
+import { RowOrderContext, useRowOrder, useRowSlot } from '../../../lib/row-order'
 import { shapeMap } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
@@ -154,7 +155,6 @@ import {
   useMenuPanel,
   useValueChecked,
 } from './menu-parts'
-import { RowOrderContext, useRowOrder, useRowSlot } from './row-order'
 
 // Dropdown opts out of the global pill/rounded shape context — popover surfaces
 // look cleaner with the smaller "rounded" radii regardless of how the rest of

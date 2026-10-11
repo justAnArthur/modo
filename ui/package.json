@@ -119,6 +119,11 @@
       "source": "./lib/row-index.tsx",
       "default": "./dist/lib/row-index.js"
     },
+    "./lib/row-order": {
+      "types": "./dist/lib/row-order.d.ts",
+      "source": "./lib/row-order.tsx",
+      "default": "./dist/lib/row-order.js"
+    },
     "./lib/scroll-column": {
       "types": "./dist/lib/scroll-column.d.ts",
       "source": "./lib/scroll-column.tsx",

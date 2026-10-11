@@ -34,6 +34,7 @@ import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
 import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
 import { useReduceMotion } from '../../../lib/reduced-motion'
+import { RowOrderContext, useRowOrder, useRowSlot } from '../../../lib/row-order'
 import { shapeMap } from '../../../lib/shape-context'
 import { useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
@@ -53,7 +54,6 @@ import {
   type MenuItemRenderOptions,
   useDropdown,
 } from './menu-item'
-import { RowOrderContext, useRowOrder, useRowSlot } from './row-order'
 
 // Menus keep the "rounded" shape whatever the rest of the UI is (index.tsx).
 const shape = shapeMap.rounded

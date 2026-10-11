@@ -50,12 +50,12 @@ import {
   useRef,
 } from 'react'
 import type { IconComponent } from '../../../lib/icon-context'
+import { useRowSlot } from '../../../lib/row-order'
 import { shapeMap } from '../../../lib/shape-context'
 import { useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
 import { useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
-import { useRowSlot } from './row-order'
 
 // MenuItem is only used inside Dropdown, which opts out of the global pill
 // shape — see index.tsx for the rationale.
