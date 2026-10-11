@@ -17,7 +17,7 @@ Each state sets the icon and its color. A toast with a description melts from th
 
 # From anywhere
 
-Mount one `Toast` with `manager={toast}` near the root, then call `toast()` from any handler or module, inside React or not. Each call returns a handle to `update` or `dismiss` it; titles and descriptions take any node, `icon` swaps the glyph and `action` adds a button.
+Mount one `Toast` with `manager={toast}` near the root, then call `toast()` from any handler or module, inside React or not. Each call returns a handle to `update` or `dismiss` it: a `loading` toast spins until it is updated to another state, then leaves on the `Toast`'s timeout; titles and descriptions take any node, `icon` swaps the glyph and `action` adds a button.
 
 <Toast manager={toast} position="bottom-right">
   <GlobalDemo />

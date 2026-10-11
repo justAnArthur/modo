@@ -3,6 +3,7 @@ import Button from '../../button'
 import Toast, { toast } from '../toast'
 import Dialog from '../dialog'
 import Tooltip from '../tooltip'
+import PendingDemo from './pending-demo'
 
 # Confirm a destructive step
 
@@ -39,6 +40,12 @@ A press outside does nothing; the answer is Cancel, Delete or Escape.
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog>
+
+# With a mutation's pending
+
+`pending` takes a mutation's `isPending`. A plain `onClick={() => mutate()}` then keeps the dialog open and locked while it runs, and closes it once `pending` falls back to false.
+
+<PendingDemo />
 
 # When it fails
 
