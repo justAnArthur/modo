@@ -11,14 +11,43 @@
  * - Variants `outline` (an alias of `tertiary`), `destructive`, `success` and
  *   `link`, and the `xs` size alias (→ `compact`), for hosts with a
  *   shadcn-style API; see `index.tsx` for the look.
+ * - `buttonVariants` takes the size aliases too (resolved as the Button
+ *   resolves them), so a host can re-export it as is.
+ * - `surface: true` (local): the fill, ring, hover, press and disabled look
+ *   as root classes, for an element that is not a Button (`<a>`), which has
+ *   no surface layer of its own. Static: no press shrink, no loading morph.
+ *   The transition list moved into compounds so one element gets exactly one.
  */
 
-import { cva } from 'class-variance-authority'
+import { cva, type VariantProps } from 'class-variance-authority'
 
-const buttonVariants = cva(
+type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'outline' | 'ghost' | 'destructive' | 'success' | 'link'
+
+type SurfacedVariant = Exclude<ButtonVariant, 'link'>
+
+const SURFACED: SurfacedVariant[] = ['primary', 'secondary', 'tertiary', 'outline', 'ghost', 'destructive', 'success']
+
+/* The Button draws its fill on an inner layer 1px inside the root and fills
+   that pixel back out with a same-color spread. Without the layer the root
+   is the surface, so the fill sits on the root and the outline ring is an
+   inset hairline on the same edge. Same tokens and mixes as the layer
+   (`index.tsx` bgVariants); plain `hover:` / `active:` instead of `group-*`. */
+const surfaceVariants: Record<SurfacedVariant, string> = {
+  primary:
+    '[--btn-bg:var(--foreground)] hover:[--btn-bg:color-mix(in_oklab,var(--foreground)_90%,var(--background))] active:[--btn-bg:color-mix(in_oklab,var(--foreground)_80%,var(--background))] bg-[var(--btn-bg)]',
+  secondary:
+    '[--btn-bg:var(--accent)] hover:[--btn-bg:color-mix(in_oklab,var(--accent)_80%,var(--background))] active:[--btn-bg:var(--accent)] bg-[var(--btn-bg)]',
+  tertiary: 'shadow-[inset_0_0_0_1px_var(--border)] hover:bg-hover active:bg-active',
+  outline: 'shadow-[inset_0_0_0_1px_var(--border)] hover:bg-hover active:bg-active',
+  ghost: 'hover:bg-hover active:bg-active',
+  destructive: 'bg-destructive-wash hover:bg-destructive-wash-hover active:bg-destructive-wash-active',
+  success: 'bg-success-wash hover:bg-success-wash-hover active:bg-success-wash-active',
+}
+
+const buttonRecipe = cva(
   [
     'group relative isolate inline-flex items-center justify-center outline-none cursor-pointer',
-    'transition-[color,opacity] duration-fast',
+    'duration-fast',
     'disabled:opacity-50 disabled:pointer-events-none',
     'focus-visible:ring-1 focus-visible:ring-focus-ring',
   ],
@@ -34,7 +63,7 @@ const buttonVariants = cva(
         success: 'text-success-strong',
         // The underline is always drawn and fades its color in, so hovering
         // never shifts a pixel of the label.
-        link: 'text-foreground underline underline-offset-4 decoration-transparent hover:decoration-current transition-[color,opacity,text-decoration-color]',
+        link: 'text-foreground underline underline-offset-4 decoration-transparent hover:decoration-current',
       },
       // The two-step size ladder shared by every control — see /docs/sizes.
       // default = 36px control height, compact = 28px for dense surfaces.
@@ -46,6 +75,15 @@ const buttonVariants = cva(
       },
       iconLeft: { true: '' },
       iconRight: { true: '' },
+      // The fill and ring as root classes, for a non-Button host (an anchor).
+      surface: {
+        true: [
+          'rounded-lg',
+          'aria-disabled:opacity-50 aria-disabled:pointer-events-none',
+          '[&_svg]:shrink-0 [&_svg]:stroke-[1.5] [&_svg]:transition-[stroke-width] [&_svg]:duration-fast hover:[&_svg]:stroke-[2]',
+        ],
+        false: '',
+      },
     },
     // An icon sits 4px closer to its edge than text does: 12px default and
     // 8px compact, against the 16px / 12px base padding.
@@ -57,15 +95,27 @@ const buttonVariants = cva(
       // A link is text: no surface to pad, but it keeps the control height so
       // it still lines up with the buttons beside it.
       { variant: 'link', size: ['default', 'compact'], className: 'px-0' },
+      // One transition list per element: a link fades its underline, a
+      // surface its fill and ring.
+      { variant: 'link', className: 'transition-[color,opacity,text-decoration-color]' },
+      { variant: SURFACED, surface: false, className: 'transition-[color,opacity]' },
+      {
+        variant: SURFACED,
+        surface: true,
+        className: 'no-underline transition-[color,opacity,background-color,box-shadow]',
+      },
+      ...SURFACED.map(variant => ({ variant, surface: true, className: surfaceVariants[variant] })),
+      // The Button sizes its icons by prop; children of a surface host are sized here.
+      { surface: true, size: 'default', className: '[&_svg]:size-4' },
+      { surface: true, size: 'compact', className: '[&_svg]:size-3.5' },
     ],
     defaultVariants: {
       variant: 'primary',
       size: 'default',
+      surface: false,
     },
   },
 )
-
-type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'outline' | 'ghost' | 'destructive' | 'success' | 'link'
 
 type ButtonSizeCanonical = 'default' | 'compact' | 'icon' | 'icon-compact'
 
@@ -84,5 +134,33 @@ const legacySizeAliases: Partial<Record<ButtonSize, ButtonSizeCanonical>> = {
   'icon-lg': 'icon',
 }
 
-export type { ButtonSize, ButtonSizeCanonical, ButtonVariant }
+type ButtonRecipeOptions = NonNullable<Parameters<typeof buttonRecipe>[0]>
+
+/** Options of `buttonVariants`: the Button's look, picked without rendering one. */
+interface ButtonVariantsOptions extends Omit<ButtonRecipeOptions, 'size'> {
+  /** Visual style. Defaults to `"primary"`. */
+  variant?: ButtonVariant | null
+  /** Step on the size ladder; the aliases resolve as on the Button (xs, sm → compact; md, lg → default; icon-sm → icon-compact; icon-lg → icon). Defaults to `"default"`. */
+  size?: ButtonSize | null
+  /** Draw the fill, ring, hover, press and disabled (`aria-disabled`) look on the element itself, for a host that is not a Button, such as an `<a>`. Static: no press shrink or loading morph — prefer `<Button asChild>` when you can render a component. Defaults to `false`. */
+  surface?: boolean | null
+}
+
+/**
+ * The Button's class recipe, callable from server code (no JSX, hooks or
+ * context). Without `surface` it returns the root classes the Button builds
+ * on: layout, label color, size, focus ring — the fill lives on the Button's
+ * inner layer, so on its own it reads as a bare label. With `surface: true`
+ * the fill and ring go on the element itself, for an anchor styled as a
+ * button. Size aliases resolve onto the ladder; the radius is the rounded
+ * shape's (pass `rounded-[20px]` or read `useShape().button` for pill).
+ */
+function buttonVariants({ size, ...options }: ButtonVariantsOptions = {}): string {
+  const canonical = size ? (legacySizeAliases[size] ?? (size as ButtonSizeCanonical)) : size
+  return buttonRecipe({ ...options, size: canonical } as ButtonRecipeOptions)
+}
+
+type ButtonVariantsProps = VariantProps<typeof buttonVariants>
+
+export type { ButtonSize, ButtonSizeCanonical, ButtonVariant, ButtonVariantsOptions, ButtonVariantsProps }
 export { buttonVariants, legacySizeAliases }

@@ -25,7 +25,8 @@
  *   The root's `transition-colors` → `transition-[color,opacity]`, so the disabled dim fades
  *   in step instead of jumping (the root draws no background or border of its own).
  * - `buttonVariants` and the size aliases moved to `variants.ts` (server-callable, no
- *   JSX or hooks) and re-exported from here.
+ *   JSX or hooks) and re-exported from here; it resolves the size aliases itself and
+ *   takes `surface` (the fill as root classes, for an anchor host; see `variants.ts`).
  * - Variants added for hosts with a shadcn-style API (local, under DESIGN.md): `outline`
  *   renders exactly as `tertiary` (both are the transparent 1px-ring button);
  *   `destructive` and `success` are their hue as text (`--destructive-strong`,
@@ -64,7 +65,7 @@ import {
 
 interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
-    Omit<VariantProps<typeof buttonVariants>, 'size'> {
+    Omit<VariantProps<typeof buttonVariants>, 'size' | 'surface'> {
   /** Visual style of the button. `outline` is `tertiary` under its shadcn name; `destructive` and `success` tint the label and a wash of their hue; `link` is underlined text on the control height. Defaults to `"primary"`. */
   variant?: 'primary' | 'secondary' | 'tertiary' | 'outline' | 'ghost' | 'destructive' | 'success' | 'link'
   /** Step on the size ladder (36px default, 28px compact — see Sizes): `"default"` | `"compact"` | `"icon"` | `"icon-compact"`. Omitted, the button follows the surrounding SizeProvider. Aliases resolve onto the ladder (xs, sm → compact; md/lg → default; icon-sm → icon-compact; icon-lg → icon). */
@@ -194,6 +195,15 @@ function useLoadingMorph(loading: boolean) {
  * (and back when it ends) while the button keeps its box, so nothing around
  * it moves. Built on Base UI's Button; `asChild` renders your own
  * element (e.g. a link) with the button's styling instead.
+ *
+ * Also exported from this item:
+ * - `buttonVariants` — the class recipe (also from `button/variants`, safe in
+ *   server code): `variant`, `size` (aliases included), `iconLeft`,
+ *   `iconRight`, `surface`. On its own it gives the root classes, and the fill
+ *   lives on the Button's inner layer; `surface: true` puts the fill, ring,
+ *   hover, press and `aria-disabled` look on the element itself, for an
+ *   anchor you can't render through `asChild`. Prefer `<Button asChild>`
+ *   where you can: it keeps the press shrink, the icon stroke and `loading`.
  *
  * @example {@include ./examples.mdx}
  */
@@ -376,6 +386,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button'
 
+export type { ButtonSizeCanonical, ButtonVariantsOptions } from './variants'
 export type { ButtonProps, ButtonSize, ButtonVariant }
 export { Button, buttonVariants }
 
