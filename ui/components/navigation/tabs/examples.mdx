@@ -1,4 +1,5 @@
 import Tabs from './index'
+import Badge from '../../badge'
 import { Clock, Settings, SquareLibrary, Star } from 'lucide-react'
 
 # Basic
@@ -57,3 +58,32 @@ active tab and the tabs keep their own state. To control them, pass `value`
     <Tabs.Panel value="favorites"><p className="text-body text-muted-foreground pt-3">Favorites content.</p></Tabs.Panel>
   </Tabs>
 </div>
+
+# With counters
+
+A `label` can be any node: text with a counter or a Badge. It still holds its width as the tab turns semibold.
+
+<div className="flex flex-col gap-4 w-full">
+  <Tabs defaultValue="open">
+    <Tabs.List>
+      <Tabs.Item value="open" label={<>Open <Badge size="compact">12</Badge></>} />
+      <Tabs.Item value="review" label={<>In review <Badge size="compact">3</Badge></>} />
+      <Tabs.Item value="closed" label={<>Closed <span className="tabular-nums text-muted-foreground">148</span></>} />
+    </Tabs.List>
+    <Tabs.Panel value="open"><p className="text-body text-muted-foreground pt-3">Twelve open requests.</p></Tabs.Panel>
+    <Tabs.Panel value="review"><p className="text-body text-muted-foreground pt-3">Three waiting for review.</p></Tabs.Panel>
+    <Tabs.Panel value="closed"><p className="text-body text-muted-foreground pt-3">Closed requests.</p></Tabs.Panel>
+  </Tabs>
+</div>
+
+# Link tabs
+
+`href` renders a tab as an anchor, for tabs that are pages: set the root's `value` from the current route and the indicator sits on it.
+
+<Tabs defaultValue="overview">
+  <Tabs.List>
+    <Tabs.Item value="overview" label="Overview" href="#overview" />
+    <Tabs.Item value="activity" label="Activity" href="#activity" />
+    <Tabs.Item value="settings" label="Settings" href="#settings" />
+  </Tabs.List>
+</Tabs>
