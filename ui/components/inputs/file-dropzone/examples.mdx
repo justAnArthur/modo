@@ -4,13 +4,13 @@ import Field from '../field'
 
 # Dropzone
 
-Drag files over the zone, or click it (or press Enter on it) to pick them. The line changes while files are in the air, and turns destructive for a type the zone won't take.
+Drag files over the zone, or click it (or press Enter on it) to pick them. While files are in the air the line says whether all, some or none of them will be taken; files that pass go to the list, the rest to the error.
 
 <UploadDemo multiple accept=".pdf,image/*" maxSize={5000000} description="PDF or images, up to 5 MB each, three at most" />
 
 # Single file
 
-Without `multiple` the zone takes one file; more than one is turned away while still in the air.
+Without `multiple` the zone takes one file: drag several and it says the rest will be skipped; drag only files of another type and it refuses the drop.
 
 <div className="w-96 max-w-full">
   <FileDropzone accept="image/*" description="PNG or JPG" />
@@ -33,6 +33,7 @@ Every line is a prop.
     multiple
     label="Presuňte súbory sem alebo kliknite"
     activeLabel="Pustite a pridajte"
+    partialLabel="Niektoré súbory sa vynechajú"
     rejectLabel="Tieto súbory nemožno pridať"
     description="PDF, najviac 10 MB"
     accept=".pdf"

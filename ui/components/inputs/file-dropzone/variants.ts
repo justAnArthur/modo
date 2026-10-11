@@ -53,15 +53,21 @@ export function acceptsFile(file: { name: string; type: string }, accept?: strin
   return rules(accept).some(rule => matches(rule, name, type))
 }
 
+/** What a drag over the zone will come to: every file taken, some taken and some turned away, or none taken. */
+export type DragVerdict = 'accept' | 'partial' | 'reject'
+
 /**
- * Whether dragged items can pass an `accept` list. A drag shows MIME types
- * but no names, so a list with extensions can't be judged until the drop.
+ * Judges dragged files while they are still in the air. A drag shows MIME
+ * types but no names, so a type the drag leaves empty, or an `accept` list
+ * with extensions, counts as passing until the drop sorts the files. `limit`
+ * is how many one drop may add.
  */
-export function acceptsDragTypes(types: string[], accept?: string) {
-  if (!accept) return true
-  const list = rules(accept)
-  if (list.some(rule => rule.startsWith('.'))) return true
-  return types.every(type => list.some(rule => matches(rule, '', type.toLowerCase())))
+export function dragVerdict(types: string[], accept: string | undefined, limit: number): DragVerdict {
+  const list = accept ? rules(accept) : []
+  const unsure = !list.length || list.some(rule => rule.startsWith('.'))
+  const passing = types.filter(type => unsure || !type || list.some(rule => matches(rule, '', type.toLowerCase())))
+  if (!passing.length || limit < 1) return 'reject'
+  return passing.length === types.length && types.length <= limit ? 'accept' : 'partial'
 }
 
 interface SortOptions {

@@ -25,7 +25,7 @@ import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
 import { cn } from '../../../lib/utils'
 import { FileRow } from './file-row'
-import { acceptsDragTypes, type FileRejection, sortFiles } from './variants'
+import { type DragVerdict, dragVerdict, type FileRejection, sortFiles } from './variants'
 
 interface FileDropzoneProps {
   /** Called with the files that pass `accept`, `maxSize` and the count, after a pick or a drop. */
@@ -46,17 +46,17 @@ interface FileDropzoneProps {
   description?: ReactNode
   /** The main line while files the zone takes are dragged over it. Defaults to `"Drop to add"`. */
   activeLabel?: ReactNode
-  /** The main line while files the zone can't take are dragged over it. Defaults to `"These files can't be added"`. */
+  /** The main line while some of the dragged files will be taken and the rest turned away (a wrong type, past `maxFiles`). Defaults to `"Some files will be skipped"`. */
+  partialLabel?: ReactNode
+  /** The main line while none of the dragged files can be taken; the drop is refused. Defaults to `"These files can't be added"`. */
   rejectLabel?: ReactNode
   /** Glyph above the labels. Defaults to the `upload` icon. */
   icon?: IconComponent
   /** Content in place of the glyph and labels. */
   children?: ReactNode
-  /** Names the file input when the form is submitted. */
-  name?: string
   /** Id of the file input, for a `Label`'s `htmlFor`. Inside a Field it is wired for you. */
   id?: string
-  /** Marks a file required. Defaults to the surrounding Field's `required`. */
+  /** Tells assistive tech a file is required (`aria-required`). The zone keeps no files, so native validation never blocks a submit: check your own list. Defaults to the surrounding Field's `required`. */
   required?: boolean
   /** Turns the zone destructive. Defaults to the surrounding Field's `invalid`. */
   invalid?: boolean
@@ -70,7 +70,7 @@ interface FileDropzoneProps {
   className?: string
 }
 
-type DragState = 'idle' | 'accept' | 'reject'
+type DragState = 'idle' | DragVerdict
 
 // Literal tables: UnoCSS only generates the classes it can read whole.
 const PAD = { default: 'px-6 py-8', compact: 'px-4 py-5' }
@@ -83,11 +83,14 @@ type FileDropzoneComponent = ForwardRefExoticComponent<FileDropzoneProps & RefAt
  * A zone to drop files on, or click to pick them.
  *
  * Drag files over it and it lights up; the line changes to say whether it
- * will take them (it reads their types while they are still in the air), and
- * turns destructive when it won't. Dropped or picked files are sorted
+ * will take them, reading their types while they are still in the air: all
+ * of them, some (the rest will be skipped), or none, when it turns
+ * destructive and refuses the drop. Dropped or picked files are sorted
  * against `accept`, `maxSize` and `maxFiles`: the ones that pass go to
- * `onFilesChange`, the rest to `onFilesRejected` with a reason, and the zone
- * keeps none, so the list, the upload and its errors stay yours. Show each
+ * `onFilesChange`, the rest to `onFilesRejected` with a reason. The zone
+ * keeps none (its input is cleared after every pick, so nothing submits with
+ * a native form and `required` is only announced), so the list, the upload
+ * and its errors stay yours. Show each
  * file in a `FileDropzone.Row`. Every line is a prop, for translation. The
  * zone is a label around a hidden file input, so a click or Enter opens the
  * picker, and inside a Field it is labelled and takes the field's state. The
@@ -118,10 +121,10 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
       label,
       description,
       activeLabel = 'Drop to add',
+      partialLabel = 'Some files will be skipped',
       rejectLabel = "These files can't be added",
       icon,
       children,
-      name,
       id,
       required,
       invalid,
@@ -161,10 +164,9 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
       if (closed || !e.dataTransfer.types.includes('Files')) return
       e.preventDefault()
       depth.current++
-      const items = [...e.dataTransfer.items].filter(item => item.kind === 'file')
-      const tooMany = !multiple ? items.length > 1 : maxFiles != null && items.length > maxFiles
-      const types = items.map(item => item.type)
-      setDrag(tooMany || !acceptsDragTypes(types, accept) ? 'reject' : 'accept')
+      const types = [...e.dataTransfer.items].filter(item => item.kind === 'file').map(item => item.type)
+      // Only a drag where nothing can pass is refused; a mixed one drops, and sortFiles splits it.
+      setDrag(dragVerdict(types, accept, multiple ? (maxFiles ?? Number.POSITIVE_INFINITY) : 1))
     }
 
     const onDragOver = (e: DragEvent) => {
@@ -196,9 +198,11 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
     const line =
       drag === 'accept'
         ? activeLabel
-        : drag === 'reject'
-          ? rejectLabel
-          : (label ?? (multiple ? 'Drop files here or click to browse' : 'Drop a file here or click to browse'))
+        : drag === 'partial'
+          ? partialLabel
+          : drag === 'reject'
+            ? rejectLabel
+            : (label ?? (multiple ? 'Drop files here or click to browse' : 'Drop a file here or click to browse'))
 
     return (
       // biome-ignore lint/a11y/noLabelWithoutControl: the file input inside is the control (Field.Control renders it).
@@ -216,6 +220,7 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
           'border border-dashed border-border transition-[background-color,border-color,opacity] duration-fast',
           'hover:bg-muted/50 has-[:focus-visible]:ring-1 has-[:focus-visible]:ring-focus-ring',
           'data-[dragging=accept]:border-solid data-[dragging=accept]:!border-border data-[dragging=accept]:!bg-muted',
+          'data-[dragging=partial]:border-solid data-[dragging=partial]:!border-border data-[dragging=partial]:!bg-muted',
           'data-[invalid]:border-destructive/50 data-[invalid]:hover:bg-destructive-light/60',
           'data-[dragging=reject]:border-solid data-[dragging=reject]:border-destructive/50 data-[dragging=reject]:!bg-destructive-light/60',
           'data-[readonly]:cursor-default data-[readonly]:hover:bg-transparent',
@@ -231,9 +236,9 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
         <Field.Control
           ref={ref}
           id={id}
-          name={name}
           disabled={closed}
-          required={required ?? field?.required}
+          // Not native `required`: the input is cleared after every pick, so it would always be missing.
+          aria-required={(required ?? field?.required) || undefined}
           aria-invalid={isInvalid || undefined}
           render={<input type="file" accept={accept} multiple={multiple} onChange={onChange} className="sr-only" />}
         />
@@ -246,11 +251,11 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
               )}
               initial={false}
               // The glyph rises to meet the files; with reduced motion it only darkens.
-              animate={{ y: drag === 'accept' && !reduced ? -2 : 0 }}
+              animate={{ y: (drag === 'accept' || drag === 'partial') && !reduced ? -2 : 0 }}
               transition={spring.fast}
             >
               <Glyph
-                size={compact ? 16 : 20}
+                size={size.icon}
                 strokeWidth={1.5}
                 className="transition-[stroke-width] duration-fast group-hover/zone:stroke-[2] group-data-[dragging]/zone:stroke-[2]"
               />
