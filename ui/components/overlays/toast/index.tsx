@@ -11,16 +11,20 @@
  * level's background shapes melted by the shared goo filter, their shadows
  * beneath, the content on top. Colors are the status tokens, the sizes the
  * control ladder's, and the motion the spring tiers; reduced motion keeps the
- * fades and snaps the shapes.
+ * fades and snaps the shapes. The global `toast()` (`manager.ts`) feeds a
+ * `Toast` mounted with `manager={toast}` from anywhere, React or not; titles
+ * and descriptions take any node, `icon` replaces the state's glyph and
+ * `action` takes a button's `{ label, onClick }` or any node. The state
+ * glyphs come from the icon set (`useIcons`), so an `IconProvider` swaps them.
  */
 
-import { Toast as ToastPrimitive } from '@base-ui/react/toast'
-import { ArrowRight, Check, CircleAlert, Info, LoaderCircle, type LucideIcon, X } from 'lucide-react'
+import { type ToastManager, Toast as ToastPrimitive } from '@base-ui/react/toast'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   cloneElement,
   createContext,
   forwardRef,
+  isValidElement,
   type ReactNode,
   type Ref,
   useContext,
@@ -31,6 +35,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { type IconComponent, type IconName, useIcons } from '../../../lib/icon-context'
 import { GooFilter } from '../../../lib/morph-layers'
 import { useReduceMotion } from '../../../lib/reduced-motion'
 import { useShape } from '../../../lib/shape-context'
@@ -42,26 +47,28 @@ import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { GOO_BLUR_RATIO, holdExit } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import Button from '../../button'
+import {
+  type ToastActionOptions,
+  type ToastData,
+  type ToastHandle,
+  type ToastInput,
+  type ToastOptions,
+  type ToastPromiseOptions,
+  type ToastSource,
+  type ToastType,
+  toast,
+  toManagerOptions,
+} from './manager'
 
-type ToastType = 'success' | 'loading' | 'error' | 'warning' | 'info' | 'action'
 type ToastPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
 
-interface ToastOptions {
-  title?: string
-  description?: string
-  type?: ToastType
-  /** Ms before it leaves; 0 keeps it until dismissed. */
-  timeout?: number
-  action?: { label: string; onClick?: () => void }
-}
-
-const ICONS: Record<ToastType, LucideIcon> = {
-  success: Check,
-  loading: LoaderCircle,
-  error: X,
-  warning: CircleAlert,
-  info: Info,
-  action: ArrowRight,
+const ICONS: Record<ToastType, IconName> = {
+  success: 'check',
+  loading: 'loader-circle',
+  error: 'x',
+  warning: 'circle-alert',
+  info: 'info',
+  action: 'arrow-right',
 }
 
 // Literal per state so the class extractor sees each one.
@@ -95,31 +102,38 @@ const ToastSettings = createContext<{ position: ToastPosition; timeout: number }
   timeout: 6000,
 })
 
-/** Shows toasts from inside a `Toast`: `show`, the per-state shortcuts, `promise` and `close`. */
+/**
+ * Shows toasts from inside a `Toast`: `show`, the per-state shortcuts,
+ * `promise`, `update` and `close` (alias `dismiss`), plus the `toasts` showing.
+ * Under a `Toast` with `manager={toast}` it works on the same stack as the
+ * global `toast()`.
+ */
 function useToast() {
-  const manager = ToastPrimitive.useToastManager()
+  const manager = ToastPrimitive.useToastManager<ToastData>()
 
   return useMemo(() => {
-    const options = ({ action, ...rest }: ToastOptions, type: ToastType) => ({
-      ...rest,
-      type,
-      actionProps: action && { children: action.label, onClick: action.onClick },
-    })
-    const show = (o: ToastOptions) => manager.add(options(o, o.type ?? 'info'))
+    const show = (o: ToastInput) => manager.add({ type: 'info', ...toManagerOptions(o) })
+    const typed = (type: ToastType) => (o: ToastInput) =>
+      show(typeof o === 'string' ? { title: o, type } : { ...o, type })
+    const result = <T,>(r: ToastPromiseOptions<T>['success']) =>
+      typeof r === 'function' ? (value: T) => toManagerOptions(r(value)) : toManagerOptions(r)
 
     return {
+      toasts: manager.toasts,
       show,
-      success: (o: ToastOptions) => show({ ...o, type: 'success' }),
-      error: (o: ToastOptions) => show({ ...o, type: 'error' }),
-      warning: (o: ToastOptions) => show({ ...o, type: 'warning' }),
-      info: (o: ToastOptions) => show({ ...o, type: 'info' }),
-      promise: <T,>(promise: Promise<T>, o: { loading: ToastOptions; success: ToastOptions; error: ToastOptions }) =>
+      success: typed('success'),
+      error: typed('error'),
+      warning: typed('warning'),
+      info: typed('info'),
+      promise: <T,>(promise: Promise<T>, o: ToastPromiseOptions<T>) =>
         manager.promise(promise, {
-          loading: options(o.loading, 'loading'),
-          success: options(o.success, 'success'),
-          error: options(o.error, 'error'),
+          loading: toManagerOptions(o.loading),
+          success: result(o.success),
+          error: result(o.error),
         }),
+      update: (id: string, o: ToastInput) => manager.update(id, toManagerOptions(o)),
       close: manager.close,
+      dismiss: manager.close,
     }
   }, [manager])
 }
@@ -145,17 +159,29 @@ function Shape({ box, className, shapeRef }: { box: Box; className: string; shap
   )
 }
 
-function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
+/** The pill's glyph: the state's icon, or the toast's own `icon` (a component, or any node). */
+function StatusIcon({ type, icon }: { type: ToastType; icon: ToastData['icon'] }) {
+  const icons = useIcons()
+  // A component is a function or a forwardRef / memo object; an element is a node.
+  const component =
+    typeof icon === 'function' ||
+    (typeof icon === 'object' && icon !== null && '$$typeof' in icon && !isValidElement(icon))
+  if (icon != null && icon !== false && !component) return <>{icon}</>
+  const Icon = component ? (icon as IconComponent) : icons[ICONS[type]]
+  return <Icon size={14} strokeWidth={2.5} className={type === 'loading' && !component ? 'animate-spin' : undefined} />
+}
+
+function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject<ToastData> }) {
   const { position, timeout } = useContext(ToastSettings)
   const shape = useShape()
   // Lifts 2 levels off its substrate with a fixed shadow, like a popover.
   const level = Math.min(useSurface() + 2, 8)
   const gooId = `toast-goo-${useId().replace(/:/g, '')}`
   const type = (toast.type ?? 'info') as ToastType
-  const Icon = ICONS[type]
+  const customAction = toast.data?.action
   const top = position.startsWith('top')
   const ending = toast.transitionStatus === 'ending'
-  const hasBody = Boolean(toast.description || toast.actionProps)
+  const hasBody = Boolean(toast.description || toast.actionProps || customAction)
   const [hovered, setHovered] = useState(false)
   const [auto, setAuto] = useState(false)
   const expanded = hasBody && type !== 'loading' && !ending && (hovered || auto)
@@ -258,7 +284,8 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
           <ToastPrimitive.Title className="relative inline-flex items-center whitespace-nowrap">
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
-                key={`${type}-${toast.title}`}
+                // A string title keys itself; a node title crossfades on each update.
+                key={`${type}-${typeof toast.title === 'string' ? toast.title : toast.updateKey}`}
                 className="inline-flex items-center gap-2"
                 initial={{ opacity: 0, filter: 'blur(4px)' }}
                 animate={{ opacity: 1, filter: 'blur(0px)' }}
@@ -266,7 +293,7 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
                 transition={spring.moderate}
               >
                 <span className={cn('flex size-6 items-center justify-center rounded-full', TONES[type])}>
-                  <Icon size={14} strokeWidth={2.5} className={type === 'loading' ? 'animate-spin' : undefined} />
+                  <StatusIcon type={type} icon={toast.data?.icon} />
                 </span>
                 <span className="text-body weight-medium text-foreground">{toast.title}</span>
               </motion.span>
@@ -283,6 +310,7 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
             <div ref={body} className={cn('flex flex-col items-start gap-3 p-4', top ? 'pt-6' : 'pb-6')}>
               <ToastPrimitive.Description className="text-caption text-muted-foreground" />
               {toast.actionProps && <ToastPrimitive.Action render={<Button size="compact" variant="secondary" />} />}
+              {customAction}
             </div>
           </motion.div>
         )}
@@ -292,27 +320,29 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
 }
 
 function ToastList() {
-  const { toasts } = ToastPrimitive.useToastManager()
+  const { toasts } = ToastPrimitive.useToastManager<ToastData>()
   return toasts.map(toast => <ToastItem key={toast.id} toast={toast} />)
 }
 
-interface ToastTriggerProps extends Omit<SlotProps, 'type'> {
+interface ToastTriggerProps extends Omit<SlotProps, 'type' | 'title'> {
   /** The toast's title, in the pill. */
-  title?: string
+  title?: ReactNode
   /** Text for the body the pill melts into. */
-  description?: string
+  description?: ReactNode
   /** State: sets the icon and its color. Defaults to `'info'`. */
   type?: 'success' | 'loading' | 'error' | 'warning' | 'info' | 'action'
   /** Ms before it leaves; 0 keeps it until dismissed. Defaults to the `Toast`'s `timeout`. */
   timeout?: number
-  /** A button in the body. */
-  action?: { label: string; onClick?: () => void }
+  /** Replaces the state's icon in the pill: an icon component, or any node. */
+  icon?: IconComponent | ReactNode
+  /** A button in the body (`{ label, onClick }`), or any node. */
+  action?: ToastActionOptions | ReactNode
   /** Runs a task: the toast shows `title` while it is pending, then `success` or `error`. */
   promise?: () => Promise<unknown>
   /** The toast once `promise` resolves. */
-  success?: { title?: string; description?: string }
+  success?: ToastOptions
   /** The toast if `promise` rejects. */
-  error?: { title?: string; description?: string }
+  error?: ToastOptions
 }
 
 const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
@@ -322,6 +352,7 @@ const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
       description,
       type,
       timeout,
+      icon,
       action,
       promise,
       success,
@@ -334,18 +365,18 @@ const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
     },
     ref,
   ) => {
-    const toast = useToast()
+    const toasts = useToast()
     const el = slotRender(render, asChild, children)
     const press = (event: React.MouseEvent<HTMLButtonElement>) => {
       onClick?.(event)
       if (promise) {
         // The error toast is the report; the rejection Base UI hands back would only surface unhandled.
-        toast
-          .promise(promise(), { loading: { title, description }, success: success ?? {}, error: error ?? {} })
+        toasts
+          .promise(promise(), { loading: { title, description, icon }, success: success ?? {}, error: error ?? {} })
           .catch(() => {})
         return
       }
-      toast.show({ title, description, type, timeout, action })
+      toasts.show({ title, description, type, timeout, icon, action })
     }
     return el ? (
       cloneElement(el, { ...props, ref, onClick: press })
@@ -365,7 +396,9 @@ interface ToastProps {
   limit?: number
   /** Ms a toast stays; hovering pauses it. Defaults to `6000`. */
   timeout?: number
-  /** The part of the app that can show toasts, with `Toast.Trigger`s or `useToast()`. */
+  /** Also renders the toasts this manager shows: pass the global `toast` so `toast()` calls from anywhere land here (mount one such `Toast` per app), or a manager from Base UI's `Toast.createToastManager()`. */
+  manager?: ToastSource
+  /** The part of the app that can show toasts, with `Toast.Trigger`s or `useToast()`. Optional: a `Toast` with a `manager` can stand alone. */
   children?: ReactNode
 }
 
@@ -384,8 +417,17 @@ interface ToastProps {
  *
  * `Toast` wraps the part of the app that shows toasts and renders them at
  * its `position`. Show one with `Toast.Trigger`, or call `useToast()`
- * inside it: `show`, `success`, `error`, `warning`, `info`, `promise` and
- * `close`.
+ * inside it: `show`, `success`, `error`, `warning`, `info`, `promise`,
+ * `update` and `close`.
+ *
+ * Or mount one `<Toast manager={toast} />` near the root and call the global
+ * `toast()` from anywhere, inside React or not: `toast({ title, description,
+ * type, timeout, icon, action, onClose })`, `toast.success`, `.error`,
+ * `.warning`, `.info`, `.loading`, `.promise`, `.update(id, …)` and
+ * `.dismiss(id?)`. Each call returns a handle with the toast's `id`,
+ * `update` and `dismiss`; calls made before the `Toast` mounts wait for it.
+ * Titles and descriptions take any node, `icon` replaces the state's glyph,
+ * and `action` is a button (`{ label, onClick }`) or any node.
  *
  * Statics:
  * - `Toast.Trigger` — a control that shows a toast when pressed:
@@ -395,11 +437,12 @@ interface ToastProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Toast({ position = 'top-right', limit = 3, timeout = 6000, children }: ToastProps) {
+function Toast({ position = 'top-right', limit = 3, timeout = 6000, manager, children }: ToastProps) {
   const settings = useMemo(() => ({ position, timeout }), [position, timeout])
 
   return (
-    <ToastPrimitive.Provider limit={limit} timeout={timeout}>
+    // The provider only ever subscribes to the manager, which is all a `ToastSource` promises.
+    <ToastPrimitive.Provider limit={limit} timeout={timeout} toastManager={manager as ToastManager | undefined}>
       <ToastSettings.Provider value={settings}>
         {children}
         <ToastPrimitive.Portal>
@@ -414,7 +457,18 @@ function Toast({ position = 'top-right', limit = 3, timeout = 6000, children }: 
 
 Toast.Trigger = ToastTrigger
 
-export type { ToastOptions, ToastPosition, ToastProps, ToastTriggerProps, ToastType }
-export { Toast, ToastTrigger, useToast }
+export type {
+  ToastActionOptions,
+  ToastHandle,
+  ToastInput,
+  ToastOptions,
+  ToastPosition,
+  ToastPromiseOptions,
+  ToastProps,
+  ToastSource,
+  ToastTriggerProps,
+  ToastType,
+}
+export { Toast, ToastTrigger, toast, useToast }
 
 export default Toast
