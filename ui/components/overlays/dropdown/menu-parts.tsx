@@ -41,7 +41,7 @@ import { spring } from '../../../lib/springs'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
-import { type ItemRect, useFluidHover } from '../../../lib/use-fluid-hover'
+import { type ItemRect, type UseFluidHoverReturn, useFluidHover } from '../../../lib/use-fluid-hover'
 import { useKeyboardNavGate } from '../../../lib/use-keyboard-nav-gate'
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../../lib/use-merge-split'
 import { type MorphOrigin, useMorph, useMorphOrigin } from '../../../lib/use-morph'
@@ -143,7 +143,10 @@ function useValueChecked() {
 // ---------------------------------------------------------------------------
 
 function useMenuPanel(containerRef: RefObject<HTMLDivElement | null>, open: boolean) {
-  const hover = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
+  // Annotated: left to inference, the declaration emit names this type through the
+  // root barrel (`import("../../..")`), a cycle that makes bunup's d.ts bundling
+  // silently drop `index.d.ts` and every entry importing the dropdown.
+  const hover: UseFluidHoverReturn = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
   const { activeIndex, setActiveIndex, itemRects, isMeasured } = hover
   const rowOrder = useRowOrder()
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null)
