@@ -109,24 +109,7 @@ interface BadgeProps
   /** Step on the size ladder (see Sizes). Legacy sm/md/lg values resolve as aliases (sm → compact; md/lg → default). Defaults to the surrounding SizeProvider, else `"default"`. */
   size?: 'default' | 'compact' | 'sm' | 'md' | 'lg'
   /** Color from the Tailwind palette: gray, red, orange, amber, yellow, lime, green, emerald, teal, cyan, blue, indigo, violet, purple, fuchsia, pink, rose. Defaults to `"gray"`. */
-  color?:
-    | 'gray'
-    | 'red'
-    | 'orange'
-    | 'amber'
-    | 'yellow'
-    | 'lime'
-    | 'green'
-    | 'emerald'
-    | 'teal'
-    | 'cyan'
-    | 'blue'
-    | 'indigo'
-    | 'violet'
-    | 'purple'
-    | 'fuchsia'
-    | 'pink'
-    | 'rose'
+  color?: BadgeColor
 }
 
 /**

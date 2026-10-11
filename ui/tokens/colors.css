@@ -69,16 +69,19 @@
      Button's destructive and success variants: the hue as text on a wash of
      itself, never a solid fill behind text (DESIGN.md › Status). The washes
      mix toward transparent like --hover, so they read on any surface level;
-     hover and press deepen them. The -strong text steps take the hue one
-     notch darker in light mode so a 13px label holds AA contrast on its wash. */
-  --destructive-strong: light-dark(oklch(0.505 0.213 27.518), var(--destructive));
+     hover and press deepen them (16 → 20 → 24%). The -strong text steps are
+     the hue darkened in light and lightened in dark, so a 13px label holds
+     WCAG AA (≥ 4.5:1) on its wash at rest, hover and press, over surfaces
+     1–5 in both schemes (worst case 4.69:1, the dark destructive press on
+     surface 5). */
+  --destructive-strong: light-dark(oklch(0.47 0.175 27), oklch(0.81 0.105 22));
   --destructive-wash: color-mix(in oklab, var(--destructive) 16%, transparent);
-  --destructive-wash-hover: color-mix(in oklab, var(--destructive) 22%, transparent);
-  --destructive-wash-active: color-mix(in oklab, var(--destructive) 28%, transparent);
-  --success-strong: light-dark(oklch(0.527 0.154 150.069), var(--status-success));
+  --destructive-wash-hover: color-mix(in oklab, var(--destructive) 20%, transparent);
+  --destructive-wash-active: color-mix(in oklab, var(--destructive) 24%, transparent);
+  --success-strong: light-dark(oklch(0.46 0.12 151), oklch(0.83 0.15 152));
   --success-wash: color-mix(in oklab, var(--status-success) 16%, transparent);
-  --success-wash-hover: color-mix(in oklab, var(--status-success) 22%, transparent);
-  --success-wash-active: color-mix(in oklab, var(--status-success) 28%, transparent);
+  --success-wash-hover: color-mix(in oklab, var(--status-success) 20%, transparent);
+  --success-wash-active: color-mix(in oklab, var(--status-success) 24%, transparent);
 
   /* ── Placeholders and media edges (local) ──
      --skeleton: the loading placeholder's fill, a foreground mix like
