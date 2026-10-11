@@ -158,3 +158,55 @@ the second card; drive `selected` from your own state to follow clicks.
     ))}
   </Card.Group>
 </div>
+
+# Outlined
+
+`border="outlined"` frames a standalone card in a hairline, the same frame an
+outlined group gives its tiles. Borderless stays the default.
+
+<div className="w-full max-w-[360px]">
+  <Card border="outlined">
+    <Card.Header>
+      <Card.Title>Billing</Card.Title>
+      <Card.Description>Your plan renews on 1 November.</Card.Description>
+    </Card.Header>
+    <Card.Content className="text-body text-muted-foreground">Team plan, 12 seats, paid yearly.</Card.Content>
+    <Card.Footer>
+      <Card.Button variant="secondary">Change plan</Card.Button>
+      <Card.Button>View invoices</Card.Button>
+    </Card.Footer>
+  </Card>
+</div>
+
+# Divider
+
+`Card.Divider` runs a hairline across the card between two parts, edge to
+edge and spaced like the parts. In an inline card it stands upright.
+
+<div className="flex w-full max-w-[520px] flex-col gap-6">
+  <Card border="outlined" className="max-w-[360px]">
+    <Card.Header>
+      <Card.Title>Request #4182</Card.Title>
+      <Card.Description>Submitted by Ada Lovelace</Card.Description>
+    </Card.Header>
+    <Card.Content className="text-body text-muted-foreground">Three items, waiting for approval.</Card.Content>
+    <Card.Divider />
+    <Card.Footer>
+      <Card.Button variant="primary">Approve</Card.Button>
+      <Card.Button>Decline</Card.Button>
+    </Card.Footer>
+  </Card>
+  <Card.Group orientation="inline" border="outlined">
+    <Card>
+      <Card.Media icon={Shield} />
+      <Card.Header>
+        <Card.Title>Two-step sign-in</Card.Title>
+        <Card.Description>On for every member</Card.Description>
+      </Card.Header>
+      <Card.Divider />
+      <Card.Footer>
+        <Card.Button>Manage</Card.Button>
+      </Card.Footer>
+    </Card>
+  </Card.Group>
+</div>
