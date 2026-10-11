@@ -1,4 +1,4 @@
-import Button from './index'
+import Button, { buttonVariants } from './index'
 import LoadingDemo from './loading-demo'
 import { ArrowRight, Check, ChevronDown, Loader, Plus, RotateCcw, Search, Settings, Trash2 } from 'lucide-react'
 
@@ -74,8 +74,10 @@ the button; the hidden label keeps its width.
 
 Press one. The surface folds into a circle around the spinner while the
 button keeps its box, so its neighbors never move, and springs back when
-loading ends. `LoadingDemo` is a docs stage: a Button whose `loading` holds
-for two seconds after a press.
+loading ends. It keeps focus while it loads (`aria-disabled`, not
+`disabled`), so press one with Enter and focus is still there when it is
+done; presses in between are ignored. `LoadingDemo` is a docs stage: a
+Button whose `loading` holds for two seconds after a press.
 
 <div className="flex w-fit max-w-full flex-col gap-3">
   <div className="flex flex-wrap items-center gap-2">
@@ -138,3 +140,25 @@ here a link — instead of rendering a `<button>`.
     Fluid Functionalism
   </a>
 </Button>
+
+# Surface classes
+
+For an element you can't render through `asChild` (a router's link that
+builds its own anchor, markup from a server template), `buttonVariants`
+with `surface: true` draws the fill, ring, hover, press and focus ring on
+the element itself. Without `surface` it returns only the root classes, and
+the fill lives on the Button's inner layer. It is static: no press shrink,
+no loading morph, so prefer `<Button asChild>` where you can. Size aliases
+(`sm`, `lg`, `icon-sm`, …) resolve as on the Button; `aria-disabled` dims it.
+
+<div className="flex flex-wrap items-center gap-2">
+  <a href="#surface-classes" className={buttonVariants({ surface: true })}>Primary</a>
+  <a href="#surface-classes" className={buttonVariants({ variant: 'secondary', surface: true })}>Secondary</a>
+  <a href="#surface-classes" className={buttonVariants({ variant: 'outline', surface: true })}>Outline</a>
+  <a href="#surface-classes" className={buttonVariants({ variant: 'ghost', surface: true })}>Ghost</a>
+  <a href="#surface-classes" className={buttonVariants({ variant: 'destructive', size: 'sm', surface: true })}>Remove</a>
+  <a href="#surface-classes" className={buttonVariants({ variant: 'secondary', size: 'icon-sm', surface: true })} aria-label="Add">
+    <Plus />
+  </a>
+  <a href="#surface-classes" aria-disabled="true" className={buttonVariants({ variant: 'secondary', surface: true })}>Disabled</a>
+</div>

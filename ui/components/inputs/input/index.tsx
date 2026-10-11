@@ -7,7 +7,8 @@
  * rewritten to `../../../lib/*` (`SizeProvider` to `../../../primitives/sizes`);
  * `InputField` split into `Input` (the ringed box, usable on its own:
  * `invalid`, `size`, ref on the `<input>`) and
- * `Label` (a plain `<label>`, rendered through `Field.Label` inside a field),
+ * `Label` (a plain `<label>`, rendered through `Field.Label` inside a field;
+ * now its own item `inputs/label`, re-exported from here),
  * which `InputGroup.Field` composes; item renamed `input`, `Input` the
  * default export; uncontrolled mode added — `value` and `onChange` are
  * optional, with a `defaultValue` twin (`InputHTMLAttributes`' own
@@ -43,7 +44,6 @@ import {
   forwardRef,
   type HTMLAttributes,
   type InputHTMLAttributes,
-  type LabelHTMLAttributes,
   type ReactNode,
   type RefAttributes,
   useContext,
@@ -70,6 +70,7 @@ import { useControllableState } from '../../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
+import { Label, type LabelProps } from '../label'
 
 interface InputGroupContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void
@@ -137,6 +138,14 @@ interface InputProps
  * that flips `type` between `"password"` and `"text"`. `readOnly` keeps the
  * value selectable while the fill stays down.
  *
+ * Its height is a step of the size ladder (see Sizes). `size` is that step
+ * (`"default"` 36px, `"compact"` 28px), not the native `<input size>`
+ * character width, which the Input doesn't take: its width comes from its
+ * container. With no `size`, the surrounding SizeProvider sets the height,
+ * so a host whose props keep the native `size` attribute strips it before
+ * spreading them onto the Input and sets density with a SizeProvider (or a
+ * Field's `size`) around the form instead.
+ *
  * Also exported from this item:
  * - `InputAction` — a small icon button inside the field, 4px inside its
  *   ring: `label` (its accessible name), `icon`, `size`, plus button props.
@@ -144,7 +153,7 @@ interface InputProps
  * - `InputAdornment` — the wrapper the adornments render in, for a field of
  *   your own built on the field box: `size`.
  * - `Label` — the field label, weight-stable and inset to line up with the
- *   input's text: `htmlFor`, `invalid`, `size`.
+ *   input's text: `htmlFor`, `invalid`, `size` (see Label, its own page).
  * - `InputGroup` — stacks labelled fields and tracks the pointer across them,
  *   so the hover glides from field to field: `size` pins every field to one
  *   step of the ladder.
@@ -352,52 +361,6 @@ const InputAction = forwardRef<HTMLButtonElement, InputActionProps>(
 )
 
 InputAction.displayName = 'InputAction'
-
-interface LabelProps extends LabelHTMLAttributes<HTMLLabelElement> {
-  /** Label text. */
-  children: ReactNode
-  /** Turns the label destructive, matching an invalid Input. Defaults to `false`. */
-  invalid?: boolean
-  /** Pins the label to one step of the size ladder. Defaults to the surrounding SizeProvider. */
-  size?: SizeVariant
-}
-
-const Label = forwardRef<HTMLLabelElement, LabelProps>(({ children, invalid, size, className, ...props }, ref) => {
-  const sizeClasses = useSize(size)
-  const compact = sizeClasses.variant === 'compact'
-
-  return (
-    <label
-      ref={ref}
-      className={cn(
-        'inline-grid',
-        sizeClasses.text,
-        // Inside a disabled field, Field.Label stamps `data-disabled`.
-        'data-[disabled]:opacity-50',
-        // One notch tighter than the ladder's control padding — the field
-        // ring is invisible at rest, so the roomier inset reads as a gap.
-        compact ? 'pl-2' : 'pl-2.5',
-        className,
-      )}
-      {...props}
-    >
-      <span className="col-start-1 row-start-1 invisible weight-semibold" aria-hidden="true">
-        {children}
-      </span>
-      <span
-        className={cn(
-          'col-start-1 row-start-1',
-          invalid ? 'text-destructive' : 'text-muted-foreground',
-          'weight-normal',
-        )}
-      >
-        {children}
-      </span>
-    </label>
-  )
-})
-
-Label.displayName = 'Label'
 
 interface InputGroupProps extends HTMLAttributes<HTMLDivElement> {
   /** One or more InputGroup.Field children. */

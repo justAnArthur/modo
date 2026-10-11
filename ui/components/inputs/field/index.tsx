@@ -186,6 +186,12 @@ type FieldComponent = ForwardRefExoticComponent<FieldProps & RefAttributes<HTMLD
  * the browser's message.
  * Behavior comes from Base UI's Field.
  *
+ * `size` pins the field and its control to one step of the size ladder;
+ * without it they follow the surrounding SizeProvider, which is how to set a
+ * form's density when a control's own props keep the native `<input size>`
+ * attribute (a character width, not a height). `Field.Control` passes a
+ * native `size` through to the element untouched.
+ *
  * InputGroup.Field is the preset for a group of text fields: a label and an
  * error string, and the group's hover gliding from field to field. Reach for
  * Field when a field stands alone, needs a description, or holds a control

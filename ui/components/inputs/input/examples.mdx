@@ -1,6 +1,7 @@
 import Input, { InputGroup, Label } from './index'
 import PasswordDemo from './password-demo'
 import Textarea from '../textarea'
+import SizeProvider from '../../../primitives/sizes'
 import { CircleCheck, Mail, Search } from 'lucide-react'
 
 # Basic
@@ -55,6 +56,28 @@ A compact field steps its adornments and actions down with it.
   <PasswordDemo size="compact" variant="bordered" placeholder="Password" />
   <Input size="compact" variant="bordered" endAdornment="EUR" defaultValue="1,200" />
 </div>
+
+# Density without size
+
+`size` is a step of the size ladder, not the native `<input size>` width. Leave it off and the surrounding SizeProvider sets the height: one provider makes a whole form compact, with nothing on each field.
+
+```tsx
+// A host whose props keep the native `size` attribute: drop it, let the provider decide.
+function TextField({ size: _nativeSize, ...props }) {
+  return <Input {...props} />
+}
+
+<SizeProvider size="compact">
+  <TextField size={20} placeholder="Height from the provider" />
+</SizeProvider>
+```
+
+<SizeProvider size="compact">
+  <div className="flex flex-col gap-3 w-72 max-w-full">
+    <Input variant="bordered" placeholder="Compact from the provider" />
+    <Input variant="bordered" icon={Mail} placeholder="So is this one" />
+  </div>
+</SizeProvider>
 
 # Read-only
 

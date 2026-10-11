@@ -24,8 +24,12 @@
  *   swapping. The spinner centres on the button, not on the label. `aria-busy` while loading.
  *   The root's `transition-colors` → `transition-[color,opacity]`, so the disabled dim fades
  *   in step instead of jumping (the root draws no background or border of its own).
+ *   A loading button stays focusable (Base UI's `focusableWhenDisabled`, so
+ *   `aria-disabled`, not `disabled`) and ignores presses; with `asChild` it
+ *   sets `aria-disabled` and swallows clicks itself.
  * - `buttonVariants` and the size aliases moved to `variants.ts` (server-callable, no
- *   JSX or hooks) and re-exported from here.
+ *   JSX or hooks) and re-exported from here; it resolves the size aliases itself and
+ *   takes `surface` (the fill as root classes, for an anchor host; see `variants.ts`).
  * - Variants added for hosts with a shadcn-style API (local, under DESIGN.md): `outline`
  *   renders exactly as `tertiary` (both are the transparent 1px-ring button);
  *   `destructive` and `success` are their hue as text (`--destructive-strong`,
@@ -64,14 +68,14 @@ import {
 
 interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
-    Omit<VariantProps<typeof buttonVariants>, 'size'> {
+    Omit<VariantProps<typeof buttonVariants>, 'size' | 'surface'> {
   /** Visual style of the button. `outline` is `tertiary` under its shadcn name; `destructive` and `success` tint the label and a wash of their hue; `link` is underlined text on the control height. Defaults to `"primary"`. */
   variant?: 'primary' | 'secondary' | 'tertiary' | 'outline' | 'ghost' | 'destructive' | 'success' | 'link'
   /** Step on the size ladder (36px default, 28px compact — see Sizes): `"default"` | `"compact"` | `"icon"` | `"icon-compact"`. Omitted, the button follows the surrounding SizeProvider. Aliases resolve onto the ladder (xs, sm → compact; md/lg → default; icon-sm → icon-compact; icon-lg → icon). */
   size?: 'default' | 'compact' | 'icon' | 'icon-compact' | 'xs' | 'sm' | 'md' | 'lg' | 'icon-sm' | 'icon-lg'
   /** Merge props onto the child element instead of rendering a `<button>` — the single React-element child becomes the rendered element (slot-style). Defaults to `false`. */
   asChild?: boolean
-  /** Folds the button into a circle around a spinner and disables it; the button keeps its box, so nothing around it moves. Defaults to `false`. */
+  /** Folds the button into a circle around a spinner and blocks presses; the button keeps its box, so nothing around it moves, and keeps focus (`aria-disabled`, not `disabled`). Defaults to `false`. */
   loading?: boolean
   /** Icon displayed before the label. */
   leadingIcon?: IconComponent
@@ -195,6 +199,15 @@ function useLoadingMorph(loading: boolean) {
  * it moves. Built on Base UI's Button; `asChild` renders your own
  * element (e.g. a link) with the button's styling instead.
  *
+ * Also exported from this item:
+ * - `buttonVariants` — the class recipe (also from `button/variants`, safe in
+ *   server code): `variant`, `size` (aliases included), `iconLeft`,
+ *   `iconRight`, `surface`. On its own it gives the root classes, and the fill
+ *   lives on the Button's inner layer; `surface: true` puts the fill, ring,
+ *   hover, press and `aria-disabled` look on the element itself, for an
+ *   anchor you can't render through `asChild`. Prefer `<Button asChild>`
+ *   where you can: it keeps the press shrink, the icon stroke and `loading`.
+ *
  * @example {@include ./examples.mdx}
  */
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -229,6 +242,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             style?: React.CSSProperties
             ref?: React.Ref<HTMLButtonElement>
             'aria-busy'?: boolean
+            'aria-disabled'?: boolean | 'true' | 'false'
+            onClick?: React.MouseEventHandler<HTMLButtonElement>
           }>)
         : null
     const label = asChildElement ? asChildElement.props.children : children
@@ -338,18 +353,32 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         iconRight: !isIconOnly && !!TrailingIcon,
       }),
       shape.button,
+      // A loading button is disabled through aria-disabled (it keeps focus),
+      // which the variants' `disabled:` styles don't see.
+      'aria-disabled:opacity-50 aria-disabled:pointer-events-none',
       active && variant === 'link' && 'decoration-current',
       className,
     )
 
     if (asChildElement) {
       const childProps = asChildElement.props
+      const onClick = props.onClick ?? childProps.onClick
       return cloneElement(
         asChildElement,
         {
           ...props,
           ref,
           'aria-busy': loading || undefined,
+          'aria-disabled': loading || props['aria-disabled'] || childProps['aria-disabled'],
+          // A pending action blocks a second press (and a link's navigation).
+          onClick: (event: React.MouseEvent<HTMLButtonElement>) => {
+            if (loading) {
+              event.preventDefault()
+              event.stopPropagation()
+              return
+            }
+            onClick?.(event)
+          },
           className: cn(rootClassName, childProps.className),
           style: { ...style, ...childProps.style },
         },
@@ -364,6 +393,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref as React.Ref<HTMLButtonElement>}
         className={rootClassName}
         disabled={disabled || loading}
+        // While loading, Base UI disables it with aria-disabled instead of
+        // the attribute, so a keyboard user keeps focus on it; it still
+        // ignores presses.
+        focusableWhenDisabled={loading}
         aria-busy={loading || undefined}
         style={style}
         {...props}
@@ -376,6 +409,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button'
 
+export type { ButtonSizeCanonical, ButtonVariantsOptions } from './variants'
 export type { ButtonProps, ButtonSize, ButtonVariant }
 export { Button, buttonVariants }
 
