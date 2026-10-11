@@ -108,10 +108,11 @@ const bgVariants: Record<string, string> = {
     'bg-transparent shadow-[0_0_0_1px_transparent] group-hover:bg-hover group-hover:shadow-[0_0_0_1px_var(--hover)] group-active:bg-active group-active:shadow-[0_0_0_0px_var(--active)]',
   // A status as an action: a translucent wash of its hue (the ghost recipe),
   // deepening on hover and press.
+  // The fill reads the wash utilities; `--btn-bg` only feeds the spread.
   destructive:
-    '[--btn-bg:var(--destructive-wash)] group-hover:[--btn-bg:var(--destructive-wash-hover)] group-active:[--btn-bg:var(--destructive-wash-active)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+    'bg-destructive-wash group-hover:bg-destructive-wash-hover group-active:bg-destructive-wash-active [--btn-bg:var(--destructive-wash)] group-hover:[--btn-bg:var(--destructive-wash-hover)] group-active:[--btn-bg:var(--destructive-wash-active)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   success:
-    '[--btn-bg:var(--success-wash)] group-hover:[--btn-bg:var(--success-wash-hover)] group-active:[--btn-bg:var(--success-wash-active)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+    'bg-success-wash group-hover:bg-success-wash-hover group-active:bg-success-wash-active [--btn-bg:var(--success-wash)] group-hover:[--btn-bg:var(--success-wash-hover)] group-active:[--btn-bg:var(--success-wash-active)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   link: 'bg-transparent',
 }
 
@@ -126,9 +127,9 @@ const activeBgVariants: Record<string, string> = {
     'bg-active shadow-[0_0_0_1px_var(--border),inset_0_0_0_0px_var(--border)] group-active:shadow-[0_0_0_0px_var(--border),inset_0_0_0_1px_var(--border)]',
   ghost: 'bg-active shadow-[0_0_0_1px_var(--active)] group-active:shadow-[0_0_0_0px_var(--active)]',
   destructive:
-    '[--btn-bg:var(--destructive-wash-active)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+    'bg-destructive-wash-active [--btn-bg:var(--destructive-wash-active)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   success:
-    '[--btn-bg:var(--success-wash-active)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+    'bg-success-wash-active [--btn-bg:var(--success-wash-active)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   // A held link shows its underline.
   link: 'bg-transparent',
 }

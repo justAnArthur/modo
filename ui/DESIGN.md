@@ -44,10 +44,29 @@ colors:
   destructive-dark: "oklch(0.7106 0.1661 22.22)"
   destructive-light: "oklch(0.971 0.013 17.38)"
   destructive-light-dark: "oklch(0.2575 0.0886 26.04)"
+  destructive-strong: "oklch(0.47 0.175 27)"
+  destructive-strong-dark: "oklch(0.81 0.105 22)"
+  destructive-wash: "color-mix(in oklab, oklch(0.6368 0.2078 25.33) 16%, transparent)"
+  destructive-wash-dark: "color-mix(in oklab, oklch(0.7106 0.1661 22.22) 16%, transparent)"
+  destructive-wash-hover: "color-mix(in oklab, oklch(0.6368 0.2078 25.33) 20%, transparent)"
+  destructive-wash-hover-dark: "color-mix(in oklab, oklch(0.7106 0.1661 22.22) 20%, transparent)"
+  destructive-wash-active: "color-mix(in oklab, oklch(0.6368 0.2078 25.33) 24%, transparent)"
+  destructive-wash-active-dark: "color-mix(in oklab, oklch(0.7106 0.1661 22.22) 24%, transparent)"
+  success-strong: "oklch(0.46 0.12 151)"
+  success-strong-dark: "oklch(0.83 0.15 152)"
+  success-wash: "color-mix(in oklab, oklch(0.723 0.192 149.58) 16%, transparent)"
+  success-wash-hover: "color-mix(in oklab, oklch(0.723 0.192 149.58) 20%, transparent)"
+  success-wash-active: "color-mix(in oklab, oklch(0.723 0.192 149.58) 24%, transparent)"
   status-success: "oklch(0.723 0.192 149.58)"
   status-loading: "oklch(0.715 0 0)"
   status-warning: "oklch(0.7686 0.1647 70.08)"
   status-info: "oklch(0.623 0.188 259.81)"
+  skeleton: "color-mix(in oklab, oklch(0.205 0 0) 8%, transparent)"
+  skeleton-dark: "color-mix(in oklab, oklch(0.97 0 0) 8%, transparent)"
+  image-edge: "rgb(0 0 0 / 0.1)"
+  image-edge-dark: "rgb(255 255 255 / 0.1)"
+  progress-track: "color-mix(in oklab, oklch(0.205 0 0) 10%, transparent)"
+  progress-track-dark: "color-mix(in oklab, oklch(0.97 0 0) 10%, transparent)"
   surface-1: "oklch(0.985 0 0)"
   surface-2: "oklch(0.991 0 0)"
   surface-3: "oklch(1 0 0)"
@@ -187,6 +206,16 @@ spacing:
   icon-compact: 14px
   goo-neck: 12px
   measure: 45rem
+motion:
+  fast: 80ms
+  fast-exit: 60ms
+  moderate: 160ms
+  moderate-exit: 120ms
+  slow: 240ms
+  slow-exit: 160ms
+  goo: 250ms
+  goo-exit: 200ms
+  loop: 2s
 components:
   button-primary:
     backgroundColor: "{colors.foreground}"
