@@ -1,7 +1,7 @@
 import { statSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { dirname, isAbsolute, relative, resolve } from 'node:path'
 import ts from 'typescript'
-import { isModoPackage, packageDirOf, resolveSourceExport } from './resolve-source'
+import { clearPackageCache, isModoPackage, packageDirOf, resolveSourceExport } from './resolve-source'
 import {
   applyPropDoc,
   type DocComment,
@@ -39,11 +39,17 @@ export function createDocsService(opts: { root: string; overlay?: Map<string, st
     fileExists,
     readFile,
     realpath: ts.sys.realpath,
-    directoryExists: ts.sys.directoryExists,
+    directoryExists: dir => ts.sys.directoryExists(dir) || [...overlay.keys()].some(f => f.startsWith(`${dir}/`)),
     getDirectories: ts.sys.getDirectories,
     getCurrentDirectory: () => opts.root,
   }
+  // A failed lookup (an import whose file doesn't exist yet) must not outlive
+  // the file's creation: the cache is cleared each run, and a file with a
+  // failed import gets a new version in the next run, so the service re-reads
+  // it instead of reusing an unchanged file's lookups.
   const resolutionCache = ts.createModuleResolutionCache(opts.root, f => f, options)
+  let failedIn = new Set<string>()
+  let invalidated = new Set<string>()
   const sourceExports = new Map<string, string | null>()
   // Per run: files don't change while one program is in use.
   const versions = new Map<string, string>()
@@ -63,7 +69,10 @@ export function createDocsService(opts: { root: string; overlay?: Map<string, st
         resolvedModule: { resolvedFileName: source, extension: extensionOf(source), isExternalLibraryImport: false },
       }
     }
-    return ts.resolveModuleName(spec, containingFile, options, moduleHost, resolutionCache)
+    const resolved = ts.resolveModuleName(spec, containingFile, options, moduleHost, resolutionCache)
+    // Installed packages' typings may leave optional imports unresolved for good.
+    if (!resolved.resolvedModule && !NODE_MODULES.test(containingFile)) failedIn.add(containingFile)
+    return resolved
   }
 
   const host: ts.LanguageServiceHost = {
@@ -82,6 +91,7 @@ export function createDocsService(opts: { root: string; overlay?: Map<string, st
           version = ''
         }
       }
+      if (invalidated.has(file)) version += `:${projectVersion}`
       versions.set(file, version)
       return version
     },
@@ -147,6 +157,8 @@ export function createDocsService(opts: { root: string; overlay?: Map<string, st
     }
   }
 
+  // `seen` holds the current inheritance path only, so two bases sharing a
+  // base (a diamond) aren't taken for a cycle.
   function docsOf(decl: ts.Declaration, seen: Set<ts.Node>): Docs {
     const sf = decl.getSourceFile()
     const dir = dirname(sf.fileName)
@@ -161,18 +173,37 @@ export function createDocsService(opts: { root: string; overlay?: Map<string, st
       else errors.push(`${tag}: could not resolve "${ref}"`)
       return ''
     })
+    seen.delete(decl)
+
+    // Includes stay inside the package the comment belongs to (and, for the
+    // host's own files, the project): docs followed into node_modules must not
+    // inline arbitrary local files into a published site.
+    const allowed = includeRoots(sf.fileName)
+    const inside = (abs: string) => allowed.some(root => isInside(root, abs))
     const own = parseDocComment(jsdoc.trim(), path => {
       const abs = resolve(dir, path)
-      return fileExists(abs) ? (readFile(abs) ?? null) : null
+      return inside(abs) && fileExists(abs) ? (readFile(abs) ?? null) : null
     })
+    const exampleDocs: string[] = []
+    for (const path of own.exampleDocs) {
+      const abs = resolve(dir, path)
+      if (inside(abs)) exampleDocs.push(abs)
+      else errors.push(`@example {@include ${path}}: outside ${allowed.join(', ')}`)
+    }
 
     return {
       description: [...inherited.map(d => d.description), own.description].filter(Boolean).join('\n\n'),
       examples: [...inherited.flatMap(d => d.examples), ...own.examples],
-      exampleDocs: [...inherited.flatMap(d => d.exampleDocs), ...own.exampleDocs.map(p => resolve(dir, p))],
+      exampleDocs: [...inherited.flatMap(d => d.exampleDocs), ...exampleDocs],
       sources: [sf.fileName, ...inherited.flatMap(d => d.sources)],
       errors: [...errors, ...inherited.flatMap(d => d.errors), ...own.errors],
     }
+  }
+
+  function includeRoots(file: string): string[] {
+    const pkg = packageDirOf(file)
+    if (NODE_MODULES.test(file)) return pkg ? [pkg] : []
+    return pkg ? [pkg, opts.root] : [opts.root]
   }
 
   /** `{@inheritDoc <ref>}`: a module specifier (its default export) or a name in the file's scope. */
@@ -197,6 +228,11 @@ export function createDocsService(opts: { root: string; overlay?: Map<string, st
       roots = files
       versions.clear()
       sourceExports.clear()
+      resolutionCache.clear()
+      invalidated = failedIn
+      failedIn = new Set()
+      documentedFiles.clear()
+      clearPackageCache()
       projectVersion++
       program = undefined
     },
@@ -237,6 +273,11 @@ function compilerOptions(root: string): ts.CompilerOptions {
 // resolveSourceExport only lands on .ts/.tsx/.mts/.cts sources.
 function extensionOf(file: string): ts.Extension {
   return (file.match(/\.[cm]?tsx?$/)?.[0] ?? '.ts') as ts.Extension
+}
+
+function isInside(root: string, file: string): boolean {
+  const rel = relative(root, file)
+  return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))
 }
 
 function fail(msg: string): ParsedItem {

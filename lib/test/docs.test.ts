@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, test } from 'bun:test'
-import { cpSync, existsSync, mkdirSync, readdirSync, symlinkSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 import { discoverItems } from '../src/lib/discover-items'
 import { createDocsService, type DocsService } from '../src/lib/docs'
@@ -98,6 +98,61 @@ describe('{@inheritDoc}', () => {
   })
 })
 
+describe('runs', () => {
+  const write = (file: string, text: string) => {
+    mkdirSync(resolve(file, '..'), { recursive: true })
+    writeFileSync(file, text)
+  }
+
+  test('an import that failed resolves once its file exists', () => {
+    const dir = join(HOST, 'late', 'late')
+    rmSync(dir, { recursive: true, force: true })
+    const file = join(dir, 'index.tsx')
+    write(file, "export { default } from './impl'\n")
+    const service = createDocsService({ root: HOST })
+    service.refresh([file])
+    expect(service.parse(file).errors).toEqual(['Could not resolve the default export from "./impl"'])
+    write(join(dir, 'impl.tsx'), '/** Late. */\nexport default function Late() {\n  return null\n}\n')
+    service.refresh([file])
+    expect(service.parse(file)).toMatchObject({ name: 'Late', description: 'Late.', errors: [] })
+  })
+
+  test('a diamond of {@inheritDoc} is not a cycle', () => {
+    const dir = join(HOST, 'late', 'diamond')
+    const doc = (text: string, refs: string[]) =>
+      `/**\n${refs.map(r => ` * {@inheritDoc ./${r}}\n`).join('')} * ${text}\n */\nexport default function X() {\n  return null\n}\n`
+    const files = new Map([
+      [join(dir, 'index.tsx'), doc('X.', ['b', 'c'])],
+      [join(dir, 'b.tsx'), doc('B.', ['d'])],
+      [join(dir, 'c.tsx'), doc('C.', ['d'])],
+      [join(dir, 'd.tsx'), doc('D.', [])],
+    ])
+    const service = createDocsService({ root: HOST, overlay: files })
+    service.refresh([join(dir, 'index.tsx')])
+    const p = service.parse(join(dir, 'index.tsx'))
+    expect([p.description, p.errors]).toEqual(['D.\n\nB.\n\nD.\n\nC.\n\nX.', []])
+  })
+
+  test("includes stay inside the comment's package", () => {
+    const pkg = join(HOST, 'node_modules', 'nosy')
+    write(join(pkg, 'package.json'), '{ "name": "nosy", "exports": { ".": { "source": "./index.tsx" } } }')
+    write(
+      join(pkg, 'index.tsx'),
+      '/**\n * Nosy. {@include ../../package.json}\n *\n * @example {@include ../../x.mdx}\n */\nexport default function Nosy() {\n  return null\n}\n',
+    )
+    const file = join(HOST, 'late', 'nosy', 'index.tsx')
+    write(file, "export { default } from 'nosy'\n")
+    const service = createDocsService({ root: HOST })
+    service.refresh([file])
+    const p = service.parse(file)
+    expect([p.description, p.exampleDocs]).toEqual(['Nosy.', []])
+    expect(p.errors).toEqual([
+      `@example {@include ../../x.mdx}: outside ${pkg}`,
+      '{@include ../../package.json}: file not found',
+    ])
+  })
+})
+
 describe('props through the compiler', () => {
   const parse = (src: string) => {
     const file = join(HOST, 'components', 'inline', 'index.tsx')
@@ -160,6 +215,7 @@ describe('bundle', () => {
       'import-reexport',
       'named-reexport',
       'relative-reexport',
+      'third-party',
       'typed-reexport',
       'wrapper',
       'wrapper-by-name',
@@ -170,6 +226,22 @@ describe('bundle', () => {
     expect(byId.wrapper!.exampleDocs).toHaveLength(2)
     expect(byId.wrapper!.exampleDocs[0]).toBe(byId['default-reexport']!.exampleDocs[0]!)
     for (const it of items) for (const doc of it.exampleDocs) expect(existsSync(doc)).toBe(true)
+  })
+
+  test('the source condition applies to modo packages only, and only when the source ships', async () => {
+    const bundler = createBundler({ userRoot: HOST, configPath: join(HOST, 'modo.config.ts') })
+    const { items } = await bundler.get()
+    expect(items.map(it => it.id)).toContain('third-party')
+    const built = (dir: string): string =>
+      readdirSync(dir, { withFileTypes: true })
+        .map(e => (e.isDirectory() ? built(join(dir, e.name)) : readFileSync(join(dir, e.name), 'utf8')))
+        .join('\n')
+    const out = built(bundler.outdir)
+    expect([out.includes('ghost-dist'), out.includes('plain-dist'), out.includes('plain-source')]).toEqual([
+      true,
+      true,
+      false,
+    ])
   })
 })
 

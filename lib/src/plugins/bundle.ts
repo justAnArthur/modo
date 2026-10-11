@@ -1,12 +1,13 @@
 import { existsSync, mkdirSync, readdirSync, rmdirSync, rmSync, statSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 import mdx from '@mdx-js/esbuild'
-import esbuild, { type BuildOptions, type Message, type Metafile } from 'esbuild'
+import esbuild, { type BuildOptions, type Message, type Metafile, type Plugin } from 'esbuild'
 import remarkGfm from 'remark-gfm'
 import { loadModoConfig } from '../lib/config.loader'
 import { discoverCssForFile } from '../lib/discover-css'
 import { discoverItems } from '../lib/discover-items'
 import { createDocsService } from '../lib/docs'
+import { isModoPackage, packageDirOf, resolveSourceExport } from '../lib/resolve-source'
 import type { SiteConfig } from '../lib/schema'
 import { TIERS, type Tier } from '../lib/tiers'
 import type { ParsedExample, ParsedItem } from '../lib/tsdoc'
@@ -240,6 +241,35 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
   }
 }
 
+/**
+ * A design system documented with modo that publishes its sources (`source`
+ * export condition) is bundled from them, as its docs are read from them: an
+ * item and the examples.mdx next to its source then share one copy of each
+ * module. Only those packages, and only when the source file ships; every
+ * other import resolves with esbuild's default conditions.
+ */
+function modoSources(): Plugin {
+  return {
+    name: 'modo:sources',
+    setup(build) {
+      const cache = new Map<string, string | null>()
+      build.onStart(() => cache.clear())
+      build.onResolve({ filter: /^[^./]/ }, args => {
+        if (args.kind === 'entry-point') return undefined
+        const key = `${args.resolveDir}\0${args.path}`
+        let path = cache.get(key)
+        if (path === undefined) {
+          const file = resolveSourceExport(args.path, args.resolveDir)
+          const pkg = file ? packageDirOf(file) : null
+          path = file && pkg && isModoPackage(pkg) ? file : null
+          cache.set(key, path)
+        }
+        return path ? { path } : undefined
+      })
+    },
+  }
+}
+
 function baseOptions(userRoot: string, outdir: string): BuildOptions {
   return {
     absWorkingDir: userRoot,
@@ -252,11 +282,6 @@ function baseOptions(userRoot: string, outdir: string): BuildOptions {
     // CJS `main`-only and browser-conditional packages that 'neutral'
     // cannot (e.g. react-remove-scroll, hoist-non-react-statics).
     platform: 'browser',
-    // A design system publishing its sources (`source` export condition) is
-    // bundled from them, as its docs are read from them: an item and the
-    // examples.mdx next to its source then share one copy of each module.
-    // `module` is esbuild's default, dropped once conditions are set.
-    conditions: ['source', 'module'],
     target: 'es2022',
     external: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
     // CJS deps that `require("react")` at module scope (e.g.
@@ -277,7 +302,11 @@ function baseOptions(userRoot: string, outdir: string): BuildOptions {
       ].join('\n'),
     },
     loader: { '.ts': 'ts', '.tsx': 'tsx', '.css': 'empty', '.svg': 'dataurl' },
-    plugins: [pagesMdx, mdx({ remarkPlugins: [remarkGfm, remarkModoExamples], jsxImportSource: 'react' })],
+    plugins: [
+      modoSources(),
+      pagesMdx,
+      mdx({ remarkPlugins: [remarkGfm, remarkModoExamples], jsxImportSource: 'react' }),
+    ],
     jsx: 'automatic',
     jsxImportSource: 'react',
     logLevel: 'silent',
