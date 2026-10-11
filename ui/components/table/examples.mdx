@@ -3,8 +3,8 @@ import SortDemo from './sort-demo'
 
 # Basic
 
-Header row without an index, body rows indexed from 0 for the fluid hover
-highlight.
+Body rows join the fluid hover highlight in document order, so they need no
+`index`; the header row stays out.
 
 <div className="w-full">
   <Table>
@@ -16,17 +16,17 @@ highlight.
       </Table.Row>
     </Table.Header>
     <Table.Body>
-      <Table.Row index={0}>
+      <Table.Row>
         <Table.Cell>Alice</Table.Cell>
         <Table.Cell>Engineer</Table.Cell>
         <Table.Cell>Active</Table.Cell>
       </Table.Row>
-      <Table.Row index={1}>
+      <Table.Row>
         <Table.Cell>Bob</Table.Cell>
         <Table.Cell>Designer</Table.Cell>
         <Table.Cell>Away</Table.Cell>
       </Table.Row>
-      <Table.Row index={2}>
+      <Table.Row>
         <Table.Cell>Carol</Table.Cell>
         <Table.Cell>Manager</Table.Cell>
         <Table.Cell>Active</Table.Cell>
@@ -171,8 +171,8 @@ A head with `sortDirection` and `onSort` becomes a sort button: a press cycles a
       </Table.Row>
     </Table.Header>
     <Table.Body>
-      {[['Alice', 'Engineer', 'Platform', 'Active'], ['Bob', 'Designer', 'Brand', 'Away'], ['Carol', 'Manager', 'Platform', 'Active']].map((row, i) => (
-        <Table.Row key={row[0]} index={i}>
+      {[['Alice', 'Engineer', 'Platform', 'Active'], ['Bob', 'Designer', 'Brand', 'Away'], ['Carol', 'Manager', 'Platform', 'Active']].map(row => (
+        <Table.Row key={row[0]}>
           <Table.Cell label="Name">{row[0]}</Table.Cell>
           <Table.Cell label="Role">{row[1]}</Table.Cell>
           <Table.Cell label="Team">{row[2]}</Table.Cell>

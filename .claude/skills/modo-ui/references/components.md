@@ -86,7 +86,7 @@ controlled + uncontrolled.
 | `Card` | `components/card` | `.Group .Header .Title .Description .Action .Content .Footer .Media .Image .Eyebrow .Feature .Button .Divider` | L H W | Transparent and borderless (`border="outlined"` frames a standalone card); only clickable cards join the group's hover; stretched link; `.Divider` is a full-bleed hairline between parts. |
 | `Avatar` | `components/avatar` | `.Image .Fallback` | L | One control tall; circle or square; fallback after a `delay`; 1px inset image edge; image fades in. |
 | `Progress` | `components/progress` | `.Spinner` | L | Determinate fill slides on `spring.moderate`; no `value` sweeps a segment; `showValue`, Intl `format`; loops on `--duration-loop`. |
-| `Table` | `components/table` | `.Header .Body .Footer .Row .Head .Cell .Caption .Empty` | L H | Row hover, semantic markup; sortable heads (icon swap); `stacked` cards below md. |
+| `Table` | `components/table` | `.Header .Body .Footer .Row .Head .Cell .Caption .Empty` | L H | Row hover, semantic markup (body rows numbered in document order, no `index` needed); sortable heads (icon swap); `stacked` cards below md. |
 | `ThinkingIndicator` | `components/thinking-indicator` | — | — | `variant` `shimmer` (default) \| `goo` (three dots melting). |
 
 ## components/inputs
