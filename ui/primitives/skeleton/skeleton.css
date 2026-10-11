@@ -1,8 +1,7 @@
 /*
  * Local addition (not part of Fluid Functionalism): the Skeleton's pulse.
  * Opacity only, one period of `--duration-loop`, every placeholder in step.
- * Skeleton drops the class under reduced motion (useReduceMotion); the media
- * query covers the first paint, before that hook has run.
+ * A fade, so it runs under reduced motion too (DESIGN.md › Motion keeps fades).
  */
 
 @keyframes skeleton-pulse {
@@ -13,10 +12,4 @@
 
 .skeleton-pulse {
   animation: skeleton-pulse var(--duration-loop) ease-in-out infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .skeleton-pulse {
-    animation: none;
-  }
 }
