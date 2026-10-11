@@ -18,6 +18,11 @@ interface PackageJson {
 
 const packageJsons = new Map<string, PackageJson | null>()
 
+/** Forgets every package.json read: a run starts with a fresh view of installs. */
+export function clearPackageCache(): void {
+  packageJsons.clear()
+}
+
 export function readPackageJson(dir: string): PackageJson | null {
   let pkg = packageJsons.get(dir)
   if (pkg !== undefined) return pkg
