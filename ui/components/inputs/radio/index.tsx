@@ -29,7 +29,9 @@
  * bare circle, Base UI's Radio.Root itself (focus, arrow keys, `id` /
  * `<label htmlFor>`, `aria-label(ledby)`), laid out however the caller likes
  * inside a value-mode group, which then draws no rows of its own (no hover,
- * selected background or ring). `disabled` on a row or the whole group.
+ * selected background or ring), and keeps its border when picked. `disabled`
+ * on a row or the whole group (which then dims as a whole); `name` and
+ * `required` on the group reach Base UI's RadioGroup for forms (value mode).
  */
 
 import { Radio as RadioPrimitive } from '@base-ui/react/radio'
@@ -386,10 +388,12 @@ interface RadioCircleProps {
   compact: boolean
   /** Already selected at mount: the dot is there, not scaled in. */
   skipAnimation: boolean
+  /** A bare circle keeps its border when picked: a lone dot would read as a bullet. */
+  bare: boolean
 }
 
 /** The circle's insides: the border and the dot that scales in. */
-function RadioCircle({ selected, active, compact, skipAnimation }: RadioCircleProps) {
+function RadioCircle({ selected, active, compact, skipAnimation, bare }: RadioCircleProps) {
   return (
     <>
       {/* Border */}
@@ -397,7 +401,9 @@ function RadioCircle({ selected, active, compact, skipAnimation }: RadioCirclePr
         className={cn(
           'absolute inset-0 rounded-full border-solid transition-all duration-fast',
           selected
-            ? 'border-[1.5px] border-transparent'
+            ? bare
+              ? 'border-[1.5px] border-control'
+              : 'border-[1.5px] border-transparent'
             : active
               ? 'border-[1.5px] border-control'
               : 'border-[1.5px] border-border',
@@ -503,7 +509,13 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
       else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
     }
     const circle = (
-      <RadioCircle selected={isSelected} active={isActive} compact={compact} skipAnimation={skipAnimation} />
+      <RadioCircle
+        selected={isSelected}
+        active={isActive}
+        compact={compact}
+        skipAnimation={skipAnimation}
+        bare={bare}
+      />
     )
 
     if (bare) {

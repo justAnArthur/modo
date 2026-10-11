@@ -100,6 +100,8 @@ interface SelectContextValue {
   value: string
   open: boolean
   origin: React.RefObject<MorphOrigin>
+  /** Local: whether the picked row's label is plain text (trimmed and truncated) or a node (laid out as is). */
+  textLabel: boolean
 }
 
 const SelectContext = createContext<SelectContextValue | null>(null)
@@ -253,7 +255,9 @@ function Select({ children, value, defaultValue, onValueChange, disabled = false
     [cancelAckClose, capture],
   )
 
-  const ctx = useMemo(() => ({ value: currentValue, open, origin }), [currentValue, open, origin])
+  const picked = items.find(item => item.value === currentValue)?.label
+  const textLabel = picked === undefined || typeof picked === 'string' || typeof picked === 'number'
+  const ctx = useMemo(() => ({ value: currentValue, open, origin, textLabel }), [currentValue, open, origin, textLabel])
 
   // A size prop pins the whole compound (trigger + portalled popup — React
   // context crosses portals) to one step of the ladder.
@@ -296,6 +300,7 @@ interface SelectValueProps {
 
 /** The trigger's value slot: the picked row's label (its children), else the muted placeholder. */
 function SelectValue({ placeholder = 'Select…', className }: SelectValueProps) {
+  const { textLabel } = useSelectContext()
   return (
     <SelectPrimitive.Value
       placeholder={placeholder}
@@ -304,7 +309,10 @@ function SelectValue({ placeholder = 'Select…', className }: SelectValueProps)
       // padding gives glyphs room while the negative margin keeps the
       // trimmed layout box.
       className={cn(
-        'min-w-0 flex-1 text-left truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1 data-[placeholder]:text-muted-foreground',
+        'min-w-0 flex-1 text-left data-[placeholder]:text-muted-foreground',
+        // A node label (a badge, an icon and text) keeps its own box: trimming
+        // and clipping it would cut it top and bottom.
+        textLabel ? 'truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1' : 'flex items-center',
         className,
       )}
     />
@@ -760,7 +768,17 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
         <SelectPrimitive.ItemText
           // py-1/-my-1 keeps truncate's overflow:hidden from clipping
           // ascenders/descenders outside the trimmed box.
-          render={<span className="flex-1 min-w-0 truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1" />}
+          render={
+            <span
+              className={cn(
+                'flex-1 min-w-0',
+                // Nodes keep their own box; only text is trimmed and truncated.
+                typeof children === 'string' || typeof children === 'number'
+                  ? 'truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1'
+                  : 'flex items-center',
+              )}
+            />
+          }
         >
           {children}
         </SelectPrimitive.ItemText>
