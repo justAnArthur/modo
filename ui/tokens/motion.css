@@ -21,6 +21,10 @@
  *
  * Local addition: `goo`, the morph engine's tier for the goo effect — 250ms
  * to land (bounce 0.15), a 200ms spring back — so the liquid neck reads.
+ *
+ * Local addition: `loop`, the period of the ambient animations that run while
+ * something is pending (the skeleton's pulse, the spinner's travel, the
+ * indeterminate bar's sweep). They never land, so they are not a spring tier.
  */
 
 :root {
@@ -32,4 +36,5 @@
   --duration-slow-exit: 160ms;
   --duration-goo: 250ms;
   --duration-goo-exit: 200ms;
+  --duration-loop: 2s;
 }

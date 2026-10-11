@@ -71,7 +71,28 @@ export const theme = {
     border: 'var(--border)',
     ring: 'var(--ring)',
     input: 'var(--input)',
-    destructive: { DEFAULT: 'var(--destructive)', light: 'var(--destructive-light)' },
+    destructive: {
+      DEFAULT: 'var(--destructive)',
+      light: 'var(--destructive-light)',
+      strong: 'var(--destructive-strong)',
+      wash: {
+        DEFAULT: 'var(--destructive-wash)',
+        hover: 'var(--destructive-wash-hover)',
+        active: 'var(--destructive-wash-active)',
+      },
+    },
+    // Button's success variant: the status hue as text on a wash of itself.
+    success: {
+      strong: 'var(--success-strong)',
+      wash: {
+        DEFAULT: 'var(--success-wash)',
+        hover: 'var(--success-wash-hover)',
+        active: 'var(--success-wash-active)',
+      },
+    },
+    skeleton: 'var(--skeleton)',
+    'image-edge': 'var(--image-edge)',
+    'progress-track': 'var(--progress-track)',
     hover: 'var(--hover)',
     active: 'var(--active)',
     syntax: {

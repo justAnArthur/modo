@@ -65,6 +65,32 @@
   --destructive: light-dark(oklch(0.6368 0.2078 25.33), oklch(0.7106 0.1661 22.22));
   --destructive-light: light-dark(oklch(0.971 0.013 17.38), oklch(0.2575 0.0886 26.04));
 
+  /* ── Tinted actions (local) ──
+     Button's destructive and success variants: the hue as text on a wash of
+     itself, never a solid fill behind text (DESIGN.md › Status). The washes
+     mix toward transparent like --hover, so they read on any surface level;
+     hover and press deepen them. The -strong text steps take the hue one
+     notch darker in light mode so a 13px label holds AA contrast on its wash. */
+  --destructive-strong: light-dark(oklch(0.505 0.213 27.518), var(--destructive));
+  --destructive-wash: color-mix(in oklab, var(--destructive) 16%, transparent);
+  --destructive-wash-hover: color-mix(in oklab, var(--destructive) 22%, transparent);
+  --destructive-wash-active: color-mix(in oklab, var(--destructive) 28%, transparent);
+  --success-strong: light-dark(oklch(0.527 0.154 150.069), var(--status-success));
+  --success-wash: color-mix(in oklab, var(--status-success) 16%, transparent);
+  --success-wash-hover: color-mix(in oklab, var(--status-success) 22%, transparent);
+  --success-wash-active: color-mix(in oklab, var(--status-success) 28%, transparent);
+
+  /* ── Placeholders and media edges (local) ──
+     --skeleton: the loading placeholder's fill, a foreground mix like
+     --border so it tracks the scheme and reads on any surface level.
+     --image-edge: the 1px inset outline over avatars and other images, so a
+     pale picture keeps its shape against the surface (upstream FF's media
+     outline: black 10% in light, white 10% in dark). */
+  --skeleton: color-mix(in oklab, var(--foreground) 8%, transparent);
+  --image-edge: light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.1));
+  /* The progress track: a recessed line any fill reads against. */
+  --progress-track: color-mix(in oklab, var(--foreground) 10%, transparent);
+
   /* ── Brand blue ──
      FF's one chromatic accent: the switch's on-track, the copy field's hover
      highlight, drop-target and selected-swatch rings. */

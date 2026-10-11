@@ -1,6 +1,6 @@
 import Button from './index'
 import LoadingDemo from './loading-demo'
-import { ArrowRight, Check, ChevronDown, Loader, Plus, RotateCcw, Search, Settings } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, Loader, Plus, RotateCcw, Search, Settings, Trash2 } from 'lucide-react'
 
 # Variants
 
@@ -20,6 +20,30 @@ to its container.
     <Button variant="tertiary" className="w-full">Tertiary</Button>
     <Button variant="ghost" className="w-full">Ghost</Button>
   </div>
+</div>
+
+# Destructive and success
+
+A status as an action: its hue as the label on a wash of itself, deepening on
+hover and press. Never a solid fill, so the view keeps one primary.
+
+<div className="flex flex-wrap items-center gap-2">
+  <Button variant="destructive" leadingIcon={Trash2}>Delete</Button>
+  <Button variant="success" leadingIcon={Check}>Approve</Button>
+  <Button variant="destructive" size="compact">Remove</Button>
+  <Button variant="success" size="compact">Accept</Button>
+</div>
+
+# Outline and link
+
+`outline` is `tertiary` under its shadcn name. `link` is text on the control
+height: its underline fades in on hover, so the label never moves, and it
+lines up with the buttons beside it.
+
+<div className="flex flex-wrap items-center gap-2">
+  <Button variant="outline">Outline</Button>
+  <Button variant="link">Forgot password?</Button>
+  <Button variant="link" trailingIcon={ArrowRight}>View all</Button>
 </div>
 
 # With Icons
@@ -68,7 +92,7 @@ for two seconds after a press.
 # Sizes
 
 The size ladder: `default` (36px) and `compact` (28px), plus square
-icon-only steps. Icon-only buttons take the icon as their child and need
+icon-only steps. There is no third height: `xs` and `sm` resolve to `compact`. Icon-only buttons take the icon as their child and need
 an `aria-label`.
 
 <div className="flex flex-col gap-3">

@@ -1,0 +1,95 @@
+import Avatar from './index'
+import SizeProvider from '../../primitives/sizes'
+import { Building2 } from 'lucide-react'
+
+# Picture and fallback
+
+The picture fades in once it has loaded. Without one, or when it fails, initials (or a person glyph) show on a neutral ground.
+
+<div className="flex items-center gap-3">
+  <Avatar>
+    <Avatar.Image alt="Ada Lovelace" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'><radialGradient id='a' cx='.3' cy='.25' r='1'><stop stop-color='%23F5C6A5'/><stop offset='1' stop-color='%236B97FF'/></radialGradient><rect width='1' height='1' fill='url(%23a)'/></svg>" />
+    <Avatar.Fallback>AL</Avatar.Fallback>
+  </Avatar>
+  <Avatar>
+    <Avatar.Image alt="Grace Hopper" src="https://invalid.example/missing.png" />
+    <Avatar.Fallback>GH</Avatar.Fallback>
+  </Avatar>
+  <Avatar>
+    <Avatar.Fallback />
+  </Avatar>
+</div>
+
+# Pale pictures
+
+A 1px inset edge keeps a light picture from dissolving into the surface.
+
+<div className="flex items-center gap-3">
+  <Avatar>
+    <Avatar.Image alt="" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'><rect width='1' height='1' fill='white'/></svg>" />
+    <Avatar.Fallback>W</Avatar.Fallback>
+  </Avatar>
+  <Avatar shape="square">
+    <Avatar.Image alt="" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'><rect width='1' height='1' fill='white'/></svg>" />
+    <Avatar.Fallback>W</Avatar.Fallback>
+  </Avatar>
+</div>
+
+# Square
+
+`shape="square"` is for teams, organizations and things. It takes the shape's item radius, so pill mode rounds it further.
+
+<div className="flex items-center gap-3">
+  <Avatar shape="square">
+    <Avatar.Fallback>AC</Avatar.Fallback>
+  </Avatar>
+  <Avatar shape="square">
+    <Avatar.Fallback>
+      <Building2 size={16} strokeWidth={1.5} aria-hidden />
+    </Avatar.Fallback>
+  </Avatar>
+</div>
+
+# Sizes
+
+One control tall: 36px, and 28px in a compact region or with `size="compact"`. A size off the ladder goes through `className`.
+
+<div className="flex flex-col gap-3">
+  <div className="flex items-center gap-3">
+    <Avatar>
+      <Avatar.Fallback>AL</Avatar.Fallback>
+    </Avatar>
+    <Avatar size="compact">
+      <Avatar.Fallback>AL</Avatar.Fallback>
+    </Avatar>
+    <Avatar size="compact" className="size-5 text-micro">
+      <Avatar.Fallback>A</Avatar.Fallback>
+    </Avatar>
+  </div>
+  <SizeProvider size="compact">
+    <div className="flex items-center gap-3">
+      <Avatar>
+        <Avatar.Fallback>GH</Avatar.Fallback>
+      </Avatar>
+      <Avatar>
+        <Avatar.Fallback />
+      </Avatar>
+    </div>
+  </SizeProvider>
+</div>
+
+# A stack
+
+Overlapping avatars with a ring of the page around each.
+
+<div className="flex -space-x-2">
+  <Avatar className="ring-2 ring-background">
+    <Avatar.Fallback>AL</Avatar.Fallback>
+  </Avatar>
+  <Avatar className="ring-2 ring-background">
+    <Avatar.Fallback>GH</Avatar.Fallback>
+  </Avatar>
+  <Avatar className="ring-2 ring-background">
+    <Avatar.Fallback>+3</Avatar.Fallback>
+  </Avatar>
+</div>
