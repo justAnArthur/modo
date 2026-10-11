@@ -34,6 +34,14 @@
  *   with `SurfaceProvider` as `Elevated` did.
  * - `effect="morph"` with `hideSource` opens the menu in place over its
  *   trigger: the positioner's `sideOffset` becomes the engine's `inPlaceOffset`.
+ * - `Select.Item`'s `index` is optional: rows take their place in document
+ *   order (`lib/row-order.tsx`), inside groups, conditionals and maps alike;
+ *   the checked row is found by its own index rather than its DOM position.
+ *   A row's label may be any node (the trigger shows it, through Base UI's
+ *   `items`), with `textValue` for typeahead.
+ * - `Select.Value` (local): the trigger's value slot as a part, so a trigger
+ *   can take it as children (shadcn's `<SelectValue placeholder>`).
+ * - `Select.Content` takes `side` / `align` / `sideOffset` (local).
  */
 
 import { Select as SelectPrimitive } from '@base-ui/react/select'
@@ -58,6 +66,7 @@ import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import type { IconComponent } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
 import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
+import { RowOrderContext, useRowOrder, useRowSlot } from '../../../lib/row-order'
 import { shapeMap, useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
@@ -125,8 +134,8 @@ const popupShape = shapeMap.rounded
  * Walk the children tree collecting `{ value, label }` pairs from SelectItem
  * elements. Passed to Base UI's `items` prop so the trigger can resolve the
  * label of an initial value before the popup has ever mounted (items only
- * render while open). Non-string labels fall back to the raw value, matching
- * the previous labelMap behaviour.
+ * render while open). The label is the row's children, whatever node they
+ * are; a row with none shows its raw value.
  */
 function collectSelectItems(node: ReactNode, out: { value: string; label: ReactNode }[] = []) {
   Children.forEach(node, child => {
@@ -135,7 +144,7 @@ function collectSelectItems(node: ReactNode, out: { value: string; label: ReactN
     if (typeof props.value === 'string') {
       out.push({
         value: props.value,
-        label: typeof props.children === 'string' ? props.children : props.value,
+        label: props.children ?? props.value,
       })
     } else if (props.children) {
       collectSelectItems(props.children, out)
@@ -177,10 +186,22 @@ interface SelectProps {
  * seen; Escape and outside presses close at once. Uncontrolled through
  * `defaultValue`, controlled through `value` + `onValueChange`.
  *
- * Statics: Select.Trigger (variant, icon, placeholder, error),
- * Select.Content (the popup: the morph options from, effect, hideSource,
- * tier), Select.Item (index, value, icon, disabled), Select.Group,
- * Select.Label and Select.Separator.
+ * Rows need no `index`: they take their place in document order, inside a
+ * `Select.Group` or out of a `map`. The trigger shows the picked row's
+ * label, whatever node it is (an icon and text, a badge), and a row's
+ * `textValue` is what typeahead matches when its children aren't plain text.
+ *
+ * Statics:
+ * - `Select.Trigger` — the field: `variant`, `icon`, `placeholder`, `error`;
+ *   children replace its value slot (a `Select.Value`).
+ * - `Select.Value` — the value slot: the picked row's label, else the muted
+ *   `placeholder`.
+ * - `Select.Content` — the popup: `side`, `align`, `sideOffset` and the morph
+ *   options `from`, `effect`, `hideSource`, `tier`.
+ * - `Select.Item` — one row: `value`, optional `index`, `textValue`, `icon`,
+ *   `disabled`; its children are the label.
+ * - `Select.Group`, `Select.Label`, `Select.Separator` — sections, their
+ *   captions and hairlines between them.
  *
  * @example {@include ./examples.mdx}
  */
@@ -263,6 +284,36 @@ function Select({ children, value, defaultValue, onValueChange, disabled = false
 Select.displayName = 'Select'
 
 // ---------------------------------------------------------------------------
+// SelectValue
+// ---------------------------------------------------------------------------
+
+interface SelectValueProps {
+  /** Shown, muted, while nothing is selected. Defaults to `"Select…"`. */
+  placeholder?: ReactNode
+  /** Extra classes for the value text. */
+  className?: string
+}
+
+/** The trigger's value slot: the picked row's label (its children), else the muted placeholder. */
+function SelectValue({ placeholder = 'Select…', className }: SelectValueProps) {
+  return (
+    <SelectPrimitive.Value
+      placeholder={placeholder}
+      // py-1/-my-1: truncate's overflow:hidden clips at the padding
+      // box, and the trimmed box excludes ascenders/descenders — the
+      // padding gives glyphs room while the negative margin keeps the
+      // trimmed layout box.
+      className={cn(
+        'min-w-0 flex-1 text-left truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1 data-[placeholder]:text-muted-foreground',
+        className,
+      )}
+    />
+  )
+}
+
+SelectValue.displayName = 'SelectValue'
+
+// ---------------------------------------------------------------------------
 // SelectTrigger
 // ---------------------------------------------------------------------------
 
@@ -289,6 +340,8 @@ const triggerVariants = cva(
 interface SelectTriggerProps
   extends Omit<HTMLAttributes<HTMLButtonElement>, 'children'>,
     VariantProps<typeof triggerVariants> {
+  /** Replaces the built-in value slot, typically with a `Select.Value` (shadcn's `<SelectValue placeholder>`). The icon and chevron stay. */
+  children?: ReactNode
   /** Visual style of the trigger. Defaults to `"bordered"`. */
   variant?: 'bordered' | 'borderless'
   /** Optional icon displayed before the value. */
@@ -304,7 +357,7 @@ interface SelectTriggerProps
 }
 
 const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
-  ({ className, variant, icon: Icon, placeholder = 'Select…', error, size, ...props }, ref) => {
+  ({ className, variant, icon: Icon, placeholder = 'Select…', error, size, children, ...props }, ref) => {
     const shape = useShape()
     const sizeClasses = useSize(size)
     const compact = sizeClasses.variant === 'compact'
@@ -335,14 +388,7 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
                 className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-fast group-hover:text-foreground group-hover:stroke-[2]"
               />
             )}
-            <SelectPrimitive.Value
-              placeholder={placeholder}
-              // py-1/-my-1: truncate's overflow:hidden clips at the padding
-              // box, and the trimmed box excludes ascenders/descenders — the
-              // padding gives glyphs room while the negative margin keeps the
-              // trimmed layout box.
-              className="min-w-0 flex-1 text-left truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1 data-[placeholder]:text-muted-foreground"
-            />
+            {children ?? <SelectValue placeholder={placeholder} />}
           </span>
 
           <svg
@@ -380,6 +426,12 @@ interface SelectContentProps {
   hideSource?: boolean
   /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
   tier?: 'moderate' | 'slow'
+  /** Side of the trigger the menu prefers; it flips when there is no room. Defaults to `"bottom"`. */
+  side?: 'top' | 'bottom' | 'left' | 'right'
+  /** Alignment against the trigger. Defaults to `"start"`. */
+  align?: 'start' | 'center' | 'end'
+  /** Gap to the trigger, in px. Ignored when the menu opens in place over the trigger (`effect="morph"` with `hideSource`). Defaults to `6`. */
+  sideOffset?: number
   /** Additional classes for the menu container. */
   className?: string
   /** `Select.Item`, `Select.Group`, `Select.Label`, `Select.Separator`. */
@@ -387,8 +439,12 @@ interface SelectContentProps {
 }
 
 const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
-  ({ from, effect, hideSource, tier = 'moderate', className, children }, ref) => {
+  (
+    { from, effect, hideSource, tier = 'moderate', side = 'bottom', align = 'start', sideOffset = 6, className, children },
+    ref,
+  ) => {
     const { open, value, origin } = useSelectContext()
+    const rowOrder = useRowOrder()
     const morph = useMorph(open, origin, { from, effect, hideSource, tier })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
     // Lifts 2 levels off its substrate with a fixed shadow (see Elevated).
@@ -430,9 +486,11 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
         inner = requestAnimationFrame(() => {
           const container = containerRef.current
           if (container) {
-            const items = Array.from(container.querySelectorAll('[data-fluid-hover-index]')) as HTMLElement[]
-            const idx = items.findIndex(el => el.getAttribute('data-value') === value)
-            setCheckedIndex(idx !== -1 ? idx : undefined)
+            // The row's own index: rows may be numbered out of DOM order (an explicit `index`).
+            const row = Array.from(container.querySelectorAll<HTMLElement>('[data-fluid-hover-index]')).find(
+              el => el.getAttribute('data-value') === value,
+            )
+            setCheckedIndex(row ? Number(row.getAttribute('data-fluid-hover-index')) : undefined)
           }
         })
       })
@@ -469,9 +527,9 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
     return (
       <SelectPrimitive.Portal>
         <SelectPrimitive.Positioner
-          side="bottom"
-          align="start"
-          sideOffset={opensInPlace({ effect, hideSource }) ? inPlaceOffset : 6}
+          side={side}
+          align={align}
+          sideOffset={opensInPlace({ effect, hideSource }) ? inPlaceOffset : sideOffset}
           alignItemWithTrigger={false}
           className="z-50 outline-none"
         >
@@ -591,7 +649,7 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
                         </AnimatePresence>
                       )}
 
-                      {children}
+                      <RowOrderContext.Provider value={rowOrder}>{children}</RowOrderContext.Provider>
                     </div>
                   </ScrollArea>
                 </MorphSurface>
@@ -613,10 +671,12 @@ SelectContent.displayName = 'SelectContent'
 interface SelectItemProps extends HTMLAttributes<HTMLDivElement> {
   /** Optional icon displayed before the label. */
   icon?: IconComponent
-  /** Position index within the content — what fluid hover measures rows by. */
-  index: number
+  /** Position among the menu's rows — what fluid hover measures rows by. Defaults to the row's place in document order. */
+  index?: number
   /** Unique value for this option. */
   value: string
+  /** The row's text for typeahead, when its children are not a plain string. */
+  textValue?: string
   /** Disables this individual item. Defaults to `false`. */
   disabled?: boolean
   /** The row label. A string label is also what the trigger shows for this value. */
@@ -624,7 +684,7 @@ interface SelectItemProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
-  ({ className, children, icon: Icon, value, index, disabled = false, ...props }, ref) => {
+  ({ className, children, icon: Icon, value, index: indexProp, textValue, disabled = false, ...props }, ref) => {
     const selectCtx = useSelectContext()
     const contentCtx = useContext(SelectContentContext)
     const internalRef = useRef<HTMLDivElement>(null)
@@ -643,6 +703,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
     // unregistering and re-registering every row and so keeping the hook's
     // measurement permanently unsettled while the pointer moved.
     const registerItem = contentCtx?.registerItem
+    const { index } = useRowSlot(internalRef, indexProp)
     useRegisterFluidHoverItem(registerItem, index, internalRef)
 
     const isActive = contentCtx?.activeIndex === index
@@ -653,7 +714,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
       <SelectPrimitive.Item
         value={value}
         disabled={disabled}
-        label={typeof children === 'string' ? children : undefined}
+        label={textValue ?? (typeof children === 'string' ? children : undefined)}
         render={
           <div
             ref={(node: HTMLDivElement | null) => {
@@ -780,6 +841,7 @@ SelectSeparator.displayName = 'SelectSeparator'
 // (not through Object.assign) so TypeScript's expando inference types them
 // onto the root function declaration.
 Select.Trigger = SelectTrigger
+Select.Value = SelectValue
 Select.Content = SelectContent
 Select.Item = SelectItem
 Select.Group = SelectGroup
@@ -790,7 +852,17 @@ Select.Separator = SelectSeparator
 // Exports
 // ---------------------------------------------------------------------------
 
-export type { SelectContentProps, SelectItemProps, SelectProps, SelectTriggerProps }
-export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, triggerVariants }
+export type { SelectContentProps, SelectItemProps, SelectProps, SelectTriggerProps, SelectValueProps }
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+  triggerVariants,
+}
 
 export default Select
