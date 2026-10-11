@@ -215,7 +215,7 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
           'group/zone relative flex cursor-pointer flex-col items-center justify-center text-center',
           'border border-dashed border-border transition-[background-color,border-color,opacity] duration-fast',
           'hover:bg-muted/50 has-[:focus-visible]:ring-1 has-[:focus-visible]:ring-focus-ring',
-          'data-[dragging=accept]:border-solid data-[dragging=accept]:!bg-muted',
+          'data-[dragging=accept]:border-solid data-[dragging=accept]:!border-border data-[dragging=accept]:!bg-muted',
           'data-[invalid]:border-destructive/50 data-[invalid]:hover:bg-destructive-light/60',
           'data-[dragging=reject]:border-solid data-[dragging=reject]:border-destructive/50 data-[dragging=reject]:!bg-destructive-light/60',
           'data-[readonly]:cursor-default data-[readonly]:hover:bg-transparent',

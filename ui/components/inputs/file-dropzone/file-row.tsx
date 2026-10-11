@@ -102,12 +102,18 @@ function UploadProgress({ value, label }: { value?: number; label: string }) {
     <Progress.Root value={known ? value : null} aria-label={label} className="mt-1">
       <Progress.Track className="relative block h-0.5 overflow-hidden rounded-full bg-muted">
         {/* Scale, not width: the fill grows on the compositor. */}
-        <motion.span
-          className="absolute inset-0 origin-left rounded-full bg-foreground"
-          initial={false}
-          animate={{ scaleX: known ? Math.min(Math.max(value, 0), 100) / 100 : 0.3, opacity: known ? 1 : 0.5 }}
-          transition={reduced ? { duration: 0 } : spring.moderate}
-        />
+        {/* Unknown progress: the whole track breathes instead of pretending to a share. */}
+        <span className={cn('absolute inset-0 transition-opacity duration-moderate', !known && 'opacity-40')}>
+          <motion.span
+            className={cn(
+              'absolute inset-0 origin-left rounded-full bg-foreground',
+              !known && 'animate-pulse motion-reduce:animate-none',
+            )}
+            initial={false}
+            animate={{ scaleX: known ? Math.min(Math.max(value, 0), 100) / 100 : 1 }}
+            transition={reduced ? { duration: 0 } : spring.moderate}
+          />
+        </span>
       </Progress.Track>
     </Progress.Root>
   )
