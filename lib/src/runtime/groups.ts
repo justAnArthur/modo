@@ -1,3 +1,4 @@
+import { ORDER_PREFIX } from '../lib/order'
 import { cap } from './text'
 
 interface Group<T> {
@@ -6,10 +7,15 @@ interface Group<T> {
   groups: Group<T>[]
 }
 
+/** A group folder's title: `form-controls` → `Form controls`; a `02-` ordering prefix is dropped. */
+export function groupTitle(folder: string): string {
+  return cap(folder.replace(ORDER_PREFIX, '').replaceAll('-', ' '))
+}
+
 /**
  * Items as a tree of their group folders (`group` is the folder path,
  * `inputs/date-time`): each level lists its own items first, then its groups
- * in folder-name order; items keep their order. `form-controls` → `Form controls`.
+ * in folder-name order; items keep their order.
  */
 export function groupTree<T extends { group?: string }>(
   list: readonly T[],
@@ -20,7 +26,7 @@ export function groupTree<T extends { group?: string }>(
   return {
     items: list.filter(it => folder(it) === undefined),
     groups: keys.map(key => ({
-      title: cap(key.replaceAll('-', ' ')),
+      title: groupTitle(key),
       ...groupTree(
         list.filter(it => folder(it) === key),
         depth + 1,

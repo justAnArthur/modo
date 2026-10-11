@@ -34,6 +34,20 @@ declare module 'virtual:modo-items' {
   export const exampleScope: Record<string, unknown>
 }
 
+declare module 'virtual:modo-pages' {
+  export type PageEntry = {
+    /** The url path, `/<slug>`; `index` is the home page. */
+    slug: string
+    /** The folders the page sits in, ordering prefixes kept (`02-guides`). */
+    group?: string
+    /** The page's YAML frontmatter; `{}` without one. */
+    frontmatter: Record<string, unknown>
+    Component: import('react').ComponentType<{ components?: Record<string, unknown> }>
+  }
+  /** The `pages/` folder's `.mdx` pages, in file-name order. */
+  export const pages: PageEntry[]
+}
+
 declare module 'virtual:modo-shell' {
   export type PanelItemExport = {
     label: string
