@@ -128,13 +128,32 @@ Each side keeps the neck between trigger and panel; near a viewport edge the pan
   </Popover>
 </div>
 
+# Dismissal
+
+`onOpenChange` gets Base UI's change details with the open state: `details.reason` says what asked (`'escape-key'`, `'outside-press'`, `'trigger-press'`, `'close-press'`, …) and `details.cancel()` keeps the popover as it is. This one ignores a press outside; Escape or Done close it.
+
+<Popover
+  onOpenChange={(open, details) => {
+    if (!open && details.reason === 'outside-press') details.cancel()
+  }}
+>
+  <Popover.Trigger render={<Button variant="secondary">Pin a note</Button>} />
+  <Popover.Content className="w-72 gap-3">
+    <Popover.Title>Pinned note</Popover.Title>
+    <Popover.Description>Click around the page: it stays until you close it.</Popover.Description>
+    <div className="flex justify-end">
+      <Popover.Close render={<Button size="compact">Done</Button>} />
+    </div>
+  </Popover.Content>
+</Popover>
+
 # Anchored to a field
 
 `anchor` positions the panel against another element than its trigger, here
 the whole field around the icon, and the panel grows out of that box.
 `--anchor-width` sizes it to the field. `initialFocus` moves focus to the
-first result when it opens from the keyboard, and `finalFocus` hands it back
-to the text, so typing goes on.
+first result when it opens from the keyboard and leaves the caret in the field
+on a click; `finalFocus` hands focus back to the text, so typing goes on.
 `AnchoredDemo` is a docs stage that holds the refs and the picked value:
 
 ```tsx
@@ -148,7 +167,7 @@ const first = useRef(null)
     <Popover.Content
       anchor={field}
       align="start"
-      initialFocus={type => (type === 'keyboard' ? first.current : true)}
+      initialFocus={type => (type === 'keyboard' ? first.current : false)}
       finalFocus={input}
       className="w-[var(--anchor-width)] max-w-none"
     >

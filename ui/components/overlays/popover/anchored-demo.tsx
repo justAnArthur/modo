@@ -34,8 +34,8 @@ export default function AnchoredDemo() {
           anchor={field}
           align="start"
           sideOffset={8}
-          // From the keyboard, straight onto the first result; a click focuses the panel.
-          initialFocus={type => (type === 'keyboard' ? first.current : true)}
+          // From the keyboard, straight onto the first result; a click leaves the caret in the field.
+          initialFocus={type => (type === 'keyboard' ? first.current : false)}
           finalFocus={input}
           className="w-[var(--anchor-width)] max-w-none gap-0 p-1"
         >

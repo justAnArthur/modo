@@ -235,13 +235,16 @@ const PopoverDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLP
 )
 PopoverDescription.displayName = 'PopoverDescription'
 
+/** What `onOpenChange` receives besides the open state: Base UI's Popover change details. */
+type PopoverOpenChangeDetails = PopoverPrimitive.Root.ChangeEventDetails
+
 interface PopoverProps {
   /** Controlled open state. Pair with `onOpenChange`. */
   open?: boolean
   /** Initial open state, for an uncontrolled popover. Defaults to `false`. */
   defaultOpen?: boolean
-  /** Called when the popover opens or closes. */
-  onOpenChange?: (open: boolean) => void
+  /** Called when the popover opens or closes, with Base UI's change details: `reason` (`'escape-key'`, `'outside-press'`, `'trigger-press'`, …), the `event`, and `cancel()` to keep it as it is. */
+  onOpenChange?: (open: boolean, details: PopoverOpenChangeDetails) => void
   /** Trap focus and block page interaction while open. Defaults to `false`. */
   modal?: boolean
   /** The trigger and the panel — `Popover.Trigger` plus a `Popover.Content`. */
@@ -259,6 +262,7 @@ interface PopoverProps {
  * off its substrate and re-provides that level. Built on Base UI's Popover:
  * it opens on press, or on hover too with `openOnHover`; it flips to the
  * other side when there is no room; Escape and an outside press close it.
+ * `onOpenChange` hears why (`details.reason`) and can `details.cancel()` it.
  *
  * Statics:
  * - `Popover.Trigger` — the control that opens it: `render={<Button/>}` or
@@ -275,7 +279,9 @@ interface PopoverProps {
  * @example {@include ./examples.mdx}
  */
 function Popover({ open, defaultOpen = false, onOpenChange, modal = false, children }: PopoverProps) {
-  const [current, setCurrent] = useControllableState(open, defaultOpen, onOpenChange)
+  // The change is reported here, not through the state hook, so the
+  // handler gets Base UI's details and can cancel it.
+  const [current, setCurrent] = useControllableState(open, defaultOpen)
   const { origin, capture } = useMorphOrigin()
   const ctx = useMemo(() => ({ open: current, origin }), [current, origin])
 
@@ -285,6 +291,8 @@ function Popover({ open, defaultOpen = false, onOpenChange, modal = false, child
         open={current}
         modal={modal}
         onOpenChange={(next, details) => {
+          onOpenChange?.(next, details)
+          if (details.isCanceled) return
           if (next) capture(details)
           setCurrent(next)
         }}
@@ -301,7 +309,7 @@ Popover.Title = PopoverTitle
 Popover.Description = PopoverDescription
 Popover.Close = PopoverClose
 
-export type { PopoverContentProps, PopoverProps, PopoverTriggerProps }
+export type { PopoverContentProps, PopoverOpenChangeDetails, PopoverProps, PopoverTriggerProps }
 export { Popover, PopoverClose, PopoverContent, PopoverDescription, PopoverTitle, PopoverTrigger }
 
 export default Popover
