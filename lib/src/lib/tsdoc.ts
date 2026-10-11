@@ -60,10 +60,12 @@ export function parseDocComment(jsdoc: string, readFile?: ReadInclude): DocComme
   return { description, examples, exampleDocs, errors }
 }
 
-// `@default x` fills the Default column; `@values a, b` is dropped when the
-// type already lists them (a literal union), else kept as prose.
+// `@default x`, else a closing "Defaults to `x`." sentence (kept in the
+// prose), fills the Default column; `@values a, b` is dropped when the type
+// already lists them (a literal union), else kept as prose.
 export function applyPropDoc(prop: ParsedProp, doc: string): void {
-  const def = doc.match(/@default\s+([^\n@]+)/)?.[1]?.trim()
+  const def =
+    doc.match(/@default\s+([^\n@]+)/)?.[1]?.trim() ?? doc.match(/(?:^|[.!?]\s+)Defaults to `([^`]+)`\.(?:\s|$)/)?.[1]
   if (def) prop.default = def
   const literalUnion = /['"`]/.test(prop.type)
   prop.description = doc

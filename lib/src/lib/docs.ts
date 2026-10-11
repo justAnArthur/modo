@@ -379,7 +379,7 @@ function propsOf(
 
   // The code's own default wins over a documented `@default`.
   const defaults = new Map<string, string>()
-  if (impl && ts.isFunctionDeclaration(impl) && param && ts.isObjectBindingPattern(param.name)) {
+  if (param && ts.isObjectBindingPattern(param.name)) {
     for (const el of param.name.elements) {
       const key = el.propertyName ?? el.name
       if (!el.dotDotDotToken && el.initializer && (ts.isIdentifier(key) || ts.isStringLiteral(key)))

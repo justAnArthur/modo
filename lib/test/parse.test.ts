@@ -51,6 +51,17 @@ describe('parseItemSource', () => {
       [undefined, 'Size. One of `default`, `sm`.'],
     ])
   })
+
+  test('a closing "Defaults to `x`." fills the column; @default and the code win', () => {
+    const r = parseItemSource(
+      `import { forwardRef } from 'react'\ninterface P {\n  /** Side. Defaults to \`'start'\`. */\n  side?: string\n  /** Gap. Defaults to \`4\`. @default 8 */\n  gap?: number\n  /** Size. Defaults to \`'md'\`. */\n  size?: string\n}\nconst X = forwardRef<HTMLDivElement, P>(({ size = 'lg' }, ref) => null)\nexport default X\n`,
+    )
+    expect(r.props.map(p => [p.name, p.default])).toEqual([
+      ['side', "'start'"],
+      ['gap', '8'],
+      ['size', "'lg'"],
+    ])
+  })
 })
 
 describe('parseCss', () => {
