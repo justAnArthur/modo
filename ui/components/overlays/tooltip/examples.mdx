@@ -45,15 +45,18 @@ with a description, a small stack of rows.
 
 Leave `content` out and `Tooltip` is the root of a compound tooltip: a
 `Tooltip.Trigger` (`render` or Radix-style `asChild`) and a
-`Tooltip.Content` with `side`, `align` and the offsets. It looks and moves
-the same as the flat form.
+`Tooltip.Content` with `side`, `align` and the offsets (and `render` or
+`asChild` for the label's own element). It looks and moves the same as the
+flat form.
 
 <div className="flex flex-wrap gap-3">
   <Tooltip>
     <Tooltip.Trigger asChild>
       <Button variant="secondary">Archive</Button>
     </Tooltip.Trigger>
-    <Tooltip.Content>Moves it out of the inbox</Tooltip.Content>
+    <Tooltip.Content asChild>
+      <span>Moves it out of the inbox</span>
+    </Tooltip.Content>
   </Tooltip>
   <Tooltip delay={0}>
     <Tooltip.Trigger render={<Button variant="secondary">Start aligned</Button>} />
