@@ -154,13 +154,16 @@ const SheetIndent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>((
 })
 SheetIndent.displayName = 'SheetIndent'
 
+/** What `onOpenChange` receives besides the open state: Base UI's Drawer change details. */
+type SheetOpenChangeDetails = DrawerPrimitive.Root.ChangeEventDetails
+
 interface SheetProps {
   /** Controlled open state. */
   open?: boolean
   /** Initial open state, for an uncontrolled sheet. Defaults to `false`. */
   defaultOpen?: boolean
-  /** Called when the sheet opens or closes, including by a swipe. */
-  onOpenChange?: (open: boolean) => void
+  /** Called when the sheet opens or closes, including by a swipe, with Base UI's change details: `reason` (`'swipe'`, `'escape-key'`, `'outside-press'`, …), the `event`, and `cancel()` to keep it as it is. */
+  onOpenChange?: (open: boolean, details: SheetOpenChangeDetails) => void
   /** The edge the sheet is attached to; a swipe back toward it dismisses it. Defaults to `'bottom'`. */
   side?: 'top' | 'right' | 'bottom' | 'left'
   /** Snap points for a top or bottom sheet: fractions of the viewport height (0–1), pixels, or `px` / `rem` strings. */
@@ -183,7 +186,8 @@ interface SheetProps {
  * go), top and bottom sheets can rest at `snapPoints`, and
  * focus and scroll are held while it is open. It floats a spacing step off
  * its edge and lifts 4 surface levels off its substrate, like a dialog; top
- * and bottom sheets show a handle.
+ * and bottom sheets show a handle. `onOpenChange` hears why
+ * (`details.reason`, `'swipe'` included) and can `details.cancel()` it.
  *
  * Statics:
  * - `Sheet.Trigger`, `Sheet.Header`, `Sheet.Footer`, `Sheet.Title`,
@@ -215,8 +219,8 @@ function Sheet({
           <DrawerPrimitive.Root
             open={root.open}
             onOpenChange={(next, details) => {
-              setSwiped(!next && details.reason === 'swipe')
               root.onOpenChange(next, details)
+              if (!details.isCanceled) setSwiped(!next && details.reason === 'swipe')
             }}
             swipeDirection={SWIPE[side]}
             snapPoints={snapPoints}
@@ -241,7 +245,7 @@ Sheet.Close = DialogClose
 Sheet.Provider = DrawerPrimitive.Provider
 Sheet.Indent = SheetIndent
 
-export type { SheetContentProps, SheetProps, SheetSide }
+export type { SheetContentProps, SheetOpenChangeDetails, SheetProps, SheetSide }
 export { Sheet, SheetContent, SheetIndent }
 
 export default Sheet

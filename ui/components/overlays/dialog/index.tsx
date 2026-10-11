@@ -31,6 +31,13 @@
  *   `Morph.Part` pairs to the dialog.
  * - The trigger / close slot shape moved to `lib/slot.ts`, shared with the
  *   other overlays.
+ * - `onOpenChange(open, details)` hears Base UI's change details (`reason`,
+ *   `event`, `cancel()`), as Popover does: the handler runs before the state
+ *   changes, so `details.cancel()` keeps the dialog as it is (emulates
+ *   Radix's `onEscapeKeyDown` / `onPointerDownOutside` / `onInteractOutside`).
+ *   One-argument handlers keep working. `DialogState` reports through it for
+ *   AlertDialog, Sheet and Command too; `createDialogChangeDetails` builds
+ *   the same shape for a change the library makes itself.
  */
 
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
@@ -242,23 +249,64 @@ const DialogDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLPa
 )
 DialogDescription.displayName = 'DialogDescription'
 
-interface DialogStateProps {
+/** What `onOpenChange` receives besides the open state: Base UI's Dialog change details. */
+type DialogOpenChangeDetails = DialogPrimitive.Root.ChangeEventDetails
+
+/** The part of Base UI's change details `DialogState` reads; Drawer's and AlertDialog's fit too. */
+interface OpenChangeDetailsLike {
+  isCanceled: boolean
+  trigger?: Element
+  event?: Event
+}
+
+/**
+ * Change details in Base UI's shape for a change the library makes itself (an
+ * AlertDialog action closing it, Command's hotkey), so `onOpenChange` handlers
+ * always get `reason`, `event` and a working `cancel()`.
+ */
+function createDialogChangeDetails(
+  reason: DialogOpenChangeDetails['reason'],
+  event: Event = new Event('change'),
+  trigger?: Element,
+): DialogOpenChangeDetails {
+  const details = {
+    reason,
+    event,
+    trigger,
+    isCanceled: false,
+    isPropagationAllowed: false,
+    cancel: () => {
+      details.isCanceled = true
+    },
+    allowPropagation: () => {
+      details.isPropagationAllowed = true
+    },
+    preventUnmountOnClose: () => {},
+  }
+  return details as DialogOpenChangeDetails
+}
+
+interface DialogStateProps<Details extends OpenChangeDetailsLike> {
   open?: boolean
   defaultOpen?: boolean
-  onOpenChange?: (open: boolean) => void
-  children: (root: {
-    open: boolean
-    onOpenChange: (next: boolean, details: { trigger?: Element; event?: Event }) => void
-  }) => ReactNode
+  onOpenChange?: (open: boolean, details: Details) => void
+  children: (root: { open: boolean; onOpenChange: (next: boolean, details: Details) => void }) => ReactNode
 }
 
 /**
  * A dialog's open state, held here (not in Base UI's Root) because the morph
  * reads it, and the open event tells it which trigger was pressed. Also
- * scopes `Morph.Part` pairs. AlertDialog shares it.
+ * scopes `Morph.Part` pairs. AlertDialog, Sheet and Command share it.
  */
-function DialogState({ open, defaultOpen = false, onOpenChange, children }: DialogStateProps) {
-  const [current, setCurrent] = useControllableState(open, defaultOpen, onOpenChange)
+function DialogState<Details extends OpenChangeDetailsLike>({
+  open,
+  defaultOpen = false,
+  onOpenChange,
+  children,
+}: DialogStateProps<Details>) {
+  // The change is reported here, not through the state hook, so the handler
+  // gets Base UI's details and can cancel it.
+  const [current, setCurrent] = useControllableState(open, defaultOpen)
   const { origin, capture } = useMorphOrigin()
   const id = useId()
   const ctx = useMemo(() => ({ open: current, origin }), [current, origin])
@@ -270,6 +318,9 @@ function DialogState({ open, defaultOpen = false, onOpenChange, children }: Dial
         {children({
           open: current,
           onOpenChange: (next, details) => {
+            if (next === current) return
+            onOpenChange?.(next, details)
+            if (details.isCanceled) return
             if (next) capture(details)
             setCurrent(next)
           },
@@ -284,8 +335,8 @@ interface DialogProps {
   open?: boolean
   /** Initial open state, for an uncontrolled dialog. Defaults to `false`. */
   defaultOpen?: boolean
-  /** Called when the dialog opens or closes. */
-  onOpenChange?: (open: boolean) => void
+  /** Called when the dialog opens or closes, with Base UI's change details: `reason` (`'escape-key'`, `'outside-press'`, `'trigger-press'`, `'close-press'`, …), the `event`, and `cancel()` to keep it as it is. */
+  onOpenChange?: (open: boolean, details: DialogOpenChangeDetails) => void
   /** Traps focus and locks page scroll while open. Defaults to `true`. */
   modal?: boolean
   /** The trigger and the content — `Dialog.Trigger` plus a `Dialog.Content`. */
@@ -307,6 +358,8 @@ interface DialogProps {
  * `position="top"` anchors the panel 12dvh down so a content-sized panel (a
  * command menu) keeps its top edge still. Built on Base UI's Dialog: open
  * state is controlled with `open` / `onOpenChange` or left to `defaultOpen`.
+ * `onOpenChange` hears why (`details.reason`) and can `details.cancel()` it,
+ * e.g. to keep the dialog open on an outside press.
  *
  * Statics:
  * - `Dialog.Trigger` — the control that opens it. `render={<Button/>}` or
@@ -346,11 +399,13 @@ Dialog.Close = DialogClose
 
 export type {
   DialogContentProps,
+  DialogOpenChangeDetails,
   DialogProps,
   DialogSlotProps as DialogTriggerProps,
   DialogSlotProps as DialogCloseProps,
 }
 export {
+  createDialogChangeDetails,
   Dialog,
   DialogClose,
   DialogContent,
