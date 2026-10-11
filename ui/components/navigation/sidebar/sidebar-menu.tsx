@@ -24,7 +24,7 @@
  *   `SidebarMenuSub` without `open` follows it. FF's docs held that state in
  *   the page.
  * - Refs written by hand are typed `MutableRefObject` (React 18).
- * - A folded `SidebarMenuSub` is `inert` (through `inertProps`, right on React 18
+ * - A folded `SidebarMenuSub` is `inert` (through `inertProps` from `lib/inert.ts`, right on React 18
  *   and 19): an active sub-row inside it stayed a
  *   tab stop while `aria-hidden` and clipped away.
  * - `sidebarMenuButtonVariants` lives in `./variants.ts` (no JSX, hooks or
@@ -60,6 +60,7 @@ import {
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { GooIndicator } from '../../../lib/goo-indicator'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
+import { inertProps } from '../../../lib/inert'
 import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
@@ -67,7 +68,7 @@ import { useControllableState } from '../../../lib/use-controllable-state'
 import { type ItemRect, useFluidHover } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
-import { inertProps, resolveSlotTemplate, slotElement } from './sidebar-core'
+import { resolveSlotTemplate, slotElement } from './sidebar-core'
 import { sidebarMenuButtonVariants } from './variants'
 
 export { sidebarMenuButtonVariants }

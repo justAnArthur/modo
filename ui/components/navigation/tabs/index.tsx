@@ -17,7 +17,8 @@
  * (`lib/goo-indicator.tsx`, local): they melt from tab to tab instead of
  * sliding; the hover pill now always returns to the active tab as it fades.
  * - `Tabs.Item` `label` takes any node (a counter, a badge) besides a string;
- *   the weight ghost-span keeps holding the width, its hidden copy `inert`.
+ *   the weight ghost-span keeps holding the width, its hidden copy `inert`
+ *   (`markInert` from `lib/inert.ts`).
  *   `href` renders the tab as an anchor (link tabs) through Base UI's `render`.
  */
 
@@ -42,6 +43,7 @@ import {
 } from 'react'
 import { GooIndicator } from '../../../lib/goo-indicator'
 import type { IconComponent } from '../../../lib/icon-context'
+import { markInert } from '../../../lib/inert'
 import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
@@ -373,9 +375,6 @@ const TabsList = forwardRef<HTMLDivElement, TabsListProps>(({ children, classNam
 TabsList.displayName = 'TabsList'
 
 /* ─────────────────────── TabItem ─────────────────────── */
-
-// Set as an attribute, outside React: React 18 and 19 disagree on the `inert` prop's value.
-const markInert = (el: HTMLElement | null) => el?.setAttribute('inert', '')
 
 interface TabItemProps extends ComponentPropsWithoutRef<typeof TabsPrimitive.Tab> {
   /** The tab's value, matched by `Tabs.Panel` and the root's `value`. */

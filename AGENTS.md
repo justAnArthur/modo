@@ -67,7 +67,7 @@ Two vocabularies:
   - `text-syntax-*` (code highlighting), `font-mono`;
   - `spring.*` and `--duration-*`;
   - the morph layer (`lib/use-morph.ts` + `MorphSurface`, docs `primitives/morph`) and the liquid indicators (`lib/goo-indicator.tsx`): overlays grow from their source and travelling indicators melt between items through them, never through hand-rolled animation.
-  - the field ladder (`lib/field-classes.ts`): a text field builds the box around its control with `useFieldBox` (the ladder in its `variant`, `data-active` / `data-invalid` / `data-disabled`, the shape's radius and inset; `focusControlOnPress` for a press in its padding) and re-declares `variant` / `invalid` / `disabled` / `size` in its props; a leading icon takes `fieldIconClasses`. Never its own hover, focus or invalid fills.
+  - the field ladder (`lib/field-classes.ts`): a text field builds the box around its control with `useFieldBox` (the ladder in its `variant`, `data-active` / `data-invalid` / `data-disabled`, the shape's radius and inset; `focusControlOnPress` for a press in its padding) and re-declares `variant` / `invalid` / `disabled` / `size` in its props; a leading icon takes `fieldIconClasses`. Never its own hover, focus or invalid fills. The pure tables live in `lib/field-variants.ts` (server-callable); `useFieldBox` also takes `readOnly` / `required`; adornments use `fieldAdornmentClasses`, actions inside the ring `FIELD_ACTION`.
   - dates and times (`components/inputs/date-time/`): pickers sit on react-day-picker, styled through its `classNames` and custom components (never its stylesheet); they take a react-day-picker / date-fns `locale`, open through the group's `picker-shell.tsx`, and list months, years, hours and minutes in a `ScrollColumn` (`lib/scroll-column.tsx`).
 
 Rules:
@@ -92,8 +92,9 @@ Rules:
 ## docs (TSDoc)
 
 - An item is `<tier>/[<group>/…]<name>/index.tsx`: a default-exported component plus a JSDoc block.
-  - The block anchors to the default export's declaration (function or const), wherever `export default` sits.
-  - The parser extracts `name`, `description`, `props` and `examples`.
+  - The block anchors to the default export's declaration (function or const), wherever `export default` sits, followed through re-exports (`export { default } from 'pkg/…'`, `export { X as default } from './x'`, `import X; export default X`); TSDoc, props and `@example {@include}` are read there, includes relative to that file. A package specifier resolves through its `source` export condition, else `types`; the bundle uses `source` too, so the package exists once.
+  - `{@inheritDoc <ref>}` (a module specifier or an in-scope name) puts the base's description and examples first, then the item's own; inherited examples render the base component; the props table is the item's own full props.
+  - modo extracts `name` (the name the item file binds, else the target's), `description`, `props` and `examples`.
 - **One place per kind:** the TSDoc comment is the item's only prose (summary paragraph = page lead, the rest = body). Examples live in a co-located `examples.mdx`, included with `@example {@include ./examples.mdx}`. Reserve inline `@example` code for a few short cases.
 - **Includes** are TypeDoc inline tags. Paths are relative to `index.tsx`; they are not recursive; a missing file prints `[modo:bundle] warning:`; `.md`/`.mdx` edits reload dev. A `.mdx` include belongs under `@example` (below).
   - `{@include ./x.md}` inlines the file into the description as Markdown (for prose too long for the comment).
@@ -109,10 +110,9 @@ Rules:
 - **Markdown** renders everywhere: item, example and prop descriptions.
   - `marked` lexer → React. Links and fences go through the shell's `Link` / `Code`; raw HTML shows as text.
   - The first paragraph is the lead; the rest renders in `data-modo="prose"`.
-- **Props** come from the destructured params plus the inline object type and per-prop JSDoc.
-  - In a prop's JSDoc, `@default x` fills the Default column (the code's own default wins); `@values a, b` names the allowed values and is dropped when the type already lists them.
-  - A bare identifier type resolves to a same-file interface or type alias.
-  - `const X = forwardRef<…, XProps>` resolves `XProps`.
+- **Props** are read with the TypeScript compiler (`lib/src/lib/docs.ts`): the render function's parameter annotation, `forwardRef<El, Props>`, or the component's type, with per-prop JSDoc.
+  - Inherited members count (`extends`, `Omit` / `Pick` / `Partial`, intersections, across files and packages) when declared in a source file, a modo-documented package or the package the docs came from. React's DOM attributes (`@types/react`) and other libraries' typings (Base UI, react-day-picker) stay out unless re-declared.
+  - The Default column: the destructured default, else `@default x`, else a closing "Defaults to `x`." sentence. `@values a, b` names the allowed values and is dropped when the type already lists them.
   - Shell slot matching reads these props, so a converted component must keep `children` (and `href` for Link) visible.
 - **Parser rules:**
   - `@example` counts only at the start of a JSDoc line.
@@ -170,6 +170,7 @@ Rules:
   - When the upstream component is the item, rename it to `index.tsx` instead (with a local-modifications header).
   - Adapters only for real API transforms: shell contracts, options→children, prop narrowing.
 - Co-located `.css` files in an item dir are auto-injected; don't import them.
+- `pages/**/*.mdx` — free-form docs pages (an introduction, guides, a changelog), outside the tiers (`pages: './docs'` moves the folder). The route is the path without `.mdx`; a leading `01-` orders a file or folder and is dropped from url and title; a folder's `index.mdx` is its landing page, the top-level one the home page (replacing the overview). Frontmatter `title` / `description`; `#` / `##` are the page's sections, `###` / `####` sub-sections. They compile in the shared build like `examples.mdx` (real imports, live JSX blocks). See `lib/README.md`, Pages.
 - Vendored files that trip the linter start with `// biome-ignore-all lint: vendored upstream code…` (or the `/* */` form in CSS), next to their provenance header.
 
 ## running
