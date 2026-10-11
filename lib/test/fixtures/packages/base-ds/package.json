@@ -1,0 +1,14 @@
+{
+  "name": "base-ds",
+  "type": "module",
+  "exports": {
+    "./components/*": {
+      "types": "./dist/components/*/index.d.ts",
+      "source": "./components/*/index.tsx",
+      "default": "./dist/components/*/index.js"
+    }
+  },
+  "devDependencies": {
+    "@justanarthur/modo": "*"
+  }
+}
