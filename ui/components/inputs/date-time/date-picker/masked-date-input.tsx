@@ -144,6 +144,8 @@ interface MaskedDateInputProps
   withTime: boolean
   /** Whether a day may be picked (bounds, disabled days). */
   allowed: (date: Date) => boolean
+  /** Whether emptying the text clears the date; when not, leaving it empty brings the date back. Defaults to `true`. */
+  clearable?: boolean
 }
 
 /** A numeric text field over the locale's date mask. */
@@ -157,6 +159,7 @@ const MaskedDateInput = forwardRef<HTMLInputElement, MaskedDateInputProps>(
       locale,
       withTime,
       allowed,
+      clearable = true,
       onFocus,
       onBlur,
       onKeyDown,
@@ -275,6 +278,12 @@ const MaskedDateInput = forwardRef<HTMLInputElement, MaskedDateInputProps>(
     const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
       setFocused(false)
       const digits = digitsIn(text)
+      if (!digits && !clearable && formatted) {
+        setText(formatted)
+        flag(false)
+        onBlur?.(e)
+        return
+      }
       const date = digits.length === full ? parseMasked(digits, mask, value && isValid(value) ? value : null) : null
       if (digits && !(date && allowed(date))) {
         // Left incomplete or impossible: say so, and let a form see it.

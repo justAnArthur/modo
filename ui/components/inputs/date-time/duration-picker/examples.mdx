@@ -14,3 +14,27 @@ import { de } from 'react-day-picker/locale'
 <div className="w-60 max-w-full">
   <DurationPicker locale={de} maxHours={8} minuteStep={15} placeholder="Dauer" />
 </div>
+
+# Half hours, from one hour
+
+`minHours` starts the hour column and `hourStep` thins it; `formatValue` writes the field's text.
+
+<div className="w-60 max-w-full">
+  <DurationPicker
+    minHours={1}
+    maxHours={12}
+    hourStep={2}
+    minuteStep={30}
+    formatValue={value => value.hours + ' h ' + String(value.minutes).padStart(2, '0') + ' min'}
+    defaultValue={{ hours: 3, minutes: 30 }}
+  />
+</div>
+
+# Slovak labels, read only
+
+`labels` names the columns and the panel's input; `readOnly` shows the duration and never opens.
+
+<div className="flex w-60 max-w-full flex-col gap-2">
+  <DurationPicker locale="sk" labels={{ duration: 'Trvanie', hour: 'Hodiny', minute: 'Minúty', close: 'Zavrieť' }} placeholder="Trvanie" />
+  <DurationPicker readOnly defaultValue={{ hours: 2, minutes: 15 }} />
+</div>

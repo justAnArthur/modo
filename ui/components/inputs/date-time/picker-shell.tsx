@@ -15,20 +15,30 @@
  * text control instead of a button, and only its leading icon, an
  * `InputAction`, opens the panel; the panel still anchors to and grows out
  * of the whole field. `readOnly` shows the value and never opens.
+ *
+ * Form wiring: `controlRef` / `controlProps` reach the field's button (an
+ * editable picker puts its own on its input), and `formValues` render
+ * visually hidden inputs carrying the value for a native form; one the
+ * browser reports as invalid hands focus to the field.
  */
 
 import { Popover } from '@base-ui/react/popover'
 import {
+  type AriaAttributes,
   type ButtonHTMLAttributes,
+  type FocusEvent,
   forwardRef,
+  type HTMLAttributes,
   type ReactElement,
   type ReactNode,
+  type Ref,
   type RefObject,
   useCallback,
+  useMemo,
   useRef,
   useState,
 } from 'react'
-import { type FieldVariant, fieldIconClasses, useFieldBox } from '../../../lib/field-classes'
+import { type FieldVariant, fieldIconClasses, useFieldBox, useFieldState } from '../../../lib/field-classes'
 import { type IconName, useIcon } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
 import { useShape } from '../../../lib/shape-context'
@@ -51,6 +61,78 @@ import { SizeProvider } from '../../../primitives/sizes'
 import Button from '../../button'
 import Sheet from '../../overlays/sheet'
 import Input, { InputAction, InputAdornment, type InputProps } from '../input'
+
+/** Attributes for the element a picker's field renders as its control (its button, or an editable field's input), `data-*` included. */
+type PickerControlAttributes = Omit<
+  HTMLAttributes<HTMLElement>,
+  'children' | 'dangerouslySetInnerHTML' | 'defaultValue' | 'defaultChecked'
+> & { [data: `data-${string}`]: string | number | boolean | undefined }
+
+/** The form and accessibility props every picker forwards to its field's control. */
+interface PickerControlProps {
+  /** Marks the value required: a native form won't submit while it is empty (and an editable field's input carries `required`). Defaults to the surrounding Field's `required`. */
+  required?: boolean
+  /** Called when the field's control (its button, or an editable field's input) loses focus, as when the panel takes it. */
+  onBlur?: (event: FocusEvent<HTMLElement>) => void
+  /** Names the field's control for assistive tech, in place of its label. */
+  'aria-label'?: string
+  /** Ids of the elements naming the field's control, in place of its own label. */
+  'aria-labelledby'?: string
+  /** Ids of the elements describing the field's control (a hint, an error message). */
+  'aria-describedby'?: string
+  /** Marks the value invalid, as `invalid` does. */
+  'aria-invalid'?: AriaAttributes['aria-invalid']
+  /** Attributes for the field's control: the button that opens the panel, or an `editable` field's input (`data-*`, `autoFocus`, `tabIndex`, handlers, which run after the picker's own). */
+  controlProps?: PickerControlAttributes
+}
+
+/** `invalid`, or `true` when `aria-invalid` marks the value invalid (unset stays unset, for a surrounding Field). */
+const invalidOf = (invalid: boolean | undefined, ariaInvalid: AriaAttributes['aria-invalid']) =>
+  ariaInvalid !== undefined && ariaInvalid !== false && ariaInvalid !== 'false' ? true : invalid
+
+/** The control's attributes from a picker's props: `controlProps`, then the named props over them, `onBlur` after its own. */
+function controlAttributes({
+  controlProps,
+  onBlur,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
+  'aria-describedby': ariaDescribedBy,
+}: PickerControlProps): PickerControlAttributes {
+  return {
+    ...controlProps,
+    ...(ariaLabel !== undefined && { 'aria-label': ariaLabel }),
+    ...(ariaLabelledBy !== undefined && { 'aria-labelledby': ariaLabelledBy }),
+    ...(ariaDescribedBy !== undefined && { 'aria-describedby': ariaDescribedBy }),
+    ...(onBlur && {
+      onBlur: (event: FocusEvent<HTMLElement>) => {
+        controlProps?.onBlur?.(event)
+        onBlur(event)
+      },
+    }),
+  }
+}
+
+/** Hands an element to every ref given. */
+function assignRefs<T>(...refs: (Ref<T> | RefObject<unknown> | undefined)[]) {
+  return (node: T | null) => {
+    for (const ref of refs) {
+      if (typeof ref === 'function') ref(node)
+      else if (ref) (ref as { current: T | null }).current = node
+    }
+  }
+}
+
+/** The field's own classes with `controlProps`, whose `className` joins them. */
+function fieldControl(className: string | undefined, controlProps: PickerControlAttributes | undefined) {
+  return { ...controlProps, className: cn(className, controlProps?.className) }
+}
+
+/** One value a native form submits: `name` (when given) and the text it carries; `slot` tells the entries apart. */
+interface PickerFormValue {
+  slot: 'value' | 'start' | 'end'
+  name?: string
+  value: string
+}
 
 interface PickerShellProps {
   open?: boolean
@@ -88,30 +170,102 @@ interface PickerShellProps {
   triggerLabel?: string
   /** Shows the value and never opens. */
   readOnly?: boolean
+  /** Receives the field's button (a plain field; an editable picker refs its own input). */
+  controlRef?: Ref<HTMLButtonElement>
+  /** Attributes for the field's button (a plain field; an editable picker puts its own on its input). */
+  controlProps?: PickerControlAttributes
+  /** What a native form submits: a visually hidden input per entry, rendered once one has a `name` or the field is `required`. */
+  formValues?: PickerFormValue[]
+  /** Marks the hidden inputs required. Defaults to the surrounding Field's `required`. */
+  required?: boolean
   /** The panel body under the header. */
   children: ReactNode
 }
 
 /** The field and its panel: a popover out of the field (or in place of it), or a bottom sheet on a phone. */
-function PickerShell({ open: openProp, defaultOpen = false, onOpenChange, size, ...props }: PickerShellProps) {
+function PickerShell({
+  open: openProp,
+  defaultOpen = false,
+  onOpenChange,
+  size,
+  formValues,
+  required,
+  ...props
+}: PickerShellProps) {
   const [open, setOpenState] = useControllableState(openProp, defaultOpen, onOpenChange)
   const setOpen = (next: boolean) => {
     if (next && props.readOnly) return
     setOpenState(next)
   }
+  const fieldRef = useRef<HTMLElement>(null)
   const mobile = useIsMobile(640)
   const shell = mobile ? (
-    <PickerSheet open={open} setOpen={setOpen} {...props} />
+    <PickerSheet open={open} setOpen={setOpen} fieldRef={fieldRef} {...props} />
   ) : (
-    <PickerPopover open={open} setOpen={setOpen} {...props} />
+    <PickerPopover open={open} setOpen={setOpen} fieldRef={fieldRef} {...props} />
+  )
+  const inputs = formValues && (
+    <PickerFormInputs values={formValues} required={required} disabled={props.disabled} fieldRef={fieldRef} />
+  )
+  const content = inputs ? (
+    <>
+      {shell}
+      {inputs}
+    </>
+  ) : (
+    shell
   )
   // A size pins the field and the portalled panel (context crosses portals).
-  return size ? <SizeProvider size={size}>{shell}</SizeProvider> : shell
+  return size ? <SizeProvider size={size}>{content}</SizeProvider> : content
 }
 
-type PanelProps = Omit<PickerShellProps, 'open' | 'defaultOpen' | 'onOpenChange' | 'size'> & {
+/**
+ * The value for a native form: visually hidden inputs, out of the tab order.
+ * They are real text inputs, not `type="hidden"`, so `required` stops a
+ * submit; when the browser reports one, focus goes to the field.
+ */
+function PickerFormInputs({
+  values,
+  required,
+  disabled,
+  fieldRef,
+}: {
+  values: PickerFormValue[]
+  required?: boolean
+  disabled?: boolean
+  fieldRef: RefObject<HTMLElement>
+}) {
+  const field = useFieldState()
+  const isRequired = required ?? field?.required ?? false
+  if (!isRequired && !values.some(v => v.name)) return null
+  const focusField = () => {
+    const el = fieldRef.current
+    ;(el instanceof HTMLButtonElement ? el : el?.querySelector('input'))?.focus()
+  }
+  return values.map(({ slot, name, value }) => (
+    <input
+      key={slot}
+      aria-hidden
+      tabIndex={-1}
+      name={name}
+      value={value}
+      required={isRequired}
+      disabled={disabled ?? field?.disabled}
+      onChange={() => {}}
+      onFocus={focusField}
+      className="sr-only"
+    />
+  ))
+}
+
+type PanelProps = Omit<
+  PickerShellProps,
+  'open' | 'defaultOpen' | 'onOpenChange' | 'size' | 'formValues' | 'required'
+> & {
   open: boolean
   setOpen: (open: boolean) => void
+  /** The field's element: its button, or an editable field's box. */
+  fieldRef: RefObject<HTMLElement>
 }
 
 type PickerFieldProps = Pick<
@@ -138,7 +292,9 @@ const PickerField = forwardRef<HTMLButtonElement, PickerFieldProps>(
         {...props}
         className={cn(
           boxProps.className,
-          'flex w-full min-w-0 items-center text-left cursor-pointer outline-none focus-visible:ring-focus-ring',
+          'flex w-full min-w-0 items-center text-left outline-none focus-visible:ring-focus-ring',
+          // A read-only field never opens, and doesn't look like it would.
+          readOnly ? 'cursor-default' : 'cursor-pointer',
           sizeClasses.gap,
           sizeClasses.control,
           className,
@@ -165,7 +321,7 @@ type EditableFieldProps = Pick<
 }
 
 /** An editable picker's field: its text control, led by the icon button that opens the panel. */
-const EditableField = forwardRef<HTMLDivElement, EditableFieldProps>(
+const EditableField = forwardRef<HTMLElement, EditableFieldProps>(
   (
     {
       icon,
@@ -184,7 +340,7 @@ const EditableField = forwardRef<HTMLDivElement, EditableFieldProps>(
     const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid, disabled, readOnly })
     return (
       <div
-        ref={ref}
+        ref={ref as Ref<HTMLDivElement>}
         {...boxProps}
         className={cn(
           boxProps.className,
@@ -240,9 +396,12 @@ function PickerPopover({
   children,
   editor,
   triggerLabel,
+  fieldRef,
+  controlRef,
+  controlProps,
   ...field
 }: PanelProps) {
-  const fieldRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useMemo(() => assignRefs<HTMLButtonElement>(fieldRef, controlRef), [fieldRef, controlRef])
   const { origin, capture } = useMorphOrigin()
   const morph = useMorph(open, origin, { from, effect, hideSource, tier })
   const shape = useShape()
@@ -276,7 +435,11 @@ function PickerPopover({
           trigger={button => <Popover.Trigger disabled={field.disabled} render={button as ReactElement} />}
         />
       ) : (
-        <Popover.Trigger disabled={field.disabled} render={<PickerField {...field} />} />
+        <Popover.Trigger
+          ref={triggerRef}
+          disabled={field.disabled}
+          render={<PickerField {...field} {...fieldControl(field.className, controlProps)} />}
+        />
       )}
       <Popover.Portal>
         <Popover.Positioner
@@ -308,7 +471,21 @@ function PickerPopover({
   )
 }
 
-function PickerSheet({ open, setOpen, header, closeLabel, dir, children, editor, triggerLabel, ...field }: PanelProps) {
+function PickerSheet({
+  open,
+  setOpen,
+  header,
+  closeLabel,
+  dir,
+  children,
+  editor,
+  triggerLabel,
+  fieldRef,
+  controlRef,
+  controlProps,
+  ...field
+}: PanelProps) {
+  const triggerRef = useMemo(() => assignRefs<HTMLButtonElement>(fieldRef, controlRef), [fieldRef, controlRef])
   const {
     initialFocus: _focus,
     popupClassName: _width,
@@ -322,13 +499,18 @@ function PickerSheet({ open, setOpen, header, closeLabel, dir, children, editor,
     <Sheet open={open} onOpenChange={setOpen}>
       {editor ? (
         <EditableField
+          ref={fieldRef}
           {...fieldProps}
           editor={editor}
           triggerLabel={triggerLabel}
           trigger={button => <Sheet.Trigger disabled={field.disabled} render={button as ReactElement} />}
         />
       ) : (
-        <Sheet.Trigger disabled={field.disabled} render={<PickerField {...fieldProps} />} />
+        <Sheet.Trigger
+          ref={triggerRef}
+          disabled={field.disabled}
+          render={<PickerField {...fieldProps} {...fieldControl(fieldProps.className, controlProps)} />}
+        />
       )}
       <Sheet.Content className="gap-2 p-3 pt-3">
         <div dir={dir} className="flex min-h-0 flex-col gap-2">
@@ -391,5 +573,5 @@ const PickerInput = forwardRef<HTMLInputElement, PickerInputProps>(
 )
 PickerInput.displayName = 'PickerInput'
 
-export type { PickerShellProps }
-export { PickerInput, PickerShell }
+export type { PickerControlAttributes, PickerControlProps, PickerFormValue, PickerShellProps }
+export { assignRefs, controlAttributes, invalidOf, PickerInput, PickerShell }

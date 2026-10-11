@@ -14,3 +14,32 @@ import { de } from 'react-day-picker/locale'
 <div className="w-60 max-w-full">
   <MonthPicker locale={de} placeholder="Ablaufdatum" startMonth={new Date(2026, 9, 1)} endMonth={new Date(2036, 11, 1)} />
 </div>
+
+# Month only
+
+`withYear={false}` leaves the month column alone, for a month of no particular year.
+
+<div className="w-60 max-w-full">
+  <MonthPicker withYear={false} placeholder="Billing month" defaultValue={new Date(2026, 9, 1)} />
+</div>
+
+# Slovak, labels and format
+
+`locale="sk"` names the months in Slovak; `labels` names the columns and `formatDate` writes the field's text.
+
+<div className="w-60 max-w-full">
+  <MonthPicker
+    locale="sk"
+    formatDate={date => date.toLocaleDateString('sk', { month: 'long', year: 'numeric' })}
+    labels={{ field: 'Mesiac', month: 'Mesiac', year: 'Rok', close: 'Zavrieť' }}
+    defaultValue={new Date(2026, 9, 1)}
+  />
+</div>
+
+# Read only
+
+`readOnly` shows the month and never opens.
+
+<div className="w-60 max-w-full">
+  <MonthPicker readOnly defaultValue={new Date(2026, 9, 1)} />
+</div>

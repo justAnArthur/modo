@@ -2,6 +2,9 @@
  * Local addition (not part of Fluid Functionalism): the scrolling option list
  * the date and time pickers stack beside their calendar (months, years,
  * hours, minutes), or lay out as a strip above it on a narrow panel.
+ * `layout="grid"` lays the options out several to a row (after utegsk/ui's
+ * 0.14 grid picker), with the fluid hover on both axes and the arrow keys
+ * moving by row and by column.
  */
 
 import { type KeyboardEvent, type ReactNode, useEffect, useRef } from 'react'
@@ -31,8 +34,20 @@ interface ScrollColumnProps<T extends number | string> {
   follow?: T | null
   /** A column, or a strip on a narrow panel. Defaults to `'vertical'`. */
   orientation?: 'vertical' | 'horizontal'
+  /** One option per row (or per column, as a strip), or a grid of `columns` options per row scrolling down. Defaults to `'list'`. */
+  layout?: 'list' | 'grid'
+  /** Options per row of a grid, 2 to 6. Defaults to `3`. */
+  columns?: 2 | 3 | 4 | 5 | 6
   className?: string
 }
+
+const GRID_COLUMNS = {
+  2: 'grid-cols-2',
+  3: 'grid-cols-3',
+  4: 'grid-cols-4',
+  5: 'grid-cols-5',
+  6: 'grid-cols-6',
+} as const
 
 /**
  * Scrolls `list` so `item` sits in its middle, on whichever axis it scrolls.
@@ -56,6 +71,10 @@ const dividedColumns = 'flex [&>*+*]:border-s [&>*]:border-border'
 
 const STEP: Record<string, number> = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }
 
+/** The step an arrow key takes: a grid's Up and Down move a whole row. */
+const stepOf = (key: string, grid: boolean, columns: number) =>
+  grid && (key === 'ArrowDown' || key === 'ArrowUp') ? (STEP[key] ?? 0) * columns : STEP[key]
+
 function ScrollColumn<T extends number | string>({
   label,
   options,
@@ -64,6 +83,8 @@ function ScrollColumn<T extends number | string>({
   inView,
   follow = value,
   orientation = 'vertical',
+  layout = 'list',
+  columns = 3,
   className,
 }: ScrollColumnProps<T>) {
   const listRef = useRef<HTMLDivElement>(null)
@@ -71,8 +92,9 @@ function ScrollColumn<T extends number | string>({
   const pointerInside = useRef(false)
   const centred = useRef(false)
   const reduceMotion = useReduceMotion()
-  const horizontal = orientation === 'horizontal'
-  const hover = useFluidHover(containerRef, { axis: horizontal ? 'x' : 'y' })
+  const grid = layout === 'grid'
+  const horizontal = !grid && orientation === 'horizontal'
+  const hover = useFluidHover(containerRef, { axis: grid ? 'xy' : horizontal ? 'x' : 'y' })
   const shape = useShape()
 
   // Recentres only when the followed option (or the axis) changes.
@@ -103,21 +125,31 @@ function ScrollColumn<T extends number | string>({
     return () => observer.disconnect()
   }, [])
 
-  // A run of banded options reads as one band: only its ends are rounded.
+  // A run of banded options reads as one band: only its ends are rounded (a grid's options band one by one).
   const banded = options.map(o => inView?.(o.value) ?? false)
+  const bandOf = (index: number) => {
+    if (!banded[index]) return undefined
+    if (grid) return 'single'
+    if (banded[index - 1]) return banded[index + 1] ? 'middle' : 'end'
+    return banded[index + 1] ? 'start' : 'single'
+  }
 
   const tabStop = options.some(o => o.value === value) ? value : (follow ?? options[0]?.value)
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    const items = [
-      ...(containerRef.current?.querySelectorAll<HTMLButtonElement>('[role="option"]:not(:disabled)') ?? []),
-    ]
-    const at = items.indexOf(document.activeElement as HTMLButtonElement)
-    const next =
-      e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1 : STEP[e.key] ? at + (STEP[e.key] ?? 0) : undefined
-    if (next === undefined) return
+    const items = [...(containerRef.current?.querySelectorAll<HTMLButtonElement>('[role="option"]') ?? [])]
+    const enabled = items.filter(item => !item.disabled)
+    const step = stepOf(e.key, grid, columns)
+    let item: HTMLButtonElement | undefined
+    if (e.key === 'Home') item = enabled[0]
+    else if (e.key === 'End') item = enabled.at(-1)
+    else if (step) {
+      // Past disabled options, in the key's direction; at an edge, the focus stays.
+      let at = items.indexOf(document.activeElement as HTMLButtonElement) + step
+      while (items[at]?.disabled) at += step
+      item = items[at] ?? (document.activeElement as HTMLButtonElement)
+    } else return
     e.preventDefault()
-    const item = items[Math.max(0, Math.min(items.length - 1, next))]
     item?.focus({ preventScroll: true })
     if (item && listRef.current) centre(listRef.current, item, reduceMotion ? 'instant' : 'smooth')
   }
@@ -150,7 +182,10 @@ function ScrollColumn<T extends number | string>({
         onMouseEnter={hover.handlers.onMouseEnter}
         onMouseLeave={hover.handlers.onMouseLeave}
         onClick={hover.handlers.onClick}
-        className={cn('relative flex p-1', horizontal ? 'w-max flex-row' : 'flex-col')}
+        className={cn(
+          'relative p-1',
+          grid ? cn('grid', GRID_COLUMNS[columns]) : cn('flex', horizontal ? 'w-max flex-row' : 'flex-col'),
+        )}
       >
         <FluidHoverHighlight hover={hover} className={shape.bg} />
         {options.map((option, index) => (
@@ -160,18 +195,9 @@ function ScrollColumn<T extends number | string>({
             registerItem={hover.registerItem}
             option={option}
             selected={option.value === value}
-            band={
-              !banded[index]
-                ? undefined
-                : banded[index - 1]
-                  ? banded[index + 1]
-                    ? 'middle'
-                    : 'end'
-                  : banded[index + 1]
-                    ? 'start'
-                    : 'single'
-            }
+            band={bandOf(index)}
             horizontal={horizontal}
+            grid={grid}
             tabStop={option.value === tabStop}
             onSelect={() => onValueChange(option.value)}
           />
@@ -188,6 +214,7 @@ function ScrollColumnItem<T extends number | string>({
   selected,
   band,
   horizontal,
+  grid,
   tabStop,
   onSelect,
 }: {
@@ -197,6 +224,7 @@ function ScrollColumnItem<T extends number | string>({
   selected: boolean
   band?: 'start' | 'middle' | 'end' | 'single'
   horizontal: boolean
+  grid: boolean
   tabStop: boolean
   onSelect: () => void
 }) {
@@ -217,7 +245,8 @@ function ScrollColumnItem<T extends number | string>({
       data-fluid-hover-index={index}
       onClick={onSelect}
       className={cn(
-        'relative z-[1] flex shrink-0 items-center justify-center px-2 tabular-nums whitespace-nowrap outline-none',
+        'relative z-[1] flex items-center justify-center px-2 tabular-nums whitespace-nowrap outline-none',
+        grid ? 'min-w-0' : 'shrink-0',
         'transition-[color,background-color] duration-fast focus-visible:ring-1 focus-visible:ring-focus-ring',
         'disabled:opacity-50 disabled:pointer-events-none',
         sizeClasses.segmentItem,

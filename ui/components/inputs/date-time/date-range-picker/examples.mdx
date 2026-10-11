@@ -1,4 +1,5 @@
 import DateRangePicker from './index'
+import { Label } from '../../input'
 import { de } from 'react-day-picker/locale'
 
 # Basic
@@ -26,4 +27,55 @@ The field writes the range the way the locale does.
     endMonth={new Date(2026, 11, 1)}
     defaultValue={{ from: new Date(2026, 9, 9), to: new Date(2026, 9, 15) }}
   />
+</div>
+
+# Editable
+
+`editable` makes the field two masked inputs, one per end, typed in the locale's numeric order; the calendar icon opens the panel. An end that can't be a date, or one left half typed, turns the field destructive with a caption.
+
+<div className="flex w-80 max-w-full flex-col gap-1">
+  <Label htmlFor="editable-range">Stay</Label>
+  <DateRangePicker id="editable-range" editable locale={de} defaultValue={{ from: new Date(2026, 9, 9), to: new Date(2026, 9, 15) }} />
+</div>
+
+# With time
+
+`withTime` adds the times: the columns set the end being picked, lit in the header (focus an end's input to switch), and the panel stays open. `hourCycle` picks the clock for both the columns and the field.
+
+<div className="w-96 max-w-full">
+  <DateRangePicker
+    withTime
+    hourCycle="h23"
+    minuteStep={15}
+    defaultValue={{ from: new Date(2026, 9, 9, 9, 0), to: new Date(2026, 9, 11, 17, 30) }}
+  />
+</div>
+
+# Editable with time
+
+<div className="w-[30rem] max-w-full">
+  <DateRangePicker editable withTime locale={de} defaultValue={{ from: new Date(2026, 9, 9, 9, 0), to: new Date(2026, 9, 11, 17, 30) }} />
+</div>
+
+# Slovak, labels and format
+
+`locale` takes a BCP 47 tag; `labels` names every part (the ends, the columns, the buttons) and `formatDate` writes each end in the field.
+
+<div className="w-80 max-w-full">
+  <DateRangePicker
+    locale="sk"
+    placeholder="Termín"
+    formatDate={date => date.toLocaleDateString('sk', { day: 'numeric', month: 'long' })}
+    labels={{ start: 'Začiatok', end: 'Koniec', close: 'Zavrieť', month: 'Mesiac', year: 'Rok', calendar: 'Otvoriť kalendár' }}
+    defaultValue={{ from: new Date(2026, 9, 9), to: new Date(2026, 9, 15) }}
+  />
+</div>
+
+# Hidden days and read only
+
+`hidden` leaves the weekends out; `readOnly` shows a range and never opens.
+
+<div className="flex w-80 max-w-full flex-col gap-2">
+  <DateRangePicker placeholder="Working days" hidden={{ dayOfWeek: [0, 6] }} />
+  <DateRangePicker readOnly defaultValue={{ from: new Date(2026, 9, 9), to: new Date(2026, 9, 15) }} />
 </div>

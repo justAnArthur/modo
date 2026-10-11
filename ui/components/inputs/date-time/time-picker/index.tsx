@@ -4,18 +4,44 @@
  * (`hourCycle`, a string value), kept in line with the other pickers here.
  */
 
-import { format, type Locale, set } from 'date-fns'
-import { type RefObject, useRef } from 'react'
-import { defaultLocale, type HourCycle, hourCycleOf, parseTimeText } from '../../../../lib/date-locale'
+import { type Locale, set } from 'date-fns'
+import {
+  type ForwardRefExoticComponent,
+  forwardRef,
+  type ReactNode,
+  type RefAttributes,
+  type RefObject,
+  useRef,
+} from 'react'
+import {
+  defaultLocale,
+  formatTime,
+  type HourCycle,
+  hourCycleOf,
+  parseTimeText,
+  resolveLocale,
+} from '../../../../lib/date-locale'
 import type { FieldVariant } from '../../../../lib/field-classes'
 import { dividedColumns } from '../../../../lib/scroll-column'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
 import { cn } from '../../../../lib/utils'
-import { PickerInput, PickerShell } from '../picker-shell'
+import { controlAttributes, invalidOf, type PickerControlProps, PickerInput, PickerShell } from '../picker-shell'
 import { pad, type Time, TimeColumns } from '../time-columns'
 
-interface TimePickerProps {
+/** Every word the picker shows or announces, for translating it. */
+interface TimePickerLabels {
+  /** Names the panel's time input. Defaults to the `placeholder`, else `"Time"`. */
+  time?: string
+  /** Names the hour column. Defaults to the locale's name for it. */
+  hour?: string
+  /** Names the minute column. Defaults to the locale's name for it. */
+  minute?: string
+  /** Names the panel's close button. Defaults to `"Close"`. */
+  close?: string
+}
+
+interface TimePickerProps extends PickerControlProps {
   /** The picked time as `"HH:mm"` on a 24-hour clock (an `<input type="time">`'s value); `null` when empty. */
   value?: string | null
   /** Initial time, for an uncontrolled picker. Defaults to `null`. */
@@ -26,8 +52,16 @@ interface TimePickerProps {
   hourCycle?: HourCycle
   /** Steps between the minute column's options. Defaults to `1`. */
   minuteStep?: number
-  /** A react-day-picker / date-fns locale: the time's format and the AM/PM names. Defaults to `enUS`. */
-  locale?: Locale
+  /** A react-day-picker / date-fns locale, or a BCP 47 tag (`"sk"`) read through Intl: the time's format and the AM/PM names. Defaults to `enUS`. */
+  locale?: Locale | string
+  /** The field's text for a time, in place of the locale's format: `(value) => …`, given `"HH:mm"`. */
+  formatTime?: (value: string) => ReactNode
+  /** Every word the picker announces (`time`, `hour`, `minute`, `close`), for translating it. Defaults to English and the locale's field names. */
+  labels?: TimePickerLabels
+  /** Shows the time but never opens. Defaults to `false`. */
+  readOnly?: boolean
+  /** Names the value for a native form: a hidden input carries it as `"HH:mm"`. */
+  name?: string
   /** Shown while empty. */
   placeholder?: string
   /** Disables the field. Defaults to `false`. */
@@ -69,39 +103,59 @@ const toValue = ({ hours, minutes }: Time) => `${pad(hours)}:${pad(minutes)}`
  *
  * The panel opens with the time as text, selected and ready to type over
  * ("15:33", "3:33 PM"), above an hour column and a minute column; on a
- * 12-hour clock the hours read with AM/PM. Each column keeps its pick in the middle and
+ * 12-hour clock the hours read with AM/PM, and the field writes the time on
+ * the same clock. Each column keeps its pick in the middle and
  * marks it with a dot. The value is `"HH:mm"` on a 24-hour clock whatever the
  * locale shows, the same as a native time input's.
  *
+ * `formatTime` writes the field's text and `labels` every word it
+ * announces; `locale` also takes a BCP 47 tag. `readOnly` shows the time
+ * and never opens. In a form, `name` submits the value as `"HH:mm"` and
+ * `required` stops an empty submit; `id`, the `aria-*` props, `onBlur`,
+ * `controlProps` and the `ref` reach the field's button.
+ *
  * @example {@include ./examples.mdx}
  */
-function TimePicker({
-  value: valueProp,
-  defaultValue = null,
-  onValueChange,
-  hourCycle,
-  minuteStep = 1,
-  locale = defaultLocale,
-  placeholder,
-  disabled,
-  variant,
-  invalid,
-  size,
-  open: openProp,
-  defaultOpen = false,
-  onOpenChange,
-  id,
-  from,
-  effect,
-  hideSource,
-  tier,
-  className,
-}: TimePickerProps) {
+const TimePicker: ForwardRefExoticComponent<TimePickerProps & RefAttributes<HTMLButtonElement>> = forwardRef<
+  HTMLButtonElement,
+  TimePickerProps
+>(function TimePicker(
+  {
+    value: valueProp,
+    defaultValue = null,
+    onValueChange,
+    hourCycle,
+    minuteStep = 1,
+    locale: localeProp = defaultLocale,
+    formatTime: formatValue,
+    labels,
+    readOnly = false,
+    name,
+    placeholder,
+    disabled,
+    variant,
+    invalid,
+    size,
+    open: openProp,
+    defaultOpen = false,
+    onOpenChange,
+    id,
+    from,
+    effect,
+    hideSource,
+    tier,
+    className,
+    ...control
+  },
+  ref,
+) {
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
   const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
   const input = useRef<HTMLInputElement>(null)
+  const locale = resolveLocale(localeProp)
+  const clock = hourCycle ?? hourCycleOf(locale)
   const time = toTime(value)
-  const formatted = time ? format(set(new Date(), time), 'p', { locale }) : ''
+  const formatted = time ? formatTime(set(new Date(), time), locale, hourCycle) : ''
 
   const readTime = (text: string) => {
     if (!text.trim()) {
@@ -120,15 +174,21 @@ function TimePicker({
       onOpenChange={setOpen}
       size={size}
       variant={variant}
-      invalid={invalid}
+      invalid={invalidOf(invalid, control['aria-invalid'])}
       disabled={disabled}
+      readOnly={readOnly}
       icon="clock"
-      display={formatted}
+      display={time && formatValue ? formatValue(toValue(time)) : formatted}
       placeholder={placeholder}
+      closeLabel={labels?.close}
+      controlRef={ref}
+      controlProps={controlAttributes(control)}
+      formValues={[{ slot: 'value', name, value: time ? toValue(time) : '' }]}
+      required={control.required}
       header={
         <PickerInput
           ref={input}
-          aria-label={placeholder || 'Time'}
+          aria-label={labels?.time || placeholder || 'Time'}
           placeholder={placeholder}
           formatted={formatted}
           onText={readTime}
@@ -149,18 +209,19 @@ function TimePicker({
         <TimeColumns
           value={time}
           onValueChange={next => setValue(toValue(next))}
-          hourCycle={hourCycle ?? hourCycleOf(locale)}
+          hourCycle={clock}
           minuteStep={minuteStep}
           locale={locale}
           orientation="vertical"
           fill
+          labels={labels}
         />
       </div>
     </PickerShell>
   )
-}
+})
 
-export type { TimePickerProps }
+export type { TimePickerLabels, TimePickerProps }
 export { TimePicker }
 
 export default TimePicker

@@ -6,24 +6,60 @@
  */
 
 import { addYears, endOfYear, format, type Locale, startOfMonth, startOfYear } from 'date-fns'
-import { type RefObject, useMemo, useRef } from 'react'
-import { defaultLocale, fieldLabel, parseMonthText } from '../../../../lib/date-locale'
+import {
+  type ForwardRefExoticComponent,
+  forwardRef,
+  type ReactNode,
+  type RefAttributes,
+  type RefObject,
+  useMemo,
+  useRef,
+} from 'react'
+import {
+  defaultLocale,
+  fieldLabel,
+  parseMonthNameText,
+  parseMonthText,
+  resolveLocale,
+} from '../../../../lib/date-locale'
 import type { FieldVariant } from '../../../../lib/field-classes'
 import { dividedColumns, ScrollColumn } from '../../../../lib/scroll-column'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
 import { cn } from '../../../../lib/utils'
-import { PickerInput, PickerShell } from '../picker-shell'
+import { controlAttributes, invalidOf, type PickerControlProps, PickerInput, PickerShell } from '../picker-shell'
 
-interface MonthPickerProps {
+/** Every word the picker announces, for translating it. */
+interface MonthPickerLabels {
+  /** Names the panel's month input. Defaults to the `placeholder`, else `"Month"`. */
+  field?: string
+  /** Names the month column. Defaults to the locale's name for it. */
+  month?: string
+  /** Names the year column. Defaults to the locale's name for it. */
+  year?: string
+  /** Names the panel's close button. Defaults to `"Close"`. */
+  close?: string
+}
+
+interface MonthPickerProps extends PickerControlProps {
   /** The picked month as its first day; `null` when empty. */
   value?: Date | null
   /** Initial month, for an uncontrolled picker. Defaults to `null`. */
   defaultValue?: Date | null
   /** Called with the new month's first day, or `null` when the field is cleared. */
   onValueChange?: (value: Date | null) => void
-  /** A react-day-picker / date-fns locale: month names and what typing reads. Defaults to `enUS`. */
-  locale?: Locale
+  /** A react-day-picker / date-fns locale, or a BCP 47 tag (`"sk"`) read through Intl: month names and what typing reads. Defaults to `enUS`. */
+  locale?: Locale | string
+  /** Adds the year column, and the year to the field. `false` leaves a month of the current year (or of the value's). Defaults to `true`. */
+  withYear?: boolean
+  /** The field's text for a month, in place of the locale's ("October 2026"): `(date) => …`, given its first day. */
+  formatDate?: (date: Date) => ReactNode
+  /** Every word the picker announces (`field`, `month`, `year`, `close`), for translating it. Defaults to English and the locale's field names. */
+  labels?: MonthPickerLabels
+  /** Shows the month but never opens. Defaults to `false`. */
+  readOnly?: boolean
+  /** Names the value for a native form: a hidden input carries it as `"yyyy-MM"` (an `<input type="month">`'s value). */
+  name?: string
   /** Shown while empty. */
   placeholder?: string
   /** The first month that can be picked. Defaults to 100 years back. */
@@ -64,40 +100,60 @@ interface MonthPickerProps {
  * The panel has the month as text to type over ("October 2026", "10/2026"),
  * above a month column and a year column; the picked month and year carry a
  * dot. The value is the month's first day, the way react-day-picker names a
- * month.
+ * month. `withYear={false}` leaves the month column alone, for a month of
+ * no particular year (the value keeps the current year).
+ *
+ * `formatDate` writes the field's text and `labels` every word it
+ * announces; `locale` also takes a BCP 47 tag. `readOnly` shows the month
+ * and never opens. In a form, `name` submits the value as `"yyyy-MM"` and
+ * `required` stops an empty submit; `id`, the `aria-*` props, `onBlur`,
+ * `controlProps` and the `ref` reach the field's button.
  *
  * @example {@include ./examples.mdx}
  */
-function MonthPicker({
-  value: valueProp,
-  defaultValue = null,
-  onValueChange,
-  locale = defaultLocale,
-  placeholder,
-  startMonth,
-  endMonth,
-  disabled,
-  variant,
-  invalid,
-  size,
-  open: openProp,
-  defaultOpen = false,
-  onOpenChange,
-  id,
-  from,
-  effect,
-  hideSource,
-  tier,
-  className,
-}: MonthPickerProps) {
+const MonthPicker: ForwardRefExoticComponent<MonthPickerProps & RefAttributes<HTMLButtonElement>> = forwardRef<
+  HTMLButtonElement,
+  MonthPickerProps
+>(function MonthPicker(
+  {
+    value: valueProp,
+    defaultValue = null,
+    onValueChange,
+    locale: localeProp = defaultLocale,
+    withYear = true,
+    formatDate,
+    labels,
+    readOnly = false,
+    name,
+    placeholder,
+    startMonth,
+    endMonth,
+    disabled,
+    variant,
+    invalid,
+    size,
+    open: openProp,
+    defaultOpen = false,
+    onOpenChange,
+    id,
+    from,
+    effect,
+    hideSource,
+    tier,
+    className,
+    ...control
+  },
+  ref,
+) {
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
   const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
   const input = useRef<HTMLInputElement>(null)
+  const locale = resolveLocale(localeProp)
   const today = useMemo(() => new Date(), [])
   const start = startOfMonth(startMonth ?? startOfYear(addYears(today, -100)))
   const end = startOfMonth(endMonth ?? endOfYear(addYears(today, 50)))
   const year = value?.getFullYear() ?? today.getFullYear()
-  const formatted = value ? format(value, 'LLLL y', { locale }) : ''
+  const formatted = value ? format(value, withYear ? 'LLLL y' : 'LLLL', { locale }) : ''
 
   // Clamped into the range, so a year change can't land outside it.
   const pick = (date: Date) => setValue(startOfMonth(date < start ? start : date > end ? end : date))
@@ -107,7 +163,7 @@ function MonthPicker({
       setValue(null)
       return true
     }
-    const read = parseMonthText(text, locale)
+    const read = withYear ? parseMonthText(text, locale) : parseMonthNameText(text, locale, new Date(year, 0, 1))
     if (!read || read < start || read > end) return false
     setValue(startOfMonth(read))
     return true
@@ -137,15 +193,21 @@ function MonthPicker({
       onOpenChange={setOpen}
       size={size}
       variant={variant}
-      invalid={invalid}
+      invalid={invalidOf(invalid, control['aria-invalid'])}
       disabled={disabled}
+      readOnly={readOnly}
       icon="calendar"
-      display={formatted}
+      display={value && formatDate ? formatDate(value) : formatted}
       placeholder={placeholder}
+      closeLabel={labels?.close}
+      controlRef={ref}
+      controlProps={controlAttributes(control)}
+      formValues={[{ slot: 'value', name, value: value ? format(value, 'yyyy-MM') : '' }]}
+      required={control.required}
       header={
         <PickerInput
           ref={input}
-          aria-label={placeholder || 'Month'}
+          aria-label={labels?.field || placeholder || 'Month'}
           placeholder={placeholder}
           formatted={formatted}
           onText={readMonth}
@@ -164,27 +226,29 @@ function MonthPicker({
     >
       <div className={cn(dividedColumns, 'h-56')}>
         <ScrollColumn
-          label={fieldLabel(locale, 'month')}
+          label={labels?.month ?? fieldLabel(locale, 'month')}
           options={months}
           value={value?.getMonth() ?? null}
           follow={value?.getMonth() ?? today.getMonth()}
           onValueChange={m => pick(new Date(year, m, 1))}
           className="min-w-0 flex-1"
         />
-        <ScrollColumn
-          label={fieldLabel(locale, 'year')}
-          options={years}
-          value={value?.getFullYear() ?? null}
-          follow={year}
-          onValueChange={y => pick(new Date(y, value?.getMonth() ?? today.getMonth(), 1))}
-          className="min-w-0 flex-1"
-        />
+        {withYear && (
+          <ScrollColumn
+            label={labels?.year ?? fieldLabel(locale, 'year')}
+            options={years}
+            value={value?.getFullYear() ?? null}
+            follow={year}
+            onValueChange={y => pick(new Date(y, value?.getMonth() ?? today.getMonth(), 1))}
+            className="min-w-0 flex-1"
+          />
+        )}
       </div>
     </PickerShell>
   )
-}
+})
 
-export type { MonthPickerProps }
+export type { MonthPickerLabels, MonthPickerProps }
 export { MonthPicker }
 
 export default MonthPicker
