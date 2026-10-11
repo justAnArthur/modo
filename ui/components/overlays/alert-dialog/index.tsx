@@ -62,11 +62,11 @@ const AlertDialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
 AlertDialogContent.displayName = 'AlertDialogContent'
 
 interface AlertDialogActionProps extends Omit<SlotProps, 'onClick'> {
-  /** The confirm. Return a promise to keep the dialog open, the button loading and every way out locked until it settles: it closes on resolve and stays open on reject. Call `event.preventDefault()` to keep it open after a plain return. */
+  /** The confirm. Return a promise to keep the dialog open, the button loading and every way out locked until it settles: it closes on resolve and stays open on reject. A plain return closes it at once, or, with `pending` set, once `pending` turns true and back to false. Call `event.preventDefault()` to keep it open after a plain return. */
   onClick?: (event: MouseEvent<HTMLButtonElement>) => unknown
   /** Called with the reason when the promise `onClick` returned rejects; the dialog stays open. */
   onError?: (error: unknown) => void
-  /** Holds the pending state from outside (a mutation's `isPending`): loading, and the dialog locked, while true. Defaults to `false`. */
+  /** Holds the pending state from outside (a mutation's `isPending`): loading, and the dialog locked, while true. Once set, a plain `onClick` (`() => mutate()`) leaves the dialog open until `pending` goes true and back to false, then closes it — on failure too; return the promise (`mutateAsync`) to stay open when it rejects. */
   pending?: boolean
   /** The Button's variant when there is no `render` element. Defaults to `"primary"`. */
   variant?: ButtonVariant
@@ -78,22 +78,23 @@ const isThenable = (value: unknown): value is PromiseLike<unknown> =>
 /** The confirm button: runs `onClick`, waits on the promise it returns, then closes. */
 const AlertDialogAction = forwardRef<HTMLButtonElement, AlertDialogActionProps>(
   (
-    {
-      onClick,
-      onError,
-      pending: pendingProp = false,
-      variant = 'primary',
-      render,
-      asChild,
-      children,
-      disabled,
-      ...props
-    },
+    { onClick, onError, pending: pendingProp, variant = 'primary', render, asChild, children, disabled, ...props },
     ref,
   ) => {
     const { setPending, close } = useContext(AlertDialogPendingContext)
     const [running, setRunning] = useState(false)
-    const busy = pendingProp || running
+    const busy = Boolean(pendingProp) || running
+    // A plain onClick under a controlled `pending` waits for it to go true and back to false.
+    const awaiting = useRef(false)
+    const wasPending = useRef(pendingProp)
+
+    useEffect(() => {
+      if (wasPending.current && !pendingProp && awaiting.current) {
+        awaiting.current = false
+        close()
+      }
+      wasPending.current = pendingProp
+    }, [pendingProp, close])
 
     useEffect(() => {
       setPending(busy)
@@ -104,7 +105,9 @@ const AlertDialogAction = forwardRef<HTMLButtonElement, AlertDialogActionProps>(
       if (busy) return
       const result = onClick?.(event)
       if (!isThenable(result)) {
-        if (!event.defaultPrevented) close()
+        if (event.defaultPrevented) return
+        if (pendingProp === undefined) close()
+        else awaiting.current = true
         return
       }
       // Lock at once, not a render later: an Escape in between must not slip through.
@@ -186,7 +189,10 @@ interface AlertDialogProps {
  * the button folds into a spinner and the dialog holds still: Cancel greys
  * out, and Escape and every close are ignored until the promise settles. It
  * closes when the promise resolves and stays open when it rejects, handing
- * the reason to `onError`, so the person can try again or cancel.
+ * the reason to `onError`, so the person can try again or cancel. With a
+ * mutation's state in `pending` instead, a plain `onClick={() => mutate()}`
+ * keeps the dialog open, locked while `pending` is true, and closes it once
+ * `pending` falls back to false.
  *
  * Statics:
  * - `AlertDialog.Action` — the confirm button: `onClick` (may return a
@@ -208,7 +214,8 @@ function AlertDialog({ children, open, defaultOpen, onOpenChange }: AlertDialogP
     setPendingState(next)
   }, [])
   const closeRef = useRef<() => void>(() => {})
-  const ctx = useMemo(() => ({ pending, setPending, close: () => closeRef.current() }), [pending, setPending])
+  const close = useCallback(() => closeRef.current(), [])
+  const ctx = useMemo(() => ({ pending, setPending, close }), [pending, setPending, close])
 
   return (
     <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
