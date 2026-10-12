@@ -107,3 +107,30 @@ The morph options of every overlay: here the panel grows as a plain morph on the
     </NavigationMenu.List>
   </NavigationMenu>
 </div>
+
+# Landmark and slots
+
+The root is the `<nav>`: it takes a ref and HTML attributes, so give it an `aria-label`. `asChild` on `Trigger` and
+`Content` makes them the element you pass, which keeps its type and ref: here the panel is a real `ul` of `li` links.
+
+<div className="flex min-h-[240px] w-full justify-center">
+  <NavigationMenu aria-label="Main">
+    <NavigationMenu.List>
+      <NavigationMenu.Item value="docs">
+        <NavigationMenu.Trigger asChild>
+          <button type="button">Docs</button>
+        </NavigationMenu.Trigger>
+        <NavigationMenu.Content asChild className="m-0 flex w-56 list-none flex-col">
+          <ul>
+            <li><NavigationMenu.Link href="#start" icon={BookOpen}>Getting started</NavigationMenu.Link></li>
+            <li><NavigationMenu.Link href="#guides" icon={Newspaper}>Guides</NavigationMenu.Link></li>
+            <li><NavigationMenu.Link href="#api" icon={Code}>API reference</NavigationMenu.Link></li>
+          </ul>
+        </NavigationMenu.Content>
+      </NavigationMenu.Item>
+      <NavigationMenu.Item>
+        <NavigationMenu.Link href="#pricing">Pricing</NavigationMenu.Link>
+      </NavigationMenu.Item>
+    </NavigationMenu.List>
+  </NavigationMenu>
+</div>

@@ -1,7 +1,8 @@
 import Dropdown from './index'
 import Button from '../../button'
 import Dialog from '../dialog'
-import { Bell, ChevronDown, Clock, Copy, Ellipsis, Lock, LogOut, Mail, Monitor, Palette, Pencil, Settings, Shield, SquareLibrary, Star, Trash2, User, Users } from 'lucide-react'
+import Input from '../../inputs/input'
+import { Bell, BookOpen, ChevronDown, Clock, Copy, Ellipsis, Lock, LogOut, Mail, Monitor, Palette, Pencil, Settings, Shield, SquareLibrary, Star, Trash2, User, Users } from 'lucide-react'
 
 # Basic
 
@@ -292,3 +293,144 @@ included — and so does its submenu above the menu.
     </Dropdown.Menu>
   </Dialog.Content>
 </Dialog>
+
+# Open-change details
+
+`onOpenChange(open, details)` hands over Base UI's event details: `details.reason` says why the menu is closing
+(`'escape-key'`, `'outside-press'`, `'focus-out'`, `'item-press'`, `'trigger-press'`) and `details.cancel()` keeps it
+open. Here an outside press is refused, so only Escape, a pick or the trigger close it. A callback that takes just
+`open` keeps working.
+
+<Dropdown.Menu onOpenChange={(open, details) => { if (!open && details.reason === 'outside-press') details.cancel() }}>
+  <Dropdown.Trigger render={<Button variant="secondary">Pinned open</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Item icon={Pencil}>Edit</Dropdown.Item>
+    <Dropdown.Item icon={Copy}>Duplicate</Dropdown.Item>
+    <Dropdown.Sub>
+      <Dropdown.SubTrigger icon={Palette}>Theme</Dropdown.SubTrigger>
+      <Dropdown.SubContent>
+        <Dropdown.Item>Light</Dropdown.Item>
+        <Dropdown.Item>Dark</Dropdown.Item>
+      </Dropdown.SubContent>
+    </Dropdown.Sub>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Modal
+
+`modal` locks the page scroll while the menu is open and keeps the pointer off everything outside it. Without it
+(the default) the page keeps scrolling and the menu follows its trigger.
+
+<Dropdown.Menu modal>
+  <Dropdown.Trigger render={<Button variant="secondary">Modal menu</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Item icon={Pencil}>Edit</Dropdown.Item>
+    <Dropdown.Item icon={Trash2}>Delete</Dropdown.Item>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Link rows
+
+`asChild` turns a row into its single child, which keeps its element type, props and ref, so a row can be a plain link
+or a router `Link`; its children are the row's content. `render={<Link href="/docs" />}` does the same. Enter and a
+click follow it once.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="secondary">Help</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Item asChild icon={BookOpen} className="no-underline">
+      <a href="#docs">Documentation</a>
+    </Dropdown.Item>
+    <Dropdown.Item asChild icon={Mail} className="no-underline">
+      <a href="#support">Contact support</a>
+    </Dropdown.Item>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Typeahead for rich rows
+
+Typing while the menu is open jumps to the row whose text starts with what you typed. A row built from markup has no
+string to match, so `textValue` supplies it: here "ad" lands on the first row, "gr" on the second.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="secondary">Assign to</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Item textValue="Ada Lovelace">
+      <User />
+      <span className="truncate">Ada Lovelace</span>
+      <Dropdown.Shortcut>Admin</Dropdown.Shortcut>
+    </Dropdown.Item>
+    <Dropdown.Item textValue="Grace Hopper">
+      <User />
+      <span className="truncate">Grace Hopper</span>
+      <Dropdown.Shortcut>Editor</Dropdown.Shortcut>
+    </Dropdown.Item>
+    <Dropdown.Item textValue="Linus Torvalds">
+      <User />
+      <span className="truncate">Linus Torvalds</span>
+      <Dropdown.Shortcut>Viewer</Dropdown.Shortcut>
+    </Dropdown.Item>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Focus return
+
+`finalFocus` decides where focus lands once the menu has closed: a ref, or a function returning an element, instead of
+the trigger. Pick a country and the cursor goes to the phone field, also inside a dialog.
+
+<Dialog>
+  <Dialog.Trigger render={<Button variant="tertiary">Add a phone number</Button>} />
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Phone number</Dialog.Title>
+      <Dialog.Description>Choose a country code, then type the number.</Dialog.Description>
+    </Dialog.Header>
+    <div className="flex items-center gap-2">
+      <Dropdown.Menu>
+        <Dropdown.Trigger render={<Button variant="secondary" trailingIcon={ChevronDown}>Country code</Button>} />
+        <Dropdown.Content finalFocus={() => document.getElementById('dropdown-phone-field')}>
+          <Dropdown.Item textValue="Slovakia">Slovakia +421</Dropdown.Item>
+          <Dropdown.Item textValue="Czechia">Czechia +420</Dropdown.Item>
+          <Dropdown.Item textValue="Germany">Germany +49</Dropdown.Item>
+        </Dropdown.Content>
+      </Dropdown.Menu>
+      <Input id="dropdown-phone-field" aria-label="Phone number" placeholder="900 000 000" />
+    </div>
+  </Dialog.Content>
+</Dialog>
+
+# Placement and layering
+
+Everything Base UI's positioner and portal take, plus a lift. `positionerClassName` styles the portalled positioner,
+which is `z-50`: a z utility there lifts a menu above other fixed layers. `container` mounts the menu somewhere else,
+`alignOffset`, `collisionPadding` and `collisionBoundary` steer where it sits near an edge. `initialFocus` takes a ref
+to focus once the menu has opened (read when it opens, so a fresh ref object each render is fine), and extra HTML
+attributes (`aria-*`, `data-*`, `id`, `style`) land on the popup.
+
+`initialFocus={false}` only drops modo's own first-row focus: Base UI still focuses the first row after a keyboard open
+and the popup after a pointer open, which cannot be suppressed. A key handler in `onKeyDownCapture` runs first:
+`preventDefault` there is harmless, navigation and typeahead still run; `stopPropagation` stops Base UI's key handling
+and the panel's arrow navigation.
+
+```tsx
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button>Open</Button>} />
+  <Dropdown.Content
+    positionerClassName="z-[60]"
+    container={dialogPopupRef}
+    alignOffset={-4}
+    collisionPadding={16}
+    collisionBoundary={boundaryRef.current}
+    initialFocus={searchRef}
+    aria-label="Actions"
+    data-testid="actions-menu"
+  >
+    <Dropdown.Sub>
+      <Dropdown.SubTrigger>More</Dropdown.SubTrigger>
+      <Dropdown.SubContent positionerClassName="z-[60]" collisionPadding={16}>
+        <Dropdown.Item>Archive</Dropdown.Item>
+      </Dropdown.SubContent>
+    </Dropdown.Sub>
+  </Dropdown.Content>
+</Dropdown.Menu>
+```

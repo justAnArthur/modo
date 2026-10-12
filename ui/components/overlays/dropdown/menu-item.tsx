@@ -36,23 +36,33 @@
  *   the merged selection background.
  * - `DropdownContextValue` gains `pin` (a submenu trigger keeps the panel's
  *   highlight while its submenu is open) and `reportChecked`.
+ * - `render` / `asChild` (`lib/slot.ts`): the row becomes the given element
+ *   (a link, a router `Link`), keeping its own props and ref; its children are
+ *   the row's content. In the inline panel Enter and Space click it once, so a
+ *   link navigates.
+ * - `textValue`: the typeahead text of a row whose content is more than a
+ *   string; it goes to the primitive's `label`.
  */
 
 import { AnimatePresence, motion } from 'motion/react'
 import {
   createContext,
+  createElement,
   forwardRef,
   type HTMLAttributes,
   type ReactElement,
   type ReactNode,
+  type Ref,
   useContext,
   useEffect,
   useRef,
+  version,
 } from 'react'
 import type { IconComponent } from '../../../lib/icon-context'
 import { useRowSlot } from '../../../lib/row-order'
 import { shapeMap } from '../../../lib/shape-context'
 import { useSize } from '../../../lib/size-context'
+import { slotRender } from '../../../lib/slot'
 import { spring } from '../../../lib/springs'
 import { useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
@@ -60,6 +70,14 @@ import { cn } from '../../../lib/utils'
 // MenuItem is only used inside Dropdown, which opts out of the global pill
 // shape — see index.tsx for the rationale.
 const shape = shapeMap.rounded
+
+const REACT_19 = parseInt(version, 10) >= 19
+
+/** An element's ref: `props.ref` on React 19, where `element.ref` warns on access; `element.ref` before (where `props.ref` warns). */
+function elementRef(element: ReactElement): Ref<HTMLElement> | undefined {
+  if (REACT_19) return (element.props as { ref?: Ref<HTMLElement> }).ref
+  return (element as ReactElement & { ref?: Ref<HTMLElement> }).ref
+}
 
 // ---------------------------------------------------------------------------
 // Dropdown context — the single shared context for every Dropdown build.
@@ -178,6 +196,12 @@ interface MenuItemProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'>
   inset?: boolean
   /** A keyboard shortcut shown muted at the row's end, e.g. `⌘K` (see Dropdown.Shortcut). */
   shortcut?: ReactNode
+  /** Typeahead text for a row whose content is more than a string (an icon beside markup): the key a press matches while the menu is open. Defaults to `label`, else the row's text `children`. */
+  textValue?: string
+  /** The element that becomes the row, e.g. a link: `render={<a href="/docs" />}`. Its own props and ref are kept, the row's classes and handlers are added, and its children are the row's content. */
+  render?: ReactElement
+  /** Compose onto the single child instead of `render`: `<Dropdown.Item asChild><a href="/docs">Docs</a></Dropdown.Item>`. Defaults to `false`. */
+  asChild?: boolean
   /** Internal: the row's authored index, stamped by a filtering panel that
    *  re-indexed the visible rows. Selection is keyed on it. */
   sourceIndex?: number
@@ -219,8 +243,11 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
     {
       icon: Icon,
       label,
+      textValue,
+      render,
+      asChild,
       index: indexProp,
-      children,
+      children: childrenProp,
       checked,
       onSelect,
       disabled,
@@ -238,6 +265,9 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
     ref,
   ) => {
     const internalRef = useRef<HTMLDivElement>(null)
+    const slot = slotRender(render, asChild, childrenProp)
+    // The slot element's own children are the row's content.
+    const children = slot ? (slot.props as { children?: ReactNode }).children : childrenProp
     const hasMounted = useRef(false)
     const {
       registerItem,
@@ -287,10 +317,29 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
     const freeform = label === undefined && text === undefined
     const lit = isActive || isChecked
 
+    const slotRef = slot ? elementRef(slot) : undefined
     const mergeRef = (node: HTMLDivElement | null) => {
       ;(internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node
-      if (typeof ref === 'function') ref(node)
-      else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
+      for (const target of [ref, slotRef]) {
+        if (typeof target === 'function') target(node)
+        else if (target) (target as React.MutableRefObject<HTMLDivElement | null>).current = node
+      }
+    }
+
+    // The row element: a div, or the slot element with the row's props on top of its own.
+    // The caller's own props come last, as they always did.
+    const rowElement = (extra?: object) => {
+      const rowProps = {
+        ref: mergeRef,
+        'data-fluid-hover-index': index,
+        ...(label !== undefined && { 'aria-label': label }),
+        ...extra,
+        ...props,
+      }
+      if (!slot) return <div {...rowProps} className={itemClassName} />
+      // Built without the slot's own children, which would win over the row's content in the primitive.
+      const { children: _content, ...slotProps } = slot.props as { children?: ReactNode; className?: string }
+      return createElement(slot.type, { ...slotProps, ...rowProps, className: cn(slotProps.className, itemClassName) })
     }
 
     // Selection is keyed on the authored index, which survives a filtering
@@ -417,43 +466,40 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
         checked: isChecked,
         value: kind === 'radio' ? value : index,
         disabled,
-        label: text,
+        label: textValue ?? text,
         // Toggling one of several stays open; picking one of one closes.
         closeOnClick: closeOnClick ?? (kind ? kind === 'radio' : !multiple),
         onClick: handleActivate,
-        element: (
-          <div ref={mergeRef} data-fluid-hover-index={index} aria-label={label} className={itemClassName} {...props} />
-        ),
+        element: rowElement(),
         children: content,
       })
     }
 
     // The roving tab stop: the checked row, else the first one.
     const tabStop = authored ? (checkedIndex ?? checkedIndices?.[0] ?? 0) : firstRow
-    return (
-      <div
-        ref={mergeRef}
-        data-fluid-hover-index={index}
-        // Disabled items are never the roving tab stop.
-        tabIndex={!disabled && index === tabStop ? 0 : -1}
-        role={isCheckbox ? 'menuitemcheckbox' : isRadio ? 'menuitemradio' : 'menuitem'}
-        aria-checked={typeof isChecked === 'boolean' ? isChecked : undefined}
-        aria-disabled={disabled || undefined}
-        aria-label={label}
-        onClick={handleActivate}
-        onKeyDown={e => {
-          if (disabled) return
-          if (e.key === ' ' || e.key === 'Enter') {
-            e.preventDefault()
-            activate()
-          }
-        }}
-        className={itemClassName}
-        {...props}
-      >
-        {content}
-      </div>
-    )
+    const slotOnClick = (slot?.props as { onClick?: (e: React.MouseEvent<HTMLDivElement>) => void } | undefined)
+      ?.onClick
+    return rowElement({
+      // Disabled items are never the roving tab stop.
+      tabIndex: !disabled && index === tabStop ? 0 : -1,
+      role: isCheckbox ? 'menuitemcheckbox' : isRadio ? 'menuitemradio' : 'menuitem',
+      'aria-checked': typeof isChecked === 'boolean' ? isChecked : undefined,
+      'aria-disabled': disabled || undefined,
+      onClick: (e: React.MouseEvent<HTMLDivElement>) => {
+        slotOnClick?.(e)
+        handleActivate?.(e)
+      },
+      onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (disabled) return
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault()
+          // A slot element is clicked once: a link navigates, its own handlers run.
+          if (slot) e.currentTarget.click()
+          else activate()
+        }
+      },
+      children: content,
+    })
   },
 )
 
