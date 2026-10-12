@@ -88,7 +88,7 @@ import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../.
 import { RowOrderContext, useRowOrder, useRowSlot } from '../../../lib/row-order'
 import { shapeMap, useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
-import { type SlotProps, slotRender } from '../../../lib/slot'
+import { type SlotProps, slotId, slotRender } from '../../../lib/slot'
 import { spring } from '../../../lib/springs'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
@@ -482,6 +482,7 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
                 )
           }
           {...props}
+          id={slotId(el, props.id)}
         >
           <span className={cn('flex items-center min-w-0 flex-1', sizeClasses.gap)}>
             {Icon && (

@@ -63,7 +63,7 @@ import { MorphSurface } from '../../../lib/morph-layers'
 import { MorphPartScope } from '../../../lib/morph-part'
 import { useShape } from '../../../lib/shape-context'
 import { useSize, useSizeVariant } from '../../../lib/size-context'
-import { type SlotProps, slotRender } from '../../../lib/slot'
+import { type SlotProps, slotId, slotRender } from '../../../lib/slot'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
@@ -86,7 +86,7 @@ const useDialogState = () => useContext(DialogContext)
 const DialogTrigger = forwardRef<HTMLButtonElement, DialogSlotProps>(({ render, asChild, children, ...props }, ref) => {
   const el = slotRender(render, asChild, children)
   return el ? (
-    <DialogPrimitive.Trigger ref={ref} render={el} {...props} />
+    <DialogPrimitive.Trigger ref={ref} render={el} {...props} id={slotId(el, props.id)} />
   ) : (
     <DialogPrimitive.Trigger ref={ref} {...props}>
       {children}

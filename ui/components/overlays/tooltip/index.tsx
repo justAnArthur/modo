@@ -58,7 +58,7 @@ import {
 } from 'react'
 import { MorphSurface } from '../../../lib/morph-layers'
 import { useShape } from '../../../lib/shape-context'
-import { type SlotProps, slotRender } from '../../../lib/slot'
+import { type SlotProps, slotId, slotRender } from '../../../lib/slot'
 import { type MorphOrigin, useMorph, useMorphOrigin } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 
@@ -263,7 +263,7 @@ const TooltipTrigger = forwardRef<HTMLButtonElement, TooltipTriggerProps>(
     // trigger inherits it from the provider.
     const shared = { ref, delay, closeDelay, onPointerMove: followCursor ? handleMove : onPointerMove, ...props }
     return el ? (
-      <TooltipPrimitive.Trigger {...shared} render={el} />
+      <TooltipPrimitive.Trigger {...shared} render={el} id={slotId(el, props.id)} />
     ) : (
       <TooltipPrimitive.Trigger {...shared}>{children}</TooltipPrimitive.Trigger>
     )

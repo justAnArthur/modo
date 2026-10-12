@@ -5,7 +5,8 @@
  * Radix-style `asChild` with a single child element. `cloneSlot` / `mergeSlotProps` /
  * `composeRefs` are the other half: a wrapper clones its single child with its own props
  * merged in, as Radix's Slot does (the child's props win, handlers chain, `className`
- * joins, `style` merges, refs compose).
+ * joins, `style` merges, refs compose). `slotId` hands a slot element's `id` to the Base UI part
+ * that wraps it, so the part registers that id rather than a generated one.
  */
 
 import {
@@ -42,6 +43,17 @@ function slotRender(render: ReactElement | undefined, asChild: boolean | undefin
     return children === undefined || own !== undefined ? render : cloneElement(render, undefined, children)
   }
   return asChild && isValidElement(children) ? children : undefined
+}
+
+/**
+ * The `id` a Base UI part should register: the slot element's own `id` when it has one, else the part's.
+ * Base UI merges a render element's props over its own, so an element `id` lands on the DOM node
+ * regardless; passing it to the part as well makes Base UI track that same id (a trigger's id is how its
+ * menu or popup finds it) instead of a generated one that no element carries.
+ */
+function slotId(element: unknown, id?: string): string | undefined {
+  const own = isValidElement(element) ? (element.props as { id?: unknown }).id : undefined
+  return typeof own === 'string' ? own : id
 }
 
 /** Calls every ref: callback refs with the node, object refs by assigning it. */
@@ -100,4 +112,4 @@ function cloneSlot(child: ReactElement, slotProps: Record<string, unknown> = {},
 }
 
 export type { SlotProps }
-export { cloneSlot, composeRefs, mergeSlotProps, slotRender }
+export { cloneSlot, composeRefs, mergeSlotProps, slotId, slotRender }
