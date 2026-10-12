@@ -78,6 +78,7 @@ import {
   useMemo,
   useRef,
   useState,
+  version,
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { FocusRing } from '../../../lib/focus-ring'
@@ -151,6 +152,15 @@ const SelectContentContext = createContext<SelectContentContextValue | null>(nul
 // its padding and break the concentric fit of the rows' hover and selection
 // backgrounds inside it.
 const popupShape = shapeMap.rounded
+
+// An element's ref: `props.ref` on React 19, `element.ref` on 18. Reading `element.ref` warns on 19, so it
+// is only touched when `props.ref` is absent (React 18 never has it).
+function elementRef(el: ReactElement | undefined): Ref<HTMLDivElement> | undefined {
+  if (!el) return undefined
+  const fromProps = (el.props as { ref?: Ref<HTMLDivElement> }).ref
+  if (fromProps) return fromProps
+  return parseInt(version, 10) >= 19 ? undefined : (el as unknown as { ref?: Ref<HTMLDivElement> }).ref
+}
 
 const ownChildren = (el: ReactElement) => (el.props as { children?: ReactNode }).children
 
@@ -238,7 +248,9 @@ interface SelectProps {
  * Statics:
  * - `Select.Trigger` — the field: `variant`, `icon`, `placeholder`, `error`;
  *   children replace its value slot (a `Select.Value`). `render` / `asChild`
- *   swap the button for your own element (it brings its own look);
+ *   swap the button for your own element (it brings its own look); an
+ *   element with children of its own drops the icon, `placeholder` and
+ *   chevron too, one without keeps them;
  *   `wrapperClassName` styles the div that holds the `error` message.
  * - `Select.Value` — the value slot: the picked row's label, else the muted
  *   `placeholder`.
@@ -399,7 +411,7 @@ SelectValue.displayName = 'SelectValue'
 // ---------------------------------------------------------------------------
 
 interface SelectTriggerProps extends Omit<SlotProps, 'children' | 'placeholder'>, VariantProps<typeof triggerVariants> {
-  /** Replaces the built-in value slot, typically with a `Select.Value` (shadcn's `<SelectValue placeholder>`). The icon and chevron stay. With `asChild`, the single child element that becomes the trigger. */
+  /** Replaces the built-in value slot, typically with a `Select.Value` (shadcn's `<SelectValue placeholder>`). The icon and chevron stay. With `asChild`, the single child element that becomes the trigger instead, and `render` takes an element the same way: that element replaces the whole field. If it has children of its own, they are the entire body, so the `icon`, `placeholder` and chevron are not rendered and the field look, including the `error` border tint, is not applied (the `error` message and `aria-invalid` remain). If it has none, it still gets the value slot, `icon` and chevron, unstyled. */
   children?: ReactNode
   /** Visual style of the trigger. Defaults to `"bordered"`. */
   variant?: 'bordered' | 'borderless'
@@ -437,8 +449,14 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
     const shape = useShape()
     const sizeClasses = useSize(size)
     const compact = sizeClasses.variant === 'compact'
-    // The element a `render` / `asChild` caller brings is the whole trigger, look included: it keeps
-    // only the `group` hook the icon and chevron colours hang on, and its own children as the value slot.
+    // The element a `render` / `asChild` caller brings is the whole trigger, look included: it gets only
+    // the `group` class, so the field's border, size, padding and `error` border tint are not applied
+    // (the `error` message below it and `aria-invalid` still are). What goes inside depends on the
+    // element's own children:
+    //  - it has some: they are the whole body and replace the field's, so the icon, `placeholder` and
+    //    chevron are not rendered (add a `Select.Value` among them to show the picked label);
+    //  - it has none: it gets the field's body, `icon` (if any), value slot with `placeholder`, and
+    //    chevron, in an unstyled trigger.
     const el = slotRender(render, asChild, asChild ? children : undefined)
     const content = el ? itemLabel(asChild, render, children) : children
 
@@ -842,7 +860,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
     const rowProps = {
       ref: (node: HTMLDivElement | null) => {
         ;(internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node
-        for (const r of [ref, (el as unknown as { ref?: Ref<HTMLDivElement> } | undefined)?.ref]) {
+        for (const r of [ref, elementRef(el)]) {
           if (typeof r === 'function') r(node)
           else if (r) (r as React.MutableRefObject<HTMLDivElement | null>).current = node
         }

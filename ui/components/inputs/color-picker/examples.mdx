@@ -73,10 +73,11 @@ Chromium-based browsers ship; everywhere else the button hides itself. Pass
 
 # Disabled and read-only
 
-`disabled` dims the trigger and takes it out of the tab order. `readOnly` keeps the plain look but shows the color only: no hover fill, no tab stop, no panel, and no X button. Neither ever opens the popover, even when `open` is controlled.
+`disabled` dims the trigger and takes it out of the tab order. `readOnly` keeps the plain look but shows the color only: no hover fill, no tab stop, no panel. Neither ever opens the popover, even when `open` is controlled, and neither shows the X button of `triggerShowRemove`, so `onTriggerRemove` can't fire by click or key.
 
 <div className="flex flex-wrap items-center gap-3">
   <ColorPicker.Popover triggerLabel="Disabled" defaultValue="#6B97FF" disabled />
+  <ColorPicker.Popover triggerLabel="Disabled, removable" defaultValue="#6B97FF" disabled triggerShowRemove />
   <ColorPicker.Popover triggerLabel="Read-only" defaultValue="#6B97FF" readOnly triggerShowRemove />
 </div>
 

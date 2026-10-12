@@ -256,7 +256,7 @@ const [open, setOpen] = useState(false)
 
 # Your own trigger and rows
 
-`render` (or `asChild` with a single child) swaps the trigger's button or a row's `div` for your element, which must forward its ref (a router link does). A custom trigger brings its own look and keeps the select's wiring; a row keeps the hover, check and keyboard behaviour. Here the trigger is a borderless text button and the rows are elements of your own, marked with `data-kind`.
+`render` (or `asChild` with a single child) swaps the trigger's button or a row's `div` for your element, which must forward its ref (a router link does). A custom trigger brings its own look and keeps the select's wiring, and the element replaces the whole field body: with children of its own, the icon, `placeholder` and chevron are not rendered (put a `Select.Value` inside to show the pick), while a childless element still gets the value slot, icon and chevron; either way the `error` border tint is not applied, though the message and `aria-invalid` are; a row keeps the hover, check and keyboard behaviour. Here the trigger is a borderless text button and the rows are elements of your own, marked with `data-kind`.
 
 <Select defaultValue="docs">
   <Select.Trigger asChild>

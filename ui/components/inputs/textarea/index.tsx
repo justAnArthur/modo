@@ -19,7 +19,7 @@ interface TextareaProps
   value?: string
   /** Initial value when uncontrolled. Defaults to `''`. */
   defaultValue?: string
-  /** Called with the new value on every change. With neither `value` nor `onChange` the textarea keeps its text in the DOM, for `register()`-style forms that read it through a `ref`. */
+  /** Called with the new value on every change. With neither `value` nor `onChange` the textarea keeps its text in the DOM, for `register()`-style forms that read it through a `ref`; choose one mode per instance, since a `defaultValue` with a conditional `onChange` flips between the two. A form library's event handler goes in `onInput`, not here. */
   onChange?: (value: string) => void
   /** Rows shown when empty; the box never gets shorter. Defaults to `3`. */
   minRows?: number
@@ -66,9 +66,16 @@ const PADDING_Y: Record<SizeVariant, string> = {
  * the DOM holds the text, `ref` is the real element, and `defaultValue`,
  * `ref.current.value = ''` and a native `form.reset()` all behave as on any
  * textarea (the box re-fits on input and on a form reset), which is what a form
- * library reading fields through refs needs. Spread props whose `onChange`
- * takes an event rather than a string (a form library's `register()`) are not
- * accepted: pass `name`, `ref` and `defaultValue` instead.
+ * library reading fields through refs needs. Choose one mode per instance:
+ * a `defaultValue` with an `onChange` that is sometimes passed and sometimes
+ * not would flip the textarea between DOM-held and controlled text.
+ *
+ * `register()`'s result can't be spread whole, because its `onChange` takes an
+ * event where this one takes a string, but only that key clashes. Pull it out
+ * and hand it to `onInput`, which is the event handler and fires on every
+ * keystroke: `const { onChange, ...rest } = register('x')` then
+ * `<Textarea {...rest} onInput={onChange} />` (`rest` carries `name`, `ref`
+ * and `onBlur`).
  *
  * @example {@include ./examples.mdx}
  */

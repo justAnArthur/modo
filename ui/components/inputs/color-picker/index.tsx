@@ -157,7 +157,7 @@ interface ColorPickerPopoverProps extends ColorPickerProps {
   triggerLabelPosition?: 'left' | 'right'
   /** Show the hex value (without alpha) next to the tile. Defaults to `true`. */
   triggerShowValue?: boolean
-  /** Render an X button on the trigger; pairs with `onTriggerRemove`. Defaults to `false`. */
+  /** Render an X button on the trigger; pairs with `onTriggerRemove`. Hidden while `disabled` or `readOnly`. Defaults to `false`. */
   triggerShowRemove?: boolean
   /** Fired when the X button is clicked. */
   onTriggerRemove?: () => void
@@ -1910,7 +1910,7 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
             {triggerLabel && triggerLabelPosition === 'right' && (
               <span className={cn('text-muted-foreground px-1 select-none', sizeClasses.text)}>{triggerLabel}</span>
             )}
-            {triggerShowRemove && !readOnly && (
+            {triggerShowRemove && !locked && (
               <span
                 role="button"
                 aria-label={removeLabel}

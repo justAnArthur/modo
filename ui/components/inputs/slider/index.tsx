@@ -933,7 +933,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
                 className="block outline-none"
                 style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
                 onFocus={e => {
-                  if ((e.currentTarget as HTMLElement).matches(':focus-visible')) setFocusedThumb(0)
+                  if ((e.target as HTMLElement).matches(':focus-visible')) setFocusedThumb(0)
                 }}
                 onBlur={() => setFocusedThumb(prev => (prev === 0 ? null : prev))}
               />
@@ -945,7 +945,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
                   className="block outline-none"
                   style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
                   onFocus={e => {
-                    if ((e.currentTarget as HTMLElement).matches(':focus-visible')) setFocusedThumb(1)
+                    if ((e.target as HTMLElement).matches(':focus-visible')) setFocusedThumb(1)
                   }}
                   onBlur={() => setFocusedThumb(prev => (prev === 1 ? null : prev))}
                 />
@@ -1505,7 +1505,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
                 aria-label={ariaLabel || label}
                 className="block outline-none"
                 onFocus={e => {
-                  if ((e.currentTarget as HTMLElement).matches(':focus-visible')) setIsFocused(true)
+                  if ((e.target as HTMLElement).matches(':focus-visible')) setIsFocused(true)
                 }}
                 onBlur={() => setIsFocused(false)}
               />

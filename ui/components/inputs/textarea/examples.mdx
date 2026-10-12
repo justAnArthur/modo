@@ -105,3 +105,16 @@ const ref = useRef<HTMLTextAreaElement>(null)
 ref.current.value // what was typed
 ref.current.value = '' // clears it
 ```
+
+
+Choose one mode per instance. A `defaultValue` with an `onChange` that is passed on some renders and not others would flip the textarea between DOM-held and controlled text.
+
+# With a form library
+
+A `register()`-style form needs the DOM mode, but its `onChange` takes an event where the Textarea's takes a string, so the result can't be spread whole. Only that key clashes: take `onChange` out and pass it as `onInput`, the event handler that fires on every keystroke. `rest` carries `name`, `ref` and `onBlur` straight through.
+
+```tsx
+const { onChange, ...rest } = register('note')
+
+<Textarea {...rest} onInput={onChange} />
+```
