@@ -1,8 +1,9 @@
-import Input, { InputGroup, Label } from './index'
+import Input, { InputAction, InputGroup, Label } from './index'
+import Dropdown from '../../overlays/dropdown'
 import PasswordDemo from './password-demo'
 import Textarea from '../textarea'
 import SizeProvider from '../../../primitives/sizes'
-import { CircleCheck, Mail, Search } from 'lucide-react'
+import { ChevronDown, CircleCheck, Mail, Search } from 'lucide-react'
 
 # Basics
 
@@ -50,6 +51,30 @@ An `InputAction` sits 4px inside the ring. Here it reveals the password; a press
 
 <div className="flex flex-col gap-3 w-72 max-w-full">
   <PasswordDemo variant="bordered" placeholder="Password" defaultValue="correct horse" />
+</div>
+
+## Popup from an adornment
+
+A searchable Dropdown in `startAdornment`: its panel is portalled out of the field, so a press inside it never refocuses the input. Click the search field and type; a press on the field's own padding still focuses the input.
+
+<div className="flex flex-col gap-3 w-72 max-w-full">
+  <Input
+    variant="bordered"
+    type="tel"
+    placeholder="Phone number"
+    startAdornment={
+      <Dropdown.Menu>
+        <Dropdown.Trigger render={<InputAction label="Country code">+1<ChevronDown /></InputAction>} />
+        <Dropdown.Content defaultCheckedIndex={0}>
+          <Dropdown.Search filter placeholder="Search countries" />
+          {['+1 United States', '+31 Netherlands', '+33 France', '+44 United Kingdom', '+49 Germany', '+421 Slovakia', '+81 Japan'].map((country, i) => (
+            <Dropdown.Item key={country} index={i} label={country} />
+          ))}
+          <Dropdown.Empty>No countries found</Dropdown.Empty>
+        </Dropdown.Content>
+      </Dropdown.Menu>
+    }
+  />
 </div>
 
 ## Compact adornments

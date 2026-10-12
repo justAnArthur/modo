@@ -105,10 +105,16 @@ export function useFieldBox({ variant, invalid, disabled, active, readOnly, requ
   }
 }
 
-/** A press anywhere in the box (icon, padding) focuses the control, without disturbing the control's own caret placement. */
+/**
+ * A press anywhere in the box (icon, padding) focuses the control, without
+ * disturbing the control's own caret placement. A press that only reaches the
+ * box through the React tree (a popup portalled out of an adornment, e.g. a
+ * searchable Dropdown) is left alone, so that popup can take focus itself.
+ */
 export function focusControlOnPress(control: RefObject<HTMLElement | null>) {
   return (e: MouseEvent) => {
     if (e.target === control.current) return
+    if (!e.currentTarget.contains(e.target as Node)) return
     e.preventDefault()
     control.current?.focus()
   }
