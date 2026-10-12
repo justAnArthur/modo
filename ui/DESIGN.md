@@ -67,6 +67,8 @@ colors:
   image-edge-dark: "rgb(255 255 255 / 0.1)"
   progress-track: "color-mix(in oklab, oklch(0.205 0 0) 10%, transparent)"
   progress-track-dark: "color-mix(in oklab, oklch(0.97 0 0) 10%, transparent)"
+  well: "oklch(0.967 0.001 286.375)"
+  well-dark: "oklch(0 0 0 / 0.25)"
   surface-1: "oklch(0.985 0 0)"
   surface-2: "oklch(0.991 0 0)"
   surface-3: "oklch(1 0 0)"
@@ -284,7 +286,7 @@ components:
     padding: 24px
     width: 400px
   tabs-list:
-    backgroundColor: "{colors.muted}"
+    backgroundColor: "{colors.well}"
     rounded: "{rounded.xl}"
     height: "{spacing.control}"
     padding: 4px
@@ -357,7 +359,11 @@ Two text colors, a greyscale ground, one blue.
   button (until `--primary-foreground` is re-pointed) and the tooltip (`text-background`).
 - **Surfaces (`bg-surface-1` … `bg-surface-8`)** — the elevation ladder (see Elevation & Depth). Prefer a
   surface level over `card`/`background` for anything that floats or nests.
-- **Muted (`bg-muted`)** — a recessed track: the segmented tabs' well, a sunken field at rest.
+- **Muted (`bg-muted`)** — a sunken fill: a field's hover wash, a queued row. In dark it is surface 2, so
+  it never carries a track: it would vanish on a card or the inset.
+- **Well (`bg-well`)** — the recessed track under a segmented control's indicator (the tabs list). Light is
+  muted; dark is black at 25%, which darkens whatever it sits on, so the track reads on the page, a card
+  and the inset alike.
 - **Accent (`bg-accent`)** — the secondary button and the switch's off track. `selected` is a firmer
   grey for persistent selection fills.
 - **Hover / Active (`bg-hover`, `bg-active`)** — translucent overlays (black 4% / 7% in light, white 6% /

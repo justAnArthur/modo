@@ -92,7 +92,7 @@ Paths below are relative to `ui/`.
 | Visual | Use | Never |
 |---|---|---|
 | Text color | `text-foreground`, `text-muted-foreground`, `text-background` (on ink), `text-destructive`, `text-status-*` | `text-foreground/60`, a third grey, `text-[#…]` |
-| Fills | `bg-surface-N` via `SURFACE_BG[level]`, `bg-muted`, `bg-accent`, `bg-hover`, `bg-active`, `bg-brand`, `bg-status-*/16`, `bg-scrim` | `bg-white`, `bg-neutral-100`, a hard-coded surface |
+| Fills | `bg-surface-N` via `SURFACE_BG[level]`, `bg-muted`, `bg-well` (a segmented control's track), `bg-accent`, `bg-hover`, `bg-active`, `bg-brand`, `bg-status-*/16`, `bg-scrim` | `bg-white`, `bg-neutral-100`, a hard-coded surface |
 | Lines | `border-border`, `ring-border`, 1px | thicker borders, colored borders |
 | Type | `text-display\|title\|subtitle\|body\|caption\|micro[-compact]` | `text-sm`, `text-[13px]`, `leading-*` on a role (it ships its own) |
 | Weight | `weight-normal\|medium\|semibold\|bold` | `font-medium`, `font-semibold`, `fontWeight` |

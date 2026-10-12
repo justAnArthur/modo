@@ -93,6 +93,12 @@
   --image-edge: light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.1));
   /* The progress track: a recessed line any fill reads against. */
   --progress-track: color-mix(in oklab, var(--foreground) 10%, transparent);
+  /* The recessed well under the segmented tabs' indicator. Light is --muted
+     (the greyer step the ladder's floor lacks). Dark can't be: --muted there
+     is surface-2, the very value of the card and the inset, so a track of it
+     vanishes on both. Black at 25% darkens whatever it sits on, so the well
+     reads on the page, a card and the inset alike. */
+  --well: light-dark(var(--muted), oklch(0 0 0 / 0.25));
 
   /* ── Brand blue ──
      FF's one chromatic accent: the switch's on-track, the copy field's hover

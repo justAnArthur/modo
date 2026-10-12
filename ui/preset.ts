@@ -95,6 +95,7 @@ export const theme = {
     skeleton: 'var(--skeleton)',
     'image-edge': 'var(--image-edge)',
     'progress-track': 'var(--progress-track)',
+    well: 'var(--well)',
     hover: 'var(--hover)',
     active: 'var(--active)',
     syntax: {
