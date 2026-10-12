@@ -31,12 +31,20 @@
  *   ✕, and split back into the glyph when the state times out. The glyphs
  *   crossfade over one fixed slot instead of `mode="wait"`; the button
  *   variant keeps that one glyph slot and swaps only its word.
+ * - Two more variants (local, additive): `"chip"` (an inline `<span>` chip with
+ *   `children`, copying its text or `value`) and `"glyph"` (the bare copy glyph,
+ *   no visible value, named by `aria-label`). Both keep a stable accessible name
+ *   and announce the result through a `role="status"` live region. `value` is
+ *   optional for the chip, the root's ref is typed `HTMLElement`, and the strings
+ *   became the `labels` prop with the same English defaults.
  */
 
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
 import {
   forwardRef,
   type HTMLAttributes,
+  type ReactNode,
+  type Ref,
   useCallback,
   useEffect,
   useId,
@@ -54,7 +62,7 @@ import { GOO_BLUR_RATIO } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { Tooltip } from '../overlays/tooltip'
 
-type CopyVariant = 'icon' | 'button'
+type CopyVariant = 'icon' | 'button' | 'chip' | 'glyph'
 type CopyAlign = 'right' | 'left'
 type CopyStatus = 'idle' | 'copied' | 'error'
 
@@ -84,7 +92,7 @@ const LAYER = { at: DISC_RECT.x - BLUR * 3, size: DISC + BLUR * 6 }
 // the layer's opacity, applied after the goo filter, which needs opaque shapes.
 const TONE_BG = { copied: 'bg-status-success', error: 'bg-status-error' }
 const TONE_TEXT = { copied: 'text-status-success', error: 'text-status-error' }
-const CHECK_STROKE: Record<CopyVariant, string> = {
+const CHECK_STROKE: Record<'icon' | 'button', string> = {
   icon: '[&_svg]:stroke-[1.5] [&_svg]:transition-[stroke-width] [&_svg]:duration-fast group-hover:[&_svg]:stroke-[2]',
   button: '[&_svg]:stroke-[2]',
 }
@@ -161,7 +169,7 @@ function CopyGlyph({
 }: {
   status: CopyStatus
   copyCount: number
-  variant: CopyVariant
+  variant: 'icon' | 'button'
   CopyIcon: IconComponent
 }) {
   return (
@@ -221,16 +229,31 @@ function CopyGlyph({
   )
 }
 
+interface CopyLabels {
+  /** The idle tooltip, and the accessible name when there is no `label`. Defaults to `"Copy to clipboard"`. */
+  copy?: string
+  /** The copied state: tooltip, accessible name, the button variant's word and the announcement. Defaults to `"Copied"`. */
+  copied?: string
+  /** The failed state: tooltip, accessible name and the announcement. Defaults to `"Copy failed"`. */
+  failed?: string
+  /** The button variant's word at rest, and the accessible name when a `label` joins it. Defaults to `"Copy"`. */
+  word?: string
+  /** The button variant's word after a failed copy. Defaults to `"Failed"`. */
+  failedWord?: string
+}
+
 interface CopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
-  /** The text value to display and copy to clipboard. */
-  value: string
+  /** The text to copy, shown in the field. Optional for `variant="chip"`, which copies its own text when this is left out. */
+  value?: string
+  /** What the chip shows (`variant="chip"` only): any inline content, copied as its text unless `value` is given. Defaults to `value`. */
+  children?: ReactNode
   /** Optional label displayed above the input. */
   label?: string
   /** Callback fired after the value is successfully copied. */
   onCopy?: () => void
   /** Disables the input and copy button. Defaults to `false`. */
   disabled?: boolean
-  /** Icon-only with tooltip, or button with visible label. Defaults to `"icon"`. */
+  /** `"icon"`: the value with a trailing copy glyph and a tooltip. `"button"`: the value with a visible Copy word. `"chip"`: an inline chip around `children` that copies its text. `"glyph"`: only the copy glyph, no visible value. Defaults to `"icon"`. */
   variant?: CopyVariant
   /** Position of the copy action relative to the value. Defaults to `"right"`. */
   align?: CopyAlign
@@ -238,6 +261,18 @@ interface CopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   size?: SizeVariant
   /** Extra classes for the wrapper around the label and the field. */
   className?: string
+  /** The accessible name of the `"chip"` and `"glyph"` buttons. A glyph has no visible text, so name it; a chip is named by its content and, without this, adds the copy hint. Defaults to `labels.copy`. */
+  'aria-label'?: string
+  /** The words of the control, for another language. Each key falls back to its English default. */
+  labels?: CopyLabels
+}
+
+const LABELS: Required<CopyLabels> = {
+  copy: 'Copy to clipboard',
+  copied: 'Copied',
+  failed: 'Copy failed',
+  word: 'Copy',
+  failedWord: 'Failed',
 }
 
 /**
@@ -256,10 +291,34 @@ interface CopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
  * Copy button, `align` moves that action to the leading edge, and the field
  * follows the surrounding SizeProvider unless `size` pins it.
  *
+ * Two variants have no field. `chip` is an inline `<span>` around `children`
+ * (the root is a span, so it sits in a sentence): it copies its own text, or
+ * `value`, and shows the same glyph after it. `glyph` is the copy glyph alone,
+ * for a place where the value is already on screen; give it an `aria-label`.
+ * Both are real buttons, keep a stable accessible name and announce "Copied"
+ * (or the failure) through a live region, so a screen reader hears the result
+ * of Enter or Space. `labels` translates every word.
+ *
  * @example {@include ./examples.mdx}
  */
-const Copy = forwardRef<HTMLDivElement, CopyProps>(
-  ({ value, label, onCopy, disabled, variant = 'icon', align = 'right', size, className, ...props }, ref) => {
+const Copy = forwardRef<HTMLElement, CopyProps>(
+  (
+    {
+      value,
+      children,
+      label,
+      onCopy,
+      disabled,
+      variant = 'icon',
+      align = 'right',
+      size,
+      className,
+      labels,
+      'aria-label': ariaLabel,
+      ...props
+    },
+    ref,
+  ) => {
     const CopyIcon = useIcon('copy')
     // "copied" and "error" both occupy the same animation slot on the button
     const [status, setStatus] = useState<CopyStatus>('idle')
@@ -269,11 +328,16 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const tooltipVisibleRef = useRef(false)
     const tooltipWasVisibleRef = useRef(false)
+    const textRef = useRef<HTMLSpanElement>(null)
     const shape = useShape()
     const sizeClasses = useSize(size)
+    const words = { ...LABELS, ...labels }
+    const chip = variant === 'chip'
+    const glyph = variant === 'glyph'
+    const compact = sizeClasses.variant === 'compact'
     // The row's height comes from the padded children, so the paddings step
     // down with the ladder (py-2 → 36px total, py-1 → 28px).
-    const rowPy = sizeClasses.variant === 'compact' ? 'py-1' : 'py-2'
+    const rowPy = compact ? 'py-1' : 'py-2'
 
     // Associate the visible label with the button: the button's accessible
     // name reads "Copy <label>" (its own state label + the field label).
@@ -289,9 +353,9 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
     // execCommand fallback for when the async Clipboard API is unavailable or
     // denied (insecure context, permissions policy) — copies via a temporary
     // off-screen textarea.
-    const copyViaExecCommand = useCallback(() => {
+    const copyViaExecCommand = useCallback((text: string) => {
       const textarea = document.createElement('textarea')
-      textarea.value = value
+      textarea.value = text
       textarea.setAttribute('readonly', '')
       textarea.style.position = 'fixed'
       textarea.style.opacity = '0'
@@ -305,15 +369,17 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
       }
       document.body.removeChild(textarea)
       return ok
-    }, [value])
+    }, [])
 
     const handleCopy = useCallback(async () => {
       if (disabled) return
+      // A chip without `value` copies what it shows.
+      const text = value ?? textRef.current?.textContent ?? ''
       let ok = true
       try {
-        await navigator.clipboard.writeText(value)
+        await navigator.clipboard.writeText(text)
       } catch {
-        ok = copyViaExecCommand()
+        ok = copyViaExecCommand(text)
       }
       setStatus(ok ? 'copied' : 'error')
       setCopyCount(c => c + 1)
@@ -344,6 +410,94 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
       setTooltipState(prev => (prev === 'copied' ? 'suppressed' : prev))
     }, [])
 
+    // The chip and the glyph keep one accessible name and say the result
+    // through a live region: a changed aria-label on a focused button is not
+    // reliably read out. A new node per copy, so a second copy is announced too.
+    const announcement = (
+      <span role="status" className="sr-only">
+        {status !== 'idle' && <span key={copyCount}>{status === 'error' ? words.failed : words.copied}</span>}
+      </span>
+    )
+
+    if (chip) {
+      return (
+        <span
+          ref={ref as Ref<HTMLSpanElement>}
+          className={cn(
+            'relative inline-flex rounded-box bg-muted dark:bg-surface-4',
+            disabled && 'opacity-50 pointer-events-none',
+            className,
+          )}
+          {...(props as HTMLAttributes<HTMLSpanElement>)}
+        >
+          <button
+            id={buttonId}
+            type="button"
+            onPointerDown={handlePointerDown}
+            onClick={handleCopy}
+            disabled={disabled}
+            aria-label={ariaLabel}
+            className={cn(
+              'group relative inline-flex cursor-pointer select-none items-center gap-1 rounded-box px-1 py-0.5 text-foreground outline-none',
+              'focus-visible:ring-1 focus-visible:ring-focus-ring',
+            )}
+          >
+            <span
+              aria-hidden
+              className="pointer-events-none absolute inset-0 rounded-box bg-hover opacity-0 transition-opacity duration-fast group-hover:opacity-100"
+            />
+            <span ref={textRef} className={cn('relative font-mono', compact ? 'text-caption-compact' : 'text-caption')}>
+              {children ?? value}
+            </span>
+            {!ariaLabel && <span className="sr-only">, {words.copy}</span>}
+            <span className="relative text-muted-foreground transition-colors duration-fast group-hover:text-foreground">
+              <CopyGlyph status={status} copyCount={copyCount} variant="icon" CopyIcon={CopyIcon} />
+            </span>
+          </button>
+          {announcement}
+        </span>
+      )
+    }
+
+    if (glyph) {
+      const name = ariaLabel ?? words.copy
+      return (
+        <span
+          ref={ref as Ref<HTMLSpanElement>}
+          className={cn('inline-flex', disabled && 'opacity-50 pointer-events-none', className)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          {...(props as HTMLAttributes<HTMLSpanElement>)}
+        >
+          <Tooltip
+            content={tooltipState === 'idle' ? name : status === 'error' ? words.failed : words.copied}
+            delayDuration={500}
+            sideOffset={2}
+            forceOpen={tooltipState === 'copied' ? true : tooltipState === 'suppressed' ? false : undefined}
+            onOpenChange={handleTooltipOpenChange}
+          >
+            <button
+              id={buttonId}
+              type="button"
+              onPointerDown={handlePointerDown}
+              onClick={handleCopy}
+              disabled={disabled}
+              aria-label={name}
+              className={cn(
+                'group inline-flex shrink-0 cursor-pointer items-center justify-center text-muted-foreground outline-none transition-colors duration-fast',
+                'hover:bg-hover hover:text-foreground active:bg-active focus-visible:ring-1 focus-visible:ring-focus-ring',
+                shape.button,
+                compact ? 'size-7' : 'size-9',
+              )}
+            >
+              <CopyGlyph status={status} copyCount={copyCount} variant="icon" CopyIcon={CopyIcon} />
+            </button>
+          </Tooltip>
+          {announcement}
+        </span>
+      )
+    }
+
     const actionElement =
       variant === 'button' ? (
         <span
@@ -357,9 +511,11 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
         >
           <CopyGlyph status={status} copyCount={copyCount} variant="button" CopyIcon={CopyIcon} />
           <span className="select-none inline-grid text-left">
-            <span className="col-start-1 row-start-1 invisible" aria-hidden="true">
-              Copied
-            </span>
+            {[words.word, words.copied, words.failedWord].map(word => (
+              <span key={word} className="col-start-1 row-start-1 invisible" aria-hidden="true">
+                {word}
+              </span>
+            ))}
             <AnimatePresence mode="wait" initial={false}>
               <motion.span
                 key={status}
@@ -369,7 +525,7 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
                 exit={{ opacity: 0, scale: 0.8, transition: spring.fast.exit }}
                 transition={spring.fast}
               >
-                {status === 'copied' ? 'Copied' : status === 'error' ? 'Failed' : 'Copy'}
+                {status === 'copied' ? words.copied : status === 'error' ? words.failedWord : words.word}
               </motion.span>
             </AnimatePresence>
           </span>
@@ -423,7 +579,7 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
         onClick={handleCopy}
         disabled={disabled}
         aria-label={
-          status === 'copied' ? 'Copied' : status === 'error' ? 'Copy failed' : label ? 'Copy' : 'Copy to clipboard'
+          status === 'copied' ? words.copied : status === 'error' ? words.failed : label ? words.word : words.copy
         }
         aria-labelledby={label ? `${buttonId} ${labelId}` : undefined}
         className={cn(
@@ -438,10 +594,11 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
 
     return (
       <div
-        ref={ref}
+        ref={ref as Ref<HTMLDivElement>}
         className={cn('flex flex-col gap-0.5', disabled && 'opacity-50 pointer-events-none', className)}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        aria-label={ariaLabel}
         {...props}
       >
         {label && (
@@ -459,7 +616,7 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
         )}
         {variant === 'icon' ? (
           <Tooltip
-            content={tooltipState === 'idle' ? 'Copy to clipboard' : status === 'error' ? 'Copy failed' : 'Copied'}
+            content={tooltipState === 'idle' ? words.copy : status === 'error' ? words.failed : words.copied}
             delayDuration={500}
             sideOffset={2}
             forceOpen={tooltipState === 'copied' ? true : tooltipState === 'suppressed' ? false : undefined}
@@ -477,6 +634,6 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
 
 Copy.displayName = 'Copy'
 
-export type { CopyAlign, CopyProps, CopyVariant }
+export type { CopyAlign, CopyLabels, CopyProps, CopyVariant }
 export { Copy }
 export default Copy
