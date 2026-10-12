@@ -216,3 +216,71 @@ A row's label may be any node; the trigger shows it as the row does. `textValue`
     <Select.Item value="end">Aligned to the end</Select.Item>
   </Select.Content>
 </Select>
+
+# Open state
+
+`open` with `onOpenChange(open, details)` drives the popup from outside, and `defaultOpen` starts it open. A controlled `open` is followed exactly, so a handler can refuse a close or an open: this select is pinned shut. Uncontrolled, a pick still holds the popup for its 300ms acknowledgment.
+
+<Select open={false} defaultValue="a">
+  <Select.Trigger aria-label="Pinned shut" />
+  <Select.Content>
+    <Select.Item value="a">Never opens</Select.Item>
+  </Select.Content>
+</Select>
+
+```tsx
+const [open, setOpen] = useState(false)
+
+<Select
+  open={open}
+  onOpenChange={(next, details) => {
+    if (!next && details.reason === 'outside-press') return
+    setOpen(next)
+  }}
+>
+  …
+</Select>
+```
+
+# Popup options
+
+`alignOffset` shifts the menu along the trigger's edge, `collisionPadding` keeps it off the viewport edge, `finalFocus` decides where focus lands on close, and HTML attributes such as `id`, `aria-label` and `data-*` land on the popup element. Base UI's select popup always focuses the picked row when it opens, so there is no `initialFocus`.
+
+<Select defaultValue="b">
+  <Select.Trigger className="w-40" aria-label="Offset" />
+  <Select.Content alignOffset={16} collisionPadding={16} aria-label="Choices" data-menu="offset">
+    <Select.Item value="a">Option A</Select.Item>
+    <Select.Item value="b">Option B</Select.Item>
+  </Select.Content>
+</Select>
+
+# Your own trigger and rows
+
+`render` (or `asChild` with a single child) swaps the trigger's button or a row's `div` for your element, which must forward its ref (a router link does). A custom trigger brings its own look and keeps the select's wiring; a row keeps the hover, check and keyboard behaviour. Here the trigger is a borderless text button and the rows are elements of your own, marked with `data-kind`.
+
+<Select defaultValue="docs">
+  <Select.Trigger asChild>
+    <button type="button" className="inline-flex items-center gap-2 text-body">
+      <Select.Value />
+    </button>
+  </Select.Trigger>
+  <Select.Content>
+    <Select.Item value="docs" asChild><div data-kind="custom">Docs</div></Select.Item>
+    <Select.Item value="guides" render={<div data-kind="custom" />}>Guides</Select.Item>
+  </Select.Content>
+</Select>
+
+# Wrapper and width
+
+The trigger sits in a flex-column div that holds its `error` text. `wrapperClassName="contents"` removes that box from the layout, and `className="min-w-0"` lifts the field's 160px minimum (128px compact).
+
+<div className="flex items-center gap-3">
+  <Select defaultValue="s">
+    <Select.Trigger className="min-w-0 w-24" wrapperClassName="contents" aria-label="Size" />
+    <Select.Content>
+      <Select.Item value="s">S</Select.Item>
+      <Select.Item value="m">M</Select.Item>
+    </Select.Content>
+  </Select>
+  <span className="text-body text-muted-foreground">sits flush in a flex row</span>
+</div>
