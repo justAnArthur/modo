@@ -9,6 +9,9 @@ import { join } from 'node:path'
 // server-callable class helpers (`variants.ts`, its own build entry), which
 // `./components/*` would map to a `variants/index.js` that doesn't exist. The
 // longer key wins over `./components/*` in Node's and Bun's pattern matching.
+// `typesVersions` in package.json stays hand-kept: its patterns are wildcards (`lib/*` serves every lib
+// module), so a new lib module needs no entry. It maps the subpaths to dist/**/*.d.ts for consumers on
+// `moduleResolution: node`, which ignore `exports` and would type-check the shipped .tsx source.
 
 type Conditions = Record<string, string>
 

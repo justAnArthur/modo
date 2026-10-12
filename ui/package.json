@@ -240,6 +240,31 @@
     "./tailwind.css": "./dist/tailwind.css",
     "./package.json": "./package.json"
   },
+  "typesVersions": {
+    "*": {
+      "primitives/*": [
+        "dist/primitives/*/index.d.ts"
+      ],
+      "components/*/variants": [
+        "dist/components/*/variants.d.ts"
+      ],
+      "components/*": [
+        "dist/components/*/index.d.ts"
+      ],
+      "blocks/*/variants": [
+        "dist/blocks/*/variants.d.ts"
+      ],
+      "blocks/*": [
+        "dist/blocks/*/index.d.ts"
+      ],
+      "lib/*": [
+        "dist/lib/*.d.ts"
+      ],
+      "unocss": [
+        "dist/preset.d.ts"
+      ]
+    }
+  },
   "scripts": {
     "build": "bun scripts/exports.ts && rm -rf dist && NODE_ENV=production bunup && bun scripts/use-client.ts && bun scripts/build-css.ts",
     "build:docs": "modo build --out docs-dist",
