@@ -2,7 +2,9 @@ import { z } from 'zod'
 
 /**
  * Pins docs-chrome slots to components. A value is a path relative to the
- * project root, optionally naming an export (`./modo.components.tsx#Select`).
+ * project root, or a package specifier resolved through the package's
+ * `exports` (`@scope/ds/docs`), optionally naming an export
+ * (`./modo.components.tsx#Select`, `@scope/ds/docs#DocsNav`).
  * An unpinned slot uses the item whose name and props match, else a plain
  * HTML fallback.
  */

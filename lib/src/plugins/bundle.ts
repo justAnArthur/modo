@@ -7,7 +7,7 @@ import { loadModoConfig } from '../lib/config.loader'
 import { discoverCssForFile } from '../lib/discover-css'
 import { discoverItems } from '../lib/discover-items'
 import { createDocsService } from '../lib/docs'
-import { isModoPackage, packageDirOf, resolveSourceExport } from '../lib/resolve-source'
+import { isModoPackage, packageDirOf, resolvePackageFile, resolveSourceExport } from '../lib/resolve-source'
 import type { SiteConfig } from '../lib/schema'
 import { TIERS, type Tier } from '../lib/tiers'
 import type { ParsedExample, ParsedItem } from '../lib/tsdoc'
@@ -155,8 +155,8 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
       ...Object.values(config?.shell ?? {}),
       ...(config?.panel?.items ?? []).map(it => it.component),
     ].filter((p): p is string => typeof p === 'string')
-    // `./modo.components.tsx#Select` names an export; several refs into one
-    // file share its entry.
+    // `./modo.components.tsx#Select` names an export (`@scope/ds/docs#DocsNav`
+    // too, a package's); several refs into one file share its entry.
     const extraKeys = new Map<string, { file: string; key: string; exportName: string }>()
     for (const p of new Set(extraPaths)) {
       const [path = p, exportName = 'default'] = p.split('#')
@@ -462,8 +462,16 @@ function itemCss(file: string, sources: string[]): string[] {
   return [...new Set(items.flatMap(discoverCssForFile))]
 }
 
-/** `./x` → x (file), x/index.{tsx,ts,jsx,js} (dir) or x.{tsx,ts,jsx,js}. */
+/**
+ * `./x` → x (file), x/index.{tsx,ts,jsx,js} (dir) or x.{tsx,ts,jsx,js}, from the
+ * project root; else, for a bare specifier, a file of an installed package
+ * (`@scope/ds/docs`, through its `exports`, the `source` file first).
+ */
 function resolveUserFile(userRoot: string, p: string): string | null {
+  return resolveProjectFile(userRoot, p) ?? resolvePackageFile(p, userRoot)
+}
+
+function resolveProjectFile(userRoot: string, p: string): string | null {
   const abs = resolve(userRoot, p)
   const exts = ['.tsx', '.ts', '.jsx', '.js']
   if (existsSync(abs)) {

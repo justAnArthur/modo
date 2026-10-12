@@ -97,13 +97,7 @@ function pick(target: unknown, sawSource: { value: boolean }): string | null {
   return null
 }
 
-/**
- * A bare specifier resolved through its package's `exports` with the
- * conditions `source`, `import`, `default` (in that priority), when that lands
- * on a TypeScript source file. Null otherwise: the caller falls back to
- * TypeScript's own resolution, which finds the `types` (.d.ts).
- */
-export function resolveSourceExport(spec: string, fromDir: string): string | null {
+function resolveExport(spec: string, fromDir: string): { file: string; sawSource: boolean } | null {
   const bare = splitBare(spec)
   if (!bare) return null
   const pkgDir = findPackageDir(bare.name, fromDir)
@@ -115,10 +109,33 @@ export function resolveSourceExport(spec: string, fromDir: string): string | nul
 
   const sawSource = { value: false }
   const target = pick(entry.target, sawSource)
-  if (!target || !sawSource.value) return null
+  if (!target) return null
   const file = resolve(pkgDir, entry.star === undefined ? target : target.replaceAll('*', entry.star))
-  if (!TS_FILE.test(file) || file.endsWith('.d.ts') || !existsSync(file)) return null
-  return realpathSync(file)
+  if (file.endsWith('.d.ts') || !existsSync(file)) return null
+  return { file: realpathSync(file), sawSource: sawSource.value }
+}
+
+/**
+ * A bare specifier resolved through its package's `exports` with the
+ * conditions `source`, `import`, `default` (in that priority), when that lands
+ * on a TypeScript source file. Null otherwise: the caller falls back to
+ * TypeScript's own resolution, which finds the `types` (.d.ts).
+ */
+export function resolveSourceExport(spec: string, fromDir: string): string | null {
+  const hit = resolveExport(spec, fromDir)
+  return hit?.sawSource && TS_FILE.test(hit.file) ? hit.file : null
+}
+
+/**
+ * A bare specifier naming a file of an installed package (`@scope/ds/docs`),
+ * for a `modo.config.ts` slot or panel reference: the same lookup as
+ * `resolveSourceExport` (the `source` file when the package ships one), else
+ * whatever the `import` / `default` condition points at, built JavaScript
+ * included. Null for a relative or absolute path, or a package that doesn't
+ * export it.
+ */
+export function resolvePackageFile(spec: string, fromDir: string): string | null {
+  return resolveExport(spec, fromDir)?.file ?? null
 }
 
 /** The nearest dir above `file` holding a package.json. */
