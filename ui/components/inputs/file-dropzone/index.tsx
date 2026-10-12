@@ -9,9 +9,11 @@ import { Field } from '@base-ui/react/field'
 import { motion } from 'motion/react'
 import {
   type ChangeEvent,
+  type CSSProperties,
   type DragEvent,
   type ForwardRefExoticComponent,
   forwardRef,
+  type LabelHTMLAttributes,
   type ReactNode,
   type RefAttributes,
   useRef,
@@ -27,7 +29,11 @@ import { cn } from '../../../lib/utils'
 import { FileRow } from './file-row'
 import { type DragVerdict, dragVerdict, type FileRejection, sortFiles } from './variants'
 
-interface FileDropzoneProps {
+interface FileDropzoneProps
+  extends Omit<
+    LabelHTMLAttributes<HTMLLabelElement>,
+    'children' | 'className' | 'style' | 'id' | 'onChange' | 'htmlFor' | 'form'
+  > {
   /** Called with the files that pass `accept`, `maxSize` and the count, after a pick or a drop. */
   onFilesChange?: (files: File[]) => void
   /** Called with the files turned away and why (`type`, `size`, `count`), after a pick or a drop. */
@@ -68,6 +74,8 @@ interface FileDropzoneProps {
   size?: SizeVariant
   /** Classes for the zone. */
   className?: string
+  /** Inline styles for the zone (its `<label>` root). The other attributes of a `<label>` (`title`, `data-*`, `aria-*`, `onClick`) reach it too, and drag handlers run before the zone's own. */
+  style?: CSSProperties
 }
 
 type DragState = 'idle' | DragVerdict
@@ -132,6 +140,12 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
       readOnly,
       size: sizeProp,
       className,
+      style,
+      onDragEnter: dragEnter,
+      onDragOver: dragOver,
+      onDragLeave: dragLeave,
+      onDrop: dropped,
+      ...rest
     },
     ref,
   ) => {
@@ -160,7 +174,8 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
       if (rejected.length) onFilesRejected?.(rejected)
     }
 
-    const onDragEnter = (e: DragEvent) => {
+    const onDragEnter = (e: DragEvent<HTMLLabelElement>) => {
+      dragEnter?.(e)
       if (closed || !e.dataTransfer.types.includes('Files')) return
       e.preventDefault()
       depth.current++
@@ -169,19 +184,22 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
       setDrag(dragVerdict(types, accept, multiple ? (maxFiles ?? Number.POSITIVE_INFINITY) : 1))
     }
 
-    const onDragOver = (e: DragEvent) => {
+    const onDragOver = (e: DragEvent<HTMLLabelElement>) => {
+      dragOver?.(e)
       if (closed || drag === 'idle') return
       e.preventDefault()
       e.dataTransfer.dropEffect = drag === 'reject' ? 'none' : 'copy'
     }
 
-    const onDragLeave = () => {
+    const onDragLeave = (e: DragEvent<HTMLLabelElement>) => {
+      dragLeave?.(e)
       if (drag === 'idle') return
       depth.current = Math.max(depth.current - 1, 0)
       if (depth.current === 0) setDrag('idle')
     }
 
-    const onDrop = (e: DragEvent) => {
+    const onDrop = (e: DragEvent<HTMLLabelElement>) => {
+      dropped?.(e)
       if (closed) return
       e.preventDefault()
       depth.current = 0
@@ -207,6 +225,8 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
     return (
       // biome-ignore lint/a11y/noLabelWithoutControl: the file input inside is the control (Field.Control renders it).
       <label
+        {...rest}
+        style={style}
         onDragEnter={onDragEnter}
         onDragOver={onDragOver}
         onDragLeave={onDragLeave}

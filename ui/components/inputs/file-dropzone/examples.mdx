@@ -54,6 +54,14 @@ Invalid takes the field's destructive ring; disabled dims the zone; read-only ta
   <FileDropzone readOnly label="No file attached" />
 </div>
 
+# Style and attributes
+
+Props a `<label>` takes (`style`, `title`, `data-*`, `aria-*`, handlers) reach the zone's root. Here an inline `maxWidth` and a tooltip.
+
+<div className="w-96 max-w-full">
+  <FileDropzone style={{ maxWidth: 280 }} title="Drop your avatar here" label="Drop an avatar" accept="image/*" />
+</div>
+
 # File rows
 
 A row shows one file: its glyph or thumbnail, the name, the size or a status line, and a remove button. `status` sets the glyph, and `progress` fills the bar while uploading.
