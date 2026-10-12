@@ -125,3 +125,27 @@ The same dimming and inert behaviour on the default step.
 <div className="w-72">
   <Slider size="default" label="Roundness" defaultValue={2} min={0} max={4} disabled />
 </div>
+
+# Vertical
+
+`orientation="vertical"` stands the track upright: min at the bottom, max at the top, ArrowUp or ArrowRight to raise and ArrowDown or ArrowLeft to lower. It always renders the dense design, takes its height from `className`, and puts the value on top (`valuePosition`) unless told otherwise.
+
+<div className="flex items-center gap-10">
+  <Slider orientation="vertical" aria-label="Volume" defaultValue={40} className="h-48" />
+  <Slider orientation="vertical" aria-label="Range" defaultValue={[20, 70]} className="h-48" />
+  <Slider orientation="vertical" aria-label="Level" defaultValue={50} step={25} showSteps valuePosition="bottom" className="h-48" />
+  <Slider orientation="vertical" aria-label="Gain" defaultValue={60} valuePosition="tooltip" className="h-48" />
+</div>
+
+# Commit
+
+`onValueCommit(value)` fires once when an interaction ends: the pointer lifting after a drag or click, a keyboard step, or a committed edit of the value. `onChange` reports every value on the way, so save from `onValueCommit` and preview from `onChange`.
+
+```tsx
+<Slider
+  aria-label="Volume"
+  defaultValue={40}
+  onChange={value => preview(value)}
+  onValueCommit={value => save(value)}
+/>
+```

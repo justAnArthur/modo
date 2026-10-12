@@ -1,4 +1,5 @@
 import Textarea from './index'
+import Button from '../../button'
 import Input, { InputGroup, Label } from '../input'
 
 # Basic
@@ -86,3 +87,34 @@ Inside `InputGroup.Field` the textarea joins the group's hover, and the field's 
 <div className="w-72 max-w-full">
   <Textarea defaultValue="Read only for now" disabled />
 </div>
+
+# Uncontrolled
+
+With neither `value` nor `onChange` the DOM holds the text, so `ref` is the real `<textarea>`: `defaultValue`, `ref.current.value = ''` and a native form reset behave as on any textarea. Type, grow the box, then reset: the text goes back to its default and the box re-fits.
+
+<form className="flex flex-col items-start gap-2 w-72 max-w-full">
+  <Textarea name="note" aria-label="Note" defaultValue={'First line\nSecond line\nThird line\nFourth line'} />
+  <Button type="reset" variant="ghost">Reset</Button>
+</form>
+
+```tsx
+const ref = useRef<HTMLTextAreaElement>(null)
+
+<Textarea ref={ref} name="note" defaultValue="Hello" />
+
+ref.current.value // what was typed
+ref.current.value = '' // clears it
+```
+
+
+Choose one mode per instance. A `defaultValue` with an `onChange` that is passed on some renders and not others would flip the textarea between DOM-held and controlled text.
+
+# With a form library
+
+A `register()`-style form needs the DOM mode, but its `onChange` takes an event where the Textarea's takes a string, so the result can't be spread whole. Only that key clashes: take `onChange` out and pass it as `onInput`, the event handler that fires on every keystroke. `rest` carries `name`, `ref` and `onBlur` straight through.
+
+```tsx
+const { onChange, ...rest } = register('note')
+
+<Textarea {...rest} onInput={onChange} />
+```
