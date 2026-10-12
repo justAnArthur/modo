@@ -3,10 +3,12 @@
  * UI's NumberField, drawn on the shared field box (`useFieldBox` in
  * `lib/field-classes.ts`) like Input, with its steppers as field actions
  * (`FIELD_ACTION_BOX` / `FIELD_ACTION_END` in `lib/field-variants.ts`).
+ * `inputProps` reaches the `<input>` (last, so `aria-*`, `autoFocus`, handlers and `id`
+ * win), and `onValueChange` hears Base UI's change details as a second argument.
  */
 
-import { NumberField } from '@base-ui/react/number-field'
-import { forwardRef, type ReactNode, useRef } from 'react'
+import { NumberField, type NumberFieldRootChangeEventDetails } from '@base-ui/react/number-field'
+import { forwardRef, type InputHTMLAttributes, type ReactNode, useRef } from 'react'
 import {
   FIELD_ACTION_BOX,
   FIELD_ACTION_END,
@@ -27,8 +29,8 @@ interface NumberInputProps {
   value?: number | null
   /** Initial value when uncontrolled. Empty when unset. */
   defaultValue?: number
-  /** Called with the new value as it changes (typing, steppers, arrow keys, scrubbing); `null` when cleared. */
-  onValueChange?: (value: number | null) => void
+  /** Called with the new value as it changes (typing, steppers, arrow keys, scrubbing); `null` when cleared. The second argument is Base UI's change details: `reason` names the cause (`"input-change"`, `"keyboard"`, `"increment-press"`, `"scrub"`, …) and `event` the DOM event. */
+  onValueChange?: (value: number | null, details: NumberFieldRootChangeEventDetails) => void
   /** Called once a change is done: on blur after typing, on release after a stepper press or a scrub. */
   onValueCommitted?: (value: number | null) => void
   /** Lowest value the steppers, arrow keys and blur clamp to. */
@@ -79,6 +81,8 @@ interface NumberInputProps {
   size?: SizeVariant
   /** Classes for the ringed box. */
   className?: string
+  /** Props for the `<input>` itself, applied last so they win: `aria-label`, `aria-describedby`, `autoFocus`, `onKeyDown`, `id`, `name`, `autoComplete`, `inputMode`. `invalid`, `required` and `disabled` stay with the props above and the surrounding Field; a `className` joins the input's own. */
+  inputProps?: Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'defaultValue' | 'onChange' | 'size'>
 }
 
 /**
@@ -124,6 +128,7 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       required,
       size,
       className,
+      inputProps,
       ...props
     },
     ref,
@@ -157,7 +162,7 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         id={id}
         value={value}
         defaultValue={defaultValue}
-        onValueChange={next => onValueChange?.(next)}
+        onValueChange={(next, details) => onValueChange?.(next, details)}
         onValueCommitted={next => onValueCommitted?.(next)}
         format={format}
         locale={locale}
@@ -181,9 +186,11 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
             }}
             placeholder={placeholder}
             aria-invalid={box.invalid || undefined}
+            {...inputProps}
             className={cn(
               'w-full min-w-0 rounded-none bg-transparent text-foreground tabular-nums placeholder:text-muted-foreground outline-none font-[inherit] weight-normal',
               box.size.text,
+              inputProps?.className,
             )}
           />
           <InputAdornment size={size}>{endAdornment}</InputAdornment>

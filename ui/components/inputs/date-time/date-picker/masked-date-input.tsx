@@ -3,7 +3,10 @@
  * text field. Typing fills a numeric mask in the locale's own order
  * ("DD.MM.YYYY", "MM/DD/YYYY", with "HH:mm" for a time); the rest of the mask
  * shows muted after the caret. After utegsk/ui's `MaskedDateInput`
- * (`packages/ui/src/components/form/calendar/date-input.client.tsx`).
+ * (`packages/ui/src/components/form/calendar/date-input.client.tsx`). The caller's
+ * attributes (`type`, `inputMode`, `autoComplete`, …) are spread after
+ * the field's own defaults (`text`, `numeric`, `off`), so they win; the value, text and
+ * key handling stay the field's.
  */
 
 import { getDate, getHours, getMinutes, getMonth, getYear, isValid, type Locale, set } from 'date-fns'
@@ -131,7 +134,7 @@ function caretAfter(input: HTMLInputElement, count: number) {
 }
 
 interface MaskedDateInputProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'defaultValue' | 'onChange' | 'type'> {
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'defaultValue' | 'onChange'> {
   /** The committed date; `null` when empty. */
   value: Date | null
   /** The value from outside can't be read as a date: keep what was typed and stay invalid. */
@@ -316,10 +319,10 @@ const MaskedDateInput = forwardRef<HTMLInputElement, MaskedDateInputProps>(
         )}
         <input
           ref={ref}
-          {...props}
           type="text"
           inputMode="numeric"
           autoComplete="off"
+          {...props}
           value={text}
           placeholder={placeholder}
           onChange={e => commit(digitsIn(e.target.value))}

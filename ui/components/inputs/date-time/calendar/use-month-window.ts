@@ -88,28 +88,36 @@ function useMonthWindow(start: Date, end: Date, anchor: Date) {
     scroller.scrollTop += (d.top - s.top) / scale - (scroller.clientHeight - day.offsetHeight) / 2
   }, [])
 
-  const measure = useCallback(() => {
-    const scroller = scrollerRef.current
-    if (!scroller) return
-    const top = scroller.scrollTop
-    const bottom = top + scroller.clientHeight
-    const shown = [...scroller.querySelectorAll<HTMLElement>('[data-calendar-month]')]
-      .map(el => ({
-        key: el.dataset.calendarMonth ?? '',
-        height: Math.min(bottom, el.offsetTop + el.offsetHeight) - Math.max(top, el.offsetTop),
-      }))
-      .filter(m => m.height > 0)
-    const inView = shown.map(m => m.key)
-    setVisible(prev => (prev.join() === inView.join() ? prev : inView))
-    setCurrent(
-      shown.reduce<(typeof shown)[number] | undefined>((a, m) => (a && a.height >= m.height ? a : m), undefined)?.key,
-    )
-    if (settling.current) return
+  /** Reports the months in view and, when `move` is set, shifts the window if the reader is near its edge. */
+  const read = useCallback(
+    (move: boolean) => {
+      const scroller = scrollerRef.current
+      if (!scroller) return
+      const top = scroller.scrollTop
+      const bottom = top + scroller.clientHeight
+      const shown = [...scroller.querySelectorAll<HTMLElement>('[data-calendar-month]')]
+        .map(el => ({
+          key: el.dataset.calendarMonth ?? '',
+          height: Math.min(bottom, el.offsetTop + el.offsetHeight) - Math.max(top, el.offsetTop),
+        }))
+        .filter(m => m.height > 0)
+      const inView = shown.map(m => m.key)
+      setVisible(prev => (prev.join() === inView.join() ? prev : inView))
+      setCurrent(
+        shown.reduce<(typeof shown)[number] | undefined>((a, m) => (a && a.height >= m.height ? a : m), undefined)?.key,
+      )
+      if (!move || settling.current) return
 
-    const margin = scroller.clientHeight
-    if (top < margin) moveWindow(addMonths(firstRef.current, -SHIFT))
-    else if (scroller.scrollHeight - bottom < margin) moveWindow(addMonths(firstRef.current, SHIFT))
-  }, [moveWindow])
+      // A reader this close to an edge moves the window. The margin is capped well inside what a shift
+      // gives back, so a list with no height of its own (a height class the stylesheet lacks, `h-auto`)
+      // can't keep the reader "near" an edge after every move and walk the window to the end of the range.
+      const margin = Math.min(scroller.clientHeight, scroller.scrollHeight / 4)
+      if (top < margin) moveWindow(addMonths(firstRef.current, -SHIFT))
+      else if (scroller.scrollHeight - bottom < margin) moveWindow(addMonths(firstRef.current, SHIFT))
+    },
+    [moveWindow],
+  )
+  const measure = useCallback(() => read(true), [read])
 
   // Runs after the window moves (and on mount) to restore the reader's place.
   useLayoutEffect(() => {
@@ -122,7 +130,9 @@ function useMonthWindow(start: Date, end: Date, anchor: Date) {
     if (target) scroller.scrollTop = target.offsetTop
     else if (kept && p.keep) scroller.scrollTop = kept.offsetTop - p.keep.delta
     else if (p.day) centreDay(p.day)
-    measure()
+    // Reports only: moving the window from here would nest one update inside the last, and
+    // the scroll the restore causes calls `measure` for the next shift.
+    read(false)
   }, [first])
 
   /** Scrolls a month to the top: smoothly when it is rendered, else by moving the window to it. */

@@ -52,6 +52,8 @@ export default function RemoteDemo({ latency = 600 }: RemoteDemoProps) {
   const [items, setItems] = useState<string[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  // Base UI's change details tell typing from a pick that rewrites the field.
+  const [reason, setReason] = useState<string>()
 
   useEffect(() => {
     setLoading(true)
@@ -71,9 +73,10 @@ export default function RemoteDemo({ latency = 600 }: RemoteDemoProps) {
         filter={null}
         loading={loading}
         inputValue={query}
-        onInputValueChange={next => {
+        onInputValueChange={(next, details) => {
           setQuery(next)
           setLimit(PAGE)
+          setReason(details.reason)
         }}
       >
         <Combobox.Input placeholder="Search a city…" />
@@ -96,6 +99,7 @@ export default function RemoteDemo({ latency = 600 }: RemoteDemoProps) {
           </Combobox.List>
         </Combobox.Content>
       </Combobox>
+      {reason && <p className="mt-1 pl-3 text-caption text-muted-foreground">Last text change: {reason}</p>}
     </div>
   )
 }

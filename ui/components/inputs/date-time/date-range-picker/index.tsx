@@ -362,7 +362,8 @@ const DateRangePicker: ForwardRefExoticComponent<
         onText={readEnd(end)}
         onEnter={() => setOpen(false)}
         onFocus={() => setActiveEnd(end)}
-        className="min-w-0 flex-1"
+        // With times, an end needs room for its whole text ("Oct 1, 2026, 12:00 AM"): below that the ends stack.
+        className={cn('min-w-0 flex-1', withTime && 'min-w-[10.5rem]')}
       />
     )
     // With times, the end the columns set is lit.
@@ -374,13 +375,13 @@ const DateRangePicker: ForwardRefExoticComponent<
   }
 
   const header = (
-    <>
+    <div className={cn('flex min-w-0 flex-1 items-center', withTime && 'flex-wrap gap-y-1')}>
       {endInput('from', startLabel)}
       <span aria-hidden className="px-0.5 text-muted-foreground">
         –
       </span>
       {endInput('to', endLabel)}
-    </>
+    </div>
   )
 
   const isInvalid = invalidOf(invalid, control['aria-invalid'])

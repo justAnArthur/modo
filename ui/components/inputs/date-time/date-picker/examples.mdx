@@ -111,6 +111,14 @@ With `withTime` the mask takes the time too, on a 24-hour clock; the locale sets
   <DatePicker editable withTime locale={de} defaultValue={new Date(1990, 4, 17, 14, 30)} />
 </div>
 
+# Input attributes
+
+`controlProps` reaches an `editable` field's input after its defaults, so `autoComplete` and `inputMode` replace its `"off"` and `"numeric"`, and `data-*`, `autoFocus` and handlers come through too.
+
+<div className="w-72 max-w-full">
+  <DatePicker editable aria-label="Date of birth" controlProps={{ autoComplete: 'bday', inputMode: 'text', 'data-field': 'birthday' }} />
+</div>
+
 # Labels and format
 
 Every word comes from `labels`, and `formatDate` writes the field's text. `actions` adds Today and Clear under the calendar.
