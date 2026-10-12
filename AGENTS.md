@@ -104,7 +104,12 @@ Rules:
   - It is an entry of the shared build (`@mdx-js/esbuild` + `remark-gfm`). Every top-level JSX block is a live example: `lib/src/plugins/mdx-examples.ts` wraps it in `ModoExample`, the example card, and keeps its source for Show code / Copy.
   - Imports are real: the item is `./index`, other items are `../../<tier>/<id>` (one `../` more per group folder), packages are imported by name. Items and `examples` scope exports also resolve as JSX tags without an import, but an identifier used in an expression (`icon={Plus}`) needs one.
   - Expressions are plain JS (acorn): no TS syntax such as `as const`. MDX isn't typechecked.
-  - `#`/`##` become example titles (`example-<slug>` ids); `###` is a sub-heading. All get anchors and feed the TOC.
+  - Headings (`example-<slug>` ids, all with anchors; the TOC lists h2–h4):
+    - **Flat file** (no `##`): `#` is an example title (h3), `###` a sub-heading (h4, in the TOC).
+    - **Grouped file** (it has a `##`): `#` is a group (h3, `example-group-title`), `##` an example inside it (h4, `example-card-title`), `###` a sub-heading (h5, rendered, not in the TOC). The TOC reads Examples › group › example.
+    - A group may hold its own example straight under the `#` (caption, then the block), before or without any `##`; it is then both. A `##` with no `#` above it is allowed (an ungrouped example).
+    - "Grouped" is decided at build time by `remarkModoExamples` (any top-level `##`), which marks every heading of the file; the runtime only reads the mark (`lib/src/lib/example-groups.ts`), so nothing flashes and a flat file renders as it always did.
+    - Each `.mdx` keeps its own structure, so inherited examples (`{@inheritDoc}`) and a wrapper's own can be flat or grouped independently; they render one after the other.
   - Prose typography is `@scope`d down to the example cards, so it never leaks into a live example.
   - A CSS scanner (UnoCSS `content`, Tailwind `@source`) must include `.mdx`, since example classes live there.
 - **Markdown** renders everywhere: item, example and prop descriptions.
@@ -191,7 +196,7 @@ Rules:
 - nav: `sidebar-nav`, `sidebar-section`, `sidebar-section-title`, `sidebar-section-items`, `sidebar-item` (`aria-current="page"` when active), `toc`, `toc-label` (`data-level`).
 - page: `page-eyebrow`, `page-title`, `page-lead`, `prose`, `section`, `section-title`, `anchor`, `hero`, `hero-stats`.
 - overviews: `bento`, `bento-card` (`data-span="wide|full"`), `bento-stage`, `bento-meta`, `bento-title`, `bento-count`, `bento-desc`, `bento-empty`, `token-preview`, `token-chip`.
-- examples: `example-card`, `example-card-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`, `code-block`, `code-actions`, `icon-label`.
+- examples: `example-card`, `example-card-title`, `example-group-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`, `code-block`, `code-actions`, `icon-label`.
 - tables and tokens: `prop-table-scroll`, `prop-table`, `token-list`, `token-row`, `token-name`, `token-meta`, `swatch` (`data-kind`).
 - colors: `color-grid`, `color-stack`, `color-tile` (`data-flush` when it matches the page), `color-tile-name`, `color-tile-value`, `color-tile-pair`.
 - foundations: `token-label`; typography `type-elements`, `type-element`, `type-families`, `type-family`, `type-family-sample`, `type-glyph`, `type-scale`, `type-step`, `type-sample`, `type-weights`, `type-weight`, `type-preview`; radius `radius-grid`, `radius-tile`, `radius-shape`; spacing `space-scale`, `space-step`, `space-bar`, `space-preview`; motion `motion-list`, `motion-row`, `motion-track`, `motion-dot`, `motion-curve`, `motion-preview`, `motion-bar`.

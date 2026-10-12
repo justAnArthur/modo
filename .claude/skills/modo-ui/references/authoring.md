@@ -143,8 +143,36 @@ One-line caption: what to try and what to notice.
 <Thing defaultValue="a" />
 ```
 
-- Each `#` heading is one example card; the JSX block under it is live, and its source is the card's
-  Show code. `###` is a sub-heading. Fence code that should be read, never wrap it in `<Code>`.
+- In a flat file each `#` heading is one example card; the JSX block under it is live, and its source
+  is the card's Show code. `###` is a sub-heading. Fence code that should be read, never wrap it in
+  `<Code>`.
+- **Groups from 7 examples up.** Once an item has seven or more examples, group them: `#` is a group,
+  `##` an example in it (a file with any `##` is grouped; the "On this page" list then reads
+  Examples › group › example). Use 2–5 groups, named short and parallel, reusing across items:
+  **Basics**, **Variants**, **Sizes**, **Content**, **Selection**, **States**, **Composition**,
+  **Behavior**, **Localization**, **Options** — whatever fits, in that spirit. A group with one
+  example, or whose first example is the group itself (`# Variants` then its caption and block, then
+  `## Destructive and success`), keeps the example straight under the `#`. In a grouped file `###` is
+  a sub-heading below the TOC. Fewer than seven examples stay flat. Example titles keep their slugs
+  (`#example-<slug>`), so re-grouping breaks no link.
+
+```mdx
+# Variants
+
+Caption of the group's own example.
+
+<Thing variant="primary" />
+
+## Outline
+
+<Thing variant="outline" />
+
+# States
+
+## Disabled
+
+<Thing disabled />
+```
 - **Hook-free.** Nothing runs a component body in an example, so interactivity comes from `default*`
   props. When a demo needs choreography (a value that changes on a timer, a button that toggles a
   state), write a small local stage component next to the item (`badge/change-demo.tsx`) and import it.
@@ -152,7 +180,8 @@ One-line caption: what to try and what to notice.
 - **Real imports.** The item is `./index`; other items by path. An identifier used in an expression
   (`icon={Plus}`) needs an import even when it is an item.
 - Order: the main use first, then each variation that changes how it looks or moves (sizes, sides,
-  effects), then states (disabled, loading, error), then composition with other items.
+  effects), then states (disabled, loading, error), then composition with other items; a grouped
+  file orders its groups that way and the examples within each.
 - Examples use the same tokens as items: no arbitrary visual values; frame geometry (`w-72`,
   `min-h-[240px]`) is fine.
 

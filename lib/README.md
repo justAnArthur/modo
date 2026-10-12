@@ -79,7 +79,7 @@ Toggle each to feel the pace.
 <Motion tier="fast">…</Motion>
 ```
 
-An `@example` that is only `{@include ./x.mdx}` is compiled into the same build as your items (real imports, shared contexts). Each `# Title` names an example and the JSX block below it becomes a live example with Show code / Copy. For prose too long for the comment, `{@include ./x.md}` inlines a Markdown file; `{@includeCode ./x}` inlines a file as a code block. Includes are not recursive; a missing file is a build warning.
+An `@example` that is only `{@include ./x.mdx}` is compiled into the same build as your items (real imports, shared contexts). Each `# Title` names an example and the JSX block below it becomes a live example with Show code / Copy. A long list can be grouped: once a file has a `##`, `#` is a group and each `##` an example in it (a group may hold its own example straight under its `#`; `###` is a sub-heading below the table of contents), so "On this page" reads Examples › group › example. A file with no `##` stays flat. For prose too long for the comment, `{@include ./x.md}` inlines a Markdown file; `{@includeCode ./x}` inlines a file as a code block. Includes are not recursive; a missing file is a build warning.
 
 ### Props
 
@@ -94,7 +94,7 @@ An item file may re-export a component instead of declaring one: `export { defau
 export { default } from '@acme/ui/components/button'
 ```
 
-To add to a component's docs rather than take them as they are, write your own TSDoc with `{@inheritDoc <ref>}`, where `<ref>` is a module specifier (its default export) or a name in the file's scope. The base's description and examples come first, then your prose and examples; inherited examples render the base component, and the props table lists your item's full props.
+To add to a component's docs rather than take them as they are, write your own TSDoc with `{@inheritDoc <ref>}`, where `<ref>` is a module specifier (its default export) or a name in the file's scope. The base's description and examples come first, then your prose and examples; inherited examples render the base component, and the props table lists your item's full props. Each `.mdx` keeps its own structure: a grouped base file and a flat one of your own (or the reverse) render one after the other.
 
 ```tsx
 import Base from '@acme/ui/components/button'
