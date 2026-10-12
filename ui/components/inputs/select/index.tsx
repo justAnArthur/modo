@@ -157,9 +157,9 @@ const popupShape = shapeMap.rounded
 // is only touched when `props.ref` is absent (React 18 never has it).
 function elementRef(el: ReactElement | undefined): Ref<HTMLDivElement> | undefined {
   if (!el) return undefined
-  const fromProps = (el.props as { ref?: Ref<HTMLDivElement> }).ref
-  if (fromProps) return fromProps
-  return parseInt(version, 10) >= 19 ? undefined : (el as unknown as { ref?: Ref<HTMLDivElement> }).ref
+  // React 19 keeps the ref in props, React 18 on the element; each warns when read the other way.
+  if (parseInt(version, 10) >= 19) return (el.props as { ref?: Ref<HTMLDivElement> }).ref
+  return (el as unknown as { ref?: Ref<HTMLDivElement> }).ref
 }
 
 const ownChildren = (el: ReactElement) => (el.props as { children?: ReactNode }).children

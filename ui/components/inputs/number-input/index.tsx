@@ -81,7 +81,7 @@ interface NumberInputProps {
   size?: SizeVariant
   /** Classes for the ringed box. */
   className?: string
-  /** Props for the `<input>` itself, applied last so they win: `aria-label`, `aria-describedby`, `autoFocus`, `onKeyDown`, `id`, `name`, `autoComplete`, `inputMode`. `invalid`, `required` and `disabled` stay with the props above and the surrounding Field; a `className` joins the input's own. */
+  /** Props for the `<input>` itself, applied last so they win: `aria-label`, `aria-describedby`, `autoFocus`, `onKeyDown`, `id`, `autoComplete`, `inputMode`. Use the root `name`; a `name` here posts the formatted text. `disabled`, `required`, `readOnly` and `type` stay with the root props and the surrounding Field; a `className` joins the input's own. */
   inputProps?: Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'defaultValue' | 'onChange' | 'size'>
 }
 

@@ -35,7 +35,7 @@ Without room for the columns, they turn into strips above the days.
 
 # Fixed height
 
-A height class on the calendar sets its height in both layouts, with the columns beside the days or above them.
+A height class on the calendar sets its height in both layouts, with the columns beside the days or above them. The calendar needs a bounded height for this: without one every month in the window renders and it opens on the window start.
 
 <div className="flex flex-wrap items-start gap-4">
   <Calendar mode="single" className="h-72" selected={new Date(2026, 9, 9)} />

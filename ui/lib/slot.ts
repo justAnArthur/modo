@@ -17,6 +17,7 @@ import {
   type ReactElement,
   type ReactNode,
   type Ref,
+  version,
 } from 'react'
 
 interface SlotProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -53,13 +54,12 @@ function composeRefs<T>(...refs: (Ref<T> | undefined | null)[]): (node: T | null
   }
 }
 
-/** A child's ref: React 19 keeps it in `props.ref`, React 18 on the element (and warns when read from props). */
+/** A child's ref: React 19 keeps it in `props.ref`, React 18 on the element; each warns when read the other way. */
+const REACT_19 = parseInt(version, 10) >= 19
+
 function elementRef(element: ReactElement): Ref<unknown> | undefined {
-  const fromProps = Object.getOwnPropertyDescriptor(element.props, 'ref')
-  if (fromProps && 'get' in fromProps && (fromProps.get as { isReactWarning?: boolean } | undefined)?.isReactWarning) {
-    return (element as { ref?: Ref<unknown> }).ref
-  }
-  return (element.props as { ref?: Ref<unknown> }).ref ?? (element as { ref?: Ref<unknown> }).ref
+  if (REACT_19) return (element.props as { ref?: Ref<unknown> }).ref
+  return (element as { ref?: Ref<unknown> }).ref
 }
 
 /**

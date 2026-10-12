@@ -86,7 +86,7 @@ interface PickerControlProps {
   'aria-describedby'?: string
   /** Marks the value invalid, as `invalid` does. */
   'aria-invalid'?: AriaAttributes['aria-invalid']
-  /** Attributes for the field's control: the button that opens the panel, or an `editable` field's input (`data-*`, `autoFocus`, `tabIndex`, handlers, which run after the picker's own; an editable field's input also takes `autoComplete` and `inputMode`, which replace its defaults of `"off"` and `"numeric"`). */
+  /** Attributes for the field's control: the button that opens the panel, or an `editable` field's input (`data-*`, `autoFocus`, `tabIndex`, handlers, which run after the picker's own; an editable field's input also takes `autoComplete` and `inputMode`, which replace its defaults of `"off"` and `"numeric"`). On an editable field the masked input owns `onChange`, so a caller's one never runs; only `onFocus`, `onBlur` and `onKeyDown` chain, the caller's `onKeyDown` first, and its `preventDefault()` skips the mask's own key handling). */
   controlProps?: PickerControlAttributes
 }
 

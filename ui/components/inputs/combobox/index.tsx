@@ -334,7 +334,7 @@ function toValues(v: string | readonly string[] | undefined): string[] {
  * `label` may be any node; its `textValue` is what filters, fills the field
  * and names its chip. `readOnly` shows the picks and takes no input. Inside a
  * Field the fields take its invalid state, like Input does, and `hideTrigger`
- * drops the chevron for a field that opens by typing. The words the buttons
+ * drops the chevron (and with it the loading spinner; the popup's status row is then the only loading signal) for a field that opens by typing. The words the buttons
  * announce ("Open", "Clear", "Remove …") and the default "Search…" placeholder
  * come from `labels`, for translating them.
  *
@@ -615,7 +615,7 @@ interface ComboboxFieldProps
   error?: string
   /** Marks the value invalid without a message: the field turns destructive and sets `aria-invalid`. Defaults to the surrounding Field's invalid state. */
   invalid?: boolean
-  /** Hides the chevron button, for a field that opens by typing or arrow keys alone. Defaults to `false`. */
+  /** Hides the chevron button, for a field that opens by typing or arrow keys alone. It also drops the loading spinner, which lives in that button, so the popup's status row is the only loading signal. Defaults to `false`. */
   hideTrigger?: boolean
   /** Render a ✕ that clears the selection and query. Its slot is always
    *  reserved so the field never changes width. Defaults to `false`. */
