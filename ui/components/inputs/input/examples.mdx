@@ -4,7 +4,9 @@ import Textarea from '../textarea'
 import SizeProvider from '../../../primitives/sizes'
 import { CircleCheck, Mail, Search } from 'lucide-react'
 
-# Basic
+# Basics
+
+## Basic
 
 A single input with a leading icon.
 
@@ -12,7 +14,7 @@ A single input with a leading icon.
   <Input placeholder="Search teamspaces..." icon={Search} />
 </div>
 
-# Variants
+## Variants
 
 `borderless` is invisible until hovered or focused; `bordered` is framed at rest.
 
@@ -21,7 +23,7 @@ A single input with a leading icon.
   <Input variant="bordered" placeholder="Bordered" />
 </div>
 
-# With a Label
+## With a Label
 
 `Label` pairs with the input through `htmlFor` and `id`.
 
@@ -30,7 +32,9 @@ A single input with a leading icon.
   <Input id="input-email" placeholder="you@example.com" icon={Mail} />
 </div>
 
-# Adornments
+# Content
+
+## Adornments
 
 `startAdornment` and `endAdornment` hold a prefix, a unit or an icon beside the text. They light with the field, and icons take the ladder's glyph size.
 
@@ -40,7 +44,7 @@ A single input with a leading icon.
   <Input variant="bordered" icon={Mail} defaultValue="ada@example.com" endAdornment={<CircleCheck />} />
 </div>
 
-# Actions
+## Actions
 
 An `InputAction` sits 4px inside the ring. Here it reveals the password; a press keeps the caret in the field.
 
@@ -48,7 +52,7 @@ An `InputAction` sits 4px inside the ring. Here it reveals the password; a press
   <PasswordDemo variant="bordered" placeholder="Password" defaultValue="correct horse" />
 </div>
 
-# Compact adornments
+## Compact adornments
 
 A compact field steps its adornments and actions down with it.
 
@@ -57,7 +61,7 @@ A compact field steps its adornments and actions down with it.
   <Input size="compact" variant="bordered" endAdornment="EUR" defaultValue="1,200" />
 </div>
 
-# Density without size
+## Density without size
 
 `size` is a step of the size ladder, not the native `<input size>` width. Leave it off and the surrounding SizeProvider sets the height: one provider makes a whole form compact, with nothing on each field.
 
@@ -79,7 +83,9 @@ function TextField({ size: _nativeSize, ...props }) {
   </div>
 </SizeProvider>
 
-# Read-only
+# States
+
+## Read-only
 
 `readOnly` keeps the value selectable and copyable; hover shows the ring, but the fill never lifts.
 
@@ -88,7 +94,7 @@ function TextField({ size: _nativeSize, ...props }) {
   <Input readOnly variant="bordered" icon={Mail} defaultValue="billing@example.com" />
 </div>
 
-# Invalid
+## Invalid
 
 `invalid` turns the field destructive.
 
@@ -108,7 +114,7 @@ function TextField({ size: _nativeSize, ...props }) {
   <InputGroup.Field index={1} label="Email" placeholder="you@example.com" icon={Mail} />
 </InputGroup>
 
-# Group with a Textarea
+## Group with a Textarea
 
 A field's children replace its Input: a `Textarea` joins the group's hover and takes the field's error.
 
@@ -119,7 +125,7 @@ A field's children replace its Input: a `Textarea` joins the group's hover and t
   </InputGroup.Field>
 </InputGroup>
 
-# Group Error
+## Group Error
 
 An `error` message renders below the field and marks it invalid.
 

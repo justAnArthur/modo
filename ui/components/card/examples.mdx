@@ -1,7 +1,9 @@
 import Card from './index'
 import { Circle, Moon, Paintbrush, Palette, Shield, SquareLibrary } from 'lucide-react'
 
-# Basic
+# Basics
+
+## Basic
 
 Borderless inline list: icon + a ghost action, divided by hairlines.
 
@@ -27,91 +29,40 @@ Borderless inline list: icon + a ghost action, divided by hairlines.
   </Card.Group>
 </div>
 
-# Grid: 2-D fluid hover
+## Heading level
 
-Two-column grid of image tiles — `columns` above 1 turns on 2-D fluid
-hover: the highlight springs to the nearest card across rows and columns.
+`Card.Title` is a `span` by default. `as` renders it as a heading level for the page's outline (`h2`, `h3`, …) or as another tag; the look stays the same. The title below is a third-level heading, since this docs page already has its own `h1` and `h2` sections.
 
-<div className="w-full max-w-[560px]">
-  <Card.Group columns={2} border="outlined" separated>
-    {[
-      { title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
-      { title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
-      { title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
-      { title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
-    ].map((f) => (
-      <Card key={f.title} onClick={() => {}}>
-        <Card.Image src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
-        <Card.Header>
-          <Card.Title>{f.title}</Card.Title>
-          <Card.Description>{f.description}</Card.Description>
-        </Card.Header>
-        <Card.Footer>
-          <Card.Button variant="primary">Get started</Card.Button>
-          <Card.Button variant="secondary">Learn more</Card.Button>
-        </Card.Footer>
-      </Card>
-    ))}
-  </Card.Group>
+<div className="w-full max-w-[360px]">
+  <Card border="outlined">
+    <Card.Header>
+      <Card.Title as="h3">Notifications</Card.Title>
+      <Card.Description>Where we send what you subscribed to.</Card.Description>
+    </Card.Header>
+    <Card.Content bodyText className="text-muted-foreground">Email and push, daily digest.</Card.Content>
+  </Card>
 </div>
 
-# Outlined group
+## Body text
 
-One shared outlined frame, rows split by dividers: logo + primary.
-Card.Media also accepts a [logoA, logoB] tuple for a connected pair.
+`bodyText` on `Card.Content` sets the size ladder's body size (one step down in a compact region), so plain text inside no longer takes the size of the page around the card. It is off by default because content inherits its size, and a host that has been relying on that would see its text change. Both cards sit in a region set in the title size.
 
-<div className="w-full max-w-[520px]">
-  <Card.Group orientation="inline" border="outlined">
-    {[
-      { title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
-      { title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
-      { title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
-      { title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
-    ].map((f) => (
-      <Card key={f.title} onClick={() => {}}>
-        <Card.Media logo="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
-        <Card.Header>
-          <Card.Title>{f.title}</Card.Title>
-          <Card.Description>{f.description}</Card.Description>
-        </Card.Header>
-        <Card.Footer>
-          <Card.Button variant="primary">Get started</Card.Button>
-        </Card.Footer>
-      </Card>
-    ))}
-  </Card.Group>
+<div className="flex w-full max-w-[560px] flex-col gap-4 text-title">
+  <Card border="outlined">
+    <Card.Header>
+      <Card.Title>Inherited</Card.Title>
+    </Card.Header>
+    <Card.Content className="text-muted-foreground">The content takes the title size of its surroundings.</Card.Content>
+  </Card>
+  <Card border="outlined">
+    <Card.Header>
+      <Card.Title>Body text</Card.Title>
+    </Card.Header>
+    <Card.Content bodyText className="text-muted-foreground">The content takes the ladder's body size.</Card.Content>
+  </Card>
 </div>
 
-# Separated tiles
-
-Separated inline tiles with a full-height image; the action row drops
-below the text (primary, secondary, ghost).
-
-<div className="w-full max-w-[560px]">
-  <Card.Group orientation="inline" separated>
-    {[
-      { title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
-      { title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
-      { title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
-      { title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
-    ].map((f) => (
-      <Card key={f.title} onClick={() => {}}>
-        <Card.Image src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
-        <Card.Header>
-          <Card.Title>{f.title}</Card.Title>
-          <Card.Description>{f.description}</Card.Description>
-        </Card.Header>
-        <Card.Footer>
-          <Card.Button variant="primary">Get started</Card.Button>
-          <Card.Button variant="secondary">Learn more</Card.Button>
-          <Card.Button>Connect</Card.Button>
-        </Card.Footer>
-      </Card>
-    ))}
-  </Card.Group>
-</div>
-
-# Fully yours — compose anything
+## Fully yours — compose anything
 
 A standalone promo card tuned to a narrow 300px column: banner, features,
 actions and a dismiss control revealed on hover or focus. (Upstream's demo
@@ -134,32 +85,9 @@ hides the card on dismiss; here `onDismiss` is a no-op.)
   </Card>
 </div>
 
-# Selected
+# Variants
 
-Clickable selection — one active card carries the fill, its title bolds,
-and the group drops the dividers around it. The selection here is fixed on
-the second card; drive `selected` from your own state to follow clicks.
-
-<div className="w-full max-w-[520px]">
-  <Card.Group orientation="inline">
-    {[
-      { icon: Circle, title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
-      { icon: Shield, title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
-      { icon: Palette, title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
-      { icon: Moon, title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
-    ].map((f, i) => (
-      <Card key={f.title} label={f.title} selected={i === 1} onClick={() => {}}>
-        <Card.Media icon={f.icon} />
-        <Card.Header>
-          <Card.Title>{f.title}</Card.Title>
-          <Card.Description>{f.description}</Card.Description>
-        </Card.Header>
-      </Card>
-    ))}
-  </Card.Group>
-</div>
-
-# Outlined
+## Outlined
 
 `border="outlined"` frames a standalone card in a hairline, the same frame an
 outlined group gives its tiles. Borderless stays the default.
@@ -178,7 +106,7 @@ outlined group gives its tiles. Borderless stays the default.
   </Card>
 </div>
 
-# Divider
+## Divider
 
 `Card.Divider` runs a hairline across the card between two parts, edge to
 edge and spaced like the parts. In an inline card it stands upright.
@@ -211,35 +139,113 @@ edge and spaced like the parts. In an inline card it stands upright.
   </Card.Group>
 </div>
 
-# Heading level
+## Selected
 
-`Card.Title` is a `span` by default. `as` renders it as a heading level for the page's outline (`h2`, `h3`, …) or as another tag; the look stays the same. The title below is a third-level heading, since this docs page already has its own `h1` and `h2` sections.
+Clickable selection — one active card carries the fill, its title bolds,
+and the group drops the dividers around it. The selection here is fixed on
+the second card; drive `selected` from your own state to follow clicks.
 
-<div className="w-full max-w-[360px]">
-  <Card border="outlined">
-    <Card.Header>
-      <Card.Title as="h3">Notifications</Card.Title>
-      <Card.Description>Where we send what you subscribed to.</Card.Description>
-    </Card.Header>
-    <Card.Content bodyText className="text-muted-foreground">Email and push, daily digest.</Card.Content>
-  </Card>
+<div className="w-full max-w-[520px]">
+  <Card.Group orientation="inline">
+    {[
+      { icon: Circle, title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
+      { icon: Shield, title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
+      { icon: Palette, title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
+      { icon: Moon, title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
+    ].map((f, i) => (
+      <Card key={f.title} label={f.title} selected={i === 1} onClick={() => {}}>
+        <Card.Media icon={f.icon} />
+        <Card.Header>
+          <Card.Title>{f.title}</Card.Title>
+          <Card.Description>{f.description}</Card.Description>
+        </Card.Header>
+      </Card>
+    ))}
+  </Card.Group>
 </div>
 
-# Body text
+# Layouts
 
-`bodyText` on `Card.Content` sets the size ladder's body size (one step down in a compact region), so plain text inside no longer takes the size of the page around the card. It is off by default because content inherits its size, and a host that has been relying on that would see its text change. Both cards sit in a region set in the title size.
+## Grid: 2-D fluid hover
 
-<div className="flex w-full max-w-[560px] flex-col gap-4 text-title">
-  <Card border="outlined">
-    <Card.Header>
-      <Card.Title>Inherited</Card.Title>
-    </Card.Header>
-    <Card.Content className="text-muted-foreground">The content takes the title size of its surroundings.</Card.Content>
-  </Card>
-  <Card border="outlined">
-    <Card.Header>
-      <Card.Title>Body text</Card.Title>
-    </Card.Header>
-    <Card.Content bodyText className="text-muted-foreground">The content takes the ladder's body size.</Card.Content>
-  </Card>
+Two-column grid of image tiles — `columns` above 1 turns on 2-D fluid
+hover: the highlight springs to the nearest card across rows and columns.
+
+<div className="w-full max-w-[560px]">
+  <Card.Group columns={2} border="outlined" separated>
+    {[
+      { title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
+      { title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
+      { title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
+      { title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
+    ].map((f) => (
+      <Card key={f.title} onClick={() => {}}>
+        <Card.Image src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
+        <Card.Header>
+          <Card.Title>{f.title}</Card.Title>
+          <Card.Description>{f.description}</Card.Description>
+        </Card.Header>
+        <Card.Footer>
+          <Card.Button variant="primary">Get started</Card.Button>
+          <Card.Button variant="secondary">Learn more</Card.Button>
+        </Card.Footer>
+      </Card>
+    ))}
+  </Card.Group>
+</div>
+
+## Outlined group
+
+One shared outlined frame, rows split by dividers: logo + primary.
+Card.Media also accepts a [logoA, logoB] tuple for a connected pair.
+
+<div className="w-full max-w-[520px]">
+  <Card.Group orientation="inline" border="outlined">
+    {[
+      { title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
+      { title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
+      { title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
+      { title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
+    ].map((f) => (
+      <Card key={f.title} onClick={() => {}}>
+        <Card.Media logo="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
+        <Card.Header>
+          <Card.Title>{f.title}</Card.Title>
+          <Card.Description>{f.description}</Card.Description>
+        </Card.Header>
+        <Card.Footer>
+          <Card.Button variant="primary">Get started</Card.Button>
+        </Card.Footer>
+      </Card>
+    ))}
+  </Card.Group>
+</div>
+
+## Separated tiles
+
+Separated inline tiles with a full-height image; the action row drops
+below the text (primary, secondary, ghost).
+
+<div className="w-full max-w-[560px]">
+  <Card.Group orientation="inline" separated>
+    {[
+      { title: 'Fluid motion', description: 'Spring-tuned transitions calibrated across three tiers' },
+      { title: 'Accessible by default', description: 'Focus-visible rings and ARIA roles in every part' },
+      { title: 'Yours to theme', description: 'Swap radius, icons, and primitive at runtime' },
+      { title: 'Dark mode ready', description: 'Tokens adapt to light and dark automatically' },
+    ].map((f) => (
+      <Card key={f.title} onClick={() => {}}>
+        <Card.Image src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
+        <Card.Header>
+          <Card.Title>{f.title}</Card.Title>
+          <Card.Description>{f.description}</Card.Description>
+        </Card.Header>
+        <Card.Footer>
+          <Card.Button variant="primary">Get started</Card.Button>
+          <Card.Button variant="secondary">Learn more</Card.Button>
+          <Card.Button>Connect</Card.Button>
+        </Card.Footer>
+      </Card>
+    ))}
+  </Card.Group>
 </div>

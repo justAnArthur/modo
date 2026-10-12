@@ -2,7 +2,9 @@ import InputMessage from './index'
 import Button from '../../button'
 import { ChevronDown, Plus } from 'lucide-react'
 
-# Basic
+# Basics
+
+## Basic
 
 No props at all: the composer keeps its own draft, grows as you type and
 clears itself on Enter.
@@ -11,7 +13,31 @@ clears itself on Enter.
   <InputMessage />
 </div>
 
-# Suggestions
+## Send Handler
+
+`onSend` receives the trimmed text and the attached files; an uncontrolled
+composer clears its own draft afterwards. The handler here is an empty
+arrow — in an app it is where the message joins the transcript.
+
+<div className="w-full max-w-xl">
+  <InputMessage
+    onSend={() => {}}
+    placeholder="Press Enter to send. Shift+Enter for newline."
+  />
+</div>
+
+## Disabled
+
+Dims the panel to 50% and drops pointer events — textarea, send button and
+drag-and-drop all go inert.
+
+<div className="w-full max-w-xl">
+  <InputMessage defaultValue="This composer is disabled" disabled />
+</div>
+
+# Content
+
+## Suggestions
 
 The ghost placeholder renders with a Tab keycap — Tab fills it into the
 composer. ArrowDown/ArrowUp walk the list below (focus stays in the
@@ -30,7 +56,7 @@ shows a ↓ hint until a row is highlighted. Typing collapses the list.
   />
 </div>
 
-# Attachments
+## Attachments
 
 `defaultFiles` seeds the composer and turns attachment behavior on: drop a
 PNG, JPEG or PDF anywhere on the panel, or use the render-fn slot's
@@ -52,7 +78,7 @@ for its × button.
   />
 </div>
 
-# Queued messages
+## Queued messages
 
 `defaultStatus="streaming"` plus `defaultQueue` runs the composer as if a
 response were in flight: the send button is a Queue action, so a typed
@@ -71,7 +97,9 @@ response, and that streaming→idle edge dispatches the row at the top.
   />
 </div>
 
-# Left Slot Only
+# Slots
+
+## Left Slot Only
 
 `leftSlot` takes the bottom-left action area — an attach button, a model
 switcher, a mode toggle.
@@ -86,7 +114,7 @@ switcher, a mode toggle.
   />
 </div>
 
-# Right Slot Only
+## Right Slot Only
 
 `rightSlot` sits in the bottom-right, just before the built-in send
 button.
@@ -99,26 +127,4 @@ button.
       </Button>
     }
   />
-</div>
-
-# Send Handler
-
-`onSend` receives the trimmed text and the attached files; an uncontrolled
-composer clears its own draft afterwards. The handler here is an empty
-arrow — in an app it is where the message joins the transcript.
-
-<div className="w-full max-w-xl">
-  <InputMessage
-    onSend={() => {}}
-    placeholder="Press Enter to send. Shift+Enter for newline."
-  />
-</div>
-
-# Disabled
-
-Dims the panel to 50% and drops pointer events — textarea, send button and
-drag-and-drop all go inert.
-
-<div className="w-full max-w-xl">
-  <InputMessage defaultValue="This composer is disabled" disabled />
 </div>

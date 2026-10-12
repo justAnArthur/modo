@@ -8,7 +8,9 @@ import MonthPicker from '../month-picker'
 import TimePicker from '../time-picker'
 import { ar, de } from 'react-day-picker/locale'
 
-# Basic
+# Basics
+
+## Basic
 
 Press the field: the date is selected to type over, and the calendar scrolls beneath it.
 
@@ -16,7 +18,7 @@ Press the field: the date is selected to type over, and the calendar scrolls ben
   <DatePicker placeholder="Pick a date" />
 </div>
 
-# With time
+## With time
 
 `withTime` adds the time to the field and hour and minute columns to the panel.
 
@@ -24,69 +26,7 @@ Press the field: the date is selected to type over, and the calendar scrolls ben
   <DatePicker withTime defaultValue={new Date(2026, 9, 9, 15, 33)} />
 </div>
 
-# German
-
-The locale sets the names, the formats shown and read ("12.10.2026"), and the week's first day.
-
-<div className="w-72 max-w-full">
-  <DatePicker locale={de} withTime defaultValue={new Date(2026, 9, 9, 15, 33)} />
-</div>
-
-# 12-hour clock
-
-`hourCycle="h12"` reads the hours with AM/PM; `minuteStep` thins the minutes.
-
-<div className="w-72 max-w-full">
-  <DatePicker withTime hourCycle="h12" minuteStep={5} defaultValue={new Date(2026, 9, 9, 15, 35)} />
-</div>
-
-# Columns on both sides
-
-`columnsSide="start"` puts the month and year before the days; the time stays after them.
-
-<div className="w-72 max-w-full">
-  <DatePicker withTime columnsSide="start" defaultValue={new Date(2026, 9, 9, 15, 33)} />
-</div>
-
-# In place
-
-`effect="morph"` with `hideSource` turns the field itself into the panel.
-
-<div className="w-72 max-w-full">
-  <DatePicker effect="morph" hideSource defaultValue={new Date(2026, 9, 9)} />
-</div>
-
-# Right to left
-
-`dir="rtl"` mirrors the panel for an Arabic locale.
-
-<div className="w-72 max-w-full">
-  <DatePicker locale={ar} dir="rtl" defaultValue={new Date(2026, 9, 9)} />
-</div>
-
-# Disabled days and bounds
-
-`disabled` takes react-day-picker matchers; `startMonth` and `endMonth` bound the calendar and its year column.
-
-<div className="w-72 max-w-full">
-  <DatePicker
-    placeholder="Weekdays in 2026"
-    disabled={{ dayOfWeek: [0, 6] }}
-    startMonth={new Date(2026, 0, 1)}
-    endMonth={new Date(2026, 11, 1)}
-  />
-</div>
-
-# Invalid and disabled
-
-`invalid` turns the field destructive; `disabled={true}` turns it off.
-
-<div className="flex w-72 max-w-full flex-col gap-2">
-  <DatePicker invalid defaultValue={new Date(2026, 9, 9)} />
-  <DatePicker disabled defaultValue={new Date(2026, 9, 9)} />
-</div>
-
-# Compact
+## Compact
 
 `size="compact"` pins the field and its panel to the compact step.
 
@@ -94,32 +34,49 @@ The locale sets the names, the formats shown and read ("12.10.2026"), and the we
   <DatePicker size="compact" defaultValue={new Date(2026, 9, 9)} />
 </div>
 
-# Editable
+## In place
 
-`editable` makes the field a text input: type the digits and the separators fall into place, with the rest of the mask muted after the caret. The calendar icon opens the panel. A day that can't exist, or one left half typed, turns the field destructive with a caption.
-
-<div className="flex w-72 max-w-full flex-col gap-1">
-  <Label htmlFor="editable-date">Date of birth</Label>
-  <DatePicker id="editable-date" editable defaultValue={new Date(1990, 4, 17)} />
-</div>
-
-# Editable with time
-
-With `withTime` the mask takes the time too, on a 24-hour clock; the locale sets the order ("17.05.1990, 14:30").
+`effect="morph"` with `hideSource` turns the field itself into the panel.
 
 <div className="w-72 max-w-full">
-  <DatePicker editable withTime locale={de} defaultValue={new Date(1990, 4, 17, 14, 30)} />
+  <DatePicker effect="morph" hideSource defaultValue={new Date(2026, 9, 9)} />
 </div>
 
-# Input attributes
+## Columns on both sides
 
-`controlProps` reaches an `editable` field's input after its defaults, so `autoComplete` and `inputMode` replace its `"off"` and `"numeric"`, and `data-*`, `autoFocus` and handlers come through too.
+`columnsSide="start"` puts the month and year before the days; the time stays after them.
 
 <div className="w-72 max-w-full">
-  <DatePicker editable aria-label="Date of birth" controlProps={{ autoComplete: 'bday', inputMode: 'text', 'data-field': 'birthday' }} />
+  <DatePicker withTime columnsSide="start" defaultValue={new Date(2026, 9, 9, 15, 33)} />
 </div>
 
-# Labels and format
+# Localization
+
+## German
+
+The locale sets the names, the formats shown and read ("12.10.2026"), and the week's first day.
+
+<div className="w-72 max-w-full">
+  <DatePicker locale={de} withTime defaultValue={new Date(2026, 9, 9, 15, 33)} />
+</div>
+
+## 12-hour clock
+
+`hourCycle="h12"` reads the hours with AM/PM; `minuteStep` thins the minutes.
+
+<div className="w-72 max-w-full">
+  <DatePicker withTime hourCycle="h12" minuteStep={5} defaultValue={new Date(2026, 9, 9, 15, 35)} />
+</div>
+
+## Right to left
+
+`dir="rtl"` mirrors the panel for an Arabic locale.
+
+<div className="w-72 max-w-full">
+  <DatePicker locale={ar} dir="rtl" defaultValue={new Date(2026, 9, 9)} />
+</div>
+
+## Labels and format
 
 Every word comes from `labels`, and `formatDate` writes the field's text. `actions` adds Today and Clear under the calendar.
 
@@ -133,51 +90,7 @@ Every word comes from `labels`, and `formatDate` writes the field's text. `actio
   />
 </div>
 
-# Invalid value
-
-A `value` that reads as no date (a malformed string, an Invalid Date) shows the invalid state and the `labels.invalid` caption.
-
-<div className="flex w-72 max-w-full flex-col gap-3">
-  <div>
-    <DatePicker defaultValue="2026-02-31-oops" />
-  </div>
-  <div>
-    <DatePicker editable defaultValue="not a date" />
-  </div>
-</div>
-
-# Read only
-
-`readOnly` shows the value but never opens or takes typing. `value` may be a string.
-
-<div className="flex w-72 max-w-full flex-col gap-2">
-  <DatePicker readOnly defaultValue="2026-10-09" />
-  <DatePicker readOnly editable defaultValue="2026-10-09" />
-</div>
-
-# Inside a dialog
-
-The panel lifts above the dialog. Escape in the field first undoes a half-typed date (the dialog stays), then closes the dialog.
-
-<Dialog>
-  <Dialog.Trigger render={<Button variant="secondary">Edit contract</Button>} />
-  <Dialog.Content>
-    <Dialog.Header>
-      <Dialog.Title>Edit contract</Dialog.Title>
-      <Dialog.Description>Type the start date, or pick it from the calendar.</Dialog.Description>
-    </Dialog.Header>
-    <div className="flex flex-col gap-1">
-      <Label htmlFor="dialog-start">Start date</Label>
-      <DatePicker id="dialog-start" editable defaultValue="2026-10-09" />
-    </div>
-    <Dialog.Footer>
-      <Dialog.Close render={<Button variant="ghost">Cancel</Button>} />
-      <Button>Save</Button>
-    </Dialog.Footer>
-  </Dialog.Content>
-</Dialog>
-
-# Slovak, from a language tag
+## Slovak, from a language tag
 
 `locale` also takes a BCP 47 tag, read through Intl: Slovak month and weekday names, its formats ("9. 10. 2026") and Monday first. `labels` translate the rest, the columns' names included.
 
@@ -192,7 +105,22 @@ The panel lifts above the dialog. Escape in the field first undoes a half-typed 
   />
 </div>
 
-# Hidden days
+# Constraints
+
+## Disabled days and bounds
+
+`disabled` takes react-day-picker matchers; `startMonth` and `endMonth` bound the calendar and its year column.
+
+<div className="w-72 max-w-full">
+  <DatePicker
+    placeholder="Weekdays in 2026"
+    disabled={{ dayOfWeek: [0, 6] }}
+    startMonth={new Date(2026, 0, 1)}
+    endMonth={new Date(2026, 11, 1)}
+  />
+</div>
+
+## Hidden days
 
 `hidden` leaves days out of the calendar: here the weekends are gaps, and typing one is refused.
 
@@ -200,7 +128,7 @@ The panel lifts above the dialog. Escape in the field first undoes a half-typed 
   <DatePicker placeholder="A working day" hidden={{ dayOfWeek: [0, 6] }} defaultValue={new Date(2026, 9, 9)} />
 </div>
 
-# Required and unselectable
+## Required and unselectable
 
 `required` keeps the picked day when it is pressed again; `unselectable` also keeps it when the text is emptied, and drops Clear.
 
@@ -209,7 +137,67 @@ The panel lifts above the dialog. Escape in the field first undoes a half-typed 
   <DatePicker unselectable editable actions defaultValue={new Date(2026, 9, 9)} />
 </div>
 
-# In a form
+# States
+
+## Invalid and disabled
+
+`invalid` turns the field destructive; `disabled={true}` turns it off.
+
+<div className="flex w-72 max-w-full flex-col gap-2">
+  <DatePicker invalid defaultValue={new Date(2026, 9, 9)} />
+  <DatePicker disabled defaultValue={new Date(2026, 9, 9)} />
+</div>
+
+## Invalid value
+
+A `value` that reads as no date (a malformed string, an Invalid Date) shows the invalid state and the `labels.invalid` caption.
+
+<div className="flex w-72 max-w-full flex-col gap-3">
+  <div>
+    <DatePicker defaultValue="2026-02-31-oops" />
+  </div>
+  <div>
+    <DatePicker editable defaultValue="not a date" />
+  </div>
+</div>
+
+## Read only
+
+`readOnly` shows the value but never opens or takes typing. `value` may be a string.
+
+<div className="flex w-72 max-w-full flex-col gap-2">
+  <DatePicker readOnly defaultValue="2026-10-09" />
+  <DatePicker readOnly editable defaultValue="2026-10-09" />
+</div>
+
+# Forms
+
+## Editable
+
+`editable` makes the field a text input: type the digits and the separators fall into place, with the rest of the mask muted after the caret. The calendar icon opens the panel. A day that can't exist, or one left half typed, turns the field destructive with a caption.
+
+<div className="flex w-72 max-w-full flex-col gap-1">
+  <Label htmlFor="editable-date">Date of birth</Label>
+  <DatePicker id="editable-date" editable defaultValue={new Date(1990, 4, 17)} />
+</div>
+
+## Editable with time
+
+With `withTime` the mask takes the time too, on a 24-hour clock; the locale sets the order ("17.05.1990, 14:30").
+
+<div className="w-72 max-w-full">
+  <DatePicker editable withTime locale={de} defaultValue={new Date(1990, 4, 17, 14, 30)} />
+</div>
+
+## Input attributes
+
+`controlProps` reaches an `editable` field's input after its defaults, so `autoComplete` and `inputMode` replace its `"off"` and `"numeric"`, and `data-*`, `autoFocus` and handlers come through too.
+
+<div className="w-72 max-w-full">
+  <DatePicker editable aria-label="Date of birth" controlProps={{ autoComplete: 'bday', inputMode: 'text', 'data-field': 'birthday' }} />
+</div>
+
+## In a form
 
 `name` puts each value in the form's data through a hidden input, in the native inputs' formats, and `required` stops an empty submit and focuses the field. `aria-describedby` and the other `aria-*` props reach the field's control.
 
@@ -231,3 +219,25 @@ The panel lifts above the dialog. Escape in the field first undoes a half-typed 
   <Button type="submit">Submit</Button>
   <output className="whitespace-pre text-caption text-muted-foreground" />
 </form>
+
+## Inside a dialog
+
+The panel lifts above the dialog. Escape in the field first undoes a half-typed date (the dialog stays), then closes the dialog.
+
+<Dialog>
+  <Dialog.Trigger render={<Button variant="secondary">Edit contract</Button>} />
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Edit contract</Dialog.Title>
+      <Dialog.Description>Type the start date, or pick it from the calendar.</Dialog.Description>
+    </Dialog.Header>
+    <div className="flex flex-col gap-1">
+      <Label htmlFor="dialog-start">Start date</Label>
+      <DatePicker id="dialog-start" editable defaultValue="2026-10-09" />
+    </div>
+    <Dialog.Footer>
+      <Dialog.Close render={<Button variant="ghost">Cancel</Button>} />
+      <Button>Save</Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog>

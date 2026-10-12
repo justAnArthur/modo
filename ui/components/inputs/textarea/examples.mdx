@@ -2,7 +2,9 @@ import Textarea from './index'
 import Button from '../../button'
 import Input, { InputGroup, Label } from '../input'
 
-# Basic
+# Basics
+
+## Basic
 
 Type past the third line: the box grows with the text, then scrolls at eight rows.
 
@@ -10,7 +12,7 @@ Type past the third line: the box grows with the text, then scrolls at eight row
   <Textarea placeholder="Write a note..." />
 </div>
 
-# Variants
+## Variants
 
 `borderless` is invisible until hovered or focused; `bordered` is framed at rest.
 
@@ -19,7 +21,7 @@ Type past the third line: the box grows with the text, then scrolls at eight row
   <Textarea variant="bordered" minRows={2} placeholder="Bordered" />
 </div>
 
-# With a Label
+## With a Label
 
 `Label` pairs with the textarea through `htmlFor` and `id`.
 
@@ -28,7 +30,7 @@ Type past the third line: the box grows with the text, then scrolls at eight row
   <Textarea id="textarea-bio" placeholder="A few words about you" />
 </div>
 
-# Rows
+## Rows
 
 `minRows` sets the empty height and `maxRows` where growth stops. Equal values give a fixed box.
 
@@ -37,7 +39,36 @@ Type past the third line: the box grows with the text, then scrolls at eight row
   <Textarea minRows={4} maxRows={4} placeholder="Fixed at four rows" />
 </div>
 
-# In a form
+## Compact
+
+`size="compact"` steps the text and padding down the size ladder.
+
+<div className="w-72 max-w-full">
+  <Textarea size="compact" minRows={2} placeholder="Dense note..." />
+</div>
+
+# States
+
+## Invalid
+
+`invalid` turns the field destructive.
+
+<div className="flex flex-col gap-1 w-72 max-w-full">
+  <Label htmlFor="textarea-invalid" invalid>
+    Message
+  </Label>
+  <Textarea id="textarea-invalid" defaultValue="Too short" invalid />
+</div>
+
+## Disabled
+
+<div className="w-72 max-w-full">
+  <Textarea defaultValue="Read only for now" disabled />
+</div>
+
+# Composition
+
+## In a form
 
 One row lines up with an Input of the same size, so the two stack without a seam.
 
@@ -52,7 +83,7 @@ One row lines up with an Input of the same size, so the two stack without a seam
   </div>
 </div>
 
-# In a group
+## In a group
 
 Inside `InputGroup.Field` the textarea joins the group's hover, and the field's `error` turns it destructive.
 
@@ -63,32 +94,7 @@ Inside `InputGroup.Field` the textarea joins the group's hover, and the field's 
   </InputGroup.Field>
 </InputGroup>
 
-# Compact
-
-`size="compact"` steps the text and padding down the size ladder.
-
-<div className="w-72 max-w-full">
-  <Textarea size="compact" minRows={2} placeholder="Dense note..." />
-</div>
-
-# Invalid
-
-`invalid` turns the field destructive.
-
-<div className="flex flex-col gap-1 w-72 max-w-full">
-  <Label htmlFor="textarea-invalid" invalid>
-    Message
-  </Label>
-  <Textarea id="textarea-invalid" defaultValue="Too short" invalid />
-</div>
-
-# Disabled
-
-<div className="w-72 max-w-full">
-  <Textarea defaultValue="Read only for now" disabled />
-</div>
-
-# Uncontrolled
+## Uncontrolled
 
 With neither `value` nor `onChange` the DOM holds the text, so `ref` is the real `<textarea>`: `defaultValue`, `ref.current.value = ''` and a native form reset behave as on any textarea. Type, grow the box, then reset: the text goes back to its default and the box re-fits.
 
@@ -109,7 +115,7 @@ ref.current.value = '' // clears it
 
 Choose one mode per instance. A `defaultValue` with an `onChange` that is passed on some renders and not others would flip the textarea between DOM-held and controlled text.
 
-# With a form library
+## With a form library
 
 A `register()`-style form needs the DOM mode, but its `onChange` takes an event where the Textarea's takes a string, so the result can't be spread whole. Only that key clashes: take `onChange` out and pass it as `onInput`, the event handler that fires on every keystroke. `rest` carries `name`, `ref` and `onBlur` straight through.
 

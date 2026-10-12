@@ -3,7 +3,9 @@ import Button from '../../button'
 import { InputGroup } from '../../inputs/input'
 import AnchoredDemo from './anchored-demo'
 
-# Edit profile
+# Basics
+
+## Edit profile
 
 The panel oozes out of the trigger through a liquid neck, then lets go. Escape or a press outside closes it back into the button.
 
@@ -24,7 +26,7 @@ The panel oozes out of the trigger through a liquid neck, then lets go. Escape o
   </Popover.Content>
 </Popover>
 
-# Hover
+## Hover
 
 With `openOnHover` the trigger opens it on hover too; a tap still toggles it on touch.
 
@@ -36,7 +38,7 @@ With `openOnHover` the trigger opens it on hover too; a tap still toggles it on 
   </Popover.Content>
 </Popover>
 
-# Any element as the trigger
+## Any element as the trigger
 
 `render` takes any element, and the trigger's children fill it when it has none of its own. Pass `nativeButton={false}` when it isn't a `<button>`: Base UI adds the role and the keyboard handling.
 
@@ -53,7 +55,9 @@ With `openOnHover` the trigger opens it on hover too; a tap still toggles it on 
   </Popover.Content>
 </Popover>
 
-# Sides
+# Placement
+
+## Sides
 
 Each side keeps the neck between trigger and panel; near a viewport edge the panel flips.
 
@@ -84,7 +88,7 @@ Each side keeps the neck between trigger and panel; near a viewport edge the pan
   </Popover>
 </div>
 
-# Align
+## Align
 
 `align` lines the panel up with the trigger's start edge, its center (the default) or its end edge; the neck stays between them.
 
@@ -109,62 +113,7 @@ Each side keeps the neck between trigger and panel; near a viewport edge the pan
   </Popover>
 </div>
 
-# Morph
-
-`effect="morph"` with `hideSource`: the trigger itself grows into the panel and shrinks back, one continuous surface.
-
-<Popover>
-  <Popover.Trigger render={<Button variant="secondary">Add note</Button>} />
-  <Popover.Content effect="morph" hideSource className="w-72 gap-3">
-    <Popover.Title>Add note</Popover.Title>
-    <InputGroup>
-      <InputGroup.Field index={0} label="Note" placeholder="Write something…" />
-    </InputGroup>
-    <div className="flex justify-end">
-      <Popover.Close render={<Button size="compact">Done</Button>} />
-    </div>
-  </Popover.Content>
-</Popover>
-
-# Sources
-
-`from` changes where the surface starts: the press point grows a circle under the cursor, `center` unfolds the panel in place.
-
-<div className="flex flex-wrap items-center justify-center gap-3">
-  <Popover>
-    <Popover.Trigger render={<Button variant="secondary">From the pointer</Button>} />
-    <Popover.Content from="pointer">
-      <Popover.Description>A circle from where you pressed.</Popover.Description>
-    </Popover.Content>
-  </Popover>
-  <Popover>
-    <Popover.Trigger render={<Button variant="secondary">From its center</Button>} />
-    <Popover.Content from="center" effect="morph">
-      <Popover.Description>Unfolds from its own center.</Popover.Description>
-    </Popover.Content>
-  </Popover>
-</div>
-
-# Dismissal
-
-`onOpenChange` gets Base UI's change details with the open state: `details.reason` says what asked (`'escape-key'`, `'outside-press'`, `'trigger-press'`, `'close-press'`, …) and `details.cancel()` keeps the popover as it is. This one ignores a press outside; Escape or Done close it.
-
-<Popover
-  onOpenChange={(open, details) => {
-    if (!open && details.reason === 'outside-press') details.cancel()
-  }}
->
-  <Popover.Trigger render={<Button variant="secondary">Pin a note</Button>} />
-  <Popover.Content className="w-72 gap-3">
-    <Popover.Title>Pinned note</Popover.Title>
-    <Popover.Description>Click around the page: it stays until you close it.</Popover.Description>
-    <div className="flex justify-end">
-      <Popover.Close render={<Button size="compact">Done</Button>} />
-    </div>
-  </Popover.Content>
-</Popover>
-
-# Anchored to a field
+## Anchored to a field
 
 `anchor` positions the panel against another element than its trigger, here
 the whole field around the icon, and the panel grows out of that box.
@@ -195,3 +144,60 @@ const first = useRef(null)
 ```
 
 <AnchoredDemo />
+
+# Behavior
+
+## Morph
+
+`effect="morph"` with `hideSource`: the trigger itself grows into the panel and shrinks back, one continuous surface.
+
+<Popover>
+  <Popover.Trigger render={<Button variant="secondary">Add note</Button>} />
+  <Popover.Content effect="morph" hideSource className="w-72 gap-3">
+    <Popover.Title>Add note</Popover.Title>
+    <InputGroup>
+      <InputGroup.Field index={0} label="Note" placeholder="Write something…" />
+    </InputGroup>
+    <div className="flex justify-end">
+      <Popover.Close render={<Button size="compact">Done</Button>} />
+    </div>
+  </Popover.Content>
+</Popover>
+
+## Sources
+
+`from` changes where the surface starts: the press point grows a circle under the cursor, `center` unfolds the panel in place.
+
+<div className="flex flex-wrap items-center justify-center gap-3">
+  <Popover>
+    <Popover.Trigger render={<Button variant="secondary">From the pointer</Button>} />
+    <Popover.Content from="pointer">
+      <Popover.Description>A circle from where you pressed.</Popover.Description>
+    </Popover.Content>
+  </Popover>
+  <Popover>
+    <Popover.Trigger render={<Button variant="secondary">From its center</Button>} />
+    <Popover.Content from="center" effect="morph">
+      <Popover.Description>Unfolds from its own center.</Popover.Description>
+    </Popover.Content>
+  </Popover>
+</div>
+
+## Dismissal
+
+`onOpenChange` gets Base UI's change details with the open state: `details.reason` says what asked (`'escape-key'`, `'outside-press'`, `'trigger-press'`, `'close-press'`, …) and `details.cancel()` keeps the popover as it is. This one ignores a press outside; Escape or Done close it.
+
+<Popover
+  onOpenChange={(open, details) => {
+    if (!open && details.reason === 'outside-press') details.cancel()
+  }}
+>
+  <Popover.Trigger render={<Button variant="secondary">Pin a note</Button>} />
+  <Popover.Content className="w-72 gap-3">
+    <Popover.Title>Pinned note</Popover.Title>
+    <Popover.Description>Click around the page: it stays until you close it.</Popover.Description>
+    <div className="flex justify-end">
+      <Popover.Close render={<Button size="compact">Done</Button>} />
+    </div>
+  </Popover.Content>
+</Popover>

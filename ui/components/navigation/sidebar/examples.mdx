@@ -7,7 +7,9 @@ import { SidebarSearchField } from '../../../blocks/sidebar-app/search-field'
 import { SidebarUserFooter } from '../../../blocks/sidebar-app/user-footer'
 import { SidebarWorkspaceHeader, WorkspaceTile } from '../../../blocks/sidebar-app/workspace-header'
 
-# Sidebar
+# Variants
+
+## Sidebar
 
 The default layout sits flush with an inner border. Pick a row: the active background melts across to it, and the hover highlight drips from row to row.
 
@@ -33,7 +35,7 @@ The default layout sits flush with an inner border. Pick a row: the active backg
   </Sidebar.Provider>
 </div>
 
-# Floating
+## Floating
 
 `variant="floating"` lifts the sidebar onto its own card, one surface level up.
 
@@ -59,7 +61,7 @@ The default layout sits flush with an inner border. Pick a row: the active backg
   </Sidebar.Provider>
 </div>
 
-# Inset
+## Inset
 
 `variant="inset"` makes your content stand out: the main region becomes the card, and the sidebar sits on the page around it.
 
@@ -85,7 +87,9 @@ The default layout sits flush with an inner border. Pick a row: the active backg
   </Sidebar.Provider>
 </div>
 
-# Nesting
+# Content
+
+## Nesting
 
 Two levels below the sections: a `collapsible` row folds its sub-menu, and the hover highlight flows from a parent into its children. Private starts folded to its label, Shared open with its rows closed, Recent open all the way down.
 
@@ -155,7 +159,7 @@ Two levels below the sections: a `collapsible` row folds its sub-menu, and the h
   </Sidebar.Provider>
 </div>
 
-# Actions and badges
+## Actions and badges
 
 A badge and up to three actions per row. The actions show on hover, so the label keeps the room at rest; the row menu grows out of its button. Section labels carry their own actions.
 
@@ -209,7 +213,7 @@ A badge and up to three actions per row. The actions show on hover, so the label
   </Sidebar.Provider>
 </div>
 
-# Header and footer
+## Header and footer
 
 The two ends of the rail: a workspace switcher and search on top, the user row at the bottom. Both menus grow out of their rows.
 
@@ -261,7 +265,9 @@ The two ends of the rail: a workspace switcher and search on top, the user row a
   </Sidebar.Provider>
 </div>
 
-# Resize, collapse and open on hover
+# Behavior
+
+## Resize, collapse and open on hover
 
 Drag the rail on the inner edge to resize, click it or press `[` to collapse. With `openOnHover`, collapsing leaves the sidebar on hover: it opens when the pointer reaches the edge or the trigger beside it, and closes when it leaves. The trigger's dashed glyph shows the mode; press it to keep the sidebar open again.
 
@@ -294,7 +300,7 @@ Drag the rail on the inner edge to resize, click it or press `[` to collapse. Wi
   </Sidebar.Provider>
 </div>
 
-# Mobile drawer
+## Mobile drawer
 
 Below `mobileBreakpoint` (768px by default) the sidebar is a Sheet: it grows out of the window's edge with the goo neck and swipes away. This one's breakpoint is set past any window, so the trigger always opens the drawer.
 

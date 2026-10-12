@@ -2,7 +2,9 @@ import Checkbox from './index'
 import SelectAllDemo from './select-all-demo'
 import { Label } from '../input'
 
-# Basic
+# Basics
+
+## Basic
 
 A standalone checkbox keeps its own state; pass `checked` and `onCheckedChange` to control it.
 
@@ -11,27 +13,7 @@ A standalone checkbox keeps its own state; pass `checked` and `onCheckedChange` 
   <Checkbox label="Subscribe to the newsletter" defaultChecked />
 </div>
 
-# Group
-
-`Checkbox.Group` stacks checkboxes: contiguous picks share one merged background, and the rows are numbered in order.
-
-<Checkbox.Group defaultCheckedIndices={[0]}>
-  {['Apples', 'Bananas', 'Cherries', 'Dates'].map(label => (
-    <Checkbox key={label} label={label} />
-  ))}
-</Checkbox.Group>
-
-# Compact
-
-`size="compact"` pins every row to the 28px step of the size ladder.
-
-<Checkbox.Group size="compact" defaultCheckedIndices={[1, 2]}>
-  {['Apples', 'Bananas', 'Cherries', 'Dates'].map(label => (
-    <Checkbox key={label} label={label} />
-  ))}
-</Checkbox.Group>
-
-# Bare
+## Bare
 
 Without a `label` the checkbox is just the box: point a `<label htmlFor>` at its `id`, or name it with `aria-label`. It joins forms through `name` and `value`.
 
@@ -47,13 +29,7 @@ Without a `label` the checkbox is just the box: point a `<label htmlFor>` at its
   </div>
 </div>
 
-# Indeterminate
-
-`indeterminate`, or `checked="indeterminate"`, shows a dash: some, not all, of what it stands for is on. Check and uncheck the rows: the dash blurs into the check and back.
-
-<SelectAllDemo rows={['Invoices', 'Receipts', 'Contracts']} />
-
-# Node label
+## Node label
 
 A label can be any node; the checkbox is then named by it.
 
@@ -66,7 +42,25 @@ A label can be any node; the checkbox is then named by it.
   }
 />
 
-# Disabled
+## Compact
+
+`size="compact"` pins every row to the 28px step of the size ladder.
+
+<Checkbox.Group size="compact" defaultCheckedIndices={[1, 2]}>
+  {['Apples', 'Bananas', 'Cherries', 'Dates'].map(label => (
+    <Checkbox key={label} label={label} />
+  ))}
+</Checkbox.Group>
+
+# States
+
+## Indeterminate
+
+`indeterminate`, or `checked="indeterminate"`, shows a dash: some, not all, of what it stands for is on. Check and uncheck the rows: the dash blurs into the check and back.
+
+<SelectAllDemo rows={['Invoices', 'Receipts', 'Contracts']} />
+
+## Disabled
 
 `disabled` dims a checkbox and ignores presses; in a group the hover and the arrow keys skip it.
 
@@ -81,3 +75,13 @@ A label can be any node; the checkbox is then named by it.
     <Checkbox aria-label="Disabled, checked" disabled defaultChecked />
   </div>
 </div>
+
+# Group
+
+`Checkbox.Group` stacks checkboxes: contiguous picks share one merged background, and the rows are numbered in order.
+
+<Checkbox.Group defaultCheckedIndices={[0]}>
+  {['Apples', 'Bananas', 'Cherries', 'Dates'].map(label => (
+    <Checkbox key={label} label={label} />
+  ))}
+</Checkbox.Group>

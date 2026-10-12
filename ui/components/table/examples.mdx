@@ -1,7 +1,9 @@
 import Table from './index'
 import SortDemo from './sort-demo'
 
-# Basic
+# Basics
+
+## Basic
 
 Body rows join the fluid hover highlight in document order, so they need no
 `index`; the header row stays out.
@@ -35,7 +37,7 @@ Body rows join the fluid hover highlight in document order, so they need no
   </Table>
 </div>
 
-# Compact
+## Compact
 
 `size="compact"` lands every row on the 28px step with 12px text, for
 dense data.
@@ -61,43 +63,7 @@ dense data.
   </Table>
 </div>
 
-# Sortable
-
-A head with `sortDirection` and `onSort` becomes a sort button: a press cycles ascending, descending and unsorted, and its arrow crossfades into the new direction. Here a small stage sorts the rows.
-
-<div className="w-full">
-  <SortDemo />
-</div>
-
-# Sort without state
-
-`defaultSortDirection` lets a head keep its own direction, for a table that sorts elsewhere (a server, TanStack) and only listens to `onSort`.
-
-<div className="w-full">
-  <Table>
-    <Table.Header>
-      <Table.Row>
-        <Table.Head defaultSortDirection="desc">Invoice</Table.Head>
-        <Table.Head defaultSortDirection={false}>Customer</Table.Head>
-        <Table.Head>Status</Table.Head>
-      </Table.Row>
-    </Table.Header>
-    <Table.Body>
-      <Table.Row index={0}>
-        <Table.Cell>INV-003</Table.Cell>
-        <Table.Cell>Northwind</Table.Cell>
-        <Table.Cell>Paid</Table.Cell>
-      </Table.Row>
-      <Table.Row index={1}>
-        <Table.Cell>INV-002</Table.Cell>
-        <Table.Cell>Contoso</Table.Cell>
-        <Table.Cell>Pending</Table.Cell>
-      </Table.Row>
-    </Table.Body>
-  </Table>
-</div>
-
-# Footer and caption
+## Footer and caption
 
 `Table.Footer` holds totals: its rows render semibold, stay out of the hover and keep their bottom border while the first body row is lit. `Table.Caption` adds a muted line below.
 
@@ -137,7 +103,7 @@ A head with `sortDirection` and `onSort` becomes a sort button: a press cycles a
   </Table>
 </div>
 
-# Empty
+## Empty
 
 `Table.Empty` spans every column with a message, or a loading indicator while rows arrive.
 
@@ -156,7 +122,7 @@ A head with `sortDirection` and `onSort` becomes a sort button: a press cycles a
   </Table>
 </div>
 
-# Stacked on small screens
+## Stacked on small screens
 
 `stacked` turns every row into a two-column card below the `md` breakpoint: the header hides and each cell is led by its muted `label` and its value reads in the primary text colour. Narrow the window to see it; `stacked={false}` on a header or row keeps it tabular.
 
@@ -179,6 +145,44 @@ A head with `sortDirection` and `onSort` becomes a sort button: a press cycles a
           <Table.Cell label="Status">{row[3]}</Table.Cell>
         </Table.Row>
       ))}
+    </Table.Body>
+  </Table>
+</div>
+
+# Sorting
+
+## Sortable
+
+A head with `sortDirection` and `onSort` becomes a sort button: a press cycles ascending, descending and unsorted, and its arrow crossfades into the new direction. Here a small stage sorts the rows.
+
+<div className="w-full">
+  <SortDemo />
+</div>
+
+## Sort without state
+
+`defaultSortDirection` lets a head keep its own direction, for a table that sorts elsewhere (a server, TanStack) and only listens to `onSort`.
+
+<div className="w-full">
+  <Table>
+    <Table.Header>
+      <Table.Row>
+        <Table.Head defaultSortDirection="desc">Invoice</Table.Head>
+        <Table.Head defaultSortDirection={false}>Customer</Table.Head>
+        <Table.Head>Status</Table.Head>
+      </Table.Row>
+    </Table.Header>
+    <Table.Body>
+      <Table.Row index={0}>
+        <Table.Cell>INV-003</Table.Cell>
+        <Table.Cell>Northwind</Table.Cell>
+        <Table.Cell>Paid</Table.Cell>
+      </Table.Row>
+      <Table.Row index={1}>
+        <Table.Cell>INV-002</Table.Cell>
+        <Table.Cell>Contoso</Table.Cell>
+        <Table.Cell>Pending</Table.Cell>
+      </Table.Row>
     </Table.Body>
   </Table>
 </div>

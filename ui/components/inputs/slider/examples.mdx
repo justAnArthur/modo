@@ -9,7 +9,7 @@ value on the left.
   <Slider size="compact" defaultValue={25} />
 </div>
 
-# Range
+## Range
 
 An array value gives two thumbs that cannot cross. The dense design
 renders it whatever the ladder step.
@@ -18,7 +18,7 @@ renders it whatever the ladder step.
   <Slider defaultValue={[25, 75]} />
 </div>
 
-# Steps
+## Steps
 
 `step` quantizes the value; `showSteps` marks each stop on the track, and
 the marks on the filled side are masked out.
@@ -28,7 +28,7 @@ the marks on the filled side are masked out.
   <Slider defaultValue={50} step={10} showSteps />
 </div>
 
-# Non-uniform Steps
+## Non-uniform Steps
 
 `steps` takes a discrete list of allowed values — positioned
 proportionally, walked by the arrow keys, with min and max taken from the
@@ -44,7 +44,7 @@ list.
   />
 </div>
 
-# Value Display
+## Value Display
 
 `valuePosition` moves the label: beside the track on either side, above or
 below it, or as a tooltip that rides the thumb while you interact.
@@ -55,7 +55,7 @@ below it, or as a tooltip that rides the thumb while you interact.
   <Slider defaultValue={50} valuePosition="tooltip" />
 </div>
 
-# Format
+## Format
 
 `formatValue` renders the number: units, percentages, anything.
 
@@ -68,7 +68,7 @@ below it, or as a tooltip that rides the thumb while you interact.
   />
 </div>
 
-# Disabled
+## Disabled
 
 `disabled` dims the slider and ignores pointer and keyboard input.
 
@@ -85,7 +85,7 @@ the left and the value on the right.
   <Slider size="default" label="Roundness" defaultValue={2} min={0} max={4} />
 </div>
 
-# Default — Scrubber
+## Default — Scrubber
 
 `variant="scrubber"` drops the pips for a continuous fill you can drag
 anywhere in the row, with a resize handle at the fill edge.
@@ -102,7 +102,7 @@ anywhere in the row, with a resize handle at the fill edge.
   />
 </div>
 
-# Default — Format
+## Default — Format
 
 `formatValue` turns the steps into names, so a numeric slider reads as a
 set of choices.
@@ -118,7 +118,7 @@ set of choices.
   />
 </div>
 
-# Default — Disabled
+## Default — Disabled
 
 The same dimming and inert behaviour on the default step.
 
@@ -126,7 +126,9 @@ The same dimming and inert behaviour on the default step.
   <Slider size="default" label="Roundness" defaultValue={2} min={0} max={4} disabled />
 </div>
 
-# Vertical
+# Behavior
+
+## Vertical
 
 `orientation="vertical"` stands the track upright: min at the bottom, max at the top, ArrowUp or ArrowRight to raise and ArrowDown or ArrowLeft to lower. It always renders the dense design, takes its height from `className`, and puts the value on top (`valuePosition`) unless told otherwise.
 
@@ -137,7 +139,7 @@ The same dimming and inert behaviour on the default step.
   <Slider orientation="vertical" aria-label="Gain" defaultValue={60} valuePosition="tooltip" className="h-48" />
 </div>
 
-# Commit
+## Commit
 
 `onValueCommit(value)` fires once when an interaction ends: the pointer lifting after a drag or click, a keyboard step, or a committed edit of the value. `onChange` reports every value on the way, so save from `onValueCommit` and preview from `onChange`.
 

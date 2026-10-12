@@ -1,6 +1,8 @@
 import Copy from './index'
 
-# Basic
+# Basics
+
+## Basic
 
 Icon-only: the value fills the row and the copy glyph sits at the
 trailing edge, with a tooltip on hover.
@@ -9,19 +11,7 @@ trailing edge, with a tooltip on hover.
   <Copy value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json" />
 </div>
 
-# Copied morph
-
-Click a row. The copy glyph's two sheets melt into a disc in the success
-tint behind a check that draws itself, and split back into the glyph after
-two seconds; a failed copy turns the disc red behind a ✕. The compact step
-keeps the same disc.
-
-<div className="flex w-72 flex-col gap-4">
-  <Copy value="bun add @base-ui/react motion" />
-  <Copy variant="button" size="compact" value="bun add @base-ui/react motion" />
-</div>
-
-# With Label
+## With Label
 
 `label` renders a muted caption above the field and joins the button's
 accessible name, so a screen reader announces "Copy Install command".
@@ -33,7 +23,21 @@ accessible name, so a screen reader announces "Copy Install command".
   />
 </div>
 
-# Button Variant
+## Copied morph
+
+Click a row. The copy glyph's two sheets melt into a disc in the success
+tint behind a check that draws itself, and split back into the glyph after
+two seconds; a failed copy turns the disc red behind a ✕. The compact step
+keeps the same disc.
+
+<div className="flex w-72 flex-col gap-4">
+  <Copy value="bun add @base-ui/react motion" />
+  <Copy variant="button" size="compact" value="bun add @base-ui/react motion" />
+</div>
+
+# Variants
+
+## Button Variant
 
 `variant="button"` trades the tooltip for a visible Copy label. The label
 slot is pre-sized to the widest state ("Copied"), so the row never
@@ -46,7 +50,26 @@ reflows when the state flips.
   />
 </div>
 
-# Left Aligned
+## Inline chip
+
+`variant="chip"` is an inline `<span>` around `children`: it sits in a sentence, copies its own text (or `value` when the text is not what you want copied), and shows the glyph after it. It is a real button, so Tab reaches it and Enter or Space copies; the result is announced to a screen reader through a live region.
+
+<p className="text-body text-muted-foreground">
+  Run <Copy variant="chip">bun add @base-ui/react</Copy> to install, or copy the registry
+  entry <Copy variant="chip" value="https://fluidfunctionalism.com/r/input-copy.json">input-copy</Copy> instead.
+  In a dense region the chip steps down: <Copy variant="chip" size="compact">bun run dev</Copy>.
+</p>
+
+## Glyph only
+
+`variant="glyph"` is the copy glyph with no visible value, for a place that already shows it. Name it with `aria-label`: that is its tooltip and its accessible name. A press copies `value`, the glyph melts into the check, and the result is announced.
+
+<div className="flex items-center gap-1 text-body">
+  <span className="font-mono text-foreground">INV-2026-0042</span>
+  <Copy variant="glyph" value="INV-2026-0042" aria-label="Copy invoice number" />
+</div>
+
+## Left Aligned
 
 `align="left"` puts the action on the leading edge, before the value —
 in either variant.
@@ -63,16 +86,9 @@ in either variant.
   />
 </div>
 
-# Disabled
+# Behavior
 
-Dims the row to 50% and drops pointer events, so the value stays readable
-but nothing can be copied.
-
-<div className="w-72">
-  <Copy label="Invite code" value="ABCD-1234-EFGH" disabled />
-</div>
-
-# Copy Callback
+## Copy Callback
 
 `onCopy` fires after a successful copy — count them, toast, or log the
 share. The handler below is an empty arrow (examples hold no state of
@@ -86,26 +102,7 @@ their own); in an app it would be where you bump a counter.
   />
 </div>
 
-# Inline chip
-
-`variant="chip"` is an inline `<span>` around `children`: it sits in a sentence, copies its own text (or `value` when the text is not what you want copied), and shows the glyph after it. It is a real button, so Tab reaches it and Enter or Space copies; the result is announced to a screen reader through a live region.
-
-<p className="text-body text-muted-foreground">
-  Run <Copy variant="chip">bun add @base-ui/react</Copy> to install, or copy the registry
-  entry <Copy variant="chip" value="https://fluidfunctionalism.com/r/input-copy.json">input-copy</Copy> instead.
-  In a dense region the chip steps down: <Copy variant="chip" size="compact">bun run dev</Copy>.
-</p>
-
-# Glyph only
-
-`variant="glyph"` is the copy glyph with no visible value, for a place that already shows it. Name it with `aria-label`: that is its tooltip and its accessible name. A press copies `value`, the glyph melts into the check, and the result is announced.
-
-<div className="flex items-center gap-1 text-body">
-  <span className="font-mono text-foreground">INV-2026-0042</span>
-  <Copy variant="glyph" value="INV-2026-0042" aria-label="Copy invoice number" />
-</div>
-
-# Other languages
+## Other languages
 
 `labels` replaces the words of the control (tooltip, accessible name, the button word, the announcement); keys you leave out keep their English default.
 
@@ -116,4 +113,13 @@ their own); in an app it would be where you bump a counter.
     labels={{ word: 'Kopírovať', copied: 'Skopírované', failed: 'Kopírovanie zlyhalo', failedWord: 'Chyba' }}
   />
   <Copy variant="glyph" value="npm i modo" aria-label="Kopírovať príkaz" labels={{ copied: 'Skopírované' }} />
+</div>
+
+## Disabled
+
+Dims the row to 50% and drops pointer events, so the value stays readable
+but nothing can be copied.
+
+<div className="w-72">
+  <Copy label="Invite code" value="ABCD-1234-EFGH" disabled />
 </div>

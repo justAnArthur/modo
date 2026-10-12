@@ -4,7 +4,9 @@ import Dialog from '../dialog'
 import Input from '../../inputs/input'
 import { Bell, BookOpen, ChevronDown, Clock, Copy, Ellipsis, Lock, LogOut, Mail, Monitor, Palette, Pencil, Settings, Shield, SquareLibrary, Star, Trash2, User, Users } from 'lucide-react'
 
-# Basic
+# Basics
+
+## Basic
 
 The inline panel, running its own selection: `defaultCheckedIndex` makes
 the rows radio options and the panel moves the marker itself.
@@ -17,25 +19,7 @@ the rows radio options and the panel moves the marker itself.
   <Dropdown.Item index={4} icon={Lock} label="Private" />
 </Dropdown>
 
-# Groups
-
-Without any checked state the rows are plain actions. Dropdown.Label
-captions a run of them, Dropdown.Separator rules between the runs, and the
-indices keep counting across both.
-
-<Dropdown>
-  <Dropdown.Label>Account</Dropdown.Label>
-  <Dropdown.Item index={0} icon={Mail} label="Email" />
-  <Dropdown.Item index={1} icon={Bell} label="Notifications" />
-  <Dropdown.Item index={2} icon={Shield} label="Privacy" />
-  <Dropdown.Separator />
-  <Dropdown.Label>Appearance</Dropdown.Label>
-  <Dropdown.Item index={3} icon={Settings} label="General" />
-  <Dropdown.Item index={4} icon={Palette} label="Theme" />
-  <Dropdown.Item index={5} icon={Monitor} label="Display" />
-</Dropdown>
-
-# Triggered menu
+## Triggered menu
 
 3 parts: Dropdown.Menu, Dropdown.Trigger, Dropdown.Content. Any element
 goes in `render`, and picking a row closes the menu.
@@ -51,76 +35,7 @@ goes in `render`, and picking a row closes the menu.
   </Dropdown.Content>
 </Dropdown.Menu>
 
-# Morph
-
-The menu oozes out of its trigger by default. `effect="morph"` with `hideSource` turns the trigger itself into the menu and shrinks it back, one continuous surface.
-
-<div className="flex flex-wrap items-start justify-center gap-3">
-  <Dropdown.Menu>
-    <Dropdown.Trigger render={<Button variant="secondary">Goo</Button>} />
-    <Dropdown.Content defaultCheckedIndex={0}>
-      <Dropdown.Item index={0} icon={Mail} label="Email" />
-      <Dropdown.Item index={1} icon={Bell} label="Notifications" />
-      <Dropdown.Item index={2} icon={Shield} label="Privacy" />
-    </Dropdown.Content>
-  </Dropdown.Menu>
-  <Dropdown.Menu>
-    <Dropdown.Trigger render={<Button variant="secondary">Morph</Button>} />
-    <Dropdown.Content effect="morph" hideSource defaultCheckedIndex={0}>
-      <Dropdown.Item index={0} icon={Settings} label="General" />
-      <Dropdown.Item index={1} icon={Palette} label="Theme" />
-      <Dropdown.Item index={2} icon={Monitor} label="Display" />
-    </Dropdown.Content>
-  </Dropdown.Menu>
-</div>
-
-# Multiple selection
-
-`defaultCheckedIndices` (or `checkedIndices`): rows become checkboxes, the
-menu stays open as you toggle, and touching picks share one background.
-
-<Dropdown.Menu>
-  <Dropdown.Trigger render={<Button variant="ghost">Status</Button>} />
-  <Dropdown.Content defaultCheckedIndices={[0, 1, 2]}>
-    {['Open', 'In progress', 'In review', 'Blocked', 'Done', 'Archived'].map((status, i) => (
-      <Dropdown.Item key={status} index={i} label={status} />
-    ))}
-  </Dropdown.Content>
-</Dropdown.Menu>
-
-# Searchable menu
-
-Put a Dropdown.Search marked `filter` first and the panel filters its own
-rows by `label`. Type to filter, press Enter to pick the first match.
-
-<Dropdown.Menu>
-  <Dropdown.Trigger render={<Button variant="ghost" trailingIcon={ChevronDown}>Language</Button>} />
-  <Dropdown.Content defaultCheckedIndex={0}>
-    <Dropdown.Search filter placeholder="Search languages" />
-    {['Auto detect', 'Arabic', 'Bengali', 'Chinese (Simplified)', 'Czech', 'Danish', 'Dutch', 'English (UK)', 'English (US)', 'Finnish', 'French', 'German', 'Greek', 'Hebrew', 'Hindi', 'Hungarian', 'Indonesian', 'Italian', 'Japanese', 'Korean', 'Norwegian', 'Polish', 'Portuguese (Brazil)', 'Romanian', 'Russian', 'Spanish', 'Swedish', 'Thai', 'Turkish', 'Ukrainian', 'Vietnamese'].map((language, i) => (
-      <Dropdown.Item key={language} index={i} label={language} />
-    ))}
-    <Dropdown.Empty>No languages found</Dropdown.Empty>
-  </Dropdown.Content>
-</Dropdown.Menu>
-
-# Searchable multiple selection
-
-Both at once. The panel filters the rows and keeps the picks on the rows
-themselves, so a filtered-away pick is still checked when it comes back.
-
-<Dropdown.Menu>
-  <Dropdown.Trigger render={<Button variant="ghost">Labels</Button>} />
-  <Dropdown.Content defaultCheckedIndices={[0, 3]}>
-    <Dropdown.Search filter placeholder="Search labels" />
-    {['Bug', 'Feature', 'Docs', 'Design', 'Performance', 'Accessibility', 'Refactor', 'Testing', 'Infrastructure', 'Security', 'Good first issue', 'Help wanted'].map((label, i) => (
-      <Dropdown.Item key={label} index={i} label={label} />
-    ))}
-    <Dropdown.Empty>No labels found</Dropdown.Empty>
-  </Dropdown.Content>
-</Dropdown.Menu>
-
-# Children items
+## Children items
 
 Rows written shadcn-style: the content as children and no `index` — each row
 takes its place in document order, conditional rows included. `shortcut`
@@ -141,7 +56,25 @@ rows that have an icon, and `onSelect` runs on a pick by pointer or keyboard.
   </Dropdown.Content>
 </Dropdown.Menu>
 
-# Groups and labels
+## Groups
+
+Without any checked state the rows are plain actions. Dropdown.Label
+captions a run of them, Dropdown.Separator rules between the runs, and the
+indices keep counting across both.
+
+<Dropdown>
+  <Dropdown.Label>Account</Dropdown.Label>
+  <Dropdown.Item index={0} icon={Mail} label="Email" />
+  <Dropdown.Item index={1} icon={Bell} label="Notifications" />
+  <Dropdown.Item index={2} icon={Shield} label="Privacy" />
+  <Dropdown.Separator />
+  <Dropdown.Label>Appearance</Dropdown.Label>
+  <Dropdown.Item index={3} icon={Settings} label="General" />
+  <Dropdown.Item index={4} icon={Palette} label="Theme" />
+  <Dropdown.Item index={5} icon={Monitor} label="Display" />
+</Dropdown>
+
+## Groups and labels
 
 `Dropdown.Group` holds a run of related rows; a `Dropdown.Label` inside it
 names the group for assistive tech. Labels and separators break the row
@@ -166,7 +99,7 @@ order, so nothing selected melts across them.
   </Dropdown.Content>
 </Dropdown.Menu>
 
-# Shortcut
+## Shortcut
 
 `Dropdown.Shortcut` is the trailing caption on its own, for rows that lay
 out their own content.
@@ -184,7 +117,95 @@ out their own content.
   </Dropdown.Item>
 </Dropdown>
 
-# Submenu
+# Selection
+
+## Multiple selection
+
+`defaultCheckedIndices` (or `checkedIndices`): rows become checkboxes, the
+menu stays open as you toggle, and touching picks share one background.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="ghost">Status</Button>} />
+  <Dropdown.Content defaultCheckedIndices={[0, 1, 2]}>
+    {['Open', 'In progress', 'In review', 'Blocked', 'Done', 'Archived'].map((status, i) => (
+      <Dropdown.Item key={status} index={i} label={status} />
+    ))}
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+## Checkbox items
+
+`Dropdown.CheckboxItem` toggles itself — `defaultChecked`, or `checked` with
+`onCheckedChange` — and keeps the menu open. Touching checked rows share one
+background, as in a multiple selection. Uncontrolled rows live inside the
+popup, so `keepMounted` keeps their state across opens.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="secondary" trailingIcon={ChevronDown}>Columns</Button>} />
+  <Dropdown.Content align="end" keepMounted>
+    <Dropdown.Label>Visible columns</Dropdown.Label>
+    <Dropdown.CheckboxItem defaultChecked>Name</Dropdown.CheckboxItem>
+    <Dropdown.CheckboxItem defaultChecked>Email</Dropdown.CheckboxItem>
+    <Dropdown.CheckboxItem>Role</Dropdown.CheckboxItem>
+    <Dropdown.CheckboxItem defaultChecked>Status</Dropdown.CheckboxItem>
+    <Dropdown.CheckboxItem disabled>Created</Dropdown.CheckboxItem>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+## Radio group
+
+`Dropdown.RadioGroup` picks one of its `Dropdown.RadioItem` rows by `value`
+(`defaultValue`, or `value` with `onValueChange`). Picking one closes the
+menu.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="secondary" trailingIcon={ChevronDown}>Language</Button>} />
+  <Dropdown.Content keepMounted>
+    <Dropdown.RadioGroup defaultValue="sk">
+      <Dropdown.Label>Language</Dropdown.Label>
+      <Dropdown.RadioItem value="sk">Slovenčina</Dropdown.RadioItem>
+      <Dropdown.RadioItem value="cs">Čeština</Dropdown.RadioItem>
+      <Dropdown.RadioItem value="en">English</Dropdown.RadioItem>
+      <Dropdown.RadioItem value="de" disabled>Deutsch</Dropdown.RadioItem>
+    </Dropdown.RadioGroup>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+## Searchable menu
+
+Put a Dropdown.Search marked `filter` first and the panel filters its own
+rows by `label`. Type to filter, press Enter to pick the first match.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="ghost" trailingIcon={ChevronDown}>Language</Button>} />
+  <Dropdown.Content defaultCheckedIndex={0}>
+    <Dropdown.Search filter placeholder="Search languages" />
+    {['Auto detect', 'Arabic', 'Bengali', 'Chinese (Simplified)', 'Czech', 'Danish', 'Dutch', 'English (UK)', 'English (US)', 'Finnish', 'French', 'German', 'Greek', 'Hebrew', 'Hindi', 'Hungarian', 'Indonesian', 'Italian', 'Japanese', 'Korean', 'Norwegian', 'Polish', 'Portuguese (Brazil)', 'Romanian', 'Russian', 'Spanish', 'Swedish', 'Thai', 'Turkish', 'Ukrainian', 'Vietnamese'].map((language, i) => (
+      <Dropdown.Item key={language} index={i} label={language} />
+    ))}
+    <Dropdown.Empty>No languages found</Dropdown.Empty>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+## Searchable multiple selection
+
+Both at once. The panel filters the rows and keeps the picks on the rows
+themselves, so a filtered-away pick is still checked when it comes back.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="ghost">Labels</Button>} />
+  <Dropdown.Content defaultCheckedIndices={[0, 3]}>
+    <Dropdown.Search filter placeholder="Search labels" />
+    {['Bug', 'Feature', 'Docs', 'Design', 'Performance', 'Accessibility', 'Refactor', 'Testing', 'Infrastructure', 'Security', 'Good first issue', 'Help wanted'].map((label, i) => (
+      <Dropdown.Item key={label} index={i} label={label} />
+    ))}
+    <Dropdown.Empty>No labels found</Dropdown.Empty>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Composition
+
+## Submenu
 
 A `Dropdown.Sub` holds a trigger row and its panel. ArrowRight, a press or a
 resting pointer opens it, ArrowLeft or Escape closes it; it grows out of its
@@ -224,45 +245,51 @@ row, which stays lit while it is open, and nests as deep as you like.
   </Dropdown.Content>
 </Dropdown.Menu>
 
-# Checkbox items
+## Link rows
 
-`Dropdown.CheckboxItem` toggles itself — `defaultChecked`, or `checked` with
-`onCheckedChange` — and keeps the menu open. Touching checked rows share one
-background, as in a multiple selection. Uncontrolled rows live inside the
-popup, so `keepMounted` keeps their state across opens.
+`asChild` turns a row into its single child, which keeps its element type, props and ref, so a row can be a plain link
+or a router `Link`; its children are the row's content. `render={<Link href="/docs" />}` does the same. Enter and a
+click follow it once.
 
 <Dropdown.Menu>
-  <Dropdown.Trigger render={<Button variant="secondary" trailingIcon={ChevronDown}>Columns</Button>} />
-  <Dropdown.Content align="end" keepMounted>
-    <Dropdown.Label>Visible columns</Dropdown.Label>
-    <Dropdown.CheckboxItem defaultChecked>Name</Dropdown.CheckboxItem>
-    <Dropdown.CheckboxItem defaultChecked>Email</Dropdown.CheckboxItem>
-    <Dropdown.CheckboxItem>Role</Dropdown.CheckboxItem>
-    <Dropdown.CheckboxItem defaultChecked>Status</Dropdown.CheckboxItem>
-    <Dropdown.CheckboxItem disabled>Created</Dropdown.CheckboxItem>
+  <Dropdown.Trigger render={<Button variant="secondary">Help</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Item asChild icon={BookOpen} className="no-underline">
+      <a href="#docs">Documentation</a>
+    </Dropdown.Item>
+    <Dropdown.Item asChild icon={Mail} className="no-underline">
+      <a href="#support">Contact support</a>
+    </Dropdown.Item>
   </Dropdown.Content>
 </Dropdown.Menu>
 
-# Radio group
+## Typeahead for rich rows
 
-`Dropdown.RadioGroup` picks one of its `Dropdown.RadioItem` rows by `value`
-(`defaultValue`, or `value` with `onValueChange`). Picking one closes the
-menu.
+Typing while the menu is open jumps to the row whose text starts with what you typed. A row built from markup has no
+string to match, so `textValue` supplies it: here "ad" lands on the first row, "gr" on the second.
 
 <Dropdown.Menu>
-  <Dropdown.Trigger render={<Button variant="secondary" trailingIcon={ChevronDown}>Language</Button>} />
-  <Dropdown.Content keepMounted>
-    <Dropdown.RadioGroup defaultValue="sk">
-      <Dropdown.Label>Language</Dropdown.Label>
-      <Dropdown.RadioItem value="sk">Slovenčina</Dropdown.RadioItem>
-      <Dropdown.RadioItem value="cs">Čeština</Dropdown.RadioItem>
-      <Dropdown.RadioItem value="en">English</Dropdown.RadioItem>
-      <Dropdown.RadioItem value="de" disabled>Deutsch</Dropdown.RadioItem>
-    </Dropdown.RadioGroup>
+  <Dropdown.Trigger render={<Button variant="secondary">Assign to</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Item textValue="Ada Lovelace">
+      <User />
+      <span className="truncate">Ada Lovelace</span>
+      <Dropdown.Shortcut>Admin</Dropdown.Shortcut>
+    </Dropdown.Item>
+    <Dropdown.Item textValue="Grace Hopper">
+      <User />
+      <span className="truncate">Grace Hopper</span>
+      <Dropdown.Shortcut>Editor</Dropdown.Shortcut>
+    </Dropdown.Item>
+    <Dropdown.Item textValue="Linus Torvalds">
+      <User />
+      <span className="truncate">Linus Torvalds</span>
+      <Dropdown.Shortcut>Viewer</Dropdown.Shortcut>
+    </Dropdown.Item>
   </Dropdown.Content>
 </Dropdown.Menu>
 
-# Inside a dialog
+## Inside a dialog
 
 A menu lifts 2 surface levels above whatever it opens over — a dialog
 included — and so does its submenu above the menu.
@@ -294,7 +321,32 @@ included — and so does its submenu above the menu.
   </Dialog.Content>
 </Dialog>
 
-# Open-change details
+# Behavior
+
+## Morph
+
+The menu oozes out of its trigger by default. `effect="morph"` with `hideSource` turns the trigger itself into the menu and shrinks it back, one continuous surface.
+
+<div className="flex flex-wrap items-start justify-center gap-3">
+  <Dropdown.Menu>
+    <Dropdown.Trigger render={<Button variant="secondary">Goo</Button>} />
+    <Dropdown.Content defaultCheckedIndex={0}>
+      <Dropdown.Item index={0} icon={Mail} label="Email" />
+      <Dropdown.Item index={1} icon={Bell} label="Notifications" />
+      <Dropdown.Item index={2} icon={Shield} label="Privacy" />
+    </Dropdown.Content>
+  </Dropdown.Menu>
+  <Dropdown.Menu>
+    <Dropdown.Trigger render={<Button variant="secondary">Morph</Button>} />
+    <Dropdown.Content effect="morph" hideSource defaultCheckedIndex={0}>
+      <Dropdown.Item index={0} icon={Settings} label="General" />
+      <Dropdown.Item index={1} icon={Palette} label="Theme" />
+      <Dropdown.Item index={2} icon={Monitor} label="Display" />
+    </Dropdown.Content>
+  </Dropdown.Menu>
+</div>
+
+## Open-change details
 
 `onOpenChange(open, details)` hands over Base UI's event details: `details.reason` says why the menu is closing
 (`'escape-key'`, `'outside-press'`, `'focus-out'`, `'item-press'`, `'trigger-press'`) and `details.cancel()` keeps it
@@ -316,7 +368,7 @@ open. Here an outside press is refused, so only Escape, a pick or the trigger cl
   </Dropdown.Content>
 </Dropdown.Menu>
 
-# Modal
+## Modal
 
 `modal` locks the page scroll while the menu is open and keeps the pointer off everything outside it. Without it
 (the default) the page keeps scrolling and the menu follows its trigger.
@@ -329,51 +381,7 @@ open. Here an outside press is refused, so only Escape, a pick or the trigger cl
   </Dropdown.Content>
 </Dropdown.Menu>
 
-# Link rows
-
-`asChild` turns a row into its single child, which keeps its element type, props and ref, so a row can be a plain link
-or a router `Link`; its children are the row's content. `render={<Link href="/docs" />}` does the same. Enter and a
-click follow it once.
-
-<Dropdown.Menu>
-  <Dropdown.Trigger render={<Button variant="secondary">Help</Button>} />
-  <Dropdown.Content>
-    <Dropdown.Item asChild icon={BookOpen} className="no-underline">
-      <a href="#docs">Documentation</a>
-    </Dropdown.Item>
-    <Dropdown.Item asChild icon={Mail} className="no-underline">
-      <a href="#support">Contact support</a>
-    </Dropdown.Item>
-  </Dropdown.Content>
-</Dropdown.Menu>
-
-# Typeahead for rich rows
-
-Typing while the menu is open jumps to the row whose text starts with what you typed. A row built from markup has no
-string to match, so `textValue` supplies it: here "ad" lands on the first row, "gr" on the second.
-
-<Dropdown.Menu>
-  <Dropdown.Trigger render={<Button variant="secondary">Assign to</Button>} />
-  <Dropdown.Content>
-    <Dropdown.Item textValue="Ada Lovelace">
-      <User />
-      <span className="truncate">Ada Lovelace</span>
-      <Dropdown.Shortcut>Admin</Dropdown.Shortcut>
-    </Dropdown.Item>
-    <Dropdown.Item textValue="Grace Hopper">
-      <User />
-      <span className="truncate">Grace Hopper</span>
-      <Dropdown.Shortcut>Editor</Dropdown.Shortcut>
-    </Dropdown.Item>
-    <Dropdown.Item textValue="Linus Torvalds">
-      <User />
-      <span className="truncate">Linus Torvalds</span>
-      <Dropdown.Shortcut>Viewer</Dropdown.Shortcut>
-    </Dropdown.Item>
-  </Dropdown.Content>
-</Dropdown.Menu>
-
-# Focus return
+## Focus return
 
 `finalFocus` decides where focus lands once the menu has closed: a ref, or a function returning an element, instead of
 the trigger. Pick a country and the cursor goes to the phone field, also inside a dialog.
@@ -399,7 +407,7 @@ the trigger. Pick a country and the cursor goes to the phone field, also inside 
   </Dialog.Content>
 </Dialog>
 
-# Placement and layering
+## Placement and layering
 
 Everything Base UI's positioner and portal take, plus a lift. `positionerClassName` styles the portalled positioner,
 which is `z-50`: a z utility there lifts a menu above other fixed layers. `container` mounts the menu somewhere else,

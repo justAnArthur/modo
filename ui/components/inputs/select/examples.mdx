@@ -2,7 +2,9 @@ import Select from './index'
 import Badge from '../../badge'
 import { Bell, Globe, Mail, Monitor, Moon, Shield, Sun, User } from 'lucide-react'
 
-# Basic
+# Basics
+
+## Basic
 
 A trigger, a popover, four options. Rows take their place in order, so
 they need no `index`.
@@ -17,7 +19,7 @@ they need no `index`.
   </Select.Content>
 </Select>
 
-# Variants
+## Variants
 
 Bordered is the default; borderless drops the resting border and keeps the
 hover fill, for toolbars and dense headers.
@@ -41,21 +43,7 @@ hover fill, for toolbars and dense headers.
   </Select>
 </div>
 
-# With Icons
-
-A leading icon on the trigger and on every row. Row icons thicken to a 2
-stroke while their row is hovered or checked.
-
-<Select defaultValue="system">
-  <Select.Trigger icon={Monitor} placeholder="Theme" />
-  <Select.Content>
-    <Select.Item index={0} value="system" icon={Monitor}>System</Select.Item>
-    <Select.Item index={1} value="light" icon={Sun}>Light</Select.Item>
-    <Select.Item index={2} value="dark" icon={Moon}>Dark</Select.Item>
-  </Select.Content>
-</Select>
-
-# Groups
+## Groups
 
 Select.Group + Select.Label caption a run of rows, Select.Separator rules
 between them. Indices keep counting across the groups.
@@ -77,7 +65,7 @@ between them. Indices keep counting across the groups.
   </Select.Content>
 </Select>
 
-# Scrollable List
+## Scrollable List
 
 Past 300px the list scrolls inside a ScrollArea: hover-revealed thumb, a
 fade at both edges, and the overlays scrolling with the rows.
@@ -108,66 +96,23 @@ fade at both edges, and the overlays scrolling with the rows.
   </Select.Content>
 </Select>
 
-# Error State
+# Content
 
-`error` on the trigger tints its border, sets `aria-invalid`, and prints
-the message underneath.
+## With Icons
 
-<Select>
-  <Select.Trigger placeholder="Select a role…" error="Please select a role to continue." />
+A leading icon on the trigger and on every row. Row icons thicken to a 2
+stroke while their row is hovered or checked.
+
+<Select defaultValue="system">
+  <Select.Trigger icon={Monitor} placeholder="Theme" />
   <Select.Content>
-    <Select.Item index={0} value="admin">Admin</Select.Item>
-    <Select.Item index={1} value="editor">Editor</Select.Item>
-    <Select.Item index={2} value="viewer">Viewer</Select.Item>
+    <Select.Item index={0} value="system" icon={Monitor}>System</Select.Item>
+    <Select.Item index={1} value="light" icon={Sun}>Light</Select.Item>
+    <Select.Item index={2} value="dark" icon={Moon}>Dark</Select.Item>
   </Select.Content>
 </Select>
 
-# Disabled
-
-`disabled` on the root takes the whole control out; on a single item it
-dims the row and makes it invisible to the hover highlight.
-
-<div className="flex flex-wrap items-center gap-3">
-  <Select disabled>
-    <Select.Trigger placeholder="Disabled" />
-    <Select.Content>
-      <Select.Item index={0} value="a">Option A</Select.Item>
-    </Select.Content>
-  </Select>
-  <Select>
-    <Select.Trigger placeholder="Some disabled…" />
-    <Select.Content>
-      <Select.Item index={0} value="a">Available</Select.Item>
-      <Select.Item index={1} value="b" disabled>Unavailable</Select.Item>
-      <Select.Item index={2} value="c">Available</Select.Item>
-    </Select.Content>
-  </Select>
-</div>
-
-# Morph
-
-The menu oozes out of its trigger by default. `effect="morph"` with `hideSource` turns the trigger itself into the list and shrinks it back, one continuous surface.
-
-<div className="flex flex-wrap items-start justify-center gap-3">
-  <Select defaultValue="goo">
-    <Select.Trigger placeholder="Goo" />
-    <Select.Content>
-      <Select.Item index={0} value="goo">Goo</Select.Item>
-      <Select.Item index={1} value="neck">Liquid neck</Select.Item>
-      <Select.Item index={2} value="drop">Drop</Select.Item>
-    </Select.Content>
-  </Select>
-  <Select defaultValue="morph">
-    <Select.Trigger placeholder="Morph" />
-    <Select.Content effect="morph" hideSource>
-      <Select.Item index={0} value="morph">Morph</Select.Item>
-      <Select.Item index={1} value="grow">Grow</Select.Item>
-      <Select.Item index={2} value="shrink">Shrink back</Select.Item>
-    </Select.Content>
-  </Select>
-</div>
-
-# Value part
+## Value part
 
 `Select.Value` is the trigger's value slot as a part, so a trigger can take it as children, shadcn style. Rows come out of a `map` inside groups, with no `index`.
 
@@ -192,7 +137,7 @@ The menu oozes out of its trigger by default. `effect="morph"` with `hideSource`
   </Select.Content>
 </Select>
 
-# Node labels
+## Node labels
 
 A row's label may be any node; the trigger shows it as the row does. `textValue` is what typeahead matches.
 
@@ -205,19 +150,45 @@ A row's label may be any node; the trigger shows it as the row does. `textValue`
   </Select.Content>
 </Select>
 
-# Placement
+# States
 
-`side`, `align` and `sideOffset` on `Select.Content` place the menu; it still flips when there is no room.
+## Error State
 
-<Select defaultValue="top">
-  <Select.Trigger className="w-40" />
-  <Select.Content side="top" align="end">
-    <Select.Item value="top">Above</Select.Item>
-    <Select.Item value="end">Aligned to the end</Select.Item>
+`error` on the trigger tints its border, sets `aria-invalid`, and prints
+the message underneath.
+
+<Select>
+  <Select.Trigger placeholder="Select a role…" error="Please select a role to continue." />
+  <Select.Content>
+    <Select.Item index={0} value="admin">Admin</Select.Item>
+    <Select.Item index={1} value="editor">Editor</Select.Item>
+    <Select.Item index={2} value="viewer">Viewer</Select.Item>
   </Select.Content>
 </Select>
 
-# Open state
+## Disabled
+
+`disabled` on the root takes the whole control out; on a single item it
+dims the row and makes it invisible to the hover highlight.
+
+<div className="flex flex-wrap items-center gap-3">
+  <Select disabled>
+    <Select.Trigger placeholder="Disabled" />
+    <Select.Content>
+      <Select.Item index={0} value="a">Option A</Select.Item>
+    </Select.Content>
+  </Select>
+  <Select>
+    <Select.Trigger placeholder="Some disabled…" />
+    <Select.Content>
+      <Select.Item index={0} value="a">Available</Select.Item>
+      <Select.Item index={1} value="b" disabled>Unavailable</Select.Item>
+      <Select.Item index={2} value="c">Available</Select.Item>
+    </Select.Content>
+  </Select>
+</div>
+
+## Open state
 
 `open` with `onOpenChange(open, details)` drives the popup from outside, and `defaultOpen` starts it open. A controlled `open` is followed exactly, so a handler can refuse a close or an open: this select is pinned shut. Uncontrolled, a pick still holds the popup for its 300ms acknowledgment.
 
@@ -242,7 +213,44 @@ const [open, setOpen] = useState(false)
 </Select>
 ```
 
-# Popup options
+# Behavior
+
+## Morph
+
+The menu oozes out of its trigger by default. `effect="morph"` with `hideSource` turns the trigger itself into the list and shrinks it back, one continuous surface.
+
+<div className="flex flex-wrap items-start justify-center gap-3">
+  <Select defaultValue="goo">
+    <Select.Trigger placeholder="Goo" />
+    <Select.Content>
+      <Select.Item index={0} value="goo">Goo</Select.Item>
+      <Select.Item index={1} value="neck">Liquid neck</Select.Item>
+      <Select.Item index={2} value="drop">Drop</Select.Item>
+    </Select.Content>
+  </Select>
+  <Select defaultValue="morph">
+    <Select.Trigger placeholder="Morph" />
+    <Select.Content effect="morph" hideSource>
+      <Select.Item index={0} value="morph">Morph</Select.Item>
+      <Select.Item index={1} value="grow">Grow</Select.Item>
+      <Select.Item index={2} value="shrink">Shrink back</Select.Item>
+    </Select.Content>
+  </Select>
+</div>
+
+## Placement
+
+`side`, `align` and `sideOffset` on `Select.Content` place the menu; it still flips when there is no room.
+
+<Select defaultValue="top">
+  <Select.Trigger className="w-40" />
+  <Select.Content side="top" align="end">
+    <Select.Item value="top">Above</Select.Item>
+    <Select.Item value="end">Aligned to the end</Select.Item>
+  </Select.Content>
+</Select>
+
+## Popup options
 
 `alignOffset` shifts the menu along the trigger's edge, `collisionPadding` keeps it off the viewport edge, `finalFocus` decides where focus lands on close, and HTML attributes such as `id`, `aria-label` and `data-*` land on the popup element. Base UI's select popup always focuses the picked row when it opens, so there is no `initialFocus`.
 
@@ -254,7 +262,9 @@ const [open, setOpen] = useState(false)
   </Select.Content>
 </Select>
 
-# Your own trigger and rows
+# Composition
+
+## Your own trigger and rows
 
 `render` (or `asChild` with a single child) swaps the trigger's button or a row's `div` for your element, which must forward its ref (a router link does). A custom trigger brings its own look and keeps the select's wiring, and the element replaces the whole field body: with children of its own, the icon, `placeholder` and chevron are not rendered (put a `Select.Value` inside to show the pick), while a childless element still gets the value slot, icon and chevron; either way the `error` border tint is not applied, though the message and `aria-invalid` are; a row keeps the hover, check and keyboard behaviour. Here the trigger is a borderless text button and the rows are elements of your own, marked with `data-kind`.
 
@@ -270,7 +280,7 @@ const [open, setOpen] = useState(false)
   </Select.Content>
 </Select>
 
-# Wrapper and width
+## Wrapper and width
 
 The trigger sits in a flex-column div that holds its `error` text. `wrapperClassName="contents"` removes that box from the layout, and `className="min-w-0"` lifts the field's 160px minimum (128px compact).
 

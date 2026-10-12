@@ -8,7 +8,9 @@ import Popover from '../../components/overlays/popover'
 import FluidHover from '../fluid-hover'
 import Elevated from '../surface'
 
-# Weight without reflow
+# Interaction
+
+## Weight without reflow
 
 Click through the tabs on each side and watch the labels next to the one you picked.
 
@@ -25,7 +27,7 @@ Click through the tabs on each side and watch the labels next to the one you pic
   goodNote="An invisible semibold copy holds the width, and the weight is paired with an optical size. Nothing moves."
 />
 
-# Hover that never blinks
+## Hover that never blinks
 
 Sweep the pointer slowly down each list, through the gaps between rows.
 
@@ -36,7 +38,7 @@ Sweep the pointer slowly down each list, through the gaps between rows.
   goodNote="One highlight sits on the nearest row and melts to the next. A click in a gap lands on the lit row."
 />
 
-# Press that keeps its shape
+## Press that keeps its shape
 
 Press and hold the short button and the wide one on each side.
 
@@ -52,7 +54,7 @@ Press and hold the short button and the wide one on each side.
   goodNote="The fill shrinks exactly 1px per side at any width, releasing slower than it presses."
 />
 
-# Copy from anywhere
+## Copy from anywhere
 
 Copy the value on each side.
 
@@ -67,7 +69,20 @@ Copy the value on each side.
   goodNote="The whole field is the target, and the glyph melts into a check on a success disc."
 />
 
-# Overlays come from somewhere
+## The ring is for the keyboard
+
+Click each button, then press Tab to reach it from the keyboard.
+
+<Craft
+  bad={<Button variant="secondary" className="focus:ring-1 focus:ring-focus-ring">Save draft</Button>}
+  badNote="The ring shows on every click and stays there, so a mouse user sees a stuck outline."
+  good={<Button variant="secondary">Save draft</Button>}
+  goodNote="The ring appears only when focus comes from the keyboard, where it tells you where you are."
+/>
+
+# Motion and surfaces
+
+## Overlays come from somewhere
 
 Open and close the panel on each side.
 
@@ -86,7 +101,7 @@ Open and close the panel on each side.
   goodNote="The panel melts out of the button through a liquid neck, lets go, and closes back into it."
 />
 
-# Indicators travel
+## Indicators travel
 
 Toggle each switch a few times.
 
@@ -97,7 +112,7 @@ Toggle each switch a few times.
   goodNote="The thumb travels on a spring and stretches as it goes, so the change reads at a glance."
 />
 
-# Surfaces lift at any depth
+## Surfaces lift at any depth
 
 A menu inside a dialog, on each side. Check it in both themes.
 
@@ -124,15 +139,4 @@ A menu inside a dialog, on each side. Check it in both themes.
     </Elevated>
   }
   goodNote="The menu lifts 2 levels above whatever it sits on, so it reads as a menu at any depth."
-/>
-
-# The ring is for the keyboard
-
-Click each button, then press Tab to reach it from the keyboard.
-
-<Craft
-  bad={<Button variant="secondary" className="focus:ring-1 focus:ring-focus-ring">Save draft</Button>}
-  badNote="The ring shows on every click and stays there, so a mouse user sees a stuck outline."
-  good={<Button variant="secondary">Save draft</Button>}
-  goodNote="The ring appears only when focus comes from the keyboard, where it tells you where you are."
 />
