@@ -5,11 +5,12 @@ import esbuild, { type BuildOptions, type Message, type Metafile, type Plugin } 
 import remarkGfm from 'remark-gfm'
 import { loadModoConfig } from '../lib/config.loader'
 import { discoverCssForFile } from '../lib/discover-css'
-import { discoverItems } from '../lib/discover-items'
+import { discoverTiers } from '../lib/discover-items'
 import { createDocsService } from '../lib/docs'
 import { isModoPackage, packageDirOf, resolvePackageFile, resolveSourceExport } from '../lib/resolve-source'
+import { itemsRootOf } from '../lib/root'
 import type { SiteConfig } from '../lib/schema'
-import { TIERS, type Tier } from '../lib/tiers'
+import type { Tier } from '../lib/tiers'
 import type { ParsedExample, ParsedItem } from '../lib/tsdoc'
 import { remarkModoExamples } from './mdx-examples'
 import { pageEntries, pagesMdx } from './pages'
@@ -83,6 +84,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
   let last: Promise<unknown> = Promise.resolve()
   let lastReport = ''
   // One TypeScript program per run, kept across runs: a rebuild re-reads only changed files.
+  // Rooted at the project, not the items' folder: tsconfig lookup and the `@example {@include}` boundary.
   const docs = createDocsService({ root: userRoot })
 
   async function run(): Promise<BundleResult> {
@@ -96,21 +98,18 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
       return null
     })
 
-    const found: Array<{ tier: Tier; id: string; group?: string; file: string }> = []
-    for (const tier of TIERS) {
-      const tierDir = resolve(userRoot, tier)
-      if (!existsSync(tierDir)) continue
-      const seen = new Set<string>()
-      for (const { id, group, dir: itemDir } of discoverItems(tierDir)) {
-        // Ids key urls and bundle entries per tier, so a group can't repeat one.
-        if (seen.has(id)) {
-          errors.push(`${relative(userRoot, itemDir)}: another ${tier} item is already named "${id}"; skipped`)
-          continue
-        }
-        seen.add(id)
-        found.push({ tier, id, group, file: resolve(itemDir, 'index.tsx') })
-      }
+    // The item tiers live under the config's `root`; pages, css, the shell and the
+    // examples scope stay relative to the project root.
+    const itemsRoot = itemsRootOf(userRoot, config)
+    if (config?.root !== undefined && !existsSync(itemsRoot)) {
+      errors.push(`root "${config.root}" not found (resolved from ${userRoot})`)
     }
+    const { items: discovered, duplicates } = discoverTiers(itemsRoot)
+    // Ids key urls and bundle entries per tier, so a group can't repeat one.
+    for (const { tier, id, dir } of duplicates) {
+      errors.push(`${relative(userRoot, dir)}: another ${tier} item is already named "${id}"; skipped`)
+    }
+    const found = discovered.map(({ tier, id, group, dir }) => ({ tier, id, group, file: resolve(dir, 'index.tsx') }))
 
     docs.refresh(found.map(f => f.file))
     const parsed: Array<Omit<BundledItem, 'bundlePath'> & { key: string }> = []

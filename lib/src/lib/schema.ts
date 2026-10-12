@@ -41,6 +41,13 @@ export interface SiteConfig {
   examples?: string
   /** The folder of free-form `.mdx` pages, relative to the project root. Defaults to `pages`. */
   pages?: string
+  /**
+   * The folder holding the item tiers (`primitives/`, `components/`, `blocks/`) and `tokens/`, relative to the project
+   * root: `root: 'src'` reads `src/components/…` and `src/tokens/…`. Defaults to `.` (the project root). Everything
+   * else the config names (`pages`, `css`, `vite`, `examples`, the shell and panel modules) stays relative to the
+   * project root.
+   */
+  root?: string
 }
 
 const ref = z.string().optional()
@@ -62,5 +69,6 @@ export const siteConfigSchema = z
     vite: z.string().optional(),
     examples: z.string().optional(),
     pages: z.string().optional(),
+    root: z.string().optional(),
   })
   .strict() satisfies z.ZodType<SiteConfig>

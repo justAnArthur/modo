@@ -1,5 +1,7 @@
 import { resolve, sep } from 'node:path'
 import { isCSSRequest, normalizePath, type Plugin } from 'vite'
+import { loadModoConfig } from '../lib/config.loader'
+import { itemsRootOf } from '../lib/root'
 import type { Bundler } from './bundle'
 import { cssModule } from './css-module'
 import { emitRoutes } from './static-routes'
@@ -7,6 +9,7 @@ import { unoExtractor } from './uno'
 
 interface Options {
   userRoot: string
+  configPath: string
   bundler: Bundler
 }
 
@@ -92,13 +95,24 @@ export function itemsPlugin(options: Options): Plugin {
     },
     configureServer(s) {
       // Watch the whole project (Vite already ignores node_modules / .git):
-      // items import shared code outside the tier dirs.
+      // items import shared code outside the tier dirs. The items' own folder
+      // (config `root`) too, as it may sit outside the project root.
       s.watcher.add(options.userRoot)
+      const roots = [options.userRoot + sep]
+      loadModoConfig(options.configPath)
+        .then(config => {
+          const itemsRoot = itemsRootOf(options.userRoot, config)
+          if (!roots.some(r => (itemsRoot + sep).startsWith(r))) {
+            roots.push(itemsRoot + sep)
+            s.watcher.add(itemsRoot)
+          }
+        })
+        .catch(() => {}) // configPlugin reports it
       const tmp = resolve(options.userRoot, '.modo-tmp') + sep
       const extractUno = unoExtractor(s)
       let timer: ReturnType<typeof setTimeout> | null = null
       s.watcher.on('all', (event, file) => {
-        if (!file.startsWith(options.userRoot + sep) || file.startsWith(tmp)) return
+        if (!roots.some(r => file.startsWith(r)) || file.startsWith(tmp)) return
         // A css edit is Vite's HMR; a css file appearing or going changes
         // which files an item injects.
         const cssMoved = file.endsWith('.css') && (event === 'add' || event === 'unlink')

@@ -41,10 +41,11 @@ export default defineConfig({
   name: 'My DS',
   css: './global.css',
   examples: './examples.ts',
+  root: './src', // optional: where the tiers and tokens/ live (default: the project root)
 })
 ```
 
-Tokens, primitives, components and blocks are discovered by directory (`tokens/`, `primitives/`, `components/`, `blocks/`), free-form pages from `pages/` (see [Pages](#pages)). An item folder may sit down in group folders (`components/overlays/dialog/`, nested `components/inputs/date-time/calendar/`); each group becomes a sidebar sub-section and a heading on the tier overview. `examples` points at a module whose named exports (e.g. `export { Plus, Search } from 'lucide-react'`) are in scope in every `@example`, next to your items.
+Tokens, primitives, components and blocks are discovered by directory (`tokens/`, `primitives/`, `components/`, `blocks/`), free-form pages from `pages/` (see [Pages](#pages)). `root` (default `.`) is the folder holding the tiers and `tokens/`, relative to the project root: with `root: 'src'` modo reads `src/components/`, `src/tokens/` and so on, so a library can keep its sources in a subfolder and its docs config beside them (`modo dev --config docs/modo.config.ts`, run from the project root). It moves only those: `pages`, `css`, `vite`, `examples` and the shell and panel modules stay relative to the project root, and `modo add` creates items under it. An item folder may sit down in group folders (`components/overlays/dialog/`, nested `components/inputs/date-time/calendar/`); each group becomes a sidebar sub-section and a heading on the tier overview. `examples` points at a module whose named exports (e.g. `export { Plus, Search } from 'lucide-react'`) are in scope in every `@example`, next to your items.
 
 The CLI accepts any user content — `modo` ships no design tokens, no React components, and no copy. You own the visual layer end-to-end.
 

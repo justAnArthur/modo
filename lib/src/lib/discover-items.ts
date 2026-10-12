@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
+import { TIERS, type Tier } from './tiers'
 
 export interface DiscoveredItem {
   id: string
@@ -31,4 +32,32 @@ function subdirs(dir: string): string[] {
 
 function isItem(dir: string): boolean {
   return existsSync(resolve(dir, 'index.tsx'))
+}
+
+export interface TierItem extends DiscoveredItem {
+  tier: Tier
+}
+
+/**
+ * Every item under `root`, tier by tier (`<root>/<tier>/…`, the tiers in docs
+ * order). A tier's ids key urls and bundle entries, so one that repeats within a
+ * tier (the same name in two groups) is left out of `items` and listed in
+ * `duplicates`, the first by path order standing.
+ */
+export function discoverTiers(root: string): { items: TierItem[]; duplicates: TierItem[] } {
+  const items: TierItem[] = []
+  const duplicates: TierItem[] = []
+  for (const tier of TIERS) {
+    const tierDir = resolve(root, tier)
+    if (!existsSync(tierDir)) continue
+    const seen = new Set<string>()
+    for (const item of discoverItems(tierDir)) {
+      if (seen.has(item.id)) duplicates.push({ ...item, tier })
+      else {
+        seen.add(item.id)
+        items.push({ ...item, tier })
+      }
+    }
+  }
+  return { items, duplicates }
 }

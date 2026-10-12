@@ -1,12 +1,15 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve, sep } from 'node:path'
 import type { Plugin } from 'vite'
+import { loadModoConfig } from '../lib/config.loader'
 import { buildGroup, GROUPS, type Group, type GroupName, parseCss, prefixGroup } from '../lib/css'
+import { itemsRootOf } from '../lib/root'
 import { cssModule } from './css-module'
 import { emitRoutes } from './static-routes'
 
 interface Options {
   userRoot: string
+  configPath: string
 }
 
 const TOKENS_VIRTUAL = 'virtual:modo-tokens'
@@ -19,8 +22,14 @@ interface ParsedTokensResult {
   cssFiles: string[]
 }
 
-function parseTokens(userRoot: string): ParsedTokensResult {
-  const tokensDir = resolve(userRoot, 'tokens')
+/** `<root>/tokens`, the config's `root` (else the project root). */
+async function tokensDirOf(options: Options): Promise<string> {
+  // configPlugin reports config errors with full detail; tokens fall back to the project root.
+  const config = await loadModoConfig(options.configPath).catch(() => null)
+  return resolve(itemsRootOf(options.userRoot, config), 'tokens')
+}
+
+function parseTokens(tokensDir: string): ParsedTokensResult {
   const cssFiles: string[] = []
   const byGroup = new Map<GroupName, ReturnType<typeof parseCss>>()
   for (const g of GROUPS) byGroup.set(g, [])
@@ -46,10 +55,10 @@ function parseTokens(userRoot: string): ParsedTokensResult {
 }
 
 export function tokensPlugin(options: Options): Plugin {
-  let cache: ParsedTokensResult | null = null
+  let cache: Promise<ParsedTokensResult> | null = null
 
-  function getCache(): ParsedTokensResult {
-    if (!cache) cache = parseTokens(options.userRoot)
+  function getCache(): Promise<ParsedTokensResult> {
+    cache ??= tokensDirOf(options).then(parseTokens)
     return cache
   }
 
@@ -61,12 +70,12 @@ export function tokensPlugin(options: Options): Plugin {
       if (id === TOKENS_CSS_VIRTUAL) return TOKENS_CSS_RESOLVED
       return null
     },
-    load(id) {
+    async load(id) {
       if (id === TOKENS_RESOLVED) {
-        return `export const tokens = ${JSON.stringify(getCache().groups)};`
+        return `export const tokens = ${JSON.stringify((await getCache()).groups)};`
       }
       if (id === TOKENS_CSS_RESOLVED) {
-        const { cssFiles } = getCache()
+        const { cssFiles } = await getCache()
         return cssModule(cssFiles)
       }
       return null
@@ -74,16 +83,18 @@ export function tokensPlugin(options: Options): Plugin {
     generateBundle: {
       // After Vite emits index.html.
       order: 'post',
-      handler(_, bundle) {
-        emitRoutes(this, bundle, ['docs/tokens', ...getCache().groups.map(g => `docs/tokens/${g.name}`)])
+      async handler(_, bundle) {
+        const { groups } = await getCache()
+        emitRoutes(this, bundle, ['docs/tokens', ...groups.map(g => `docs/tokens/${g.name}`)])
       },
     },
     configureServer(server) {
-      const dir = resolve(options.userRoot, 'tokens') + sep
       // The pages read parsed values, so a token edit reloads them; Vite's
       // css HMR alone would leave the numbers stale.
-      server.watcher.on('all', (_event, file) => {
-        if (!file.startsWith(dir) || !file.endsWith('.css')) return
+      server.watcher.on('all', async (_event, file) => {
+        if (!file.endsWith('.css')) return
+        const dir = (await tokensDirOf(options)) + sep
+        if (!file.startsWith(dir)) return
         cache = null
         for (const id of [TOKENS_RESOLVED, TOKENS_CSS_RESOLVED]) {
           const mod = server.moduleGraph.getModuleById(id)

@@ -154,6 +154,7 @@ Rules:
   - A host Link needn't forward data attributes: the chrome puts its hooks on wrappers.
   - One Sidebar drives both sides: each `panel.items` entry is a `Sidebar.Section`.
 - **`modo.config.ts` hooks:**
+  - `root` — the folder holding the tiers and `tokens/`, relative to the project root (the cwd of the CLI); default `.`. Only discovery, the tokens plugin, their watchers and `modo add` use it; `pages`, `css`, `vite`, `examples`, shell/panel modules and `.modo-tmp` stay project-root-relative (`lib/src/lib/root.ts`).
   - `css` — injected right after the lib's structural CSS, before tokens.
   - `examples` — a module whose named exports are in scope in every example. Alias any export that collides with an item name; an unresolvable path yields scope `{}`.
   - `vite` — default-exports `(config) => config`, imported natively. This is how Tailwind/Uno get added.
