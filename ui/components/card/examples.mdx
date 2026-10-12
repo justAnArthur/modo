@@ -210,3 +210,36 @@ edge and spaced like the parts. In an inline card it stands upright.
     </Card>
   </Card.Group>
 </div>
+
+# Heading level
+
+`Card.Title` is a `span` by default. `as` renders it as a heading level for the page's outline (`h2`, `h3`, …) or as another tag; the look stays the same. The title below is the second-level heading of its section.
+
+<div className="w-full max-w-[360px]">
+  <Card border="outlined">
+    <Card.Header>
+      <Card.Title as="h2">Notifications</Card.Title>
+      <Card.Description>Where we send what you subscribed to.</Card.Description>
+    </Card.Header>
+    <Card.Content bodyText className="text-muted-foreground">Email and push, daily digest.</Card.Content>
+  </Card>
+</div>
+
+# Body text
+
+`bodyText` on `Card.Content` sets the size ladder's body size (one step down in a compact region), so plain text inside no longer takes the size of the page around the card. It is off by default because content inherits its size, and a host that has been relying on that would see its text change. Both cards sit in a region set in the title size.
+
+<div className="flex w-full max-w-[560px] flex-col gap-4 text-title">
+  <Card border="outlined">
+    <Card.Header>
+      <Card.Title>Inherited</Card.Title>
+    </Card.Header>
+    <Card.Content className="text-muted-foreground">The content takes the title size of its surroundings.</Card.Content>
+  </Card>
+  <Card border="outlined">
+    <Card.Header>
+      <Card.Title>Body text</Card.Title>
+    </Card.Header>
+    <Card.Content bodyText className="text-muted-foreground">The content takes the ladder's body size.</Card.Content>
+  </Card>
+</div>
