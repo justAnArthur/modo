@@ -16,6 +16,9 @@
  * - Styling reads DS tokens (AGENTS.md styling): literal colors → color
  *   tokens; `duration-80|120|160` and tier-length JS durations →
  *   `duration-<tier>` / `spring.*`.
+ * - The Base UI viewport carries `data-scroll-edges`, so `scroll-fade` reads Base UI's
+ *   `--scroll-area-overflow-*` vars there (scroll-aware in browsers without scroll-driven
+ *   animations, e.g. Firefox).
  */
 
 import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area'
@@ -115,6 +118,7 @@ const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
           >
             <ScrollAreaPrimitive.Viewport
               data-slot="scroll-area-viewport"
+              data-scroll-edges=""
               className={cn('size-full rounded-[inherit]', viewportClassName)}
             >
               {/* Content gives Base UI an intrinsic size to measure

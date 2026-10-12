@@ -398,3 +398,41 @@ html.transitioning *::after {
     animation-range-end: var(--scroll-fade-size), 100%;
   }
 }
+
+/* In a ScrollArea, Base UI writes how far each edge has left to scroll
+   (--scroll-area-overflow-*), so the fade reads that in every browser,
+   Firefox included. */
+[data-scroll-edges].scroll-fade {
+  animation: none;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 min(var(--scroll-fade-size), var(--scroll-area-overflow-y-start)),
+    #000 calc(100% - min(var(--scroll-fade-size), var(--scroll-area-overflow-y-end))),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 min(var(--scroll-fade-size), var(--scroll-area-overflow-y-start)),
+    #000 calc(100% - min(var(--scroll-fade-size), var(--scroll-area-overflow-y-end))),
+    transparent 100%
+  );
+}
+[data-scroll-edges].scroll-fade-x {
+  animation: none;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 min(var(--scroll-fade-size), var(--scroll-area-overflow-x-start)),
+    #000 calc(100% - min(var(--scroll-fade-size), var(--scroll-area-overflow-x-end))),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 min(var(--scroll-fade-size), var(--scroll-area-overflow-x-start)),
+    #000 calc(100% - min(var(--scroll-fade-size), var(--scroll-area-overflow-x-end))),
+    transparent 100%
+  );
+}
