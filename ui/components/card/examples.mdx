@@ -213,12 +213,12 @@ edge and spaced like the parts. In an inline card it stands upright.
 
 # Heading level
 
-`Card.Title` is a `span` by default. `as` renders it as a heading level for the page's outline (`h2`, `h3`, …) or as another tag; the look stays the same. The title below is the second-level heading of its section.
+`Card.Title` is a `span` by default. `as` renders it as a heading level for the page's outline (`h2`, `h3`, …) or as another tag; the look stays the same. The title below is a third-level heading, since this docs page already has its own `h1` and `h2` sections.
 
 <div className="w-full max-w-[360px]">
   <Card border="outlined">
     <Card.Header>
-      <Card.Title as="h2">Notifications</Card.Title>
+      <Card.Title as="h3">Notifications</Card.Title>
       <Card.Description>Where we send what you subscribed to.</Card.Description>
     </Card.Header>
     <Card.Content bodyText className="text-muted-foreground">Email and push, daily digest.</Card.Content>

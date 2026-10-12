@@ -673,7 +673,7 @@ interface AccordionTriggerProps extends HTMLAttributes<HTMLButtonElement> {
   children: ReactNode
   /** The glyph at the row's end, which turns a quarter turn when the item opens (so give it a right-pointing one), or `false` for none. Defaults to the icon context's `chevron-right`. */
   icon?: IconComponent | false
-  /** Whether the label gets heavier while the item is open. On, the label renders twice in one grid cell (a hidden semibold copy reserves its width, so nothing reflows); off, it renders once and keeps whatever weight its content has, which suits rich content such as a whole `Card.Header` that would otherwise be duplicated in the DOM. Defaults to `true`. */
+  /** Whether the label gets heavier while the item is open. On, the label renders twice in one grid cell (a hidden semibold copy reserves its width, so nothing reflows); off, it renders once and keeps whatever weight its content has, which suits rich content such as a whole `Card.Header` that would otherwise be duplicated in the DOM. The label sits inside the trigger `<button>`, so give it phrasing content (spans), not block elements such as a `div`-based header. Rich content that sets its own text colour does not change on open: only the chevron, the highlight and the open tint signal the state. Defaults to `true`. */
   weightShift?: boolean
 }
 

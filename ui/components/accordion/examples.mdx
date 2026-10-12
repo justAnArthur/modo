@@ -175,7 +175,7 @@ Each panel drips out of the row where it was pressed (its middle, from the keybo
 
 # Rich headers
 
-By default the trigger renders its label twice: a hidden semibold copy reserves the width, so the label gets heavier on open without moving. A header made of components would be duplicated in the DOM, so `weightShift={false}` renders it once and leaves the weight to its content. `contentClassName` is merged over the inner row's inset, padding and muted body text: the first panel below turns its text to full strength, the second takes a wider inset and the caption size.
+By default the trigger renders its label twice: a hidden semibold copy reserves the width, so the label gets heavier on open without moving. A header made of components would be duplicated in the DOM, so `weightShift={false}` renders it once and leaves the weight to its content. `contentClassName` is merged over the inner row's inset, padding and muted body text: the first panel below turns its text to full strength, the second takes a wider inset and the caption size. The label lives inside the trigger `<button>`, so build it from phrasing content (spans, as below), never a `div`-based header. Text that fixes its own colour stays that colour when the item opens: the chevron, the highlight and the open tint are what signal the state.
 
 <Accordion.Group type="multiple" defaultValue={['one']}>
   <Accordion.Item value="one" index={0}>

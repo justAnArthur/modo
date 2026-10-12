@@ -31,6 +31,7 @@
  *   ✕, and split back into the glyph when the state times out. The glyphs
  *   crossfade over one fixed slot instead of `mode="wait"`; the button
  *   variant keeps that one glyph slot and swaps only its word.
+ * - `CopyProps` is a union on `variant`: `value` is required except for the chip.
  * - Two more variants (local, additive): `"chip"` (an inline `<span>` chip with
  *   `children`, copying its text or `value`) and `"glyph"` (the bare copy glyph,
  *   no visible value, named by `aria-label`). Both keep a stable accessible name
@@ -58,6 +59,7 @@ import { useReduceMotion } from '../../lib/reduced-motion'
 import { useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
+import { useSurface } from '../../lib/surface-context'
 import { GOO_BLUR_RATIO } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { Tooltip } from '../overlays/tooltip'
@@ -242,8 +244,8 @@ interface CopyLabels {
   failedWord?: string
 }
 
-interface CopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
-  /** The text to copy, shown in the field. Optional for `variant="chip"`, which copies its own text when this is left out. */
+interface CopyBaseProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
+  /** The text to copy, shown in the field. Required for every variant except `"chip"`, which copies its own text when this is left out. */
   value?: string
   /** What the chip shows (`variant="chip"` only): any inline content, copied as its text unless `value` is given. Defaults to `value`. */
   children?: ReactNode
@@ -265,6 +267,25 @@ interface CopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   'aria-label'?: string
   /** The words of the control, for another language. Each key falls back to its English default. */
   labels?: CopyLabels
+}
+
+// `value` is the one prop whose requirement depends on the variant: the field
+// shows it and the glyph has nothing else to copy, so only the chip may omit it.
+type CopyProps = CopyBaseProps &
+  ({ variant?: Exclude<CopyVariant, 'chip'>; value: string } | { variant: 'chip'; value?: string })
+
+// The chip's fill: `bg-muted` in light (a step darker than any substrate), and in
+// dark three surface steps above the substrate it sits on, so it still reads inside
+// a Card or Dialog. Literal per level for the class extractor, like SURFACE_BG.
+const DARK_CHIP_BG: Record<number, string> = {
+  1: 'dark:bg-surface-1',
+  2: 'dark:bg-surface-2',
+  3: 'dark:bg-surface-3',
+  4: 'dark:bg-surface-4',
+  5: 'dark:bg-surface-5',
+  6: 'dark:bg-surface-6',
+  7: 'dark:bg-surface-7',
+  8: 'dark:bg-surface-8',
 }
 
 const LABELS: Required<CopyLabels> = {
@@ -331,6 +352,7 @@ const Copy = forwardRef<HTMLElement, CopyProps>(
     const textRef = useRef<HTMLSpanElement>(null)
     const shape = useShape()
     const sizeClasses = useSize(size)
+    const chipLevel = Math.min(useSurface() + 3, 8)
     const words = { ...LABELS, ...labels }
     const chip = variant === 'chip'
     const glyph = variant === 'glyph'
@@ -424,7 +446,8 @@ const Copy = forwardRef<HTMLElement, CopyProps>(
         <span
           ref={ref as Ref<HTMLSpanElement>}
           className={cn(
-            'relative inline-flex rounded-box bg-muted dark:bg-surface-4',
+            'relative inline-flex rounded-box bg-muted',
+            DARK_CHIP_BG[chipLevel],
             disabled && 'opacity-50 pointer-events-none',
             className,
           )}
