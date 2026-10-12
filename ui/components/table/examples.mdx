@@ -99,7 +99,7 @@ A head with `sortDirection` and `onSort` becomes a sort button: a press cycles a
 
 # Footer and caption
 
-`Table.Footer` holds totals: its rows render semibold and stay out of the hover. `Table.Caption` adds a muted line below.
+`Table.Footer` holds totals: its rows render semibold, stay out of the hover and keep their bottom border while the first body row is lit. `Table.Caption` adds a muted line below.
 
 <div className="w-full">
   <Table>
@@ -158,7 +158,7 @@ A head with `sortDirection` and `onSort` becomes a sort button: a press cycles a
 
 # Stacked on small screens
 
-`stacked` turns every row into a two-column card below the `md` breakpoint: the header hides and each cell is led by its `label`. Narrow the window to see it; `stacked={false}` on a header or row keeps it tabular.
+`stacked` turns every row into a two-column card below the `md` breakpoint: the header hides and each cell is led by its muted `label` and its value reads in the primary text colour. Narrow the window to see it; `stacked={false}` on a header or row keeps it tabular.
 
 <div className="w-full">
   <Table stacked>
