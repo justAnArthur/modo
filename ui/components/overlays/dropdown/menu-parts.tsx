@@ -424,6 +424,10 @@ function DropdownSub({ children, open, defaultOpen = false, onOpenChange, disabl
         open={current}
         disabled={disabled}
         onOpenChange={(next, details) => {
+          // Base UI re-reports a sub that is already closed as closed (reason `sibling-open`,
+          // once per sibling that opens). The caller hears changes only, as it did through
+          // useControllableState's no-op skip: a handler shared with the root must not see them.
+          if (next === current) return
           onOpenChange?.(next, details)
           if (details.isCanceled) return
           if (next) capture(details)
