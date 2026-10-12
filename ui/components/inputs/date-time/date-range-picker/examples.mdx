@@ -57,6 +57,14 @@ The field writes the range the way the locale does.
   <DateRangePicker editable withTime locale={de} defaultValue={{ from: new Date(2026, 9, 9, 9, 0), to: new Date(2026, 9, 11, 17, 30) }} />
 </div>
 
+# Editable with a 12-hour clock
+
+The panel's header keeps both ends readable on a phone: when the two inputs don't fit side by side, they stack.
+
+<div className="w-[30rem] max-w-full">
+  <DateRangePicker editable withTime hourCycle="h12" defaultValue={{ from: new Date(2026, 9, 1, 0, 0), to: new Date(2026, 9, 11, 17, 30) }} />
+</div>
+
 # Slovak, labels and format
 
 `locale` takes a BCP 47 tag; `labels` names every part (the ends, the columns, the buttons) and `formatDate` writes each end in the field.

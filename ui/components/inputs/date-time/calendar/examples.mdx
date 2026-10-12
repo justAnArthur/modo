@@ -32,3 +32,14 @@ Without room for the columns, they turn into strips above the days.
 <div className="w-72 max-w-full">
   <Calendar mode="single" selected={new Date(2026, 9, 9)} />
 </div>
+
+# Fixed height
+
+A height class on the calendar sets its height in both layouts, with the columns beside the days or above them.
+
+<div className="flex flex-wrap items-start gap-4">
+  <Calendar mode="single" className="h-72" selected={new Date(2026, 9, 9)} />
+  <div className="w-72 max-w-full">
+    <Calendar mode="single" className="h-72" selected={new Date(2026, 9, 9)} />
+  </div>
+</div>

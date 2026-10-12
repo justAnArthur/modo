@@ -66,7 +66,11 @@ import Input, { InputAction, InputAdornment, type InputProps } from '../input'
 type PickerControlAttributes = Omit<
   HTMLAttributes<HTMLElement>,
   'children' | 'dangerouslySetInnerHTML' | 'defaultValue' | 'defaultChecked'
-> & { [data: `data-${string}`]: string | number | boolean | undefined }
+> & {
+  /** An editable field's input: browser autofill hint. Defaults to `"off"`. */
+  autoComplete?: string
+  [data: `data-${string}`]: string | number | boolean | undefined
+}
 
 /** The form and accessibility props every picker forwards to its field's control. */
 interface PickerControlProps {
@@ -82,7 +86,7 @@ interface PickerControlProps {
   'aria-describedby'?: string
   /** Marks the value invalid, as `invalid` does. */
   'aria-invalid'?: AriaAttributes['aria-invalid']
-  /** Attributes for the field's control: the button that opens the panel, or an `editable` field's input (`data-*`, `autoFocus`, `tabIndex`, handlers, which run after the picker's own). */
+  /** Attributes for the field's control: the button that opens the panel, or an `editable` field's input (`data-*`, `autoFocus`, `tabIndex`, handlers, which run after the picker's own; an editable field's input also takes `autoComplete` and `inputMode`, which replace its defaults of `"off"` and `"numeric"`). */
   controlProps?: PickerControlAttributes
 }
 
