@@ -63,6 +63,15 @@
  *   group (`Menu.GroupLabel`); labels and separators take a place in the row
  *   order so selection runs never melt across them.
  * - `Dropdown.Trigger` also takes Radix-style `asChild` (`lib/slot.ts`).
+ * - Radix-parity options, all optional: `Dropdown.Menu` forwards Base UI's
+ *   change details (`reason`, `cancel()`) to `onOpenChange` and takes `modal`;
+ *   `Dropdown.Content` / `Dropdown.SubContent` take `finalFocus`,
+ *   `initialFocus` (modo's own: Base UI 1.4.1's Menu.Popup has none),
+ *   `collisionPadding`, `positionerClassName`, `container`, and spread HTML
+ *   attributes onto the popup (the panel's own handlers run after theirs);
+ *   `Dropdown.Content` also takes `alignOffset` and `collisionBoundary`;
+ *   `Dropdown.Item` takes `render` / `asChild` and `textValue`, the other row
+ *   parts `textValue`.
  * - The popup panel shares `useMenuPanel` with `Dropdown.SubContent`: a
  *   keyboard focus ring gated on keyboard use (as in Select), the highlight
  *   pinned on a submenu trigger while its submenu is open, and handlers that
@@ -70,7 +79,7 @@
  *   `renderMenuItem` is the shared `renderPopupItem`.
  */
 
-import type { MenuTriggerProps } from '@base-ui/react/menu'
+import type { MenuRootChangeEventDetails, MenuTriggerProps } from '@base-ui/react/menu'
 // Aliased: a bare `Menu` import makes the .d.ts bundler rename the `Menu` static too
 import { Menu as BaseMenu } from '@base-ui/react/menu'
 import { AnimatePresence, motion } from 'motion/react'
@@ -135,6 +144,7 @@ import {
   useDropdownMaybe,
 } from './menu-item'
 import {
+  chain,
   DropdownCheckboxItem,
   type DropdownCheckboxItemProps,
   DropdownGroup,
@@ -150,6 +160,8 @@ import {
   type DropdownSubProps,
   DropdownSubTrigger,
   type DropdownSubTriggerProps,
+  type MenuPopupProps,
+  type MenuPortalProps,
   mergeRefs,
   ownEvent,
   renderPopupItem,
@@ -658,10 +670,12 @@ interface DropdownMenuProps {
   open?: boolean
   /** Initial open state — uncontrolled. Defaults to `false`. */
   defaultOpen?: boolean
-  /** Called when the menu opens or closes. */
-  onOpenChange?: (open: boolean) => void
+  /** Called when the menu opens or closes, with Base UI's event details: `reason` (why: `'escape-key'`, `'outside-press'`, `'focus-out'`, `'item-press'`, `'trigger-press'`…), `event`, and `cancel()`, which keeps the menu as it is. A callback that takes only `open` keeps working. */
+  onOpenChange?: (open: boolean, details: MenuRootChangeEventDetails) => void
   /** Disables the menu. Defaults to `false`. */
   disabled?: boolean
+  /** Locks the page scroll while the menu is open and keeps the pointer off everything outside it. Non-modal, the page keeps scrolling and the popup follows its trigger. Defaults to `false`. */
+  modal?: boolean
   /** Pins trigger-side content and the portalled popup rows to one step of the size ladder (default 36px, compact 28px — see Sizes). Omitted, they follow the surrounding SizeProvider. */
   size?: SizeVariant
 }
@@ -672,6 +686,7 @@ function DropdownMenu({
   defaultOpen = false,
   onOpenChange,
   disabled = false,
+  modal = false,
   size,
 }: DropdownMenuProps) {
   const [internalOpen, setInternalOpen] = useState(defaultOpen)
@@ -679,10 +694,11 @@ function DropdownMenu({
   const { origin, capture } = useMorphOrigin()
 
   const handleOpenChange = useCallback(
-    (next: boolean, details: { trigger?: Element; event?: Event }) => {
+    (next: boolean, details: MenuRootChangeEventDetails) => {
+      onOpenChange?.(next, details)
+      if (details.isCanceled) return
       if (next) capture(details)
       if (openProp === undefined) setInternalOpen(next)
-      onOpenChange?.(next)
     },
     [openProp, onOpenChange, capture],
   )
@@ -697,9 +713,9 @@ function DropdownMenu({
         open={open}
         onOpenChange={handleOpenChange}
         disabled={disabled}
-        // Non-modal: the page keeps scrolling and the Positioner tracks the
-        // anchor, so the popup follows its trigger instead of detaching.
-        modal={false}
+        // Non-modal by default: the page keeps scrolling and the Positioner
+        // tracks the anchor, so the popup follows its trigger instead of detaching.
+        modal={modal}
       >
         {children}
       </BaseMenu.Root>
@@ -752,11 +768,13 @@ DropdownTrigger.displayName = 'DropdownTrigger'
 
 type MenuPositionerProps = ComponentProps<typeof BaseMenu.Positioner>
 
-interface DropdownContentProps {
+interface DropdownContentProps extends Omit<HTMLAttributes<HTMLDivElement>, 'className'> {
   /** `Dropdown.Item` rows, plus `Dropdown.Label`, `Dropdown.Separator`, `Dropdown.Search`, `Dropdown.Empty`. */
   children: ReactNode
   /** Extra classes for the popup surface. */
   className?: string
+  /** Classes for the portalled positioner element: a z utility here lifts the menu above other fixed layers (the positioner is `z-50`), e.g. `z-[60]`. */
+  positionerClassName?: string
   /** Index of the checked item. Drives the animated selected background and
    *  the radio-group value announced to assistive tech. */
   checkedIndex?: number
@@ -778,6 +796,18 @@ interface DropdownContentProps {
   align?: MenuPositionerProps['align']
   /** Gap to the trigger, in px. Ignored when the menu opens in place over its trigger (`effect="morph"` with `hideSource`). Defaults to `6`. */
   sideOffset?: number
+  /** Shift along the trigger's edge, in px. Defaults to `0`. */
+  alignOffset?: MenuPositionerProps['alignOffset']
+  /** Space to keep between the menu and the edge of the collision boundary, in px (a number, or per side). Defaults to `5`. */
+  collisionPadding?: MenuPositionerProps['collisionPadding']
+  /** The element or rectangle the menu stays inside when it flips and shifts. Defaults to `'clipping-ancestors'`. */
+  collisionBoundary?: MenuPositionerProps['collisionBoundary']
+  /** The element the portalled menu mounts into, e.g. a Dialog's popup so it stays inside its focus trap. Defaults to `document.body`. */
+  container?: MenuPortalProps['container']
+  /** Where focus goes once the menu has closed: `false` leaves it, a ref moves it there (a text field after a pick), a function picks by how it closed. Defaults to Base UI's own return to the trigger. */
+  finalFocus?: MenuPopupProps['finalFocus']
+  /** An element to focus once the menu has opened, in place of the first row, or `false` to leave focus on the popup. Base UI 1.4.1's Menu.Popup has no such option, so this is modo's: it acts a frame after the open. Defaults to the first row (the search field when there is one). */
+  initialFocus?: boolean | RefObject<HTMLElement | null>
   /** Where the menu grows from (see Morph): the trigger, the pointer, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
   /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
@@ -804,11 +834,26 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
       side = 'bottom',
       align = 'start',
       sideOffset = 6,
+      alignOffset,
+      collisionPadding,
+      collisionBoundary,
+      container,
+      finalFocus,
+      initialFocus,
+      positionerClassName,
       from,
       effect,
       hideSource,
       tier = 'moderate',
       keepMounted = false,
+      onKeyDownCapture,
+      onMouseEnter,
+      onMouseMove,
+      onMouseLeave,
+      onClick,
+      onFocus,
+      onBlur,
+      ...popupProps
     },
     ref,
   ) => {
@@ -853,14 +898,15 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
     // takes focus itself instead). A frame after the primitive's own open
     // autofocus, which lands on the popup for pointer opens.
     useEffect(() => {
-      if (!open) return
+      if (!open || initialFocus === false) return
       let inner: number | undefined
       const outer = requestAnimationFrame(() => {
         inner = requestAnimationFrame(() => {
+          if (typeof initialFocus === 'object') return initialFocus.current?.focus()
           if (hasSearch()) return
-          const container = containerRef.current
-          if (!container || (container.contains(document.activeElement) && document.activeElement !== container)) return
-          const first = container.querySelector<HTMLElement>(
+          const rows = containerRef.current
+          if (!rows || (rows.contains(document.activeElement) && document.activeElement !== rows)) return
+          const first = rows.querySelector<HTMLElement>(
             '[role="menuitem"]:not([aria-disabled="true"]), [role="menuitemradio"]:not([aria-disabled="true"]), [role="menuitemcheckbox"]:not([aria-disabled="true"])',
           )
           first?.focus()
@@ -870,7 +916,7 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
         cancelAnimationFrame(outer)
         if (inner !== undefined) cancelAnimationFrame(inner)
       }
-    }, [open, hasSearch])
+    }, [open, hasSearch, initialFocus])
 
     // The popup keeps its rows registered between opens, so their rects
     // were taken while it was hidden: re-measure once it is open and laid out.
@@ -925,37 +971,42 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
     )
 
     return (
-      <BaseMenu.Portal keepMounted={keepMounted}>
+      <BaseMenu.Portal keepMounted={keepMounted} container={container}>
         <BaseMenu.Positioner
           side={side}
           align={align}
           sideOffset={opensInPlace({ effect, hideSource }) ? inPlaceOffset : sideOffset}
-          className="z-50 outline-none"
+          alignOffset={alignOffset}
+          collisionPadding={collisionPadding}
+          collisionBoundary={collisionBoundary}
+          className={cn('z-50 outline-none', positionerClassName)}
         >
           <DropdownContext.Provider value={contentCtx}>
             <DropdownFilterContext.Provider value={rows.filterCtx}>
               <DropdownSearchHostContext.Provider value={searchHost}>
                 <BaseMenu.Popup
+                  {...popupProps}
                   ref={morph.popupRef}
-                  onKeyDownCapture={e => {
+                  finalFocus={finalFocus}
+                  onKeyDownCapture={chain(onKeyDownCapture, e => {
                     // A submenu's keys bubble here through the portal.
                     if (!ownEvent(e)) return
                     panel.trackKeyboardNav(e)
                     redirectTypingToSearch(e)
-                  }}
-                  onMouseEnter={() => {
+                  })}
+                  onMouseEnter={chain(onMouseEnter, () => {
                     handlers.onMouseEnter()
                     setFocusedIndex(null)
-                  }}
-                  onMouseMove={e => ownEvent(e) && handlers.onMouseMove(e)}
-                  onClick={e => ownEvent(e) && handlers.onClick(e)}
-                  onMouseLeave={() => {
+                  })}
+                  onMouseMove={chain(onMouseMove, e => ownEvent(e) && handlers.onMouseMove(e))}
+                  onClick={chain(onClick, e => ownEvent(e) && handlers.onClick(e))}
+                  onMouseLeave={chain(onMouseLeave, () => {
                     handlers.onMouseLeave()
                     // The pointer's session is over; a focused search field
                     // gets its first-row highlight back.
                     if (isSearchField(document.activeElement)) highlightFirst()
-                  }}
-                  onFocus={e => {
+                  })}
+                  onFocus={chain(onFocus, e => {
                     // Keyboard navigation moves the hover background, and the
                     // ring once the keyboard earned it (useKeyboardNavGate).
                     if (!ownEvent(e) || focusRow(e)) return
@@ -969,14 +1020,14 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
                       // (pointer leaving a row) doesn't count.
                       setActiveIndex(null)
                     }
-                  }}
-                  onBlur={e => {
+                  })}
+                  onBlur={chain(onBlur, e => {
                     // The popup itself takes focus when the pointer leaves a row; only a
                     // departure from the whole popup ends the hover session.
                     if (!ownEvent(e) || e.currentTarget.contains(e.relatedTarget as Node)) return
                     setFocusedIndex(null)
                     setActiveIndex(null)
-                  }}
+                  })}
                   className="relative select-none outline-none"
                 >
                   <SurfaceProvider value={level}>

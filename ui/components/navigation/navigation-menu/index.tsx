@@ -7,6 +7,9 @@
  * one fluid hover highlight, and `NavigationMenu.Indicator` is a liquid
  * marker (`lib/goo-indicator.tsx`) under the open or current item. A panel
  * draws one keyboard ring (`lib/focus-ring.tsx`, on the surrounding shape).
+ * The root forwards its ref and HTML attributes to the `<nav>`; `Trigger` and
+ * `Content` also take Radix-style `asChild` (the child's element type and ref
+ * are kept, its children become the part's content).
  */
 
 import { NavigationMenu as NavigationMenuPrimitive } from '@base-ui/react/navigation-menu'
@@ -14,9 +17,15 @@ import { motion } from 'motion/react'
 import {
   type ComponentPropsWithoutRef,
   createContext,
+  createElement,
+  type ForwardRefExoticComponent,
   forwardRef,
+  isValidElement,
   type MutableRefObject,
+  type ReactElement,
   type ReactNode,
+  type Ref,
+  type RefAttributes,
   type RefObject,
   useCallback,
   useContext,
@@ -112,9 +121,21 @@ function useRegisterBySelector(
 }
 
 /** Writes a node into a forwarded ref as well as a local one. */
-function assignRef<T>(ref: React.ForwardedRef<T>, node: T | null) {
+function assignRef<T>(ref: Ref<T> | undefined, node: T | null) {
   if (typeof ref === 'function') ref(node)
-  else if (ref) ref.current = node
+  else if (ref) (ref as MutableRefObject<T | null>).current = node
+}
+
+/**
+ * What `asChild` makes of a part's single child: the element to render in its place (its own children
+ * taken out, or they would win over the part's in the primitive, and its ref too, which the part merges
+ * itself), that ref, and the content the child brought.
+ */
+function slotParts(asChild: boolean | undefined, children: ReactNode) {
+  if (!asChild || !isValidElement(children)) return { element: undefined, ref: undefined, content: children }
+  const slot = children as ReactElement<{ children?: ReactNode }> & { ref?: Ref<HTMLElement> }
+  const { children: content, ...props } = slot.props
+  return { element: createElement(slot.type, props), ref: slot.ref, content }
 }
 
 /* ─────────────────────── List ─────────────────────── */
@@ -239,12 +260,14 @@ const STRIP_ITEM =
 /* ─────────────────────── Trigger ─────────────────────── */
 
 interface NavigationMenuTriggerProps extends ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Trigger> {
-  /** The trigger's label. */
+  /** The trigger's label. With `asChild`, the single child element, whose own children are the label. */
   children?: ReactNode
+  /** Compose onto the single child instead of `render`: it becomes the trigger and keeps its element type, props and ref. Defaults to `false`. */
+  asChild?: boolean
 }
 
 const NavigationMenuTrigger = forwardRef<HTMLButtonElement, NavigationMenuTriggerProps>(
-  ({ className, children, ...props }, ref) => {
+  ({ className, children, asChild, render, ...props }, ref) => {
     const { value, triggers } = useRoot()
     const itemValue = useContext(ItemContext)
     const size = useSize()
@@ -252,19 +275,27 @@ const NavigationMenuTrigger = forwardRef<HTMLButtonElement, NavigationMenuTrigge
     const reduced = useReduceMotion()
     const Chevron = useIcon('chevron-down')
     const open = value === itemValue
+    const slot = slotParts(asChild, children)
+
+    const setRefs = useCallback(
+      (node: HTMLButtonElement | null) => {
+        if (node) triggers.current.set(itemValue, node)
+        else triggers.current.delete(itemValue)
+        assignRef(ref, node)
+        assignRef(slot.ref, node)
+      },
+      [triggers, itemValue, ref, slot.ref],
+    )
 
     return (
       <NavigationMenuPrimitive.Trigger
-        ref={node => {
-          if (node) triggers.current.set(itemValue, node)
-          else triggers.current.delete(itemValue)
-          assignRef(ref, node)
-        }}
+        ref={setRefs}
+        render={slot.element ?? render}
         {...{ [TARGET]: '', 'data-navigation-menu-value': itemValue }}
         className={cn(STRIP_ITEM, size.control, size.px, size.gap, shape.button, open && 'text-foreground', className)}
         {...props}
       >
-        <StripLabel emphasized={open}>{children}</StripLabel>
+        <StripLabel emphasized={open}>{slot.content}</StripLabel>
         <motion.span
           aria-hidden="true"
           className="flex"
@@ -292,12 +323,14 @@ NavigationMenuTrigger.displayName = 'NavigationMenuTrigger'
 interface NavigationMenuContentProps extends ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Content> {
   /** Classes for the panel's content: its width and layout (a grid of links, a feature column). */
   className?: string
-  /** The panel: `NavigationMenu.Link`s and anything else. */
+  /** The panel: `NavigationMenu.Link`s and anything else. With `asChild`, the single child element, whose own children are the panel. */
   children?: ReactNode
+  /** Compose onto the single child instead of `render`: it becomes the panel and keeps its element type, props and ref, so a `ul` stays a `ul`. Defaults to `false`. */
+  asChild?: boolean
 }
 
 const NavigationMenuContent = forwardRef<HTMLDivElement, NavigationMenuContentProps>(
-  ({ className, children, ...props }, ref) => {
+  ({ className, children, asChild, render, ...props }, ref) => {
     const { value, setPanelSize } = useRoot()
     const itemValue = useContext(ItemContext)
     const open = value === itemValue
@@ -321,19 +354,32 @@ const NavigationMenuContent = forwardRef<HTMLDivElement, NavigationMenuContentPr
       return () => observer.disconnect()
     }, [open, element, setPanelSize])
 
+    const slot = slotParts(asChild, children)
+    // One merged ref, stable while its parts are: the panel re-measures whenever its ref changes.
     const setRefs = useCallback(
       (node: HTMLDivElement | null) => {
         containerRef.current = node
         setElement(node)
         assignRef(ref, node)
+        assignRef(slot.ref, node)
       },
-      [ref],
+      [ref, slot.ref],
+    )
+
+    // A list element can't hold the overlays' divs directly.
+    const inList = element?.tagName === 'UL' || element?.tagName === 'OL'
+    const overlays = (
+      <>
+        <FluidHoverHighlight hover={hover} className={shape.bg} />
+        <FocusRing rect={open && focused !== null ? hover.itemRects[focused] : undefined} />
+      </>
     )
 
     return (
       <InContentContext.Provider value={true}>
         <NavigationMenuPrimitive.Content
           ref={setRefs}
+          render={slot.element ?? render}
           {...hover.handlers}
           onKeyDown={event => {
             if (event.key === 'Tab') keyboardNavRef.current = true
@@ -357,9 +403,14 @@ const NavigationMenuContent = forwardRef<HTMLDivElement, NavigationMenuContentPr
           )}
           {...props}
         >
-          <FluidHoverHighlight hover={hover} className={shape.bg} />
-          <FocusRing rect={open && focused !== null ? hover.itemRects[focused] : undefined} />
-          {children}
+          {inList ? (
+            <li aria-hidden="true" className="contents">
+              {overlays}
+            </li>
+          ) : (
+            overlays
+          )}
+          {slot.content}
         </NavigationMenuPrimitive.Content>
       </InContentContext.Provider>
     )
@@ -446,7 +497,11 @@ NavigationMenuLink.displayName = 'NavigationMenuLink'
 
 /* ─────────────────────── Root ─────────────────────── */
 
-interface NavigationMenuProps {
+interface NavigationMenuProps
+  extends Omit<
+    ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root>,
+    'value' | 'defaultValue' | 'onValueChange' | 'delay' | 'closeDelay' | 'className' | 'children'
+  > {
   /** Controlled open item (its `value`), or `null` when closed. Pair with `onValueChange`. */
   value?: string | null
   /** Initially open item, for an uncontrolled menu. Defaults to `null`. */
@@ -477,6 +532,15 @@ interface NavigationMenuProps {
   children?: ReactNode
 }
 
+type NavigationMenuComponent = ForwardRefExoticComponent<NavigationMenuProps & RefAttributes<HTMLElement>> & {
+  List: typeof NavigationMenuList
+  Item: typeof NavigationMenuItem
+  Trigger: typeof NavigationMenuTrigger
+  Content: typeof NavigationMenuContent
+  Link: typeof NavigationMenuLink
+  Indicator: typeof NavigationMenuIndicator
+}
+
 /**
  * A site navigation bar whose items open flyout panels of links.
  *
@@ -488,15 +552,17 @@ interface NavigationMenuProps {
  * from item to item under the open one, or under the current page's link.
  * The panel lifts 2 surface levels off its substrate. Built on Base UI's
  * NavigationMenu: panels open on hover or press, arrow keys move between
- * items, Escape closes; controlled with `value` + `onValueChange`.
+ * items, Escape closes; controlled with `value` + `onValueChange`. The root
+ * is the `<nav>`: it takes a ref and HTML attributes such as `aria-label`.
  *
  * Statics:
  * - `NavigationMenu.List` — the strip.
  * - `NavigationMenu.Item` — one entry: a Trigger + Content pair, or a Link;
  *   `value`.
  * - `NavigationMenu.Trigger` — opens its item's panel; the chevron turns and
- *   the label turns semibold while open.
- * - `NavigationMenu.Content` — the item's panel; size it with `className`.
+ *   the label turns semibold while open; `asChild`.
+ * - `NavigationMenu.Content` — the item's panel; size it with `className`;
+ *   `asChild` makes it the child (a `ul`, say).
  * - `NavigationMenu.Link` — a link: in the strip, a top-level item; in a
  *   panel, a row with `icon` and `description`. `active` marks the current
  *   page; `closeOnClick`.
@@ -504,22 +570,26 @@ interface NavigationMenuProps {
  *
  * @example {@include ./examples.mdx}
  */
-function NavigationMenu({
-  value,
-  defaultValue = null,
-  onValueChange,
-  delay,
-  closeDelay,
-  align = 'start',
-  sideOffset = 12,
-  from,
-  effect,
-  hideSource,
-  tier,
-  size,
-  className,
-  children,
-}: NavigationMenuProps) {
+const NavigationMenu = forwardRef<HTMLElement, NavigationMenuProps>(function NavigationMenu(
+  {
+    value,
+    defaultValue = null,
+    onValueChange,
+    delay,
+    closeDelay,
+    align = 'start',
+    sideOffset = 12,
+    from,
+    effect,
+    hideSource,
+    tier,
+    size,
+    className,
+    children,
+    ...props
+  },
+  ref,
+) {
   const [current, setCurrent] = useControllableState<string | null>(value, defaultValue, onValueChange)
   const { origin, capture } = useMorphOrigin()
   const triggers = useRef(new Map<string, HTMLElement>())
@@ -539,6 +609,8 @@ function NavigationMenu({
   const root = (
     <RootContext.Provider value={ctx}>
       <NavigationMenuPrimitive.Root
+        {...props}
+        ref={ref}
         value={current}
         onValueChange={(next, details) => {
           const nextValue = (next as string | null) ?? null
@@ -582,8 +654,9 @@ function NavigationMenu({
 
   // A size prop pins the strip and its panels to one ladder step.
   return size ? <SizeProvider size={size}>{root}</SizeProvider> : root
-}
+}) as NavigationMenuComponent
 
+NavigationMenu.displayName = 'NavigationMenu'
 NavigationMenu.List = NavigationMenuList
 NavigationMenu.Item = NavigationMenuItem
 NavigationMenu.Trigger = NavigationMenuTrigger
