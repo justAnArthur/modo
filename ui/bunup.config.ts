@@ -25,9 +25,13 @@ export default defineConfig([
       '{primitives,components,blocks}/**/index.tsx',
       '{components,blocks}/**/variants.ts',
       'lib/*.{ts,tsx}',
+      // the docs chrome (slot adapters): never imported by the barrel
+      'docs/index.ts',
     ],
     // scripts/use-client.ts adds `"use client"` to the modules that need it
     target: 'browser',
   },
-  { ...shared, name: 'preset', entry: ['preset.ts'], target: 'node' },
+  // docs/vite.ts runs in the host's Node (a modo `vite` extension) beside the preset; Node never
+  // strips types under node_modules, so what ships for it is JS
+  { ...shared, name: 'preset', entry: ['preset.ts', 'docs/vite.ts'], target: 'node' },
 ])

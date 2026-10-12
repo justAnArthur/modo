@@ -23,7 +23,6 @@ import presetModoUi from './preset'
 
 const root = dirname(fileURLToPath(import.meta.url))
 const sources = resolve(root, '{lib,primitives,components,blocks}/**/*.{ts,tsx,mdx}')
-const chrome = resolve(root, 'modo.components.tsx')
 
 export default defineConfig({
   presets: [
@@ -35,7 +34,7 @@ export default defineConfig({
   ],
   outputToCssLayers: true,
   content: {
-    filesystem: [sources, chrome],
-    pipeline: { include: [sources, chrome] },
+    filesystem: [sources],
+    pipeline: { include: [sources] },
   },
 })

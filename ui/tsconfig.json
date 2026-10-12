@@ -1,6 +1,6 @@
 {
   "extends": "../tsconfig.base.json",
-  "compilerOptions": { "noEmit": true, "types": ["node"] },
+  "compilerOptions": { "noEmit": true, "allowImportingTsExtensions": true, "types": ["node"] },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", ".modo-tmp", "dist"]
 }

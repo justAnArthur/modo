@@ -1,5 +1,5 @@
 import { existsSync, globSync, readFileSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { dirname, join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -11,7 +11,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 const ROOT = join(import.meta.dirname, '..')
 const read = (file: string) => readFileSync(join(ROOT, file), 'utf8')
 
-const sources = globSync('{lib,primitives,components,blocks}/**/*.{ts,tsx}', { cwd: ROOT })
+const sources = globSync('{lib,primitives,components,blocks,docs}/**/*.{ts,tsx}', { cwd: ROOT })
 const contexts = sources.flatMap(file =>
   [...read(file).matchAll(/\b(?:const|let) (\w+) = createContext[<(]/g)].map(match => ({ file, name: match[1]! })),
 )
@@ -76,6 +76,30 @@ const { toast: barrelToast } = await import(BARREL)
 const { toast: entryToast } = await import(TOAST)
 if (barrelToast !== entryToast) failures.push('toast differs between the barrel and ./components/overlays/toast')
 
+// The docs chrome (`./docs`) is for a host's docs site: the barrel must not reach it,
+// or every consumer's bundle would carry the slot adapters (and Sidebar with them).
+const imports = (code: string) => [...code.matchAll(/(?:from|import)\s*"(\.[^"]+)"/g)].map(([, from]) => from!)
+const reachable = new Set<string>()
+const queue = ['dist/index.js']
+for (let file = queue.pop(); file; file = queue.pop()) {
+  if (reachable.has(file)) continue
+  reachable.add(file)
+  for (const from of imports(read(file))) queue.push(relative(ROOT, join(ROOT, dirname(file), from)))
+}
+const docsLeaks = [...reachable].filter(
+  file => file.startsWith('dist/docs/') || /\bDocsNav\b|__uiTheme/.test(read(file)),
+)
+for (const file of docsLeaks) failures.push(`the barrel reaches the docs chrome through ${file}`)
+
+const DOCS = '@justanarthur/modo-ui/docs'
+const DOCS_VITE = '@justanarthur/modo-ui/docs/vite'
+const docs = await import(DOCS)
+const docsVite = await import(DOCS_VITE)
+const slots = ['Button', 'Link', 'Icon', 'Select', 'DocsNav', 'ThemeSwitcher']
+for (const name of slots) if (typeof docs[name] === 'undefined') failures.push(`${DOCS} does not export ${name}`)
+if (typeof docsVite.docsTheme !== 'function') failures.push(`${DOCS_VITE} does not export docsTheme`)
+if (!existsSync(join(ROOT, 'docs/chrome.css'))) failures.push('docs/chrome.css is missing (./docs/chrome.css)')
+
 // Every tokens/<group>.css ships unchanged as dist/tokens/<group>.css (`./tokens/*`):
 // a host's modo viewer reads them one by one to group its foundations pages.
 const tokenFiles = globSync('tokens/*.css', { cwd: ROOT }).sort()
@@ -90,6 +114,8 @@ console.log(`${SIZE} -> ${relative(ROOT, fileURLToPath(import.meta.resolve(SIZE)
 console.log(`${BUTTON} -> ${relative(ROOT, fileURLToPath(import.meta.resolve(BUTTON)))}`)
 console.log(`Button under a compact SizeContext.Provider renders compact: ${shared}`)
 console.log(`toast(): ${managers} manager in dist, barrel === entry: ${barrelToast === entryToast}`)
+console.log(`barrel reaches ${reachable.size} files, none of the docs chrome: ${docsLeaks.length === 0}`)
+console.log(`${DOCS}: ${slots.join(', ')}; ${DOCS_VITE}: docsTheme`)
 console.log(`.d.ts beside every entry: ${untyped.length === 0}`)
 console.log(`dist/tokens/: ${tokenFiles.map(file => file.slice('tokens/'.length)).join(', ')}`)
 console.log(`statics renamed by the .d.ts bundler: ${renamed.length}`)

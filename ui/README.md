@@ -106,7 +106,7 @@ Every vendored file opens with a plain `/* */` header. The header names the
 upstream path and commit, carries the MIT notice, and lists every local
 modification. The vendored code below the header keeps upstream's formatting.
 Files written for this port (`preset.ts`, `uno.config.ts`, `vite.ts`, `index.ts`,
-`scripts/build-css.ts`, `modo.components.tsx`,
+`scripts/build-css.ts`, `docs/*`,
 `lib/use-controllable-state.ts`, `primitives/code/index.tsx`, `primitives/craft/*`, the morph files
 in `lib/` (`use-morph.ts`, `reduced-motion.ts`, `morph-layers.tsx`, `morph-part.tsx`, `goo-indicator.tsx`,
 `slot.ts`) and `primitives/morph/index.tsx`, `blocks/sidebar-app/index.tsx`,
@@ -137,13 +137,13 @@ positioning) are ported.
 | `DESIGN.md` | The design language in Google's [DESIGN.md](https://github.com/google-labs-code/design.md) format: the tokens as front matter, the rules as prose. Agents building here follow the `modo-ui` skill (`.claude/skills/modo-ui` at the repo root). |
 | `tokens/*.css` | Colors, typography (`--font-sans`, `--text-*`), motion (`--duration-*`), radius and spacing. Shipped per group as `dist/tokens/*.css` (`./tokens/*`). |
 | `base.css` | Theme switching, base styles, focus fallback, scrollbars, shimmer/spinner keyframes and `.scroll-fade`. Shipped in the package. The inline `code` chip applies only inside the docs shell, `data-modo="prose"` and `.modo-prose`. |
-| `global.css` | The docs site's stylesheet (`modo.config.ts` `css`): imports `base.css`, then the modo-only focus revert and the docs chrome. |
+| `global.css` | The docs site's stylesheet (`modo.config.ts` `css`): imports `base.css`, then `docs/chrome.css`. |
 | `preset.ts` | The UnoCSS preset (theme and token utilities), shipped as `@justanarthur/modo-ui/unocss`. |
-| `uno.config.ts`, `vite.ts` | The UnoCSS setup of the docs site and the prebuilt CSS (see below). |
+| `uno.config.ts`, `vite.ts` | The UnoCSS setup of the docs site and the prebuilt CSS (see below); `vite.ts` also applies the docs chrome's `docsTheme` plugin. |
 | `index.ts`, `bunup.config.ts`, `scripts/build-css.ts` | The package build: `bun run build` writes the components, their types and the stylesheets to `dist/`. The docs site builds with `bun run build:docs` into `docs-dist/`. |
 | `scripts/exports.ts`, `scripts/use-client.ts`, `scripts/check-singletons.ts` | Packaging around that build. `exports.ts` (first step of `bun run build`) writes one `./lib/<name>` export per `lib/` module into `package.json`, plus `./components/*/variants` and `./blocks/*/variants` for the items' server-callable `variants.ts` entries; commit the `package.json` it leaves. `use-client.ts` (after bunup) puts `"use client"` on the emitted modules that render, call a hook or create a context, or use a binding from one; pure helpers (`cn`, class tables, springs, `variants.ts`) and re-export entries stay directive-free so a React Server Component can call them (`--list` prints the split). `check-singletons.ts` (`bun run check:dist`) checks that every React context and the `toast()` manager exist once in `dist/`, and that every entry has its `.d.ts`. `typesVersions` in `package.json` maps every public subpath to `dist/**/*.d.ts`, so `moduleResolution: node` consumers do not type-check the shipped source. |
 | `lib/` | FF's shared system files (upstream `lib/`, `hooks/` and the fluid-hover highlight, flat, upstream names), imported relatively by items. modo only scans the tier folders, so it never mistakes them for items. |
-| `modo.components.tsx` | Components only the docs site uses: the `Icon`, `Select` and `DocsNav` shell-slot adapters and the `ThemeSwitcher` panel item, picked in `modo.config.ts` by export name (`./modo.components.tsx#Select`). |
+| `docs/` | The docs chrome, shipped: `chrome.tsx` (the `Button`, `Link`, `Icon`, `Select` and `DocsNav` shell-slot adapters and the `ThemeSwitcher` panel item, re-exported by `index.ts` as `@justanarthur/modo-ui/docs`), `chrome.css` (the inset layout and the look of the chrome, `@justanarthur/modo-ui/docs/chrome.css`) and `vite.ts` (`docsTheme`, the pre-paint theme controller, `@justanarthur/modo-ui/docs/vite`). `modo.config.ts` picks the slots by export name (`./docs#DocsNav`); another design system documented with modo points at the same module by package specifier (see **The docs chrome, for another design system**). The barrel (`index.ts`) never imports it, `bun run check:dist` fails if it does. |
 | `primitives/<id>/` | FF's "System" pages: `index.tsx` (component + TSDoc prose) and `examples.mdx`, pulled in by `@example {@include ./examples.mdx}`. |
 | `components/[<group>/]<id>/` | FF's "Components" pages, same shape. The `AI/`, `inputs/` (with `inputs/date-time/`), `navigation/` and `overlays/` group folders become sidebar sub-groups and overview sections; the core display items stay ungrouped. |
 | `blocks/<id>/` | Compositions of several items, same shape: `sidebar-app`, FF's sidebar preset `sa1FQfCxH6` as an app shell, with the header and footer blocks it is built from beside it. |
@@ -292,17 +292,17 @@ only what is specific to it:
 | — | `registry/blocks/sidebar-app/inset-topbar.tsx` | `blocks/sidebar-app/inset-topbar.tsx` | the trigger's peek-time fade dropped (the sidebar opens on hover in flow, so the trigger stays) |
 | — | `registry/default/lib/sidebar-menu-grid.ts` | `blocks/sidebar-app/menu-grid.ts` | the width reads `--anchor-width` only; the `-ml-1` shift dropped (it would move the morph surface's content off its background) |
 
-`Select` in `modo.components.tsx` is not an item: modo's docs chrome renders its Select slot
+`Select` in `docs/chrome.tsx` is not an item: modo's docs chrome renders its Select slot
 with a flat `value` / `onChange` / `options` contract
 (`lib/src/lib/slots.tsx`), and this adapter maps it onto
 `Select.Trigger` / `Select.Content` / `Select.Item` so the chrome runs on the
 design system's own Select. The
 `components/inputs/select` item keeps the upstream API untouched.
 
-`DocsNav` in `modo.components.tsx` is the chrome's Sidebar slot, pinned as
+`DocsNav` in `docs/chrome.tsx` is the chrome's Sidebar slot, pinned as
 `shell.Sidebar` (by name alone modo would adopt the documented `Sidebar`, an
 app shell that needs its provider). Each aside is an inset `Sidebar` with its
-own provider, and `global.css` turns the content between them into the inset
+own provider, and `docs/chrome.css` turns the content between them into the inset
 card (the lib's grid columns become `auto`, so they follow the sidebars' width
 springs). Each provider has `openOnHover`, and its `Sidebar.Trigger` sits in
 the card's corner: the trigger, `[` for the nav and `]` for the panel, switch
@@ -315,13 +315,82 @@ below xl. A section of links is a collapsible `Sidebar.Group` with one
 highlight melt from link to link; a panel section (Theme) keeps its control
 under the group label.
 
-`ThemeSwitcher` in `modo.components.tsx` is not an item either: it is the `Theme` entry in
+`ThemeSwitcher` in `docs/chrome.tsx` is not an item either: it is the `Theme` entry in
 `modo.config.ts` `panel.items`, a `Select` of Light / Dark / System (each row
 with its icon, the trigger showing the active one) that reads and sets
 `window.__uiTheme` and re-reads it on `ui:themechange`. All switching logic lives in the pre-paint controller
 described under **Tailwind → UnoCSS**, so the control holds no theme state of
 its own. `demo/scripts/run-design-systems.ts` appends its own `Switcher` panel
 item to whatever a design system declares, so both show up under the runner.
+
+The chrome's own elements (the corner triggers, the panel section's gutter) are
+styled in `docs/chrome.css` through `data-modo-ui` attributes, not utility
+classes: nothing in `docs/` needs a UnoCSS or Tailwind scan, so a host with
+either generator loads the same file. `Button` and `Link` are pinned too, so a
+design system with items of those names but another prop shape is not matched
+by name (modo would warn on every start).
+
+### The docs chrome, for another design system
+
+A design system documented with modo (an `@utegsk/ui`-style package that
+depends on `@justanarthur/modo-ui`) gets the same sidebars, inset card layout,
+panel and Theme switcher as this site by pointing its `modo.config.ts` at the
+shipped module. A `shell` / `panel` value may be a package specifier (the
+viewer resolves it from the project root through the package's `exports`, the
+`source` file first), which needs an `@justanarthur/modo` release after
+0.9.0-canary.0; with an older viewer keep a one-line local re-export instead
+(`export * from '@justanarthur/modo-ui/docs'` in a `docs/shell.tsx`, and point
+the slots at `./docs/shell.tsx#DocsNav`).
+
+```ts
+// modo.config.ts
+import { defineConfig } from '@justanarthur/modo/config'
+
+export default defineConfig({
+  name: 'My DS',
+  css: './docs.css',
+  vite: './vite.mjs',
+  shell: {
+    Button: '@justanarthur/modo-ui/docs#Button',
+    Link: '@justanarthur/modo-ui/docs#Link',
+    Select: '@justanarthur/modo-ui/docs#Select',
+    Icon: '@justanarthur/modo-ui/docs#Icon',
+    Sidebar: '@justanarthur/modo-ui/docs#DocsNav',
+  },
+  panel: { items: [{ label: 'Theme', component: '@justanarthur/modo-ui/docs#ThemeSwitcher' }] },
+})
+```
+
+```css
+/* docs.css: the package stylesheet (or base.css with your own utilities), then the chrome */
+@import "@justanarthur/modo-ui/styles.css";
+@import "@justanarthur/modo-ui/docs/chrome.css";
+```
+
+```js
+// vite.mjs: plain JS, Node loads it as is. Add your own plugins (Tailwind, UnoCSS) beside docsTheme.
+import { docsTheme } from '@justanarthur/modo-ui/docs/vite'
+
+export default config => {
+  config.plugins = [...(config.plugins ?? []), docsTheme({ storageKey: 'my-ds-theme' })]
+  return config
+}
+```
+
+- `chrome.css` also loads by itself, as the stylesheet beside the slot module,
+  when modo bundles `@justanarthur/modo-ui/docs` from its source; the explicit
+  `@import` fixes where it sits in your cascade and is the one to rely on.
+- `docsTheme` puts `.light` / `.dark` on `<html>` before first paint and
+  exposes `window.__uiTheme` for `ThemeSwitcher`; `storageKey` (default
+  `modo-ui-theme`) keeps two sites on one origin apart.
+- The panel's narrow-screen behavior (below xl the panel is a drawer, opened on
+  hover or with `]`, never a strip above the content) comes with `chrome.css`.
+  A stylesheet that re-implements the layout instead of importing it can
+  recreate the lib's `grid-template-rows: auto` strip: a viewport-tall blank
+  row with the Theme select behind it.
+- `lucide-react` (the `Icon` slot) is already a dependency of the package;
+  the docs entry adds no other. `@justanarthur/modo-ui` itself must be a
+  dependency of the host: modo resolves the specifier from the project root.
 
 ## Tier mapping
 
@@ -371,7 +440,7 @@ No ported file imports any of them.
 
 The files only they, or the FF docs site's nav, use are left out too:
 `mobile-drawer`, `nav-item`, `nav-menu`, `lib/theme-context.tsx` (the
-`ThemeSwitcher` panel item and vite.ts's pre-paint controller take its
+`ThemeSwitcher` panel item and docs/vite.ts's pre-paint controller take its
 place) and the blocks other than the sidebar's (`queued-stack`,
 `dialog-sidebar`). Inside kept files, the same rule removed
 `SURFACE_HOVER_BG`, `SURFACE_HOVER_SHADOW` and `surfaceHoverClasses` from
@@ -398,7 +467,8 @@ prebuilt `styles.css`, and turns `preset.ts` into `tailwind.css`.
 
 - **Dark mode.** `dark: 'class'` produces `.dark .dark\:x`, the same "inside a
   `.dark` ancestor" contract as FF's `@custom-variant dark (&:is(.dark *))`.
-  modo ships no theme of its own, so `vite.ts` injects a small controller into
+  modo ships no theme of its own, so `docsTheme` (`docs/vite.ts`, applied by
+  `vite.ts`) injects a small controller into
   `index.html` (`transformIndexHtml`, `head-prepend`). Before first paint it
   puts `light` or `dark` on `<html>` — the stored preference, or the OS one
   under `system` — which is also what flips every `light-dark()` token through
@@ -411,7 +481,10 @@ prebuilt `styles.css`, and turns `preset.ts` into `tailwind.css`.
   `global.css` (and the `base.css` it imports) and fixes the order of the
   layer its `@layer base` rules join.
   `vite.ts` is loaded by Node with type stripping, so it may only use erasable
-  TypeScript and hands `uno.config.ts` to UnoCSS by absolute path.
+  TypeScript, names the `.ts` extension of the one relative module it imports
+  (`./docs/vite.ts`) and hands `uno.config.ts` to UnoCSS by absolute path.
+  `docs/vite.ts` ships built (`dist/docs/vite.js`): Node never strips types
+  from a file under `node_modules`.
 - **Colors.** Theme colors point at the CSS variables directly (for example
   `accent: 'var(--accent)'`, `surface.1..8`). wind4 applies opacity modifiers
   to `var()` colors with `color-mix(in srgb, …)`, so `bg-accent/12` works on
@@ -435,7 +508,7 @@ prebuilt `styles.css`, and turns `preset.ts` into `tailwind.css`.
   after the reset, so utilities (in `default`) still win. This is the same
   arrangement as Tailwind's base/utilities split.
 - **Content.** UnoCSS scans `{lib,primitives,components,blocks}/**/*.{ts,tsx,mdx}`
-  and `modo.components.tsx` from disk (`content.filesystem`, and the same
+  from disk (`content.filesystem`, and the same
   globs in `content.pipeline.include`, since the default pipeline skips
   `.ts`). Two reasons:
   - modo serves items pre-bundled, so the sources never pass through Vite's

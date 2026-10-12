@@ -79,7 +79,7 @@ Rules:
   - Defaults live in one place each. `shell.css` opens with the contract block: every generic type and radius token resolves once to a `--modo-*` var, falling back to a literal size or, for weights, the keyword `bold`. `tokens/host-colors.ts` does the same for colors. Rules read `--modo-*`, never a generic token with an inline fallback. Those two are the only literal visuals in the lib.
   - Spacing fallbacks stay inline (`var(--space-2, 8px)`): spacing is structure. Motion has no default; no token means no transition.
   - Inherit before you set: line-height, font family and link decoration come from the host. Capitalize in content (`cap()` in `runtime/text.ts`), never with `text-transform`.
-- **DS code** (items, examples, `modo.components.tsx`):
+- **DS code** (items, examples, docs chrome adapters such as `ui/docs/chrome.tsx`):
   - Use theme tokens through the DS's utilities.
   - No arbitrary values for color, type, radius, shadow or motion (`text-[15px]`, `bg-[#…]`, `rounded-[10px]`, `duration-[…]`).
   - No inline `style` for them, and no raw hex/oklch outside `tokens/*.css`.
@@ -139,7 +139,8 @@ Rules:
 - **Shell inheritance:**
   - The chrome looks for user components per slot, matched by name plus required props. Primitives: Button, Link, Code, Icon. Components: Select, Sidebar Root/Item/Section.
   - Unmatched slots fall back to the lib's Plain components; `modo.config.ts: shell` pins slots.
-  - A `shell` / `panel.items[].component` reference may name an export: `./modo.components.tsx#Select` (else the default export). Several refs into one file share its build entry, so a DS can keep all its docs-only components in one `modo.components.tsx`.
+  - A `shell` / `panel.items[].component` reference may name an export: `./docs/chrome.tsx#Select` (else the default export). Several refs into one file share its build entry, so a DS can keep all its docs-only components in one module.
+  - A reference that is not a file in the project may be a package specifier (`@scope/ds/docs#DocsNav`): it resolves from the project root through the package's `exports` (the `source` condition first, else `import` / `default`, built JS included) and bundles like a local file; a stylesheet beside the resolved module loads with it. `@justanarthur/modo-ui/docs` is the shipped docs chrome (see `ui/README.md`).
   - Contracts beyond the matched props:
     - Button gets `variant="ghost"`, `size="icon-sm"`, `aria-label`, `aria-pressed`.
     - Link gets `aria-label` on icon-only anchors and `title` from Markdown links; forward them.

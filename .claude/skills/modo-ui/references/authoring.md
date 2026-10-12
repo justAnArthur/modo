@@ -15,6 +15,7 @@ live in `AGENTS.md` (**docs**, **file naming**, **styling**); this file is the u
 - [Template: Pagination](#template-pagination)
 - [Porting an upstream FF component](#porting-an-upstream-ff-component)
 - [Adding a token](#adding-a-token)
+- [Docs setup in another package](#docs-setup-in-another-package)
 - [Verify](#verify)
 
 ## Files
@@ -449,6 +450,45 @@ The mechanical pass every ported item went through (README › Items):
 3. A class group in `lib/utils.ts` when the utility's prefix could collide in `cn` (a `text-*` that is
    not a color, a new `duration-*`).
 4. Mirror it in `DESIGN.md` (front matter and prose) so the design doc stays the readable source.
+
+## Docs setup in another package
+
+The docs site's chrome (the inset sidebar layout, the nav, the Theme switcher) is shipped by this package:
+`@justanarthur/modo-ui/docs` (slot adapters), `/docs/chrome.css` (layout and look), `/docs/vite` (`docsTheme`,
+the pre-paint theme controller). A design system documented with modo that depends on `@justanarthur/modo-ui`
+adds exactly these lines, and keeps no copy of the chrome:
+
+```ts
+// modo.config.ts
+shell: {
+  Button: '@justanarthur/modo-ui/docs#Button',
+  Link: '@justanarthur/modo-ui/docs#Link',
+  Select: '@justanarthur/modo-ui/docs#Select',
+  Icon: '@justanarthur/modo-ui/docs#Icon',
+  Sidebar: '@justanarthur/modo-ui/docs#DocsNav',
+},
+panel: { items: [{ label: 'Theme', component: '@justanarthur/modo-ui/docs#ThemeSwitcher' }] },
+```
+
+```css
+/* the stylesheet named by `css` */
+@import "@justanarthur/modo-ui/docs/chrome.css";
+```
+
+```js
+// the module named by `vite` (plain .mjs, Node loads it as is)
+import { docsTheme } from '@justanarthur/modo-ui/docs/vite'
+export default config => {
+  config.plugins = [...(config.plugins ?? []), docsTheme({ storageKey: 'my-ds-theme' })]
+  return config
+}
+```
+
+Package specifiers in `shell` / `panel` need a viewer that resolves them (`@justanarthur/modo` after 0.9.0-canary.0);
+on an older one, a local `docs/shell.tsx` holding `export * from '@justanarthur/modo-ui/docs'` and slots pointing at
+`./docs/shell.tsx#<Slot>` is the supported fallback. Never re-implement the layout in the consumer's css: the chrome's
+rules (`[data-modo="app"]` grid, the panel drawer below xl) are one set, in `chrome.css`. The full explanation is in
+`ui/README.md` (**The docs chrome, for another design system**).
 
 ## Verify
 

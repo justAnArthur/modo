@@ -221,8 +221,8 @@ What makes it read as this system rather than "a component library":
 
 ## Gotchas
 
-- **UnoCSS only sees literal class names**, scanned from disk (`{lib,primitives,components,blocks}/**`
-  and `modo.components.tsx`). Pick dynamic classes from literal tables (`SURFACE_BG[level]`), never
+- **UnoCSS only sees literal class names**, scanned from disk (`{lib,primitives,components,blocks}/**`;
+  the docs chrome in `docs/` styles itself in `docs/chrome.css`, no classes). Pick dynamic classes from literal tables (`SURFACE_BG[level]`), never
   template strings. `transition-[x]` with a property wind4 doesn't know needs `theme.property` in
   `uno.config.ts`.
 - **One shared esbuild build** makes contexts (size, shape, surface, morph scope) cross items. Import the

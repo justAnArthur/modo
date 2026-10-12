@@ -29,7 +29,8 @@ interface Module {
   client: boolean
 }
 
-const files = globSync('**/*.js', { cwd: DIST }).filter(file => file !== 'preset.js')
+// preset.js and docs/vite.js run in the host's Node, never in the browser
+const files = globSync('**/*.js', { cwd: DIST }).filter(file => file !== 'preset.js' && file !== 'docs/vite.js')
 
 const modules = new Map<string, Module>(
   files.map(file => {

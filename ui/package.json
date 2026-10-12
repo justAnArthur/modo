@@ -42,6 +42,7 @@
     "primitives",
     "components",
     "blocks",
+    "docs",
     "DESIGN.md",
     "README.md",
     "LICENSE*"
@@ -234,6 +235,17 @@
       "source": "./preset.ts",
       "default": "./dist/preset.js"
     },
+    "./docs": {
+      "types": "./dist/docs/index.d.ts",
+      "source": "./docs/index.ts",
+      "default": "./dist/docs/index.js"
+    },
+    "./docs/vite": {
+      "types": "./dist/docs/vite.d.ts",
+      "source": "./docs/vite.ts",
+      "default": "./dist/docs/vite.js"
+    },
+    "./docs/chrome.css": "./docs/chrome.css",
     "./styles.css": "./dist/styles.css",
     "./base.css": "./dist/base.css",
     "./tokens.css": "./dist/tokens.css",
@@ -263,6 +275,12 @@
       ],
       "unocss": [
         "dist/preset.d.ts"
+      ],
+      "docs/vite": [
+        "dist/docs/vite.d.ts"
+      ],
+      "docs": [
+        "dist/docs/index.d.ts"
       ]
     }
   },
