@@ -19,7 +19,7 @@ import {
 } from 'react'
 import { FIELD_TEXT_INSET, FieldStateContext, useFieldState } from '../../../lib/field-classes'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
-import { slotRender } from '../../../lib/slot'
+import { slotId, slotRender } from '../../../lib/slot'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
 import { Label } from '../input'
@@ -143,7 +143,8 @@ interface FieldControlProps {
 }
 
 function FieldControl({ render, asChild, children }: FieldControlProps) {
-  return <BaseField.Control render={slotRender(render, asChild, children)} />
+  const el = slotRender(render, asChild, children)
+  return <BaseField.Control render={el} id={slotId(el)} />
 }
 
 interface ProvideFieldStateProps {

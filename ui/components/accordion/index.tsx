@@ -39,6 +39,9 @@
  *   focus ring snap with rows a morph pushes around (instead of springing
  *   after them over the content) until the pointer or focus moves. `effect`
  *   and `tier` on `AccordionContent`; reduced motion snaps, as before.
+ * - `AccordionTrigger` takes `render` / `asChild` (`lib/slot.ts`, local): the element is
+ *   Base UI's Trigger as it is, inside the same row and header, with no row look, label
+ *   copy or chevron. Its own `id` is the one Base UI registers (`slotId`).
  */
 
 import { Accordion as AccordionPrimitive } from '@base-ui/react/accordion'
@@ -70,6 +73,7 @@ import { GooFilter } from '../../lib/morph-layers'
 import { useReduceMotion } from '../../lib/reduced-motion'
 import { useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
+import { type SlotProps, slotId, slotRender } from '../../lib/slot'
 import { spring } from '../../lib/springs'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
@@ -515,7 +519,9 @@ type AccordionComponent = ForwardRefExoticComponent<AccordionProps & RefAttribut
  * Statics: Accordion.Group (the grouped root: type, collapsible,
  * defaultValue, value, onValueChange, highlight, size), Accordion.Item (value,
  * index, disabled), Accordion.Trigger (the row that toggles its item: `icon`
- * swaps or hides the chevron, `weightShift={false}` renders a rich label once)
+ * swaps or hides the chevron, `weightShift={false}` renders a rich label once,
+ * `render` / `asChild` make your own element the trigger, unstyled and without
+ * chevron or label copy)
  * and Accordion.Content (the collapsible panel: `effect` — `'goo'` or a plain
  * `'morph'` — the spring `tier`, `'slow'` or `'moderate'`, and
  * `contentClassName` for the inner row).
@@ -668,9 +674,9 @@ AccordionItem.displayName = 'AccordionItem'
 
 // ─── AccordionTrigger ────────────────────────────────────────────────────────
 
-interface AccordionTriggerProps extends HTMLAttributes<HTMLButtonElement> {
-  /** Trigger label content. */
-  children: ReactNode
+interface AccordionTriggerProps extends Omit<SlotProps, 'children'> {
+  /** Trigger label content. With `asChild`, the single child element that becomes the trigger instead, and `render` takes an element the same way: that element is rendered as it is, the whole trigger, look included. It gets Base UI's `aria-expanded`, `aria-controls`, `data-panel-open` and key handling, and sits in the same row, but the label copy, `weightShift`, `icon` and chevron are not rendered (give it its own content), nor are the trigger's padding and ring. */
+  children?: ReactNode
   /** The glyph at the row's end, which turns a quarter turn when the item opens (so give it a right-pointing one), or `false` for none. Defaults to the icon context's `chevron-right`. */
   icon?: IconComponent | false
   /** Whether the label gets heavier while the item is open. On, the label renders twice in one grid cell (a hidden semibold copy reserves its width, so nothing reflows); off, it renders once and keeps whatever weight its content has, which suits rich content such as a whole `Card.Header` that would otherwise be duplicated in the DOM. The label sits inside the trigger `<button>`, so give it phrasing content (spans), not block elements such as a `div`-based header. Rich content that sets its own text colour does not change on open: only the chevron, the highlight and the open tint signal the state. Defaults to `true`. */
@@ -678,7 +684,8 @@ interface AccordionTriggerProps extends HTMLAttributes<HTMLButtonElement> {
 }
 
 const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
-  ({ children, className, icon, weightShift = true, ...props }, ref) => {
+  ({ children, className, icon, weightShift = true, render, asChild, nativeButton, ...props }, ref) => {
+    const el = slotRender(render, asChild, children)
     const ChevronRight = useIcon('chevron-right')
     const Glyph = icon === false ? null : (icon ?? ChevronRight)
     const groupCtx = useAccordionGroup()
@@ -703,15 +710,21 @@ const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
       <AccordionPrimitive.Header render={<div />}>
         <AccordionPrimitive.Trigger
           ref={ref as React.Ref<HTMLElement>}
-          className={cn(
-            `relative z-10 flex items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.px} ${sizeClasses.variant === 'compact' ? 'py-1' : 'py-2'} w-full cursor-pointer outline-none select-none`,
-            !groupCtx?.grouped && 'focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-0',
-            className,
-          )}
+          // A `render` / `asChild` element is the whole trigger: its own look, no row padding or ring.
+          className={
+            el
+              ? className
+              : cn(
+                  `relative z-10 flex items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.px} ${sizeClasses.variant === 'compact' ? 'py-1' : 'py-2'} w-full cursor-pointer outline-none select-none`,
+                  !groupCtx?.grouped &&
+                    'focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-0',
+                  className,
+                )
+          }
           {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+          {...(el ? { render: el, nativeButton, id: slotId(el, props.id) } : {})}
         >
-          {/* Label with dual-layer text */}
-          {weightShift ? (
+          {el ? undefined : weightShift ? (
             <span className={cn('inline-grid flex-1 text-left', sizeClasses.text)}>
               <span className="col-start-1 row-start-1 invisible weight-semibold" aria-hidden="true">
                 {children}
@@ -739,7 +752,7 @@ const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
           )}
 
           {/* Chevron */}
-          {Glyph && (
+          {!el && Glyph && (
             <motion.span
               className="shrink-0 inline-flex items-center justify-center"
               animate={{ rotate: isOpen ? 90 : 0 }}

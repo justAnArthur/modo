@@ -1,4 +1,5 @@
 import Accordion from './index'
+import Button from '../button'
 import { ArrowRight } from 'lucide-react'
 
 # Standalone
@@ -198,6 +199,29 @@ By default the trigger renders its label twice: a hidden semibold copy reserves 
     </Accordion.Trigger>
     <Accordion.Content contentClassName="px-6 text-caption">
       Shared workspaces and roles.
+    </Accordion.Content>
+  </Accordion.Item>
+</Accordion.Group>
+
+# Your own trigger
+
+`asChild` (or `render`) makes your element the trigger, so a Button, a link-styled control or anything else can open the item. It is rendered as it is: the row's label copy, the chevron and the row padding are not added, so the element brings its own content and look. Base UI still wires `aria-expanded`, `aria-controls`, `data-panel-open` and the keys onto it, so style the open state with `data-[panel-open]`.
+
+<Accordion.Group type="single" collapsible defaultValue="one">
+  <Accordion.Item value="one" index={0}>
+    <Accordion.Trigger asChild>
+      <Button variant="ghost" className="w-full justify-start">Billing</Button>
+    </Accordion.Trigger>
+    <Accordion.Content>
+      Invoices, payment methods and receipts.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="two" index={1}>
+    <Accordion.Trigger render={<Button variant="ghost" className="w-full justify-start" />}>
+      Security
+    </Accordion.Trigger>
+    <Accordion.Content>
+      Passwords, sessions and two-factor.
     </Accordion.Content>
   </Accordion.Item>
 </Accordion.Group>

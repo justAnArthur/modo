@@ -119,6 +119,7 @@ import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../.
 import { RowOrderContext, useRowOrder, useRowSlot } from '../../../lib/row-order'
 import { shapeMap } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
+import { slotId } from '../../../lib/slot'
 import { spring } from '../../../lib/springs'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
@@ -754,9 +755,14 @@ type DropdownTriggerProps = MenuTriggerProps & {
 const DropdownTrigger = forwardRef<HTMLButtonElement, DropdownTriggerProps>(
   ({ asChild, render, children, ...props }, ref) =>
     asChild && isValidElement(children) ? (
-      <BaseMenu.Trigger ref={ref} render={children as ReactElement<Record<string, unknown>>} {...props} />
+      <BaseMenu.Trigger
+        ref={ref}
+        render={children as ReactElement<Record<string, unknown>>}
+        {...props}
+        id={slotId(children, props.id)}
+      />
     ) : (
-      <BaseMenu.Trigger ref={ref} render={render} {...props}>
+      <BaseMenu.Trigger ref={ref} render={render} {...props} id={slotId(render, props.id)}>
         {children}
       </BaseMenu.Trigger>
     ),

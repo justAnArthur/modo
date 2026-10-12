@@ -21,6 +21,9 @@
  *   :focus-visible fallback), html.transitioning, native scrollbars,
  *   .scrollbar-hide, shimmer + spinner keyframes, .scroll-fade(-x).
  *
+ * Local scope change: the inline code chip applies inside the docs shell, a
+ * `data-modo="prose"` block or a `.modo-prose` container, not to every <code>.
+ *
  * Local value changes: the inline code chip and the shimmer stops read color
  * tokens instead of upstream's hex (light code chip `--muted`, dark
  * `--surface-4`; shimmer dim → bright runs `--muted-foreground` →
@@ -115,10 +118,11 @@ body {
     text-wrap: pretty;
   }
 
-  /* Inline code chips: bare <code> in prose gets its own ground. Excludes
-     code inside <pre>. Base layer, so a page can still override with
-     utilities. */
-  code:not(pre code) {
+  /* Inline code chips, for prose that opts in: the docs shell (`data-modo="app"`),
+     a modo prose block (`data-modo="prose"`) or a `.modo-prose` container. A bare
+     <code> in an app is left alone. Excludes code inside <pre>. Base layer, so a
+     page can still override with utilities. */
+  :where([data-modo="app"], [data-modo="prose"], .modo-prose) code:not(pre code) {
     background: light-dark(var(--muted), var(--surface-4));
     border-radius: 4px;
     padding: 1px 4px;

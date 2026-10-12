@@ -39,6 +39,7 @@ import {
   forwardRef,
   type HTMLAttributes,
   isValidElement,
+  type MouseEventHandler,
   type ReactElement,
   type ReactNode,
   type Ref,
@@ -235,8 +236,8 @@ CardGroup.displayName = 'CardGroup'
 interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'> {
   /** Compositional parts: Card.Image, Card.Media, Card.Header, Card.Content, Card.Footer. */
   children?: ReactNode
-  /** Makes the whole card a clickable target (stretched button); fluid hover previews it. */
-  onClick?: () => void
+  /** Makes the whole card a clickable target (stretched button); fluid hover previews it. Receives the click event, or takes no argument. */
+  onClick?: MouseEventHandler<HTMLElement>
   /** Makes the whole card a link (stretched anchor). */
   href?: string
   /** Opens href in a new tab. Defaults to `false`. */

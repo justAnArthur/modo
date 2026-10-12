@@ -25,7 +25,7 @@ import {
 } from 'react'
 import { MorphSurface } from '../../../lib/morph-layers'
 import { useShape } from '../../../lib/shape-context'
-import { type SlotProps, slotRender } from '../../../lib/slot'
+import { type SlotProps, slotId, slotRender } from '../../../lib/slot'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
@@ -52,7 +52,7 @@ const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>(
   ({ render, asChild, children, ...props }, ref) => {
     const el = slotRender(render, asChild, children)
     return el ? (
-      <PopoverPrimitive.Trigger ref={ref} render={el} {...props} />
+      <PopoverPrimitive.Trigger ref={ref} render={el} {...props} id={slotId(el, props.id)} />
     ) : (
       <PopoverPrimitive.Trigger ref={ref} {...props}>
         {children}
