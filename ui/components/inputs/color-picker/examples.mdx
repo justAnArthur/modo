@@ -70,3 +70,33 @@ Chromium-based browsers ship; everywhere else the button hides itself. Pass
   <ColorPicker defaultValue="#6B97FF" />
   <ColorPicker defaultValue="#6B97FF" hideEyedropper />
 </div>
+
+# Disabled and read-only
+
+`disabled` dims the trigger and takes it out of the tab order. `readOnly` keeps the plain look but shows the color only: no hover fill, no tab stop, no panel, and no X button. Neither ever opens the popover, even when `open` is controlled.
+
+<div className="flex flex-wrap items-center gap-3">
+  <ColorPicker.Popover triggerLabel="Disabled" defaultValue="#6B97FF" disabled />
+  <ColorPicker.Popover triggerLabel="Read-only" defaultValue="#6B97FF" readOnly triggerShowRemove />
+</div>
+
+# Filling a field
+
+`rootClassName` styles the div around the trigger, so with `w-full` on both it and `triggerClassName` the trigger takes the width of its field. `removeLabel` names the X button for a screen reader, in any language.
+
+<div className="w-72 max-w-full">
+  <ColorPicker.Popover
+    rootClassName="w-full"
+    triggerClassName="w-full"
+    triggerLabel="Background"
+    triggerShowRemove
+    removeLabel="Odstrániť farbu"
+    defaultValue="#FFFFFF"
+  />
+</div>
+
+# Swatches on a light surface
+
+A white or near-white swatch keeps a hairline edge of its own, so it reads against a light popup.
+
+<ColorPicker defaultValue="#6B97FF" swatches={['#FFFFFF', '#F0F0F0', '#E5E5E5', '#000000']} />

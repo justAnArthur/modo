@@ -44,6 +44,12 @@
  *   `render={<Elevated/>}`.
  * - `effect="morph"` with `hideSource` opens the popover in place over its
  *   trigger: the positioner's `sideOffset` becomes the engine's `inPlaceOffset`.
+ * - `ColorPicker.Popover` takes `disabled` / `readOnly` (trigger not tabbable and
+ *   the popover never opens; read-only keeps the plain look), `rootClassName`
+ *   (the div around the trigger) and `removeLabel` (the remove button's accessible name).
+ * - `ColorSwatch` and `ColorTile` paint their hairline (`shadow-swatch`) on an overlay
+ *   above the color: as the button's own inset shadow it sat under the color
+ *   layer, so a white swatch had no edge on a light surface.
  * - The color types and math (`parseColor`, `buildParsed`, conversions) moved
  *   to `variants.ts` (server-callable, no JSX or hooks) and re-exported here.
  */
@@ -155,6 +161,14 @@ interface ColorPickerPopoverProps extends ColorPickerProps {
   triggerShowRemove?: boolean
   /** Fired when the X button is clicked. */
   onTriggerRemove?: () => void
+  /** Accessible name of the trigger's X button. Defaults to `"Remove color"`. */
+  removeLabel?: string
+  /** Disables the trigger: it dims, skips the tab order and never opens the panel. Defaults to `false`. */
+  disabled?: boolean
+  /** Shows the color but keeps it unchangeable: the trigger skips the tab order, loses its hover fill, never opens the panel and hides the X button. Defaults to `false`. */
+  readOnly?: boolean
+  /** Classes for the div around the trigger, an `inline-flex` box. Add `w-full` with `triggerClassName="w-full"` to make the trigger fill a field's width. `className` styles the panel, not this. */
+  rootClassName?: string
   /** Custom classes on the trigger button. */
   triggerClassName?: string
   /** Controls the popover's open state. When provided, the popover is fully
@@ -1145,6 +1159,7 @@ function ColorTile({ color, size = 24, className, style }: ColorTileProps) {
       }}
     >
       <span className="absolute inset-0" style={{ backgroundColor: color }} />
+      <span aria-hidden className={cn('absolute inset-0 pointer-events-none shadow-swatch', shape.bg)} />
     </span>
   )
 }
@@ -1185,6 +1200,7 @@ const ColorSwatch = forwardRef<HTMLButtonElement, ColorSwatchProps>(
         {...props}
       >
         <span className="absolute inset-0" style={{ backgroundColor: color }} />
+        <span aria-hidden className={cn('absolute inset-0 pointer-events-none shadow-swatch', shape.bg)} />
       </button>
     )
   },
@@ -1797,6 +1813,10 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
       triggerShowRemove = false,
       onTriggerRemove,
       triggerClassName,
+      removeLabel = 'Remove color',
+      disabled = false,
+      readOnly = false,
+      rootClassName,
       open: openProp,
       defaultOpen = false,
       onOpenChange,
@@ -1811,7 +1831,8 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
   ) => {
     const isOpenControlled = openProp !== undefined
     const [internalOpen, setInternalOpen] = useState(defaultOpen)
-    const open = isOpenControlled ? openProp : internalOpen
+    const locked = disabled || readOnly
+    const open = !locked && (isOpenControlled ? openProp : internalOpen)
     const { origin, capture } = useMorphOrigin()
     const morph = useMorph(open, origin, { from, effect, hideSource, tier })
     const shape = useShape()
@@ -1826,11 +1847,12 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
 
     const handleOpenChange = useCallback(
       (next: boolean, details: { trigger?: Element; event?: Event }) => {
+        if (locked) return
         if (next) capture(details)
         if (!isOpenControlled) setInternalOpen(next)
         onOpenChange?.(next)
       },
-      [isOpenControlled, onOpenChange, capture],
+      [isOpenControlled, locked, onOpenChange, capture],
     )
 
     const isControlled = pickerProps.value !== undefined
@@ -1862,10 +1884,14 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
         // anchor, so the panel follows its trigger instead of detaching.
         modal={false}
       >
-        <div ref={ref} className="inline-flex">
+        <div ref={ref} className={cn('inline-flex', rootClassName)}>
           <Popover.Trigger
+            disabled={disabled}
+            tabIndex={readOnly ? -1 : undefined}
+            data-readonly={readOnly || undefined}
             className={cn(
               'flex items-center border border-border bg-transparent hover:bg-hover transition-colors duration-fast outline-none focus-visible:ring-1 focus-visible:ring-focus-ring cursor-pointer',
+              'disabled:opacity-50 disabled:pointer-events-none data-[readonly]:cursor-default data-[readonly]:hover:!bg-transparent',
               sizeClasses.gap,
               sizeClasses.control,
               compact ? 'px-1.5' : 'px-2',
@@ -1884,10 +1910,10 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
             {triggerLabel && triggerLabelPosition === 'right' && (
               <span className={cn('text-muted-foreground px-1 select-none', sizeClasses.text)}>{triggerLabel}</span>
             )}
-            {triggerShowRemove && (
+            {triggerShowRemove && !readOnly && (
               <span
                 role="button"
-                aria-label="Remove color"
+                aria-label={removeLabel}
                 tabIndex={0}
                 onClick={e => {
                   e.stopPropagation()
