@@ -56,6 +56,7 @@ import {
   useContext,
   useEffect,
   useRef,
+  version,
 } from 'react'
 import type { IconComponent } from '../../../lib/icon-context'
 import { useRowSlot } from '../../../lib/row-order'
@@ -69,6 +70,14 @@ import { cn } from '../../../lib/utils'
 // MenuItem is only used inside Dropdown, which opts out of the global pill
 // shape — see index.tsx for the rationale.
 const shape = shapeMap.rounded
+
+const REACT_19 = parseInt(version, 10) >= 19
+
+/** An element's ref: `props.ref` on React 19, where `element.ref` warns on access; `element.ref` before (where `props.ref` warns). */
+function elementRef(element: ReactElement): Ref<HTMLElement> | undefined {
+  if (REACT_19) return (element.props as { ref?: Ref<HTMLElement> }).ref
+  return (element as ReactElement & { ref?: Ref<HTMLElement> }).ref
+}
 
 // ---------------------------------------------------------------------------
 // Dropdown context — the single shared context for every Dropdown build.
@@ -308,7 +317,7 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
     const freeform = label === undefined && text === undefined
     const lit = isActive || isChecked
 
-    const slotRef = slot ? (slot as ReactElement & { ref?: Ref<HTMLElement> }).ref : undefined
+    const slotRef = slot ? elementRef(slot) : undefined
     const mergeRef = (node: HTMLDivElement | null) => {
       ;(internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node
       for (const target of [ref, slotRef]) {

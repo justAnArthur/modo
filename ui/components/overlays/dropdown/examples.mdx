@@ -404,7 +404,13 @@ the trigger. Pick a country and the cursor goes to the phone field, also inside 
 Everything Base UI's positioner and portal take, plus a lift. `positionerClassName` styles the portalled positioner,
 which is `z-50`: a z utility there lifts a menu above other fixed layers. `container` mounts the menu somewhere else,
 `alignOffset`, `collisionPadding` and `collisionBoundary` steer where it sits near an edge. `initialFocus` takes a ref
-to focus once the menu has opened, and extra HTML attributes (`aria-*`, `data-*`, `id`, `style`) land on the popup.
+to focus once the menu has opened (read when it opens, so a fresh ref object each render is fine), and extra HTML
+attributes (`aria-*`, `data-*`, `id`, `style`) land on the popup.
+
+`initialFocus={false}` only drops modo's own first-row focus: Base UI still focuses the first row after a keyboard open
+and the popup after a pointer open, which cannot be suppressed. A key handler in `onKeyDownCapture` runs first:
+`preventDefault` there is harmless, navigation and typeahead still run; `stopPropagation` stops Base UI's key handling
+and the panel's arrow navigation.
 
 ```tsx
 <Dropdown.Menu>

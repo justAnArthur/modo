@@ -72,6 +72,14 @@
  *   `Dropdown.Content` also takes `alignOffset` and `collisionBoundary`;
  *   `Dropdown.Item` takes `render` / `asChild` and `textValue`, the other row
  *   parts `textValue`.
+ * - `initialFocus={false}` only drops modo's own first-row focus. Base UI still
+ *   focuses the first row on a keyboard open and the popup on a pointer open;
+ *   that initial focus can't be suppressed.
+ * - `onKeyDownCapture` on `Dropdown.Content` / `Dropdown.SubContent` runs first.
+ *   `preventDefault` there is harmless: navigation and typeahead still run.
+ *   `stopPropagation` there stops Base UI's key handling and the panel's own
+ *   arrow navigation (both bubble-phase); the panel's capture-phase bookkeeping
+ *   (the keyboard ring, typing redirected into `Dropdown.Search`) still runs.
  * - The popup panel shares `useMenuPanel` with `Dropdown.SubContent`: a
  *   keyboard focus ring gated on keyboard use (as in Select), the highlight
  *   pinned on a submenu trigger while its submenu is open, and handlers that
@@ -804,10 +812,12 @@ interface DropdownContentProps extends Omit<HTMLAttributes<HTMLDivElement>, 'cla
   collisionBoundary?: MenuPositionerProps['collisionBoundary']
   /** The element the portalled menu mounts into, e.g. a Dialog's popup so it stays inside its focus trap. Defaults to `document.body`. */
   container?: MenuPortalProps['container']
-  /** Where focus goes once the menu has closed: `false` leaves it, a ref moves it there (a text field after a pick), a function picks by how it closed. Defaults to Base UI's own return to the trigger. */
+  /** Where focus goes once the menu has closed: `false` leaves it, a ref moves it there (a text field after a pick), a function picks by how it closed. Defaults to `undefined`: Base UI's own return to the trigger. */
   finalFocus?: MenuPopupProps['finalFocus']
-  /** An element to focus once the menu has opened, in place of the first row, or `false` to leave focus on the popup. Base UI 1.4.1's Menu.Popup has no such option, so this is modo's: it acts a frame after the open. Defaults to the first row (the search field when there is one). */
+  /** An element to focus once the menu has opened, in place of the first row, or `false` to drop modo's own first-row focus. Base UI 1.4.1's Menu.Popup has no such option, so this is modo's: it acts a frame after the open. `false` does not silence Base UI's own initial focus, which still lands on the first row after a keyboard open and on the popup after a pointer open. The ref may be a fresh object each render: it is read when the menu opens, and only a change to or from `false` re-runs it. Defaults to `undefined`: the first row (the search field when there is one). */
   initialFocus?: boolean | RefObject<HTMLElement | null>
+  /** Key handler on the popup, in the capture phase, ahead of the panel's own. `preventDefault` is harmless: navigation and typeahead still run. `stopPropagation` stops Base UI's key handling and the panel's arrow navigation; the keyboard ring and typing redirected into `Dropdown.Search` still run. Defaults to `undefined`. */
+  onKeyDownCapture?: HTMLAttributes<HTMLDivElement>['onKeyDownCapture']
   /** Where the menu grows from (see Morph): the trigger, the pointer, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
   /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
@@ -897,12 +907,17 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
     // Open ready to act: focus the first enabled row (a mounted search field
     // takes focus itself instead). A frame after the primitive's own open
     // autofocus, which lands on the popup for pointer opens.
+    // Read through a ref: a fresh `{ current }` object each render must not re-run the effect.
+    const initialFocusRef = useRef(initialFocus)
+    initialFocusRef.current = initialFocus
+    const keepsFocus = initialFocus === false
     useEffect(() => {
-      if (!open || initialFocus === false) return
+      if (!open || keepsFocus) return
       let inner: number | undefined
       const outer = requestAnimationFrame(() => {
         inner = requestAnimationFrame(() => {
-          if (typeof initialFocus === 'object') return initialFocus.current?.focus()
+          const target = initialFocusRef.current
+          if (typeof target === 'object') return target.current?.focus()
           if (hasSearch()) return
           const rows = containerRef.current
           if (!rows || (rows.contains(document.activeElement) && document.activeElement !== rows)) return
@@ -916,7 +931,7 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
         cancelAnimationFrame(outer)
         if (inner !== undefined) cancelAnimationFrame(inner)
       }
-    }, [open, hasSearch, initialFocus])
+    }, [open, hasSearch, keepsFocus])
 
     // The popup keeps its rows registered between opens, so their rects
     // were taken while it was hidden: re-measure once it is open and laid out.

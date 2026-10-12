@@ -540,10 +540,12 @@ interface DropdownSubContentProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   collisionPadding?: MenuPositionerProps['collisionPadding']
   /** The element the portalled submenu mounts into. Defaults to `document.body`. */
   container?: MenuPortalProps['container']
-  /** Where focus goes once the submenu has closed: `false` leaves it, a ref moves it there, a function picks by how it closed. Defaults to Base UI's own return to the trigger row. */
+  /** Where focus goes once the submenu has closed: `false` leaves it, a ref moves it there, a function picks by how it closed. Defaults to `undefined`: Base UI's own return to the trigger row. */
   finalFocus?: MenuPopupProps['finalFocus']
-  /** An element to focus once the submenu has opened. Omitted, keyboard opens focus the first row, as Base UI does. */
+  /** An element to focus once the submenu has opened. The ref may be a fresh object each render: it is read when the submenu opens. Defaults to `undefined`: keyboard opens focus the first row, as Base UI does. */
   initialFocus?: RefObject<HTMLElement | null>
+  /** Key handler on the popup, in the capture phase, ahead of the panel's own. `preventDefault` is harmless: navigation and typeahead still run. `stopPropagation` stops Base UI's key handling; the keyboard ring still runs. Defaults to `undefined`. */
+  onKeyDownCapture?: HTMLAttributes<HTMLDivElement>['onKeyDownCapture']
   /** Where the submenu grows from (see Morph): its trigger row, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
   from?: 'trigger' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
   /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
@@ -598,11 +600,15 @@ const DropdownSubContent = forwardRef<HTMLDivElement, DropdownSubContentProps>(
     }, [open, remeasure])
 
     // Base UI's Menu.Popup has no `initialFocus`: the element takes focus a frame after the open.
+    // Read through a ref: a fresh `{ current }` object each render must not re-run the effect.
+    const initialFocusRef = useRef(initialFocus)
+    initialFocusRef.current = initialFocus
+    const hasInitialFocus = Boolean(initialFocus)
     useEffect(() => {
-      if (!open || !initialFocus) return
-      const frame = requestAnimationFrame(() => initialFocus.current?.focus())
+      if (!open || !hasInitialFocus) return
+      const frame = requestAnimationFrame(() => initialFocusRef.current?.current?.focus())
       return () => cancelAnimationFrame(frame)
-    }, [open, initialFocus])
+    }, [open, hasInitialFocus])
 
     const runs = useSelectionRuns(panel.valueChecked)
     const blocks = useMergeSplitBlocks(runs, itemRects, shape.bgRadius)

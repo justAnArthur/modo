@@ -34,6 +34,7 @@ import {
   useMemo,
   useRef,
   useState,
+  version,
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { FocusRing } from '../../../lib/focus-ring'
@@ -126,6 +127,14 @@ function assignRef<T>(ref: Ref<T> | undefined, node: T | null) {
   else if (ref) (ref as MutableRefObject<T | null>).current = node
 }
 
+const REACT_19 = parseInt(version, 10) >= 19
+
+/** An element's ref: `props.ref` on React 19, where `element.ref` warns on access; `element.ref` before (where `props.ref` warns). */
+function elementRef(element: ReactElement): Ref<HTMLElement> | undefined {
+  if (REACT_19) return (element.props as { ref?: Ref<HTMLElement> }).ref
+  return (element as ReactElement & { ref?: Ref<HTMLElement> }).ref
+}
+
 /**
  * What `asChild` makes of a part's single child: the element to render in its place (its own children
  * taken out, or they would win over the part's in the primitive, and its ref too, which the part merges
@@ -133,9 +142,12 @@ function assignRef<T>(ref: Ref<T> | undefined, node: T | null) {
  */
 function slotParts(asChild: boolean | undefined, children: ReactNode) {
   if (!asChild || !isValidElement(children)) return { element: undefined, ref: undefined, content: children }
-  const slot = children as ReactElement<{ children?: ReactNode }> & { ref?: Ref<HTMLElement> }
+  const slot = children as ReactElement<{ children?: ReactNode; ref?: Ref<HTMLElement> }>
   const { children: content, ...props } = slot.props
-  return { element: createElement(slot.type, props), ref: slot.ref, content }
+  const ref = elementRef(slot)
+  // On React 19 the ref rides in the props: the part merges it itself.
+  if (REACT_19) delete props.ref
+  return { element: createElement(slot.type, props), ref, content }
 }
 
 /* ─────────────────────── List ─────────────────────── */
@@ -366,8 +378,14 @@ const NavigationMenuContent = forwardRef<HTMLDivElement, NavigationMenuContentPr
       [ref, slot.ref],
     )
 
-    // A list element can't hold the overlays' divs directly.
-    const inList = element?.tagName === 'UL' || element?.tagName === 'OL'
+    // A list element can't hold the overlays' divs directly. A string tag tells at once, from the first paint;
+    // a component or render function only once it has mounted.
+    const host = slot.element ?? render
+    const hostType = isValidElement(host) ? host.type : typeof host === 'function' ? undefined : 'div'
+    const inList =
+      typeof hostType === 'string'
+        ? hostType === 'ul' || hostType === 'ol'
+        : element?.tagName === 'UL' || element?.tagName === 'OL'
     const overlays = (
       <>
         <FluidHoverHighlight hover={hover} className={shape.bg} />
