@@ -37,6 +37,12 @@
  *   never a solid fill; `link` is foreground text on the control height with no padding,
  *   whose always-drawn underline fades in on hover (and shows while `active`). Size `xs`
  *   resolves to `compact`: the ladder has two steps.
+ * - The `primary` fill and label read the theme hooks `--primary`, `--primary-hover`,
+ *   `--primary-active`, `--primary-foreground` and `--shadow-button-primary`
+ *   (`tokens/colors.css`; `bg-primary` / `text-primary-foreground`) instead of the
+ *   ink and `text-background`, so a host can recolour it. Defaults are the old values.
+ *   The shadow hook is appended to the layer's own shadow (it sits on the fill layer:
+ *   a shadow on the root would be covered by it). `variants.ts` mirrors it on the root.
  */
 
 import { Button as ButtonPrimitive } from '@base-ui/react/button'
@@ -94,10 +100,12 @@ interface ButtonProps
    Pressing collapses the spread, shrinking the surface by exactly 1px per
    side at any width — a scale would warp (2% of a 400px button is 8px
    sideways but under 1px vertically). Fill colors are opaque color-mix()es
-   rather than alpha so the fill and its spread ring never seam. */
+   rather than alpha so the fill and its spread ring never seam. The primary
+   fill reads the `--primary*` hooks; `--shadow-button-primary` joins the
+   layer's shadow list after the ring, at rest and pressed. */
 const bgVariants: Record<string, string> = {
   primary:
-    '[--btn-bg:var(--foreground)] group-hover:[--btn-bg:color-mix(in_oklab,var(--foreground)_90%,var(--background))] group-active:[--btn-bg:color-mix(in_oklab,var(--foreground)_80%,var(--background))] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+    '[--btn-bg:var(--primary)] group-hover:[--btn-bg:var(--primary-hover)] group-active:[--btn-bg:var(--primary-active)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg),var(--shadow-button-primary)] group-active:shadow-[0_0_0_0px_var(--btn-bg),var(--shadow-button-primary)]',
   secondary:
     '[--btn-bg:var(--accent)] group-hover:[--btn-bg:color-mix(in_oklab,var(--accent)_80%,var(--background))] group-active:[--btn-bg:var(--accent)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   // The border ring is an outer 1px shadow at rest that hands off to an
@@ -124,7 +132,7 @@ const bgVariants: Record<string, string> = {
    geometric press-collapse still reacts on top. */
 const activeBgVariants: Record<string, string> = {
   primary:
-    '[--btn-bg:color-mix(in_oklab,var(--foreground)_80%,var(--background))] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+    '[--btn-bg:var(--primary-active)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg),var(--shadow-button-primary)] group-active:shadow-[0_0_0_0px_var(--btn-bg),var(--shadow-button-primary)]',
   secondary:
     '[--btn-bg:var(--accent)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   tertiary:

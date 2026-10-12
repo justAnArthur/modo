@@ -7,7 +7,9 @@
  * - The class recipe (`buttonVariants`) and the size aliases, split out of
  *   `index.tsx` so server code can call them: no JSX, hooks or contexts here.
  *   `index.tsx` re-exports them.
- * - Styling reads DS tokens (see `index.tsx`).
+ * - Styling reads DS tokens (see `index.tsx`). The `primary` variant reads the theme hooks
+ *   `--primary*` and `--shadow-button-primary` (`tokens/colors.css`), also on the `surface`
+ *   root (the shadow rides `shadow-[…]`, so it composes with the focus ring).
  * - Variants `outline` (an alias of `tertiary`), `destructive`, `success` and
  *   `link`, and the `xs` size alias (→ `compact`), for hosts with a
  *   shadcn-style API; see `index.tsx` for the look.
@@ -34,7 +36,7 @@ const SURFACED: SurfacedVariant[] = ['primary', 'secondary', 'tertiary', 'outlin
    (`index.tsx` bgVariants); plain `hover:` / `active:` instead of `group-*`. */
 const surfaceVariants: Record<SurfacedVariant, string> = {
   primary:
-    '[--btn-bg:var(--foreground)] hover:[--btn-bg:color-mix(in_oklab,var(--foreground)_90%,var(--background))] active:[--btn-bg:color-mix(in_oklab,var(--foreground)_80%,var(--background))] bg-[var(--btn-bg)]',
+    '[--btn-bg:var(--primary)] hover:[--btn-bg:var(--primary-hover)] active:[--btn-bg:var(--primary-active)] bg-[var(--btn-bg)] shadow-[var(--shadow-button-primary)]',
   secondary:
     '[--btn-bg:var(--accent)] hover:[--btn-bg:color-mix(in_oklab,var(--accent)_80%,var(--background))] active:[--btn-bg:var(--accent)] bg-[var(--btn-bg)]',
   tertiary: 'shadow-[inset_0_0_0_1px_var(--border)] hover:bg-hover active:bg-active',
@@ -54,7 +56,7 @@ const buttonRecipe = cva(
   {
     variants: {
       variant: {
-        primary: 'text-background',
+        primary: 'text-primary-foreground',
         secondary: 'text-foreground',
         tertiary: 'text-foreground',
         outline: 'text-foreground',

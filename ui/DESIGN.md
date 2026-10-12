@@ -349,12 +349,12 @@ fun; the only overshoot in the system is the slow tier's 0.12 and the goo's 0.15
 Two text colors, a greyscale ground, one blue.
 
 - **Foreground (`text-foreground`)** — near-black ink in light, near-white in dark. Headings, labels,
-  values, selected items, the primary button's fill.
+  values, selected items, the primary button's fill (until `--primary` is re-pointed).
 - **Muted foreground (`text-muted-foreground`)** — the only secondary text color: descriptions, captions,
   placeholders, idle icons, idle tab labels. Never an opacity step of foreground (`text-foreground/60`
   is wrong); a third text tone does not exist.
 - **Background (`bg-background`)** — the page, equal to surface 1. Also the text color on the primary
-  button and the tooltip (`text-background`).
+  button (until `--primary-foreground` is re-pointed) and the tooltip (`text-background`).
 - **Surfaces (`bg-surface-1` … `bg-surface-8`)** — the elevation ladder (see Elevation & Depth). Prefer a
   surface level over `card`/`background` for anything that floats or nests.
 - **Muted (`bg-muted`)** — a recessed track: the segmented tabs' well, a sunken field at rest.
@@ -367,6 +367,15 @@ Two text colors, a greyscale ground, one blue.
   forced scopes. Hairlines only, 1px.
 - **Brand (`bg-brand`, `ring-focus-ring`)** — `focus-ring` is `brand`: every keyboard ring is a 1px blue
   ring 2px outside the element. The single theming point for focus.
+- **Primary (`bg-primary`, `text-primary-foreground`)** — the primary Button's theme hooks, so a host can
+  recolour it without forking the component: `--primary` (the fill, default `foreground`), `--primary-hover`
+  and `--primary-active` (default: `--primary` mixed 10% / 20% toward `background`), `--primary-foreground`
+  (the label, default `background`) and `--shadow-button-primary` (an extra shadow list drawn on the fill
+  layer, after its press ring: a lit edge, an outline, a drop; default the invisible `0 0 #0000`). All
+  five default to the ink look, so nothing moves until one is overridden. Re-point them on
+  `:root, .light, .dark` (zero-specificity defaults, so any stylesheet order wins), and set the hover and
+  active steps with the fill, since their defaults mix from the `--primary` they are declared with.
+  Other ink fills (checkbox, switch, progress, …) still read `foreground`.
 - **Destructive (`text-destructive`, `bg-destructive-light`)** — errors and destructive confirms only.
 - **Tinted actions (`text-destructive-strong` on `bg-destructive-wash`, `text-success-strong` on
   `bg-success-wash`)** — the destructive and success buttons: the hue as text, dark enough for AA on its
@@ -537,7 +546,7 @@ The signature behaviors:
 Each item lives at `<tier>/[<group>/]<name>/index.tsx` and composes from Base UI (behavior) plus the
 shared systems above (look and motion). Ready-made patterns to reach for before writing anything:
 
-- **Buttons** — `primary` (ink fill), `secondary` (accent fill), `tertiary` (transparent, a 1px
+- **Buttons** — `primary` (ink fill by default, the `--primary` theme hooks), `secondary` (accent fill), `tertiary` (transparent, a 1px
   `border` ring that moves inward on press), `ghost` (transparent, muted text that turns foreground over
   the hover overlay). A component token with no `backgroundColor` is transparent over its substrate.
   Sizes `default` 36 / `compact` 28 / `icon` / `icon-compact`. Icons sit 4px closer to their edge than

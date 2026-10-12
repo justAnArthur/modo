@@ -50,6 +50,8 @@ export const theme = {
       foreground: 'var(--accent-foreground)',
       hover: 'var(--accent-hover)',
     },
+    // The primary Button's fill and label: the ink by default, a host's brand when re-pointed.
+    primary: { DEFAULT: 'var(--primary)', foreground: 'var(--primary-foreground)' },
     brand: { DEFAULT: 'var(--brand)', hover: 'var(--brand-hover)' },
     'focus-ring': 'var(--focus-ring)',
     // The tint-direction triplet as a color, so `bg-overlay/8` is the
