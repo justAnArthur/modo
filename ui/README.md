@@ -158,7 +158,8 @@ positioning) are ported.
 | `lib/springs.ts` | `lib/springs.ts` | `goo` tier added (the morph engine's goo: 250ms to land, bounce 0.15, a 200ms spring back); `exitFallbackMs` also reads a spring exit's `visualDuration` |
 | `lib/font-weight.ts` | — | not ported: its `fontWeights` became the `--weight-*` tokens in `tokens/typography.css` (the `weight-*` utilities) |
 | `lib/popup.ts` | `lib/popup.ts` | `popupMotionClass` dropped (unused since the popups morph) |
-| `lib/shape-context.tsx` | `lib/shape-context.tsx` | `"use client"` dropped |
+| `lib/shape-context.tsx` | `lib/shape-context.tsx` | `"use client"` dropped; `--shape-input-radius` is published through `claimShapeRadius` and given back on unmount |
+| — (new) | `lib/shape-radius.ts` | Local addition: the stack of `ShapeProvider` claims on `--shape-input-radius` (`<html>`), so an unmounting provider restores the one below it or the page's own value; plain data, tested without a DOM |
 | `lib/size-context.tsx` | `lib/size-context.tsx` | `"use client"` dropped; `SizeProvider` moved to `primitives/sizes` (the documented item), with `SizeContext` exported for it; `sizeMap`, `typeScale` and their types moved to `size-scale.ts` and re-exported |
 | `lib/size-context.tsx` (`sizeMap`, `typeScale`) | `lib/size-scale.ts` | The ladder's plain data, split out so server code can read it (no JSX, hooks or contexts); `sizeMap` text classes → `text-body` / `text-body-compact` |
 | `lib/icon-context.tsx` | `lib/icon-context.tsx` | `"use client"` dropped; `size`/`strokeWidth` widened to `number \| string` for lucide v1 + React 18 types |

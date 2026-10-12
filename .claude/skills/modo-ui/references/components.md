@@ -116,7 +116,7 @@ controlled + uncontrolled.
 
 | Item | Statics | Systems | Notes |
 |---|---|---|---|
-| `Tabs` | `.List .Item .Panel` | L S H G W | Segmented well (`bg-muted`), +3 elevated indicator, hover pill that drips back into it; node labels, `href` link tabs. |
+| `Tabs` | `.List .Item .Panel` | L S H G W | Segmented well (`bg-well`), +3 elevated indicator, hover pill that drips back into it; node labels, `href` link tabs. |
 | `TabsSubtle` | `.Item .Panel` | L H G W C | Pill tabs; panels may sit inside the root. |
 | `Accordion` | `.Group .Item .Trigger .Content` | L H M W C | Panel morphs out of its row; `highlight` `item` \| `trigger`; `Trigger` `icon` (replace or `false`) and `weightShift={false}` (rich headers, label rendered once); `Content` `contentClassName`; `Trigger` takes `render` / `asChild`: the element is the whole trigger, with no chevron or label copy; its `id` is the one registered. |
 | `Sidebar` | `.Provider .Trigger .Rail .Inset .Input .Header .Content .Footer .Separator .Group .GroupLabel .GroupAction .GroupActions .GroupContent .Menu .MenuItem .MenuButton .MenuAction .MenuActions .MenuBadge .MenuSkeleton .MenuSub .MenuSubItem .MenuSubButton` | L S H G C | Liquid active rows and hover; `openOnHover`; collapsible rows; mobile `Sheet`. |
@@ -156,6 +156,7 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 | `size-scale.ts` | `sizeMap`, `typeScale`, `SizeVariant`, `SizeClasses` | The ladder's plain data, for server code (re-exported by `size-context.tsx`). |
 | `field-classes.ts`, `field-variants.ts` | `useFieldBox`, `focusControlOnPress`, `FieldStateContext`, `useFieldState`; `fieldVariants`, `fieldIconClasses`, `fieldAdornmentClasses`, `FIELD_ACTION*`, `FIELD_PX` | The field ladder: a text control's box, state, adornments and actions (the tables are server-callable). |
 | `shape-context.tsx` | `useShape`, `ShapeProvider`, `shapeMap` | Radii (rounded / pill). |
+| `shape-radius.ts` | `claimShapeRadius` | The claim a `ShapeProvider` holds on `--shape-input-radius` (released on unmount). |
 | `surface-context.tsx`, `surface-classes.ts` | `useSurface`, `SurfaceProvider`; `SURFACE_BG`, `SURFACE_SHADOW`, `surfaceClasses` | Elevation. |
 | `use-fluid-hover.ts`, `fluid-hover-highlight.tsx` | `useFluidHover`, `useRegisterFluidHoverItem`, `pickNearest`, `ItemRect`; `FluidHoverHighlight` | One highlight per list. |
 | `goo-indicator.tsx` | `GooIndicator`, `GooLayer`, `union` | Anything that travels between items. |

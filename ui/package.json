@@ -160,6 +160,11 @@
       "source": "./lib/shape-context.tsx",
       "default": "./dist/lib/shape-context.js"
     },
+    "./lib/shape-radius": {
+      "types": "./dist/lib/shape-radius.d.ts",
+      "source": "./lib/shape-radius.ts",
+      "default": "./dist/lib/shape-radius.js"
+    },
     "./lib/size-context": {
       "types": "./dist/lib/size-context.d.ts",
       "source": "./lib/size-context.tsx",
