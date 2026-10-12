@@ -1,6 +1,7 @@
 import Combobox from './index'
 import RemoteDemo from './remote-demo'
 import Badge from '../../badge'
+import Field from '../field'
 import { Clock, Globe, Lock, Mail, Search, Star, Users } from 'lucide-react'
 
 # Basic
@@ -206,9 +207,91 @@ fades the whole thing and stops the popup opening.
   </Combobox>
 </div>
 
+# In a Field
+
+A Combobox inside a Field takes its invalid state, like Input does: the box turns destructive and the field sets `aria-invalid`. `invalid` does the same without a Field.
+
+<div className="flex flex-wrap items-start gap-3">
+  <Field invalid className="w-72 max-w-full">
+    <Field.Label>Framework</Field.Label>
+    <Combobox items={['Next.js', 'Nuxt', 'Astro']}>
+      <Combobox.Input placeholder="Select a framework…" />
+      <Combobox.Content>
+        <Combobox.Empty>No framework found.</Combobox.Empty>
+        <Combobox.List>
+          {(item) => (
+            <Combobox.Item key={item} value={item}>
+              {item}
+            </Combobox.Item>
+          )}
+        </Combobox.List>
+      </Combobox.Content>
+    </Combobox>
+    <Field.Error>Pick a framework to continue.</Field.Error>
+  </Field>
+  <Combobox items={['Next.js', 'Nuxt', 'Astro']}>
+    <Combobox.Input invalid aria-label="Framework, invalid" placeholder="Invalid, no message" />
+    <Combobox.Content>
+      <Combobox.Empty>No framework found.</Combobox.Empty>
+      <Combobox.List>
+        {(item) => (
+          <Combobox.Item key={item} value={item}>
+            {item}
+          </Combobox.Item>
+        )}
+      </Combobox.List>
+    </Combobox.Content>
+  </Combobox>
+</div>
+
+# Hidden trigger
+
+`hideTrigger` drops the chevron button, for a field that opens by typing or the arrow keys. It leaves the clear ✕ alone.
+
+<div className="w-72 max-w-full">
+  <Combobox items={['Next.js', 'Nuxt', 'Astro']}>
+    <Combobox.Input hideTrigger clearable aria-label="Framework" placeholder="Type to search…" />
+    <Combobox.Content>
+      <Combobox.Empty>No framework found.</Combobox.Empty>
+      <Combobox.List>
+        {(item) => (
+          <Combobox.Item key={item} value={item}>
+            {item}
+          </Combobox.Item>
+        )}
+      </Combobox.List>
+    </Combobox.Content>
+  </Combobox>
+</div>
+
+# Translated labels
+
+`labels` on the root holds the words the buttons announce: `open`, `clear`, `remove` (a function of the chip's text) and the default `placeholder`. Here in Slovak, for a screen reader.
+
+<div className="w-80 max-w-full">
+  <Combobox
+    multiple
+    defaultValue={['Bratislava']}
+    labels={{ open: 'Otvoriť', clear: 'Vymazať', remove: (label) => `Odstrániť ${label}`, placeholder: 'Hľadať…' }}
+    items={['Bratislava', 'Košice', 'Žilina', 'Nitra']}
+  >
+    <Combobox.Chips clearable aria-label="Mesto" />
+    <Combobox.Content>
+      <Combobox.Empty>Nič sa nenašlo.</Combobox.Empty>
+      <Combobox.List>
+        {(item) => (
+          <Combobox.Item key={item} value={item}>
+            {item}
+          </Combobox.Item>
+        )}
+      </Combobox.List>
+    </Combobox.Content>
+  </Combobox>
+</div>
+
 # Remote items
 
-For items that come from a server: own the query with `inputValue` and `onInputValueChange`, pass `filter={null}` so the list shows exactly what you hand it, and set `loading` while a page is on its way. The chevron blurs into a spinner and a status row sits under the list; `footer` on `Combobox.Content` pins a "Load more" under it.
+For items that come from a server: own the query with `inputValue` and `onInputValueChange`, pass `filter={null}` so the list shows exactly what you hand it, and set `loading` while a page is on its way. The chevron blurs into a spinner and a status row sits under the list; `footer` on `Combobox.Content` pins a "Load more" under it. `onInputValueChange` also gets Base UI's change details: `reason` is `"input-change"` for typing and `"item-press"` when a pick rewrites the field, so a pick doesn't have to start another search.
 
 <RemoteDemo />
 
