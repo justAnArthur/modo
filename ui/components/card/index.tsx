@@ -26,6 +26,9 @@
  * - `Card.Divider` / `CardDivider` (local): a hairline across the card between
  *   its parts (full-bleed, spaced like the parts), vertical in an inline card;
  *   the Separator primitive in the card's divider tone.
+ * - `CardTitle` takes `as` (a heading level or another tag; a `span` by default)
+ *   and `CardContent` takes `bodyText` (the ladder's body size instead of the
+ *   inherited one), both local and opt-in.
  */
 
 import {
@@ -38,6 +41,7 @@ import {
   isValidElement,
   type ReactElement,
   type ReactNode,
+  type Ref,
   type RefAttributes,
   useContext,
   useMemo,
@@ -290,7 +294,8 @@ type CardComponent = ForwardRefExoticComponent<CardProps & RefAttributes<HTMLDiv
  * Statics: Card.Group (orientation "card" | "inline", columns, border "none"
  * | "outlined", separated, fluidHover), Card.Header (title + description
  * grid, pins Card.Action top-right), Card.Title (weight-animates when the card
- * is selected), Card.Description, Card.Action, Card.Content, Card.Footer (the
+ * is selected; `as` renders it as a heading level), Card.Description,
+ * Card.Action, Card.Content (`bodyText` sets the body size), Card.Footer (the
  * actions row; it wraps), Card.Divider (a hairline across the card between
  * its parts, vertical in an inline card), Card.Media (an icon tile, a logo or a [logoA, logoB] pair),
  * Card.Image (full-bleed banner, or a leading image when inline),
@@ -580,8 +585,15 @@ CardHeader.displayName = 'CardHeader'
 
 // ── CardTitle ────────────────────────────────────────────
 
-const CardTitle = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>(
-  ({ className, children, ...props }, ref) => {
+type CardTitleTag = 'span' | 'div' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+
+interface CardTitleProps extends HTMLAttributes<HTMLSpanElement> {
+  /** The element the title renders as: a heading level (`'h2'`, `'h3'`, …) for a page outline, or another tag. The title keeps its look whatever the tag. Defaults to `'span'`. */
+  as?: CardTitleTag
+}
+
+const CardTitle = forwardRef<HTMLSpanElement, CardTitleProps>(
+  ({ as: Tag = 'span', className, children, ...props }, ref) => {
     const { emphasized, orientation } = useContext(CardContext)
     const sizeClasses = useSize()
     const compact = sizeClasses.variant === 'compact'
@@ -599,11 +611,12 @@ const CardTitle = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>(
     // width so the ellipsis falls inside the visible box. All of it is inert
     // while titles wrap normally.
     return (
-      <span
-        ref={ref}
+      <Tag
+        ref={ref as Ref<HTMLHeadingElement>}
         data-slot="card-title"
         className={cn(
           'inline-grid grid-cols-[minmax(0,1fr)] leading-snug',
+          Tag !== 'span' && 'm-0',
           compact ? 'text-subtitle-compact' : 'text-subtitle',
           className,
         )}
@@ -630,7 +643,7 @@ const CardTitle = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>(
         >
           {children}
         </span>
-      </span>
+      </Tag>
     )
   },
 )
@@ -677,7 +690,12 @@ CardAction.displayName = 'CardAction'
 
 // ── CardContent ──────────────────────────────────────────
 
-const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => {
+interface CardContentProps extends HTMLAttributes<HTMLDivElement> {
+  /** Sets the size ladder's body text (`text-body`, one step down in a compact region) on the content, so plain text there no longer takes the size of whatever surrounds the card. Off, the content inherits it, as before. Defaults to `false`. */
+  bodyText?: boolean
+}
+
+const CardContent = forwardRef<HTMLDivElement, CardContentProps>(({ bodyText = false, className, ...props }, ref) => {
   const { orientation } = useContext(CardContext)
   const sizeClasses = useSize()
   const compact = sizeClasses.variant === 'compact'
@@ -685,7 +703,11 @@ const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>((
     <div
       ref={ref}
       data-slot="card-content"
-      className={cn(orientation === 'inline' ? '' : compact ? 'px-3 pt-2.5' : 'px-4 pt-3', className)}
+      className={cn(
+        orientation === 'inline' ? '' : compact ? 'px-3 pt-2.5' : 'px-4 pt-3',
+        bodyText && sizeClasses.text,
+        className,
+      )}
       {...props}
     />
   )
@@ -1017,7 +1039,17 @@ Object.assign(Card, {
   Button: CardButton,
 })
 
-export type { CardBorder, CardButtonProps, CardButtonVariant, CardGroupProps, CardLogo, CardProps }
+export type {
+  CardBorder,
+  CardButtonProps,
+  CardButtonVariant,
+  CardContentProps,
+  CardGroupProps,
+  CardLogo,
+  CardProps,
+  CardTitleProps,
+  CardTitleTag,
+}
 export {
   Card,
   CardAction,

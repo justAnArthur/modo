@@ -45,11 +45,16 @@ const before = (a: Slot, b: Slot) =>
 
 function number(slots: Map<string, Slot>) {
   let next = 0
-  for (const slot of slots.values()) if (slot.explicit !== undefined) next = Math.max(next, slot.explicit + 1)
+  const loose: [string, Slot][] = []
+  for (const entry of slots) {
+    const { explicit } = entry[1]
+    if (explicit === undefined) loose.push(entry)
+    else next = Math.max(next, explicit + 1)
+  }
   const order = new Map<string, number>()
   let first: number | undefined
-  for (const [id, slot] of [...slots].sort(([, a], [, b]) => before(a, b))) {
-    if (slot.explicit !== undefined) continue
+  // Only the rows without an `index` need the DOM to find their place.
+  for (const [id, slot] of loose.sort(([, a], [, b]) => before(a, b))) {
     if (!slot.gap) first ??= next
     order.set(id, next++)
   }
@@ -70,21 +75,27 @@ function same({ order: a, first: firstA }: Numbering, { order: b, first: firstB 
 /** A panel's numbering. Provide the result through `RowOrderContext`. */
 function useRowOrder(): RowOrder {
   const slots = useRef(new Map<string, Slot>())
+  // Slots without an `index`: while there are none, the numbering is empty and an indexed row changes nothing.
+  const loose = useRef(0)
   const [numbering, setNumbering] = useState<Numbering>({ order: EMPTY })
   const [, changed] = useReducer((n: number) => n + 1, 0)
 
   const register = useCallback((id: string, slot: Slot) => {
+    const own = slot.explicit === undefined
     slots.current.set(id, slot)
-    changed()
+    if (own) loose.current++
+    if (own || loose.current > 0) changed()
     return () => {
       slots.current.delete(id)
-      changed()
+      if (own) loose.current--
+      if (own || loose.current > 0) changed()
     }
   }, [])
 
   // Every render: a re-ordered list moves no row in or out, so only the DOM
   // knows. Rows register in their own layout effects, which run first.
   useLayoutEffect(() => {
+    if (loose.current === 0 && numbering.order.size === 0) return
     const next = number(slots.current)
     setNumbering(prev => (same(prev, next) ? prev : next))
   })

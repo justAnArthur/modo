@@ -1,4 +1,5 @@
 import Accordion from './index'
+import { ArrowRight } from 'lucide-react'
 
 # Standalone
 
@@ -143,6 +144,60 @@ Each panel drips out of the row where it was pressed (its middle, from the keybo
     <Accordion.Trigger>Moderate tier</Accordion.Trigger>
     <Accordion.Content tier="moderate">
       The goo again, on the moderate spring.
+    </Accordion.Content>
+  </Accordion.Item>
+</Accordion.Group>
+
+# Without the chevron
+
+`icon={false}` drops the glyph at the row's end, for a row whose own content says it opens. A component passed as `icon` replaces the chevron and turns a quarter turn on open, so give it a right-pointing glyph.
+
+<Accordion.Group type="single" collapsible defaultValue="plain">
+  <Accordion.Item value="plain" index={0}>
+    <Accordion.Trigger icon={false}>No chevron</Accordion.Trigger>
+    <Accordion.Content>
+      The label takes the whole row; hover and the open tint still say what it does.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="default" index={1}>
+    <Accordion.Trigger>Default chevron</Accordion.Trigger>
+    <Accordion.Content>
+      The same row with the icon context's chevron.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="custom" index={2}>
+    <Accordion.Trigger icon={ArrowRight}>Custom glyph</Accordion.Trigger>
+    <Accordion.Content>
+      An arrow that points down once the item is open.
+    </Accordion.Content>
+  </Accordion.Item>
+</Accordion.Group>
+
+# Rich headers
+
+By default the trigger renders its label twice: a hidden semibold copy reserves the width, so the label gets heavier on open without moving. A header made of components would be duplicated in the DOM, so `weightShift={false}` renders it once and leaves the weight to its content. `contentClassName` is merged over the inner row's inset, padding and muted body text: the first panel below turns its text to full strength, the second takes a wider inset and the caption size. The label lives inside the trigger `<button>`, so build it from phrasing content (spans, as below), never a `div`-based header. Text that fixes its own colour stays that colour when the item opens: the chevron, the highlight and the open tint are what signal the state.
+
+<Accordion.Group type="multiple" defaultValue={['one']}>
+  <Accordion.Item value="one" index={0}>
+    <Accordion.Trigger weightShift={false}>
+      <span className="flex flex-col">
+        <span className="text-subtitle text-foreground">Pro plan</span>
+        <span className="text-caption text-muted-foreground">Billed yearly, cancel any time</span>
+      </span>
+    </Accordion.Trigger>
+    <Accordion.Content contentClassName="text-foreground">
+      Unlimited projects and priority support. The header above is in the DOM once.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="two" index={1}>
+    <Accordion.Trigger weightShift={false} icon={false}>
+      <span className="flex flex-col">
+        <span className="text-subtitle text-foreground">Team plan</span>
+        <span className="text-caption text-muted-foreground">Per seat, no chevron</span>
+      </span>
+    </Accordion.Trigger>
+    <Accordion.Content contentClassName="px-6 text-caption">
+      Shared workspaces and roles.
     </Accordion.Content>
   </Accordion.Item>
 </Accordion.Group>

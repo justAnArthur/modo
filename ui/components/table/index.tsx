@@ -42,6 +42,13 @@
  *     `index` still wins. So a wrapper rendering rows needs no counter.
  *   - Stacked cells align their content to the start (`items-start`), so a
  *     value keeps its own width instead of stretching across the card.
+ *   - A row's weight follows its section (body rows regular, header and footer
+ *     rows semibold), not whether it has an index yet: unindexed rows get theirs
+ *     in the server HTML, so nothing changes weight on hydration.
+ *   - Only header rows give up their border to a lit first row; any other row
+ *     without an index keeps it.
+ *   - Stacked values read in the primary text colour (labels stay muted); the
+ *     tabular layout from `md` up is unchanged.
  */
 
 import { motion } from 'motion/react'
@@ -283,10 +290,11 @@ const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(
 
     const isBodyRow = index !== undefined
     const activeIdx = ctx?.activeIndex ?? null
+    // The header's last border runs along row 0, so it melts into the lit pill; no other unindexed row does.
     const hideBorder =
       activeIdx !== null &&
       ((isBodyRow && (index === activeIdx || index === activeIdx - 1)) ||
-        (!isBodyRow && section !== 'footer' && activeIdx === 0))
+        (!isBodyRow && section === 'header' && activeIdx === 0))
 
     const row = (
       <tr
@@ -300,7 +308,8 @@ const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(
           'group/row relative z-10 border-b transition-[border-color] duration-fast',
           hideBorder ? 'border-transparent' : 'border-accent/40',
           isBodyRow && activeIdx === index && 'is-active',
-          isBodyRow ? 'weight-normal' : 'weight-semibold',
+          // By section: an unindexed body row has no index until the first layout pass, after the server HTML.
+          section === 'body' || isBodyRow ? 'weight-normal' : 'weight-semibold',
           stacked && 'grid grid-cols-2 md:table-row',
           className,
         )}
@@ -447,7 +456,8 @@ const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(({ label, cla
       className={cn(
         'text-muted-foreground transition-colors duration-fast group-[.is-active]/row:text-foreground',
         sizeClasses.variant === 'compact' ? 'px-2.5 py-[5px]' : 'px-3 py-2',
-        stacked && 'flex flex-col items-start md:table-cell',
+        // Stacked, the label is the muted line and the value leads; from md the row is tabular again.
+        stacked && 'flex flex-col items-start text-foreground md:table-cell md:text-muted-foreground',
         className,
       )}
       {...props}

@@ -65,7 +65,7 @@ import {
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
-import { useIcon } from '../../lib/icon-context'
+import { type IconComponent, useIcon } from '../../lib/icon-context'
 import { GooFilter } from '../../lib/morph-layers'
 import { useReduceMotion } from '../../lib/reduced-motion'
 import { useShape } from '../../lib/shape-context'
@@ -514,9 +514,11 @@ type AccordionComponent = ForwardRefExoticComponent<AccordionProps & RefAttribut
  *
  * Statics: Accordion.Group (the grouped root: type, collapsible,
  * defaultValue, value, onValueChange, highlight, size), Accordion.Item (value,
- * index, disabled), Accordion.Trigger (the row that toggles its item) and
- * Accordion.Content (the collapsible panel: `effect` — `'goo'` or a plain
- * `'morph'` — and the spring `tier`, `'slow'` or `'moderate'`).
+ * index, disabled), Accordion.Trigger (the row that toggles its item: `icon`
+ * swaps or hides the chevron, `weightShift={false}` renders a rich label once)
+ * and Accordion.Content (the collapsible panel: `effect` — `'goo'` or a plain
+ * `'morph'` — the spring `tier`, `'slow'` or `'moderate'`, and
+ * `contentClassName` for the inner row).
  *
  * @example {@include ./examples.mdx}
  */
@@ -669,11 +671,16 @@ AccordionItem.displayName = 'AccordionItem'
 interface AccordionTriggerProps extends HTMLAttributes<HTMLButtonElement> {
   /** Trigger label content. */
   children: ReactNode
+  /** The glyph at the row's end, which turns a quarter turn when the item opens (so give it a right-pointing one), or `false` for none. Defaults to the icon context's `chevron-right`. */
+  icon?: IconComponent | false
+  /** Whether the label gets heavier while the item is open. On, the label renders twice in one grid cell (a hidden semibold copy reserves its width, so nothing reflows); off, it renders once and keeps whatever weight its content has, which suits rich content such as a whole `Card.Header` that would otherwise be duplicated in the DOM. The label sits inside the trigger `<button>`, so give it phrasing content (spans), not block elements such as a `div`-based header. Rich content that sets its own text colour does not change on open: only the chevron, the highlight and the open tint signal the state. Defaults to `true`. */
+  weightShift?: boolean
 }
 
 const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
-  ({ children, className, ...props }, ref) => {
+  ({ children, className, icon, weightShift = true, ...props }, ref) => {
     const ChevronRight = useIcon('chevron-right')
+    const Glyph = icon === false ? null : (icon ?? ChevronRight)
     const groupCtx = useAccordionGroup()
     const { index, isOpen, triggerRef, highlight, press } = useAccordionItemContext()
     const shape = useShape()
@@ -704,36 +711,50 @@ const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
           {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
         >
           {/* Label with dual-layer text */}
-          <span className={cn('inline-grid flex-1 text-left', sizeClasses.text)}>
-            <span className="col-start-1 row-start-1 invisible weight-semibold" aria-hidden="true">
-              {children}
+          {weightShift ? (
+            <span className={cn('inline-grid flex-1 text-left', sizeClasses.text)}>
+              <span className="col-start-1 row-start-1 invisible weight-semibold" aria-hidden="true">
+                {children}
+              </span>
+              <span
+                className={cn(
+                  'col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast',
+                  isOpen || isActive ? 'text-foreground' : 'text-muted-foreground',
+                  isOpen ? 'weight-semibold' : 'weight-normal',
+                )}
+              >
+                {children}
+              </span>
             </span>
+          ) : (
             <span
               className={cn(
-                'col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast',
+                'block min-w-0 flex-1 text-left transition-[color] duration-fast',
+                sizeClasses.text,
                 isOpen || isActive ? 'text-foreground' : 'text-muted-foreground',
-                isOpen ? 'weight-semibold' : 'weight-normal',
               )}
             >
               {children}
             </span>
-          </span>
+          )}
 
           {/* Chevron */}
-          <motion.span
-            className="shrink-0 inline-flex items-center justify-center"
-            animate={{ rotate: isOpen ? 90 : 0 }}
-            transition={spring.fast}
-          >
-            <ChevronRight
-              size={sizeClasses.icon}
-              strokeWidth={isOpen || isActive ? 2 : 1.5}
-              className={cn(
-                'transition-[color,stroke-width] duration-fast',
-                isOpen || isActive ? 'text-foreground' : 'text-muted-foreground',
-              )}
-            />
-          </motion.span>
+          {Glyph && (
+            <motion.span
+              className="shrink-0 inline-flex items-center justify-center"
+              animate={{ rotate: isOpen ? 90 : 0 }}
+              transition={spring.fast}
+            >
+              <Glyph
+                size={sizeClasses.icon}
+                strokeWidth={isOpen || isActive ? 2 : 1.5}
+                className={cn(
+                  'transition-[color,stroke-width] duration-fast',
+                  isOpen || isActive ? 'text-foreground' : 'text-muted-foreground',
+                )}
+              />
+            </motion.span>
+          )}
         </AccordionPrimitive.Trigger>
       </AccordionPrimitive.Header>
     )
@@ -798,6 +819,8 @@ interface AccordionContentProps extends HTMLAttributes<HTMLDivElement> {
   effect?: 'goo' | 'morph'
   /** Spring tier the panel opens on; it closes on the tier's faster exit tween. Defaults to `'slow'`. */
   tier?: 'moderate' | 'slow'
+  /** Classes for the inner row that holds the children, merged over its defaults (the row inset, the top and bottom padding, the muted body text), so `px-0 text-foreground` takes the content flush and full-strength. */
+  contentClassName?: string
 }
 
 interface Rect {
@@ -828,7 +851,7 @@ function place(el: HTMLElement | null, { x, y, w, h, r }: Rect) {
 }
 
 const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps>(
-  ({ children, className, effect = 'goo', tier = 'slow', ...props }, ref) => {
+  ({ children, className, effect = 'goo', tier = 'slow', contentClassName, ...props }, ref) => {
     const groupCtx = useAccordionGroup()
     const { isOpen, highlight, press } = useAccordionItemContext()
     const shape = useShape()
@@ -1008,6 +1031,7 @@ const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps>(
                     sizeClasses.px,
                     sizeClasses.text,
                     sizeClasses.variant === 'compact' ? 'pb-2.5' : 'pb-3',
+                    contentClassName,
                   )}
                 >
                   {children}
