@@ -5,7 +5,8 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 
 // After `bun run build`: every React context must exist once in dist/, so an
-// item and a host importing `@justanarthur/modo-ui/lib/*` share it.
+// item and a host importing `@justanarthur/modo-ui/lib/*` share it, and every
+// token file must ship per group.
 
 const ROOT = join(import.meta.dirname, '..')
 const read = (file: string) => readFileSync(join(ROOT, file), 'utf8')
@@ -75,12 +76,22 @@ const { toast: barrelToast } = await import(BARREL)
 const { toast: entryToast } = await import(TOAST)
 if (barrelToast !== entryToast) failures.push('toast differs between the barrel and ./components/overlays/toast')
 
+// Every tokens/<group>.css ships unchanged as dist/tokens/<group>.css (`./tokens/*`):
+// a host's modo viewer reads them one by one to group its foundations pages.
+const tokenFiles = globSync('tokens/*.css', { cwd: ROOT }).sort()
+for (const file of tokenFiles) {
+  const shipped = join('dist', file)
+  if (!existsSync(join(ROOT, shipped))) failures.push(`${shipped} is missing (tokens/*.css must ship per group)`)
+  else if (read(shipped) !== read(file)) failures.push(`${shipped} differs from ${file}`)
+}
+
 console.log(`${contexts.length} contexts, ${calls} createContext calls in dist, one declaration each`)
 console.log(`${SIZE} -> ${relative(ROOT, fileURLToPath(import.meta.resolve(SIZE)))}`)
 console.log(`${BUTTON} -> ${relative(ROOT, fileURLToPath(import.meta.resolve(BUTTON)))}`)
 console.log(`Button under a compact SizeContext.Provider renders compact: ${shared}`)
 console.log(`toast(): ${managers} manager in dist, barrel === entry: ${barrelToast === entryToast}`)
 console.log(`.d.ts beside every entry: ${untyped.length === 0}`)
+console.log(`dist/tokens/: ${tokenFiles.map(file => file.slice('tokens/'.length)).join(', ')}`)
 console.log(`statics renamed by the .d.ts bundler: ${renamed.length}`)
 
 if (failures.length) {

@@ -1,5 +1,5 @@
-import { globSync, readFileSync, writeFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { globSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { basename, join } from 'node:path'
 import { createGenerator } from 'unocss'
 import { COMPONENT_DIRS, theme, utilities } from '../preset'
 import config from '../uno.config'
@@ -9,6 +9,8 @@ import config from '../uno.config'
 // - base.css (plus tailwind.css or the UnoCSS preset): tokens and base styles
 //   only, so the host's own Tailwind or UnoCSS generates the utilities from
 //   the scanned dist/*.js, once, beside its own.
+// Besides those, tokens.css (every token file concatenated) and tokens/<group>.css
+// (each file on its own, unchanged).
 
 type Tree = string | { [key: string]: Tree }
 
@@ -75,3 +77,8 @@ write('tokens.css', tokens)
 write('base.css', head + base)
 write('styles.css', `${head}${generated}\n${base}`)
 write('tailwind.css', tailwind)
+
+// tokens/<group>.css as shipped files (`./tokens/*`): a host's modo viewer reads
+// them one by one and groups the variables by file name, so each lands unchanged.
+mkdirSync(join(DIST, 'tokens'), { recursive: true })
+for (const file of glob('tokens/*.css')) write(`tokens/${basename(file)}`, read(file))

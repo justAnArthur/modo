@@ -237,6 +237,7 @@
     "./styles.css": "./dist/styles.css",
     "./base.css": "./dist/base.css",
     "./tokens.css": "./dist/tokens.css",
+    "./tokens/*": "./dist/tokens/*",
     "./tailwind.css": "./dist/tailwind.css",
     "./package.json": "./package.json"
   },
