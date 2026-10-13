@@ -59,6 +59,7 @@ import { NumberField } from '@base-ui/react/number-field'
 import { Popover } from '@base-ui/react/popover'
 import { AnimatePresence, motion } from 'motion/react'
 import {
+  type AriaAttributes,
   type CSSProperties,
   createContext,
   type ForwardRefExoticComponent,
@@ -171,6 +172,16 @@ interface ColorPickerPopoverProps extends ColorPickerProps {
   rootClassName?: string
   /** Custom classes on the trigger button. */
   triggerClassName?: string
+  /** The trigger button's id, which a `<label htmlFor>` targets (a form field's control id). */
+  id?: string
+  /** Names the trigger button. */
+  'aria-label'?: string
+  /** Ids of the elements naming the trigger button. */
+  'aria-labelledby'?: string
+  /** Ids of the elements describing the trigger button (a field's help text and error). */
+  'aria-describedby'?: string
+  /** Marks the trigger button invalid for assistive tech. */
+  'aria-invalid'?: AriaAttributes['aria-invalid']
   /** Controls the popover's open state. When provided, the popover is fully
    *  controlled and ignores trigger clicks. */
   open?: boolean
@@ -1825,6 +1836,11 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
       effect,
       hideSource,
       tier,
+      id,
+      'aria-label': ariaLabel,
+      'aria-labelledby': ariaLabelledBy,
+      'aria-describedby': ariaDescribedBy,
+      'aria-invalid': ariaInvalid,
       ...pickerProps
     },
     ref,
@@ -1886,6 +1902,11 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
       >
         <div ref={ref} className={cn('inline-flex', rootClassName)}>
           <Popover.Trigger
+            id={id}
+            aria-label={ariaLabel}
+            aria-labelledby={ariaLabelledBy}
+            aria-describedby={ariaDescribedBy}
+            aria-invalid={ariaInvalid}
             disabled={disabled}
             tabIndex={readOnly ? -1 : undefined}
             data-readonly={readOnly || undefined}
