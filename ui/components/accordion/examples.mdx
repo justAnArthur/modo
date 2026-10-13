@@ -1,6 +1,10 @@
 import Accordion from './index'
+import Button from '../button'
+import { ArrowRight } from 'lucide-react'
 
-# Standalone
+# Basics
+
+## Standalone
 
 A single collapsible item with its own hover state.
 
@@ -13,7 +17,7 @@ A single collapsible item with its own hover state.
   </Accordion.Item>
 </Accordion>
 
-# Single Expand
+## Single Expand
 
 Multiple items with fluid hover — only one can be expanded at a time.
 
@@ -48,7 +52,7 @@ Multiple items with fluid hover — only one can be expanded at a time.
   </Accordion.Item>
 </Accordion.Group>
 
-# Multi Expand
+## Multi Expand
 
 Multiple items with fluid hover — several can be expanded at once.
 
@@ -73,34 +77,7 @@ Multiple items with fluid hover — several can be expanded at once.
   </Accordion.Item>
 </Accordion.Group>
 
-# Row highlight
-
-With `highlight="trigger"` an expanded item holds no tint — the fill
-scopes to the row and waits for hover. Suits dense panels, where a block
-per open item reads as a second layer.
-
-<Accordion.Group type="single" collapsible defaultValue="item-1" highlight="trigger">
-  <Accordion.Item value="item-1" index={0}>
-    <Accordion.Trigger>Expanded, but not tinted</Accordion.Trigger>
-    <Accordion.Content>
-      The panel reads as part of the page rather than a filled block.
-    </Accordion.Content>
-  </Accordion.Item>
-  <Accordion.Item value="item-2" index={1}>
-    <Accordion.Trigger>Hover any row</Accordion.Trigger>
-    <Accordion.Content>
-      The fill follows your cursor instead of marking a state.
-    </Accordion.Content>
-  </Accordion.Item>
-  <Accordion.Item value="item-3" index={2}>
-    <Accordion.Trigger>Compare with the sections above</Accordion.Trigger>
-    <Accordion.Content>
-      Those hold a block across the row and its panel while open.
-    </Accordion.Content>
-  </Accordion.Item>
-</Accordion.Group>
-
-# Morph
+## Morph
 
 Each panel drips out of the row where it was pressed (its middle, from the keyboard) and widens into the item, its content revealed by the same shape; closing folds it back into the row. The rows below ride its bottom edge.
 
@@ -128,7 +105,36 @@ Each panel drips out of the row where it was pressed (its middle, from the keybo
   </Accordion.Item>
 </Accordion.Group>
 
-# Without the goo
+# Variants
+
+## Row highlight
+
+With `highlight="trigger"` an expanded item holds no tint — the fill
+scopes to the row and waits for hover. Suits dense panels, where a block
+per open item reads as a second layer.
+
+<Accordion.Group type="single" collapsible defaultValue="item-1" highlight="trigger">
+  <Accordion.Item value="item-1" index={0}>
+    <Accordion.Trigger>Expanded, but not tinted</Accordion.Trigger>
+    <Accordion.Content>
+      The panel reads as part of the page rather than a filled block.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="item-2" index={1}>
+    <Accordion.Trigger>Hover any row</Accordion.Trigger>
+    <Accordion.Content>
+      The fill follows your cursor instead of marking a state.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="item-3" index={2}>
+    <Accordion.Trigger>Compare with the sections above</Accordion.Trigger>
+    <Accordion.Content>
+      Those hold a block across the row and its panel while open.
+    </Accordion.Content>
+  </Accordion.Item>
+</Accordion.Group>
+
+## Without the goo
 
 `effect="morph"` grows the same shape with no liquid neck to its row; `tier="moderate"` runs the goo on the quicker, critically damped spring.
 
@@ -143,6 +149,85 @@ Each panel drips out of the row where it was pressed (its middle, from the keybo
     <Accordion.Trigger>Moderate tier</Accordion.Trigger>
     <Accordion.Content tier="moderate">
       The goo again, on the moderate spring.
+    </Accordion.Content>
+  </Accordion.Item>
+</Accordion.Group>
+
+## Without the chevron
+
+`icon={false}` drops the glyph at the row's end, for a row whose own content says it opens. A component passed as `icon` replaces the chevron and turns a quarter turn on open, so give it a right-pointing glyph.
+
+<Accordion.Group type="single" collapsible defaultValue="plain">
+  <Accordion.Item value="plain" index={0}>
+    <Accordion.Trigger icon={false}>No chevron</Accordion.Trigger>
+    <Accordion.Content>
+      The label takes the whole row; hover and the open tint still say what it does.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="default" index={1}>
+    <Accordion.Trigger>Default chevron</Accordion.Trigger>
+    <Accordion.Content>
+      The same row with the icon context's chevron.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="custom" index={2}>
+    <Accordion.Trigger icon={ArrowRight}>Custom glyph</Accordion.Trigger>
+    <Accordion.Content>
+      An arrow that points down once the item is open.
+    </Accordion.Content>
+  </Accordion.Item>
+</Accordion.Group>
+
+# Composition
+
+## Rich headers
+
+By default the trigger renders its label twice: a hidden semibold copy reserves the width, so the label gets heavier on open without moving. A header made of components would be duplicated in the DOM, so `weightShift={false}` renders it once and leaves the weight to its content. `contentClassName` is merged over the inner row's inset, padding and muted body text: the first panel below turns its text to full strength, the second takes a wider inset and the caption size. The label lives inside the trigger `<button>`, so build it from phrasing content (spans, as below), never a `div`-based header. Text that fixes its own colour stays that colour when the item opens: the chevron, the highlight and the open tint are what signal the state.
+
+<Accordion.Group type="multiple" defaultValue={['one']}>
+  <Accordion.Item value="one" index={0}>
+    <Accordion.Trigger weightShift={false}>
+      <span className="flex flex-col">
+        <span className="text-subtitle text-foreground">Pro plan</span>
+        <span className="text-caption text-muted-foreground">Billed yearly, cancel any time</span>
+      </span>
+    </Accordion.Trigger>
+    <Accordion.Content contentClassName="text-foreground">
+      Unlimited projects and priority support. The header above is in the DOM once.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="two" index={1}>
+    <Accordion.Trigger weightShift={false} icon={false}>
+      <span className="flex flex-col">
+        <span className="text-subtitle text-foreground">Team plan</span>
+        <span className="text-caption text-muted-foreground">Per seat, no chevron</span>
+      </span>
+    </Accordion.Trigger>
+    <Accordion.Content contentClassName="px-6 text-caption">
+      Shared workspaces and roles.
+    </Accordion.Content>
+  </Accordion.Item>
+</Accordion.Group>
+
+## Your own trigger
+
+`asChild` (or `render`) makes your element the trigger, so a Button, a link-styled control or anything else can open the item. It is rendered as it is: the row's label copy, the chevron and the row padding are not added, so the element brings its own content and look. Base UI still wires `aria-expanded`, `aria-controls`, `data-panel-open` and the keys onto it, so style the open state with `data-[panel-open]`.
+
+<Accordion.Group type="single" collapsible defaultValue="one">
+  <Accordion.Item value="one" index={0}>
+    <Accordion.Trigger asChild>
+      <Button variant="ghost" className="w-full justify-start">Billing</Button>
+    </Accordion.Trigger>
+    <Accordion.Content>
+      Invoices, payment methods and receipts.
+    </Accordion.Content>
+  </Accordion.Item>
+  <Accordion.Item value="two" index={1}>
+    <Accordion.Trigger render={<Button variant="ghost" className="w-full justify-start" />}>
+      Security
+    </Accordion.Trigger>
+    <Accordion.Content>
+      Passwords, sessions and two-factor.
     </Accordion.Content>
   </Accordion.Item>
 </Accordion.Group>

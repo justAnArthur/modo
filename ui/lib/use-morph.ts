@@ -39,6 +39,8 @@ interface MorphOptions {
    * starts and on every frame.
    */
   instant?: (popup: HTMLElement) => boolean
+  /** Puts focus back on the trigger once a closed popup that held it has gone (see `returnFocus`). Off when the owner places focus itself (Base UI's `finalFocus`). Defaults to `true`. */
+  returnFocus?: boolean
 }
 
 /** What opened the overlay: the pressed trigger and the press point. */
@@ -112,10 +114,20 @@ function roundedRectPath({ x, y, w, h, r }: Rect) {
   )
 }
 
-function radiusOf(el: Element, width: number, height: number) {
-  const value = getComputedStyle(el).borderTopLeftRadius
-  const r = value.endsWith('%') ? (Number.parseFloat(value) / 100) * width : Number.parseFloat(value)
-  return Math.min(r || 0, width / 2, height / 2)
+// The roundest corner: a control joined in a group (a ButtonGroup's Select trigger) squares the corners it
+// shares, and in the middle of a group every one; with none round it is `fallback` (the popup's own radius), so
+// the popup doesn't grow from a square.
+function radiusOf(el: Element, width: number, height: number, fallback = 0) {
+  const style = getComputedStyle(el)
+  const px = (value: string) =>
+    (value.endsWith('%') ? (Number.parseFloat(value) / 100) * width : Number.parseFloat(value)) || 0
+  const r = Math.max(
+    px(style.borderTopLeftRadius),
+    px(style.borderTopRightRadius),
+    px(style.borderBottomRightRadius),
+    px(style.borderBottomLeftRadius),
+  )
+  return Math.min(r || fallback, width / 2, height / 2)
 }
 
 function onScreen(rect: DOMRect) {
@@ -165,7 +177,7 @@ function sourceRect(from: MorphFrom, origin: MorphOrigin, box: DOMRect, target: 
   if (!el) return center
   const rect = el.getBoundingClientRect()
   if (!onScreen(rect)) return center
-  return local(rect.left, rect.top, rect.width, rect.height, radiusOf(el, rect.width, rect.height))
+  return local(rect.left, rect.top, rect.width, rect.height, radiusOf(el, rect.width, rect.height, target.r))
 }
 
 /** A slide from a viewport edge starts fully off screen; from anywhere else, centered on the source. */
@@ -294,7 +306,15 @@ function useMorphOrigin() {
 function useMorph(
   open: boolean,
   origin: RefObject<MorphOrigin>,
-  { from = 'trigger', effect = 'goo', hideSource = false, tier = 'slow', exit, instant }: MorphOptions = {},
+  {
+    from = 'trigger',
+    effect = 'goo',
+    hideSource = false,
+    tier = 'slow',
+    exit,
+    instant,
+    returnFocus: refocus = true,
+  }: MorphOptions = {},
   onExited?: () => void,
 ) {
   const reduced = useReduceMotion()
@@ -378,7 +398,13 @@ function useMorph(
     const { effect, from } = run.current
     const shaped = drawsShape(effect)
     const box = el.getBoundingClientRect()
-    const target = { x: 0, y: 0, w: box.width, h: box.height, r: targetRadius.current }
+    const target = {
+      x: 0,
+      y: 0,
+      w: box.width,
+      h: box.height,
+      r: Math.min(targetRadius.current, box.width / 2, box.height / 2),
+    }
     const source = sourceRect(from, origin.current ?? {}, box, target)
     const blur = effect === 'goo' ? Math.max(GOO_SURFACE_BLUR, target.r * GOO_BLUR_RATIO) : 0
     const layer = layerBox(source, target, blur * 3)
@@ -426,7 +452,9 @@ function useMorph(
     const first = !geometry.current
     if (first && refs.bg.current) {
       const box = popup.getBoundingClientRect()
-      targetRadius.current = radiusOf(refs.bg.current, box.width, box.height)
+      // Not capped by the box yet: a popup can arrive before its layout (0 high, so a 0 radius kept for every
+      // open, which grew as a square and rounded only as it landed). `measure` caps it by the measured box.
+      targetRadius.current = radiusOf(refs.bg.current, box.width || Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY)
     }
 
     let controls: ReturnType<typeof animate> | undefined
@@ -471,7 +499,7 @@ function useMorph(
   }
 
   const closing = (popup: HTMLDivElement) => {
-    returnTo.current = popup.contains(document.activeElement) ? (origin.current?.trigger ?? null) : null
+    returnTo.current = refocus && popup.contains(document.activeElement) ? (origin.current?.trigger ?? null) : null
     if (!geometry.current) {
       exited.current?.()
       return

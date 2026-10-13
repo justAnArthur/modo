@@ -1,15 +1,19 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, statSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, rmdirSync, rmSync, statSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 import mdx from '@mdx-js/esbuild'
-import esbuild, { type BuildOptions, type Message, type Metafile } from 'esbuild'
+import esbuild, { type BuildOptions, type Message, type Metafile, type Plugin } from 'esbuild'
 import remarkGfm from 'remark-gfm'
 import { loadModoConfig } from '../lib/config.loader'
 import { discoverCssForFile } from '../lib/discover-css'
-import { discoverItems } from '../lib/discover-items'
+import { discoverTiers } from '../lib/discover-items'
+import { createDocsService } from '../lib/docs'
+import { isModoPackage, packageDirOf, resolvePackageFile, resolveSourceExport } from '../lib/resolve-source'
+import { itemsRootOf } from '../lib/root'
 import type { SiteConfig } from '../lib/schema'
-import { TIERS, type Tier } from '../lib/tiers'
-import { type ParsedExample, type ParsedItem, parseItemSource } from '../lib/tsdoc'
+import type { Tier } from '../lib/tiers'
+import type { ParsedExample, ParsedItem } from '../lib/tsdoc'
 import { remarkModoExamples } from './mdx-examples'
+import { pageEntries, pagesMdx } from './pages'
 
 // One esbuild build for the whole design system: every item, every shell /
 // panel module and the `examples` scope module are entry points of the same
@@ -79,6 +83,9 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
   let current: Promise<BundleResult> | null = null
   let last: Promise<unknown> = Promise.resolve()
   let lastReport = ''
+  // One TypeScript program per run, kept across runs: a rebuild re-reads only changed files.
+  // Rooted at the project, not the items' folder: tsconfig lookup and the `@example {@include}` boundary.
+  const docs = createDocsService({ root: userRoot })
 
   async function run(): Promise<BundleResult> {
     const errors: string[] = []
@@ -91,47 +98,40 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
       return null
     })
 
+    // The item tiers live under the config's `root`; pages, css, the shell and the
+    // examples scope stay relative to the project root.
+    const itemsRoot = itemsRootOf(userRoot, config)
+    if (config?.root !== undefined && !existsSync(itemsRoot)) {
+      errors.push(`root "${config.root}" not found (resolved from ${userRoot})`)
+    }
+    const { items: discovered, duplicates } = discoverTiers(itemsRoot)
+    // Ids key urls and bundle entries per tier, so a group can't repeat one.
+    for (const { tier, id, dir } of duplicates) {
+      errors.push(`${relative(userRoot, dir)}: another ${tier} item is already named "${id}"; skipped`)
+    }
+    const found = discovered.map(({ tier, id, group, dir }) => ({ tier, id, group, file: resolve(dir, 'index.tsx') }))
+
+    docs.refresh(found.map(f => f.file))
     const parsed: Array<Omit<BundledItem, 'bundlePath'> & { key: string }> = []
-    for (const tier of TIERS) {
-      const tierDir = resolve(userRoot, tier)
-      if (!existsSync(tierDir)) continue
-      const seen = new Set<string>()
-      for (const { id, group, dir: itemDir } of discoverItems(tierDir)) {
-        // Ids key urls and bundle entries per tier, so a group can't repeat one.
-        if (seen.has(id)) {
-          errors.push(`${relative(userRoot, itemDir)}: another ${tier} item is already named "${id}"; skipped`)
-          continue
-        }
-        seen.add(id)
-        const file = resolve(itemDir, 'index.tsx')
-        const p = parseItemSource(readFileSync(file, 'utf8'), {
-          readFile: path => {
-            try {
-              return readFileSync(resolve(itemDir, path), 'utf8')
-            } catch {
-              return null
-            }
-          },
-        })
-        if (p.errors.length > 0) warnings.push(`${tier}/${id}: ${p.errors.join('; ')}`)
-        const exampleDocs = p.exampleDocs.map(path => resolve(itemDir, path))
-        for (const doc of exampleDocs.filter(d => !existsSync(d))) {
-          warnings.push(`${tier}/${id}: @example include not found: ${relative(itemDir, doc)}`)
-        }
-        parsed.push({
-          key: `items/${tier}/${id}`,
-          id,
-          tier,
-          group,
-          name: p.name || id,
-          description: p.description,
-          props: p.props,
-          examples: p.examples,
-          exampleDocs: exampleDocs.filter(d => existsSync(d)),
-          cssFiles: discoverCssForFile(file),
-          file,
-        })
+    for (const { tier, id, group, file } of found) {
+      const p = docs.parse(file)
+      if (p.errors.length > 0) warnings.push(`${tier}/${id}: ${p.errors.join('; ')}`)
+      for (const doc of p.exampleDocs.filter(d => !existsSync(d))) {
+        warnings.push(`${tier}/${id}: @example include not found: ${relative(resolve(file, '..'), doc)}`)
       }
+      parsed.push({
+        key: `items/${tier}/${id}`,
+        id,
+        tier,
+        group,
+        name: p.name || id,
+        description: p.description,
+        props: p.props,
+        examples: p.examples,
+        exampleDocs: [...new Set(p.exampleDocs.filter(d => existsSync(d)))],
+        cssFiles: itemCss(file, p.sources),
+        file,
+      })
     }
 
     const keyByFile = new Map<string, string>()
@@ -148,13 +148,14 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     }
 
     for (const it of parsed) for (const doc of it.exampleDocs) keyFor(doc, `examples/${it.tier}/${it.id}`)
+    pageEntries(userRoot, config, keyFor)
 
     const extraPaths = [
       ...Object.values(config?.shell ?? {}),
       ...(config?.panel?.items ?? []).map(it => it.component),
     ].filter((p): p is string => typeof p === 'string')
-    // `./modo.components.tsx#Select` names an export; several refs into one
-    // file share its entry.
+    // `./modo.components.tsx#Select` names an export (`@scope/ds/docs#DocsNav`
+    // too, a package's); several refs into one file share its entry.
     const extraKeys = new Map<string, { file: string; key: string; exportName: string }>()
     for (const p of new Set(extraPaths)) {
       const [path = p, exportName = 'default'] = p.split('#')
@@ -239,6 +240,35 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
   }
 }
 
+/**
+ * A design system documented with modo that publishes its sources (`source`
+ * export condition) is bundled from them, as its docs are read from them: an
+ * item and the examples.mdx next to its source then share one copy of each
+ * module. Only those packages, and only when the source file ships; every
+ * other import resolves with esbuild's default conditions.
+ */
+function modoSources(): Plugin {
+  return {
+    name: 'modo:sources',
+    setup(build) {
+      const cache = new Map<string, string | null>()
+      build.onStart(() => cache.clear())
+      build.onResolve({ filter: /^[^./]/ }, args => {
+        if (args.kind === 'entry-point') return undefined
+        const key = `${args.resolveDir}\0${args.path}`
+        let path = cache.get(key)
+        if (path === undefined) {
+          const file = resolveSourceExport(args.path, args.resolveDir)
+          const pkg = file ? packageDirOf(file) : null
+          path = file && pkg && isModoPackage(pkg) ? file : null
+          cache.set(key, path)
+        }
+        return path ? { path } : undefined
+      })
+    },
+  }
+}
+
 function baseOptions(userRoot: string, outdir: string): BuildOptions {
   return {
     absWorkingDir: userRoot,
@@ -271,7 +301,11 @@ function baseOptions(userRoot: string, outdir: string): BuildOptions {
       ].join('\n'),
     },
     loader: { '.ts': 'ts', '.tsx': 'tsx', '.css': 'empty', '.svg': 'dataurl' },
-    plugins: [mdx({ remarkPlugins: [remarkGfm, remarkModoExamples], jsxImportSource: 'react' })],
+    plugins: [
+      modoSources(),
+      pagesMdx,
+      mdx({ remarkPlugins: [remarkGfm, remarkModoExamples], jsxImportSource: 'react' }),
+    ],
     jsx: 'automatic',
     jsxImportSource: 'react',
     logLevel: 'silent',
@@ -417,8 +451,26 @@ async function report(
   return text
 }
 
-/** `./x` → x (file), x/index.{tsx,ts,jsx,js} (dir) or x.{tsx,ts,jsx,js}. */
+/**
+ * The item's co-located stylesheets, then those next to each source its docs
+ * came from (a re-exported or `{@inheritDoc}` base item renders with its own
+ * auto-injected CSS) when that source is an item's `index.tsx`.
+ */
+function itemCss(file: string, sources: string[]): string[] {
+  const items = [file, ...sources.filter(s => /[\\/]index\.tsx$/.test(s))]
+  return [...new Set(items.flatMap(discoverCssForFile))]
+}
+
+/**
+ * `./x` → x (file), x/index.{tsx,ts,jsx,js} (dir) or x.{tsx,ts,jsx,js}, from the
+ * project root; else, for a bare specifier, a file of an installed package
+ * (`@scope/ds/docs`, through its `exports`, the `source` file first).
+ */
 function resolveUserFile(userRoot: string, p: string): string | null {
+  return resolveProjectFile(userRoot, p) ?? resolvePackageFile(p, userRoot)
+}
+
+function resolveProjectFile(userRoot: string, p: string): string | null {
   const abs = resolve(userRoot, p)
   const exts = ['.tsx', '.ts', '.jsx', '.js']
   if (existsSync(abs)) {

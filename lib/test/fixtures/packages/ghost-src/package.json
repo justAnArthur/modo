@@ -1,0 +1,10 @@
+{
+  "name": "ghost-src",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "default": "./index.js"
+    }
+  }
+}

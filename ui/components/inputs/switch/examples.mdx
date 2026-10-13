@@ -1,29 +1,16 @@
 import Switch from './index'
+import { Label } from '../input'
 
-# Basic
+# Basics
+
+## Basic
 
 A labelled switch. Uncontrolled here — it keeps its own state; pass
 `checked` and `onToggle` to control it.
 
 <Switch label="Notifications" />
 
-# Disabled
-
-`disabled` dims the row and ignores pointer and keyboard input.
-
-<Switch label="Disabled option" disabled />
-
-# Compact
-
-`size="compact"` shrinks the track, thumb and label one step down the
-size ladder. `defaultChecked` starts it on.
-
-<div className="flex flex-col">
-  <Switch size="compact" label="Auto-save" defaultChecked />
-  <Switch size="compact" label="Show hidden files" />
-</div>
-
-# Description
+## Description
 
 `description` adds a muted line under the label, and `trackSide="end"` pushes the track to the far edge, as in a settings row.
 
@@ -33,6 +20,38 @@ size ladder. `defaultChecked` starts it on.
   label="Auto-update"
   description="Install updates in the background and restart when idle"
 />
+
+## Bare
+
+Without a `label` the switch is the track alone: point a `<label htmlFor>` at its `id`, or name it with `aria-label`. The thumb still drags.
+
+<div className="flex flex-col gap-3">
+  <div className="flex items-center gap-3">
+    <Switch id="bare-wifi" defaultChecked />
+    <Label htmlFor="bare-wifi">Wi-Fi</Label>
+  </div>
+  <div className="flex items-center gap-4">
+    <Switch aria-label="Airplane mode" />
+    <Switch aria-label="Bluetooth" size="compact" defaultChecked />
+    <Switch aria-label="Hotspot" disabled />
+  </div>
+</div>
+
+## Compact
+
+`size="compact"` shrinks the track, thumb and label one step down the
+size ladder. `defaultChecked` starts it on.
+
+<div className="flex flex-col">
+  <Switch size="compact" label="Auto-save" defaultChecked />
+  <Switch size="compact" label="Show hidden files" />
+</div>
+
+## Disabled
+
+`disabled` dims the row and ignores pointer and keyboard input.
+
+<Switch label="Disabled option" disabled />
 
 # Group
 
@@ -56,7 +75,7 @@ size ladder. `defaultChecked` starts it on.
   </div>
 </div>
 
-# Group states
+## Group states
 
 Every switch in a group keeps its own state; a disabled row gets no highlight. Rows work without a description too.
 
@@ -66,7 +85,7 @@ Every switch in a group keeps its own state; a disabled row gets no highlight. R
   <Switch label="SMS" description="Not available in your region" disabled />
 </Switch.Group>
 
-# Compact group
+## Compact group
 
 `size` on the group pins every row to one step of the size ladder.
 

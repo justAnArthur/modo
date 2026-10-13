@@ -3,6 +3,7 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, wri
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadModoConfig } from '../lib/config.loader'
+import { itemsRootOf } from '../lib/root'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const libRoot = resolve(__dirname, '..')
@@ -21,7 +22,7 @@ Usage:
   modo check               Validate modo.config.ts
 
 Options:
-  --config <file>          dev, build, check: the config file (default modo.config.ts)
+  --config <file>          dev, build, check, add: the config file (default modo.config.ts)
   --base <path>            build: public path the site is served under (default /)
   --out <dir>              build: the output dir (default ./dist)
   --help, -h               Show this help
@@ -117,6 +118,10 @@ async function runAdd(args: string[]) {
     throw new Error('add requires `<kind> <name>`, kind one of primitive, component, block, token')
   }
   // `overlays/dialog` puts the item in a group folder, `inputs/date-time/calendar` in a nested one.
+  // Items and tokens go under the config's `root`, when there is a config.
+  const configPath = configOf(args)
+  const config = existsSync(configPath) ? await loadModoConfig(configPath) : null
+  const root = itemsRootOf(process.cwd(), config)
   const path = name.split('/').map(kebab)
   const id = path.at(-1)!
   const dir = path.join('/')
@@ -133,7 +138,7 @@ async function runAdd(args: string[]) {
         }
 
   for (const [rel, text] of Object.entries(files)) {
-    const file = resolve(process.cwd(), rel)
+    const file = resolve(root, rel)
     if (existsSync(file)) throw new Error(`Already exists: ${file}`)
     mkdirSync(dirname(file), { recursive: true })
     writeFileSync(file, text)
@@ -144,6 +149,8 @@ async function runAdd(args: string[]) {
 async function runCheck(args: string[]) {
   const configPath = configOf(args)
   const cfg = await loadModoConfig(configPath)
+  const root = itemsRootOf(process.cwd(), cfg)
+  if (cfg.root !== undefined && !existsSync(root)) throw new Error(`root "${cfg.root}" not found (resolved to ${root})`)
   process.stdout.write(`OK — ${configPath} is valid (name="${cfg.name}")\n`)
 }
 

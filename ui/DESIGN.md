@@ -44,10 +44,31 @@ colors:
   destructive-dark: "oklch(0.7106 0.1661 22.22)"
   destructive-light: "oklch(0.971 0.013 17.38)"
   destructive-light-dark: "oklch(0.2575 0.0886 26.04)"
+  destructive-strong: "oklch(0.47 0.175 27)"
+  destructive-strong-dark: "oklch(0.81 0.105 22)"
+  destructive-wash: "color-mix(in oklab, oklch(0.6368 0.2078 25.33) 16%, transparent)"
+  destructive-wash-dark: "color-mix(in oklab, oklch(0.7106 0.1661 22.22) 16%, transparent)"
+  destructive-wash-hover: "color-mix(in oklab, oklch(0.6368 0.2078 25.33) 20%, transparent)"
+  destructive-wash-hover-dark: "color-mix(in oklab, oklch(0.7106 0.1661 22.22) 20%, transparent)"
+  destructive-wash-active: "color-mix(in oklab, oklch(0.6368 0.2078 25.33) 24%, transparent)"
+  destructive-wash-active-dark: "color-mix(in oklab, oklch(0.7106 0.1661 22.22) 24%, transparent)"
+  success-strong: "oklch(0.46 0.12 151)"
+  success-strong-dark: "oklch(0.83 0.15 152)"
+  success-wash: "color-mix(in oklab, oklch(0.723 0.192 149.58) 16%, transparent)"
+  success-wash-hover: "color-mix(in oklab, oklch(0.723 0.192 149.58) 20%, transparent)"
+  success-wash-active: "color-mix(in oklab, oklch(0.723 0.192 149.58) 24%, transparent)"
   status-success: "oklch(0.723 0.192 149.58)"
   status-loading: "oklch(0.715 0 0)"
   status-warning: "oklch(0.7686 0.1647 70.08)"
   status-info: "oklch(0.623 0.188 259.81)"
+  skeleton: "color-mix(in oklab, oklch(0.205 0 0) 8%, transparent)"
+  skeleton-dark: "color-mix(in oklab, oklch(0.97 0 0) 8%, transparent)"
+  image-edge: "rgb(0 0 0 / 0.1)"
+  image-edge-dark: "rgb(255 255 255 / 0.1)"
+  progress-track: "color-mix(in oklab, oklch(0.205 0 0) 10%, transparent)"
+  progress-track-dark: "color-mix(in oklab, oklch(0.97 0 0) 10%, transparent)"
+  well: "oklch(0.967 0.001 286.375)"
+  well-dark: "oklch(0 0 0 / 0.25)"
   surface-1: "oklch(0.985 0 0)"
   surface-2: "oklch(0.991 0 0)"
   surface-3: "oklch(1 0 0)"
@@ -187,6 +208,16 @@ spacing:
   icon-compact: 14px
   goo-neck: 12px
   measure: 45rem
+motion:
+  fast: 80ms
+  fast-exit: 60ms
+  moderate: 160ms
+  moderate-exit: 120ms
+  slow: 240ms
+  slow-exit: 160ms
+  goo: 250ms
+  goo-exit: 200ms
+  loop: 2s
 components:
   button-primary:
     backgroundColor: "{colors.foreground}"
@@ -255,7 +286,7 @@ components:
     padding: 24px
     width: 400px
   tabs-list:
-    backgroundColor: "{colors.muted}"
+    backgroundColor: "{colors.well}"
     rounded: "{rounded.xl}"
     height: "{spacing.control}"
     padding: 4px
@@ -320,15 +351,19 @@ fun; the only overshoot in the system is the slow tier's 0.12 and the goo's 0.15
 Two text colors, a greyscale ground, one blue.
 
 - **Foreground (`text-foreground`)** — near-black ink in light, near-white in dark. Headings, labels,
-  values, selected items, the primary button's fill.
+  values, selected items, the primary button's fill (until `--primary` is re-pointed).
 - **Muted foreground (`text-muted-foreground`)** — the only secondary text color: descriptions, captions,
   placeholders, idle icons, idle tab labels. Never an opacity step of foreground (`text-foreground/60`
   is wrong); a third text tone does not exist.
 - **Background (`bg-background`)** — the page, equal to surface 1. Also the text color on the primary
-  button and the tooltip (`text-background`).
+  button (until `--primary-foreground` is re-pointed) and the tooltip (`text-background`).
 - **Surfaces (`bg-surface-1` … `bg-surface-8`)** — the elevation ladder (see Elevation & Depth). Prefer a
   surface level over `card`/`background` for anything that floats or nests.
-- **Muted (`bg-muted`)** — a recessed track: the segmented tabs' well, a sunken field at rest.
+- **Muted (`bg-muted`)** — a sunken fill: a field's hover wash, a queued row. In dark it is surface 2, so
+  it never carries a track: it would vanish on a card or the inset.
+- **Well (`bg-well`)** — the recessed track under a segmented control's indicator (the tabs list). Light is
+  muted; dark is black at 25%, which darkens whatever it sits on, so the track reads on the page, a card
+  and the inset alike.
 - **Accent (`bg-accent`)** — the secondary button and the switch's off track. `selected` is a firmer
   grey for persistent selection fills.
 - **Hover / Active (`bg-hover`, `bg-active`)** — translucent overlays (black 4% / 7% in light, white 6% /
@@ -338,7 +373,25 @@ Two text colors, a greyscale ground, one blue.
   forced scopes. Hairlines only, 1px.
 - **Brand (`bg-brand`, `ring-focus-ring`)** — `focus-ring` is `brand`: every keyboard ring is a 1px blue
   ring 2px outside the element. The single theming point for focus.
+- **Primary (`bg-primary`, `text-primary-foreground`)** — the primary Button's theme hooks, so a host can
+  recolour it without forking the component: `--primary` (the fill, default `foreground`), `--primary-hover`
+  and `--primary-active` (default: `--primary` mixed 10% / 20% toward `background`), `--primary-foreground`
+  (the label, default `background`) and `--shadow-button-primary` (an extra shadow list drawn on the fill
+  layer, after its press ring: a lit edge, an outline, a drop; default the invisible `0 0 #0000`). All
+  five default to the ink look, so nothing moves until one is overridden. Re-point them on
+  `:root, .light, .dark` (zero-specificity defaults, so any stylesheet order wins), and set the hover and
+  active steps with the fill, since their defaults mix from the `--primary` they are declared with.
+  Other ink fills (checkbox, switch, progress, …) still read `foreground`.
 - **Destructive (`text-destructive`, `bg-destructive-light`)** — errors and destructive confirms only.
+- **Tinted actions (`text-destructive-strong` on `bg-destructive-wash`, `text-success-strong` on
+  `bg-success-wash`)** — the destructive and success buttons: the hue as text, dark enough for AA on its
+  wash, over a translucent wash of it that deepens on hover and press (`-hover`, `-active`). Never a
+  solid fill.
+- **Skeleton (`bg-skeleton`)** — 8% of foreground: the loading placeholder, quieter than any border.
+- **Image edge (`outline-image-edge`)** — a 1px inset edge (black or white at 10%) on images and
+  avatars, so a picture keeps its outline on any substrate.
+- **Progress track (`bg-progress-track`)** — 10% of foreground under the ink (`bg-foreground`) fill of
+  a progress bar.
 - **Status (`text-status-*`, `bg-status-*/16`)** — success, loading, error, warning, info, action. A
   status shows as tinted text on a 16% wash of itself, never as a solid fill behind text.
 - **Scrim (`bg-scrim`)** — behind a modal dialog; it fades with the morph's progress.
@@ -467,7 +520,9 @@ hand-written duration; never a fourth speed.
 | `spring.slow` | 240ms spring, bounce 0.12 | 160ms | Large surfaces: plain morphs, the search field's growth, shared parts |
 | `spring.goo` | 250ms visual, bounce 0.15 | 200ms spring back | Every goo morph, so the liquid neck is on screen long enough to read |
 
-CSS consumers use `duration-fast|moderate|slow[-exit]` and `delay-*`. Animate `transform` and `opacity`;
+CSS consumers use `duration-fast|moderate|slow[-exit]` and `delay-*`. `--duration-loop` (2s) is the
+period of pending-state loops (the indeterminate progress sweep, the spinner, the skeleton pulse); it is
+not a spring tier, and under reduced motion a loop pulses opacity in place. Animate `transform` and `opacity`;
 a measured geometry engine (the morph layer, `GooIndicator`) is the only thing that writes boxes.
 
 The signature behaviors:
@@ -497,29 +552,55 @@ The signature behaviors:
 Each item lives at `<tier>/[<group>/]<name>/index.tsx` and composes from Base UI (behavior) plus the
 shared systems above (look and motion). Ready-made patterns to reach for before writing anything:
 
-- **Buttons** — `primary` (ink fill), `secondary` (accent fill), `tertiary` (transparent, a 1px
+- **Buttons** — `primary` (ink fill by default, the `--primary` theme hooks), `secondary` (accent fill), `tertiary` (transparent, a 1px
   `border` ring that moves inward on press), `ghost` (transparent, muted text that turns foreground over
   the hover overlay). A component token with no `backgroundColor` is transparent over its substrate.
   Sizes `default` 36 / `compact` 28 / `icon` / `icon-compact`. Icons sit 4px closer to their edge than
   text. `active` holds the pressed look while a menu it opened is showing. One primary per view.
+  `outline` is `tertiary` under its shadcn name. `destructive` and `success` are their hue as text on a
+  wash of it (Tinted actions), never a solid fill; `link` is underlined foreground text on the control
+  height, no padding. `xs` and `sm` resolve to `compact`: the ladder has two steps.
 - **Inputs** — transparent and ringless at rest, a `bg-muted/50` wash plus a `ring-border` ring on
-  hover, `bg-card` plus the ring on focus; the label sits above in muted body text. Errors: destructive caption at
-  `weight-medium`, a `destructive-light` wash.
+  hover, `bg-card` plus the ring on focus; read-only keeps the ring but never lifts the fill. The label
+  sits above in muted body text (an asterisk when required), help text below in muted caption, both
+  inset to the text. Errors: destructive caption at `weight-medium`, a `destructive-light` wash.
+  Adornments are muted and light with the field; field actions are 4px inside the ring. File
+  dropzones: a dashed hairline on the container radius, a muted fill while files hover over it,
+  destructive for files it won't take; a drag it can partly take keeps the neutral fill and says that
+  some will be skipped.
 - **Lists and menus** — rows on the control height, `itemPx` inset, one fluid hover highlight, rows
   without their own `:hover` fill. Disabled rows stay registered but are skipped. Keyboard focus earns a
   1px brand ring that springs between rows; pointer focus never shows it.
 - **Selection** — checkbox and radio rows melt their selected backgrounds into one run; tabs and
   subtle tabs carry an elevated (+3) or translucent indicator that melts between items; the selected
-  label goes `weight-semibold`.
+  label goes `weight-semibold`. Checkbox, radio and switch also come bare (no label): just the box,
+  circle or track, with a 1px focus ring offset 2px, for tables and hand-laid forms. An indeterminate
+  checkbox shows a dash that blurs into the check. A loading control keeps its box: the combobox
+  chevron blurs into a spinner in the same slot.
 - **Overlays** — popup surfaces at +2 with `shadow-surface-3`, dialogs at +4, `rounded-xl` containers,
-  12px goo neck between trigger and panel, content padding 16px (popover) or 24px (dialog).
+  12px goo neck between trigger and panel, content padding 16px (popover) or 24px (dialog). A confirm
+  that runs a task folds its button into the loading circle and holds the dialog until it settles.
 - **Tooltips** — inverted (`bg-foreground` / `text-background`), caption at `weight-medium`, morph from
-  the trigger, a hand-off between grouped tooltips is instant.
+  the trigger, a hand-off between grouped tooltips is instant; the same label whether written flat or
+  as Trigger + Content parts.
 - **Badges** — 24px (20px compact), caption medium, a 15% wash of the color into the background with
-  foreground text; dot variant keeps a neutral outline.
-- **Toasts** — a status pill that melts into a body; status color as text on a 16% wash.
+  foreground text; dot variant keeps a neutral outline; `outline` is that frame without the dot, and
+  no color.
+- **Toasts** — a status pill on the button radius that melts open into a card (title on top, details
+  beneath, on the container radius); status color as text on a 16% wash. Shown from
+  anywhere through the global `toast()`; a custom icon sits in the same status disc.
 - **Cards** — transparent and borderless, inheriting the substrate; hairline dividers and the fluid
-  hover do the framing; only clickable cards join the hover.
+  hover do the framing; only clickable cards join the hover. `border="outlined"` gives a standalone
+  card the outlined group's hairline frame; `Card.Divider` is a full-bleed hairline between its parts.
+- **Pagination** — the current page is a liquid `bg-accent` indicator on the fluid-hover strip; dense
+  tables use the jump-to-page field.
+- **Avatar** — one control tall (36px, 28px compact), a circle, or a square on the item radius,
+  with the image edge; initials or an icon on `bg-accent` until the image loads, which then fades in.
+- **Progress** — a 4px pill: the ink fill slides to its value on `spring.moderate`; with no value a
+  segment sweeps the track on the loop period. The spinner is the loading button's figure-eight.
+- **Skeleton** — `bg-skeleton` blocks on the item radius pulsing in opacity, rows on the control
+  height; hidden from assistive tech (mark the loading region busy instead).
+- **Separator** — the one 1px `border` hairline, horizontal or vertical; no ornament.
 
 ## Do's and Don'ts
 

@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { buildGroup, parseCss } from '../src/lib/css'
 import { discoverItems } from '../src/lib/discover-items'
+import { parseItemSource } from '../src/lib/docs'
 import { compileExampleBody, isCompiledExample } from '../src/lib/example'
-import { parseItemSource } from '../src/lib/tsdoc'
 import { groupTree } from '../src/runtime/groups'
 
 describe('parseItemSource', () => {
@@ -49,6 +49,17 @@ describe('parseItemSource', () => {
     expect(r.props.map(p => [p.default, p.description])).toEqual([
       ["'a'", 'Style.'],
       [undefined, 'Size. One of `default`, `sm`.'],
+    ])
+  })
+
+  test('a closing "Defaults to `x`." fills the column; @default and the code win', () => {
+    const r = parseItemSource(
+      `import { forwardRef } from 'react'\ninterface P {\n  /** Side. Defaults to \`'start'\`. */\n  side?: string\n  /** Gap. Defaults to \`4\`. @default 8 */\n  gap?: number\n  /** Size. Defaults to \`'md'\`. */\n  size?: string\n}\nconst X = forwardRef<HTMLDivElement, P>(({ size = 'lg' }, ref) => null)\nexport default X\n`,
+    )
+    expect(r.props.map(p => [p.name, p.default])).toEqual([
+      ['side', "'start'"],
+      ['gap', '8'],
+      ['size', "'lg'"],
     ])
   })
 })

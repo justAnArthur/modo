@@ -1,18 +1,45 @@
 /*
- * Components the docs site uses but the design system doesn't document.
- * modo.config.ts picks each one by export name: `./modo.components.tsx#Select`.
+ * The docs chrome: every slot adapter modo's viewer needs to render a design
+ * system's docs the way modo-ui's own site is drawn. modo.config.ts picks each
+ * one by export name (`./docs#DocsNav`, or `@justanarthur/modo-ui/docs#DocsNav`
+ * from another package); chrome.css holds the layout rules and the look they
+ * share, so nothing here needs a utility generator to scan this file.
  */
 
 import { Check, CodeXml, Copy, Link2, Monitor, Moon, Sun } from 'lucide-react'
-import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useState } from 'react'
-import FluidSelect from './components/inputs/select'
+import {
+  type AnchorHTMLAttributes,
+  Children,
+  createContext,
+  isValidElement,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from 'react'
+import ModoButton from '../components/button'
+import FluidSelect from '../components/inputs/select'
 import Sidebar, {
   SIDEBAR_KEYBOARD_SHORTCUT,
   SIDEBAR_KEYBOARD_SHORTCUT_RIGHT,
   type SidebarSide,
   useSidebar,
-} from './components/navigation/sidebar'
-import { cn } from './lib/utils'
+} from '../components/navigation/sidebar'
+
+/**
+ * Button slot: the chrome's icon buttons (Show code, Copy, the anchor toggles). The chrome passes
+ * `variant="ghost"`, `size="icon-sm"`, `aria-label` and `aria-pressed`; the design system's Button takes them as is.
+ * Pinned so a host with an item named `Button` of another shape is not matched by name.
+ */
+export const Button = ModoButton
+
+/**
+ * Link slot: every chrome and Markdown link, a plain anchor so the chrome's own link styling applies.
+ * Pinned so a host with an item named `Link` of another shape is not matched by name.
+ */
+export function Link(props: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
+  return <a {...props} />
+}
 
 const icons = { code: CodeXml, copy: Copy, check: Check, link: Link2 }
 
@@ -67,16 +94,16 @@ declare global {
 /**
  * Sidebar slot: both asides of the chrome, each an inset `Sidebar` with its
  * own `openOnHover` provider, so the content between them is the inset card
- * (global.css). The trigger in the card's corner (or `[` for the nav, `]` for
+ * (chrome.css). The trigger in the card's corner (or `[` for the nav, `]` for
  * the panel) switches a side between open and on hover. Below md each side
  * is a drawer. The panel starts on hover below xl.
  *
  * A section of links is a collapsible `Sidebar.Group` whose rows share one
  * `Sidebar.Menu`, so the current page and the hover highlight melt from link
  * to link (the TOC's current heading too, as the page scrolls); a panel
- * section (the Theme select) keeps its control under the group label. Pinned
- * in modo.config.ts, since by name alone modo would adopt the documented
- * `Sidebar`, an app shell that needs its provider.
+ * section (the Theme select) keeps its control under the group label. Pin it
+ * in modo.config.ts: by name alone modo would adopt a documented `Sidebar`
+ * item, an app shell that needs its provider.
  */
 export function DocsNav({ children }: { children?: ReactNode }) {
   const [side, setSide] = useState<SidebarSide>()
@@ -113,13 +140,7 @@ function DocsNavTrigger({ side }: { side: SidebarSide }) {
   useDocsShortcut(side === 'left' ? SIDEBAR_KEYBOARD_SHORTCUT : SIDEBAR_KEYBOARD_SHORTCUT_RIGHT, toggleSidebar)
 
   return (
-    <div
-      className={cn(
-        'absolute top-2 flex h-12 items-center px-1.5 transition-[margin] duration-fast',
-        side === 'left' ? 'left-full' : 'right-full',
-        (state === 'collapsed' || isMobile) && (side === 'left' ? 'ml-2' : 'mr-2'),
-      )}
-    >
+    <div data-modo-ui="nav-trigger" data-side={side} data-gutter={state === 'collapsed' || isMobile ? '' : undefined}>
       <Sidebar.Trigger />
     </div>
   )
@@ -190,7 +211,7 @@ function DocsNavSection({ title, children }: { title: string; children?: ReactNo
   return (
     <Sidebar.Group>
       <Sidebar.GroupLabel>{title}</Sidebar.GroupLabel>
-      <div className="px-2">{children}</div>
+      <div data-modo-ui="nav-controls">{children}</div>
     </Sidebar.Group>
   )
 }
@@ -231,8 +252,8 @@ const THEMES = [
 ]
 
 /**
- * Theme panel item. The switching itself is the pre-paint script vite.ts
- * injects (`window.__uiTheme`), so a stored preference applies before first
+ * Theme panel item. The switching itself is the pre-paint script the vite
+ * helper injects (`docsTheme` in `@justanarthur/modo-ui/docs/vite`, `window.__uiTheme`), so a stored preference applies before first
  * paint; this only reflects and sets it. `ui:themechange` also fires when the
  * OS flips underneath 'system'.
  */

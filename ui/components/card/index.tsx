@@ -20,6 +20,15 @@
  *   hex focus-ring fallback → `ring-focus-ring` / `border-focus-ring`;
  *   `rounded-[Npx]` → radius tokens; `duration-80|120|160` and tier-length JS
  *   durations → `duration-<tier>` / `spring.*`.
+ * - `border` on a standalone Card (local): `"outlined"` draws the same hairline
+ *   frame an outlined Card.Group gives its tiles; inside a group the group's
+ *   `border` still decides. Borderless stays the default.
+ * - `Card.Divider` / `CardDivider` (local): a hairline across the card between
+ *   its parts (full-bleed, spaced like the parts), vertical in an inline card;
+ *   the Separator primitive in the card's divider tone.
+ * - `CardTitle` takes `as` (a heading level or another tag; a `span` by default)
+ *   and `CardContent` takes `bodyText` (the ladder's body size instead of the
+ *   inherited one), both local and opt-in.
  */
 
 import {
@@ -30,8 +39,10 @@ import {
   forwardRef,
   type HTMLAttributes,
   isValidElement,
+  type MouseEventHandler,
   type ReactElement,
   type ReactNode,
+  type Ref,
   type RefAttributes,
   useContext,
   useMemo,
@@ -43,6 +54,7 @@ import { useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { cn } from '../../lib/utils'
+import Separator, { type SeparatorProps } from '../../primitives/separator'
 import { SizeProvider } from '../../primitives/sizes'
 
 // ---------------------------------------------------------------------------
@@ -224,8 +236,8 @@ CardGroup.displayName = 'CardGroup'
 interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'> {
   /** Compositional parts: Card.Image, Card.Media, Card.Header, Card.Content, Card.Footer. */
   children?: ReactNode
-  /** Makes the whole card a clickable target (stretched button); fluid hover previews it. */
-  onClick?: () => void
+  /** Makes the whole card a clickable target (stretched button); fluid hover previews it. Receives the click event, or takes no argument. */
+  onClick?: MouseEventHandler<HTMLElement>
   /** Makes the whole card a link (stretched anchor). */
   href?: string
   /** Opens href in a new tab. Defaults to `false`. */
@@ -244,6 +256,8 @@ interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'> {
   onDismiss?: () => void
   /** Pins the card to one step of the size ladder — compact tightens type and padding. Omitted, it follows the surrounding SizeProvider. */
   size?: SizeVariant
+  /** Frame of a standalone card: `"outlined"` draws a hairline around it, like an outlined group's tiles. Inside a Card.Group the group's `border` decides. Defaults to `"none"`. */
+  border?: CardBorder
   /** Injected by Card.Group — do not set by hand. */
   index?: number
 }
@@ -256,6 +270,7 @@ type CardComponent = ForwardRefExoticComponent<CardProps & RefAttributes<HTMLDiv
   Action: typeof CardAction
   Content: typeof CardContent
   Footer: typeof CardFooter
+  Divider: typeof CardDivider
   Media: typeof CardMedia
   Image: typeof CardImage
   Eyebrow: typeof CardEyebrow
@@ -270,7 +285,8 @@ type CardComponent = ForwardRefExoticComponent<CardProps & RefAttributes<HTMLDiv
  *
  * The same parts and data-slot contract as shadcn's Card, on a transparent,
  * borderless surface: a card inherits its parent's substrate and leans on
- * hairline dividers rather than a drawn frame. Card.Group owns the layout (a
+ * hairline dividers rather than a drawn frame (a standalone card opts into
+ * one with `border="outlined"`). Card.Group owns the layout (a
  * stacked list, inline rows or a grid) and assigns every child its fluid
  * hover index; only a clickable card (`onClick` or `href`) joins the magnetic
  * highlight. A clickable card is one stretched button or link, while footer
@@ -279,8 +295,10 @@ type CardComponent = ForwardRefExoticComponent<CardProps & RefAttributes<HTMLDiv
  * Statics: Card.Group (orientation "card" | "inline", columns, border "none"
  * | "outlined", separated, fluidHover), Card.Header (title + description
  * grid, pins Card.Action top-right), Card.Title (weight-animates when the card
- * is selected), Card.Description, Card.Action, Card.Content, Card.Footer (the
- * actions row), Card.Media (an icon tile, a logo or a [logoA, logoB] pair),
+ * is selected; `as` renders it as a heading level), Card.Description,
+ * Card.Action, Card.Content (`bodyText` sets the body size), Card.Footer (the
+ * actions row; it wraps), Card.Divider (a hairline across the card between
+ * its parts, vertical in an inline card), Card.Media (an icon tile, a logo or a [logoA, logoB] pair),
  * Card.Image (full-bleed banner, or a leading image when inline),
  * Card.Eyebrow (small uppercase label), Card.Feature (icon + title +
  * description row) and Card.Button (primary | secondary | ghost | link
@@ -301,6 +319,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       dismissOnHover = true,
       onDismiss,
       size,
+      border = 'none',
       index,
       className,
       children,
@@ -367,7 +386,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
     // hug, so it stays unclipped and its media reads as a plain square, and a
     // card in a continuous block leans on the shared group frame for both.
     const tileShape = !group
-      ? cn(shape.container, 'overflow-hidden')
+      ? cn(shape.container, 'overflow-hidden', border === 'outlined' && 'border border-border/60')
       : separated && outlined
         ? cn(shape.container, 'overflow-hidden border border-border/60')
         : ''
@@ -567,8 +586,15 @@ CardHeader.displayName = 'CardHeader'
 
 // ── CardTitle ────────────────────────────────────────────
 
-const CardTitle = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>(
-  ({ className, children, ...props }, ref) => {
+type CardTitleTag = 'span' | 'div' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+
+interface CardTitleProps extends HTMLAttributes<HTMLSpanElement> {
+  /** The element the title renders as: a heading level (`'h2'`, `'h3'`, …) for a page outline, or another tag. The title keeps its look whatever the tag. Defaults to `'span'`. */
+  as?: CardTitleTag
+}
+
+const CardTitle = forwardRef<HTMLSpanElement, CardTitleProps>(
+  ({ as: Tag = 'span', className, children, ...props }, ref) => {
     const { emphasized, orientation } = useContext(CardContext)
     const sizeClasses = useSize()
     const compact = sizeClasses.variant === 'compact'
@@ -586,11 +612,12 @@ const CardTitle = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>(
     // width so the ellipsis falls inside the visible box. All of it is inert
     // while titles wrap normally.
     return (
-      <span
-        ref={ref}
+      <Tag
+        ref={ref as Ref<HTMLHeadingElement>}
         data-slot="card-title"
         className={cn(
           'inline-grid grid-cols-[minmax(0,1fr)] leading-snug',
+          Tag !== 'span' && 'm-0',
           compact ? 'text-subtitle-compact' : 'text-subtitle',
           className,
         )}
@@ -617,7 +644,7 @@ const CardTitle = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>(
         >
           {children}
         </span>
-      </span>
+      </Tag>
     )
   },
 )
@@ -664,7 +691,12 @@ CardAction.displayName = 'CardAction'
 
 // ── CardContent ──────────────────────────────────────────
 
-const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => {
+interface CardContentProps extends HTMLAttributes<HTMLDivElement> {
+  /** Sets the size ladder's body text (`text-body`, one step down in a compact region) on the content, so plain text there no longer takes the size of whatever surrounds the card. Off, the content inherits it, as before. Defaults to `false`. */
+  bodyText?: boolean
+}
+
+const CardContent = forwardRef<HTMLDivElement, CardContentProps>(({ bodyText = false, className, ...props }, ref) => {
   const { orientation } = useContext(CardContext)
   const sizeClasses = useSize()
   const compact = sizeClasses.variant === 'compact'
@@ -672,7 +704,11 @@ const CardContent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>((
     <div
       ref={ref}
       data-slot="card-content"
-      className={cn(orientation === 'inline' ? '' : compact ? 'px-3 pt-2.5' : 'px-4 pt-3', className)}
+      className={cn(
+        orientation === 'inline' ? '' : compact ? 'px-3 pt-2.5' : 'px-4 pt-3',
+        bodyText && sizeClasses.text,
+        className,
+      )}
       {...props}
     />
   )
@@ -710,6 +746,32 @@ const CardFooter = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({
 })
 
 CardFooter.displayName = 'CardFooter'
+
+// ── CardDivider ──────────────────────────────────────────
+// Local: a hairline across the card between two parts. The card has no
+// padding of its own, so a direct child runs edge to edge; its top margin
+// matches the parts' top padding, so the gap reads the same on both sides.
+
+const CardDivider = forwardRef<HTMLDivElement, SeparatorProps>(({ className, orientation, ...props }, ref) => {
+  const { orientation: cardOrientation } = useContext(CardContext)
+  const compact = useSize().variant === 'compact'
+  const vertical = (orientation ?? (cardOrientation === 'inline' ? 'vertical' : 'horizontal')) === 'vertical'
+  return (
+    <Separator
+      ref={ref}
+      data-slot="card-divider"
+      {...props}
+      orientation={vertical ? 'vertical' : 'horizontal'}
+      className={cn(
+        'bg-border/60',
+        vertical ? (compact ? 'my-2.5' : 'my-3.5') : compact ? 'mt-2.5' : 'mt-3',
+        className,
+      )}
+    />
+  )
+})
+
+CardDivider.displayName = 'CardDivider'
 
 // ── CardMedia ────────────────────────────────────────────
 // FF addition: a leading icon or brand logo(s). Not part of shadcn's anatomy,
@@ -970,6 +1032,7 @@ Object.assign(Card, {
   Action: CardAction,
   Content: CardContent,
   Footer: CardFooter,
+  Divider: CardDivider,
   Media: CardMedia,
   Image: CardImage,
   Eyebrow: CardEyebrow,
@@ -977,13 +1040,24 @@ Object.assign(Card, {
   Button: CardButton,
 })
 
-export type { CardButtonProps, CardButtonVariant, CardGroupProps, CardLogo, CardProps }
+export type {
+  CardBorder,
+  CardButtonProps,
+  CardButtonVariant,
+  CardContentProps,
+  CardGroupProps,
+  CardLogo,
+  CardProps,
+  CardTitleProps,
+  CardTitleTag,
+}
 export {
   Card,
   CardAction,
   CardButton,
   CardContent,
   CardDescription,
+  CardDivider,
   CardEyebrow,
   CardFeature,
   CardFooter,

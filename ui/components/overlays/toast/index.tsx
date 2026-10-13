@@ -11,16 +11,23 @@
  * level's background shapes melted by the shared goo filter, their shadows
  * beneath, the content on top. Colors are the status tokens, the sizes the
  * control ladder's, and the motion the spring tiers; reduced motion keeps the
- * fades and snaps the shapes.
+ * fades and snaps the shapes. The global `toast()` (`manager.ts`) feeds a
+ * `Toast` mounted with `manager={toast}` from anywhere, React or not; titles
+ * and descriptions take any node, `icon` replaces the state's glyph and
+ * `action` takes a button's `{ label, onClick }` or any node. The state
+ * glyphs come from the icon set (`useIcons`), so an `IconProvider` swaps them.
+ * `Toast.Action` / `Toast.Close` wrap Base UI's parts as compact Buttons
+ * (`render` / `asChild` as the slot shape), so a custom action node needs no
+ * `@base-ui/react/toast` import.
  */
 
-import { Toast as ToastPrimitive } from '@base-ui/react/toast'
-import { ArrowRight, Check, CircleAlert, Info, LoaderCircle, type LucideIcon, X } from 'lucide-react'
+import { type ToastManager, Toast as ToastPrimitive } from '@base-ui/react/toast'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   cloneElement,
   createContext,
   forwardRef,
+  isValidElement,
   type ReactNode,
   type Ref,
   useContext,
@@ -31,6 +38,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { type IconComponent, type IconName, useIcon, useIcons } from '../../../lib/icon-context'
 import { GooFilter } from '../../../lib/morph-layers'
 import { useReduceMotion } from '../../../lib/reduced-motion'
 import { useShape } from '../../../lib/shape-context'
@@ -41,27 +49,29 @@ import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { GOO_BLUR_RATIO, holdExit } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import Button from '../../button'
+import Button, { type ButtonProps } from '../../button'
+import {
+  type ToastActionOptions,
+  type ToastData,
+  type ToastHandle,
+  type ToastInput,
+  type ToastOptions,
+  type ToastPromiseOptions,
+  type ToastSource,
+  type ToastType,
+  toast,
+  toManagerOptions,
+} from './manager'
 
-type ToastType = 'success' | 'loading' | 'error' | 'warning' | 'info' | 'action'
 type ToastPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
 
-interface ToastOptions {
-  title?: string
-  description?: string
-  type?: ToastType
-  /** Ms before it leaves; 0 keeps it until dismissed. */
-  timeout?: number
-  action?: { label: string; onClick?: () => void }
-}
-
-const ICONS: Record<ToastType, LucideIcon> = {
-  success: Check,
-  loading: LoaderCircle,
-  error: X,
-  warning: CircleAlert,
-  info: Info,
-  action: ArrowRight,
+const ICONS: Record<ToastType, IconName> = {
+  success: 'check',
+  loading: 'loader-circle',
+  error: 'x',
+  warning: 'circle-alert',
+  info: 'info',
+  action: 'arrow-right',
 }
 
 // Literal per state so the class extractor sees each one.
@@ -74,7 +84,8 @@ const TONES: Record<ToastType, string> = {
   action: 'text-status-action bg-status-action/16',
 }
 
-const VIEWPORT: Record<ToastPosition, string> = {
+// Where a position's shared stack sits, and how its toasts flow in it.
+const HOST: Record<ToastPosition, string> = {
   'top-left': 'top-4 left-4 items-start',
   'top-center': 'top-4 left-1/2 -translate-x-1/2 items-center',
   'top-right': 'top-4 right-4 items-end',
@@ -82,44 +93,89 @@ const VIEWPORT: Record<ToastPosition, string> = {
   'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2 flex-col-reverse items-center',
   'bottom-right': 'bottom-4 right-4 flex-col-reverse items-end',
 }
+const FLOW: Record<ToastPosition, string> = {
+  'top-left': 'items-start',
+  'top-center': 'items-center',
+  'top-right': 'items-end',
+  'bottom-left': 'flex-col-reverse items-start',
+  'bottom-center': 'flex-col-reverse items-center',
+  'bottom-right': 'flex-col-reverse items-end',
+}
 
-// The pill is one control tall, and the goo melts as much as its radius allows.
+// Every `Toast` at a position portals into one fixed stack, so toasts of
+// separate providers (a page of demos, a provider per route) line up instead
+// of covering each other. The stack leaves the page with its last provider.
+const hosts = new Map<ToastPosition, { el: HTMLElement; users: number }>()
+
+function useToastHost(position: ToastPosition) {
+  const [host, setHost] = useState<HTMLElement | null>(null)
+  useLayoutEffect(() => {
+    let entry = hosts.get(position)
+    if (!entry) {
+      const el = document.createElement('div')
+      el.dataset.toastStack = position
+      el.className = cn('fixed z-[60] flex flex-col gap-2', HOST[position])
+      document.body.append(el)
+      entry = { el, users: 0 }
+      hosts.set(position, entry)
+    }
+    const claimed = entry
+    claimed.users++
+    setHost(claimed.el)
+    return () => {
+      claimed.users--
+      if (claimed.users > 0) return
+      claimed.el.remove()
+      hosts.delete(position)
+    }
+  }, [position])
+  return host
+}
+
+// The pill is one control tall; its title sits after the 24px disc, 6px in and 8px apart.
 const PILL = sizeMap.default.controlHeight
-const BLUR = (PILL / 2) * GOO_BLUR_RATIO
+const TITLE_INSET = 38
 const SNAP = { duration: 0 }
 const AUTO_EXPAND_MS = 150
 const AUTO_COLLAPSE_BEFORE_MS = 2000
 
 const ToastSettings = createContext<{ position: ToastPosition; timeout: number }>({
-  position: 'top-right',
+  position: 'bottom-center',
   timeout: 6000,
 })
 
-/** Shows toasts from inside a `Toast`: `show`, the per-state shortcuts, `promise` and `close`. */
+/**
+ * Shows toasts from inside a `Toast`: `show`, the per-state shortcuts,
+ * `promise`, `update` and `close` (alias `dismiss`), plus the `toasts` showing.
+ * Under a `Toast` with `manager={toast}` it works on the same stack as the
+ * global `toast()`.
+ */
 function useToast() {
-  const manager = ToastPrimitive.useToastManager()
+  const manager = ToastPrimitive.useToastManager<ToastData>()
 
   return useMemo(() => {
-    const options = ({ action, ...rest }: ToastOptions, type: ToastType) => ({
-      ...rest,
-      type,
-      actionProps: action && { children: action.label, onClick: action.onClick },
-    })
-    const show = (o: ToastOptions) => manager.add(options(o, o.type ?? 'info'))
+    const show = (o: ToastInput) => manager.add({ type: 'info', ...toManagerOptions(o) })
+    const typed = (type: ToastType) => (o: ToastInput) =>
+      show(typeof o === 'string' ? { title: o, type } : { ...o, type })
+    const result = <T,>(r: ToastPromiseOptions<T>['success']) =>
+      typeof r === 'function' ? (value: T) => toManagerOptions(r(value)) : toManagerOptions(r)
 
     return {
+      toasts: manager.toasts,
       show,
-      success: (o: ToastOptions) => show({ ...o, type: 'success' }),
-      error: (o: ToastOptions) => show({ ...o, type: 'error' }),
-      warning: (o: ToastOptions) => show({ ...o, type: 'warning' }),
-      info: (o: ToastOptions) => show({ ...o, type: 'info' }),
-      promise: <T,>(promise: Promise<T>, o: { loading: ToastOptions; success: ToastOptions; error: ToastOptions }) =>
+      success: typed('success'),
+      error: typed('error'),
+      warning: typed('warning'),
+      info: typed('info'),
+      promise: <T,>(promise: Promise<T>, o: ToastPromiseOptions<T>) =>
         manager.promise(promise, {
-          loading: options(o.loading, 'loading'),
-          success: options(o.success, 'success'),
-          error: options(o.error, 'error'),
+          loading: toManagerOptions(o.loading),
+          success: result(o.success),
+          error: result(o.error),
         }),
+      update: (id: string, o: ToastInput) => manager.update(id, toManagerOptions(o)),
       close: manager.close,
+      dismiss: manager.close,
     }
   }, [manager])
 }
@@ -129,10 +185,15 @@ interface Box {
   y: number
   width: number
   height: number
+  /** Corner radius in px; the class's radius when left out. */
+  borderRadius?: number
+  /** 0 hides a shape folded flat, whose shadow would still draw a hairline. */
+  opacity?: number
 }
 
 function Shape({ box, className, shapeRef }: { box: Box; className: string; shapeRef?: Ref<HTMLDivElement> }) {
   const reduced = useReduceMotion()
+  const transition = reduced ? SNAP : spring.slow
   return (
     <motion.div
       ref={shapeRef}
@@ -140,22 +201,34 @@ function Shape({ box, className, shapeRef }: { box: Box; className: string; shap
       className={cn('pointer-events-none absolute top-0 left-0', className)}
       initial={false}
       animate={{ ...box }}
-      transition={reduced ? SNAP : spring.slow}
+      transition={{ ...transition, opacity: box.opacity ? transition : reduced ? SNAP : spring.slow.exit }}
     />
   )
 }
 
-function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
+/** The pill's glyph: the state's icon, or the toast's own `icon` (a component, or any node). */
+function StatusIcon({ type, icon }: { type: ToastType; icon: ToastData['icon'] }) {
+  const icons = useIcons()
+  // A component is a function or a forwardRef / memo object; an element is a node.
+  const component =
+    typeof icon === 'function' ||
+    (typeof icon === 'object' && icon !== null && '$$typeof' in icon && !isValidElement(icon))
+  if (icon != null && icon !== false && !component) return <>{icon}</>
+  const Icon = component ? (icon as IconComponent) : icons[ICONS[type]]
+  return <Icon size={14} strokeWidth={2.5} className={type === 'loading' && !component ? 'animate-spin' : undefined} />
+}
+
+function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject<ToastData> }) {
   const { position, timeout } = useContext(ToastSettings)
   const shape = useShape()
   // Lifts 2 levels off its substrate with a fixed shadow, like a popover.
   const level = Math.min(useSurface() + 2, 8)
   const gooId = `toast-goo-${useId().replace(/:/g, '')}`
   const type = (toast.type ?? 'info') as ToastType
-  const Icon = ICONS[type]
+  const customAction = toast.data?.action
   const top = position.startsWith('top')
   const ending = toast.transitionStatus === 'ending'
-  const hasBody = Boolean(toast.description || toast.actionProps)
+  const hasBody = Boolean(toast.description || toast.actionProps || customAction)
   const [hovered, setHovered] = useState(false)
   const [auto, setAuto] = useState(false)
   const expanded = hasBody && type !== 'loading' && !ending && (hovered || auto)
@@ -201,12 +274,13 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
     return () => hold.cancel()
   }, [ending])
 
-  // The pill sits on the toast's side of the screen; the body opens away from
-  // the edge. While open, the pill reaches into the body by the body's corner
-  // radius, covering that corner, so the outer edge runs straight and the goo
-  // only rounds the inner corner (Sileo's open pill). The body's padding on
-  // the pill side clears that reach. The header and the body content ride the
-  // same values as their shapes, so they never drift apart mid-spring.
+  // The pill lands on the toast's side of the screen. Opening, it spreads
+  // over the toast's full width as the card's header row while the body grows
+  // from behind it to the card's full height, the two melted by the goo, so
+  // the open toast is one card on the container radius with the title on top
+  // and the details beneath, aligned to the title. The header and the body
+  // content ride the same values as their shapes, so they never drift apart
+  // mid-spring.
   const bodyHeight = expanded ? size.body : 0
   const height = PILL + bodyHeight
   const pillX = position.endsWith('left')
@@ -214,12 +288,24 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
     : position.endsWith('right')
       ? size.width - size.pill
       : (size.width - size.pill) / 2
-  const pillHeight = PILL + Math.min(bodyHeight, size.radius)
-  const pill = { x: pillX, y: top ? 0 : height - pillHeight, width: size.pill, height: pillHeight }
-  const bodyBox = { x: 0, y: top ? PILL : 0, width: size.width, height: bodyHeight }
+  const headerX = expanded ? 0 : pillX
+  const pill = {
+    x: headerX,
+    y: 0,
+    width: expanded ? size.width : size.pill,
+    height: PILL,
+    borderRadius: expanded ? size.radius : shape.bgRadius,
+  }
+  // Folded, the body hides behind the pill, so it spreads from the pill's side.
+  const bodyBox = expanded
+    ? { x: 0, y: 0, width: size.width, height, opacity: 1 }
+    : { x: pillX, y: 0, width: size.pill, height: 0, opacity: 0 }
+  const blur = Math.max(size.radius, shape.bgRadius) * GOO_BLUR_RATIO
   const reduced = useReduceMotion()
   // Reduced motion keeps the fades and drops the travel.
-  const away = reduced ? { opacity: 0 } : { opacity: 0, y: top ? -6 : 6, scale: 0.95 }
+  // A toast slides in from the edge it is attached to, and back out to it.
+  const side = position.endsWith('left') ? -1 : position.endsWith('right') ? 1 : 0
+  const away = reduced ? { opacity: 0 } : { opacity: 0, x: side * 24, y: side ? 0 : top ? -12 : 12, scale: 0.95 }
   const move = reduced ? SNAP : spring.slow
 
   return (
@@ -232,18 +318,18 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
       render={
         <motion.div
           initial={{ ...away, height: PILL }}
-          animate={ending ? { ...away, height } : { opacity: 1, y: 0, scale: 1, height }}
+          animate={ending ? { ...away, height } : { opacity: 1, x: 0, y: 0, scale: 1, height }}
           transition={ending ? spring.moderate.exit : { ...spring.moderate, height: move }}
         />
       }
       className="relative w-[min(22rem,calc(100vw-2rem))] select-none outline-none [translate:var(--toast-swipe-movement-x)_var(--toast-swipe-movement-y)]"
     >
-      <GooFilter id={gooId} blur={BLUR} />
-      <Shape box={pill} className={cn('rounded-full', SURFACE_SHADOW[3])} />
+      <GooFilter id={gooId} blur={blur} />
+      <Shape box={pill} className={cn(SURFACE_SHADOW[3])} />
       {hasBody && <Shape box={bodyBox} className={cn(shape.container, SURFACE_SHADOW[3])} />}
       {/* The filter is the effect itself: it melts the two token-filled shapes into one. */}
       <div aria-hidden className="pointer-events-none absolute inset-0" style={{ filter: `url(#${gooId})` }}>
-        <Shape box={pill} className={cn('rounded-full', SURFACE_BG[level])} />
+        <Shape box={pill} className={cn(SURFACE_BG[level])} />
         {hasBody && <Shape box={bodyBox} shapeRef={bodyShape} className={cn(shape.container, SURFACE_BG[level])} />}
       </div>
 
@@ -252,13 +338,14 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
           ref={header}
           className="absolute top-0 left-0 flex h-9 w-max items-center py-1.5 pr-4 pl-1.5"
           initial={false}
-          animate={{ x: pillX, y: top ? 0 : height - PILL }}
+          animate={{ x: headerX }}
           transition={move}
         >
           <ToastPrimitive.Title className="relative inline-flex items-center whitespace-nowrap">
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
-                key={`${type}-${toast.title}`}
+                // A string title keys itself; a node title crossfades on each update.
+                key={`${type}-${typeof toast.title === 'string' ? toast.title : toast.updateKey}`}
                 className="inline-flex items-center gap-2"
                 initial={{ opacity: 0, filter: 'blur(4px)' }}
                 animate={{ opacity: 1, filter: 'blur(0px)' }}
@@ -266,7 +353,7 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
                 transition={spring.moderate}
               >
                 <span className={cn('flex size-6 items-center justify-center rounded-full', TONES[type])}>
-                  <Icon size={14} strokeWidth={2.5} className={type === 'loading' ? 'animate-spin' : undefined} />
+                  <StatusIcon type={type} icon={toast.data?.icon} />
                 </span>
                 <span className="text-body weight-medium text-foreground">{toast.title}</span>
               </motion.span>
@@ -277,12 +364,17 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
           <motion.div
             className="absolute top-0 left-0 w-full overflow-hidden"
             initial={false}
-            animate={{ y: bodyBox.y, height: bodyHeight, opacity: expanded ? 1 : 0 }}
+            animate={{ y: PILL, height: bodyHeight, opacity: expanded ? 1 : 0 }}
             transition={{ ...move, opacity: expanded ? spring.slow : spring.slow.exit }}
           >
-            <div ref={body} className={cn('flex flex-col items-start gap-3 p-4', top ? 'pt-6' : 'pb-6')}>
+            <div
+              ref={body}
+              className="flex flex-col items-start gap-3 pr-4 pb-3.5"
+              style={{ paddingLeft: TITLE_INSET }}
+            >
               <ToastPrimitive.Description className="text-caption text-muted-foreground" />
               {toast.actionProps && <ToastPrimitive.Action render={<Button size="compact" variant="secondary" />} />}
+              {customAction}
             </div>
           </motion.div>
         )}
@@ -292,27 +384,29 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
 }
 
 function ToastList() {
-  const { toasts } = ToastPrimitive.useToastManager()
+  const { toasts } = ToastPrimitive.useToastManager<ToastData>()
   return toasts.map(toast => <ToastItem key={toast.id} toast={toast} />)
 }
 
-interface ToastTriggerProps extends Omit<SlotProps, 'type'> {
+interface ToastTriggerProps extends Omit<SlotProps, 'type' | 'title'> {
   /** The toast's title, in the pill. */
-  title?: string
+  title?: ReactNode
   /** Text for the body the pill melts into. */
-  description?: string
+  description?: ReactNode
   /** State: sets the icon and its color. Defaults to `'info'`. */
   type?: 'success' | 'loading' | 'error' | 'warning' | 'info' | 'action'
   /** Ms before it leaves; 0 keeps it until dismissed. Defaults to the `Toast`'s `timeout`. */
   timeout?: number
-  /** A button in the body. */
-  action?: { label: string; onClick?: () => void }
+  /** Replaces the state's icon in the pill: an icon component, or any node. */
+  icon?: IconComponent | ReactNode
+  /** A button in the body (`{ label, onClick }`), or any node. */
+  action?: ToastActionOptions | ReactNode
   /** Runs a task: the toast shows `title` while it is pending, then `success` or `error`. */
   promise?: () => Promise<unknown>
   /** The toast once `promise` resolves. */
-  success?: { title?: string; description?: string }
+  success?: ToastOptions
   /** The toast if `promise` rejects. */
-  error?: { title?: string; description?: string }
+  error?: ToastOptions
 }
 
 const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
@@ -322,6 +416,7 @@ const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
       description,
       type,
       timeout,
+      icon,
       action,
       promise,
       success,
@@ -330,22 +425,24 @@ const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
       asChild,
       children,
       onClick,
+      // The element is the control itself (cloned, no Base UI button), so there is nothing to tell.
+      nativeButton: _nativeButton,
       ...props
     },
     ref,
   ) => {
-    const toast = useToast()
+    const toasts = useToast()
     const el = slotRender(render, asChild, children)
     const press = (event: React.MouseEvent<HTMLButtonElement>) => {
       onClick?.(event)
       if (promise) {
         // The error toast is the report; the rejection Base UI hands back would only surface unhandled.
-        toast
-          .promise(promise(), { loading: { title, description }, success: success ?? {}, error: error ?? {} })
+        toasts
+          .promise(promise(), { loading: { title, description, icon }, success: success ?? {}, error: error ?? {} })
           .catch(() => {})
         return
       }
-      toast.show({ title, description, type, timeout, action })
+      toasts.show({ title, description, type, timeout, icon, action })
     }
     return el ? (
       cloneElement(el, { ...props, ref, onClick: press })
@@ -358,14 +455,74 @@ const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
 )
 ToastTrigger.displayName = 'ToastTrigger'
 
+type ToastButtonVariant = NonNullable<ButtonProps['variant']>
+
+interface ToastActionProps extends SlotProps {
+  /** The Button's variant when there is no `render` element. Defaults to `'secondary'`. */
+  variant?: ToastButtonVariant
+}
+
+/**
+ * A button inside a toast (a custom `action` node or `description`), on Base UI's
+ * `Toast.Action`: a compact Button by default, or `render` / `asChild`. A toast shown with
+ * `action: { label, onClick }` already renders one.
+ */
+const ToastAction = forwardRef<HTMLButtonElement, ToastActionProps>(
+  ({ render, asChild, children, variant = 'secondary', ...props }, ref) => {
+    const child = asChild && isValidElement(children) ? children : undefined
+    const el = render ?? child ?? <Button size="compact" variant={variant} />
+    // Base UI renders the action only when it has children, so they go to the part, not the element.
+    const label = child
+      ? (child.props as { children?: ReactNode }).children
+      : (children ?? (el.props as { children?: ReactNode }).children)
+    return (
+      <ToastPrimitive.Action ref={ref} render={el} {...props}>
+        {label}
+      </ToastPrimitive.Action>
+    )
+  },
+)
+ToastAction.displayName = 'ToastAction'
+
+interface ToastCloseProps extends SlotProps {
+  /** The Button's variant when there is no `render` element. Defaults to `'ghost'`. */
+  variant?: ToastButtonVariant
+}
+
+/**
+ * Dismisses the toast it sits in (a custom `action` node or `description`), on Base UI's
+ * `Toast.Close`: a compact Button around `children`, an ✕ labelled `Close` without them, or
+ * `render` / `asChild`.
+ */
+const ToastClose = forwardRef<HTMLButtonElement, ToastCloseProps>(
+  ({ render, asChild, children, variant = 'ghost', ...props }, ref) => {
+    const XIcon = useIcon('x')
+    const el =
+      slotRender(render, asChild, children) ??
+      (children === undefined ? (
+        <Button size="icon-compact" variant={variant} aria-label="Close">
+          <XIcon />
+        </Button>
+      ) : (
+        <Button size="compact" variant={variant}>
+          {children}
+        </Button>
+      ))
+    return <ToastPrimitive.Close ref={ref} render={el} {...props} />
+  },
+)
+ToastClose.displayName = 'ToastClose'
+
 interface ToastProps {
-  /** Where toasts stack; the pill sits on that side and the body opens away from the edge. Defaults to `'top-right'`. */
+  /** Where toasts stack; the pill lands on that side and opens into a card. Defaults to `'bottom-center'`. */
   position?: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
   /** How many toasts show at once; older ones wait. Defaults to `3`. */
   limit?: number
   /** Ms a toast stays; hovering pauses it. Defaults to `6000`. */
   timeout?: number
-  /** The part of the app that can show toasts, with `Toast.Trigger`s or `useToast()`. */
+  /** Also renders the toasts this manager shows: pass the global `toast` so `toast()` calls from anywhere land here (mount one such `Toast` per app), or a manager from Base UI's `Toast.createToastManager()`. */
+  manager?: ToastSource
+  /** The part of the app that can show toasts, with `Toast.Trigger`s or `useToast()`. Optional: a `Toast` with a `manager` can stand alone. */
   children?: ReactNode
 }
 
@@ -384,10 +541,22 @@ interface ToastProps {
  *
  * `Toast` wraps the part of the app that shows toasts and renders them at
  * its `position`. Show one with `Toast.Trigger`, or call `useToast()`
- * inside it: `show`, `success`, `error`, `warning`, `info`, `promise` and
- * `close`.
+ * inside it: `show`, `success`, `error`, `warning`, `info`, `promise`,
+ * `update` and `close`.
+ *
+ * Or mount one `<Toast manager={toast} />` near the root and call the global
+ * `toast()` from anywhere, inside React or not: `toast({ title, description,
+ * type, timeout, icon, action, onClose })`, `toast.success`, `.error`,
+ * `.warning`, `.info`, `.loading`, `.promise`, `.update(id, …)` and
+ * `.dismiss(id?)`. Each call returns a handle with the toast's `id`,
+ * `update` and `dismiss`; calls made before the `Toast` mounts wait for it.
+ * Titles and descriptions take any node, `icon` replaces the state's glyph,
+ * and `action` is a button (`{ label, onClick }`) or any node.
  *
  * Statics:
+ * - `Toast.Action` / `Toast.Close` — a button and a dismiss for a custom
+ *   `action` node (or a description): compact Buttons by default (the close
+ *   an ✕ without children), or `render` / `asChild`.
  * - `Toast.Trigger` — a control that shows a toast when pressed:
  *   `render={<Button/>}` or `asChild`, with the toast's `title`,
  *   `description`, `type`, `timeout`, `action`, or a `promise` with its
@@ -395,26 +564,45 @@ interface ToastProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Toast({ position = 'top-right', limit = 3, timeout = 6000, children }: ToastProps) {
+function Toast({ position = 'bottom-center', limit = 3, timeout = 6000, manager, children }: ToastProps) {
   const settings = useMemo(() => ({ position, timeout }), [position, timeout])
+  const host = useToastHost(position)
 
   return (
-    <ToastPrimitive.Provider limit={limit} timeout={timeout}>
+    // The provider only ever subscribes to the manager, which is all a `ToastSource` promises.
+    <ToastPrimitive.Provider limit={limit} timeout={timeout} toastManager={manager as ToastManager | undefined}>
       <ToastSettings.Provider value={settings}>
         {children}
-        <ToastPrimitive.Portal>
-          <ToastPrimitive.Viewport className={cn('fixed z-[60] flex flex-col gap-2 outline-none', VIEWPORT[position])}>
-            <ToastList />
-          </ToastPrimitive.Viewport>
-        </ToastPrimitive.Portal>
+        {host && (
+          <ToastPrimitive.Portal container={host}>
+            <ToastPrimitive.Viewport className={cn('flex flex-col gap-2 outline-none empty:hidden', FLOW[position])}>
+              <ToastList />
+            </ToastPrimitive.Viewport>
+          </ToastPrimitive.Portal>
+        )}
       </ToastSettings.Provider>
     </ToastPrimitive.Provider>
   )
 }
 
 Toast.Trigger = ToastTrigger
+Toast.Action = ToastAction
+Toast.Close = ToastClose
 
-export type { ToastOptions, ToastPosition, ToastProps, ToastTriggerProps, ToastType }
-export { Toast, ToastTrigger, useToast }
+export type {
+  ToastActionOptions,
+  ToastActionProps,
+  ToastCloseProps,
+  ToastHandle,
+  ToastInput,
+  ToastOptions,
+  ToastPosition,
+  ToastPromiseOptions,
+  ToastProps,
+  ToastSource,
+  ToastTriggerProps,
+  ToastType,
+}
+export { Toast, ToastAction, ToastClose, ToastTrigger, toast, useToast }
 
 export default Toast

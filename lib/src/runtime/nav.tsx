@@ -1,10 +1,12 @@
 import { config } from 'virtual:modo-config'
 import { items } from 'virtual:modo-items'
+import { pages } from 'virtual:modo-pages'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import type { ReactNode } from 'react'
 import { TIERS } from '../lib/tiers'
 import { groupTree } from './groups'
+import { pageTitle } from './pages/ContentPage'
 import { usePath, withBase } from './router'
 import { cap } from './text'
 
@@ -13,7 +15,15 @@ export function SidebarNav() {
   const isActive = (href: string) => path === href || path.startsWith(`${href}/`)
   return (
     <>
-      <NavSection title={config.name} items={[{ id: '/', name: 'Overview' }]} isActive={isActive} />
+      <NavSection
+        title={config.name}
+        items={[
+          { id: '/', name: 'Overview' },
+          ...pages.filter(p => p.slug !== 'index').map(p => ({ id: `/${p.slug}`, name: pageTitle(p), group: p.group })),
+        ]}
+        // Exact: a folder's landing page stays inactive on the pages under it.
+        isActive={href => path === href}
+      />
       <NavSection
         title="Foundations"
         overview="/docs/tokens"

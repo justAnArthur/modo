@@ -49,9 +49,23 @@
  *   their box with the shared `useFieldBox` (ladder in the variant, state
  *   attributes, radius, inset), as every text field does; `variant` is typed
  *   `FieldVariant` (no `null`).
+ * - Hooks for remote data (local): `loading` (the chevron turns into a
+ *   spinner, a status row under the list, the empty message held back),
+ *   a controlled query (`inputValue` / `defaultInputValue` /
+ *   `onInputValueChange`), `filter={null}` to keep every item the caller
+ *   hands in, `readOnly`, a controlled popup (`open` / `defaultOpen` /
+ *   `onOpenChange`), a `footer` under the list (`Combobox.Content`), and
+ *   object items whose `label` is any node with a `textValue` to filter and
+ *   fill the field by.
+ * - Field parity (local): the fields read a surrounding Field's invalid state
+ *   (`error` still forces it; `invalid` is a prop too, and `aria-invalid`
+ *   follows the resolved state), `hideTrigger` drops the chevron button,
+ *   `labels` on the root translates the "Open" / "Clear" / "Remove …" button
+ *   names and the default "Search…" placeholder, and `onInputValueChange`
+ *   hears Base UI's change details (`reason`) as a second argument.
  */
 
-import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox'
+import { Combobox as ComboboxPrimitive, type ComboboxRootChangeEventDetails } from '@base-ui/react/combobox'
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
 import {
   createContext,
@@ -74,11 +88,13 @@ import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
 import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
+import { useReduceMotion } from '../../../lib/reduced-motion'
 import { shapeMap, useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
+import { useControllableState } from '../../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../../lib/use-merge-split'
 import { inPlaceOffset, type MorphOrigin, opensInPlace, useMorph, useMorphOrigin } from '../../../lib/use-morph'
@@ -105,7 +121,10 @@ import { SizeProvider } from '../../../primitives/sizes'
 /** An object item: `value` and `label`, plus whatever the rows need. */
 interface ComboboxItemObject {
   value: string
-  label: string
+  /** What the row and the chip show: text, or any node with a `textValue`. */
+  label: ReactNode
+  /** The item as text: what the query filters and the field shows. Defaults to `label` when it is a string, else `value`. */
+  textValue?: string
   [key: string]: unknown
 }
 
@@ -115,9 +134,39 @@ function itemValue(item: ComboboxItemData): string {
   return typeof item === 'string' ? item : item.value
 }
 
+/** The item as text: what filters, fills the field and names a chip. */
 function itemLabel(item: ComboboxItemData): string {
+  if (typeof item === 'string') return item
+  return item.textValue ?? (typeof item.label === 'string' ? item.label : item.value)
+}
+
+/** The item as shown: its label node. */
+function itemNode(item: ComboboxItemData): ReactNode {
   return typeof item === 'string' ? item : item.label
 }
+
+/** Every fixed word the field's buttons announce, for translating it. */
+interface ComboboxLabels {
+  /** Names the chevron button. Defaults to `"Open"`. */
+  open?: string
+  /** Names the clear ✕ of a `clearable` field. Defaults to `"Clear"`. */
+  clear?: string
+  /** Names a chip's remove ✕ from the chip's text: `(label) => …`. Defaults to ``(label) => `Remove ${label}` ``. */
+  remove?: (label: string) => string
+  /** The fields' placeholder while nothing is typed or selected, unless a field sets its own. Defaults to `"Search…"`. */
+  placeholder?: string
+}
+
+/** What `Combobox.Content`'s footer gets when it is a function. */
+interface ComboboxFooterContext {
+  /** Closes the popup. */
+  close: () => void
+  /** The trimmed query. */
+  query: string
+}
+
+/** A node, or a function of the popup's state, rendered under the list. */
+type ComboboxFooter = ReactNode | ((context: ComboboxFooterContext) => ReactNode)
 
 // The create row is one more item in the list the primitive filters and
 // highlights, so Enter and the arrows reach it like any row. Its value can't
@@ -154,7 +203,19 @@ interface ComboboxContextValue {
   /** `hideSelected` has emptied the list with nothing typed: every item is
    *  a chip already. */
   allSelected: boolean
+  /** Local: items are on their way; the empty message waits. */
+  loading: boolean
+  /** Local: the loading row's text. */
+  loadingLabel: ReactNode
+  /** Local: shows the picks but takes no input. */
+  readOnly: boolean
+  /** Local: opens or closes the popup (the footer's `close`). */
+  setOpen: (open: boolean) => void
+  /** Local: the translated button names and default placeholder. */
+  labels: ComboboxLabels
 }
+
+const NO_LABELS: ComboboxLabels = {}
 
 const ComboboxContext = createContext<ComboboxContextValue | null>(null)
 
@@ -203,8 +264,26 @@ interface ComboboxProps {
   defaultValue?: string | string[]
   /** Called with the pick, `""` when cleared, or the array when `multiple`. */
   onValueChange?: ((value: string) => void) | ((value: string[]) => void)
-  /** Match an item against the query. Defaults to a case-insensitive "contains" on the label. */
-  filter?: (item: ComboboxItemData, query: string) => boolean
+  /** Match an item against the query, or `null` to show every item as given (filtered elsewhere, e.g. on a server). Defaults to a case-insensitive "contains" on the item's text. */
+  filter?: ((item: ComboboxItemData, query: string) => boolean) | null
+  /** Controlled query, the field's text. Pair it with `onInputValueChange`. */
+  inputValue?: string
+  /** Initial query, for an uncontrolled field. Defaults to the picked item's text in single mode, else `""`. */
+  defaultInputValue?: string
+  /** Called with the field's text on every keystroke, and when a pick or a close rewrites it. The second argument is Base UI's change details: `reason` tells typing (`"input-change"`) from a pick, a clear or a close rewriting the text (`"item-press"`, `"clear-press"`, `"none"`, …). */
+  onInputValueChange?: (inputValue: string, details: ComboboxRootChangeEventDetails) => void
+  /** Items are loading: the chevron turns into a spinner, a status row sits under the list and the empty message waits. Defaults to `false`. */
+  loading?: boolean
+  /** The loading row's text. Defaults to `"Loading…"`. */
+  loadingLabel?: ReactNode
+  /** Shows the picks but takes no input: the popup stays shut and the clear ✕ and chip ✕ go. Defaults to `false`. */
+  readOnly?: boolean
+  /** Controlled open state of the popup. Pair it with `onOpenChange`. */
+  open?: boolean
+  /** Initial open state, for an uncontrolled popup. Defaults to `false`. */
+  defaultOpen?: boolean
+  /** Called when the popup opens or closes. */
+  onOpenChange?: (open: boolean) => void
   /** Adds a last row that creates the trimmed query whenever no label matches it exactly. Add the item to `items` and return it to select it. */
   onCreate?: (query: string) => ComboboxItemData | void
   /** The create row's label. Defaults to ``(query) => `Create “${query}”` ``. */
@@ -221,6 +300,8 @@ interface ComboboxProps {
   required?: boolean
   /** Pins field and popup to one step of the size ladder (default 36px, compact 28px — see the Sizes primitive). Omitted, both follow the surrounding SizeProvider. */
   size?: SizeVariant
+  /** Every fixed word the field's buttons announce (`open`, `clear`, `remove`, `placeholder`), for translating it. Defaults to English: `"Open"`, `"Clear"`, `"Remove …"`, `"Search…"`. */
+  labels?: ComboboxLabels
 }
 
 function toValues(v: string | readonly string[] | undefined): string[] {
@@ -244,11 +325,25 @@ function toValues(v: string | readonly string[] | undefined): string[] {
  * an empty field drops the last one. Uncontrolled with `defaultValue`, or
  * controlled with `value` plus `onValueChange`.
  *
+ * For items that come from elsewhere (a server, a paged API), own the query
+ * with `inputValue` + `onInputValueChange`, pass `filter={null}` so the list
+ * shows exactly the items you hand it, and set `loading` while they are on
+ * their way: the chevron blurs into a spinner and a status row sits under
+ * the list instead of the empty message. `Combobox.Content`'s `footer` pins
+ * an action under the list ("Load more", "Add new…"). An object item's
+ * `label` may be any node; its `textValue` is what filters, fills the field
+ * and names its chip. `readOnly` shows the picks and takes no input. Inside a
+ * Field the fields take its invalid state, like Input does, and `hideTrigger`
+ * drops the chevron (and with it the loading spinner; the popup's status row is then the only loading signal) for a field that opens by typing. The words the buttons
+ * announce ("Open", "Clear", "Remove …") and the default "Search…" placeholder
+ * come from `labels`, for translating them.
+ *
  * Statics:
- * - `Combobox.Input` — the single-pick field: icon, text input, clear ✕, chevron.
- * - `Combobox.Chips` — the multiple field: one chip per pick ahead of the input.
+ * - `Combobox.Input` — the single-pick field: icon, text input, clear ✕, chevron (`hideTrigger` drops it); `invalid` or `error` turn it destructive, as a surrounding Field's invalid state does.
+ * - `Combobox.Chips` — the multiple field: one chip per pick ahead of the input, with the same `hideTrigger`, `invalid` and `error`.
  * - `Combobox.Content` — the popup surface, holding `Combobox.Empty` and `Combobox.List`:
- *   `side`, `align`, `sideOffset` and the morph options `from`, `effect`, `hideSource`, `tier`.
+ *   `side`, `align`, `sideOffset`, a `footer` under the list, and the morph options
+ *   `from`, `effect`, `hideSource`, `tier`.
  * - `Combobox.List` — a row per match, from a `(item, index) => ReactNode` child.
  * - `Combobox.Item` — one row: `value`, optional `icon` and `disabled`.
  * - `Combobox.Empty` — what shows when nothing matches.
@@ -270,12 +365,27 @@ function Combobox({
   disabled = false,
   name,
   required,
+  inputValue: inputValueProp,
+  defaultInputValue,
+  onInputValueChange,
+  labels,
+  loading = false,
+  loadingLabel = 'Loading…',
+  readOnly = false,
+  open: openProp,
+  defaultOpen = false,
+  onOpenChange,
   size,
 }: ComboboxProps) {
   const isMultiple = !!multiple
   const [internalValues, setInternalValues] = useState<string[]>(() => toValues(defaultValue))
-  const [inputValue, setInputValue] = useState('')
-  const [open, setOpen] = useState(false)
+  // The primitive's change details ride along to the caller's handler: the setter below drops no-op
+  // writes, so the details are parked in a ref the handler reads when the write goes through.
+  const inputDetails = useRef<ComboboxRootChangeEventDetails | undefined>(undefined)
+  const [inputValue, setInputValue] = useControllableState(inputValueProp, defaultInputValue ?? '', next =>
+    onInputValueChange?.(next, inputDetails.current as ComboboxRootChangeEventDetails),
+  )
+  const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
   const [highlight, setHighlight] = useState<Highlight | null>(null)
   // Items the create row made while no consumer owns the list.
   const [createdItems, setCreatedItems] = useState<ComboboxItemData[]>([])
@@ -368,6 +478,8 @@ function Combobox({
   // Without a consumer filter the primitive's own collator match is kept.
   const { contains } = ComboboxPrimitive.useFilter()
   const filterFn = useMemo(() => {
+    // `null`: the caller filters; the list shows what it is handed.
+    if (filter === null) return null
     if (!filter && !createItem) return undefined
     const match = filter
       ? (item: ComboboxItemData, q: string) => filter(item, q)
@@ -388,8 +500,28 @@ function Combobox({
       itemsByValue,
       createRow,
       allSelected,
+      loading,
+      loadingLabel,
+      readOnly,
+      setOpen,
+      labels: labels ?? NO_LABELS,
     }),
-    [values, isMultiple, inputValue, open, origin, disabled, itemsByValue, createRow, allSelected],
+    [
+      values,
+      isMultiple,
+      inputValue,
+      open,
+      origin,
+      disabled,
+      itemsByValue,
+      createRow,
+      allSelected,
+      loading,
+      loadingLabel,
+      readOnly,
+      setOpen,
+      labels,
+    ],
   )
 
   // A size prop pins the whole compound (field + portalled popup — React
@@ -415,12 +547,20 @@ function Combobox({
             if (next) capture({ event: details.event, trigger: anchorRef.current ?? undefined })
             setOpen(next)
           }}
-          onInputValueChange={next => setInputValue(next)}
+          // Controlled only when the caller owns the query; otherwise Base UI
+          // keeps it and this mirrors it.
+          inputValue={inputValueProp}
+          defaultInputValue={defaultInputValue}
+          onInputValueChange={(next, details) => {
+            inputDetails.current = details
+            setInputValue(next)
+          }}
           autoHighlight={ALWAYS_HIGHLIGHT}
           onItemHighlighted={(item, details) =>
             setHighlight(item === undefined ? null : { index: details.index, keyboard: details.reason !== 'pointer' })
           }
           disabled={disabled}
+          readOnly={readOnly}
           name={name}
           required={required}
           // Non-modal: the page keeps scrolling and the Positioner tracks the
@@ -469,10 +609,14 @@ interface ComboboxFieldProps
   variant?: FieldVariant
   /** Leading icon inside the field. */
   icon?: IconComponent
-  /** Shown while nothing is typed or selected. Defaults to `"Search…"`. */
+  /** Shown while nothing is typed or selected. Defaults to `labels.placeholder` on the root, else `"Search…"`. */
   placeholder?: string
   /** Error message under the field; tints the ring and sets `aria-invalid`. */
   error?: string
+  /** Marks the value invalid without a message: the field turns destructive and sets `aria-invalid`. Defaults to the surrounding Field's invalid state. */
+  invalid?: boolean
+  /** Hides the chevron button, for a field that opens by typing or arrow keys alone. It also drops the loading spinner, which lives in that button, so the popup's status row is the only loading signal. Defaults to `false`. */
+  hideTrigger?: boolean
   /** Render a ✕ that clears the selection and query. Its slot is always
    *  reserved so the field never changes width. Defaults to `false`. */
   clearable?: boolean
@@ -483,18 +627,38 @@ interface ComboboxFieldProps
 
 type ComboboxInputProps = ComboboxFieldProps
 
+// Icon swap (motion.md): the chevron and the spinner share one cell.
+const SHOWN = { opacity: 1, scale: 1, filter: 'blur(0px)' }
+const HIDDEN = { opacity: 0, scale: 0.6, filter: 'blur(4px)' }
+const swapEnter = { type: 'tween' as const, duration: spring.fast.duration, ease: 'easeOut' as const }
+const swapLeave = { type: 'tween' as const, ...spring.fast.exit, ease: 'easeIn' as const }
+
 /** The trailing clear ✕ and chevron, shared by both fields. */
-function FieldControls({ clearable, compact, iconSize }: { clearable: boolean; compact: boolean; iconSize: number }) {
+function FieldControls({
+  clearable,
+  hideTrigger,
+  compact,
+  iconSize,
+}: {
+  clearable: boolean
+  hideTrigger: boolean
+  compact: boolean
+  iconSize: number
+}) {
   const XIcon = useIcon('x')
+  const Loader = useIcon('loader-circle')
   const pill = useShape().variant === 'pill'
+  const { loading, readOnly, labels } = useComboboxContext()
+  const reduced = useReduceMotion()
+  const swap = (shown: boolean) => (reduced ? { opacity: shown ? 1 : 0 } : shown ? SHOWN : HIDDEN)
   return (
     <>
-      {clearable && (
+      {clearable && !readOnly && (
         // The primitive hides the button while there is nothing to clear; a
         // fixed slot keeps the field's width steady either way.
         <span className={cn('flex shrink-0 items-center justify-center', compact ? 'size-5' : 'size-6')}>
           <ComboboxPrimitive.Clear
-            aria-label="Clear"
+            aria-label={labels.clear ?? 'Clear'}
             className={cn(clearButtonClass, pill && 'rounded-full', compact ? 'size-5' : 'size-6')}
           >
             <XIcon size={iconSize} strokeWidth={1.5} />
@@ -502,37 +666,71 @@ function FieldControls({ clearable, compact, iconSize }: { clearable: boolean; c
         </span>
       )}
       {/* Not a tab stop: the field itself opens on ArrowDown or typing. */}
-      <ComboboxPrimitive.Trigger
-        aria-label="Open"
-        tabIndex={-1}
-        className={cn(fieldButtonClass, compact ? 'size-5' : 'size-6')}
-      >
-        <svg
-          width={iconSize}
-          height={iconSize}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="transition-colors duration-fast"
+      {!hideTrigger && (
+        <ComboboxPrimitive.Trigger
+          aria-label={labels.open ?? 'Open'}
+          tabIndex={-1}
+          className={cn(fieldButtonClass, compact ? 'size-5' : 'size-6')}
         >
-          <path d="M6 9l6 6 6-6" />
-        </svg>
-      </ComboboxPrimitive.Trigger>
+          {/* While loading, the chevron blurs into a spinner in the same cell. */}
+          <span className="grid" style={{ width: iconSize, height: iconSize }}>
+            <motion.span
+              className="col-start-1 row-start-1 flex"
+              initial={false}
+              animate={swap(!loading)}
+              transition={loading ? swapLeave : swapEnter}
+            >
+              <svg
+                width={iconSize}
+                height={iconSize}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={cn('transition-colors duration-fast', readOnly && 'invisible')}
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </motion.span>
+            <motion.span
+              aria-hidden
+              className="col-start-1 row-start-1 flex"
+              initial={false}
+              animate={swap(loading)}
+              transition={loading ? swapEnter : swapLeave}
+            >
+              <Loader size={iconSize} strokeWidth={1.5} className="animate-spin motion-reduce:animate-none" />
+            </motion.span>
+          </span>
+        </ComboboxPrimitive.Trigger>
+      )}
     </>
   )
 }
 
 const ComboboxInput = forwardRef<HTMLInputElement, ComboboxInputProps>(
   (
-    { className, variant = 'bordered', icon: Icon, placeholder = 'Search…', error, clearable = false, size, ...props },
+    {
+      className,
+      variant = 'bordered',
+      icon: Icon,
+      placeholder,
+      error,
+      invalid,
+      hideTrigger = false,
+      clearable = false,
+      size,
+      ...props
+    },
     ref,
   ) => {
-    const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid: !!error, size })
+    const { anchorRef, readOnly, labels } = useComboboxContext()
+    // `error` forces the destructive state; otherwise the prop, then a surrounding Field's.
+    const box = useFieldBox({ variant, invalid: error ? true : invalid, readOnly, size })
+    const { size: sizeClasses, props: boxProps } = box
     const compact = sizeClasses.variant === 'compact'
-    const { anchorRef } = useComboboxContext()
 
     return (
       <div className="flex flex-col gap-1">
@@ -553,8 +751,8 @@ const ComboboxInput = forwardRef<HTMLInputElement, ComboboxInputProps>(
           {Icon && <Icon size={sizeClasses.icon} strokeWidth={1.5} className={fieldIconClasses} />}
           <ComboboxPrimitive.Input
             ref={ref}
-            placeholder={placeholder}
-            aria-invalid={!!error || undefined}
+            placeholder={placeholder ?? labels.placeholder ?? 'Search…'}
+            aria-invalid={box.invalid || undefined}
             className={cn(
               'min-w-0 flex-1 rounded-none bg-transparent text-foreground placeholder:text-muted-foreground outline-none font-[inherit]',
               sizeClasses.text,
@@ -564,7 +762,12 @@ const ComboboxInput = forwardRef<HTMLInputElement, ComboboxInputProps>(
             )}
             {...props}
           />
-          <FieldControls clearable={clearable} compact={compact} iconSize={sizeClasses.icon} />
+          <FieldControls
+            clearable={clearable}
+            hideTrigger={hideTrigger}
+            compact={compact}
+            iconSize={sizeClasses.icon}
+          />
         </ComboboxPrimitive.InputGroup>
         {error && <span className="text-caption text-destructive pl-3">{error}</span>}
       </div>
@@ -621,13 +824,25 @@ function useChipRowHeight(padY: number) {
 
 const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
   (
-    { className, variant = 'bordered', icon: Icon, placeholder = 'Search…', error, clearable = false, size, ...props },
+    {
+      className,
+      variant = 'bordered',
+      icon: Icon,
+      placeholder,
+      error,
+      invalid,
+      hideTrigger = false,
+      clearable = false,
+      size,
+      ...props
+    },
     ref,
   ) => {
     const XIcon = useIcon('x')
     const shape = useShape()
-    const { anchorRef, open, disabled, inputValue, values } = useComboboxContext()
-    const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid: !!error, disabled, size })
+    const { anchorRef, open, disabled, inputValue, values, readOnly, labels } = useComboboxContext()
+    const box = useFieldBox({ variant, invalid: error ? true : invalid, disabled, readOnly, size })
+    const { size: sizeClasses, props: boxProps } = box
     const compact = sizeClasses.variant === 'compact'
     const rowHeight = useChipRowHeight(compact ? 8 : 12)
 
@@ -718,17 +933,26 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
                               compact ? 'h-5 text-caption-compact' : 'h-6 text-caption',
                             )}
                           >
-                            <span className="truncate">{label}</span>
-                            <ComboboxPrimitive.ChipRemove
-                              aria-label={`Remove ${label}`}
+                            <span
                               className={cn(
-                                chipRemoveClass,
-                                shape.variant === 'pill' && 'rounded-full',
-                                compact ? 'size-4' : 'size-5',
+                                typeof itemNode(item) === 'string' ? 'truncate' : 'flex min-w-0 items-center',
+                                readOnly && 'pr-1.5',
                               )}
                             >
-                              <XIcon size={compact ? 10 : 12} strokeWidth={2} />
-                            </ComboboxPrimitive.ChipRemove>
+                              {itemNode(item)}
+                            </span>
+                            {!readOnly && (
+                              <ComboboxPrimitive.ChipRemove
+                                aria-label={labels.remove ? labels.remove(label) : `Remove ${label}`}
+                                className={cn(
+                                  chipRemoveClass,
+                                  shape.variant === 'pill' && 'rounded-full',
+                                  compact ? 'size-4' : 'size-5',
+                                )}
+                              >
+                                <XIcon size={compact ? 10 : 12} strokeWidth={2} />
+                              </ComboboxPrimitive.ChipRemove>
+                            )}
                           </ComboboxPrimitive.Chip>
                         </motion.span>
                       )
@@ -745,8 +969,8 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
                     <ComboboxPrimitive.Input
                       ref={ref}
                       size={Math.max(1, inputValue.length + 1)}
-                      placeholder={selected?.length ? undefined : placeholder}
-                      aria-invalid={!!error || undefined}
+                      placeholder={selected?.length ? undefined : (placeholder ?? labels.placeholder ?? 'Search…')}
+                      aria-invalid={box.invalid || undefined}
                       className={cn(
                         'w-full min-w-0 rounded-none bg-transparent text-foreground placeholder:text-muted-foreground outline-none font-[inherit]',
                         // Line box = row height, so the caret spans the chip row.
@@ -760,7 +984,12 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
               )}
             </ComboboxPrimitive.Value>
           </div>
-          <FieldControls clearable={clearable} compact={compact} iconSize={sizeClasses.icon} />
+          <FieldControls
+            clearable={clearable}
+            hideTrigger={hideTrigger}
+            compact={compact}
+            iconSize={sizeClasses.icon}
+          />
         </ComboboxPrimitive.Chips>
         {error && <span className="text-caption text-destructive pl-3">{error}</span>}
       </div>
@@ -793,6 +1022,8 @@ interface ComboboxContentProps {
   hideSource?: boolean
   /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
   tier?: 'moderate' | 'slow'
+  /** Pinned under the list, past a hairline: a "load more" or "add new" action. A function gets `{ close, query }`. */
+  footer?: ComboboxFooter
 }
 
 const ComboboxContent = forwardRef<HTMLDivElement, ComboboxContentProps>(
@@ -807,10 +1038,11 @@ const ComboboxContent = forwardRef<HTMLDivElement, ComboboxContentProps>(
       effect,
       hideSource,
       tier = 'moderate',
+      footer,
     },
     ref,
   ) => {
-    const { open, origin, anchorRef } = useComboboxContext()
+    const { open, origin, anchorRef, setOpen, inputValue } = useComboboxContext()
     const morph = useMorph(open, origin, { from, effect, hideSource, tier })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
     // Lifts 2 levels off its substrate with a fixed shadow (see Elevated).
@@ -843,6 +1075,14 @@ const ComboboxContent = forwardRef<HTMLDivElement, ComboboxContentProps>(
                 )}
               >
                 {children}
+                {footer !== undefined && (
+                  // Outside the scrolling list, so it stays put while the rows scroll.
+                  <div className="shrink-0 border-t border-border p-1">
+                    {typeof footer === 'function'
+                      ? footer({ close: () => setOpen(false), query: inputValue.trim() })
+                      : footer}
+                  </div>
+                )}
               </MorphSurface>
             </SurfaceProvider>
           </ComboboxPrimitive.Popup>
@@ -867,7 +1107,9 @@ interface ComboboxListProps {
 }
 
 const ComboboxList = forwardRef<HTMLDivElement, ComboboxListProps>(({ className, children }, ref) => {
-  const { open, values, multiple, inputValue, createRow } = useComboboxContext()
+  const { open, values, multiple, inputValue, createRow, loading, loadingLabel } = useComboboxContext()
+  const Loader = useIcon('loader-circle')
+  const sizeClasses = useSize()
   const highlight = useContext(ComboboxHighlightContext)
   const PlusIcon = useIcon('plus')
   const shape = popupShape
@@ -1043,6 +1285,27 @@ const ComboboxList = forwardRef<HTMLDivElement, ComboboxListProps>(({ className,
             )}
           </ComboboxPrimitive.Collection>
         </ComboboxPrimitive.List>
+        {loading && (
+          // Not a row: no hover, no pick. Under the rows, so items already
+          // here stay where they are while more arrive.
+          <div
+            role="status"
+            className={cn(
+              'flex shrink-0 items-center justify-center text-muted-foreground',
+              sizeClasses.control,
+              sizeClasses.itemPx,
+              sizeClasses.gap,
+              sizeClasses.text,
+            )}
+          >
+            <Loader
+              size={sizeClasses.icon}
+              strokeWidth={1.5}
+              className="shrink-0 animate-spin motion-reduce:animate-none"
+            />
+            <span className="truncate [text-box:trim-both_cap_alphabetic]">{loadingLabel}</span>
+          </div>
+        )}
       </ScrollArea>
     </ComboboxContentContext.Provider>
   )
@@ -1131,7 +1394,17 @@ const ComboboxItem = forwardRef<HTMLDivElement, ComboboxItemProps>(
 
         {/* py-1/-my-1 keeps truncate's overflow:hidden from clipping
             ascenders/descenders outside the trimmed box. */}
-        <span className="flex-1 min-w-0 truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1">{children}</span>
+        {/* Nodes keep their own box; only text is trimmed and truncated. */}
+        <span
+          className={cn(
+            'flex-1 min-w-0',
+            typeof children === 'string' || typeof children === 'number'
+              ? 'truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1'
+              : 'flex items-center',
+          )}
+        >
+          {children}
+        </span>
 
         {/* Always-rendered fixed slot so the check appearing/disappearing
             never changes the row's intrinsic width. */}
@@ -1201,7 +1474,7 @@ const ComboboxEmpty = forwardRef<HTMLDivElement, ComboboxEmptyProps>(
         className={cn('px-3 text-center text-muted-foreground [&:not(:empty)]:py-6', sizeClasses.text, className)}
         {...props}
       >
-        {ctx.allSelected && allSelected !== undefined ? allSelected : children}
+        {ctx.loading ? null : ctx.allSelected && allSelected !== undefined ? allSelected : children}
       </ComboboxPrimitive.Empty>
     )
   },
@@ -1229,10 +1502,13 @@ export type {
   ComboboxChipsProps,
   ComboboxContentProps,
   ComboboxEmptyProps,
+  ComboboxFooter,
+  ComboboxFooterContext,
   ComboboxInputProps,
   ComboboxItemData,
   ComboboxItemObject,
   ComboboxItemProps,
+  ComboboxLabels,
   ComboboxListProps,
   ComboboxProps,
   ComboboxValue,

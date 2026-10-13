@@ -26,6 +26,13 @@
  *   with their descriptions, so modo's parser lists them. The track-styling
  *   props (`trackClassName`, `trackStyle`, `fillClassName`, `fillStyle`,
  *   `hideFill`, `thumbColor`, `thumbBorderColor`) are still inherited.
+ * - `aria-label` (local addition) names the thumbs ahead of `label`, so a
+ *   slider without a visible label prefix still has an accessible name; it
+ *   is no longer spread onto the role-less root div.
+ * - `orientation="vertical"` (local addition): upright track on the compact engine
+ *   (axis position grows from the bottom edge; pointer math reads clientY), and
+ *   `onValueCommit` (both engines): fires once as a pointer drag ends, and for
+ *   keyboard steps and committed edits through Base UI's `onValueCommitted`.
  * - TSDoc with the FF docs page's examples added above `Slider`;
  *   `export default Slider` added.
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
@@ -90,6 +97,8 @@ interface SliderEngineProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChan
   hideFill?: boolean
   thumbColor?: string
   thumbBorderColor?: string
+  orientation?: 'horizontal' | 'vertical'
+  onValueCommit?: (value: SliderValue) => void
 }
 
 // ---------------------------------------------------------------------------
@@ -287,21 +296,28 @@ interface TooltipValueProps {
   value: number
   formatValue: (v: number) => string
   motionX: MotionValue<number>
+  vertical?: boolean
 }
 
-function TooltipValue({ value, formatValue, motionX }: TooltipValueProps) {
+function TooltipValue({ value, formatValue, motionX, vertical = false }: TooltipValueProps) {
   const shape = useShape()
   const tooltipX = useTransform(motionX, x => x + THUMB_SIZE / 2)
+  const tooltipY = useTransform(motionX, x => -x)
   return (
     <motion.div
-      className="absolute -translate-x-1/2 pointer-events-none z-20"
-      style={{
-        x: tooltipX,
-        top: -16,
-      }}
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 4, transition: spring.fast.exit }}
+      className={cn('absolute pointer-events-none z-20', vertical ? 'translate-y-1/2' : '-translate-x-1/2')}
+      style={
+        vertical
+          ? { y: tooltipY, bottom: THUMB_SIZE / 2, left: `calc(50% + ${THUMB_SIZE}px)` }
+          : { x: tooltipX, top: -16 }
+      }
+      initial={vertical ? { opacity: 0, x: -4 } : { opacity: 0, y: 4 }}
+      animate={vertical ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
+      exit={
+        vertical
+          ? { opacity: 0, x: -4, transition: spring.fast.exit }
+          : { opacity: 0, y: 4, transition: spring.fast.exit }
+      }
       transition={spring.fast}
     >
       <span
@@ -332,7 +348,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
       steps,
       showSteps = false,
       showValue = true,
-      valuePosition = 'left',
+      valuePosition: valuePositionProp,
       formatValue = String,
       label,
       disabled = false,
@@ -343,11 +359,19 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
       hideFill = false,
       thumbColor,
       thumbBorderColor,
+      orientation = 'horizontal',
+      onValueCommit,
       className,
+      'aria-label': ariaLabel,
       ...props
     },
     ref,
   ) => {
+    const vertical = orientation === 'vertical'
+    const valuePosition = valuePositionProp ?? (vertical ? 'top' : 'left')
+    const onValueCommitRef = useRef(onValueCommit)
+    onValueCommitRef.current = onValueCommit
+    const latestValue = useRef<SliderValue>(value)
     const isRange = Array.isArray(value)
     const values = toRadixValue(value)
     const shape = useShape()
@@ -415,17 +439,38 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
     )
     const fillWidth = isRange ? fillWidthRange : fillWidthSingle
 
+    // Vertical: the axis position grows upward from the bottom edge.
+    const thumbY0 = useTransform(motionX0, x => -x)
+    const thumbY1 = useTransform(motionX1, x => -x)
+
     // --- Step dots mask (hides dots on filled side, like SliderComfortable pips) ---
+    const maskDir = vertical ? 'to top' : 'to right'
     const stepDotsMaskSingle = useTransform(motionX0, x => {
       const edge = x + THUMB_SIZE / 2
-      return `linear-gradient(to right, transparent ${edge}px, black ${edge + 2}px)`
+      return `linear-gradient(${maskDir}, transparent ${edge}px, black ${edge + 2}px)`
     })
     const stepDotsMaskRange = useTransform([motionX0, motionX1] as MotionValue<number>[], ([x0, x1]) => {
       const left = (x0 as number) + THUMB_SIZE / 2
       const right = (x1 as number) + THUMB_SIZE / 2
-      return `linear-gradient(to right, black ${left - 2}px, transparent ${left}px, transparent ${right}px, black ${right + 2}px)`
+      return `linear-gradient(${maskDir}, black ${left - 2}px, transparent ${left}px, transparent ${right}px, black ${right + 2}px)`
     })
     const stepDotsMask = isRange ? stepDotsMaskRange : stepDotsMaskSingle
+
+    // Pointer position along the track's axis (from the min end) and the track's length, in layout
+    // space so ancestor CSS scale doesn't skew them.
+    const measure = useCallback(
+      (clientX: number, clientY: number) => {
+        const trackEl = trackRef.current
+        if (!trackEl) return null
+        const rect = trackEl.getBoundingClientRect()
+        const length = vertical ? trackEl.offsetHeight : trackEl.offsetWidth
+        const visual = vertical ? rect.height : rect.width
+        if (length <= 0 || visual <= 0) return null
+        const scale = visual / length
+        return { length, pos: (vertical ? rect.bottom - clientY : clientX - rect.left) / scale }
+      },
+      [vertical],
+    )
 
     // --- Hover preview computation ---
     const computeHoverPreview = useCallback(
@@ -464,7 +509,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
     useLayoutEffect(() => {
       const el = trackRef.current
       if (!el || initialSyncDone.current) return
-      const w = el.offsetWidth
+      const w = vertical ? el.offsetHeight : el.offsetWidth
       trackWidthRef.current = w
       const px0 = valueToPixel(values[0]!, min, max, w)
       motionX0.set(px0)
@@ -481,7 +526,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
       const el = trackRef.current
       if (!el) return
       const ro = new ResizeObserver(([entry]) => {
-        const w = entry!.contentRect.width
+        const w = vertical ? entry!.contentRect.height : entry!.contentRect.width
         trackWidthRef.current = w
         if (!dragging.current && initialSyncDone.current) {
           const v = valuesRef.current
@@ -497,7 +542,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
       })
       ro.observe(el)
       return () => ro.disconnect()
-    }, [isRange, motionX0, motionX1])
+    }, [isRange, vertical, motionX0, motionX1])
 
     // --- Sync motion values on value change (keyboard, programmatic) ---
     // Depend on a primitive key rather than the `values` array — its identity
@@ -536,8 +581,10 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
         if (isRange) {
           const newValues: [number, number] = [...(values as [number, number])]
           newValues[thumbIndex] = newValue
+          latestValue.current = newValues
           onChange(newValues)
         } else {
+          latestValue.current = newValue
           onChange(newValue)
         }
       },
@@ -552,15 +599,12 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
         e.preventDefault()
         e.stopPropagation() // Prevent Radix from also handling the drag
 
-        const trackEl = trackRef.current
-        if (!trackEl) return
-        const trackRect = trackEl.getBoundingClientRect()
-        const layoutWidth = trackEl.offsetWidth
-        if (layoutWidth <= 0 || trackRect.width <= 0) return
-        // Normalize cursor to layout space so it matches motionX (which is
-        // rendered as a CSS-pixel transform), even under ancestor CSS scale.
-        const scale = trackRect.width / layoutWidth
-        const localX = (e.clientX - trackRect.left) / scale - THUMB_SIZE / 2
+        // Normalized to layout space so it matches motionX (which is rendered as a
+        // CSS-pixel transform), even under ancestor CSS scale.
+        const m = measure(e.clientX, e.clientY)
+        if (!m) return
+        const layoutWidth = m.length
+        const localX = m.pos - THUMB_SIZE / 2
         const clamped = Math.max(0, Math.min(layoutWidth - THUMB_SIZE, localX))
 
         // Determine which thumb to drag
@@ -592,20 +636,17 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
 
         ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
       },
-      [disabled, isRange, min, max, step, stepValues, motionX0, motionX1, clampForRange, emitChange],
+      [disabled, isRange, min, max, step, stepValues, motionX0, motionX1, clampForRange, emitChange, measure],
     )
 
     const handlePointerMove = useCallback(
       (e: React.PointerEvent<HTMLDivElement>) => {
         if (!dragging.current) return
         e.stopPropagation()
-        const trackEl = trackRef.current
-        if (!trackEl) return
-        const trackRect = trackEl.getBoundingClientRect()
-        const layoutWidth = trackEl.offsetWidth
-        if (layoutWidth <= 0 || trackRect.width <= 0) return
-        const scale = trackRect.width / layoutWidth
-        const localX = (e.clientX - trackRect.left) / scale - THUMB_SIZE / 2
+        const m = measure(e.clientX, e.clientY)
+        if (!m) return
+        const layoutWidth = m.length
+        const localX = m.pos - THUMB_SIZE / 2
         const clamped = Math.max(0, Math.min(layoutWidth - THUMB_SIZE, localX))
 
         const motionX = activeDragThumb.current === 0 ? motionX0 : motionX1
@@ -619,12 +660,13 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
         const finalValue = pixelToValue(finalPx, min, max, step, layoutWidth, stepValues)
         emitChange(activeDragThumb.current, finalValue)
       },
-      [min, max, step, stepValues, motionX0, motionX1, clampForRange, emitChange],
+      [min, max, step, stepValues, motionX0, motionX1, clampForRange, emitChange, measure],
     )
 
     const handlePointerUp = useCallback(() => {
       if (!dragging.current) return
       dragging.current = false
+      onValueCommitRef.current?.(latestValue.current)
       setIsPressed(false)
       setHoverPreview(null)
 
@@ -653,6 +695,14 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
       [isRange, onChange, stepValues],
     )
 
+    const handleRadixCommit = useCallback(
+      (newValues: number[]) => {
+        const mapped = stepValues ? newValues.map(i => stepValues[Math.round(i)]!) : newValues
+        onValueCommitRef.current?.(isRange ? (mapped as [number, number]) : mapped[0]!)
+      },
+      [isRange, stepValues],
+    )
+
     // --- Click-to-edit handlers ---
     const handleStartEdit = useCallback((index: number) => {
       setEditingIndex(index)
@@ -661,6 +711,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
     const handleCommitEdit = useCallback(
       (index: number, v: number) => {
         emitChange(index, v)
+        onValueCommitRef.current?.(latestValue.current)
         setEditingIndex(null)
       },
       [emitChange],
@@ -694,10 +745,12 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
     // --- Per-thumb accessible names ---
     // aria-label on Root lands on a role-less div and never reaches the
     // thumb's input, so each Thumb gets its own label.
+    // `aria-label` names the thumbs ahead of the visible `label` (local addition).
     const thumbAriaLabel = (index: number): string | undefined => {
-      if (!isRange) return label
-      if (!label) return index === 0 ? 'Minimum' : 'Maximum'
-      return index === 0 ? `${label} minimum` : `${label} maximum`
+      const name = ariaLabel || label
+      if (!isRange) return name
+      if (!name) return index === 0 ? 'Minimum' : 'Maximum'
+      return index === 0 ? `${name} minimum` : `${name} maximum`
     }
 
     // --- Value display component ---
@@ -726,16 +779,29 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
         <motion.span
           key={`visual-thumb-${index}`}
           className="flex items-center justify-center pointer-events-none"
-          style={{
-            width: THUMB_SIZE,
-            height: THUMB_SIZE,
-            marginTop: -THUMB_SIZE / 2,
-            x: motionX,
-            position: 'absolute',
-            top: '50%',
-            left: 0,
-            zIndex: 10,
-          }}
+          style={
+            vertical
+              ? {
+                  width: THUMB_SIZE,
+                  height: THUMB_SIZE,
+                  marginLeft: -THUMB_SIZE / 2,
+                  y: index === 0 ? thumbY0 : thumbY1,
+                  position: 'absolute',
+                  left: '50%',
+                  bottom: 0,
+                  zIndex: 10,
+                }
+              : {
+                  width: THUMB_SIZE,
+                  height: THUMB_SIZE,
+                  marginTop: -THUMB_SIZE / 2,
+                  x: motionX,
+                  position: 'absolute',
+                  top: '50%',
+                  left: 0,
+                  zIndex: 10,
+                }
+          }
           initial={false}
         >
           <motion.span
@@ -770,8 +836,14 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
       <div
         ref={ref}
         className={cn(
-          'flex flex-col gap-0 w-full select-none touch-none overflow-visible',
-          valuePosition === 'left' || valuePosition === 'right' ? 'flex-row items-center gap-2 mb-2' : 'flex-col',
+          'flex gap-0 select-none touch-none overflow-visible',
+          vertical ? 'h-40 w-fit items-center' : 'flex-col w-full',
+          valuePosition === 'left' || valuePosition === 'right'
+            ? vertical
+              ? 'flex-row gap-2'
+              : 'flex-row items-center gap-2 mb-2'
+            : 'flex-col',
+          vertical && (valuePosition === 'top' || valuePosition === 'bottom' || valuePosition === 'tooltip') && 'gap-2',
           disabled && 'opacity-50 pointer-events-none',
           className,
         )}
@@ -782,14 +854,22 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
 
         {/* Track area */}
         <div
-          className="relative flex-1 overflow-visible"
-          style={{
-            height:
-              valuePosition === 'left' || valuePosition === 'right'
-                ? THUMB_SIZE + 16
-                : THUMB_SIZE + (valuePosition === 'tooltip' ? 16 : 0),
-            paddingTop: valuePosition === 'tooltip' ? 16 : 0,
-          }}
+          className={cn(
+            'relative overflow-visible',
+            vertical ? 'min-h-0 min-w-0' : 'flex-1',
+            vertical && (valuePosition === 'left' || valuePosition === 'right' ? 'h-full' : 'flex-1'),
+          )}
+          style={
+            vertical
+              ? { width: THUMB_SIZE + 16 }
+              : {
+                  height:
+                    valuePosition === 'left' || valuePosition === 'right'
+                      ? THUMB_SIZE + 16
+                      : THUMB_SIZE + (valuePosition === 'tooltip' ? 16 : 0),
+                  paddingTop: valuePosition === 'tooltip' ? 16 : 0,
+                }
+          }
           onPointerEnter={() => setIsHovered(true)}
           onPointerLeave={() => {
             setIsHovered(false)
@@ -797,28 +877,34 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
           }}
           onMouseMove={e => {
             if (dragging.current) return
-            const trackEl = trackRef.current
-            if (!trackEl) return
-            const trackRect = trackEl.getBoundingClientRect()
-            const layoutWidth = trackEl.offsetWidth
-            if (layoutWidth <= 0 || trackRect.width <= 0) return
-            // Normalize to layout space so the formula's THUMB_SIZE / TRACK_INSET
-            // constants (layout px) match the cursor's coordinate space, even
-            // when an ancestor applies a CSS scale transform (e.g. /demo).
-            const scale = trackRect.width / layoutWidth
-            const layoutX = (e.clientX - trackRect.left) / scale
-            const clamped = Math.max(0, Math.min(layoutWidth, layoutX))
-            computeHoverPreview(clamped, layoutWidth)
+            // Layout space, so the formula's THUMB_SIZE / TRACK_INSET constants (layout px)
+            // match the cursor's coordinate space, even when an ancestor applies a CSS
+            // scale transform (e.g. /demo).
+            const m = measure(e.clientX, e.clientY)
+            if (!m) return
+            computeHoverPreview(Math.max(0, Math.min(m.length, m.pos)), m.length)
           }}
         >
           {/* Tooltip values */}
           {showValue && valuePosition === 'tooltip' && (
             <AnimatePresence>
               {isInteracting && (
-                <TooltipValue key="tooltip-0" value={values[0]!} formatValue={formatValue} motionX={motionX0} />
+                <TooltipValue
+                  key="tooltip-0"
+                  value={values[0]!}
+                  formatValue={formatValue}
+                  motionX={motionX0}
+                  vertical={vertical}
+                />
               )}
               {isInteracting && isRange && values[1] !== undefined && (
-                <TooltipValue key="tooltip-1" value={values[1]} formatValue={formatValue} motionX={motionX1} />
+                <TooltipValue
+                  key="tooltip-1"
+                  value={values[1]}
+                  formatValue={formatValue}
+                  motionX={motionX1}
+                  vertical={vertical}
+                />
               )}
             </AnimatePresence>
           )}
@@ -827,12 +913,14 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
           <SliderPrimitive.Root
             value={stepValues ? values.map(v => nearestStepIndex(v, stepValues)) : values}
             onValueChange={v => handleRadixChange(v as number[])}
+            onValueCommitted={v => handleRadixCommit(v as number[])}
             min={stepValues ? 0 : min}
             max={stepValues ? stepValues.length - 1 : max}
             step={stepValues ? 1 : step}
+            orientation={orientation}
             disabled={disabled}
             className="absolute inset-0 opacity-0 pointer-events-none"
-            style={{ height: THUMB_SIZE }}
+            style={vertical ? { width: THUMB_SIZE } : { height: THUMB_SIZE }}
           >
             <SliderPrimitive.Control className="w-full h-full">
               <SliderPrimitive.Track className="w-full h-full">
@@ -845,7 +933,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
                 className="block outline-none"
                 style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
                 onFocus={e => {
-                  if ((e.currentTarget as HTMLElement).matches(':focus-visible')) setFocusedThumb(0)
+                  if ((e.target as HTMLElement).matches(':focus-visible')) setFocusedThumb(0)
                 }}
                 onBlur={() => setFocusedThumb(prev => (prev === 0 ? null : prev))}
               />
@@ -857,7 +945,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
                   className="block outline-none"
                   style={{ width: THUMB_SIZE, height: THUMB_SIZE }}
                   onFocus={e => {
-                    if ((e.currentTarget as HTMLElement).matches(':focus-visible')) setFocusedThumb(1)
+                    if ((e.target as HTMLElement).matches(':focus-visible')) setFocusedThumb(1)
                   }}
                   onBlur={() => setFocusedThumb(prev => (prev === 1 ? null : prev))}
                 />
@@ -868,8 +956,12 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
           {/* Visual track with pointer handlers */}
           <div
             ref={trackRef}
-            className="relative w-full cursor-ew-resize py-2"
-            style={{ height: THUMB_SIZE + 16, opacity: ready ? 1 : 0 }}
+            className={cn('relative', vertical ? 'h-full cursor-ns-resize px-2' : 'w-full cursor-ew-resize py-2')}
+            style={
+              vertical
+                ? { width: THUMB_SIZE + 16, opacity: ready ? 1 : 0 }
+                : { height: THUMB_SIZE + 16, opacity: ready ? 1 : 0 }
+            }
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
@@ -877,8 +969,8 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
           >
             {/* Extended hit area — 8px beyond each edge */}
             <div
-              className="absolute cursor-ew-resize"
-              style={{ left: -8, right: -8, top: 0, bottom: 0 }}
+              className={cn('absolute', vertical ? 'cursor-ns-resize' : 'cursor-ew-resize')}
+              style={vertical ? { left: 0, right: 0, top: -8, bottom: -8 } : { left: -8, right: -8, top: 0, bottom: 0 }}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
@@ -889,15 +981,20 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
               {hoverPreview && showHoverTooltip && !isPressed && valuePosition !== 'tooltip' && (
                 <motion.div
                   key="hover-tooltip"
-                  className="absolute -translate-x-1/2 pointer-events-none z-20"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 4, transition: spring.fast.exit }}
+                  className={cn('absolute pointer-events-none z-20', vertical ? 'translate-y-1/2' : '-translate-x-1/2')}
+                  initial={vertical ? { opacity: 0, x: -4 } : { opacity: 0, y: 4 }}
+                  animate={vertical ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
+                  exit={
+                    vertical
+                      ? { opacity: 0, x: -4, transition: spring.fast.exit }
+                      : { opacity: 0, y: 4, transition: spring.fast.exit }
+                  }
                   transition={spring.fast}
-                  style={{
-                    left: hoverPreview.cursorX,
-                    top: -20,
-                  }}
+                  style={
+                    vertical
+                      ? { bottom: hoverPreview.cursorX, left: `calc(100% + 4px)` }
+                      : { left: hoverPreview.cursorX, top: -20 }
+                  }
                 >
                   <span
                     className={cn(
@@ -919,24 +1016,27 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
                 trackClassName,
               )}
               initial={false}
-              animate={{
-                height: TRACK_BG_HEIGHT,
-                top: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2,
-              }}
+              animate={
+                vertical
+                  ? { width: TRACK_BG_HEIGHT, left: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2 }
+                  : { height: TRACK_BG_HEIGHT, top: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2 }
+              }
               transition={spring.fast}
               style={{
-                left: TRACK_INSET,
-                right: TRACK_INSET,
+                ...(vertical ? { top: TRACK_INSET, bottom: TRACK_INSET } : { left: TRACK_INSET, right: TRACK_INSET }),
                 ...trackStyle,
               }}
             >
               {/* Filled range */}
               {!hideFill && (
                 <motion.div
-                  className={cn('absolute h-full bg-selected/50 dark:bg-accent/40', fillClassName)}
+                  className={cn(
+                    'absolute bg-selected/50 dark:bg-accent/40',
+                    vertical ? 'w-full' : 'h-full',
+                    fillClassName,
+                  )}
                   style={{
-                    left: fillLeft,
-                    width: fillWidth,
+                    ...(vertical ? { bottom: fillLeft, height: fillWidth } : { left: fillLeft, width: fillWidth }),
                     ...fillStyle,
                   }}
                 />
@@ -944,7 +1044,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
 
               {/* Hover preview */}
               <motion.div
-                className="absolute h-full bg-accent/40 pointer-events-none z-[2]"
+                className={cn('absolute bg-accent/40 pointer-events-none z-[2]', vertical ? 'w-full' : 'h-full')}
                 initial={false}
                 animate={{
                   opacity: hoverPreview && !isPressed ? 1 : 0,
@@ -953,12 +1053,23 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
                   opacity: { duration: 0.15 },
                 }}
                 style={{
-                  left: hoverPreview ? hoverPreview.left - TRACK_INSET : 0,
-                  width: hoverPreview ? hoverPreview.width : 0,
+                  ...(vertical
+                    ? {
+                        bottom: hoverPreview ? hoverPreview.left - TRACK_INSET : 0,
+                        height: hoverPreview ? hoverPreview.width : 0,
+                      }
+                    : {
+                        left: hoverPreview ? hoverPreview.left - TRACK_INSET : 0,
+                        width: hoverPreview ? hoverPreview.width : 0,
+                      }),
                   borderRadius:
                     hoverPreview && hoverPreview.cursorX > hoverPreview.left
-                      ? '0 9999px 9999px 0'
-                      : '9999px 0 0 9999px',
+                      ? vertical
+                        ? '9999px 9999px 0 0'
+                        : '0 9999px 9999px 0'
+                      : vertical
+                        ? '0 0 9999px 9999px'
+                        : '9999px 0 0 9999px',
                 }}
               />
             </motion.div>
@@ -966,10 +1077,11 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
             {/* Step dots — masked so filled side is hidden */}
             {stepDots.length > 0 && (
               <motion.div
-                className="absolute left-0 right-0 pointer-events-none"
+                className={cn('absolute pointer-events-none', vertical ? 'top-0 bottom-0' : 'left-0 right-0')}
                 style={{
-                  top: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2,
-                  height: TRACK_BG_HEIGHT,
+                  ...(vertical
+                    ? { left: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2, width: TRACK_BG_HEIGHT }
+                    : { top: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2, height: TRACK_BG_HEIGHT }),
                   WebkitMaskImage: stepDotsMask,
                   maskImage: stepDotsMask,
                 }}
@@ -979,8 +1091,15 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
                     key={v}
                     className="absolute pointer-events-none flex items-center justify-center"
                     style={{
-                      left: `calc(${THUMB_SIZE / 2}px + ${percent} * (100% - ${THUMB_SIZE}px))`,
-                      top: '50%',
+                      ...(vertical
+                        ? {
+                            bottom: `calc(${THUMB_SIZE / 2}px + ${percent} * (100% - ${THUMB_SIZE}px))`,
+                            left: '50%',
+                          }
+                        : {
+                            left: `calc(${THUMB_SIZE / 2}px + ${percent} * (100% - ${THUMB_SIZE}px))`,
+                            top: '50%',
+                          }),
                       width: 0,
                       height: 0,
                     }}
@@ -1032,6 +1151,7 @@ interface SliderComfortableProps
   label?: string
   formatValue?: (v: number) => string
   disabled?: boolean
+  onValueCommit?: (value: number) => void
 }
 
 const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
@@ -1046,12 +1166,17 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
       label,
       formatValue = String,
       disabled = false,
+      onValueCommit,
       className,
+      'aria-label': ariaLabel,
       ...props
     },
     ref,
   ) => {
     const containerRef = useRef<HTMLDivElement | null>(null)
+    const onValueCommitRef = useRef(onValueCommit)
+    onValueCommitRef.current = onValueCommit
+    const latestValue = useRef(value)
     const dragging = useRef(false)
     const handleDragging = useRef(false)
     const [isHovered, setIsHovered] = useState(false)
@@ -1205,6 +1330,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
         dragging.current = true
         setIsPressed(true)
         const newVal = getValueFromX(e.clientX)
+        latestValue.current = newVal
         onChange(newVal)
         const newPercent = Math.max(0, Math.min(1, (newVal - min) / (max - min)))
         animate(fillPercent, newPercent, spring.fast)
@@ -1218,6 +1344,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
       (e: React.PointerEvent<HTMLDivElement>) => {
         if (!dragging.current) return
         const newVal = getValueFromX(e.clientX)
+        latestValue.current = newVal
         onChange(newVal)
         const newPercent = Math.max(0, Math.min(1, (newVal - min) / (max - min)))
         if (variant === 'scrubber') {
@@ -1231,6 +1358,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
     )
 
     const handlePointerUp = useCallback(() => {
+      if (dragging.current) onValueCommitRef.current?.(latestValue.current)
       dragging.current = false
       setIsPressed(false)
       setHoverPreview(null)
@@ -1246,6 +1374,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
         handleDragging.current = true
         setIsPressed(true)
         const newVal = getValueFromX(e.clientX)
+        latestValue.current = newVal
         onChange(newVal)
         fillPercent.set(Math.max(0, Math.min(1, (newVal - min) / (max - min))))
         animate(zeroOffset, newVal === min ? zeroTarget : 0, spring.fast)
@@ -1258,6 +1387,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
       (e: React.PointerEvent<HTMLDivElement>) => {
         if (!handleDragging.current) return
         const newVal = getValueFromX(e.clientX)
+        latestValue.current = newVal
         onChange(newVal)
         fillPercent.set(Math.max(0, Math.min(1, (newVal - min) / (max - min))))
         animate(zeroOffset, newVal === min ? zeroTarget : 0, spring.fast)
@@ -1266,6 +1396,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
     )
 
     const handleResizePointerUp = useCallback(() => {
+      if (handleDragging.current) onValueCommitRef.current?.(latestValue.current)
       handleDragging.current = false
       setIsPressed(false)
       setHoverPreview(null)
@@ -1358,6 +1489,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
           <SliderPrimitive.Root
             value={[value]}
             onValueChange={v => handleRadixChange(v as number[])}
+            onValueCommitted={v => onValueCommitRef.current?.((v as number[])[0]!)}
             min={min}
             max={max}
             step={step}
@@ -1370,10 +1502,10 @@ const ComfortableSlider = forwardRef<HTMLDivElement, SliderComfortableProps>(
               </SliderPrimitive.Track>
               <SliderPrimitive.Thumb
                 index={0}
-                aria-label={label}
+                aria-label={ariaLabel || label}
                 className="block outline-none"
                 onFocus={e => {
-                  if ((e.currentTarget as HTMLElement).matches(':focus-visible')) setIsFocused(true)
+                  if ((e.target as HTMLElement).matches(':focus-visible')) setIsFocused(true)
                 }}
                 onBlur={() => setIsFocused(false)}
               />
@@ -1612,8 +1744,14 @@ interface SliderProps extends Omit<SliderEngineProps, 'value' | 'onChange'> {
   formatValue?: (v: number) => string
   /** Accessible label for the slider, also shown as prefix in the value display. */
   label?: string
+  /** Accessible name of the thumb(s) when it should differ from `label`, e.g. no visible `label` at all. Defaults to `label`. */
+  'aria-label'?: string
   /** Disables all interaction. Defaults to `false`. */
   disabled?: boolean
+  /** Layout axis. `"vertical"` stands the track upright (min at the bottom, max at the top; ArrowUp / ArrowRight raise it, ArrowDown / ArrowLeft lower it) and always renders the compact design, which has no vertical pip or scrubber layout. Give it a height with `className` (`h-48`). `valuePosition` then defaults to `"top"`. Defaults to `"horizontal"`. */
+  orientation?: 'horizontal' | 'vertical'
+  /** Called once when an interaction ends with the value it settled on: the pointer lifting after a drag or click, a keyboard step, or a committed value edit. `onChange` reports every value on the way. */
+  onValueCommit?: (value: SliderValue) => void
 }
 
 /**
@@ -1664,7 +1802,8 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
       props.fillStyle !== undefined ||
       props.hideFill !== undefined ||
       props.thumbColor !== undefined ||
-      props.thumbBorderColor !== undefined
+      props.thumbBorderColor !== undefined ||
+      props.orientation === 'vertical'
 
     if (resolved === 'compact' || needsCompactEngine) {
       return <CompactSlider ref={ref} {...props} />
@@ -1679,6 +1818,7 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
       label,
       formatValue,
       disabled,
+      onValueCommit,
       // Compact-engine-only fields — all undefined on this path (any defined
       // one would have routed to the compact engine above).
       steps: _steps,
@@ -1692,6 +1832,7 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
       hideFill: _hideFill,
       thumbColor: _thumbColor,
       thumbBorderColor: _thumbBorderColor,
+      orientation: _orientation,
       ...html
     } = props
 
@@ -1707,6 +1848,7 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
         label={label}
         formatValue={formatValue}
         disabled={disabled}
+        onValueCommit={onValueCommit as ((v: number) => void) | undefined}
         {...(html as Omit<SliderComfortableProps, 'value' | 'onChange'>)}
       />
     )

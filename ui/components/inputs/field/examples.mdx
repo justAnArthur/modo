@@ -1,0 +1,117 @@
+import Field from './index'
+import Input from '../input'
+import Textarea from '../textarea'
+import NumberInput from '../number-input'
+import { Mail } from 'lucide-react'
+
+# Basics
+
+## Field
+
+A label above the control, help text below it. The label targets the control and the description is read with it.
+
+<Field className="w-72 max-w-full">
+  <Field.Label>Email</Field.Label>
+  <Input icon={Mail} placeholder="you@example.com" />
+  <Field.Description>We only write about your account.</Field.Description>
+</Field>
+
+## Any field control
+
+Textarea and NumberInput join the same way: the label, description and error wire to them.
+
+<div className="flex flex-col gap-4 w-72 max-w-full">
+  <Field>
+    <Field.Label>Message</Field.Label>
+    <Textarea placeholder="Write your message" minRows={2} />
+  </Field>
+  <Field invalid>
+    <Field.Label>Seats</Field.Label>
+    <NumberInput defaultValue={0} min={0} />
+    <Field.Error>Book at least one seat.</Field.Error>
+  </Field>
+</div>
+
+## Field.Control
+
+A control that isn't a field control gets the field's id, `aria-describedby` and `aria-invalid` through `Field.Control`, here a native select.
+
+<Field className="w-72 max-w-full">
+  <Field.Label>Country</Field.Label>
+  <Field.Control
+    render={
+      <select className="h-9 w-full bg-transparent px-1.5 text-body text-foreground">
+        <option>Slovakia</option>
+        <option>Czechia</option>
+        <option>Austria</option>
+      </select>
+    }
+  />
+  <Field.Description>Where the invoice is sent.</Field.Description>
+</Field>
+
+## Hidden label
+
+`visuallyHidden` keeps the label for assistive tech where the placeholder carries the meaning.
+
+<Field className="w-72 max-w-full">
+  <Field.Label visuallyHidden>Search</Field.Label>
+  <Input variant="bordered" placeholder="Search people" />
+</Field>
+
+## Compact
+
+`size` pins the field and its control to the compact step.
+
+<Field size="compact" className="w-64 max-w-full">
+  <Field.Label>Filter</Field.Label>
+  <Input placeholder="Name contains…" />
+  <Field.Description>Matches any part of the name.</Field.Description>
+</Field>
+
+# States
+
+## Error
+
+`invalid` turns the label and the box destructive; `Field.Error` shows its message while it has one. Both come from your validation.
+
+<Field invalid className="w-72 max-w-full">
+  <Field.Label>Email</Field.Label>
+  <Input icon={Mail} defaultValue="ada@" />
+  <Field.Error>Enter a full address, like ada@example.com.</Field.Error>
+</Field>
+
+## Required
+
+`required` marks the control required and the label with an asterisk.
+
+<Field required name="company" className="w-72 max-w-full">
+  <Field.Label>Company</Field.Label>
+  <Input placeholder="Acme Inc." />
+</Field>
+
+## Native validation
+
+With `validationMode`, Base UI checks the control's own rules (`required`, `type="email"`) and the field turns destructive on a failure; an empty `Field.Error` shows the browser's message. Type something that isn't an address and leave the field.
+
+<Field required validationMode="onBlur" className="w-72 max-w-full">
+  <Field.Label>Work email</Field.Label>
+  <Input type="email" icon={Mail} placeholder="you@company.com" />
+  <Field.Error />
+</Field>
+
+## Disabled and read-only
+
+The field hands its state to the control: `disabled` dims everything, `readOnly` keeps the value selectable.
+
+<div className="flex flex-col gap-4 w-72 max-w-full">
+  <Field disabled>
+    <Field.Label>Workspace</Field.Label>
+    <Input defaultValue="Design" />
+    <Field.Description>Only owners can rename it.</Field.Description>
+  </Field>
+  <Field readOnly>
+    <Field.Label>Invoice number</Field.Label>
+    <Input defaultValue="INV-2026-0042" />
+  </Field>
+</div>

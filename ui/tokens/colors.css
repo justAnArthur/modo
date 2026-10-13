@@ -65,6 +65,41 @@
   --destructive: light-dark(oklch(0.6368 0.2078 25.33), oklch(0.7106 0.1661 22.22));
   --destructive-light: light-dark(oklch(0.971 0.013 17.38), oklch(0.2575 0.0886 26.04));
 
+  /* ── Tinted actions (local) ──
+     Button's destructive and success variants: the hue as text on a wash of
+     itself, never a solid fill behind text (DESIGN.md › Status). The washes
+     mix toward transparent like --hover, so they read on any surface level;
+     hover and press deepen them (16 → 20 → 24%). The -strong text steps are
+     the hue darkened in light and lightened in dark, so a 13px label holds
+     WCAG AA (≥ 4.5:1) on its wash at rest, hover and press, over surfaces
+     1–5 in both schemes (worst case 4.69:1, the dark destructive press on
+     surface 5). */
+  --destructive-strong: light-dark(oklch(0.47 0.175 27), oklch(0.81 0.105 22));
+  --destructive-wash: color-mix(in oklab, var(--destructive) 16%, transparent);
+  --destructive-wash-hover: color-mix(in oklab, var(--destructive) 20%, transparent);
+  --destructive-wash-active: color-mix(in oklab, var(--destructive) 24%, transparent);
+  --success-strong: light-dark(oklch(0.46 0.12 151), oklch(0.83 0.15 152));
+  --success-wash: color-mix(in oklab, var(--status-success) 16%, transparent);
+  --success-wash-hover: color-mix(in oklab, var(--status-success) 20%, transparent);
+  --success-wash-active: color-mix(in oklab, var(--status-success) 24%, transparent);
+
+  /* ── Placeholders and media edges (local) ──
+     --skeleton: the loading placeholder's fill, a foreground mix like
+     --border so it tracks the scheme and reads on any surface level.
+     --image-edge: the 1px inset outline over avatars and other images, so a
+     pale picture keeps its shape against the surface (upstream FF's media
+     outline: black 10% in light, white 10% in dark). */
+  --skeleton: color-mix(in oklab, var(--foreground) 8%, transparent);
+  --image-edge: light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.1));
+  /* The progress track: a recessed line any fill reads against. */
+  --progress-track: color-mix(in oklab, var(--foreground) 10%, transparent);
+  /* The recessed well under the segmented tabs' indicator. Light is --muted
+     (the greyer step the ladder's floor lacks). Dark can't be: --muted there
+     is surface-2, the very value of the card and the inset, so a track of it
+     vanishes on both. Black at 25% darkens whatever it sits on, so the well
+     reads on the page, a card and the inset alike. */
+  --well: light-dark(var(--muted), oklch(0 0 0 / 0.25));
+
   /* ── Brand blue ──
      FF's one chromatic accent: the switch's on-track, the copy field's hover
      highlight, drop-target and selected-swatch rings. */
@@ -130,6 +165,33 @@
   --syntax-identifier: var(--foreground);
   --syntax-jsx: var(--foreground);
   --syntax-sign: var(--muted-foreground);
+}
+
+/* ── Primary action (theme hooks) ──
+   What the primary Button paints, as hooks a host re-points to recolour it
+   (a brand fill with a lit edge) without forking the component:
+     --primary             the fill. Defaults to the ink.
+     --primary-hover       its hover fill, 10% toward --background.
+     --primary-active      its pressed fill, 20% toward --background.
+     --primary-foreground  the label on the fill. Defaults to --background.
+     --shadow-button-primary  an extra shadow list for the fill layer, drawn on
+                           top of the layer's own press ring (a highlight,
+                           an outline, a drop). The default is an invisible
+                           no-op that stays valid inside a comma list.
+   All five default to what the primary Button always drew, so nothing
+   changes until one is overridden. Override --primary-hover and
+   --primary-active with it, since their defaults mix from the value
+   --primary has where they are declared. Re-point them on `:root, .light,
+   .dark` (or on `:root` alone when the value is the same in both schemes).
+   `bg-primary`, `text-primary` and `text-primary-foreground` read them.
+   Zero specificity (:where): a host's override wins from any stylesheet
+   order, `<html class="dark">` included. */
+:where(:root, .light, .dark) {
+  --primary: var(--foreground);
+  --primary-hover: color-mix(in oklab, var(--primary) 90%, var(--background));
+  --primary-active: color-mix(in oklab, var(--primary) 80%, var(--background));
+  --primary-foreground: var(--background);
+  --shadow-button-primary: 0 0 #0000;
 }
 
 /* ── Badge palette ──

@@ -1,6 +1,10 @@
 import Checkbox from './index'
+import SelectAllDemo from './select-all-demo'
+import { Label } from '../input'
 
-# Basic
+# Basics
+
+## Basic
 
 A standalone checkbox keeps its own state; pass `checked` and `onCheckedChange` to control it.
 
@@ -9,21 +13,74 @@ A standalone checkbox keeps its own state; pass `checked` and `onCheckedChange` 
   <Checkbox label="Subscribe to the newsletter" defaultChecked />
 </div>
 
-# Group
+## Bare
 
-`Checkbox.Group` stacks checkboxes: contiguous picks share one merged background, and the rows are numbered in order.
+Without a `label` the checkbox is just the box: point a `<label htmlFor>` at its `id`, or name it with `aria-label`. It joins forms through `name` and `value`.
 
-<Checkbox.Group defaultCheckedIndices={[0]}>
+<div className="flex flex-col gap-3">
+  <div className="flex items-center gap-2">
+    <Checkbox id="bare-terms" name="terms" defaultChecked />
+    <Label htmlFor="bare-terms">Accept the terms</Label>
+  </div>
+  <div className="flex items-center gap-4">
+    <Checkbox aria-label="Select row" />
+    <Checkbox aria-label="Select row, compact" size="compact" defaultChecked />
+    <Checkbox aria-label="Some rows selected" checked="indeterminate" />
+  </div>
+</div>
+
+## Node label
+
+A label can be any node; the checkbox is then named by it.
+
+<Checkbox
+  defaultChecked
+  label={
+    <span>
+      I agree to the <a className="underline" href="#">terms of service</a>
+    </span>
+  }
+/>
+
+## Compact
+
+`size="compact"` pins every row to the 28px step of the size ladder.
+
+<Checkbox.Group size="compact" defaultCheckedIndices={[1, 2]}>
   {['Apples', 'Bananas', 'Cherries', 'Dates'].map(label => (
     <Checkbox key={label} label={label} />
   ))}
 </Checkbox.Group>
 
-# Compact
+# States
 
-`size="compact"` pins every row to the 28px step of the size ladder.
+## Indeterminate
 
-<Checkbox.Group size="compact" defaultCheckedIndices={[1, 2]}>
+`indeterminate`, or `checked="indeterminate"`, shows a dash: some, not all, of what it stands for is on. Check and uncheck the rows: the dash blurs into the check and back.
+
+<SelectAllDemo rows={['Invoices', 'Receipts', 'Contracts']} />
+
+## Disabled
+
+`disabled` dims a checkbox and ignores presses; in a group the hover and the arrow keys skip it.
+
+<div className="flex flex-col gap-3">
+  <Checkbox.Group defaultCheckedIndices={[0]}>
+    <Checkbox label="Email" />
+    <Checkbox label="SMS (not in your region)" disabled />
+    <Checkbox label="Push" />
+  </Checkbox.Group>
+  <div className="flex items-center gap-4 px-3">
+    <Checkbox aria-label="Disabled" disabled />
+    <Checkbox aria-label="Disabled, checked" disabled defaultChecked />
+  </div>
+</div>
+
+# Group
+
+`Checkbox.Group` stacks checkboxes: contiguous picks share one merged background, and the rows are numbered in order.
+
+<Checkbox.Group defaultCheckedIndices={[0]}>
   {['Apples', 'Bananas', 'Cherries', 'Dates'].map(label => (
     <Checkbox key={label} label={label} />
   ))}

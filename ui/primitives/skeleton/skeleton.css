@@ -1,0 +1,15 @@
+/*
+ * Local addition (not part of Fluid Functionalism): the Skeleton's pulse.
+ * Opacity only, one period of `--duration-loop`, every placeholder in step.
+ * A fade, so it runs under reduced motion too (DESIGN.md › Motion keeps fades).
+ */
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.skeleton-pulse {
+  animation: skeleton-pulse var(--duration-loop) ease-in-out infinite;
+}

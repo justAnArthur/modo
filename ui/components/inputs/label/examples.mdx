@@ -1,0 +1,67 @@
+import Label from './index'
+import Input from '../input'
+import Checkbox from '../checkbox'
+import Field from '../field'
+import SizeProvider from '../../../primitives/sizes'
+import { Mail } from 'lucide-react'
+
+# Basic
+
+`htmlFor` points the label at the control's `id`. It starts where the input's text does.
+
+<div className="flex w-72 max-w-full flex-col gap-1">
+  <Label htmlFor="label-email">Email</Label>
+  <Input id="label-email" icon={Mail} placeholder="you@example.com" />
+</div>
+
+# Invalid
+
+`invalid` turns it destructive, matching an invalid Input.
+
+<div className="flex w-72 max-w-full flex-col gap-1">
+  <Label htmlFor="label-invalid" invalid>
+    Email
+  </Label>
+  <Input id="label-invalid" icon={Mail} defaultValue="ada@" invalid />
+</div>
+
+# Sizes
+
+It reads the surrounding SizeProvider like the field below it; `size` pins it to one step.
+
+<div className="flex w-72 max-w-full flex-col gap-4">
+  <div className="flex flex-col gap-1">
+    <Label htmlFor="label-default">Default</Label>
+    <Input id="label-default" placeholder="36px field" />
+  </div>
+  <SizeProvider size="compact">
+    <div className="flex flex-col gap-1">
+      <Label htmlFor="label-compact">Compact</Label>
+      <Input id="label-compact" placeholder="28px field" />
+    </div>
+  </SizeProvider>
+</div>
+
+# Beside a control
+
+A label next to a bare control names it, and a click on it toggles the control.
+
+<div className="flex items-center gap-2">
+  <Checkbox id="label-terms" defaultChecked />
+  <Label htmlFor="label-terms">Accept the terms</Label>
+</div>
+
+# In a Field
+
+Inside a Field, `Field.Label` renders a Label and links it for you; the field hands it its invalid, disabled and required state.
+
+<div className="flex w-72 max-w-full flex-col gap-4">
+  <Field required>
+    <Field.Label>Name</Field.Label>
+    <Input placeholder="Ada Lovelace" />
+  </Field>
+  <Field disabled>
+    <Field.Label>Workspace</Field.Label>
+    <Input defaultValue="Analytical Engines" />
+  </Field>
+</div>

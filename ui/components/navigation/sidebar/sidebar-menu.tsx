@@ -24,11 +24,14 @@
  *   `SidebarMenuSub` without `open` follows it. FF's docs held that state in
  *   the page.
  * - Refs written by hand are typed `MutableRefObject` (React 18).
- * - A folded `SidebarMenuSub` is `inert`: an active sub-row inside it stayed a
+ * - A folded `SidebarMenuSub` is `inert` (through `inertProps` from `lib/inert.ts`, right on React 18
+ *   and 19): an active sub-row inside it stayed a
  *   tab stop while `aria-hidden` and clipped away.
+ * - `sidebarMenuButtonVariants` lives in `./variants.ts` (no JSX, hooks or
+ *   contexts), so server code can call it; re-exported here unchanged.
  */
 
-import { cva, type VariantProps } from 'class-variance-authority'
+import type { VariantProps } from 'class-variance-authority'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   type AnchorHTMLAttributes,
@@ -57,6 +60,7 @@ import {
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { GooIndicator } from '../../../lib/goo-indicator'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
+import { inertProps } from '../../../lib/inert'
 import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
@@ -65,6 +69,9 @@ import { type ItemRect, useFluidHover } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
 import { resolveSlotTemplate, slotElement } from './sidebar-core'
+import { sidebarMenuButtonVariants } from './variants'
+
+export { sidebarMenuButtonVariants }
 
 // SSR-safe layout effect (client components still server-render in Next).
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
@@ -872,26 +879,6 @@ function MenuRowLabel({
 
 // ─── SidebarMenuButton ───────────────────────────────────────────────────────
 
-export const sidebarMenuButtonVariants = cva(
-  // The trailing gutter is an exact reservation published by the row (see
-  // rowGutter): --row-gutter at rest, --row-gutter-hover once hover-revealed
-  // actions are showing. One rule per state instead of a class per
-  // count/badge/reveal combination.
-  // Disabled stays in the layout, and pointer events pass through it to the
-  // row, since a browser sends no mouse events to a disabled button: the
-  // container keeps seeing the moves, and fluid hover simply never lights it.
-  'peer/menu-button relative z-10 flex w-full cursor-pointer select-none items-center gap-2 pl-2 text-left outline-none disabled:opacity-50 disabled:pointer-events-none transition-[padding] duration-fast pr-[var(--row-gutter)] group-hover/menu-item:pr-[var(--row-gutter-hover)] group-focus-within/menu-item:pr-[var(--row-gutter-hover)] group-hover/menu-sub-item:pr-[var(--row-gutter-hover)] group-focus-within/menu-sub-item:pr-[var(--row-gutter-hover)] group-has-[[data-sidebar=menu-action]:is([data-state=open],[data-popup-open],[aria-expanded=true])]/menu-item:pr-[var(--row-gutter-hover)] group-has-[[data-sidebar=menu-action]:is([data-state=open],[data-popup-open],[aria-expanded=true])]/menu-sub-item:pr-[var(--row-gutter-hover)]',
-  {
-    variants: {
-      variant: {
-        default: '',
-        outline: 'border border-border bg-background',
-      },
-    },
-    defaultVariants: { variant: 'default' },
-  },
-)
-
 export interface SidebarMenuButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof sidebarMenuButtonVariants> {
@@ -1358,7 +1345,7 @@ const SidebarMenuSub = forwardRef<HTMLUListElement, SidebarMenuSubProps>(
           data-sidebar="menu-sub"
           data-state={open ? 'open' : 'closed'}
           aria-hidden={open ? undefined : true}
-          {...(open ? {} : { inert: '' })}
+          {...inertProps(!open)}
           className={cn(
             // ml-[15px] (a margin, not a translate, so the rows' measured
             // rects include it) + 1px border + pl-2 lands the sub-row label

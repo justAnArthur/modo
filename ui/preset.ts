@@ -50,6 +50,8 @@ export const theme = {
       foreground: 'var(--accent-foreground)',
       hover: 'var(--accent-hover)',
     },
+    // The primary Button's fill and label: the ink by default, a host's brand when re-pointed.
+    primary: { DEFAULT: 'var(--primary)', foreground: 'var(--primary-foreground)' },
     brand: { DEFAULT: 'var(--brand)', hover: 'var(--brand-hover)' },
     'focus-ring': 'var(--focus-ring)',
     // The tint-direction triplet as a color, so `bg-overlay/8` is the
@@ -71,7 +73,29 @@ export const theme = {
     border: 'var(--border)',
     ring: 'var(--ring)',
     input: 'var(--input)',
-    destructive: { DEFAULT: 'var(--destructive)', light: 'var(--destructive-light)' },
+    destructive: {
+      DEFAULT: 'var(--destructive)',
+      light: 'var(--destructive-light)',
+      strong: 'var(--destructive-strong)',
+      wash: {
+        DEFAULT: 'var(--destructive-wash)',
+        hover: 'var(--destructive-wash-hover)',
+        active: 'var(--destructive-wash-active)',
+      },
+    },
+    // Button's success variant: the status hue as text on a wash of itself.
+    success: {
+      strong: 'var(--success-strong)',
+      wash: {
+        DEFAULT: 'var(--success-wash)',
+        hover: 'var(--success-wash-hover)',
+        active: 'var(--success-wash-active)',
+      },
+    },
+    skeleton: 'var(--skeleton)',
+    'image-edge': 'var(--image-edge)',
+    'progress-track': 'var(--progress-track)',
+    well: 'var(--well)',
     hover: 'var(--hover)',
     active: 'var(--active)',
     syntax: {
@@ -155,7 +179,7 @@ export const utilities: Record<string, Record<string, string>> = Object.fromEntr
 // `filesystem` files their pipeline filter rejects, which has no `.js`. In the
 // repo these dirs hold no .js, so the docs site scans the source itself.
 const dist = dirname(fileURLToPath(import.meta.url))
-export const COMPONENT_DIRS = ['shared', 'primitives', 'components', 'blocks']
+export const COMPONENT_DIRS = ['shared', 'lib', 'primitives', 'components', 'blocks']
 
 export function modoUiContent(): string {
   return COMPONENT_DIRS.map(dir => join(dist, dir))

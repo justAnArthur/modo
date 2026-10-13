@@ -47,6 +47,18 @@ The sheet oozes up out of the bottom edge. Swipe it back down, press outside or 
   </Sheet>
 </div>
 
+# Side and width on the content
+
+The Radix shape works too: `side` on `Sheet.Content` overrides the root's, and the swipe follows it. `popupClassName` sizes the sheet's box past its default width.
+
+<Sheet>
+  <Sheet.Trigger render={<Button variant="secondary">Wide left sheet</Button>} />
+  <Sheet.Content side="left" popupClassName="w-[min(32rem,calc(100%-1rem))]">
+    <Sheet.Title>Activity</Sheet.Title>
+    <Sheet.Description>A wider panel for a longer read.</Sheet.Description>
+  </Sheet.Content>
+</Sheet>
+
 # From the trigger
 
 `from="trigger"` grows the sheet out of the button instead of the edge; once open it behaves like any sheet.

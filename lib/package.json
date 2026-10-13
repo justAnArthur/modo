@@ -1,7 +1,7 @@
 {
   "name": "@justanarthur/modo",
   "type": "module",
-  "version": "0.8.0",
+  "version": "0.9.0-canary.3",
   "description": "Atomic design system renderer — reads tokens/primitives/components/blocks and produces a docs site that uses the user's components in the chrome.",
   "license": "MIT",
   "keywords": [
@@ -75,9 +75,15 @@
     "@vitejs/plugin-react": "^4.3.0",
     "esbuild": "^0.20.0",
     "marked": "^18.0.14",
+    "remark-frontmatter": "^5.0.0",
     "remark-gfm": "^4.0.1",
+    "remark-mdx-frontmatter": "^6.0.0",
+    "typescript": "^5.4.0",
     "vite": "^5.4.0",
     "zod": "^3.23.0"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "peerDependencies": {
     "react": ">=18",
@@ -90,7 +96,6 @@
     "@types/react-dom": "^18.3.0",
     "bunup": "^0.16.0",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0",
-    "typescript": "^5.4.0"
+    "react-dom": "^18.3.0"
   }
 }

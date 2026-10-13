@@ -16,7 +16,17 @@ import {
   startOfWeek,
   startOfYear,
 } from 'date-fns'
-import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import {
+  Fragment,
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { type DayButtonProps, DayPicker, type DayPickerProps, type DayProps, type MonthProps } from 'react-day-picker'
 import { defaultLocale, fieldLabel } from '../../../../lib/date-locale'
 import { dividedColumns, ScrollColumn } from '../../../../lib/scroll-column'
@@ -95,6 +105,27 @@ function DayButton({ day: _, modifiers, className, ...props }: DayButtonProps) {
   )
 }
 
+/** The Calendar's own props, beside DayPicker's. */
+interface CalendarOwnProps {
+  /** The locale: a react-day-picker / date-fns locale (`import { de } from 'react-day-picker/locale'`). Names months and weekdays, picks the first day of the week. Defaults to `enUS`. */
+  locale?: Locale
+  /** Pins the calendar to one step of the size ladder (36px days, compact 28px). Defaults to the surrounding SizeProvider. */
+  size?: SizeVariant
+  /** Which side of the days the month and year columns stand on; the month column keeps next to the days. Defaults to `'end'`. */
+  columnsSide?: 'start' | 'end'
+  /** Accessible names of the month and year columns (`{ month, year }`). Default to the locale's names for the fields. */
+  columnLabels?: { month?: string; year?: string }
+  /** More columns, given the layout's orientation — the date picker's hours and minutes. */
+  extraColumns?: (orientation: 'vertical' | 'horizontal') => ReactNode
+  /** Which side of the days the extra columns stand on, outside the month and year columns when they share it. Defaults to `'end'`. */
+  extraColumnsSide?: 'start' | 'end'
+  /** Classes for the calendar's box. */
+  className?: string
+}
+
+/** DayPicker's props (`mode`, `selected`, `onSelect`, matchers…) and the Calendar's own. */
+type CalendarProps = DayPickerProps & CalendarOwnProps
+
 /**
  * A calendar that scrolls through the months instead of paging, with month
  * and year columns to jump by.
@@ -122,24 +153,12 @@ function Calendar({
   locale = defaultLocale,
   size,
   columnsSide = 'end',
+  columnLabels,
   extraColumns,
   extraColumnsSide = 'end',
   className,
   ...props
-}: DayPickerProps & {
-  /** The locale: a react-day-picker / date-fns locale (`import { de } from 'react-day-picker/locale'`). Names months and weekdays, picks the first day of the week. Defaults to `enUS`. */
-  locale?: Locale
-  /** Pins the calendar to one step of the size ladder (36px days, compact 28px). Defaults to the surrounding SizeProvider. */
-  size?: SizeVariant
-  /** Which side of the days the month and year columns stand on; the month column keeps next to the days. Defaults to `'end'`. */
-  columnsSide?: 'start' | 'end'
-  /** More columns, given the layout's orientation — the date picker's hours and minutes. */
-  extraColumns?: (orientation: 'vertical' | 'horizontal') => ReactNode
-  /** Which side of the days the extra columns stand on, outside the month and year columns when they share it. Defaults to `'end'`. */
-  extraColumnsSide?: 'start' | 'end'
-  /** Classes for the calendar's box. */
-  className?: string
-}) {
+}: CalendarProps): ReactElement {
   const sizeClasses = useSize(size)
   const picked = pickedDate(props)
   const today = useMemo(() => new Date(), [])
@@ -229,7 +248,7 @@ function Calendar({
   const monthColumn = (
     <ScrollColumn
       key="month"
-      label={fieldLabel(locale, 'month')}
+      label={columnLabels?.month ?? fieldLabel(locale, 'month')}
       options={months}
       value={picked && isSameYear(picked, new Date(yearInView, 0, 1)) ? picked.getMonth() : null}
       follow={monthInView}
@@ -242,7 +261,7 @@ function Calendar({
   const yearColumn = (
     <ScrollColumn
       key="year"
-      label={fieldLabel(locale, 'year')}
+      label={columnLabels?.year ?? fieldLabel(locale, 'year')}
       options={years}
       value={picked?.getFullYear() ?? null}
       follow={yearInView}
@@ -254,8 +273,10 @@ function Calendar({
   )
   const extras = extraColumns?.(orientation)
   // Outward from the days: the month column, the year column, then the extras.
-  const before = [extraColumnsSide === 'start' && extras, columnsSide === 'start' && [yearColumn, monthColumn]]
-  const after = [columnsSide === 'end' && [monthColumn, yearColumn], extraColumnsSide === 'end' && extras]
+  // Keyed fragments, so a side's children keep their identity as the extras come and go.
+  const extrasPart = extras ? <Fragment key="extras">{extras}</Fragment> : null
+  const before = [extraColumnsSide === 'start' && extrasPart, columnsSide === 'start' && [yearColumn, monthColumn]]
+  const after = [columnsSide === 'end' && [monthColumn, yearColumn], extraColumnsSide === 'end' && extrasPart]
   const side = (place: 'start' | 'end') =>
     wide
       ? cn(dividedColumns, 'h-full shrink-0 border-border', place === 'start' ? 'border-e' : 'border-s')
@@ -342,8 +363,6 @@ function Calendar({
 
   return size ? <SizeProvider size={size}>{content}</SizeProvider> : content
 }
-
-type CalendarProps = Parameters<typeof Calendar>[0]
 
 export type { CalendarProps }
 export { Calendar }

@@ -5,51 +5,28 @@
  * the date and time pickers) builds on.
  */
 
-import { cva } from 'class-variance-authority'
 import { createContext, type MouseEvent, type RefObject, useContext } from 'react'
+import { FIELD_PX, type FieldVariant, fieldVariants } from './field-variants'
 import { useShape } from './shape-context'
 import { type SizeVariant, useSize } from './size-context'
 import { cn } from './utils'
 
-/**
- * The ringed box of a text field. It steps from rest to a muted fill when lit
- * (hovered, or `data-active` from a group's fluid hover) to the card fill
- * when focused. `data-invalid` keeps a destructive ring in every state and
- * tints the lit fill; `data-disabled` frames and dims it. Put it on the
- * element around the control and stamp the data attributes; Base UI parts
- * stamp `data-invalid` / `data-disabled` themselves.
- */
-export const fieldVariants = cva(
-  [
-    'group/field ring-1 cursor-text transition-[background-color,box-shadow,opacity] duration-fast',
-    'hover:bg-muted/50 hover:ring-border data-[active]:bg-muted/50 data-[active]:ring-border',
-    // `!`: Uno doesn't emit the state variants in a fixed order, so the
-    // states that must win (focus fill, invalid ring) win on importance.
-    'focus-within:!bg-card focus-within:ring-border',
-    'data-[invalid]:!ring-destructive/50 data-[invalid]:hover:bg-destructive-light/60 data-[invalid]:data-[active]:bg-destructive-light/60',
-    'data-[disabled]:ring-border data-[disabled]:opacity-50 data-[disabled]:pointer-events-none',
-  ],
-  {
-    variants: {
-      variant: {
-        // Invisible until lit or focused.
-        borderless: 'bg-transparent ring-transparent',
-        // Framed at rest.
-        bordered: 'bg-transparent ring-border',
-      },
-    },
-    defaultVariants: {
-      variant: 'borderless',
-    },
-  },
-)
-
-/** A leading icon inside a `fieldVariants` box: muted at rest, it darkens and thickens with the field. Pass `strokeWidth={1.5}`. */
-export const fieldIconClasses =
-  'shrink-0 text-muted-foreground transition-[color,stroke-width] duration-fast group-hover/field:text-foreground group-hover/field:stroke-[2] group-data-[active]/field:text-foreground group-data-[active]/field:stroke-[2] group-focus-within/field:text-foreground group-focus-within/field:stroke-[2]'
-
-/** Framed at rest (`bordered`), or invisible until hovered or focused (`borderless`). */
-export type FieldVariant = 'bordered' | 'borderless'
+// The pure tables live in `field-variants.ts` (callable from a server
+// component); every name stays importable from here.
+export {
+  FIELD_ACTION,
+  FIELD_ACTION_BOX,
+  FIELD_ACTION_END,
+  FIELD_ACTION_RADIUS,
+  FIELD_ADORNMENT_ICON,
+  FIELD_PX,
+  FIELD_TEXT_INSET,
+  type FieldVariant,
+  fieldActionClasses,
+  fieldAdornmentClasses,
+  fieldIconClasses,
+  fieldVariants,
+} from './field-variants'
 
 /**
  * What every text field's box takes. Items re-declare these members in their
@@ -64,23 +41,35 @@ export interface FieldBoxOptions {
   disabled?: boolean
   /** Lit from outside, e.g. a group's fluid hover. */
   active?: boolean
+  /** Shows the value without letting it change: the ring answers, the fill never lifts. */
+  readOnly?: boolean
+  /** Marks the control required (`required` on the control). */
+  required?: boolean
   /** Pins the field to one step of the size ladder. Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
 }
 
-/**
- * State a field wrapper (InputGroup.Field) hands to whatever control it
- * holds: lit by the group's fluid hover, its error, its disabled state.
- * `useFieldBox` reads it, so any field built on the box joins in; the
- * control's own props win.
- */
-export const FieldStateContext = createContext<{ active: boolean; invalid: boolean; disabled: boolean } | null>(null)
+/** What a field wrapper hands to the control it holds. */
+export interface FieldState {
+  /** Lit by a group's fluid hover. */
+  active: boolean
+  invalid: boolean
+  disabled: boolean
+  readOnly?: boolean
+  required?: boolean
+}
 
-// Literal table: one notch tighter than the ladder's `px`, since the ring is
-// invisible at rest and the roomier inset would read as a gap.
-const FIELD_PX: Record<SizeVariant, string> = {
-  default: 'px-2.5',
-  compact: 'px-2',
+/**
+ * State a field wrapper (Field, InputGroup.Field) hands to whatever control
+ * it holds: lit by the group's fluid hover, its error, its disabled,
+ * read-only and required state. `useFieldBox` reads it, so any field built on
+ * the box joins in; the control's own props win.
+ */
+export const FieldStateContext = createContext<FieldState | null>(null)
+
+/** The surrounding field's state, or `null` outside one. */
+export function useFieldState() {
+  return useContext(FieldStateContext)
 }
 
 /**
@@ -88,34 +77,44 @@ const FIELD_PX: Record<SizeVariant, string> = {
  * variant, the state attributes it reads, the shape's input radius and the
  * horizontal inset. Spread `props` on the element around the control (or the
  * control itself, for a button field); the height stays with the item, from
- * the returned `size`. Inside InputGroup.Field, unset `active` / `invalid` /
- * `disabled` come from the field (`FieldStateContext`).
+ * the returned `size`. Inside a Field or InputGroup.Field, unset `active` / `invalid` /
+ * `disabled` / `readOnly` / `required` come from the field (`FieldStateContext`).
  */
-export function useFieldBox({ variant, invalid, disabled, active, size }: FieldBoxOptions) {
+export function useFieldBox({ variant, invalid, disabled, active, readOnly, required, size }: FieldBoxOptions) {
   const field = useContext(FieldStateContext)
   const shape = useShape()
   const sizeClasses = useSize(size)
   const isInvalid = invalid ?? field?.invalid ?? false
   const isDisabled = disabled ?? field?.disabled ?? false
+  const isReadOnly = readOnly ?? field?.readOnly ?? false
 
   return {
     size: sizeClasses,
-    /** Resolved with the field's state, for the control's `aria-invalid` / `disabled`. */
+    /** Resolved with the field's state, for the control's `aria-invalid` / `disabled` / `readOnly` / `required`. */
     invalid: isInvalid,
     disabled: isDisabled,
+    readOnly: isReadOnly,
+    required: required ?? field?.required,
     props: {
       'data-active': (active ?? field?.active) || undefined,
       'data-invalid': isInvalid || undefined,
       'data-disabled': isDisabled || undefined,
+      'data-readonly': isReadOnly || undefined,
       className: cn(fieldVariants({ variant }), shape.input, FIELD_PX[sizeClasses.variant]),
     },
   }
 }
 
-/** A press anywhere in the box (icon, padding) focuses the control, without disturbing the control's own caret placement. */
+/**
+ * A press anywhere in the box (icon, padding) focuses the control, without
+ * disturbing the control's own caret placement. A press that only reaches the
+ * box through the React tree (a popup portalled out of an adornment, e.g. a
+ * searchable Dropdown) is left alone, so that popup can take focus itself.
+ */
 export function focusControlOnPress(control: RefObject<HTMLElement | null>) {
   return (e: MouseEvent) => {
     if (e.target === control.current) return
+    if (!e.currentTarget.contains(e.target as Node)) return
     e.preventDefault()
     control.current?.focus()
   }

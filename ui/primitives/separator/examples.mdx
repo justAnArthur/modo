@@ -1,0 +1,30 @@
+import Separator from './index'
+import Button from '../../components/button'
+
+# Horizontal
+
+Between stacked sections. The line fills the width; the spacing around it is the layout's.
+
+<div className="flex w-72 flex-col gap-3">
+  <div className="flex flex-col gap-1">
+    <span className="text-subtitle weight-semibold text-foreground">Profile</span>
+    <span className="text-caption text-muted-foreground">Your name and photo, as others see them.</span>
+  </div>
+  <Separator />
+  <div className="flex flex-col gap-1">
+    <span className="text-subtitle weight-semibold text-foreground">Security</span>
+    <span className="text-caption text-muted-foreground">Password and two-step sign-in.</span>
+  </div>
+</div>
+
+# Vertical
+
+Between clusters of a toolbar. `orientation="vertical"` stretches the line to the row's height.
+
+<div className="flex items-center gap-2">
+  <Button variant="ghost" size="compact">Bold</Button>
+  <Button variant="ghost" size="compact">Italic</Button>
+  <Separator orientation="vertical" className="my-1" />
+  <Button variant="ghost" size="compact">Link</Button>
+  <Button variant="ghost" size="compact">Quote</Button>
+</div>

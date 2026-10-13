@@ -1,0 +1,59 @@
+import Progress from './index'
+import StepDemo from './step-demo'
+import Button from '../button'
+import SizeProvider from '../../primitives/sizes'
+
+# Determinate
+
+`value` between `min` and `max` (0 and 100 by default). `label` names the bar; `showValue` prints the amount beside it.
+
+<div className="flex w-80 flex-col gap-6">
+  <Progress value={40} label="Uploading report.pdf" showValue />
+  <Progress value={100} label="Synced" showValue />
+  <Progress value={12} aria-label="Storage used" />
+</div>
+
+# The fill slides
+
+Press Step. The fill slides to the new amount on the indicator spring instead of stretching, so its rounded end keeps its shape. `StepDemo` is a docs stage: a Progress whose `value` steps through `values` on each press.
+
+<StepDemo values={[10, 35, 60, 90, 100, 0]} label="Importing contacts" showValue />
+
+# Indeterminate
+
+`value={null}` (the default) when nobody knows how far along it is: a segment sweeps the track. Under reduced motion it breathes in place.
+
+<div className="flex w-80 flex-col gap-6">
+  <Progress label="Preparing export" />
+  <Progress aria-label="Loading" />
+</div>
+
+# Along an edge
+
+Positioned along the top of a region, the bar is a loading line for everything under it.
+
+<div className="relative w-80 overflow-hidden rounded-xl border border-border p-4">
+  <Progress aria-label="Loading results" className="absolute inset-x-0 top-0" />
+  <span className="text-body text-muted-foreground">Results are on their way.</span>
+</div>
+
+# Spinner
+
+`Progress.Spinner` is the same wait in a small space: the loading glyph of Button, one control tall. It follows the size ladder, and `className` sizes it off the ladder.
+
+<div className="flex flex-col gap-3">
+  <div className="flex items-center gap-3">
+    <Progress.Spinner />
+    <Progress.Spinner size="compact" />
+    <span className="inline-flex items-center gap-1 text-body text-muted-foreground">
+      <Progress.Spinner className="size-6" label="Saving" />
+      Saving
+    </span>
+  </div>
+  <SizeProvider size="compact">
+    <div className="flex items-center gap-2">
+      <Progress.Spinner />
+      <Button variant="tertiary" loading>Saving</Button>
+    </div>
+  </SizeProvider>
+</div>

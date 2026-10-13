@@ -22,12 +22,17 @@ is specific to this package.
   `bg-surface-N`, `shadow-surface-N`, `rounded-box|glyph`). `lib/utils.ts` — `cn`, which knows them.
 - `lib/` — the shared systems: `springs`, `size-context`, `shape-context`, `surface-*`,
   `use-fluid-hover` + `fluid-hover-highlight`, `goo-indicator`, `use-morph` + `morph-layers` +
-  `morph-part`, `reduced-motion`, `use-controllable-state`, `slot`, `icon-context`.
+  `morph-part`, `reduced-motion`, `use-controllable-state`, `slot`, `icon-context`, `field-classes` +
+  `field-variants` (the field ladder), `row-order` (rows without `index`). Pure data and class tables
+  (`size-scale`, `field-variants`, an item's `variants.ts`) carry no JSX or hooks, so server code can
+  call them.
 - `primitives/` — the systems as documented items (Surface, Sizes, FluidHover, Motion, Morph,
-  ScrollArea, Code, Craft). `components/[inputs|navigation|overlays]/` — controls. `blocks/` —
+  ScrollArea, Code, Craft, Separator, Skeleton). `components/[inputs|navigation|overlays]/` — controls. `blocks/` —
   compositions.
-- `modo.components.tsx` — docs-only adapters for the chrome's slots (`Select`, `Icon`, `DocsNav`) and the
-  Theme panel item. `global.css` — base styles and the chrome's look through `data-modo` attributes.
+- `docs/` — the docs chrome, shipped (`@justanarthur/modo-ui/docs`, `/docs/chrome.css`, `/docs/vite`): the slot
+  adapters (`Button`, `Link`, `Icon`, `Select`, `DocsNav`), the Theme panel item, the layout and look through
+  `data-modo` attributes, and the pre-paint theme controller. The docs site and any consumer's docs use this one
+  copy; the barrel never imports it. `global.css` — `base.css` plus `docs/chrome.css`.
 
 ## rules that matter most
 

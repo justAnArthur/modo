@@ -34,18 +34,43 @@
  *   with `SurfaceProvider` as `Elevated` did.
  * - `effect="morph"` with `hideSource` opens the menu in place over its
  *   trigger: the positioner's `sideOffset` becomes the engine's `inPlaceOffset`.
+ * - `Select.Item`'s `index` is optional: rows take their place in document
+ *   order (`lib/row-order.tsx`), inside groups, conditionals and maps alike;
+ *   the checked row is found by its own index rather than its DOM position.
+ *   A row's label may be any node (the trigger shows it, through Base UI's
+ *   `items`), with `textValue` for typeahead.
+ * - `Select.Value` (local): the trigger's value slot as a part, so a trigger
+ *   can take it as children (shadcn's `<SelectValue placeholder>`).
+ * - `Select.Content` takes `side` / `align` / `sideOffset` (local).
+ * - The keyboard focus ring is the shared `FocusRing` (`lib/focus-ring.tsx`,
+ *   pinned to the popup's rounded shape), so it also snaps under reduced motion.
+ * - `triggerVariants` moved to `variants.ts` (server-callable, no JSX or hooks)
+ *   and re-exported here.
+ * - Root `open` / `defaultOpen` / `onOpenChange(open, details)` (local): the 300ms
+ *   pick acknowledgment runs only while the open state is uncontrolled; a
+ *   controlled select follows the caller's `open` and reports every request.
+ * - `Select.Content` takes `alignOffset` / `collisionPadding` (Positioner),
+ *   `finalFocus` (Popup) and rest HTML props (Popup). `initialFocus` is not
+ *   offered: Base UI's select popup always focuses the picked row itself.
+ * - `Select.Trigger` / `Select.Item` take `render` / `asChild` (`lib/slot.ts`);
+ *   the trigger takes `wrapperClassName` for its outer div. `Select.Value`
+ *   and `Select.Group` forward their ref.
  */
 
 import { Select as SelectPrimitive } from '@base-ui/react/select'
-import { cva, type VariantProps } from 'class-variance-authority'
+import type { VariantProps } from 'class-variance-authority'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   Children,
+  type ComponentProps,
+  cloneElement,
   createContext,
   forwardRef,
   type HTMLAttributes,
   isValidElement,
+  type ReactElement,
   type ReactNode,
+  type Ref,
   useCallback,
   useContext,
   useEffect,
@@ -53,13 +78,17 @@ import {
   useMemo,
   useRef,
   useState,
+  version,
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
+import { FocusRing } from '../../../lib/focus-ring'
 import type { IconComponent } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
 import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
+import { RowOrderContext, useRowOrder, useRowSlot } from '../../../lib/row-order'
 import { shapeMap, useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
+import { type SlotProps, slotId, slotRender } from '../../../lib/slot'
 import { spring } from '../../../lib/springs'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
@@ -69,6 +98,7 @@ import { inPlaceOffset, type MorphOrigin, opensInPlace, useMorph, useMorphOrigin
 import { cn } from '../../../lib/utils'
 import { ScrollArea } from '../../../primitives/scroll-area'
 import { SizeProvider } from '../../../primitives/sizes'
+import { triggerVariants } from './variants'
 
 // ---------------------------------------------------------------------------
 // Select context
@@ -91,6 +121,8 @@ interface SelectContextValue {
   value: string
   open: boolean
   origin: React.RefObject<MorphOrigin>
+  /** Local: whether the picked row's label is plain text (trimmed and truncated) or a node (laid out as is). */
+  textLabel: boolean
 }
 
 const SelectContext = createContext<SelectContextValue | null>(null)
@@ -121,21 +153,39 @@ const SelectContentContext = createContext<SelectContentContextValue | null>(nul
 // backgrounds inside it.
 const popupShape = shapeMap.rounded
 
+// An element's ref: `props.ref` on React 19, `element.ref` on 18. Reading `element.ref` warns on 19, so it
+// is only touched when `props.ref` is absent (React 18 never has it).
+function elementRef(el: ReactElement | undefined): Ref<HTMLDivElement> | undefined {
+  if (!el) return undefined
+  // React 19 keeps the ref in props, React 18 on the element; each warns when read the other way.
+  if (parseInt(version, 10) >= 19) return (el.props as { ref?: Ref<HTMLDivElement> }).ref
+  return (el as unknown as { ref?: Ref<HTMLDivElement> }).ref
+}
+
+const ownChildren = (el: ReactElement) => (el.props as { children?: ReactNode }).children
+
+// With `asChild` a row's children are the element that becomes the row, and its own children are
+// the label; a `render` element's own children are the label when the row has none.
+function itemLabel(asChild: boolean | undefined, render: ReactElement | undefined, children: ReactNode) {
+  if (asChild && isValidElement(children)) return ownChildren(children)
+  return children === undefined && render ? ownChildren(render) : children
+}
+
 /**
  * Walk the children tree collecting `{ value, label }` pairs from SelectItem
  * elements. Passed to Base UI's `items` prop so the trigger can resolve the
  * label of an initial value before the popup has ever mounted (items only
- * render while open). Non-string labels fall back to the raw value, matching
- * the previous labelMap behaviour.
+ * render while open). The label is the row's children, whatever node they
+ * are; a row with none shows its raw value.
  */
 function collectSelectItems(node: ReactNode, out: { value: string; label: ReactNode }[] = []) {
   Children.forEach(node, child => {
     if (!isValidElement(child)) return
-    const props = child.props as { value?: unknown; children?: ReactNode }
+    const props = child.props as { value?: unknown; children?: ReactNode; asChild?: boolean; render?: ReactElement }
     if (typeof props.value === 'string') {
       out.push({
         value: props.value,
-        label: typeof props.children === 'string' ? props.children : props.value,
+        label: itemLabel(props.asChild, props.render, props.children) ?? props.value,
       })
     } else if (props.children) {
       collectSelectItems(props.children, out)
@@ -143,6 +193,9 @@ function collectSelectItems(node: ReactNode, out: { value: string; label: ReactN
   })
   return out
 }
+
+/** Base UI's change details for the select popup: `reason`, `event`, `trigger`, `cancel()`. */
+type SelectOpenChangeDetails = SelectPrimitive.Root.ChangeEventDetails
 
 interface SelectProps {
   /** `Select.Trigger` and `Select.Content`. */
@@ -153,6 +206,12 @@ interface SelectProps {
   defaultValue?: string
   /** Called when the selected value changes. */
   onValueChange?: (value: string) => void
+  /** Controlled open state. Pair with `onOpenChange`. A controlled select follows it exactly: it closes only when you say so, and the 300ms pick acknowledgment is skipped. */
+  open?: boolean
+  /** Uncontrolled initial open state. Defaults to `false`. */
+  defaultOpen?: boolean
+  /** Called when the popup asks to open or close, with Base UI's change details (`reason`, `event`, `trigger`, `cancel()`). Uncontrolled, a pick reports its close once the 300ms acknowledgment ends. */
+  onOpenChange?: (open: boolean, details: SelectOpenChangeDetails) => void
   /** Disables the entire select. Defaults to `false`. */
   disabled?: boolean
   /** Name for form submission (renders a hidden native input). */
@@ -175,20 +234,57 @@ interface SelectProps {
  * popup's open and close through the shared morph (see Morph), goo by
  * default. A pick holds the popup open for 300ms so that acknowledgment is
  * seen; Escape and outside presses close at once. Uncontrolled through
- * `defaultValue`, controlled through `value` + `onValueChange`.
+ * `defaultValue`, controlled through `value` + `onValueChange`. The popup's
+ * open state follows the same rule: `defaultOpen`, or `open` +
+ * `onOpenChange(open, details)`. A controlled `open` is obeyed exactly, so
+ * a handler may refuse a close; it skips the 300ms hold, which only runs
+ * while the select keeps its own open state.
  *
- * Statics: Select.Trigger (variant, icon, placeholder, error),
- * Select.Content (the popup: the morph options from, effect, hideSource,
- * tier), Select.Item (index, value, icon, disabled), Select.Group,
- * Select.Label and Select.Separator.
+ * Rows need no `index`: they take their place in document order, inside a
+ * `Select.Group` or out of a `map`. The trigger shows the picked row's
+ * label, whatever node it is (an icon and text, a badge), and a row's
+ * `textValue` is what typeahead matches when its children aren't plain text.
+ *
+ * Statics:
+ * - `Select.Trigger` — the field: `variant`, `icon`, `placeholder`, `error`;
+ *   children replace its value slot (a `Select.Value`). `render` / `asChild`
+ *   swap the button for your own element (it brings its own look); an
+ *   element with children of its own drops the icon, `placeholder` and
+ *   chevron too, one without keeps them;
+ *   `wrapperClassName` styles the div that holds the `error` message.
+ * - `Select.Value` — the value slot: the picked row's label, else the muted
+ *   `placeholder`.
+ * - `Select.Content` — the popup: `side`, `align`, `sideOffset`, `alignOffset`,
+ *   `collisionPadding`, `finalFocus`, the morph options `from`, `effect`,
+ *   `hideSource`, `tier`, and HTML attributes (`id`, `aria-*`, `data-*`) for
+ *   the popup element.
+ * - `Select.Item` — one row: `value`, optional `index`, `textValue`, `icon`,
+ *   `disabled`; its children are the label. `render` / `asChild` make the
+ *   row your own element, a link for instance.
+ * - `Select.Group`, `Select.Label`, `Select.Separator` — sections, their
+ *   captions and hairlines between them.
  *
  * @example {@include ./examples.mdx}
  */
-function Select({ children, value, defaultValue, onValueChange, disabled = false, name, required, size }: SelectProps) {
+function Select({
+  children,
+  value,
+  defaultValue,
+  onValueChange,
+  open: openProp,
+  defaultOpen = false,
+  onOpenChange,
+  disabled = false,
+  name,
+  required,
+  size,
+}: SelectProps) {
   const [internalValue, setInternalValue] = useState(defaultValue ?? '')
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(defaultOpen)
   const { origin, capture } = useMorphOrigin()
   const currentValue = value !== undefined ? value : internalValue
+  const controlledOpen = openProp !== undefined
+  const open = controlledOpen ? openProp : internalOpen
 
   const items = useMemo(() => collectSelectItems(children), [children])
 
@@ -210,29 +306,39 @@ function Select({ children, value, defaultValue, onValueChange, disabled = false
   }, [])
   useEffect(() => cancelAckClose, [cancelAckClose])
 
+  const onOpenChangeRef = useRef(onOpenChange)
+  onOpenChangeRef.current = onOpenChange
+  const controlledOpenRef = useRef(controlledOpen)
+  controlledOpenRef.current = controlledOpen
+
   // Picking an item acknowledges before closing: the close is deferred by
   // selectionAckMs so the checkmark draw and the selected background's spring
   // to the picked row are seen. Every other close reason (Escape, outside
   // press, trigger toggle, focus-out) closes immediately and cancels any
-  // pending acknowledgment; re-picking within the window restarts it.
+  // pending acknowledgment; re-picking within the window restarts it. A
+  // controlled `open` is the caller's: every request is reported at once and
+  // nothing is deferred.
   const handleOpenChange = useCallback(
-    (nextOpen: boolean, eventDetails: { reason: string; trigger?: Element; event?: Event }) => {
+    (nextOpen: boolean, eventDetails: SelectOpenChangeDetails) => {
       if (nextOpen) capture(eventDetails)
-      if (!nextOpen && eventDetails.reason === 'item-press') {
-        cancelAckClose()
+      cancelAckClose()
+      if (!nextOpen && eventDetails.reason === 'item-press' && !controlledOpenRef.current) {
         ackTimeoutRef.current = window.setTimeout(() => {
           ackTimeoutRef.current = null
-          setOpen(false)
+          setInternalOpen(false)
+          onOpenChangeRef.current?.(false, eventDetails)
         }, selectionAckMs)
         return
       }
-      cancelAckClose()
-      setOpen(nextOpen)
+      if (!controlledOpenRef.current) setInternalOpen(nextOpen)
+      onOpenChangeRef.current?.(nextOpen, eventDetails)
     },
     [cancelAckClose, capture],
   )
 
-  const ctx = useMemo(() => ({ value: currentValue, open, origin }), [currentValue, open, origin])
+  const picked = items.find(item => item.value === currentValue)?.label
+  const textLabel = picked === undefined || typeof picked === 'string' || typeof picked === 'number'
+  const ctx = useMemo(() => ({ value: currentValue, open, origin, textLabel }), [currentValue, open, origin, textLabel])
 
   // A size prop pins the whole compound (trigger + portalled popup — React
   // context crosses portals) to one step of the ladder.
@@ -263,32 +369,50 @@ function Select({ children, value, defaultValue, onValueChange, disabled = false
 Select.displayName = 'Select'
 
 // ---------------------------------------------------------------------------
-// SelectTrigger
+// SelectValue
 // ---------------------------------------------------------------------------
 
-const triggerVariants = cva(
-  [
-    'group inline-flex items-center justify-between outline-none cursor-pointer',
-    'transition-all duration-fast',
-    'disabled:opacity-50 disabled:pointer-events-none',
-    'focus-visible:ring-1 focus-visible:ring-focus-ring',
-  ],
-  {
-    variants: {
-      variant: {
-        bordered: 'border border-border bg-transparent text-foreground hover:bg-hover',
-        borderless: 'border border-transparent bg-transparent text-foreground hover:bg-hover',
-      },
-    },
-    defaultVariants: {
-      variant: 'bordered',
-    },
+interface SelectValueProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'children' | 'placeholder'> {
+  /** Shown, muted, while nothing is selected. Defaults to `"Select…"`. */
+  placeholder?: ReactNode
+  /** Extra classes for the value text. */
+  className?: string
+}
+
+/** The trigger's value slot: the picked row's label (its children), else the muted placeholder. */
+const SelectValue = forwardRef<HTMLSpanElement, SelectValueProps>(
+  ({ placeholder = 'Select…', className, ...props }, ref) => {
+    const { textLabel } = useSelectContext()
+    return (
+      <SelectPrimitive.Value
+        ref={ref}
+        placeholder={placeholder}
+        // py-1/-my-1: truncate's overflow:hidden clips at the padding
+        // box, and the trimmed box excludes ascenders/descenders — the
+        // padding gives glyphs room while the negative margin keeps the
+        // trimmed layout box.
+        className={cn(
+          'min-w-0 flex-1 text-left data-[placeholder]:text-muted-foreground',
+          // A node label (a badge, an icon and text) keeps its own box: trimming
+          // and clipping it would cut it top and bottom.
+          textLabel ? 'truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1' : 'flex items-center',
+          className,
+        )}
+        {...props}
+      />
+    )
   },
 )
 
-interface SelectTriggerProps
-  extends Omit<HTMLAttributes<HTMLButtonElement>, 'children'>,
-    VariantProps<typeof triggerVariants> {
+SelectValue.displayName = 'SelectValue'
+
+// ---------------------------------------------------------------------------
+// SelectTrigger
+// ---------------------------------------------------------------------------
+
+interface SelectTriggerProps extends Omit<SlotProps, 'children' | 'placeholder'>, VariantProps<typeof triggerVariants> {
+  /** Replaces the built-in value slot, typically with a `Select.Value` (shadcn's `<SelectValue placeholder>`). The icon and chevron stay. With `asChild`, the single child element that becomes the trigger instead, and `render` takes an element the same way: that element replaces the whole field. If it has children of its own, they are the entire body, so the `icon`, `placeholder` and chevron are not rendered and the field look, including the `error` border tint, is not applied (the `error` message and `aria-invalid` remain). If it has none, it still gets the value slot, `icon` and chevron, unstyled. */
+  children?: ReactNode
   /** Visual style of the trigger. Defaults to `"bordered"`. */
   variant?: 'bordered' | 'borderless'
   /** Optional icon displayed before the value. */
@@ -299,33 +423,66 @@ interface SelectTriggerProps
   error?: string
   /** Size override for the trigger alone. Prefer the `size` prop on `<Select>` (or a surrounding SizeProvider) so the popup matches. */
   size?: SizeVariant
-  /** Extra classes for the trigger button. */
+  /** Extra classes for the trigger button. The field has a minimum width of 160px (128px compact); pass `min-w-0` to lift that floor. */
   className?: string
+  /** Extra classes for the div around the trigger, which holds the `error` message under it. It is a plain flex column, so `contents` makes it vanish from the layout. */
+  wrapperClassName?: string
 }
 
 const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
-  ({ className, variant, icon: Icon, placeholder = 'Select…', error, size, ...props }, ref) => {
+  (
+    {
+      className,
+      wrapperClassName,
+      variant,
+      icon: Icon,
+      placeholder = 'Select…',
+      error,
+      size,
+      render,
+      asChild,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
     const shape = useShape()
     const sizeClasses = useSize(size)
     const compact = sizeClasses.variant === 'compact'
+    // The element a `render` / `asChild` caller brings is the whole trigger, look included: it gets only
+    // the `group` class, so the field's border, size, padding and `error` border tint are not applied
+    // (the `error` message below it and `aria-invalid` still are). What goes inside depends on the
+    // element's own children:
+    //  - it has some: they are the whole body and replace the field's, so the icon, `placeholder` and
+    //    chevron are not rendered (add a `Select.Value` among them to show the picked label);
+    //  - it has none: it gets the field's body, `icon` (if any), value slot with `placeholder`, and
+    //    chevron, in an unstyled trigger.
+    const el = slotRender(render, asChild, asChild ? children : undefined)
+    const content = el ? itemLabel(asChild, render, children) : children
 
     return (
-      <div className="flex flex-col gap-1">
+      <div className={cn('flex flex-col gap-1', wrapperClassName)}>
         <SelectPrimitive.Trigger
           ref={ref}
+          render={el}
           aria-invalid={!!error || undefined}
-          className={cn(
-            triggerVariants({ variant }),
-            sizeClasses.control,
-            sizeClasses.text,
-            sizeClasses.px,
-            sizeClasses.gap,
-            compact ? 'min-w-[128px]' : 'min-w-[160px]',
-            shape.input,
-            error && 'border-destructive/50 hover:border-destructive/50',
-            className,
-          )}
+          className={
+            el
+              ? cn('group', className)
+              : cn(
+                  triggerVariants({ variant }),
+                  sizeClasses.control,
+                  sizeClasses.text,
+                  sizeClasses.px,
+                  sizeClasses.gap,
+                  compact ? 'min-w-[128px]' : 'min-w-[160px]',
+                  shape.input,
+                  error && 'border-destructive/50 hover:border-destructive/50',
+                  className,
+                )
+          }
           {...props}
+          id={slotId(el, props.id)}
         >
           <span className={cn('flex items-center min-w-0 flex-1', sizeClasses.gap)}>
             {Icon && (
@@ -335,14 +492,7 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
                 className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-fast group-hover:text-foreground group-hover:stroke-[2]"
               />
             )}
-            <SelectPrimitive.Value
-              placeholder={placeholder}
-              // py-1/-my-1: truncate's overflow:hidden clips at the padding
-              // box, and the trimmed box excludes ascenders/descenders — the
-              // padding gives glyphs room while the negative margin keeps the
-              // trimmed layout box.
-              className="min-w-0 flex-1 text-left truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1 data-[placeholder]:text-muted-foreground"
-            />
+            {content ?? <SelectValue placeholder={placeholder} />}
           </span>
 
           <svg
@@ -371,7 +521,20 @@ SelectTrigger.displayName = 'SelectTrigger'
 // SelectContent
 // ---------------------------------------------------------------------------
 
-interface SelectContentProps {
+type SelectPositionerProps = ComponentProps<typeof SelectPrimitive.Positioner>
+type SelectPopupProps = ComponentProps<typeof SelectPrimitive.Popup>
+
+// Handlers the popup drives itself (fluid hover, the keyboard ring gate): not passed through.
+type PopupOwnHandlers =
+  | 'onKeyDownCapture'
+  | 'onMouseEnter'
+  | 'onMouseMove'
+  | 'onMouseLeave'
+  | 'onClick'
+  | 'onFocus'
+  | 'onBlur'
+
+interface SelectContentProps extends Omit<HTMLAttributes<HTMLDivElement>, PopupOwnHandlers | 'className' | 'children'> {
   /** Where the menu grows from (see Morph): the trigger, the pointer, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | React.RefObject<HTMLElement | null>
   /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
@@ -380,6 +543,18 @@ interface SelectContentProps {
   hideSource?: boolean
   /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
   tier?: 'moderate' | 'slow'
+  /** Side of the trigger the menu prefers; it flips when there is no room. Defaults to `"bottom"`. */
+  side?: 'top' | 'bottom' | 'left' | 'right'
+  /** Alignment against the trigger. Defaults to `"start"`. */
+  align?: 'start' | 'center' | 'end'
+  /** Gap to the trigger, in px. Ignored when the menu opens in place over the trigger (`effect="morph"` with `hideSource`). Defaults to `6`. */
+  sideOffset?: number
+  /** Shift along the aligned edge in px, after `align` (a number, or Base UI's function of side, align and sizes). Defaults to `0`. */
+  alignOffset?: SelectPositionerProps['alignOffset']
+  /** Space kept between the menu and the edge of its collision boundary, in px or per side. Defaults to `5`. */
+  collisionPadding?: SelectPositionerProps['collisionPadding']
+  /** Where focus goes when the menu closes: a ref, `false` to leave it, `true` for the default, or a function of how it closed (`'mouse'`, `'touch'`, `'pen'`, `'keyboard'`). Defaults to the trigger. */
+  finalFocus?: SelectPopupProps['finalFocus']
   /** Additional classes for the menu container. */
   className?: string
   /** `Select.Item`, `Select.Group`, `Select.Label`, `Select.Separator`. */
@@ -387,9 +562,34 @@ interface SelectContentProps {
 }
 
 const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
-  ({ from, effect, hideSource, tier = 'moderate', className, children }, ref) => {
+  (
+    {
+      from,
+      effect,
+      hideSource,
+      tier = 'moderate',
+      side = 'bottom',
+      align = 'start',
+      sideOffset = 6,
+      alignOffset,
+      collisionPadding,
+      finalFocus,
+      className,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
     const { open, value, origin } = useSelectContext()
-    const morph = useMorph(open, origin, { from, effect, hideSource, tier })
+    const rowOrder = useRowOrder()
+    const morph = useMorph(open, origin, {
+      from,
+      effect,
+      hideSource,
+      tier,
+      // A custom `finalFocus` places focus itself; the morph's own return to the trigger would undo it.
+      returnFocus: typeof finalFocus === 'boolean' ? finalFocus : finalFocus === undefined,
+    })
     useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
     // Lifts 2 levels off its substrate with a fixed shadow (see Elevated).
     const level = Math.min(useSurface() + 2, 8)
@@ -430,9 +630,11 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
         inner = requestAnimationFrame(() => {
           const container = containerRef.current
           if (container) {
-            const items = Array.from(container.querySelectorAll('[data-fluid-hover-index]')) as HTMLElement[]
-            const idx = items.findIndex(el => el.getAttribute('data-value') === value)
-            setCheckedIndex(idx !== -1 ? idx : undefined)
+            // The row's own index: rows may be numbered out of DOM order (an explicit `index`).
+            const row = Array.from(container.querySelectorAll<HTMLElement>('[data-fluid-hover-index]')).find(
+              el => el.getAttribute('data-value') === value,
+            )
+            setCheckedIndex(row ? Number(row.getAttribute('data-fluid-hover-index')) : undefined)
           }
         })
       })
@@ -469,15 +671,19 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
     return (
       <SelectPrimitive.Portal>
         <SelectPrimitive.Positioner
-          side="bottom"
-          align="start"
-          sideOffset={opensInPlace({ effect, hideSource }) ? inPlaceOffset : 6}
+          side={side}
+          align={align}
+          sideOffset={opensInPlace({ effect, hideSource }) ? inPlaceOffset : sideOffset}
+          alignOffset={alignOffset}
+          collisionPadding={collisionPadding}
           alignItemWithTrigger={false}
           className="z-50 outline-none"
         >
           <SelectContentContext.Provider value={contentCtx}>
             <SelectPrimitive.Popup
               ref={morph.popupRef}
+              finalFocus={finalFocus}
+              {...props}
               // Capture phase: the primitive moves focus during its own keydown
               // handling, so the nav flag must be set before then.
               onKeyDownCapture={trackKeyboardNav}
@@ -569,29 +775,9 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
                       <FluidHoverHighlight hover={hover} hidden={!open} className={shape.bg} />
 
                       {/* Focus ring */}
-                      {open && (
-                        <AnimatePresence>
-                          {focusRect && (
-                            <motion.div
-                              className={`absolute ${shape.focusRing} pointer-events-none z-20 border border-focus-ring`}
-                              initial={false}
-                              animate={{
-                                left: focusRect.left - 2,
-                                top: focusRect.top - 2,
-                                width: focusRect.width + 4,
-                                height: focusRect.height + 4,
-                              }}
-                              exit={{ opacity: 0, transition: spring.fast.exit }}
-                              transition={{
-                                ...spring.fast,
-                                opacity: { duration: spring.fast.duration },
-                              }}
-                            />
-                          )}
-                        </AnimatePresence>
-                      )}
+                      {open && <FocusRing rect={focusRect} shape="rounded" />}
 
-                      {children}
+                      <RowOrderContext.Provider value={rowOrder}>{children}</RowOrderContext.Provider>
                     </div>
                   </ScrollArea>
                 </MorphSurface>
@@ -610,21 +796,43 @@ SelectContent.displayName = 'SelectContent'
 // SelectItem
 // ---------------------------------------------------------------------------
 
-interface SelectItemProps extends HTMLAttributes<HTMLDivElement> {
+interface SelectItemProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
+  /** The element that becomes the row, e.g. a router link (it must forward its ref); it gets the row's look and behaviour. Its children fill the label unless `children` is given. */
+  render?: ReactElement
+  /** Make the single child element the row, its own children being the label. Both spellings work. Defaults to `false`. */
+  asChild?: boolean
   /** Optional icon displayed before the label. */
   icon?: IconComponent
-  /** Position index within the content — what fluid hover measures rows by. */
-  index: number
+  /** Position among the menu's rows — what fluid hover measures rows by. Defaults to the row's place in document order. */
+  index?: number
   /** Unique value for this option. */
   value: string
+  /** The row's text for typeahead, when its children are not a plain string. */
+  textValue?: string
   /** Disables this individual item. Defaults to `false`. */
   disabled?: boolean
-  /** The row label. A string label is also what the trigger shows for this value. */
+  /** The row label. A string label is also what the trigger shows for this value. With `asChild`, the single child element that becomes the row. */
   children?: ReactNode
 }
 
 const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
-  ({ className, children, icon: Icon, value, index, disabled = false, ...props }, ref) => {
+  (
+    {
+      className,
+      children: childrenProp,
+      render,
+      asChild,
+      icon: Icon,
+      value,
+      index: indexProp,
+      textValue,
+      disabled = false,
+      ...props
+    },
+    ref,
+  ) => {
+    const el = slotRender(render, asChild, asChild ? childrenProp : undefined)
+    const children = itemLabel(asChild, render, childrenProp)
     const selectCtx = useSelectContext()
     const contentCtx = useContext(SelectContentContext)
     const internalRef = useRef<HTMLDivElement>(null)
@@ -643,39 +851,51 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
     // unregistering and re-registering every row and so keeping the hook's
     // measurement permanently unsettled while the pointer moved.
     const registerItem = contentCtx?.registerItem
+    const { index } = useRowSlot(internalRef, indexProp)
     useRegisterFluidHoverItem(registerItem, index, internalRef)
 
     const isActive = contentCtx?.activeIndex === index
     const isChecked = selectCtx.value === value
     const skipAnimation = !hasMounted.current
 
+    const rowProps = {
+      ref: (node: HTMLDivElement | null) => {
+        ;(internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+        for (const r of [ref, elementRef(el)]) {
+          if (typeof r === 'function') r(node)
+          else if (r) (r as React.MutableRefObject<HTMLDivElement | null>).current = node
+        }
+      },
+      'data-fluid-hover-index': index,
+      'data-value': value,
+      className: cn(
+        // Fixed height (was py-2 around a 19.5px line box ≈ 35.5px) so
+        // the text-box trim on the item text doesn't shrink the row.
+        // shrink-0: the popup is a max-height flex column, so without it
+        // a long list compresses rows to fit instead of scrolling.
+        `relative z-10 flex ${sizeClasses.control} shrink-0 items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.itemPx} ${sizeClasses.text} cursor-pointer outline-none select-none`,
+        'transition-[color] duration-fast',
+        isActive || isChecked ? 'text-foreground' : 'text-muted-foreground',
+        disabled && 'opacity-50 pointer-events-none',
+        className,
+      ),
+      ...props,
+    }
+
     return (
       <SelectPrimitive.Item
         value={value}
         disabled={disabled}
-        label={typeof children === 'string' ? children : undefined}
+        label={textValue ?? (typeof children === 'string' ? children : undefined)}
         render={
-          <div
-            ref={(node: HTMLDivElement | null) => {
-              ;(internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node
-              if (typeof ref === 'function') ref(node)
-              else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
-            }}
-            data-fluid-hover-index={index}
-            data-value={value}
-            className={cn(
-              // Fixed height (was py-2 around a 19.5px line box ≈ 35.5px) so
-              // the text-box trim on the item text doesn't shrink the row.
-              // shrink-0: the popup is a max-height flex column, so without it
-              // a long list compresses rows to fit instead of scrolling.
-              `relative z-10 flex ${sizeClasses.control} shrink-0 items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.itemPx} ${sizeClasses.text} cursor-pointer outline-none select-none`,
-              'transition-[color] duration-fast',
-              isActive || isChecked ? 'text-foreground' : 'text-muted-foreground',
-              disabled && 'opacity-50 pointer-events-none',
-              className,
-            )}
-            {...props}
-          />
+          el ? (
+            cloneElement(el, {
+              ...rowProps,
+              className: cn(rowProps.className, (el.props as { className?: string }).className),
+            })
+          ) : (
+            <div {...rowProps} />
+          )
         }
       >
         {Icon && (
@@ -689,7 +909,17 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
         <SelectPrimitive.ItemText
           // py-1/-my-1 keeps truncate's overflow:hidden from clipping
           // ascenders/descenders outside the trimmed box.
-          render={<span className="flex-1 min-w-0 truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1" />}
+          render={
+            <span
+              className={cn(
+                'flex-1 min-w-0',
+                // Nodes keep their own box; only text is trimmed and truncated.
+                typeof children === 'string' || typeof children === 'number'
+                  ? 'truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1'
+                  : 'flex items-center',
+              )}
+            />
+          }
         >
           {children}
         </SelectPrimitive.ItemText>
@@ -742,13 +972,13 @@ SelectItem.displayName = 'SelectItem'
 // SelectGroup + SelectLabel + SelectSeparator
 // ---------------------------------------------------------------------------
 
-function SelectGroup({ children, className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div role="group" className={className} {...props}>
+const SelectGroup = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(
+  ({ children, className, ...props }, ref) => (
+    <div ref={ref} role="group" className={className} {...props}>
       {children}
     </div>
-  )
-}
+  ),
+)
 
 SelectGroup.displayName = 'SelectGroup'
 
@@ -780,6 +1010,7 @@ SelectSeparator.displayName = 'SelectSeparator'
 // (not through Object.assign) so TypeScript's expando inference types them
 // onto the root function declaration.
 Select.Trigger = SelectTrigger
+Select.Value = SelectValue
 Select.Content = SelectContent
 Select.Item = SelectItem
 Select.Group = SelectGroup
@@ -790,7 +1021,24 @@ Select.Separator = SelectSeparator
 // Exports
 // ---------------------------------------------------------------------------
 
-export type { SelectContentProps, SelectItemProps, SelectProps, SelectTriggerProps }
-export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, triggerVariants }
+export type {
+  SelectContentProps,
+  SelectItemProps,
+  SelectOpenChangeDetails,
+  SelectProps,
+  SelectTriggerProps,
+  SelectValueProps,
+}
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+  triggerVariants,
+}
 
 export default Select

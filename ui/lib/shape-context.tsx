@@ -7,9 +7,12 @@
  *
  * Local modifications:
  * - `"use client"` directive dropped (no RSC here).
+ * - `--shape-input-radius` is published through `claimShapeRadius` (`shape-radius.ts`),
+ *   which gives it back when the provider unmounts, instead of a bare `setProperty`.
  */
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { claimShapeRadius, type ShapeRadiusClaim } from './shape-radius'
 
 type ShapeVariant = 'pill' | 'rounded'
 
@@ -110,10 +113,21 @@ function ShapeProvider({ children, defaultShape = 'rounded' }: { children: React
   // Publish the current element radius as a CSS custom property so plain-CSS
   // consumers that can't read React context stay in sync with the shape
   // system — e.g. the @layer base :focus-visible fallback ring in
-  // globals.css. Set on <html> so portalled content sees it too.
+  // globals.css. Set on <html> so portalled content sees it too, and given
+  // back on unmount (the provider below, or modo's default, applies again).
+  const claimRef = useRef<ShapeRadiusClaim | null>(null)
   useEffect(() => {
-    document.documentElement.style.setProperty('--shape-input-radius', `${shapeMap[shape].bgRadius}px`)
+    const radius = `${shapeMap[shape].bgRadius}px`
+    if (claimRef.current) claimRef.current.update(radius)
+    else claimRef.current = claimShapeRadius(document.documentElement, radius)
   }, [shape])
+  useEffect(
+    () => () => {
+      claimRef.current?.release()
+      claimRef.current = null
+    },
+    [],
+  )
 
   const value = useMemo(() => ({ shape, setShape, classes: shapeMap[shape] }), [shape, setShape])
 

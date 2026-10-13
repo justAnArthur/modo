@@ -75,7 +75,9 @@ import 'virtual:uno.css'
 import '@justanarthur/modo-ui/base.css'
 ```
 
-`tokens.css` holds the CSS variables alone.
+`tokens.css` holds the CSS variables alone. Each token file also ships on its
+own, unchanged, as `@justanarthur/modo-ui/tokens/<group>.css` (`colors`, `motion`,
+`radius`, `spacing`, `typography`), for a host whose modo viewer reads `tokens/*.css`.
 
 ### Theme
 
@@ -104,7 +106,7 @@ Every vendored file opens with a plain `/* */` header. The header names the
 upstream path and commit, carries the MIT notice, and lists every local
 modification. The vendored code below the header keeps upstream's formatting.
 Files written for this port (`preset.ts`, `uno.config.ts`, `vite.ts`, `index.ts`,
-`scripts/build-css.ts`, `modo.components.tsx`,
+`scripts/build-css.ts`, `docs/*`,
 `lib/use-controllable-state.ts`, `primitives/code/index.tsx`, `primitives/craft/*`, the morph files
 in `lib/` (`use-morph.ts`, `reduced-motion.ts`, `morph-layers.tsx`, `morph-part.tsx`, `goo-indicator.tsx`,
 `slot.ts`) and `primitives/morph/index.tsx`, `blocks/sidebar-app/index.tsx`,
@@ -133,14 +135,15 @@ positioning) are ported.
 |---|---|
 | `AGENTS.md` | The ui-specific guide for coding agents (where things live, the rules that matter most, the checks); `CLAUDE.md` imports it. |
 | `DESIGN.md` | The design language in Google's [DESIGN.md](https://github.com/google-labs-code/design.md) format: the tokens as front matter, the rules as prose. Agents building here follow the `modo-ui` skill (`.claude/skills/modo-ui` at the repo root). |
-| `tokens/*.css` | Colors, typography (`--font-sans`, `--text-*`), motion (`--duration-*`), radius and spacing. |
-| `base.css` | Theme switching, base styles, focus fallback, scrollbars, shimmer/spinner keyframes and `.scroll-fade`. Shipped in the package. |
-| `global.css` | The docs site's stylesheet (`modo.config.ts` `css`): imports `base.css`, then the modo-only focus revert and the docs chrome. |
+| `tokens/*.css` | Colors, typography (`--font-sans`, `--text-*`), motion (`--duration-*`), radius and spacing. Shipped per group as `dist/tokens/*.css` (`./tokens/*`). |
+| `base.css` | Theme switching, base styles, focus fallback, scrollbars, shimmer/spinner keyframes and `.scroll-fade`. Shipped in the package. The inline `code` chip applies only inside the docs shell, `data-modo="prose"` and `.modo-prose`. |
+| `global.css` | The docs site's stylesheet (`modo.config.ts` `css`): imports `base.css`, then `docs/chrome.css`. |
 | `preset.ts` | The UnoCSS preset (theme and token utilities), shipped as `@justanarthur/modo-ui/unocss`. |
-| `uno.config.ts`, `vite.ts` | The UnoCSS setup of the docs site and the prebuilt CSS (see below). |
+| `uno.config.ts`, `vite.ts` | The UnoCSS setup of the docs site and the prebuilt CSS (see below); `vite.ts` also applies the docs chrome's `docsTheme` plugin. |
 | `index.ts`, `bunup.config.ts`, `scripts/build-css.ts` | The package build: `bun run build` writes the components, their types and the stylesheets to `dist/`. The docs site builds with `bun run build:docs` into `docs-dist/`. |
+| `scripts/exports.ts`, `scripts/use-client.ts`, `scripts/check-singletons.ts` | Packaging around that build. `exports.ts` (first step of `bun run build`) writes one `./lib/<name>` export per `lib/` module into `package.json`, plus `./components/*/variants` and `./blocks/*/variants` for the items' server-callable `variants.ts` entries; commit the `package.json` it leaves. `use-client.ts` (after bunup) puts `"use client"` on the emitted modules that render, call a hook or create a context, or use a binding from one; pure helpers (`cn`, class tables, springs, `variants.ts`) and re-export entries stay directive-free so a React Server Component can call them (`--list` prints the split). `check-singletons.ts` (`bun run check:dist`) checks that every React context and the `toast()` manager exist once in `dist/`, and that every entry has its `.d.ts`. `typesVersions` in `package.json` maps every public subpath to `dist/**/*.d.ts`, so `moduleResolution: node` consumers do not type-check the shipped source. |
 | `lib/` | FF's shared system files (upstream `lib/`, `hooks/` and the fluid-hover highlight, flat, upstream names), imported relatively by items. modo only scans the tier folders, so it never mistakes them for items. |
-| `modo.components.tsx` | Components only the docs site uses: the `Icon`, `Select` and `DocsNav` shell-slot adapters and the `ThemeSwitcher` panel item, picked in `modo.config.ts` by export name (`./modo.components.tsx#Select`). |
+| `docs/` | The docs chrome, shipped: `chrome.tsx` (the `Button`, `Link`, `Icon`, `Select` and `DocsNav` shell-slot adapters and the `ThemeSwitcher` panel item, re-exported by `index.ts` as `@justanarthur/modo-ui/docs`), `chrome.css` (the inset layout and the look of the chrome, `@justanarthur/modo-ui/docs/chrome.css`) and `vite.ts` (`docsTheme`, the pre-paint theme controller, `@justanarthur/modo-ui/docs/vite`). `modo.config.ts` picks the slots by export name (`./docs#DocsNav`); another design system documented with modo points at the same module by package specifier (see **The docs chrome, for another design system**). The barrel (`index.ts`) never imports it, `bun run check:dist` fails if it does. |
 | `primitives/<id>/` | FF's "System" pages: `index.tsx` (component + TSDoc prose) and `examples.mdx`, pulled in by `@example {@include ./examples.mdx}`. |
 | `components/[<group>/]<id>/` | FF's "Components" pages, same shape. The `AI/`, `inputs/` (with `inputs/date-time/`), `navigation/` and `overlays/` group folders become sidebar sub-groups and overview sections; the core display items stay ungrouped. |
 | `blocks/<id>/` | Compositions of several items, same shape: `sidebar-app`, FF's sidebar preset `sa1FQfCxH6` as an app shell, with the header and footer blocks it is built from beside it. |
@@ -155,8 +158,10 @@ positioning) are ported.
 | `lib/springs.ts` | `lib/springs.ts` | `goo` tier added (the morph engine's goo: 250ms to land, bounce 0.15, a 200ms spring back); `exitFallbackMs` also reads a spring exit's `visualDuration` |
 | `lib/font-weight.ts` | — | not ported: its `fontWeights` became the `--weight-*` tokens in `tokens/typography.css` (the `weight-*` utilities) |
 | `lib/popup.ts` | `lib/popup.ts` | `popupMotionClass` dropped (unused since the popups morph) |
-| `lib/shape-context.tsx` | `lib/shape-context.tsx` | `"use client"` dropped |
-| `lib/size-context.tsx` | `lib/size-context.tsx` | `"use client"` dropped; `SizeProvider` moved to `primitives/sizes` (the documented item), with `SizeContext` exported for it; `sizeMap` text classes → `text-body` / `text-body-compact` |
+| `lib/shape-context.tsx` | `lib/shape-context.tsx` | `"use client"` dropped; `--shape-input-radius` is published through `claimShapeRadius` and given back on unmount |
+| — (new) | `lib/shape-radius.ts` | Local addition: the stack of `ShapeProvider` claims on `--shape-input-radius` (`<html>`), so an unmounting provider restores the one below it or the page's own value; plain data, tested without a DOM |
+| `lib/size-context.tsx` | `lib/size-context.tsx` | `"use client"` dropped; `SizeProvider` moved to `primitives/sizes` (the documented item), with `SizeContext` exported for it; `sizeMap`, `typeScale` and their types moved to `size-scale.ts` and re-exported |
+| `lib/size-context.tsx` (`sizeMap`, `typeScale`) | `lib/size-scale.ts` | The ladder's plain data, split out so server code can read it (no JSX, hooks or contexts); `sizeMap` text classes → `text-body` / `text-body-compact` |
 | `lib/icon-context.tsx` | `lib/icon-context.tsx` | `"use client"` dropped; `size`/`strokeWidth` widened to `number \| string` for lucide v1 + React 18 types |
 | `lib/surface-context.tsx` | `lib/surface-context.tsx` | `"use client"` dropped |
 | `lib/surface-classes.ts` | `lib/surface-classes.ts` | `SURFACE_HOVER_*` and `surfaceHoverClasses` dropped (only Sidebar used them) |
@@ -169,10 +174,14 @@ positioning) are ported.
 | — (new) | `lib/use-controllable-state.ts` | Local addition: controlled + uncontrolled state, Base UI style |
 | — (new) | `lib/use-morph.ts` | Local addition: the morph engine (source rect → popup box on a spring tier, exit hold for Base UI's unmount), geometry after beUI's popover; goo runs on its own `spring.goo` with a blur of at least 8px that eases to nothing as the surface lands, so the neck pinches off; a close-only `exit` override, an `instant` predicate that ends a run at once, press points from clicks, context menus and long presses (a droplet source for `from="pointer"`), cleanup when the popup unmounts mid-run; focus goes back to the trigger when a closed popup that held it is gone and Base UI skipped the return (the exit hold makes a menu read the pointer leaving the inert popup as a hover close) |
 | — (new) | `lib/reduced-motion.ts` | Local addition: `useReduceMotion`, the one reduced-motion read for the morph layer and the liquid indicators — the OS setting, or a `MotionConfig` asking for it (motion's `useReducedMotionConfig` alone ignores the OS without `<MotionConfig reducedMotion="user">`) |
-| — (new) | `lib/field-classes.ts` | Local addition: the field ladder FF repeats per text field (rest → muted fill on hover or a group's `data-active` → card fill on focus; `data-invalid` keeps a destructive ring), as `fieldVariants` + `fieldIconClasses`, shared by Input, Textarea, Combobox and Sidebar's input; `useFieldBox` (variant, state attributes, radius, inset) + `focusControlOnPress`, the box Input, Textarea, Combobox's fields and the date/time pickers' field build on, so each takes `variant` |
-| — (new) | `lib/date-locale.ts` | Local addition: what the date and time pickers read off a react-day-picker (date-fns) locale — the hour cycle (Intl), typed dates, times and months in the locale's formats (date-fns `parse` with `P`…`PPPP`), field names for column labels (`Intl.DisplayNames`) |
-| — (new) | `lib/scroll-column.tsx` | Local addition: `ScrollColumn`, the scrolling option list beside a calendar (months, years, hours, minutes) or a strip above it: the pick gets a dot, a run of `inView` options one band, the followed option stays centred; fluid hover, listbox semantics, arrow keys; `dividedColumns` puts a hairline between neighbours |
-| — (new) | `lib/slot.ts` | Local addition: Dialog's `render` / `asChild` slot shape (`SlotProps`, `slotRender`), shared by every overlay part that wraps a control |
+| — (new) | `lib/field-classes.ts` | Local addition: the field ladder FF repeats per text field (rest → muted fill on hover or a group's `data-active` → card fill on focus; `data-invalid` keeps a destructive ring), as `fieldVariants` + `fieldIconClasses`, shared by Input, Textarea, Combobox and Sidebar's input; `useFieldBox` (variant, state attributes incl. `readOnly` / `required`, radius, inset) + `focusControlOnPress`, the box Input, Textarea, NumberInput, Combobox's fields and the date/time pickers' field build on, so each takes `variant`; `FieldStateContext`, which hands a `Field`'s state to its control; the pure class tables live in `field-variants.ts` and are re-exported here |
+| — (new) | `lib/field-variants.ts` | Local addition: the field ladder's pure class tables (box, icon, adornment, action, label/description insets), split from `field-classes.ts` so a React Server Component can call them |
+| — (new) | `lib/date-locale.ts` | Local addition: what the date and time pickers read off a react-day-picker (date-fns) locale — the hour cycle (Intl), typed dates, times and months in the locale's formats (date-fns `parse` with `P`…`PPPP`), field names for column labels (`Intl.DisplayNames`); `resolveLocale` (a BCP 47 tag → an Intl-backed date-fns Locale, after utegsk/ui's `localeFromTag`), `formatTime` on an explicit hour cycle, `parseDateTimeText` / `parseMonthNameText` |
+| — (new) | `lib/row-order.tsx` | Local addition: document-order row numbering for menus and lists (`useRowOrder`, `useRowSlot`, `RowOrderContext`), so a row's `index` is optional; unlike `row-index.tsx` (direct children) it reaches rows anywhere below the panel; labels, separators and groups are numbered without a rect, so a selection run never melts across them. Lifted out of Dropdown; an explicit `index` on every row skips the DOM sort |
+| — (new) | `lib/inert.ts` | Local addition: `inert` that holds on React 18 and 19 (18 passes it through as an unknown attribute and needs `''`, 19 reads a boolean and drops `''`): `inertProps(on)` to spread, `markInert` as a ref for an element that is always inert; Sidebar's folded and collapsed parts, Tabs' ghost label |
+| — (new) | `lib/focus-ring.tsx` | Local addition: `FocusRing`, the one keyboard ring a list panel draws, 2px outside the focused row and springing between rows (a snap under reduced motion); radius from the surrounding shape, or pinned with `shape` (popups pin `rounded`); Dropdown and its submenus, NavigationMenu, Select |
+| — (new) | `lib/scroll-column.tsx` | Local addition: `ScrollColumn`, the scrolling option list beside a calendar (months, years, hours, minutes) or a strip above it: the pick gets a dot, a run of `inView` options one band, the followed option stays centred; fluid hover, listbox semantics, arrow keys; `dividedColumns` puts a hairline between neighbours; `layout="grid"` (`columns` 2–6, 2-D fluid hover, row-wise arrow keys) after utegsk/ui's 0.14 grid picker |
+| — (new) | `lib/slot.ts` | Local addition: Dialog's `render` / `asChild` slot shape (`SlotProps`, `slotRender`), shared by every overlay part that wraps a control; `children` fill a `render` element that has none of its own (Base UI semantics), and `nativeButton` reaches the Base UI triggers and closes (`false` for a `<div>` or link); `cloneSlot` / `mergeSlotProps` / `composeRefs` are Radix Slot's merge (child props win, `on*` handlers chain child-first, `className` joins, `style` merges, refs compose; React 18 `forwardRef` and React 19 `props.ref`); `slotId(el, id)` hands a slot element's own `id` to the Base UI part, so triggers and Field.Control register the id the DOM carries |
 | — (new) | `lib/morph-part.tsx` | Local addition: `MorphPart` (shared parts over a motion `layoutId`, after motion-primitives' morphing dialog) and the scope contexts overlays provide |
 | — (new) | `lib/goo-indicator.tsx` | Local addition: `GooIndicator` (melts between items, a lingering blob follows it) and `GooLayer` (goo over the shapes' coverage, filled with their own token, on only while moving), on the engine's `GOO_MATRIX` / `GOO_BLUR_RATIO` |
 | — (new) | `lib/morph-layers.tsx` | Local addition: `MorphSurface`, the renderer (shapes layer with beUI's goo filter plus a `--shadow-color` hairline around the melted shape, surface background and shadow, clipped content) |
@@ -181,7 +190,7 @@ positioning) are ported.
 
 | Upstream | Local |
 |---|---|
-| `app/globals.css` §1 tokens | `tokens/colors.css`, with HEX converted to oklch. The surface ladder and shadows live in `primitives/surface/surface.css`. Local addition: the `--status-*` roles (toast states), by reference to the badge palette, `--destructive` and `--brand`. |
+| `app/globals.css` §1 tokens | `tokens/colors.css`, with HEX converted to oklch. The surface ladder and shadows live in `primitives/surface/surface.css`. Local addition: the `--status-*` roles (toast states), by reference to the badge palette, `--destructive` and `--brand`; and the primary-action hooks `--primary`, `--primary-hover`, `--primary-active`, `--primary-foreground`, `--shadow-button-primary` (defaults: the ink, its 90% / 80% mixes toward the background, the background, a no-op shadow), read by Button's `primary` variant and by `bg-primary` / `text-primary-foreground`. |
 | `app/globals.css` §2 theme switching | `base.css` (`color-scheme`, `--overlay`) and `surface.css` (`--shadow-N` per scheme) |
 | `app/globals.css` §3 `@theme inline` | `preset.ts` `theme` |
 | `app/globals.css` `--fs-*` + `@utility text-*` | `tokens/typography.css` `--text-*` and `preset.ts` `utilities` |
@@ -201,10 +210,11 @@ only what is specific to it:
   `@/components/ui/fluid-hover-highlight` → `../../lib/fluid-hover-highlight`,
   `@/registry/radix/*` → the Base-flavor sibling, `framer-motion` →
   `motion/react`, `next/link` → a plain anchor.
-- A local `interface <Item>Props` whose members are each declared on one line
-  with the FF docs API-table text (modo's parser lists only members declared
-  in the interface body), modo TSDoc written from the FF docs page, and
-  `export default <Item>`. Upstream's named exports are kept.
+- A local `interface <Item>Props` whose members carry the FF docs API-table
+  text, modo TSDoc written from the FF docs page, and `export default <Item>`.
+  Upstream's named exports are kept. (Many members are re-declared in the
+  interface body from when modo listed only those; it now reads props through
+  the TypeScript compiler, inherited members included.)
 
 #### primitives
 
@@ -218,47 +228,59 @@ only what is specific to it:
 | `Morph` | — (local; see [Morph sources](#morph-sources)) | `primitives/morph/index.tsx` | a docs stage like `Motion`: a trigger and a panel playing one `from` × `effect` pair over `lib/use-morph.ts`; static `.Part` (= `MorphPart`); also documents the liquid indicators (`lib/goo-indicator.tsx`) |
 | `Code` | — (local; FF has no code item) | `primitives/code/index.tsx` | sugar-high tokens colored by the `--syntax-*` tokens, one surface step above its substrate; also the docs chrome's Code slot |
 | `Craft` | — (local; after the before/after pairs on fluidfunctionalism.com/docs/skill) | `primitives/craft/index.tsx` (+ `demos.tsx`) | a docs stage: a bad and a good version side by side with a one-line verdict each; the bad sides live in `demos.tsx` and break one rule each on purpose, the good sides are this package's items |
+| `Separator` | — (local) | `primitives/separator/index.tsx` | Base UI Separator (role and orientation for assistive tech) on the `border` token; `orientation` |
+| `Skeleton` | — (local) | `primitives/skeleton/index.tsx` (+ `skeleton.css`) | a `--skeleton` fill pulsing in opacity on `--duration-loop` (also under reduced motion); one block sized by its caller, or `rows` on the size ladder (`bordered` frames them); hidden from assistive tech |
 
 #### components
 
 | Item | Upstream | Local | Specific modifications |
 |---|---|---|---|
-| `Accordion` | `registry/base/accordion.tsx` | `components/accordion/index.tsx` | open state runs through `useControllableState` (see [Behavior additions](#behavior-additions)); standalone `Accordion` accepts `highlight` and passes it to its items as their default; the panel morphs out of its row (a shape grows from the press point into the item, content clipped by it, layout height on its bottom edge; the `"item"` tint is that shape melted into the row through `GooFilter`), `effect` / `tier` on `Accordion.Content`; the group's hover highlight and focus ring snap with reflowed rows; statics `.Group/.Item/.Trigger/.Content` |
-| `AlertDialog` | — (local) | `components/overlays/alert-dialog/index.tsx` | Base UI AlertDialog root (always modal, no outside-press dismissal) over Dialog's own parts and `DialogState`, so it morphs like Dialog; `AlertDialog.Content` drops the ✕ by default; statics as Dialog's |
-| `Badge` | `registry/default/badge.tsx` | `components/badge/index.tsx` | `variant` re-declared (it came from cva's `VariantProps` upstream); changes animate: a new label or variant springs the width (inner content span, `spring.moderate`) while the label blur-crossfades, a new color fades, the dot scales in and out; "Changes" example over a local `change-demo.tsx` stage |
-| `Button` | `registry/base/button.tsx` | `components/button/index.tsx` | `variant`/`disabled`/`children` re-declared; extra Sizes / Active / As-child / Loading morph examples; `loading` folds the surface into a circle around the spinner and back (`spring.moderate`, box unchanged), label and spinner crossfade, `aria-busy`, the disabled dim fades; "Loading morph" example over a local `loading-demo.tsx` stage; also serves modo's chrome Button (`shell.Button`) |
-| `Calendar` | — (local, on react-day-picker) | `components/inputs/date-time/calendar/index.tsx` (+ `use-month-window.ts`) | DayPicker props pass through (as shadcn's Calendar); styled through `classNames` and custom `Month` / `Day` / `DayButton` (no react-day-picker stylesheet); one scrolling list of months rendered as a 25-month window that moves as you scroll; a pinned weekday row, muted weekends, today's dot; FF's fills (the pick `bg-foreground text-background` like the primary button, a range `bg-active`, its preview `bg-hover`); month and year columns that mark the month being read and jump on click, before or after the days (`columnsSide`), turning into strips when narrow; `extraColumns` / `extraColumnsSide` for the date picker's time |
-| `Card` | `registry/default/card.tsx` | `components/card/index.tsx` | `next/link` → plain anchors (stretched card link, `CardButton`'s `href` form); statics `.Group/.Header/.Title/.Description/.Action/.Content/.Footer/.Media/.Image/.Eyebrow/.Feature/.Button` |
-| `Checkbox` (upstream `CheckboxItem`), `Checkbox.Group` (upstream `CheckboxGroup`) | `registry/base/checkbox-group.tsx` | `components/inputs/checkbox/index.tsx` | renamed; the row stands alone too (own state from `defaultChecked`, `onCheckedChange`, own hover and focus ring, `size`); rows numbered by the group (`lib/row-index.tsx`), so `index` is optional; uncontrolled mode + group-level callback; item `checked`/`onToggle` optional, falling back to group context; arrow-key focus guarded for `noUncheckedIndexedAccess`; shared `useSelectionRuns`, picks melt and split through the goo |
-| `ColorPicker` | `registry/default/color-picker.tsx` | `components/inputs/color-picker/index.tsx` | `@/registry/radix/{slider,tooltip}` → the Base siblings `../slider` / `../../overlays/tooltip`; `noUncheckedIndexedAccess` guards on regex captures, `rgb()`/`hsl()`/`oklch()` parts, `itemRects[i]` and the Slider's array value; static `.Popover`; uncontrolled support was already upstream (verified, kept); `ColorPicker.Popover` (goo on `spring.goo`; `from` / `effect` / `hideSource` / `tier`) and the format menu morph out of their triggers, replacing the motion wrappers and the ignored `actionsRef` |
-| `Combobox` | `registry/base/combobox.tsx` | `components/inputs/combobox/index.tsx` | root de-generified (the parser needs a plain function plus a same-file `interface ComboboxProps`): items gained an index signature, `value`/`defaultValue` are `string \| string[]` and `onValueChange` is a union of the two handler shapes; `ComboboxValue<Multiple>` still exported; `creatable` added; `React.*` type refs replaced by named type imports; statics `.Input/.Chips/.Content/.List/.Item/.Empty`; the popup morphs out of the field (morph layer, goo on `spring.goo`; `from` / `effect` / `hideSource` / `tier` on `Combobox.Content`), replacing the `scaleY` wrapper and the `actionsRef` deferred unmount |
-| `Command` | — (local) | `components/overlays/command/index.tsx` | Base UI Autocomplete rendered inline in Dialog's panel (`position="top"`, no ✕), morphing from its trigger with goo; grouped/flat command data filtered by label + keywords; one fluid highlight follows Base UI's highlight; ⌘K/Ctrl+K `hotkey` (one palette answers a press); fresh palette per open; statics `.Trigger/.Content/.Palette/.Shortcut`; `CommandList`/`CommandListRoot` exported for Search |
+| `Accordion` | `registry/base/accordion.tsx` | `components/accordion/index.tsx` | open state runs through `useControllableState` (see [Behavior additions](#behavior-additions)); standalone `Accordion` accepts `highlight` and passes it to its items as their default; the panel morphs out of its row (a shape grows from the press point into the item, content clipped by it, layout height on its bottom edge; the `"item"` tint is that shape melted into the row through `GooFilter`), `effect` / `tier` on `Accordion.Content`; the group's hover highlight and focus ring snap with reflowed rows; statics `.Group/.Item/.Trigger/.Content`; local Trigger `icon` / `weightShift`, Content `contentClassName`; `Accordion.Trigger` takes `render` / `asChild` (`lib/slot.ts`) |
+| `AlertDialog` | — (local) | `components/overlays/alert-dialog/index.tsx` (+ `pending-demo.tsx`) | Base UI AlertDialog root (always modal, no outside-press dismissal) over Dialog's own parts and `DialogState`, so it morphs like Dialog; `AlertDialog.Content` drops the ✕ by default; statics as Dialog's; `AlertDialog.Action` (promise-aware confirm: Button `loading`, every close blocked via `details.cancel()` while pending, closes on resolve, `onError` on reject; a controlled `pending` makes a plain `onClick` close once `pending` goes true and back to false) and `AlertDialog.Cancel` (Close as a ghost Button, disabled while pending); `pending-demo.tsx` is the docs stage; `onOpenChange(open, details)` with Base UI's change details (an action's own close reports `'imperative-action'`) |
+| `Avatar` | — (local) | `components/avatar/index.tsx` | Base UI Avatar (image loading status, the fallback's `delay`); one control tall (36 / 28px compact), `shape` circle or square; a 1px inset image edge after FF's media outline (`outline-image-edge`); the image fades in on the fast tier; statics `.Image/.Fallback` |
+| `Badge` | `registry/default/badge.tsx` | `components/badge/index.tsx` | `variant` re-declared (it came from cva's `VariantProps` upstream); changes animate: a new label or variant springs the width (inner content span, `spring.moderate`) while the label blur-crossfades, a new color fades, the dot scales in and out; "Changes" example over a local `change-demo.tsx` stage; `badgeColors`, `badgeVariants` and the size aliases moved to `variants.ts` (server-callable) and re-exported; local variant `outline` (the dot badge's neutral hairline without the dot; `color` has no effect) |
+| `Button` | `registry/base/button.tsx` | `components/button/index.tsx` | `variant`/`disabled`/`children` re-declared; extra Sizes / Active / As-child / Loading morph examples; `loading` folds the surface into a circle around the spinner and back (`spring.moderate`, box unchanged), label and spinner crossfade, `aria-busy`, the disabled dim fades; "Loading morph" example over a local `loading-demo.tsx` stage; also serves modo's chrome Button (`shell.Button`); `buttonVariants` and the size aliases moved to `variants.ts` (server-callable) and re-exported; local variants for shadcn-style hosts: `outline` (renders as `tertiary`), `destructive` / `success` (their `-strong` hue as text on a translucent wash that deepens on hover and press, never a solid fill), `link` (underlined foreground text on the control height); size `xs` → `compact`; the `primary` variant reads the `--primary*` / `--shadow-button-primary` hooks (the same ink look by default); `buttonVariants` resolves the size aliases and takes `surface` (fill/ring/wash/hover/press/`aria-disabled` as root classes, for an anchor host); `loading` keeps focus (`focusableWhenDisabled`; `asChild` sets `aria-disabled` and blocks clicks) |
+| `Calendar` | — (local, on react-day-picker) | `components/inputs/date-time/calendar/index.tsx` (+ `use-month-window.ts`) | DayPicker props pass through (as shadcn's Calendar); styled through `classNames` and custom `Month` / `Day` / `DayButton` (no react-day-picker stylesheet); one scrolling list of months rendered as a 25-month window that moves as you scroll; a pinned weekday row, muted weekends, today's dot; FF's fills (the pick `bg-foreground text-background` like the primary button, a range `bg-active`, its preview `bg-hover`); month and year columns that mark the month being read and jump on click, before or after the days (`columnsSide`), turning into strips when narrow; `extraColumns` / `extraColumnsSide` for the date picker's time; `columnLabels`; a named `CalendarProps` and a `ReactElement` return; the month window's edge margin is capped, so a list with no height of its own no longer loops |
+| `Card` | `registry/default/card.tsx` | `components/card/index.tsx` | `next/link` → plain anchors (stretched card link, `CardButton`'s `href` form); statics `.Group/.Header/.Title/.Description/.Action/.Content/.Footer/.Media/.Image/.Eyebrow/.Feature/.Button/.Divider`; local `border="outlined"` on a standalone card (the outlined group's hairline frame; inside a group the group decides); local `Card.Divider` (a full-bleed hairline between the card's parts, vertical in an inline card; the Separator primitive); local Title `as`, Content `bodyText` |
+| `Checkbox` (upstream `CheckboxItem`), `Checkbox.Group` (upstream `CheckboxGroup`) | `registry/base/checkbox-group.tsx` | `components/inputs/checkbox/index.tsx` | renamed; the row stands alone too (own state from `defaultChecked`, `onCheckedChange`, own hover and focus ring, `size`); rows numbered by the group (`lib/row-index.tsx`), so `index` is optional; uncontrolled mode + group-level callback; item `checked`/`onToggle` optional, falling back to group context; arrow-key focus guarded for `noUncheckedIndexedAccess`; shared `useSelectionRuns`, picks melt and split through the goo; `label` optional, any node (named via `aria-labelledby`); without a label and outside a group the checkbox is a bare box, Base UI's Checkbox.Root itself (`id` / `<label htmlFor>`, `aria-label`, `name` / `value` / `required` for forms), keeping its border when checked; `indeterminate` / `checked="indeterminate"` shows the icon set's `minus`, swapped with the self-drawing check in one cell; `disabled` dims a row and takes it out of the group's hover and arrow keys |
+| `ColorPicker` | `registry/default/color-picker.tsx` | `components/inputs/color-picker/index.tsx` | `@/registry/radix/{slider,tooltip}` → the Base siblings `../slider` / `../../overlays/tooltip`; `noUncheckedIndexedAccess` guards on regex captures, `rgb()`/`hsl()`/`oklch()` parts, `itemRects[i]` and the Slider's array value; static `.Popover`; uncontrolled support was already upstream (verified, kept); `ColorPicker.Popover` (goo on `spring.goo`; `from` / `effect` / `hideSource` / `tier`) and the format menu morph out of their triggers, replacing the motion wrappers and the ignored `actionsRef`; the color types and math (`parseColor`, `buildParsed`, conversions, formatting) in `variants.ts` (server-callable) and re-exported; `ColorPicker.Popover` takes `disabled`, `readOnly`, `rootClassName` and `removeLabel`; swatches and tiles keep a hairline above the color |
+| `Combobox` | `registry/base/combobox.tsx` | `components/inputs/combobox/index.tsx` | root de-generified (the parser needs a plain function plus a same-file `interface ComboboxProps`): items gained an index signature, `value`/`defaultValue` are `string \| string[]` and `onValueChange` is a union of the two handler shapes; `ComboboxValue<Multiple>` still exported; `creatable` added; `React.*` type refs replaced by named type imports; statics `.Input/.Chips/.Content/.List/.Item/.Empty`; the popup morphs out of the field (morph layer, goo on `spring.goo`; `from` / `effect` / `hideSource` / `tier` on `Combobox.Content`), replacing the `scaleY` wrapper and the `actionsRef` deferred unmount; `loading` (the chevron blurs into a `loader-circle` spinner, a status row under the list, the empty message held back) and `loadingLabel`; controlled query (`inputValue` / `defaultInputValue` / `onInputValueChange`); `filter={null}` shows the items as given; `readOnly` (Base UI's, plus the field box's read-only state; no clear or chip ✕); controlled popup (`open` / `defaultOpen` / `onOpenChange`); `footer` on `Combobox.Content` (a node or `({ close, query }) => node`); object items' `label` may be any node (unclipped in rows and chips) with `textValue` to filter, fill the field and name the chip; fields read the surrounding Field's invalid state (`invalid` prop, `error` forces it), `hideTrigger`, a root `labels` object (`open` / `clear` / `remove(label)` / `placeholder`), and `onInputValueChange(value, details)` forwarding Base UI's change details |
+| `Command` | — (local) | `components/overlays/command/index.tsx` | Base UI Autocomplete rendered inline in Dialog's panel (`position="top"`, no ✕), morphing from its trigger with goo; grouped/flat command data filtered by label + keywords; one fluid highlight follows Base UI's highlight; ⌘K/Ctrl+K `hotkey` (one palette answers a press); fresh palette per open; statics `.Trigger/.Content/.Palette/.Shortcut`; `CommandList`/`CommandListRoot` exported for Search; `onOpenChange(open, details)` with Base UI's change details (`reason`, `event`, `cancel()`) |
 | `ContextMenu` | — (local; see [Morph sources](#morph-sources)) | `components/overlays/context-menu/index.tsx` | Base UI ContextMenu (right click, long press) with the morph layer growing from the press point (`from="pointer"` default, goo on `spring.goo`); rows are Dropdown's `MenuItem`, `Dropdown.Label`, `Dropdown.Separator` with fluid hover; `ContextMenu.Item` adds `shortcut`; `size` on the root; statics `.Trigger/.Content/.Item/.Label/.Separator` |
-| `Dialog` | `registry/base/dialog.tsx` | `components/overlays/dialog/index.tsx` | `DialogProps` and `DialogContentProps` fully re-declared (the slot props now come from `lib/slot.ts`); statics attached as expando properties (`Dialog.Trigger = …`), so `<Dialog.Content>` types without a cast; FF's "With a sidebar" example replaced by "Surfaces inside a dialog" (written before the Sidebar was ported); the panel morphs out of its trigger (morph layer, goo on `spring.goo`; `from` / `effect` / `hideSource` / `tier` on `Dialog.Content`), the backdrop fades with the morph's progress, the root holds the open state and scopes `Morph.Part` pairs |
-| `Dropdown` | `registry/base/dropdown.tsx` | `components/overlays/dropdown/index.tsx` | uncontrolled selection and uncontrolled search filtering (below); `items[next].focus()` guarded; statics `.Menu/.Trigger/.Content/.Item/.Label/.Separator/.Search/.Empty`; FF's "Create from the query" section skipped — adding a row to the list is real consumer state; the popup menu morphs out of its trigger (morph layer, goo on `spring.goo`; `from` / `effect` / `hideSource` / `tier` on `Dropdown.Content`), replacing the `scaleY` wrapper and the ignored `actionsRef`; popup rows hand activation to the Menu item's `onClick` so Enter / Space pick |
-| `DatePicker`, `DateRangePicker`, `TimePicker`, `DurationPicker`, `MonthPicker` | — (local; props after shadcn's date picker and utegsk/ui's pickers) | `components/inputs/date-time/<id>/index.tsx` (+ the group's `picker-shell.tsx`, `time-columns.tsx`) | a field on the field ladder whose panel morphs out of it with Combobox's options (goo by default; `from` / `effect` / `hideSource` / `tier`, in place with `effect="morph"` + `hideSource`), or a bottom `Sheet` under 640px; one hour column with AM/PM on a 12-hour clock; `columnsSide` / `timeColumnsSide`; the panel header types the value in the locale's formats; `value` / `defaultValue` / `onValueChange` with `null` for empty — a `Date`, react-day-picker's `DateRange`, `"HH:mm"`, a date-fns `Duration`, a month's first day; `locale` is a react-day-picker locale throughout |
-| — | `registry/default/menu-item.tsx` | `components/overlays/dropdown/menu-item.tsx` | a row with no `checked` derives it from a self-managed panel and toggles the panel's state; `sourceIndex` carries the authored index so selection survives filter re-indexing |
+| `Dialog` | `registry/base/dialog.tsx` | `components/overlays/dialog/index.tsx` | `DialogProps` and `DialogContentProps` fully re-declared (the slot props now come from `lib/slot.ts`); statics attached as expando properties (`Dialog.Trigger = …`), so `<Dialog.Content>` types without a cast; FF's "With a sidebar" example replaced by "Surfaces inside a dialog" (written before the Sidebar was ported); the panel morphs out of its trigger (morph layer, goo on `spring.goo`; `from` / `effect` / `hideSource` / `tier` on `Dialog.Content`), the backdrop fades with the morph's progress, the root holds the open state and scopes `Morph.Part` pairs; `onOpenChange(open, details)` hears Base UI's change details and can `cancel()` (one-argument handlers still work), and `createDialogChangeDetails` builds them for the library's own changes; `disablePointerDismissal` on the root; `Dialog.Content` types and forwards `initialFocus` / `finalFocus` and takes `popupClassName` (merged after the popup's width) |
+| `Dropdown` | `registry/base/dropdown.tsx` | `components/overlays/dropdown/index.tsx` | uncontrolled selection and uncontrolled search filtering (below); `items[next].focus()` guarded; statics `.Menu/.Trigger/.Content/.Item/.Label/.Separator/.Search/.Empty`; FF's "Create from the query" section skipped — adding a row to the list is real consumer state; the popup menu morphs out of its trigger (morph layer, goo on `spring.goo`; `from` / `effect` / `hideSource` / `tier` on `Dropdown.Content`), replacing the `scaleY` wrapper and the ignored `actionsRef`; popup rows hand activation to the Menu item's `onClick` so Enter / Space pick; shadcn DropdownMenu parity: children rows with an optional index (`lib/row-order.tsx`), `inset` / `shortcut` rows, a cancelable `onSelect(event)`, `asChild` on the trigger, a keyboard focus ring, `keepMounted`, and the parts in `menu-parts.tsx` (see the headers); `render`/`asChild` and `textValue` on rows; Menu `onOpenChange(open, details)` and `modal`; Content/SubContent `finalFocus`, modo-side `initialFocus`, `collisionPadding`, `container`, `positionerClassName`, popup HTML attributes; Content `alignOffset`, `collisionBoundary` |
+| `DatePicker`, `DateRangePicker`, `TimePicker`, `DurationPicker`, `MonthPicker` | — (local; props after shadcn's date picker and utegsk/ui's pickers) | `components/inputs/date-time/<id>/index.tsx` (+ the group's `picker-shell.tsx`, `time-columns.tsx`) | a field on the field ladder whose panel morphs out of it with Combobox's options (goo by default; `from` / `effect` / `hideSource` / `tier`, in place with `effect="morph"` + `hideSource`), or a bottom `Sheet` under 640px; one hour column with AM/PM on a 12-hour clock; `columnsSide` / `timeColumnsSide`; the panel header types the value in the locale's formats; `value` / `defaultValue` / `onValueChange` with `null` for empty — a `Date`, react-day-picker's `DateRange`, `"HH:mm"`, a date-fns `Duration`, a month's first day; `locale` is a react-day-picker locale throughout; `picker-shell.tsx` takes an `editor`, `triggerLabel` and `readOnly`; `picker-shell.tsx` also takes `controlRef` / `controlProps` / `formValues` / `required` (visually hidden inputs for native forms) and exports `PickerControlProps` (form + aria props every picker forwards); every picker is a `forwardRef` with `readOnly`, `labels`, string `locale`; `DateRangePicker` adds `editable`, `withTime`, `hourCycle`, `hidden`, `startName` / `endName`, `startInputProps` / `endInputProps`; `controlProps` reaches an editable field's input after its defaults (`autoComplete`, `inputMode`); the range panel header wraps with `withTime` |
+| `DatePicker` | — (local; the masked input after utegsk/ui's `MaskedDateInput`) | `components/inputs/date-time/date-picker/index.tsx` (+ `masked-date-input.tsx`) | `editable` masked input in the field (Escape restores the last real date), `labels`, `formatDate`, `actions`, `readOnly`, string values (date-only strings read as local days) with an invalid state; `hidden`, `required` (no deselect), `unselectable` (`masked-date-input.tsx` takes `clearable`) |
+| — | `registry/default/menu-item.tsx` | `components/overlays/dropdown/menu-item.tsx` | a row with no `checked` derives it from a self-managed panel and toggles the panel's state; `sourceIndex` carries the authored index so selection survives filter re-indexing; `label` and `index` optional (`children` rows numbered in document order), `inset`, `shortcut`, cancelable `onSelect(event)`; checkbox and radio rows report to the panel for the merged selection background; `render`/`asChild` and `textValue` on rows |
+| — | — (local) | `components/overlays/dropdown/menu-parts.tsx` | `Dropdown.Group`, the `Dropdown.Shortcut` re-export, value-keyed `Dropdown.CheckboxItem`, `Dropdown.RadioGroup` / `Dropdown.RadioItem`, `Dropdown.Sub` / `.SubTrigger` / `.SubContent` (a submenu morphs out of its row), and `useMenuPanel`, the state both popups share (keyboard focus ring, the submenu trigger's pinned highlight, value-checked backgrounds); `Sub` / `SubContent` take `finalFocus`, modo-side `initialFocus`, `collisionPadding`, `container`, `positionerClassName` and popup HTML attributes |
 | — | `registry/default/dropdown-search.tsx` | `components/overlays/dropdown/dropdown-search.tsx` | `filter` mode: `value`/`onValueChange` optional, the field reads and writes the query held by the panel (`DropdownFilterContext`) |
-| `Copy` (upstream `InputCopy`) | `registry/default/input-copy.tsx` | `components/copy/index.tsx` | renamed, out of the inputs group; `@/registry/radix/tooltip` → `../overlays/tooltip`; `useRef<ReturnType<typeof setTimeout> \| null>(null)` (React 18 overloads); defaults spelled into the prop prose; the tooltip comment's "Radix" reads "Base UI"; the copied state morphs: the glyph's two sheets melt through the goo filter into a status-tinted disc behind the check (✕ on failure) and split back |
-| `Input`, `Label`, `InputGroup` | `registry/default/input-group.tsx` | `components/inputs/input/index.tsx` | `InputField` split into `Input` (the ringed box, standalone: own hover outside a group, `invalid`, `size`) and `Label` (a plain `<label>`, rendered through `Field.Label` in a field), composed back by `InputGroup.Field`; item renamed `input`, `Input` the default export; uncontrolled mode (`InputHTMLAttributes`' own `defaultValue` omitted in favour of the local one); static `.Field` |
+| `Copy` (upstream `InputCopy`) | `registry/default/input-copy.tsx` | `components/copy/index.tsx` | renamed, out of the inputs group; `@/registry/radix/tooltip` → `../overlays/tooltip`; `useRef<ReturnType<typeof setTimeout> \| null>(null)` (React 18 overloads); defaults spelled into the prop prose; the tooltip comment's "Radix" reads "Base UI"; the copied state morphs: the glyph's two sheets melt through the goo filter into a status-tinted disc behind the check (✕ on failure) and split back; local `chip` and `glyph` variants, `labels`, live-region announcement; ref typed `HTMLElement` |
+| `Field` | — (local) | `components/inputs/field/index.tsx` | Base UI Field with no form library: `.Label` / `.Description` / `.Error` / `.Control`, inset to the text in the field box (`lib/field-variants.ts`); the field's state (invalid, also from native validity; disabled, read-only, required) reaches any control on `useFieldBox` through `FieldStateContext` |
+| `FileDropzone` | — (local) | `components/inputs/file-dropzone/index.tsx` (+ `file-row.tsx`, `variants.ts`, `upload-demo.tsx`) | a label around a visually hidden file input, joined to Base UI's Field; hands picked files over and keeps none (no upload logic); drag verdicts accept / partial (some will be skipped) / reject, refusing only drags where nothing can pass; `required` announced, not native; `.Row` (`FileRow`: status and progress); the pure accept / size / count helpers (`acceptsFile`, `dragVerdict`, `sortFiles`, `formatFileSize`) in `variants.ts`; `upload-demo.tsx` is the docs stage; rest `<label>` props and `style` on the root |
+| `Input`, `Label`, `InputGroup` | `registry/default/input-group.tsx` | `components/inputs/input/index.tsx` | `InputField` split into `Input` (the ringed box, standalone: own hover outside a group, `invalid`, `size`) and `Label` (now its own item `components/inputs/label/index.tsx`, re-exported from `inputs/input`; rendered through `Field.Label` in a field), composed back by `InputGroup.Field`; item renamed `input`, `Input` the default export; uncontrolled mode (`InputHTMLAttributes`' own `defaultValue` omitted in favour of the local one); static `.Field`; `startAdornment` / `endAdornment`, `readOnly`, `required` (both also from a surrounding `Field`), `InputAction` (an icon button inside the box) and `InputAdornment`; a `type` swap keeps the caret and selection |
+| `Label` | `registry/default/input-group.tsx` | `components/inputs/label/index.tsx` | split out of InputField; invalid, size; data-disabled dims it; re-exported from inputs/input |
 | `InputMessage` | `registry/default/input-message.tsx` | `components/AI/input-message/index.tsx` | uncontrolled twins for value, files, queue and status (below); `FilePreviewTile` turned into a `forwardRef` (it exits inside `<AnimatePresence mode="popLayout">`, which measures through a ref); guards on `queue[0]`, `history[i]`, `suggestions[i]` and the `moveQueued` swap; FF's Playground section skipped and the surrounding transcript dropped (`ChatMessage` is not ported) |
+| `NavigationMenu` | — (local) | `components/navigation/navigation-menu/index.tsx` | Base UI NavigationMenu; one shared flyout morphing from its trigger (anchored to the List, frame springs to each content's size, content crossfades by activation direction); fluid hover on strip and panels; one keyboard ring per panel; `Indicator` is a GooIndicator under the open/current item; Root takes ref and nav attributes; Trigger and Content `asChild` keep the child's element and ref |
+| `NumberInput` | — (local) | `components/inputs/number-input/index.tsx` | Base UI NumberField on the field box (`useFieldBox`), steppers as field actions inside the ring, Intl `format`, scrub; `inputProps` spread last on the `<input>`; `onValueChange(value, details)` |
+| `Pagination` | — (local, from the skill's authoring.md template) | `components/navigation/pagination/index.tsx` | pages strip (GooIndicator + fluid hover) or jump-to-page field; edges; page-size Select; labels as props |
 | — | `registry/default/file-thumbnail.tsx` | `components/AI/input-message/file-thumbnail.tsx` | the lazy `import("pdfjs-dist")` is kept as-is — verified against modo's esbuild settings, it lands in a ~790 kB chunk fetched only when a PDF is attached; the worker still comes from jsDelivr, so no bundler-side worker config is needed; the `@next/next/no-img-element` eslint-disable dropped |
-| `Popover` | — (local; after beUI's gooey popover and motion-primitives' morphing popover, see [Morph sources](#morph-sources)) | `components/overlays/popover/index.tsx` | Base UI Popover with the morph layer (goo by default); `openOnHover` on the trigger; statics `.Trigger/.Content/.Title/.Description/.Close` |
+| `Popover` | — (local; after beUI's gooey popover and motion-primitives' morphing popover, see [Morph sources](#morph-sources)) | `components/overlays/popover/index.tsx` | Base UI Popover with the morph layer (goo by default); `openOnHover` on the trigger; statics `.Trigger/.Content/.Title/.Description/.Close`; `Popover.Content` forwards `anchor` (the morph's source when it is an element), `alignOffset`, `collisionPadding`, `collisionBoundary`, `initialFocus`, `finalFocus`; `onOpenChange(open, details)` with Base UI's change details (`cancel()`) |
 | `PreviewCard` | — (local; after beUI's gooey popover, see [Morph sources](#morph-sources)) | `components/overlays/preview-card/index.tsx` | Base UI PreviewCard with the morph layer (goo from the link on `spring.goo`); `delay` / `closeDelay` / `render` on the trigger, a token-styled link by default; `from` without `'pointer'`; statics `.Trigger/.Content` |
-| `Radio` (upstream `RadioItem`), `Radio.Group` (upstream `RadioGroup`) | `registry/base/radio-group.tsx` | `components/inputs/radio/index.tsx` | renamed; rows numbered by the group (`lib/row-index.tsx`), so `index` is optional; uncontrolled index and value modes; group context carries a `selectIndex` setter every item calls, so items need no `selected`/`onSelect`; arrow-key focus guarded; selected background is a `GooIndicator` |
+| `Progress` | — (local) | `components/progress/index.tsx` (+ `progress.css`, `step-demo.tsx`) | Base UI Progress; the determinate fill is a full-width bar slid with `translateX` on `spring.moderate` (after FF's CarouselDots fill, never scaled); with no `value` a segment sweeps the track; `.Spinner` draws Button's figure-eight loading glyph; both loops on `--duration-loop` (`progress.css`); `step-demo.tsx` is the docs stage |
+| `Radio` (upstream `RadioItem`), `Radio.Group` (upstream `RadioGroup`) | `registry/base/radio-group.tsx` | `components/inputs/radio/index.tsx` | renamed; rows numbered by the group (`lib/row-index.tsx`), so `index` is optional; uncontrolled index and value modes; group context carries a `selectIndex` setter every item calls, so items need no `selected`/`onSelect`; arrow-key focus guarded; selected background is a `GooIndicator`; `label` optional, any node; a `Radio` without one is a bare circle, Base UI's Radio.Root (picked by `value`, `id` / `<label htmlFor>`, keeping its border when picked) laid out freely inside a value-mode group, which then draws no rows and leaves the arrow keys to Base UI; `disabled` on a row, or on the group (which dims as a whole); the group's `name` / `required` reach Base UI's RadioGroup for forms |
 | `Search` | — (local; after beUI's morphing search, see [Morph sources](#morph-sources)) | `components/inputs/search/index.tsx` | pill or icon button springing its own width in place (`spring.slow`), growing over its neighbors (`align`); with `items`, Autocomplete suggestions ooze out of the field via the morph layer (goo on `spring.goo`, `effect`/`tier`) with Command's rows; Escape closes → clears → collapses; blur collapses when empty; `shortcut`; `<search>` landmark + form, `onSubmit` |
-| `Select` | `registry/base/select.tsx` | `components/inputs/select/index.tsx` | members re-declared one per line (the parser drops members whose type spans lines); upstream's uncontrolled `defaultValue` verified and kept rather than rerouted through `useControllableState`; expando statics `.Trigger/.Content/.Item/.Group/.Label/.Separator`; the popup morphs out of its trigger (morph layer, goo on `spring.goo`; `from` / `effect` / `hideSource` / `tier` on `Select.Content`), replacing the `scaleY` wrapper and the `actionsRef` deferred unmount |
-| `Sheet` | — (local; replaces beUI's bottom sheet and drawer, see [Morph sources](#morph-sources)) | `components/overlays/sheet/index.tsx` | Base UI Drawer (swipe to dismiss, snap points, `Drawer.Viewport` for the swipe) with the morph growing from the sheet's own edge; a swipe-dismissed sheet slides on off its edge from the release point (the morph's `exit`); `side`, `snapPoints`, `defaultSnapPoint`; Dialog's parts and `DialogState` (Base UI's Drawer parts are Dialog's); statics as Dialog's plus `.Provider` / `.Indent` |
-| `Sidebar` | `registry/base/sidebar.tsx` (+ `registry/default/sidebar-core.tsx`, `sidebar-menu.tsx`; `app/globals.css` `.scroll-divider`) | `components/navigation/sidebar/index.tsx` (+ `sidebar-core.tsx`, `sidebar-menu.tsx`, `sidebar.css`) | the mobile sheet is the DS's `Sheet` (goo from its edge, swipe to dismiss) instead of a Dialog with a framer slide; no collapsed peek: `openOnHover` on the provider opens the sidebar in flow while the pointer is between its edge and the far side of a trigger beside it, the trigger switching between open and on hover (`panel-*-dashed` glyphs added to the icon context); the active row backgrounds are `GooIndicator`s and the hover highlight the liquid `FluidHoverHighlight`; uncontrolled selection (`value` on the buttons, `value` / `defaultValue` / `onValueChange` on `Sidebar`) and collapsible rows (`Sidebar.MenuItem collapsible`, below); statics `.Provider/.Trigger/.Rail/.Inset/.Input/.Header/.Content/.Footer/.Separator/.Group/.GroupLabel/.GroupAction/.GroupActions/.GroupContent/.Menu/.MenuItem/.MenuButton/.MenuAction/.MenuActions/.MenuBadge/.MenuSkeleton/.MenuSub/.MenuSubItem/.MenuSubButton` through a `SidebarComponent` cast; `fontVariationSettings` → `weight-*`, `text-[Npx]` → type roles, hex focus ring → `ring-focus-ring`, `duration-80\|160\|240` → tiers |
-| `Slider` | `registry/base/slider.tsx` | `components/inputs/slider/index.tsx` | `var(--color-accent)` → `var(--accent)` (no `--color-*` aliases here); uncontrolled support on the public wrapper, with both engines still fully controlled; `SliderProps extends Omit<SliderEngineProps, "value" \| "onChange">`; React 18 ref types (`MutableRefObject`); indexed reads of the value/step/pip arrays asserted |
-| `Switch` | `registry/base/switch.tsx` | `components/inputs/switch/index.tsx` | uncontrolled support; every in-body read goes through the resolved `isChecked` and a `toggle()` that also calls `onToggle`; the thumb is a `GooIndicator` in Base UI's Thumb (stretches as it travels), dragged x held in state; local `description` (muted line, `aria-describedby`) and `trackSide`; local `Switch.Group`: switches as settings rows (track at the end) in one outlined fieldset, after an outlined `Card.Group` (shared hairlines dropped around the fluid hover highlight), rows numbered by the group |
-| `Table` | `registry/default/table.tsx` | `components/table/index.tsx` | statics `.Header/.Body/.Row/.Head/.Cell`; `TableProps` / `TableRowProps` exported |
-| `Tabs` | `registry/base/tabs.tsx` | `components/navigation/tabs/index.tsx` | `defaultSelectedIndex` added as the index-mode twin of the existing `defaultValue`; indicator and hover pill are `GooIndicator`s (the hover pill returns to the active tab as it fades); statics `.List/.Item/.Panel` |
+| `Select` | `registry/base/select.tsx` | `components/inputs/select/index.tsx` | members re-declared one per line (the parser drops members whose type spans lines); upstream's uncontrolled `defaultValue` verified and kept rather than rerouted through `useControllableState`; expando statics `.Trigger/.Content/.Item/.Group/.Label/.Separator`; the popup morphs out of its trigger (morph layer, goo on `spring.goo`; `from` / `effect` / `hideSource` / `tier` on `Select.Content`), replacing the `scaleY` wrapper and the `actionsRef` deferred unmount; `Select.Item`'s `index` is optional: rows take their place in document order (`lib/row-order.tsx`), inside groups, conditionals and maps, and the checked row is found by its own index; `textValue` for typeahead; a node label is shown as is (unclipped) in the rows and, through Base UI's `items`, in the trigger; `Select.Value` part, with `Select.Trigger` children replacing its value slot; `side` / `align` / `sideOffset` on `Select.Content`; `triggerVariants` in `variants.ts` (server-callable) and re-exported; the keyboard ring is the shared `lib/focus-ring.tsx`; `open` / `defaultOpen` / `onOpenChange(open, details)` (the 300ms pick ack runs only while uncontrolled); `Select.Content` `alignOffset` / `collisionPadding` / `finalFocus` / rest HTML attributes; `Select.Trigger` / `Select.Item` `render` / `asChild`; `Select.Trigger` `wrapperClassName`; `Select.Value` and `Select.Group` forward ref |
+| `Sheet` | — (local; replaces beUI's bottom sheet and drawer, see [Morph sources](#morph-sources)) | `components/overlays/sheet/index.tsx` | Base UI Drawer (swipe to dismiss, snap points, `Drawer.Viewport` for the swipe) with the morph growing from the sheet's own edge; a swipe-dismissed sheet slides on off its edge from the release point (the morph's `exit`); `side`, `snapPoints`, `defaultSnapPoint`; Dialog's parts and `DialogState` (Base UI's Drawer parts are Dialog's); statics as Dialog's plus `.Provider` / `.Indent`; `onOpenChange(open, details)` with Base UI's change details (`reason`, `event`, `cancel()`); `disablePointerDismissal` on the root; `Sheet.Content` takes `side` (overrides the root's, the swipe follows), `initialFocus` / `finalFocus` and `popupClassName` (merged after `PLACEMENT`) |
+| `Sidebar` | `registry/base/sidebar.tsx` (+ `registry/default/sidebar-core.tsx`, `sidebar-menu.tsx`; `app/globals.css` `.scroll-divider`) | `components/navigation/sidebar/index.tsx` (+ `sidebar-core.tsx`, `sidebar-menu.tsx`, `sidebar.css`) | the mobile sheet is the DS's `Sheet` (goo from its edge, swipe to dismiss) instead of a Dialog with a framer slide; no collapsed peek: `openOnHover` on the provider opens the sidebar in flow while the pointer is between its edge and the far side of a trigger beside it, the trigger switching between open and on hover (`panel-*-dashed` glyphs added to the icon context); the active row backgrounds are `GooIndicator`s and the hover highlight the liquid `FluidHoverHighlight`; uncontrolled selection (`value` on the buttons, `value` / `defaultValue` / `onValueChange` on `Sidebar`) and collapsible rows (`Sidebar.MenuItem collapsible`, below); statics `.Provider/.Trigger/.Rail/.Inset/.Input/.Header/.Content/.Footer/.Separator/.Group/.GroupLabel/.GroupAction/.GroupActions/.GroupContent/.Menu/.MenuItem/.MenuButton/.MenuAction/.MenuActions/.MenuBadge/.MenuSkeleton/.MenuSub/.MenuSubItem/.MenuSubButton` through a `SidebarComponent` cast; `fontVariationSettings` → `weight-*`, `text-[Npx]` → type roles, hex focus ring → `ring-focus-ring`, `duration-80\|160\|240` → tiers; `sidebarMenuButtonVariants` and the `SIDEBAR_*` constants in `variants.ts` (server-callable; `variants.ts` files are bunup entries); `inert` through `lib/inert.ts` |
+| `Slider` | `registry/base/slider.tsx` | `components/inputs/slider/index.tsx` | `var(--color-accent)` → `var(--accent)` (no `--color-*` aliases here); uncontrolled support on the public wrapper, with both engines still fully controlled; `SliderProps extends Omit<SliderEngineProps, "value" \| "onChange">`; React 18 ref types (`MutableRefObject`); indexed reads of the value/step/pip arrays asserted; `aria-label` names the thumbs ahead of the visible `label`; `orientation="vertical"` (compact engine, min at bottom) and `onValueCommit` (both engines; drag end, keyboard step, value edit) |
+| `Switch` | `registry/base/switch.tsx` | `components/inputs/switch/index.tsx` | uncontrolled support; every in-body read goes through the resolved `isChecked` and a `toggle()` that also calls `onToggle`; the thumb is a `GooIndicator` in Base UI's Thumb (stretches as it travels), dragged x held in state; local `description` (muted line, `aria-describedby`) and `trackSide`; local `Switch.Group`: switches as settings rows (track at the end) in one outlined fieldset, after an outlined `Card.Group` (shared hairlines dropped around the fluid hover highlight), rows numbered by the group; `label` optional, any node; without one (outside a group) the switch is the bare track, Base UI's Switch.Root, which toggles itself (click, keyboard, a `<label htmlFor>`) through `onCheckedChange`, with the thumb drag on the track and the toggle that follows a drag swallowed; `name` / `value` / `required` reach Base UI's hidden input in both modes |
+| `Table` | `registry/default/table.tsx` | `components/table/index.tsx` (+ `sort-demo.tsx`) | statics `.Header/.Body/.Row/.Head/.Cell`; `TableProps` / `TableRowProps` exported; local additions: Footer, Caption, Empty, sortable Head (`sortDirection`/`defaultSortDirection`/`onSort`), `stacked` + Cell `label` (stacked cells `items-start`), `containerClassName`; unindexed body rows numbered in document order (`lib/row-order`); weight by section; header-only border melt; stacked values in foreground |
+| `Tabs` | `registry/base/tabs.tsx` | `components/navigation/tabs/index.tsx` | `defaultSelectedIndex` added as the index-mode twin of the existing `defaultValue`; indicator and hover pill are `GooIndicator`s (the hover pill returns to the active tab as it fades); statics `.List/.Item/.Panel`; `Tabs.Item` node `label` (inert ghost copy), `href` link tabs |
 | `TabsSubtle` | `registry/base/tabs-subtle.tsx` | `components/navigation/tabs-subtle/index.tsx` | uncontrolled mode; panels may be authored inside the root (below); the tab list's ref write goes through `MutableRefObject`; selected and hover pills are `GooIndicator`s; statics `.Item/.Panel` |
-| `Textarea` | — (local; Input's multi-line twin) | `components/inputs/textarea/index.tsx` | Base UI `Field.Control` rendered as a `<textarea>`; the field ladder from `lib/field-classes.ts`; padding sized so one row matches the control height; grows from `minRows` to `maxRows` (InputMessage's measure), then scrolls; `value` / `defaultValue` / `onChange` |
+| `Textarea` | — (local; Input's multi-line twin) | `components/inputs/textarea/index.tsx` | Base UI `Field.Control` rendered as a `<textarea>`; the field ladder from `lib/field-classes.ts`; padding sized so one row matches the control height; grows from `minRows` to `maxRows` (InputMessage's measure), then scrolls; `value` / `defaultValue` / `onChange`; `readOnly` / `required` (also from a surrounding `Field`); neither `value` nor `onChange` means a DOM-held uncontrolled `<textarea>` (ref-readable, form-reset aware) |
 | `ThinkingIndicator` | `registry/default/thinking-indicator.tsx` | `components/AI/thinking-indicator/index.tsx` | upstream prop JSDoc kept (it already matches the FF API table); the `.shimmer-text` rule it rides lives in `base.css`; local `variant="goo"` (three dots merging and splitting through `GooFilter`, plain label; default stays `shimmer`); reduced motion also follows MotionConfig |
-| `Toast` | — (local; after Sileo, see [Morph sources](#morph-sources)) | `components/overlays/toast/index.tsx` | Base UI Toast (queue, timers, swipe, announcements) with Sileo's pill melting into a body through the shared `GooFilter`; autopilot expand/collapse, six states on the `--status-*` tokens, promise toasts; `Toast` is the provider + viewport, `Toast.Trigger` shows one, `useToast()` the imperative API |
-| `Tooltip` | `registry/base/tooltip.tsx` | `components/overlays/tooltip/index.tsx` | `className`/`children` docs filled in; statics `.Provider` / `.PortalContainer`; the slide + fade replaced by the morph layer (goo from the trigger on `spring.goo`, `from` / `effect` / `tier` props; `followCursor` tooltips fade); a hand-off between grouped tooltips skips the morph (Base UI's `data-instant`) |
+| `Toast` | — (local; after Sileo, see [Morph sources](#morph-sources)) | `components/overlays/toast/index.tsx` (+ `manager.ts`, `global-demo.tsx`) | Base UI Toast (queue, timers, swipe, announcements) with Sileo's pill melting into a body through the shared `GooFilter`; autopilot expand/collapse, six states on the `--status-*` tokens, promise toasts; `Toast` is the provider + viewport, `Toast.Trigger` shows one, `useToast()` the in-tree API (plus `toasts`, `update`, `dismiss`); `manager.ts` holds one module-level Base UI `createToastManager()` exported as the global `toast()` (`.success/.error/.warning/.info/.loading/.promise/.update/.dismiss`, each returning `{ id, update, dismiss }`), queuing calls made before a provider subscribes (dropped on the server); `<Toast manager={toast}>` renders them (`manager` takes any source with a `subscribe`); ReactNode title/description, `icon` as a component or node, `action` as `{ label, onClick }` or a node, `duration` as an alias of `timeout`; a loading toast stays until its type changes, then leaves on the timeout; status glyphs via `useIcons()` instead of direct lucide imports; `global-demo.tsx` is the docs stage; `Toast.Action` / `Toast.Close` (Base UI's parts as compact Buttons, `render` / `asChild`) for custom action nodes |
+| `Tooltip` | `registry/base/tooltip.tsx` | `components/overlays/tooltip/index.tsx` | `className`/`children` docs filled in; statics `.Provider` / `.PortalContainer`; the slide + fade replaced by the morph layer (goo from the trigger on `spring.goo`, `from` / `effect` / `tier` props; `followCursor` tooltips fade); a hand-off between grouped tooltips skips the morph (Base UI's `data-instant`); local compound parts `TooltipRoot` (`open` / `defaultOpen` / `onOpenChange`, `delay` or `delayDuration`, `closeDelay`, `followCursor`), `TooltipTrigger` (`render` or Radix-style `asChild`; drops the slot's `nativeButton`) and `TooltipContent` (`side`, `align`, `sideOffset`, `alignOffset`, `collisionPadding`, `positionerClassName`, morph options, `render` / `asChild` for the label, rest props on the popup), also as statics `.Root .Trigger .Content`; `Tooltip` without `content` is the root, and the flat form gains `open` / `defaultOpen` / `align` / `alignOffset` / `collisionPadding` / `delay` / `closeDelay`; `TooltipProvider` takes `delay` / `closeDelay` / `timeout` and Radix's `delayDuration` / `skipDelayDuration` (Base UI name wins; a negative skip clamps to 0) |
 
 #### blocks
 
@@ -271,17 +293,17 @@ only what is specific to it:
 | — | `registry/blocks/sidebar-app/inset-topbar.tsx` | `blocks/sidebar-app/inset-topbar.tsx` | the trigger's peek-time fade dropped (the sidebar opens on hover in flow, so the trigger stays) |
 | — | `registry/default/lib/sidebar-menu-grid.ts` | `blocks/sidebar-app/menu-grid.ts` | the width reads `--anchor-width` only; the `-ml-1` shift dropped (it would move the morph surface's content off its background) |
 
-`Select` in `modo.components.tsx` is not an item: modo's docs chrome renders its Select slot
+`Select` in `docs/chrome.tsx` is not an item: modo's docs chrome renders its Select slot
 with a flat `value` / `onChange` / `options` contract
 (`lib/src/lib/slots.tsx`), and this adapter maps it onto
 `Select.Trigger` / `Select.Content` / `Select.Item` so the chrome runs on the
 design system's own Select. The
 `components/inputs/select` item keeps the upstream API untouched.
 
-`DocsNav` in `modo.components.tsx` is the chrome's Sidebar slot, pinned as
+`DocsNav` in `docs/chrome.tsx` is the chrome's Sidebar slot, pinned as
 `shell.Sidebar` (by name alone modo would adopt the documented `Sidebar`, an
 app shell that needs its provider). Each aside is an inset `Sidebar` with its
-own provider, and `global.css` turns the content between them into the inset
+own provider, and `docs/chrome.css` turns the content between them into the inset
 card (the lib's grid columns become `auto`, so they follow the sidebars' width
 springs). Each provider has `openOnHover`, and its `Sidebar.Trigger` sits in
 the card's corner: the trigger, `[` for the nav and `]` for the panel, switch
@@ -294,13 +316,82 @@ below xl. A section of links is a collapsible `Sidebar.Group` with one
 highlight melt from link to link; a panel section (Theme) keeps its control
 under the group label.
 
-`ThemeSwitcher` in `modo.components.tsx` is not an item either: it is the `Theme` entry in
+`ThemeSwitcher` in `docs/chrome.tsx` is not an item either: it is the `Theme` entry in
 `modo.config.ts` `panel.items`, a `Select` of Light / Dark / System (each row
 with its icon, the trigger showing the active one) that reads and sets
 `window.__uiTheme` and re-reads it on `ui:themechange`. All switching logic lives in the pre-paint controller
 described under **Tailwind → UnoCSS**, so the control holds no theme state of
 its own. `demo/scripts/run-design-systems.ts` appends its own `Switcher` panel
 item to whatever a design system declares, so both show up under the runner.
+
+The chrome's own elements (the corner triggers, the panel section's gutter) are
+styled in `docs/chrome.css` through `data-modo-ui` attributes, not utility
+classes: nothing in `docs/` needs a UnoCSS or Tailwind scan, so a host with
+either generator loads the same file. `Button` and `Link` are pinned too, so a
+design system with items of those names but another prop shape is not matched
+by name (modo would warn on every start).
+
+### The docs chrome, for another design system
+
+A design system documented with modo (an `@utegsk/ui`-style package that
+depends on `@justanarthur/modo-ui`) gets the same sidebars, inset card layout,
+panel and Theme switcher as this site by pointing its `modo.config.ts` at the
+shipped module. A `shell` / `panel` value may be a package specifier (the
+viewer resolves it from the project root through the package's `exports`, the
+`source` file first), which needs an `@justanarthur/modo` release after
+0.9.0-canary.0; with an older viewer keep a one-line local re-export instead
+(`export * from '@justanarthur/modo-ui/docs'` in a `docs/shell.tsx`, and point
+the slots at `./docs/shell.tsx#DocsNav`).
+
+```ts
+// modo.config.ts
+import { defineConfig } from '@justanarthur/modo/config'
+
+export default defineConfig({
+  name: 'My DS',
+  css: './docs.css',
+  vite: './vite.mjs',
+  shell: {
+    Button: '@justanarthur/modo-ui/docs#Button',
+    Link: '@justanarthur/modo-ui/docs#Link',
+    Select: '@justanarthur/modo-ui/docs#Select',
+    Icon: '@justanarthur/modo-ui/docs#Icon',
+    Sidebar: '@justanarthur/modo-ui/docs#DocsNav',
+  },
+  panel: { items: [{ label: 'Theme', component: '@justanarthur/modo-ui/docs#ThemeSwitcher' }] },
+})
+```
+
+```css
+/* docs.css: the package stylesheet (or base.css with your own utilities), then the chrome */
+@import "@justanarthur/modo-ui/styles.css";
+@import "@justanarthur/modo-ui/docs/chrome.css";
+```
+
+```js
+// vite.mjs: plain JS, Node loads it as is. Add your own plugins (Tailwind, UnoCSS) beside docsTheme.
+import { docsTheme } from '@justanarthur/modo-ui/docs/vite'
+
+export default config => {
+  config.plugins = [...(config.plugins ?? []), docsTheme({ storageKey: 'my-ds-theme' })]
+  return config
+}
+```
+
+- `chrome.css` also loads by itself, as the stylesheet beside the slot module,
+  when modo bundles `@justanarthur/modo-ui/docs` from its source; the explicit
+  `@import` fixes where it sits in your cascade and is the one to rely on.
+- `docsTheme` puts `.light` / `.dark` on `<html>` before first paint and
+  exposes `window.__uiTheme` for `ThemeSwitcher`; `storageKey` (default
+  `modo-ui-theme`) keeps two sites on one origin apart.
+- The panel's narrow-screen behavior (below xl the panel is a drawer, opened on
+  hover or with `]`, never a strip above the content) comes with `chrome.css`.
+  A stylesheet that re-implements the layout instead of importing it can
+  recreate the lib's `grid-template-rows: auto` strip: a viewport-tall blank
+  row with the Theme select behind it.
+- `lucide-react` (the `Icon` slot) is already a dependency of the package;
+  the docs entry adds no other. `@justanarthur/modo-ui` itself must be a
+  dependency of the host: modo resolves the specifier from the project root.
 
 ## Tier mapping
 
@@ -318,6 +409,7 @@ becomes the one block.
 | primitives | `code` (Code) | — (local, sugar-high) | — |
 | primitives | `morph` (Morph) | — (local, `lib/use-morph.ts`) | — |
 | primitives | `craft` (Craft) | — (local, bad/good pairs) | skill (before/after) |
+| primitives | `separator` (Separator), `skeleton` (Skeleton) | — (local) | — |
 | components | accordion, button, combobox, dialog, dropdown, select, slider, switch, tabs, tabs-subtle, tooltip | `registry/base/<id>.tsx` | same slug |
 | components | `checkbox` (Checkbox, `.Group`), `radio` (Radio, `.Group`) | `registry/base/checkbox-group.tsx`, `radio-group.tsx` | checkbox-group, radio-group |
 | components | badge, card, color-picker, input-message, table, thinking-indicator | `registry/default/<id>.tsx` | same slug |
@@ -325,6 +417,7 @@ becomes the one block.
 | components | `input` (Input, Label, InputGroup) | `registry/default/input-group.tsx` | input-group |
 | components | alert-dialog, command, context-menu, popover, preview-card, search, sheet, toast | — (local, see [Morph sources](#morph-sources)) | — |
 | components | calendar, date-picker, date-range-picker, time-picker, duration-picker, month-picker (group `inputs/date-time`) | — (local, on react-day-picker) | — |
+| components | avatar, progress, field, number-input, file-dropzone, navigation-menu, pagination | — (local) | — |
 | components | sidebar | `base/sidebar.tsx` + `default/sidebar-core.tsx` + `default/sidebar-menu.tsx` | sidebar |
 | blocks | `sidebar-app` (SidebarApp) | the preset generator's output + `blocks/sidebar-*` | sidebar, preset `sa1FQfCxH6` |
 
@@ -348,7 +441,7 @@ No ported file imports any of them.
 
 The files only they, or the FF docs site's nav, use are left out too:
 `mobile-drawer`, `nav-item`, `nav-menu`, `lib/theme-context.tsx` (the
-`ThemeSwitcher` panel item and vite.ts's pre-paint controller take its
+`ThemeSwitcher` panel item and docs/vite.ts's pre-paint controller take its
 place) and the blocks other than the sidebar's (`queued-stack`,
 `dialog-sidebar`). Inside kept files, the same rule removed
 `SURFACE_HOVER_BG`, `SURFACE_HOVER_SHADOW` and `surfaceHoverClasses` from
@@ -375,7 +468,8 @@ prebuilt `styles.css`, and turns `preset.ts` into `tailwind.css`.
 
 - **Dark mode.** `dark: 'class'` produces `.dark .dark\:x`, the same "inside a
   `.dark` ancestor" contract as FF's `@custom-variant dark (&:is(.dark *))`.
-  modo ships no theme of its own, so `vite.ts` injects a small controller into
+  modo ships no theme of its own, so `docsTheme` (`docs/vite.ts`, applied by
+  `vite.ts`) injects a small controller into
   `index.html` (`transformIndexHtml`, `head-prepend`). Before first paint it
   puts `light` or `dark` on `<html>` — the stored preference, or the OS one
   under `system` — which is also what flips every `light-dark()` token through
@@ -388,7 +482,10 @@ prebuilt `styles.css`, and turns `preset.ts` into `tailwind.css`.
   `global.css` (and the `base.css` it imports) and fixes the order of the
   layer its `@layer base` rules join.
   `vite.ts` is loaded by Node with type stripping, so it may only use erasable
-  TypeScript and hands `uno.config.ts` to UnoCSS by absolute path.
+  TypeScript, names the `.ts` extension of the one relative module it imports
+  (`./docs/vite.ts`) and hands `uno.config.ts` to UnoCSS by absolute path.
+  `docs/vite.ts` ships built (`dist/docs/vite.js`): Node never strips types
+  from a file under `node_modules`.
 - **Colors.** Theme colors point at the CSS variables directly (for example
   `accent: 'var(--accent)'`, `surface.1..8`). wind4 applies opacity modifiers
   to `var()` colors with `color-mix(in srgb, …)`, so `bg-accent/12` works on
@@ -412,7 +509,7 @@ prebuilt `styles.css`, and turns `preset.ts` into `tailwind.css`.
   after the reset, so utilities (in `default`) still win. This is the same
   arrangement as Tailwind's base/utilities split.
 - **Content.** UnoCSS scans `{lib,primitives,components,blocks}/**/*.{ts,tsx,mdx}`
-  and `modo.components.tsx` from disk (`content.filesystem`, and the same
+  from disk (`content.filesystem`, and the same
   globs in `content.pipeline.include`, since the default pipeline skips
   `.ts`). Two reasons:
   - modo serves items pre-bundled, so the sources never pass through Vite's
@@ -522,19 +619,20 @@ declared packages.
 
 ## Docs and examples
 
-What modo's parser (`lib/src/lib/tsdoc.ts`) and example compiler
+What modo's item reader (`lib/src/lib/docs.ts`, `tsdoc.ts`) and example compiler
 (`lib/src/lib/example.ts`) need, and how this package answers it:
 
-- **The item is the file's `export default`** — either `function X(…)` or a
-  `const X = forwardRef<HTMLXElement, XProps>(…)`. The forwardRef form's first
-  type argument must contain no `<` or `,`, which is why ScrollArea spells out
-  `HTMLDivElement` instead of `ComponentRef<typeof …>`, and why Combobox's
-  root lost its generics.
-- **Props come from a same-file `interface XProps`**, and only from members
-  declared in its body — inherited members are invisible, and a member whose
-  type spans several lines is dropped. Every member needs a description, and
-  defaults are read from that prose (`Defaults to \`false\`.`), not from the
-  destructuring. Hence the FF API-table text re-declared on every prop.
+- **The item is the file's `export default`**, followed through re-exports
+  to its declaration — `function X(…)`, a `forwardRef<El, XProps>(…)`, or any
+  component-typed value. (The workarounds for the old text parser stay: ScrollArea's
+  spelled-out `HTMLDivElement`, Combobox's de-generified root.)
+- **Props are read with the TypeScript compiler** from the render function's
+  parameter, the `forwardRef` props type or the component's type, inherited
+  members included (`extends`, `Omit`, `Pick`, intersections, across files).
+  React's DOM attributes and other libraries' typings (Base UI,
+  react-day-picker) stay out unless re-declared, so a prop meant for the table
+  is declared with a description. The Default column takes the destructured
+  default, else `@default`, else a closing ``Defaults to `x`.`` sentence.
 - **Examples live in `examples.mdx`** next to the item, included by the
   TSDoc's `@example {@include ./examples.mdx}`: a `# <FF section title>`,
   an optional caption, then one JSX block (or a fenced code block for code to
@@ -600,7 +698,7 @@ The runner kills stray `modo dev` processes, splices a temporary
 upward. To run the package on its own, without the switcher:
 
 ```sh
-cd ui && MODO_PORT=5180 bunx modo dev
+cd ui && MODO_PORT=5180 bun ../lib/dist/cli.js dev   # after a lib build; ui has no modo bin
 ```
 
 ## How to verify

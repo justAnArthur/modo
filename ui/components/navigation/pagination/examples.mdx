@@ -1,0 +1,74 @@
+import Pagination from './index'
+
+# Basics
+
+## Pages
+
+The current page melts from page to page, and the hover glides along the strip. A click between two pages lands on the lit one.
+
+<Pagination pageCount={12} defaultPage={5} />
+
+## Few pages
+
+With nothing to skip, every page shows.
+
+<Pagination pageCount={5} defaultPage={2} />
+
+## First and last
+
+`edges` adds buttons to the ends, for long runs of pages.
+
+<Pagination pageCount={40} defaultPage={18} edges />
+
+# Controls
+
+## Jump to a page
+
+`variant="input"` swaps the strip for a field: type a page and press Enter. First and last come with it.
+
+<Pagination pageCount={24} defaultPage={3} variant="input" />
+
+## Page size
+
+Setting `defaultPageSize` (or `pageSize`) adds a Select of `pageSizes`, the layout a data table footer uses.
+
+<Pagination pageCount={8} variant="input" defaultPageSize={20} />
+
+With `pageSizeLabel=""` the caption goes and `pageSizeAriaLabel` still names the Select.
+
+<Pagination pageCount={8} variant="input" defaultPageSize={20} pageSizeLabel="" pageSizeAriaLabel="Rows per page" />
+
+# Options
+
+## Compact
+
+The strip steps down the size ladder with everything around it, the page-size menu included.
+
+<div className="flex flex-col gap-4">
+  <Pagination pageCount={20} defaultPage={10} size="compact" />
+  <Pagination pageCount={20} defaultPage={10} variant="input" defaultPageSize={10} size="compact" />
+</div>
+
+## Translated labels
+
+Every label is a prop: the buttons' names, the field's name and the page-size caption.
+
+<Pagination
+  pageCount={8}
+  defaultPage={2}
+  variant="input"
+  defaultPageSize={10}
+  label="Stránkovanie"
+  firstLabel="Prvá strana"
+  previousLabel="Predchádzajúca strana"
+  nextLabel="Ďalšia strana"
+  lastLabel="Posledná strana"
+  pageLabel="Strana"
+  pageSizeLabel="Riadkov na stranu"
+/>
+
+## Disabled
+
+`disabled` holds every control, e.g. while the next page loads.
+
+<Pagination pageCount={12} defaultPage={4} disabled />

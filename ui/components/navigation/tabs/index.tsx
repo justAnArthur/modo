@@ -16,6 +16,10 @@
  * The active indicator and the hover pill are `GooIndicator`s
  * (`lib/goo-indicator.tsx`, local): they melt from tab to tab instead of
  * sliding; the hover pill now always returns to the active tab as it fades.
+ * - `Tabs.Item` `label` takes any node (a counter, a badge) besides a string;
+ *   the weight ghost-span keeps holding the width, its hidden copy `inert`
+ *   (`markInert` from `lib/inert.ts`).
+ *   `href` renders the tab as an anchor (link tabs) through Base UI's `render`.
  */
 
 import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
@@ -39,6 +43,7 @@ import {
 } from 'react'
 import { GooIndicator } from '../../../lib/goo-indicator'
 import type { IconComponent } from '../../../lib/icon-context'
+import { markInert } from '../../../lib/inert'
 import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
@@ -119,7 +124,8 @@ type TabsComponent = ForwardRefExoticComponent<TabsProps & RefAttributes<HTMLDiv
  *
  * Statics:
  * - `Tabs.List` — the segmented track holding the tabs.
- * - `Tabs.Item` — one tab: `value`, `label`, optional `icon`.
+ * - `Tabs.Item` — one tab: `value`, `label` (text, or a node such as a
+ *   label with a counter), optional `icon`, and `href` to render it as a link.
  * - `Tabs.Panel` — content shown while the tab with the same `value` is active.
  *
  * @example {@include ./examples.mdx}
@@ -313,7 +319,7 @@ const TabsList = forwardRef<HTMLDivElement, TabsListProps>(({ children, classNam
           // segmentPad + segmentItem add up to the ladder's control height
           // (36px default, 28px compact) so the segmented control's outer
           // box lines up with buttons, selects, and inputs beside it.
-          'relative inline-flex items-center select-none bg-muted',
+          'relative inline-flex items-center select-none bg-well',
           sizeClasses.segmentPad,
           shape.container,
           className,
@@ -371,15 +377,20 @@ TabsList.displayName = 'TabsList'
 /* ─────────────────────── TabItem ─────────────────────── */
 
 interface TabItemProps extends ComponentPropsWithoutRef<typeof TabsPrimitive.Tab> {
+  /** The tab's value, matched by `Tabs.Panel` and the root's `value`. */
   value: string
+  /** Leading icon; its stroke thickens while the tab is hovered or active. */
   icon?: IconComponent
-  label: string
+  /** The label: text, or a node such as text with a counter or a badge. */
+  label: ReactNode
+  /** Render the tab as an anchor to this URL (link tabs): pressing it follows the link and selects the tab. */
+  href?: string
   /** @internal Auto-assigned by TabsList. */
   _index?: number
 }
 
 const TabItem = forwardRef<HTMLButtonElement, TabItemProps>(
-  ({ value, icon: Icon, label, _index = 0, className, onClick, ...props }, ref) => {
+  ({ value, icon: Icon, label, href, _index = 0, className, onClick, ...props }, ref) => {
     const internalRef = useRef<HTMLButtonElement>(null)
     const sizeClasses = useSize()
     const { registerTab, hoveredIndex, selectedValue, setOptimisticIdx } = useTabsList()
@@ -391,6 +402,9 @@ const TabItem = forwardRef<HTMLButtonElement, TabItemProps>(
 
     const isSelected = selectedValue === value
     const isActive = hoveredIndex === _index || isSelected
+    // A text label trims its box to the cap height; a node (a counter, a badge) lays out as a row.
+    const text = typeof label === 'string' || typeof label === 'number'
+    const labelLayout = text ? '[text-box:trim-both_cap_alphabetic]' : 'inline-flex items-center gap-1.5'
 
     return (
       <TabsPrimitive.Tab
@@ -407,11 +421,14 @@ const TabItem = forwardRef<HTMLButtonElement, TabItemProps>(
             (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node as HTMLButtonElement | null
         }}
         value={value}
+        // Local: link tabs render an anchor (Base UI keeps the tab semantics on it).
+        // biome-ignore lint/a11y/useAnchorContent: Base UI renders the tab's label into the anchor
+        {...(href !== undefined && { render: <a href={href} />, nativeButton: false })}
         data-fluid-hover-index={_index}
         className={cn(
           // Fixed height (not py) so the text-box trim below doesn't shrink
           // the tab — browsers without text-box support render identically.
-          'relative z-10 flex items-center px-3 cursor-pointer bg-transparent border-none outline-none',
+          'relative z-10 flex items-center px-3 cursor-pointer bg-transparent border-none outline-none no-underline',
           sizeClasses.segmentItem,
           sizeClasses.gap,
           className,
@@ -428,18 +445,22 @@ const TabItem = forwardRef<HTMLButtonElement, TabItemProps>(
             )}
           />
         )}
-        {/* Both stacked spans carry the text-box trim so the invisible bold
-            sizer and the visible label keep identical boxes. */}
+        {/* Both stacked spans carry the same layout so the invisible bold
+            sizer and the visible label keep identical boxes. A node label
+            renders twice too; its hidden copy is inert, so keep it
+            presentational (text, counters, badges). */}
         <span className={cn('inline-grid whitespace-nowrap', sizeClasses.text)}>
           <span
-            className="col-start-1 row-start-1 invisible [text-box:trim-both_cap_alphabetic] weight-semibold"
+            className={cn('col-start-1 row-start-1 invisible weight-semibold', labelLayout)}
             aria-hidden="true"
+            ref={text ? undefined : markInert}
           >
             {label}
           </span>
           <span
             className={cn(
-              'col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast [text-box:trim-both_cap_alphabetic]',
+              'col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast',
+              labelLayout,
               isActive ? 'text-foreground' : 'text-muted-foreground',
               isSelected ? 'weight-semibold' : 'weight-normal',
             )}

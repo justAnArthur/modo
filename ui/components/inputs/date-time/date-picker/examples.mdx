@@ -1,7 +1,16 @@
 import DatePicker from './index'
+import { Label } from '../../input'
+import Button from '../../../button'
+import Dialog from '../../../overlays/dialog'
+import DateRangePicker from '../date-range-picker'
+import DurationPicker from '../duration-picker'
+import MonthPicker from '../month-picker'
+import TimePicker from '../time-picker'
 import { ar, de } from 'react-day-picker/locale'
 
-# Basic
+# Basics
+
+## Basic
 
 Press the field: the date is selected to type over, and the calendar scrolls beneath it.
 
@@ -9,7 +18,7 @@ Press the field: the date is selected to type over, and the calendar scrolls ben
   <DatePicker placeholder="Pick a date" />
 </div>
 
-# With time
+## With time
 
 `withTime` adds the time to the field and hour and minute columns to the panel.
 
@@ -17,31 +26,15 @@ Press the field: the date is selected to type over, and the calendar scrolls ben
   <DatePicker withTime defaultValue={new Date(2026, 9, 9, 15, 33)} />
 </div>
 
-# German
+## Compact
 
-The locale sets the names, the formats shown and read ("12.10.2026"), and the week's first day.
+`size="compact"` pins the field and its panel to the compact step.
 
-<div className="w-72 max-w-full">
-  <DatePicker locale={de} withTime defaultValue={new Date(2026, 9, 9, 15, 33)} />
+<div className="w-60 max-w-full">
+  <DatePicker size="compact" defaultValue={new Date(2026, 9, 9)} />
 </div>
 
-# 12-hour clock
-
-`hourCycle="h12"` reads the hours with AM/PM; `minuteStep` thins the minutes.
-
-<div className="w-72 max-w-full">
-  <DatePicker withTime hourCycle="h12" minuteStep={5} defaultValue={new Date(2026, 9, 9, 15, 35)} />
-</div>
-
-# Columns on both sides
-
-`columnsSide="start"` puts the month and year before the days; the time stays after them.
-
-<div className="w-72 max-w-full">
-  <DatePicker withTime columnsSide="start" defaultValue={new Date(2026, 9, 9, 15, 33)} />
-</div>
-
-# In place
+## In place
 
 `effect="morph"` with `hideSource` turns the field itself into the panel.
 
@@ -49,7 +42,33 @@ The locale sets the names, the formats shown and read ("12.10.2026"), and the we
   <DatePicker effect="morph" hideSource defaultValue={new Date(2026, 9, 9)} />
 </div>
 
-# Right to left
+## Columns on both sides
+
+`columnsSide="start"` puts the month and year before the days; the time stays after them.
+
+<div className="w-72 max-w-full">
+  <DatePicker withTime columnsSide="start" defaultValue={new Date(2026, 9, 9, 15, 33)} />
+</div>
+
+# Localization
+
+## German
+
+The locale sets the names, the formats shown and read ("12.10.2026"), and the week's first day.
+
+<div className="w-72 max-w-full">
+  <DatePicker locale={de} withTime defaultValue={new Date(2026, 9, 9, 15, 33)} />
+</div>
+
+## 12-hour clock
+
+`hourCycle="h12"` reads the hours with AM/PM; `minuteStep` thins the minutes.
+
+<div className="w-72 max-w-full">
+  <DatePicker withTime hourCycle="h12" minuteStep={5} defaultValue={new Date(2026, 9, 9, 15, 35)} />
+</div>
+
+## Right to left
 
 `dir="rtl"` mirrors the panel for an Arabic locale.
 
@@ -57,7 +76,38 @@ The locale sets the names, the formats shown and read ("12.10.2026"), and the we
   <DatePicker locale={ar} dir="rtl" defaultValue={new Date(2026, 9, 9)} />
 </div>
 
-# Disabled days and bounds
+## Labels and format
+
+Every word comes from `labels`, and `formatDate` writes the field's text. `actions` adds Today and Clear under the calendar.
+
+<div className="w-72 max-w-full">
+  <DatePicker
+    locale={de}
+    actions
+    placeholder="Datum wählen"
+    formatDate={date => date.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })}
+    labels={{ date: 'Datum', close: 'Schließen', today: 'Heute', clear: 'Leeren', calendar: 'Kalender öffnen', invalid: 'Ungültiges Datum' }}
+  />
+</div>
+
+## Slovak, from a language tag
+
+`locale` also takes a BCP 47 tag, read through Intl: Slovak month and weekday names, its formats ("9. 10. 2026") and Monday first. `labels` translate the rest, the columns' names included.
+
+<div className="w-72 max-w-full">
+  <DatePicker
+    locale="sk"
+    withTime
+    actions
+    placeholder="Vyberte dátum"
+    labels={{ date: 'Dátum', time: 'Čas', close: 'Zavrieť', today: 'Dnes', clear: 'Vymazať', month: 'Mesiac', year: 'Rok', hour: 'Hodina', minute: 'Minúta', calendar: 'Otvoriť kalendár', invalid: 'Neplatný dátum' }}
+    defaultValue={new Date(2026, 9, 9, 15, 33)}
+  />
+</div>
+
+# Constraints
+
+## Disabled days and bounds
 
 `disabled` takes react-day-picker matchers; `startMonth` and `endMonth` bound the calendar and its year column.
 
@@ -70,7 +120,26 @@ The locale sets the names, the formats shown and read ("12.10.2026"), and the we
   />
 </div>
 
-# Invalid and disabled
+## Hidden days
+
+`hidden` leaves days out of the calendar: here the weekends are gaps, and typing one is refused.
+
+<div className="w-72 max-w-full">
+  <DatePicker placeholder="A working day" hidden={{ dayOfWeek: [0, 6] }} defaultValue={new Date(2026, 9, 9)} />
+</div>
+
+## Required and unselectable
+
+`required` keeps the picked day when it is pressed again; `unselectable` also keeps it when the text is emptied, and drops Clear.
+
+<div className="flex w-72 max-w-full flex-col gap-2">
+  <DatePicker required defaultValue={new Date(2026, 9, 9)} />
+  <DatePicker unselectable editable actions defaultValue={new Date(2026, 9, 9)} />
+</div>
+
+# States
+
+## Invalid and disabled
 
 `invalid` turns the field destructive; `disabled={true}` turns it off.
 
@@ -79,10 +148,96 @@ The locale sets the names, the formats shown and read ("12.10.2026"), and the we
   <DatePicker disabled defaultValue={new Date(2026, 9, 9)} />
 </div>
 
-# Compact
+## Invalid value
 
-`size="compact"` pins the field and its panel to the compact step.
+A `value` that reads as no date (a malformed string, an Invalid Date) shows the invalid state and the `labels.invalid` caption.
 
-<div className="w-60 max-w-full">
-  <DatePicker size="compact" defaultValue={new Date(2026, 9, 9)} />
+<div className="flex w-72 max-w-full flex-col gap-3">
+  <div>
+    <DatePicker defaultValue="2026-02-31-oops" />
+  </div>
+  <div>
+    <DatePicker editable defaultValue="not a date" />
+  </div>
 </div>
+
+## Read only
+
+`readOnly` shows the value but never opens or takes typing. `value` may be a string.
+
+<div className="flex w-72 max-w-full flex-col gap-2">
+  <DatePicker readOnly defaultValue="2026-10-09" />
+  <DatePicker readOnly editable defaultValue="2026-10-09" />
+</div>
+
+# Forms
+
+## Editable
+
+`editable` makes the field a text input: type the digits and the separators fall into place, with the rest of the mask muted after the caret. The calendar icon opens the panel. A day that can't exist, or one left half typed, turns the field destructive with a caption.
+
+<div className="flex w-72 max-w-full flex-col gap-1">
+  <Label htmlFor="editable-date">Date of birth</Label>
+  <DatePicker id="editable-date" editable defaultValue={new Date(1990, 4, 17)} />
+</div>
+
+## Editable with time
+
+With `withTime` the mask takes the time too, on a 24-hour clock; the locale sets the order ("17.05.1990, 14:30").
+
+<div className="w-72 max-w-full">
+  <DatePicker editable withTime locale={de} defaultValue={new Date(1990, 4, 17, 14, 30)} />
+</div>
+
+## Input attributes
+
+`controlProps` reaches an `editable` field's input after its defaults, so `autoComplete` and `inputMode` replace its `"off"` and `"numeric"`, and `data-*`, `autoFocus` and handlers come through too.
+
+<div className="w-72 max-w-full">
+  <DatePicker editable aria-label="Date of birth" controlProps={{ autoComplete: 'bday', inputMode: 'text', 'data-field': 'birthday' }} />
+</div>
+
+## In a form
+
+`name` puts each value in the form's data through a hidden input, in the native inputs' formats, and `required` stops an empty submit and focuses the field. `aria-describedby` and the other `aria-*` props reach the field's control.
+
+<form
+  className="flex w-80 max-w-full flex-col gap-2"
+  onSubmit={event => {
+    event.preventDefault()
+    const lines = [...new FormData(event.currentTarget)].map(([key, value]) => key + '=' + value)
+    event.currentTarget.querySelector('output').textContent = lines.join('\n')
+  }}
+>
+  <Label htmlFor="form-date">Start</Label>
+  <DatePicker id="form-date" name="start" required aria-describedby="form-date-hint" placeholder="Required" />
+  <p id="form-date-hint" className="text-caption text-muted-foreground">The first day of the contract.</p>
+  <DateRangePicker name="stay" defaultValue={{ from: new Date(2026, 9, 9), to: new Date(2026, 9, 15) }} />
+  <TimePicker name="time" defaultValue="09:30" />
+  <DurationPicker name="duration" defaultValue={{ hours: 1, minutes: 30 }} />
+  <MonthPicker name="month" defaultValue={new Date(2026, 9, 1)} />
+  <Button type="submit">Submit</Button>
+  <output className="whitespace-pre text-caption text-muted-foreground" />
+</form>
+
+## Inside a dialog
+
+The panel lifts above the dialog. Escape in the field first undoes a half-typed date (the dialog stays), then closes the dialog.
+
+<Dialog>
+  <Dialog.Trigger render={<Button variant="secondary">Edit contract</Button>} />
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Edit contract</Dialog.Title>
+      <Dialog.Description>Type the start date, or pick it from the calendar.</Dialog.Description>
+    </Dialog.Header>
+    <div className="flex flex-col gap-1">
+      <Label htmlFor="dialog-start">Start date</Label>
+      <DatePicker id="dialog-start" editable defaultValue="2026-10-09" />
+    </div>
+    <Dialog.Footer>
+      <Dialog.Close render={<Button variant="ghost">Cancel</Button>} />
+      <Button>Save</Button>
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog>

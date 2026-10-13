@@ -1,0 +1,69 @@
+import NumberInput from './index'
+import Field from '../field'
+
+# Basics
+
+## Number input
+
+Type a number, or step it with minus and plus. Hold a button to repeat; the arrow keys step too, Shift by ten.
+
+<div className="w-56 max-w-full">
+  <NumberInput variant="bordered" defaultValue={4} min={0} max={20} inputProps={{ 'aria-label': 'Quantity' }} />
+</div>
+
+## Formats
+
+`format` takes `Intl.NumberFormat` options and `locale` the locale. Typing in the shown form parses back.
+
+<div className="flex flex-col gap-3 w-56 max-w-full">
+  <NumberInput variant="bordered" defaultValue={1234.5} format={{ style: 'currency', currency: 'EUR' }} locale="en-US" inputProps={{ 'aria-label': 'Price in euros, US format' }} />
+  <NumberInput variant="bordered" defaultValue={1234.5} format={{ style: 'currency', currency: 'EUR' }} locale="sk-SK" inputProps={{ 'aria-label': 'Price in euros, Slovak format' }} />
+  <NumberInput variant="bordered" defaultValue={0.25} step={0.05} format={{ style: 'percent' }} inputProps={{ 'aria-label': 'Discount' }} />
+</div>
+
+## Units and scrubbing
+
+`endAdornment` holds a unit. With `scrub`, the start adornment is a handle: drag it sideways to change the value.
+
+<div className="flex flex-col gap-3 w-56 max-w-full">
+  <NumberInput variant="bordered" defaultValue={72} endAdornment="kg" inputProps={{ 'aria-label': 'Weight in kilograms' }} />
+  <NumberInput variant="bordered" defaultValue={320} min={0} startAdornment="W" scrub stepper={false} inputProps={{ 'aria-label': 'Width' }} />
+</div>
+
+## Compact
+
+The compact step shrinks the box, the text and the steppers together.
+
+<div className="w-44 max-w-full">
+  <NumberInput size="compact" variant="bordered" defaultValue={10} step={5} inputProps={{ 'aria-label': 'Spacing' }} />
+</div>
+
+# Composition
+
+## In a Field
+
+Inside a Field it is labelled and takes the field's state: here invalid, with its message.
+
+<Field invalid className="w-56 max-w-full">
+  <Field.Label>Guests</Field.Label>
+  <NumberInput defaultValue={12} max={10} inputProps={{ 'aria-label': 'Guests' }} />
+  <Field.Error>The room seats ten.</Field.Error>
+</Field>
+
+## Input props
+
+`inputProps` goes onto the `<input>` itself, after the field's own, so an accessible name, `autoFocus`, `autoComplete`, `inputMode` or a key handler reaches it. `onValueChange` also hears Base UI's change details; `reason` tells typing from a stepper press.
+
+<div className="w-56 max-w-full">
+  <NumberInput variant="bordered" defaultValue={2} min={0} inputProps={{ 'aria-label': 'Seats', 'aria-describedby': 'seats-help', autoComplete: 'off', inputMode: 'numeric' }} />
+  <p id="seats-help" className="mt-1 text-caption text-muted-foreground">Described by this line.</p>
+</div>
+
+# States
+
+Disabled dims the field and its steppers; read-only hides the steppers and keeps the value selectable.
+
+<div className="flex flex-col gap-3 w-56 max-w-full">
+  <NumberInput variant="bordered" defaultValue={3} disabled inputProps={{ 'aria-label': 'Disabled count' }} />
+  <NumberInput variant="bordered" defaultValue={3} readOnly inputProps={{ 'aria-label': 'Read-only count' }} />
+</div>

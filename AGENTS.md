@@ -67,7 +67,7 @@ Two vocabularies:
   - `text-syntax-*` (code highlighting), `font-mono`;
   - `spring.*` and `--duration-*`;
   - the morph layer (`lib/use-morph.ts` + `MorphSurface`, docs `primitives/morph`) and the liquid indicators (`lib/goo-indicator.tsx`): overlays grow from their source and travelling indicators melt between items through them, never through hand-rolled animation.
-  - the field ladder (`lib/field-classes.ts`): a text field builds the box around its control with `useFieldBox` (the ladder in its `variant`, `data-active` / `data-invalid` / `data-disabled`, the shape's radius and inset; `focusControlOnPress` for a press in its padding) and re-declares `variant` / `invalid` / `disabled` / `size` in its props; a leading icon takes `fieldIconClasses`. Never its own hover, focus or invalid fills.
+  - the field ladder (`lib/field-classes.ts`): a text field builds the box around its control with `useFieldBox` (the ladder in its `variant`, `data-active` / `data-invalid` / `data-disabled`, the shape's radius and inset; `focusControlOnPress` for a press in its padding) and re-declares `variant` / `invalid` / `disabled` / `size` in its props; a leading icon takes `fieldIconClasses`. Never its own hover, focus or invalid fills. The pure tables live in `lib/field-variants.ts` (server-callable); `useFieldBox` also takes `readOnly` / `required`; adornments use `fieldAdornmentClasses`, actions inside the ring `FIELD_ACTION`.
   - dates and times (`components/inputs/date-time/`): pickers sit on react-day-picker, styled through its `classNames` and custom components (never its stylesheet); they take a react-day-picker / date-fns `locale`, open through the group's `picker-shell.tsx`, and list months, years, hours and minutes in a `ScrollColumn` (`lib/scroll-column.tsx`).
 
 Rules:
@@ -79,7 +79,7 @@ Rules:
   - Defaults live in one place each. `shell.css` opens with the contract block: every generic type and radius token resolves once to a `--modo-*` var, falling back to a literal size or, for weights, the keyword `bold`. `tokens/host-colors.ts` does the same for colors. Rules read `--modo-*`, never a generic token with an inline fallback. Those two are the only literal visuals in the lib.
   - Spacing fallbacks stay inline (`var(--space-2, 8px)`): spacing is structure. Motion has no default; no token means no transition.
   - Inherit before you set: line-height, font family and link decoration come from the host. Capitalize in content (`cap()` in `runtime/text.ts`), never with `text-transform`.
-- **DS code** (items, examples, `modo.components.tsx`):
+- **DS code** (items, examples, docs chrome adapters such as `ui/docs/chrome.tsx`):
   - Use theme tokens through the DS's utilities.
   - No arbitrary values for color, type, radius, shadow or motion (`text-[15px]`, `bg-[#…]`, `rounded-[10px]`, `duration-[…]`).
   - No inline `style` for them, and no raw hex/oklch outside `tokens/*.css`.
@@ -92,8 +92,9 @@ Rules:
 ## docs (TSDoc)
 
 - An item is `<tier>/[<group>/…]<name>/index.tsx`: a default-exported component plus a JSDoc block.
-  - The block anchors to the default export's declaration (function or const), wherever `export default` sits.
-  - The parser extracts `name`, `description`, `props` and `examples`.
+  - The block anchors to the default export's declaration (function or const), wherever `export default` sits, followed through re-exports (`export { default } from 'pkg/…'`, `export { X as default } from './x'`, `import X; export default X`); TSDoc, props and `@example {@include}` are read there, includes relative to that file. A package specifier resolves through its `source` export condition, else `types`; the bundle uses `source` too, so the package exists once.
+  - `{@inheritDoc <ref>}` (a module specifier or an in-scope name) puts the base's description and examples first, then the item's own; inherited examples render the base component; the props table is the item's own full props.
+  - modo extracts `name` (the name the item file binds, else the target's), `description`, `props` and `examples`.
 - **One place per kind:** the TSDoc comment is the item's only prose (summary paragraph = page lead, the rest = body). Examples live in a co-located `examples.mdx`, included with `@example {@include ./examples.mdx}`. Reserve inline `@example` code for a few short cases.
 - **Includes** are TypeDoc inline tags. Paths are relative to `index.tsx`; they are not recursive; a missing file prints `[modo:bundle] warning:`; `.md`/`.mdx` edits reload dev. A `.mdx` include belongs under `@example` (below).
   - `{@include ./x.md}` inlines the file into the description as Markdown (for prose too long for the comment).
@@ -103,16 +104,20 @@ Rules:
   - It is an entry of the shared build (`@mdx-js/esbuild` + `remark-gfm`). Every top-level JSX block is a live example: `lib/src/plugins/mdx-examples.ts` wraps it in `ModoExample`, the example card, and keeps its source for Show code / Copy.
   - Imports are real: the item is `./index`, other items are `../../<tier>/<id>` (one `../` more per group folder), packages are imported by name. Items and `examples` scope exports also resolve as JSX tags without an import, but an identifier used in an expression (`icon={Plus}`) needs one.
   - Expressions are plain JS (acorn): no TS syntax such as `as const`. MDX isn't typechecked.
-  - `#`/`##` become example titles (`example-<slug>` ids); `###` is a sub-heading. All get anchors and feed the TOC.
+  - Headings (`example-<slug>` ids, all with anchors; the TOC lists h2–h4):
+    - **Flat file** (no `##`): `#` is an example title (h3), `###` a sub-heading (h4, in the TOC).
+    - **Grouped file** (it has a `##`): `#` is a group (h3, `example-group-title`), `##` an example inside it (h4, `example-card-title`), `###` a sub-heading (h5, rendered, not in the TOC). The TOC reads Examples › group › example.
+    - A group may hold its own example straight under the `#` (caption, then the block), before or without any `##`; it is then both. A `##` with no `#` above it is allowed (an ungrouped example).
+    - "Grouped" is decided at build time by `remarkModoExamples` (any top-level `##`), which marks every heading of the file; the runtime only reads the mark (`lib/src/lib/example-groups.ts`), so nothing flashes and a flat file renders as it always did.
+    - Each `.mdx` keeps its own structure, so inherited examples (`{@inheritDoc}`) and a wrapper's own can be flat or grouped independently; they render one after the other.
   - Prose typography is `@scope`d down to the example cards, so it never leaks into a live example.
   - A CSS scanner (UnoCSS `content`, Tailwind `@source`) must include `.mdx`, since example classes live there.
 - **Markdown** renders everywhere: item, example and prop descriptions.
   - `marked` lexer → React. Links and fences go through the shell's `Link` / `Code`; raw HTML shows as text.
   - The first paragraph is the lead; the rest renders in `data-modo="prose"`.
-- **Props** come from the destructured params plus the inline object type and per-prop JSDoc.
-  - In a prop's JSDoc, `@default x` fills the Default column (the code's own default wins); `@values a, b` names the allowed values and is dropped when the type already lists them.
-  - A bare identifier type resolves to a same-file interface or type alias.
-  - `const X = forwardRef<…, XProps>` resolves `XProps`.
+- **Props** are read with the TypeScript compiler (`lib/src/lib/docs.ts`): the render function's parameter annotation, `forwardRef<El, Props>`, or the component's type, with per-prop JSDoc.
+  - Inherited members count (`extends`, `Omit` / `Pick` / `Partial`, intersections, across files and packages) when declared in a source file, a modo-documented package or the package the docs came from. React's DOM attributes (`@types/react`) and other libraries' typings (Base UI, react-day-picker) stay out unless re-declared.
+  - The Default column: the destructured default, else `@default x`, else a closing "Defaults to `x`." sentence. `@values a, b` names the allowed values and is dropped when the type already lists them.
   - Shell slot matching reads these props, so a converted component must keep `children` (and `href` for Link) visible.
 - **Parser rules:**
   - `@example` counts only at the start of a JSDoc line.
@@ -139,7 +144,8 @@ Rules:
 - **Shell inheritance:**
   - The chrome looks for user components per slot, matched by name plus required props. Primitives: Button, Link, Code, Icon. Components: Select, Sidebar Root/Item/Section.
   - Unmatched slots fall back to the lib's Plain components; `modo.config.ts: shell` pins slots.
-  - A `shell` / `panel.items[].component` reference may name an export: `./modo.components.tsx#Select` (else the default export). Several refs into one file share its build entry, so a DS can keep all its docs-only components in one `modo.components.tsx`.
+  - A `shell` / `panel.items[].component` reference may name an export: `./docs/chrome.tsx#Select` (else the default export). Several refs into one file share its build entry, so a DS can keep all its docs-only components in one module.
+  - A reference that is not a file in the project may be a package specifier (`@scope/ds/docs#DocsNav`): it resolves from the project root through the package's `exports` (the `source` condition first, else `import` / `default`, built JS included) and bundles like a local file; a stylesheet beside the resolved module loads with it. `@justanarthur/modo-ui/docs` is the shipped docs chrome (see `ui/README.md`).
   - Contracts beyond the matched props:
     - Button gets `variant="ghost"`, `size="icon-sm"`, `aria-label`, `aria-pressed`.
     - Link gets `aria-label` on icon-only anchors and `title` from Markdown links; forward them.
@@ -148,6 +154,7 @@ Rules:
   - A host Link needn't forward data attributes: the chrome puts its hooks on wrappers.
   - One Sidebar drives both sides: each `panel.items` entry is a `Sidebar.Section`.
 - **`modo.config.ts` hooks:**
+  - `root` — the folder holding the tiers and `tokens/`, relative to the project root (the cwd of the CLI); default `.`. Only discovery, the tokens plugin, their watchers and `modo add` use it; `pages`, `css`, `vite`, `examples`, shell/panel modules and `.modo-tmp` stay project-root-relative (`lib/src/lib/root.ts`).
   - `css` — injected right after the lib's structural CSS, before tokens.
   - `examples` — a module whose named exports are in scope in every example. Alias any export that collides with an item name; an unresolvable path yields scope `{}`.
   - `vite` — default-exports `(config) => config`, imported natively. This is how Tailwind/Uno get added.
@@ -170,6 +177,7 @@ Rules:
   - When the upstream component is the item, rename it to `index.tsx` instead (with a local-modifications header).
   - Adapters only for real API transforms: shell contracts, options→children, prop narrowing.
 - Co-located `.css` files in an item dir are auto-injected; don't import them.
+- `pages/**/*.mdx` — free-form docs pages (an introduction, guides, a changelog), outside the tiers (`pages: './docs'` moves the folder). The route is the path without `.mdx`; a leading `01-` orders a file or folder and is dropped from url and title; a folder's `index.mdx` is its landing page, the top-level one the home page (replacing the overview). Frontmatter `title` / `description`; `#` / `##` are the page's sections, `###` / `####` sub-sections. They compile in the shared build like `examples.mdx` (real imports, live JSX blocks). See `lib/README.md`, Pages.
 - Vendored files that trip the linter start with `// biome-ignore-all lint: vendored upstream code…` (or the `/* */` form in CSS), next to their provenance header.
 
 ## running
@@ -189,7 +197,7 @@ Rules:
 - nav: `sidebar-nav`, `sidebar-section`, `sidebar-section-title`, `sidebar-section-items`, `sidebar-item` (`aria-current="page"` when active), `toc`, `toc-label` (`data-level`).
 - page: `page-eyebrow`, `page-title`, `page-lead`, `prose`, `section`, `section-title`, `anchor`, `hero`, `hero-stats`.
 - overviews: `bento`, `bento-card` (`data-span="wide|full"`), `bento-stage`, `bento-meta`, `bento-title`, `bento-count`, `bento-desc`, `bento-empty`, `token-preview`, `token-chip`.
-- examples: `example-card`, `example-card-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`, `code-block`, `code-actions`, `icon-label`.
+- examples: `example-card`, `example-card-title`, `example-group-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`, `code-block`, `code-actions`, `icon-label`.
 - tables and tokens: `prop-table-scroll`, `prop-table`, `token-list`, `token-row`, `token-name`, `token-meta`, `swatch` (`data-kind`).
 - colors: `color-grid`, `color-stack`, `color-tile` (`data-flush` when it matches the page), `color-tile-name`, `color-tile-value`, `color-tile-pair`.
 - foundations: `token-label`; typography `type-elements`, `type-element`, `type-families`, `type-family`, `type-family-sample`, `type-glyph`, `type-scale`, `type-step`, `type-sample`, `type-weights`, `type-weight`, `type-preview`; radius `radius-grid`, `radius-tile`, `radius-shape`; spacing `space-scale`, `space-step`, `space-bar`, `space-preview`; motion `motion-list`, `motion-row`, `motion-track`, `motion-dot`, `motion-curve`, `motion-preview`, `motion-bar`.

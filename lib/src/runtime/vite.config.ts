@@ -3,9 +3,11 @@ import { pathToFileURL } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { defineConfig, searchForWorkspaceRoot, type UserConfig } from 'vite'
 import { loadModoConfig } from '../lib/config.loader'
+import { itemsRootOf } from '../lib/root'
 import { createBundler } from '../plugins/bundle'
 import { configPlugin } from '../plugins/config'
 import { itemsPlugin } from '../plugins/items'
+import { pagesPlugin } from '../plugins/pages'
 import { shellPlugin } from '../plugins/shell'
 import { tokensPlugin } from '../plugins/tokens'
 
@@ -38,13 +40,16 @@ async function applyUserViteExtension(base: UserConfig): Promise<UserConfig> {
 
 export default defineConfig(async () => {
   // One esbuild build shared by the items and shell plugins (see plugins/bundle.ts).
+  // configPlugin reports config errors with full detail once Vite starts.
+  const cfg = await loadModoConfig(CONFIG_PATH).catch(() => null)
   const bundler = createBundler({ userRoot: USER_ROOT, configPath: CONFIG_PATH })
   const base: UserConfig = {
     root: RUNTIME_DIR,
     plugins: [
       configPlugin({ userRoot: USER_ROOT, configPath: CONFIG_PATH }),
-      tokensPlugin({ userRoot: USER_ROOT }),
-      itemsPlugin({ userRoot: USER_ROOT, bundler }),
+      tokensPlugin({ userRoot: USER_ROOT, configPath: CONFIG_PATH }),
+      itemsPlugin({ userRoot: USER_ROOT, configPath: CONFIG_PATH, bundler }),
+      pagesPlugin({ bundler }),
       shellPlugin({ libDir: LIB_DIR, bundler }),
       react(),
     ],
@@ -58,7 +63,7 @@ export default defineConfig(async () => {
       fs: {
         // The workspace root: Bun hoists deps into the monorepo's node_modules
         // store, and Vite 403s font URLs resolved there without it.
-        allow: [searchForWorkspaceRoot(USER_ROOT), LIB_DIR],
+        allow: [searchForWorkspaceRoot(USER_ROOT), itemsRootOf(USER_ROOT, cfg), LIB_DIR],
       },
     },
     // Item bundles import React from the design system, the runtime from the

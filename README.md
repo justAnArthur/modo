@@ -124,7 +124,9 @@ export default defineConfig({
     Select: 'components/select',
     Sidebar: 'components/sidebar',
     Code: 'primitives/code',
-    Icon: './modo.components.tsx#Icon', // a path may name an export
+    Icon: './docs/chrome.tsx#Icon', // a path may name an export
+    // or a design system's published module, by package specifier:
+    // Sidebar: '@justanarthur/modo-ui/docs#DocsNav',
   },
 
   // entries rendered in the right panel, each as a Sidebar.Section

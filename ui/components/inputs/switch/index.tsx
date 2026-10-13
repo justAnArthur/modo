@@ -38,6 +38,12 @@
  *   hairlines dropped around the fluid hover highlight). A switch inside
  *   reads the group from context: track at the end, roomier padding, its
  *   position from `lib/row-index.tsx`.
+ * - Bare mode (local): `label` is optional and takes any node; without one
+ *   (outside a group) the switch is the track alone, Base UI's Switch.Root,
+ *   which then toggles itself (click, keyboard, a `<label htmlFor>` pointing
+ *   at its `id`) through `onCheckedChange`, with the thumb drag on the track
+ *   and a toggle that follows a drag swallowed. `name` / `value` /
+ *   `required` reach Base UI's hidden input in both modes.
  */
 
 import { Switch as SwitchPrimitive } from '@base-ui/react/switch'
@@ -69,8 +75,8 @@ import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
 
 interface SwitchProps extends HTMLAttributes<HTMLDivElement> {
-  /** Text label displayed next to the switch. */
-  label: string
+  /** Label displayed next to the switch, any node. Omit it, outside a group, for the bare track (see Bare): name it with `aria-label`, `aria-labelledby` or a `<label htmlFor>` pointing at its `id`. */
+  label?: ReactNode
   /** Secondary text under the label: what turning the switch on does. With one, the label stays at full contrast. */
   description?: ReactNode
   /** The side of the label the track sits on; `"end"` pushes it to the row's far edge, as in a settings list (always, inside a `Switch.Group`). Defaults to `"start"`. */
@@ -85,6 +91,12 @@ interface SwitchProps extends HTMLAttributes<HTMLDivElement> {
   onCheckedChange?: (checked: boolean) => void
   /** Disables the switch. Defaults to `false`. */
   disabled?: boolean
+  /** Form field name: a hidden checkbox input submits `value` while on. */
+  name?: string
+  /** Value submitted with `name` while on. Defaults to `"on"`. */
+  value?: string
+  /** Marks the hidden form input required. Defaults to `false`. */
+  required?: boolean
   /** Transition for the thumb's slide and hover/press stretch. Defaults to the `spring.moderate` motion token. */
   thumbTransition?: Transition
   /** Pins the switch to one step of the size ladder (see Sizes). Defaults to the surrounding SizeProvider, else `"default"`. */
@@ -165,6 +177,9 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
       onToggle,
       onCheckedChange,
       disabled = false,
+      name,
+      value,
+      required = false,
       thumbTransition,
       size,
       className,
@@ -290,6 +305,64 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
       pointerStart.current = null
     }, [setDragX])
 
+    const trackClass = cn(
+      'relative shrink-0 rounded-full outline-none cursor-pointer',
+      'transition-colors duration-fast',
+      'focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+      isChecked ? (hovered ? 'bg-brand-hover' : 'bg-brand') : hovered ? 'bg-accent-hover' : 'bg-accent',
+    )
+    const thumbElement = (
+      <SwitchPrimitive.Thumb className="pointer-events-none absolute inset-0">
+        <GooIndicator
+          rect={thumb}
+          className="rounded-full bg-thumb"
+          shadow="shadow-thumb"
+          transition={dragX === null ? (thumbTransition ?? spring.moderate) : false}
+        />
+      </SwitchPrimitive.Thumb>
+    )
+
+    // Bare: no label and no group — the track alone is the control, and Base
+    // UI's own activation (click, keyboard, a label's htmlFor) toggles it.
+    if (label === undefined && !group) {
+      return (
+        <SwitchPrimitive.Root
+          ref={node => {
+            rowRef.current = node as HTMLDivElement | null
+            if (typeof ref === 'function') ref(node as HTMLDivElement | null)
+            else if (ref) ref.current = node as HTMLDivElement | null
+          }}
+          checked={isChecked}
+          onCheckedChange={() => {
+            // The drag already toggled on release; its click must not toggle back.
+            if (didDrag.current) return
+            toggle()
+          }}
+          disabled={disabled}
+          name={name}
+          value={value}
+          required={required}
+          onPointerEnter={e => {
+            if (e.pointerType === 'mouse') setHovered(true)
+          }}
+          onPointerLeave={() => setHovered(false)}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
+          className={cn(trackClass, 'touch-none', disabled && 'opacity-50 pointer-events-none', className)}
+          style={{
+            width: m.trackWidth,
+            height: m.trackHeight,
+          }}
+          // The root's handlers are typed for Base UI's span.
+          {...(props as HTMLAttributes<HTMLSpanElement>)}
+        >
+          {thumbElement}
+        </SwitchPrimitive.Root>
+      )
+    }
+
     return (
       <div
         ref={node => {
@@ -323,17 +396,14 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
         {/* Switch */}
         <SwitchPrimitive.Root
           checked={isChecked}
-          aria-labelledby={labelId}
+          aria-labelledby={label === undefined ? undefined : labelId}
           aria-describedby={description ? descriptionId : undefined}
           disabled={disabled}
+          name={name}
+          value={value}
+          required={required}
           tabIndex={0}
-          className={cn(
-            'relative shrink-0 rounded-full outline-none cursor-pointer',
-            end && 'order-last',
-            'transition-colors duration-fast',
-            'focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-            isChecked ? (hovered ? 'bg-brand-hover' : 'bg-brand') : hovered ? 'bg-accent-hover' : 'bg-accent',
-          )}
+          className={cn(trackClass, end && 'order-last')}
           style={{
             width: m.trackWidth,
             height: m.trackHeight,
@@ -341,14 +411,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
           // Base UI re-dispatches this click on its hidden input, which bubbles to the row and toggles it: stop the original so a press toggles once.
           onClick={e => e.stopPropagation()}
         >
-          <SwitchPrimitive.Thumb className="pointer-events-none absolute inset-0">
-            <GooIndicator
-              rect={thumb}
-              className="rounded-full bg-thumb"
-              shadow="shadow-thumb"
-              transition={dragX === null ? (thumbTransition ?? spring.moderate) : false}
-            />
-          </SwitchPrimitive.Thumb>
+          {thumbElement}
         </SwitchPrimitive.Root>
 
         {/* Label */}

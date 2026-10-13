@@ -1,6 +1,6 @@
-import Button from './index'
+import Button, { buttonVariants } from './index'
 import LoadingDemo from './loading-demo'
-import { ArrowRight, Check, ChevronDown, Loader, Plus, RotateCcw, Search, Settings } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, Loader, Plus, RotateCcw, Search, Settings, Trash2 } from 'lucide-react'
 
 # Variants
 
@@ -22,53 +22,34 @@ to its container.
   </div>
 </div>
 
-# With Icons
+## Destructive and success
 
-`leadingIcon` and `trailingIcon` take an icon component; it sits 4px
-closer to its edge than the label would.
-
-<div className="flex flex-wrap items-center gap-2">
-  <Button leadingIcon={Plus}>Create</Button>
-  <Button variant="secondary" trailingIcon={ArrowRight}>Next</Button>
-  <Button variant="tertiary" leadingIcon={Search} trailingIcon={ArrowRight}>
-    Search
-  </Button>
-</div>
-
-# Loading & Disabled
-
-`loading` folds the surface into a circle around a spinner and disables
-the button; the hidden label keeps its width.
+A status as an action: its hue as the label on a wash of itself, deepening on
+hover and press. Never a solid fill, so the view keeps one primary.
 
 <div className="flex flex-wrap items-center gap-2">
-  <Button loading>Loading</Button>
-  <Button variant="secondary" loading leadingIcon={Loader}>Saving</Button>
-  <Button disabled>Disabled</Button>
+  <Button variant="destructive" leadingIcon={Trash2}>Delete</Button>
+  <Button variant="success" leadingIcon={Check}>Approve</Button>
+  <Button variant="destructive" size="compact">Remove</Button>
+  <Button variant="success" size="compact">Accept</Button>
 </div>
 
-# Loading morph
+## Outline and link
 
-Press one. The surface folds into a circle around the spinner while the
-button keeps its box, so its neighbors never move, and springs back when
-loading ends. `LoadingDemo` is a docs stage: a Button whose `loading` holds
-for two seconds after a press.
+`outline` is `tertiary` under its shadcn name. `link` is text on the control
+height: its underline fades in on hover, so the label never moves, and it
+lines up with the buttons beside it.
 
-<div className="flex w-fit max-w-full flex-col gap-3">
-  <div className="flex flex-wrap items-center gap-2">
-    <LoadingDemo leadingIcon={Check}>Save</LoadingDemo>
-    <LoadingDemo variant="secondary">Publish</LoadingDemo>
-    <LoadingDemo variant="tertiary" trailingIcon={ArrowRight}>Next</LoadingDemo>
-    <LoadingDemo variant="secondary" size="icon" aria-label="Refresh">
-      <RotateCcw />
-    </LoadingDemo>
-  </div>
-  <LoadingDemo className="w-full">Create account</LoadingDemo>
+<div className="flex flex-wrap items-center gap-2">
+  <Button variant="outline">Outline</Button>
+  <Button variant="link">Forgot password?</Button>
+  <Button variant="link" trailingIcon={ArrowRight}>View all</Button>
 </div>
 
 # Sizes
 
 The size ladder: `default` (36px) and `compact` (28px), plus square
-icon-only steps. Icon-only buttons take the icon as their child and need
+icon-only steps. There is no third height: `xs` and `sm` resolve to `compact`. Icon-only buttons take the icon as their child and need
 an `aria-label`.
 
 <div className="flex flex-col gap-3">
@@ -92,7 +73,41 @@ an `aria-label`.
   </div>
 </div>
 
-# Active
+# States
+
+## Loading & Disabled
+
+`loading` folds the surface into a circle around a spinner and disables
+the button; the hidden label keeps its width.
+
+<div className="flex flex-wrap items-center gap-2">
+  <Button loading>Loading</Button>
+  <Button variant="secondary" loading leadingIcon={Loader}>Saving</Button>
+  <Button disabled>Disabled</Button>
+</div>
+
+## Loading morph
+
+Press one. The surface folds into a circle around the spinner while the
+button keeps its box, so its neighbors never move, and springs back when
+loading ends. It keeps focus while it loads (`aria-disabled`, not
+`disabled`), so press one with Enter and focus is still there when it is
+done; presses in between are ignored. `LoadingDemo` is a docs stage: a
+Button whose `loading` holds for two seconds after a press.
+
+<div className="flex w-fit max-w-full flex-col gap-3">
+  <div className="flex flex-wrap items-center gap-2">
+    <LoadingDemo leadingIcon={Check}>Save</LoadingDemo>
+    <LoadingDemo variant="secondary">Publish</LoadingDemo>
+    <LoadingDemo variant="tertiary" trailingIcon={ArrowRight}>Next</LoadingDemo>
+    <LoadingDemo variant="secondary" size="icon" aria-label="Refresh">
+      <RotateCcw />
+    </LoadingDemo>
+  </div>
+  <LoadingDemo className="w-full">Create account</LoadingDemo>
+</div>
+
+## Active
 
 `active` forces the pressed visual — for a button whose dropdown or
 popover is currently open.
@@ -104,7 +119,22 @@ popover is currently open.
   <Button variant="ghost" active>Ghost</Button>
 </div>
 
-# As child
+# Composition
+
+## With Icons
+
+`leadingIcon` and `trailingIcon` take an icon component; it sits 4px
+closer to its edge than the label would.
+
+<div className="flex flex-wrap items-center gap-2">
+  <Button leadingIcon={Plus}>Create</Button>
+  <Button variant="secondary" trailingIcon={ArrowRight}>Next</Button>
+  <Button variant="tertiary" leadingIcon={Search} trailingIcon={ArrowRight}>
+    Search
+  </Button>
+</div>
+
+## As child
 
 `asChild` merges the button's styling onto its single child element —
 here a link — instead of rendering a `<button>`.
@@ -114,3 +144,25 @@ here a link — instead of rendering a `<button>`.
     Fluid Functionalism
   </a>
 </Button>
+
+## Surface classes
+
+For an element you can't render through `asChild` (a router's link that
+builds its own anchor, markup from a server template), `buttonVariants`
+with `surface: true` draws the fill, ring, hover, press and focus ring on
+the element itself. Without `surface` it returns only the root classes, and
+the fill lives on the Button's inner layer. It is static: no press shrink,
+no loading morph, so prefer `<Button asChild>` where you can. Size aliases
+(`sm`, `lg`, `icon-sm`, …) resolve as on the Button; `aria-disabled` dims it.
+
+<div className="flex flex-wrap items-center gap-2">
+  <a href="#surface-classes" className={buttonVariants({ surface: true })}>Primary</a>
+  <a href="#surface-classes" className={buttonVariants({ variant: 'secondary', surface: true })}>Secondary</a>
+  <a href="#surface-classes" className={buttonVariants({ variant: 'outline', surface: true })}>Outline</a>
+  <a href="#surface-classes" className={buttonVariants({ variant: 'ghost', surface: true })}>Ghost</a>
+  <a href="#surface-classes" className={buttonVariants({ variant: 'destructive', size: 'sm', surface: true })}>Remove</a>
+  <a href="#surface-classes" className={buttonVariants({ variant: 'secondary', size: 'icon-sm', surface: true })} aria-label="Add">
+    <Plus />
+  </a>
+  <a href="#surface-classes" aria-disabled="true" className={buttonVariants({ variant: 'secondary', surface: true })}>Disabled</a>
+</div>

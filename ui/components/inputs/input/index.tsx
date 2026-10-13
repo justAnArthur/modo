@@ -7,7 +7,8 @@
  * rewritten to `../../../lib/*` (`SizeProvider` to `../../../primitives/sizes`);
  * `InputField` split into `Input` (the ringed box, usable on its own:
  * `invalid`, `size`, ref on the `<input>`) and
- * `Label` (a plain `<label>`, rendered through `Field.Label` inside a field),
+ * `Label` (a plain `<label>`, rendered through `Field.Label` inside a field;
+ * now its own item `inputs/label`, re-exported from here),
  * which `InputGroup.Field` composes; item renamed `input`, `Input` the
  * default export; uncontrolled mode added — `value` and `onChange` are
  * optional, with a `defaultValue` twin (`InputHTMLAttributes`' own
@@ -23,6 +24,12 @@
  * `InputGroup.Field` takes children in place of its Input (a Textarea);
  * modo docs — TSDoc with FF's docs/API text, `InputGroup.Field`
  * static (typed via a cast on the root).
+ * Local additions: `startAdornment` / `endAdornment` (content beside the
+ * text, sized from the ladder, lit with the field), `readOnly` (the
+ * field's read-only look), `required` and both read from a surrounding
+ * `Field` (see Field); `InputAction`, a small icon button that sits inside
+ * the box (a password reveal, a clear); a `type` swap keeps the caret and
+ * selection (browsers reset them to the start).
  * Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  * `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`;
  * `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
@@ -31,31 +38,39 @@
 
 import { Field } from '@base-ui/react/field'
 import {
+  type ButtonHTMLAttributes,
   createContext,
   type ForwardRefExoticComponent,
   forwardRef,
   type HTMLAttributes,
   type InputHTMLAttributes,
-  type LabelHTMLAttributes,
   type ReactNode,
   type RefAttributes,
   useContext,
+  useLayoutEffect,
   useMemo,
   useRef,
 } from 'react'
 import {
+  FIELD_ACTION,
+  FIELD_ACTION_RADIUS,
+  FIELD_ADORNMENT_ICON,
   FieldStateContext,
   type FieldVariant,
+  fieldActionClasses,
+  fieldAdornmentClasses,
   fieldIconClasses,
   focusControlOnPress,
   useFieldBox,
 } from '../../../lib/field-classes'
 import type { IconComponent } from '../../../lib/icon-context'
+import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
+import { Label, type LabelProps } from '../label'
 
 interface InputGroupContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void
@@ -76,6 +91,10 @@ interface InputProps
   placeholder?: string
   /** Leading icon inside the input. */
   icon?: IconComponent
+  /** Content before the text, after `icon`: a prefix (`"https://"`), an icon element, an `InputAction`. Strings read as muted text; icons take the ladder's glyph size. */
+  startAdornment?: ReactNode
+  /** Content after the text: a unit (`"kg"`), a status icon, an `InputAction` such as a password reveal or a clear. */
+  endAdornment?: ReactNode
   /** Controlled input value. */
   value?: string
   /** Initial value when uncontrolled. Defaults to `''`. */
@@ -88,6 +107,12 @@ interface InputProps
   invalid?: boolean
   /** Disables the input. Defaults to `false`. */
   disabled?: boolean
+  /** Shows the value without letting it change: it can be selected and copied, the ring answers hover and focus, the fill never lifts. Defaults to `false`. */
+  readOnly?: boolean
+  /** Marks the input required. Defaults to the surrounding Field's `required`. */
+  required?: boolean
+  /** The input's type. Swapping it (a password reveal) keeps the caret and the selection where they were. Defaults to `"text"`. */
+  type?: string
   /** Pins the input to one step of the size ladder (default 36px, compact 28px). Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
   /** Classes for the ringed box around the input. */
@@ -101,11 +126,34 @@ interface InputProps
  * ground with a hairline ring, focus onto the card ground, and its leading
  * icon thickens. `invalid` turns it destructive. It is uncontrolled with
  * `defaultValue`, or controlled with `value` + `onChange`, and fills the width
- * of its container. Pair it with a `Label` through `htmlFor` / `id`.
+ * of its container. Pair it with a `Label` through `htmlFor` / `id`, or put
+ * it in a Field, which labels it and hands it its error, disabled,
+ * read-only and required state.
+ *
+ * `startAdornment` and `endAdornment` hold what sits beside the text: a
+ * prefix or a unit, an icon, or an `InputAction` (a password reveal, a
+ * clear). They light with the field like its leading icon, and icons in
+ * them take the ladder's glyph size. Swapping `type` keeps the caret and the
+ * selection where they were, so a password reveal is just an `InputAction`
+ * that flips `type` between `"password"` and `"text"`. `readOnly` keeps the
+ * value selectable while the fill stays down.
+ *
+ * Its height is a step of the size ladder (see Sizes). `size` is that step
+ * (`"default"` 36px, `"compact"` 28px), not the native `<input size>`
+ * character width, which the Input doesn't take: its width comes from its
+ * container. With no `size`, the surrounding SizeProvider sets the height,
+ * so a host whose props keep the native `size` attribute strips it before
+ * spreading them onto the Input and sets density with a SizeProvider (or a
+ * Field's `size`) around the form instead.
  *
  * Also exported from this item:
+ * - `InputAction` — a small icon button inside the field, 4px inside its
+ *   ring: `label` (its accessible name), `icon`, `size`, plus button props.
+ *   A press keeps the caret in the field.
+ * - `InputAdornment` — the wrapper the adornments render in, for a field of
+ *   your own built on the field box: `size`.
  * - `Label` — the field label, weight-stable and inset to line up with the
- *   input's text: `htmlFor`, `invalid`, `size`.
+ *   input's text: `htmlFor`, `invalid`, `size` (see Label, its own page).
  * - `InputGroup` — stacks labelled fields and tracks the pointer across them,
  *   so the hover glides from field to field: `size` pins every field to one
  *   step of the ladder.
@@ -122,12 +170,18 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
   (
     {
       icon: Icon,
+      startAdornment,
+      endAdornment,
       value: valueProp,
       defaultValue = '',
       onChange: onChangeProp,
       variant = 'borderless',
       invalid,
       disabled,
+      readOnly,
+      required,
+      type = 'text',
+      onSelect,
       size,
       className,
       ...props
@@ -138,8 +192,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const [value, onChange] = useControllableState(valueProp, defaultValue, onChangeProp)
 
     const inputRef = useRef<HTMLInputElement | null>(null)
-    const box = useFieldBox({ variant, invalid, disabled, size })
+    const box = useFieldBox({ variant, invalid, disabled, readOnly, required, size })
     const { size: sizeClasses, props: boxProps } = box
+    const keepSelection = useSelectionAcrossType(inputRef, type)
 
     return (
       <div
@@ -158,6 +213,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
       >
         {Icon && <Icon size={sizeClasses.icon} strokeWidth={1.5} className={fieldIconClasses} />}
+        <InputAdornment size={size}>{startAdornment}</InputAdornment>
         {/* Base UI's own Input is this Field.Control: on its own it is a
             plain input, inside a Field.Root it joins the field's wiring. */}
         <Field.Control
@@ -169,18 +225,26 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             if (typeof ref === 'function') ref(input)
             else if (ref) ref.current = input
           }}
-          type="text"
+          type={type}
+          onSelect={e => {
+            keepSelection(e.currentTarget)
+            onSelect?.(e)
+          }}
           value={value}
           onChange={e => onChange(e.target.value)}
           disabled={box.disabled}
+          readOnly={box.readOnly}
+          required={box.required}
           aria-invalid={box.invalid || undefined}
           className={cn(
-            'w-full rounded-none bg-transparent text-foreground placeholder:text-muted-foreground outline-none font-[inherit]',
+            // min-w-0: adornments take their width first, the text field the rest.
+            'w-full min-w-0 rounded-none bg-transparent text-foreground placeholder:text-muted-foreground outline-none font-[inherit]',
             sizeClasses.text,
             'weight-normal',
           )}
           {...props}
         />
+        <InputAdornment size={size}>{endAdornment}</InputAdornment>
       </div>
     )
   },
@@ -188,51 +252,115 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
 Input.displayName = 'Input'
 
-interface LabelProps extends LabelHTMLAttributes<HTMLLabelElement> {
-  /** Label text. */
-  children: ReactNode
-  /** Turns the label destructive, matching an invalid Input. Defaults to `false`. */
-  invalid?: boolean
-  /** Pins the label to one step of the size ladder. Defaults to the surrounding SizeProvider. */
-  size?: SizeVariant
+/**
+ * Browsers put the caret back at the start when an input's `type` changes.
+ * Records the selection as it moves (call the returned function from
+ * `onSelect`) and puts it back once a new `type` has committed, while the
+ * input still has focus, so a password reveal leaves the caret where it was.
+ */
+function useSelectionAcrossType(input: { current: HTMLInputElement | null }, type: string) {
+  const selection = useRef<[number | null, number | null]>([null, null])
+  const lastType = useRef(type)
+
+  useLayoutEffect(() => {
+    if (lastType.current === type) return
+    lastType.current = type
+    const el = input.current
+    const [start, end] = selection.current
+    if (!el || start === null || el.ownerDocument.activeElement !== el) return
+    const restore = () => {
+      // Types without a selection API (email, number) throw; their caret stays where the browser put it.
+      try {
+        el.setSelectionRange(start, end)
+      } catch {}
+    }
+    restore()
+    // Chrome resets the selection once more after the swap, past this effect; restore again on the next frame.
+    const frame = requestAnimationFrame(restore)
+    return () => cancelAnimationFrame(frame)
+  }, [input, type])
+
+  return (el: HTMLInputElement) => {
+    selection.current = [el.selectionStart, el.selectionEnd]
+  }
 }
 
-const Label = forwardRef<HTMLLabelElement, LabelProps>(({ children, invalid, size, className, ...props }, ref) => {
-  const sizeClasses = useSize(size)
-  const compact = sizeClasses.variant === 'compact'
+interface InputAdornmentProps {
+  /** What sits beside the text. Nothing renders when it is empty. */
+  children?: ReactNode
+  /** Pins the adornment, and an `InputAction` inside it, to one step of the size ladder. Defaults to the surrounding SizeProvider. */
+  size?: SizeVariant
+  /** Classes for the wrapper. */
+  className?: string
+}
 
-  return (
-    <label
-      ref={ref}
+/** Content beside a field's text, lit with the field: what `startAdornment` / `endAdornment` render in, for a field of your own on `useFieldBox`. */
+function InputAdornment({ children, size, className }: InputAdornmentProps) {
+  const sizeClasses = useSize(size)
+  if (children == null || children === false || children === '') return null
+  const node = (
+    <span
       className={cn(
-        'inline-grid',
+        fieldAdornmentClasses,
+        FIELD_ADORNMENT_ICON[sizeClasses.variant],
+        sizeClasses.gap,
         sizeClasses.text,
-        // Inside a disabled field, Field.Label stamps `data-disabled`.
-        'data-[disabled]:opacity-50',
-        // One notch tighter than the ladder's control padding — the field
-        // ring is invisible at rest, so the roomier inset reads as a gap.
-        compact ? 'pl-2' : 'pl-2.5',
         className,
       )}
-      {...props}
     >
-      <span className="col-start-1 row-start-1 invisible weight-semibold" aria-hidden="true">
-        {children}
-      </span>
-      <span
-        className={cn(
-          'col-start-1 row-start-1',
-          invalid ? 'text-destructive' : 'text-muted-foreground',
-          'weight-normal',
-        )}
-      >
-        {children}
-      </span>
-    </label>
+      {children}
+    </span>
   )
-})
+  // A size pin reaches an InputAction inside.
+  return size ? <SizeProvider size={size}>{node}</SizeProvider> : node
+}
 
-Label.displayName = 'Label'
+interface InputActionProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
+  /** Names the action for assistive tech (its `aria-label`), e.g. "Show password". */
+  label: string
+  /** The glyph. Pass an icon component, or an icon element as `children`. */
+  icon?: IconComponent
+  /** An icon element, in place of `icon`. */
+  children?: ReactNode
+  /** Disables the action. Defaults to `false`. */
+  disabled?: boolean
+  /** Pins the action to one step of the size ladder (28px in a default field, 20px in a compact one). Defaults to the surrounding SizeProvider. */
+  size?: SizeVariant
+  /** Classes for the button. */
+  className?: string
+}
+
+/** A small icon button inside a field box: a password reveal, a clear, a copy. */
+const InputAction = forwardRef<HTMLButtonElement, InputActionProps>(
+  ({ label, icon: Icon, children, size, className, onMouseDown, ...props }, ref) => {
+    const sizeClasses = useSize(size)
+    const shape = useShape()
+
+    return (
+      <button
+        ref={ref}
+        type="button"
+        aria-label={label}
+        // Keep the caret where it was: the field stays focused through a press.
+        onMouseDown={e => {
+          onMouseDown?.(e)
+          e.preventDefault()
+        }}
+        className={cn(
+          fieldActionClasses,
+          FIELD_ACTION[sizeClasses.variant],
+          FIELD_ACTION_RADIUS[shape.variant],
+          className,
+        )}
+        {...props}
+      >
+        {Icon ? <Icon size={sizeClasses.icon} strokeWidth={1.5} /> : children}
+      </button>
+    )
+  },
+)
+
+InputAction.displayName = 'InputAction'
 
 interface InputGroupProps extends HTMLAttributes<HTMLDivElement> {
   /** One or more InputGroup.Field children. */
@@ -361,6 +489,6 @@ InputField.displayName = 'InputField'
 
 Object.assign(InputGroup, { Field: InputField })
 
-export type { InputFieldProps, InputGroupProps, InputProps, LabelProps }
-export { Input, InputGroup, Label }
+export type { InputActionProps, InputAdornmentProps, InputFieldProps, InputGroupProps, InputProps, LabelProps }
+export { Input, InputAction, InputAdornment, InputGroup, Label }
 export default Input

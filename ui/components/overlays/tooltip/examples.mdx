@@ -41,6 +41,29 @@ with a description, a small stack of rows.
   <Button leadingIcon={Plus}>Save</Button>
 </Tooltip>
 
+# Compound parts
+
+Leave `content` out and `Tooltip` is the root of a compound tooltip: a
+`Tooltip.Trigger` (`render` or Radix-style `asChild`) and a
+`Tooltip.Content` with `side`, `align` and the offsets (and `render` or
+`asChild` for the label's own element). It looks and moves the same as the
+flat form.
+
+<div className="flex flex-wrap gap-3">
+  <Tooltip>
+    <Tooltip.Trigger asChild>
+      <Button variant="secondary">Archive</Button>
+    </Tooltip.Trigger>
+    <Tooltip.Content asChild>
+      <span>Moves it out of the inbox</span>
+    </Tooltip.Content>
+  </Tooltip>
+  <Tooltip delay={0}>
+    <Tooltip.Trigger render={<Button variant="secondary">Start aligned</Button>} />
+    <Tooltip.Content side="bottom" align="start">Lines up with the trigger's left edge</Tooltip.Content>
+  </Tooltip>
+</div>
+
 # Follow cursor
 
 For tall or wide triggers, a centered tooltip sits far from the pointer —
@@ -64,7 +87,9 @@ For tall or wide triggers, a centered tooltip sits far from the pointer —
 
 `delayDuration` overrides the hover delay per tooltip. Wrap a region in
 `Tooltip.Provider` to share one delay and let adjacent tooltips skip it,
-and the morph: the next label shows in place.
+and the morph: the next label shows in place. The provider takes Base UI's
+`delay` / `closeDelay` / `timeout` or Radix's `delayDuration` /
+`skipDelayDuration`, so a Radix provider config spreads straight in.
 
 <Tooltip.Provider delayDuration={300} skipDelayDuration={500}>
   <div className="flex flex-wrap gap-3">

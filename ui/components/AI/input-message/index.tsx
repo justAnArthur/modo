@@ -924,6 +924,8 @@ const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
         if (!clickToFocus || disabled) return
         const target = e.target as HTMLElement
         if (target === textareaRef.current) return
+        // A press in a popup portalled out of the box reaches it through the React tree only.
+        if (!e.currentTarget.contains(target)) return
         if (target.closest('button, a, input, select, textarea, [contenteditable], [role="button"], [data-im-queue]')) {
           return
         }

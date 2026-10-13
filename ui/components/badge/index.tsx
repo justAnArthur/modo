@@ -20,9 +20,13 @@
  *   the dot scales in and out with the label sliding to make room. The content
  *   sits in one inner span that carries the morph, so the root keeps the
  *   caller's `style`.
+ * - `badgeColors`, `badgeVariants` and the size aliases moved to `variants.ts`
+ *   (server-callable, no JSX or hooks) and re-exported from here.
+ * - Variant `outline` (local): the dot badge's neutral hairline frame without
+ *   the dot; it draws no color, so `color` has no effect on it.
  */
 
-import { cva, type VariantProps } from 'class-variance-authority'
+import type { VariantProps } from 'class-variance-authority'
 import { AnimatePresence, animate, motion } from 'motion/react'
 import { forwardRef, type HTMLAttributes, type ReactNode, useLayoutEffect, useRef } from 'react'
 import { useReduceMotion } from '../../lib/reduced-motion'
@@ -30,59 +34,15 @@ import { useShape } from '../../lib/shape-context'
 import { useSizeVariant } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
 import { cn } from '../../lib/utils'
-
-const badgeColors = {
-  gray: 'var(--badge-gray)',
-  red: 'var(--badge-red)',
-  orange: 'var(--badge-orange)',
-  amber: 'var(--badge-amber)',
-  yellow: 'var(--badge-yellow)',
-  lime: 'var(--badge-lime)',
-  green: 'var(--badge-green)',
-  emerald: 'var(--badge-emerald)',
-  teal: 'var(--badge-teal)',
-  cyan: 'var(--badge-cyan)',
-  blue: 'var(--badge-blue)',
-  indigo: 'var(--badge-indigo)',
-  violet: 'var(--badge-violet)',
-  purple: 'var(--badge-purple)',
-  fuchsia: 'var(--badge-fuchsia)',
-  pink: 'var(--badge-pink)',
-  rose: 'var(--badge-rose)',
-} as const
-
-type BadgeColor = keyof typeof badgeColors
-
-const badgeVariants = cva('inline-flex items-center weight-medium whitespace-nowrap', {
-  variants: {
-    variant: {
-      solid: '',
-      dot: 'border border-border text-foreground',
-    },
-    // The two-step size ladder shared by every control — see /docs/sizes.
-    size: {
-      default: 'h-6 px-2.5 text-caption gap-1.5',
-      compact: 'h-5 px-2 text-caption-compact gap-1',
-    },
-  },
-  defaultVariants: {
-    variant: 'solid',
-    size: 'default',
-  },
-})
-
-type BadgeSizeCanonical = 'default' | 'compact'
-
-/** Public size values: the canonical two-size scale plus the pre-sizes-system
- *  aliases, kept so existing call sites keep compiling. Aliases resolve onto
- *  the canonical ladder (sm → compact; md/lg → default). */
-type BadgeSize = BadgeSizeCanonical | 'sm' | 'md' | 'lg'
-
-const legacySizeAliases: Partial<Record<BadgeSize, BadgeSizeCanonical>> = {
-  sm: 'compact',
-  md: 'default',
-  lg: 'default',
-}
+import {
+  type BadgeColor,
+  type BadgeSize,
+  type BadgeSizeCanonical,
+  type BadgeVariant,
+  badgeColors,
+  badgeVariants,
+  legacySizeAliases,
+} from './variants'
 
 const { exit: _exit, ...enter } = spring.moderate
 
@@ -144,26 +104,32 @@ function useWidthMorph(change: string) {
 interface BadgeProps
   extends Omit<HTMLAttributes<HTMLSpanElement>, 'color'>,
     Omit<VariantProps<typeof badgeVariants>, 'size'> {
-  /** Visual style. Solid uses a tinted background; dot shows a colored indicator. Defaults to `"solid"`. */
-  variant?: 'solid' | 'dot'
+  /** Visual style. Solid uses a tinted background; dot shows a colored indicator; outline is the dot badge's neutral hairline frame without the dot (it ignores `color`). Defaults to `"solid"`. */
+  variant?: 'solid' | 'dot' | 'outline'
   /** Step on the size ladder (see Sizes). Legacy sm/md/lg values resolve as aliases (sm → compact; md/lg → default). Defaults to the surrounding SizeProvider, else `"default"`. */
-  size?: BadgeSize
+  size?: 'default' | 'compact' | 'sm' | 'md' | 'lg'
   /** Color from the Tailwind palette: gray, red, orange, amber, yellow, lime, green, emerald, teal, cyan, blue, indigo, violet, purple, fuchsia, pink, rose. Defaults to `"gray"`. */
   color?: BadgeColor
 }
 
 /**
- * Compact label for status, category, or metadata. Supports solid and dot
- * variants with Tailwind colors.
+ * Compact label for status, category, or metadata. Supports solid, dot and
+ * outline variants with Tailwind colors.
  *
  * Solid badges tint their background with the chosen color mixed into the
  * page background (gray uses the accent token); dot badges keep a neutral
- * border and show the color as a small indicator. The badge rides the size
+ * border and show the color as a small indicator; outline badges are the
+ * neutral frame alone, for a label that carries no status. The badge rides the size
  * ladder — `size` pins it, otherwise it follows the surrounding SizeProvider
  * — and takes its corner radius from the shape context. Changes animate: a
  * new label or variant springs the width while the label crossfades, and a
  * new color fades in. The palette is also exported as `badgeColors`, the class
- * recipe as `badgeVariants`.
+ * recipe as `badgeVariants` (both callable on the server).
+ *
+ * Status labels pick a hue rather than a fill of their own: a destructive or
+ * error label is `color="red"`, a success label `color="green"`, a secondary
+ * or default one `color="gray"`, and a neutral outlined one
+ * `variant="outline"` (see the Status mapping example).
  *
  * @example {@include ./examples.mdx}
  */
@@ -212,7 +178,7 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
             whatever pops out of the flow on its way out. */}
         <span ref={content} className="relative inline-flex min-w-0 items-center gap-[inherit] overflow-x-clip">
           <AnimatePresence mode="popLayout" initial={false}>
-            {!isSolid && (
+            {variant === 'dot' && (
               <motion.span
                 key="dot"
                 className="shrink-0 rounded-full transition-[background-color] duration-moderate"
@@ -253,7 +219,7 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
 
 Badge.displayName = 'Badge'
 
-export type { BadgeColor, BadgeProps, BadgeSize }
+export type { BadgeColor, BadgeProps, BadgeSize, BadgeVariant }
 export { Badge, badgeColors, badgeVariants }
 
 export default Badge

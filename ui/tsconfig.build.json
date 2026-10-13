@@ -1,4 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["index.ts", "preset.ts", "lib", "primitives", "components", "blocks"]
+  "include": ["index.ts", "preset.ts", "lib", "primitives", "components", "blocks", "docs"]
 }

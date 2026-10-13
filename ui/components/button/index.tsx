@@ -24,10 +24,29 @@
  *   swapping. The spinner centres on the button, not on the label. `aria-busy` while loading.
  *   The root's `transition-colors` → `transition-[color,opacity]`, so the disabled dim fades
  *   in step instead of jumping (the root draws no background or border of its own).
+ *   A loading button stays focusable (Base UI's `focusableWhenDisabled`, so
+ *   `aria-disabled`, not `disabled`) and ignores presses; with `asChild` it
+ *   sets `aria-disabled` and swallows clicks itself.
+ * - `buttonVariants` and the size aliases moved to `variants.ts` (server-callable, no
+ *   JSX or hooks) and re-exported from here; it resolves the size aliases itself and
+ *   takes `surface` (the fill as root classes, for an anchor host; see `variants.ts`).
+ * - Variants added for hosts with a shadcn-style API (local, under DESIGN.md): `outline`
+ *   renders exactly as `tertiary` (both are the transparent 1px-ring button);
+ *   `destructive` and `success` are their hue as text (`--destructive-strong`,
+ *   `--success-strong`) on a translucent wash of it that deepens on hover and press,
+ *   never a solid fill; `link` is foreground text on the control height with no padding,
+ *   whose always-drawn underline fades in on hover (and shows while `active`). Size `xs`
+ *   resolves to `compact`: the ladder has two steps.
+ * - The `primary` fill and label read the theme hooks `--primary`, `--primary-hover`,
+ *   `--primary-active`, `--primary-foreground` and `--shadow-button-primary`
+ *   (`tokens/colors.css`; `bg-primary` / `text-primary-foreground`) instead of the
+ *   ink and `text-background`, so a host can recolour it. Defaults are the old values.
+ *   The shadow hook is appended to the layer's own shadow (it sits on the fill layer:
+ *   a shadow on the root would be covered by it). `variants.ts` mirrors it on the root.
  */
 
 import { Button as ButtonPrimitive } from '@base-ui/react/button'
-import { cva, type VariantProps } from 'class-variance-authority'
+import type { VariantProps } from 'class-variance-authority'
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
 import {
   type ButtonHTMLAttributes,
@@ -45,73 +64,24 @@ import { useShape } from '../../lib/shape-context'
 import { useSizeVariant } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
 import { cn } from '../../lib/utils'
-
-const buttonVariants = cva(
-  [
-    'group relative isolate inline-flex items-center justify-center outline-none cursor-pointer',
-    'transition-[color,opacity] duration-fast',
-    'disabled:opacity-50 disabled:pointer-events-none',
-    'focus-visible:ring-1 focus-visible:ring-focus-ring',
-  ],
-  {
-    variants: {
-      variant: {
-        primary: 'text-background',
-        secondary: 'text-foreground',
-        tertiary: 'text-foreground',
-        ghost: 'text-muted-foreground hover:text-foreground',
-      },
-      // The two-step size ladder shared by every control — see /docs/sizes.
-      // default = 36px control height, compact = 28px for dense surfaces.
-      size: {
-        default: 'h-9 px-4 text-body gap-1.5',
-        compact: 'h-7 px-3 text-body-compact gap-1',
-        icon: 'h-9 w-9 p-0 [&_svg]:h-4 [&_svg]:w-4',
-        'icon-compact': 'h-7 w-7 p-0 [&_svg]:h-3.5 [&_svg]:w-3.5',
-      },
-      iconLeft: { true: '' },
-      iconRight: { true: '' },
-    },
-    // An icon sits 4px closer to its edge than text does: 12px default and
-    // 8px compact, against the 16px / 12px base padding.
-    compoundVariants: [
-      { size: 'compact', iconLeft: true, className: 'pl-2' },
-      { size: 'default', iconLeft: true, className: 'pl-3' },
-      { size: 'compact', iconRight: true, className: 'pr-2' },
-      { size: 'default', iconRight: true, className: 'pr-3' },
-    ],
-    defaultVariants: {
-      variant: 'primary',
-      size: 'default',
-    },
-  },
-)
-
-type ButtonSizeCanonical = 'default' | 'compact' | 'icon' | 'icon-compact'
-
-/** Public size values: the canonical two-size scale plus the pre-sizes-system
- *  aliases, kept so existing call sites keep compiling. Aliases resolve onto
- *  the canonical ladder (sm → compact; md/lg → default). */
-type ButtonSize = ButtonSizeCanonical | 'sm' | 'md' | 'lg' | 'icon-sm' | 'icon-lg'
-
-const legacySizeAliases: Partial<Record<ButtonSize, ButtonSizeCanonical>> = {
-  sm: 'compact',
-  md: 'default',
-  lg: 'default',
-  'icon-sm': 'icon-compact',
-  'icon-lg': 'icon',
-}
+import {
+  type ButtonSize,
+  type ButtonSizeCanonical,
+  type ButtonVariant,
+  buttonVariants,
+  legacySizeAliases,
+} from './variants'
 
 interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
-    Omit<VariantProps<typeof buttonVariants>, 'size'> {
-  /** Visual style of the button. Defaults to `"primary"`. */
-  variant?: 'primary' | 'secondary' | 'tertiary' | 'ghost'
-  /** Step on the size ladder (36px default, 28px compact — see Sizes): `"default"` | `"compact"` | `"icon"` | `"icon-compact"`. Omitted, the button follows the surrounding SizeProvider. Legacy sm/md/lg values resolve as aliases (sm → compact; md/lg → default; icon-sm → icon-compact; icon-lg → icon). */
-  size?: ButtonSize
+    Omit<VariantProps<typeof buttonVariants>, 'size' | 'surface'> {
+  /** Visual style of the button. `outline` is `tertiary` under its shadcn name; `destructive` and `success` tint the label and a wash of their hue; `link` is underlined text on the control height. Defaults to `"primary"`. */
+  variant?: 'primary' | 'secondary' | 'tertiary' | 'outline' | 'ghost' | 'destructive' | 'success' | 'link'
+  /** Step on the size ladder (36px default, 28px compact — see Sizes): `"default"` | `"compact"` | `"icon"` | `"icon-compact"`. Omitted, the button follows the surrounding SizeProvider. Aliases resolve onto the ladder (xs, sm → compact; md/lg → default; icon-sm → icon-compact; icon-lg → icon). */
+  size?: 'default' | 'compact' | 'icon' | 'icon-compact' | 'xs' | 'sm' | 'md' | 'lg' | 'icon-sm' | 'icon-lg'
   /** Merge props onto the child element instead of rendering a `<button>` — the single React-element child becomes the rendered element (slot-style). Defaults to `false`. */
   asChild?: boolean
-  /** Folds the button into a circle around a spinner and disables it; the button keeps its box, so nothing around it moves. Defaults to `false`. */
+  /** Folds the button into a circle around a spinner and blocks presses; the button keeps its box, so nothing around it moves, and keeps focus (`aria-disabled`, not `disabled`). Defaults to `false`. */
   loading?: boolean
   /** Icon displayed before the label. */
   leadingIcon?: IconComponent
@@ -130,10 +100,12 @@ interface ButtonProps
    Pressing collapses the spread, shrinking the surface by exactly 1px per
    side at any width — a scale would warp (2% of a 400px button is 8px
    sideways but under 1px vertically). Fill colors are opaque color-mix()es
-   rather than alpha so the fill and its spread ring never seam. */
+   rather than alpha so the fill and its spread ring never seam. The primary
+   fill reads the `--primary*` hooks; `--shadow-button-primary` joins the
+   layer's shadow list after the ring, at rest and pressed. */
 const bgVariants: Record<string, string> = {
   primary:
-    '[--btn-bg:var(--foreground)] group-hover:[--btn-bg:color-mix(in_oklab,var(--foreground)_90%,var(--background))] group-active:[--btn-bg:color-mix(in_oklab,var(--foreground)_80%,var(--background))] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+    '[--btn-bg:var(--primary)] group-hover:[--btn-bg:var(--primary-hover)] group-active:[--btn-bg:var(--primary-active)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg),var(--shadow-button-primary)] group-active:shadow-[0_0_0_0px_var(--btn-bg),var(--shadow-button-primary)]',
   secondary:
     '[--btn-bg:var(--accent)] group-hover:[--btn-bg:color-mix(in_oklab,var(--accent)_80%,var(--background))] group-active:[--btn-bg:var(--accent)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   // The border ring is an outer 1px shadow at rest that hands off to an
@@ -146,18 +118,32 @@ const bgVariants: Record<string, string> = {
   // render only outside the surface box.
   ghost:
     'bg-transparent shadow-[0_0_0_1px_transparent] group-hover:bg-hover group-hover:shadow-[0_0_0_1px_var(--hover)] group-active:bg-active group-active:shadow-[0_0_0_0px_var(--active)]',
+  // A status as an action: a translucent wash of its hue (the ghost recipe),
+  // deepening on hover and press.
+  // The fill reads the wash utilities; `--btn-bg` only feeds the spread.
+  destructive:
+    'bg-destructive-wash group-hover:bg-destructive-wash-hover group-active:bg-destructive-wash-active [--btn-bg:var(--destructive-wash)] group-hover:[--btn-bg:var(--destructive-wash-hover)] group-active:[--btn-bg:var(--destructive-wash-active)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+  success:
+    'bg-success-wash group-hover:bg-success-wash-hover group-active:bg-success-wash-active [--btn-bg:var(--success-wash)] group-hover:[--btn-bg:var(--success-wash-hover)] group-active:[--btn-bg:var(--success-wash-active)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+  link: 'bg-transparent',
 }
 
 /* Forced-active (`active` prop): pressed colors at full size; the
    geometric press-collapse still reacts on top. */
 const activeBgVariants: Record<string, string> = {
   primary:
-    '[--btn-bg:color-mix(in_oklab,var(--foreground)_80%,var(--background))] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+    '[--btn-bg:var(--primary-active)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg),var(--shadow-button-primary)] group-active:shadow-[0_0_0_0px_var(--btn-bg),var(--shadow-button-primary)]',
   secondary:
     '[--btn-bg:var(--accent)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   tertiary:
     'bg-active shadow-[0_0_0_1px_var(--border),inset_0_0_0_0px_var(--border)] group-active:shadow-[0_0_0_0px_var(--border),inset_0_0_0_1px_var(--border)]',
   ghost: 'bg-active shadow-[0_0_0_1px_var(--active)] group-active:shadow-[0_0_0_0px_var(--active)]',
+  destructive:
+    'bg-destructive-wash-active [--btn-bg:var(--destructive-wash-active)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+  success:
+    'bg-success-wash-active [--btn-bg:var(--success-wash-active)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+  // A held link shows its underline.
+  link: 'bg-transparent',
 }
 
 const { exit: _exit, ...enter } = spring.moderate
@@ -210,12 +196,25 @@ function useLoadingMorph(loading: boolean) {
  *
  * Four variants (primary, secondary, tertiary, ghost) on the two-step size
  * ladder: 36px by default, 28px compact — an explicit `size` wins, otherwise
- * the button follows the surrounding SizeProvider. The press effect shrinks
+ * the button follows the surrounding SizeProvider. For hosts with a
+ * shadcn-style API there are four more: `outline` (tertiary by its other
+ * name), `destructive` and `success` (the hue as the label on a wash of
+ * itself, never a solid fill, so a view keeps one primary) and `link`
+ * (underlined text on the control height). The press effect shrinks
  * the fill by exactly 1px per side at any width, icons thicken their stroke
  * on hover, and `loading` folds the surface into a circle around a spinner
  * (and back when it ends) while the button keeps its box, so nothing around
  * it moves. Built on Base UI's Button; `asChild` renders your own
  * element (e.g. a link) with the button's styling instead.
+ *
+ * Also exported from this item:
+ * - `buttonVariants` — the class recipe (also from `button/variants`, safe in
+ *   server code): `variant`, `size` (aliases included), `iconLeft`,
+ *   `iconRight`, `surface`. On its own it gives the root classes, and the fill
+ *   lives on the Button's inner layer; `surface: true` puts the fill, ring,
+ *   hover, press and `aria-disabled` look on the element itself, for an
+ *   anchor you can't render through `asChild`. Prefer `<Button asChild>`
+ *   where you can: it keeps the press shrink, the icon stroke and `loading`.
  *
  * @example {@include ./examples.mdx}
  */
@@ -251,6 +250,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             style?: React.CSSProperties
             ref?: React.Ref<HTMLButtonElement>
             'aria-busy'?: boolean
+            'aria-disabled'?: boolean | 'true' | 'false'
+            onClick?: React.MouseEventHandler<HTMLButtonElement>
           }>)
         : null
     const label = asChildElement ? asChildElement.props.children : children
@@ -269,7 +270,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // proportionate across sizes.
     const spinnerSizeClass = isCompact ? 'h-7 w-7' : 'h-9 w-9'
     const shape = useShape()
-    const bgClass = active ? activeBgVariants[variant ?? 'primary'] : bgVariants[variant ?? 'primary']
+    // `outline` is tertiary by its shadcn name.
+    const surfaceVariant = variant === 'outline' ? 'tertiary' : (variant ?? 'primary')
+    const bgClass = active ? activeBgVariants[surfaceVariant] : bgVariants[surfaceVariant]
 
     const surface = useLoadingMorph(loading)
 
@@ -358,17 +361,32 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         iconRight: !isIconOnly && !!TrailingIcon,
       }),
       shape.button,
+      // A loading button is disabled through aria-disabled (it keeps focus),
+      // which the variants' `disabled:` styles don't see.
+      'aria-disabled:opacity-50 aria-disabled:pointer-events-none',
+      active && variant === 'link' && 'decoration-current',
       className,
     )
 
     if (asChildElement) {
       const childProps = asChildElement.props
+      const onClick = props.onClick ?? childProps.onClick
       return cloneElement(
         asChildElement,
         {
           ...props,
           ref,
           'aria-busy': loading || undefined,
+          'aria-disabled': loading || props['aria-disabled'] || childProps['aria-disabled'],
+          // A pending action blocks a second press (and a link's navigation).
+          onClick: (event: React.MouseEvent<HTMLButtonElement>) => {
+            if (loading) {
+              event.preventDefault()
+              event.stopPropagation()
+              return
+            }
+            onClick?.(event)
+          },
           className: cn(rootClassName, childProps.className),
           style: { ...style, ...childProps.style },
         },
@@ -383,6 +401,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref as React.Ref<HTMLButtonElement>}
         className={rootClassName}
         disabled={disabled || loading}
+        // While loading, Base UI disables it with aria-disabled instead of
+        // the attribute, so a keyboard user keeps focus on it; it still
+        // ignores presses.
+        focusableWhenDisabled={loading}
         aria-busy={loading || undefined}
         style={style}
         {...props}
@@ -395,7 +417,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button'
 
-export type { ButtonProps, ButtonSize }
+export type { ButtonSizeCanonical, ButtonVariantsOptions } from './variants'
+export type { ButtonProps, ButtonSize, ButtonVariant }
 export { Button, buttonVariants }
 
 export default Button

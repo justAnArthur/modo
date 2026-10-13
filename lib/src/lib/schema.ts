@@ -2,7 +2,9 @@ import { z } from 'zod'
 
 /**
  * Pins docs-chrome slots to components. A value is a path relative to the
- * project root, optionally naming an export (`./modo.components.tsx#Select`).
+ * project root, or a package specifier resolved through the package's
+ * `exports` (`@scope/ds/docs`), optionally naming an export
+ * (`./modo.components.tsx#Select`, `@scope/ds/docs#DocsNav`).
  * An unpinned slot uses the item whose name and props match, else a plain
  * HTML fallback.
  */
@@ -37,6 +39,15 @@ export interface SiteConfig {
   vite?: string
   /** A module whose named exports are in scope in every example (icons, helpers). Item names win on collision. */
   examples?: string
+  /** The folder of free-form `.mdx` pages, relative to the project root. Defaults to `pages`. */
+  pages?: string
+  /**
+   * The folder holding the item tiers (`primitives/`, `components/`, `blocks/`) and `tokens/`, relative to the project
+   * root: `root: 'src'` reads `src/components/…` and `src/tokens/…`. Defaults to `.` (the project root). Everything
+   * else the config names (`pages`, `css`, `vite`, `examples`, the shell and panel modules) stays relative to the
+   * project root.
+   */
+  root?: string
 }
 
 const ref = z.string().optional()
@@ -57,5 +68,7 @@ export const siteConfigSchema = z
     css: z.string().optional(),
     vite: z.string().optional(),
     examples: z.string().optional(),
+    pages: z.string().optional(),
+    root: z.string().optional(),
   })
   .strict() satisfies z.ZodType<SiteConfig>

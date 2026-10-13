@@ -15,6 +15,7 @@ live in `AGENTS.md` (**docs**, **file naming**, **styling**); this file is the u
 - [Template: Pagination](#template-pagination)
 - [Porting an upstream FF component](#porting-an-upstream-ff-component)
 - [Adding a token](#adding-a-token)
+- [Docs setup in another package](#docs-setup-in-another-package)
 - [Verify](#verify)
 
 ## Files
@@ -24,8 +25,13 @@ components/<group>/<name>/
   index.tsx          the item: default export + TSDoc + props interface
   examples.mdx       its examples, included by `@example {@include ./examples.mdx}`
   <part>.tsx         optional helpers (a row, a docs stage), imported by index.tsx
+  variants.ts        optional: class tables and pure helpers (no JSX, hooks or contexts), a build
+                     entry of its own that server code can call; index.tsx re-exports it
   <name>.css         optional, auto-injected; structure only (visuals through tokens)
 ```
+
+Free-form pages (an introduction, a migration guide) are not items: they are `.mdx` files in the
+package's `pages/` (see `lib/README.md`, Pages).
 
 Groups are `inputs`, `navigation`, `overlays`; ungrouped items are core display pieces. The id stays
 `<name>`, so moving between groups changes no URL. Imports: `lib/*` relatively (`../../../lib/…` from a
@@ -64,16 +70,24 @@ Then add its row to `README.md`'s file map (and the tier mapping table for a new
 
 ## Props interface
 
-modo's parser (`lib/src/lib/tsdoc.ts`) reads props from a same-file `interface <Item>Props`:
+modo reads an item through the TypeScript compiler (`lib/src/lib/docs.ts`):
 
-- **Only members declared in the body count.** Inherited members (`extends HTMLAttributes<…>`) are
-  invisible in the table; re-declare the ones a reader needs (`className`, `children`, `disabled`).
-- **One member per line.** A member whose type spans lines is dropped. Hoist a long union to a type
-  alias (`type BadgeColor = …`) and reference it.
-- **Every member has a description.** End with "Defaults to \`x\`." when there is a default: the table
-  reads the default from that sentence. `@values a, b` names allowed values when the type can't.
-- **The item is the file's default export**, a `function X(…)` or `const X = forwardRef<HTMLDivElement,
-  XProps>(…)`; the forwardRef's first type argument holds no `<` or `,`.
+- **The item is the file's default export**, followed to its declaration: a `function X(props: XProps)`,
+  a `forwardRef<El, XProps>(…)`, or any component-typed value. The props type is the render function's
+  parameter annotation, the `forwardRef` type argument, or the component's type.
+- **Inherited members show.** `extends`, `Omit` / `Pick` / `Partial` and intersections resolve across
+  files and from modo-documented packages; a member's type may span lines. React's DOM attributes
+  (`@types/react`) and other libraries' typings (Base UI, react-day-picker) stay out: re-declare the ones
+  a reader needs (`className`, `children`, `disabled`) with a description.
+- **Every member has a description.** The Default column takes the destructured default first, then
+  `@default x`, then a closing "Defaults to \`x\`." sentence. `@values a, b` names allowed values when
+  the type can't.
+- **Re-export items.** An item file may only re-export a component (`export { default } from 'pkg/…'`,
+  `export { X as default } from './x'`, `import X …; export default X`): the page reads the TSDoc, props
+  and `@example {@include}` at the declaration (includes relative to that file); a package specifier
+  resolves through its `source` export condition, else its `types`. `{@inheritDoc <ref>}` (a specifier
+  or an in-scope name) puts the base's description and examples before the item's own; the props
+  table is still the item's full props.
 - Shared prop prose is shared verbatim: the morph options (`from`, `effect`, `hideSource`, `tier`) copy
   their docs from [motion.md](motion.md#morphing-overlays); `size` reads "Pins … to one step of the size
   ladder (36px default, 28px compact). Defaults to the surrounding SizeProvider."
@@ -129,8 +143,36 @@ One-line caption: what to try and what to notice.
 <Thing defaultValue="a" />
 ```
 
-- Each `#` heading is one example card; the JSX block under it is live, and its source is the card's
-  Show code. `###` is a sub-heading. Fence code that should be read, never wrap it in `<Code>`.
+- In a flat file each `#` heading is one example card; the JSX block under it is live, and its source
+  is the card's Show code. `###` is a sub-heading. Fence code that should be read, never wrap it in
+  `<Code>`.
+- **Groups from 7 examples up.** Once an item has seven or more examples, group them: `#` is a group,
+  `##` an example in it (a file with any `##` is grouped; the "On this page" list then reads
+  Examples › group › example). Use 2–5 groups, named short and parallel, reusing across items:
+  **Basics**, **Variants**, **Sizes**, **Content**, **Selection**, **States**, **Composition**,
+  **Behavior**, **Localization**, **Options** — whatever fits, in that spirit. A group with one
+  example, or whose first example is the group itself (`# Variants` then its caption and block, then
+  `## Destructive and success`), keeps the example straight under the `#`. In a grouped file `###` is
+  a sub-heading below the TOC. Fewer than seven examples stay flat. Example titles keep their slugs
+  (`#example-<slug>`), so re-grouping breaks no link.
+
+```mdx
+# Variants
+
+Caption of the group's own example.
+
+<Thing variant="primary" />
+
+## Outline
+
+<Thing variant="outline" />
+
+# States
+
+## Disabled
+
+<Thing disabled />
+```
 - **Hook-free.** Nothing runs a component body in an example, so interactivity comes from `default*`
   props. When a demo needs choreography (a value that changes on a timer, a button that toggles a
   state), write a small local stage component next to the item (`badge/change-demo.tsx`) and import it.
@@ -138,7 +180,8 @@ One-line caption: what to try and what to notice.
 - **Real imports.** The item is `./index`; other items by path. An identifier used in an expression
   (`icon={Plus}`) needs an import even when it is an item.
 - Order: the main use first, then each variation that changes how it looks or moves (sizes, sides,
-  effects), then states (disabled, loading, error), then composition with other items.
+  effects), then states (disabled, loading, error), then composition with other items; a grouped
+  file orders its groups that way and the examples within each.
 - Examples use the same tokens as items: no arbitrary visual values; frame geometry (`w-72`,
   `min-h-[240px]`) is fine.
 
@@ -421,7 +464,7 @@ The mechanical pass every ported item went through (README › Items):
 5. Add `default*` twins through `useControllableState` for every controlled-only prop.
 6. React 18: `MutableRefObject` casts where a forwarded ref is written, `useRef<T | null>(null)`,
    `forwardRef` for components that receive refs.
-7. Re-declare the props interface one member per line with the FF docs API-table text; write the TSDoc
+7. Write the FF docs API-table text on the props interface (re-declare the members a reader needs); write the TSDoc
    from the FF docs page; one `# <FF section title>` example per docs section in `examples.mdx`
    (Playground and API Reference are never ported).
 8. Header comment listing every change; README file-map row.
@@ -436,6 +479,45 @@ The mechanical pass every ported item went through (README › Items):
 3. A class group in `lib/utils.ts` when the utility's prefix could collide in `cn` (a `text-*` that is
    not a color, a new `duration-*`).
 4. Mirror it in `DESIGN.md` (front matter and prose) so the design doc stays the readable source.
+
+## Docs setup in another package
+
+The docs site's chrome (the inset sidebar layout, the nav, the Theme switcher) is shipped by this package:
+`@justanarthur/modo-ui/docs` (slot adapters), `/docs/chrome.css` (layout and look), `/docs/vite` (`docsTheme`,
+the pre-paint theme controller). A design system documented with modo that depends on `@justanarthur/modo-ui`
+adds exactly these lines, and keeps no copy of the chrome:
+
+```ts
+// modo.config.ts
+shell: {
+  Button: '@justanarthur/modo-ui/docs#Button',
+  Link: '@justanarthur/modo-ui/docs#Link',
+  Select: '@justanarthur/modo-ui/docs#Select',
+  Icon: '@justanarthur/modo-ui/docs#Icon',
+  Sidebar: '@justanarthur/modo-ui/docs#DocsNav',
+},
+panel: { items: [{ label: 'Theme', component: '@justanarthur/modo-ui/docs#ThemeSwitcher' }] },
+```
+
+```css
+/* the stylesheet named by `css` */
+@import "@justanarthur/modo-ui/docs/chrome.css";
+```
+
+```js
+// the module named by `vite` (plain .mjs, Node loads it as is)
+import { docsTheme } from '@justanarthur/modo-ui/docs/vite'
+export default config => {
+  config.plugins = [...(config.plugins ?? []), docsTheme({ storageKey: 'my-ds-theme' })]
+  return config
+}
+```
+
+Package specifiers in `shell` / `panel` need a viewer that resolves them (`@justanarthur/modo` after 0.9.0-canary.0);
+on an older one, a local `docs/shell.tsx` holding `export * from '@justanarthur/modo-ui/docs'` and slots pointing at
+`./docs/shell.tsx#<Slot>` is the supported fallback. Never re-implement the layout in the consumer's css: the chrome's
+rules (`[data-modo="app"]` grid, the panel drawer below xl) are one set, in `chrome.css`. The full explanation is in
+`ui/README.md` (**The docs chrome, for another design system**).
 
 ## Verify
 

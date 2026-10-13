@@ -77,8 +77,8 @@ Upstream's craft, docs and snippets assume a shadcn + Tailwind + Next app. Read 
 4. **Look and motion from the systems** below. Each one is a checklist item, not an option.
 5. **State both ways.** `value` / `defaultValue` / `onValueChange` (and `open` / `defaultOpen` /
    `onOpenChange`) through `useControllableState`, so examples run without hooks.
-6. **Document.** Header comment, a `interface XProps` with one member per line, each described and
-   ending in "Defaults to `x`." where it has one, then TSDoc (lead sentence, concept paragraph, Statics
+6. **Document.** Header comment, an `interface XProps` whose members are each described (with
+   "Defaults to `x`." or `@default` where the code doesn't destructure one), then TSDoc (lead sentence, concept paragraph, Statics
    list) and `@example {@include ./examples.mdx}`.
 7. **Verify** ([authoring.md](references/authoring.md#verify)): typecheck, lint, the style grep, then look
    at it in the dev server in light, dark, compact, by keyboard and with reduced motion.
@@ -92,7 +92,7 @@ Paths below are relative to `ui/`.
 | Visual | Use | Never |
 |---|---|---|
 | Text color | `text-foreground`, `text-muted-foreground`, `text-background` (on ink), `text-destructive`, `text-status-*` | `text-foreground/60`, a third grey, `text-[#…]` |
-| Fills | `bg-surface-N` via `SURFACE_BG[level]`, `bg-muted`, `bg-accent`, `bg-hover`, `bg-active`, `bg-brand`, `bg-status-*/16`, `bg-scrim` | `bg-white`, `bg-neutral-100`, a hard-coded surface |
+| Fills | `bg-surface-N` via `SURFACE_BG[level]`, `bg-muted`, `bg-well` (a segmented control's track), `bg-accent`, `bg-hover`, `bg-active`, `bg-brand`, `bg-status-*/16`, `bg-scrim` | `bg-white`, `bg-neutral-100`, a hard-coded surface |
 | Lines | `border-border`, `ring-border`, 1px | thicker borders, colored borders |
 | Type | `text-display\|title\|subtitle\|body\|caption\|micro[-compact]` | `text-sm`, `text-[13px]`, `leading-*` on a role (it ships its own) |
 | Weight | `weight-normal\|medium\|semibold\|bold` | `font-medium`, `font-semibold`, `fontWeight` |
@@ -221,15 +221,16 @@ What makes it read as this system rather than "a component library":
 
 ## Gotchas
 
-- **UnoCSS only sees literal class names**, scanned from disk (`{lib,primitives,components,blocks}/**`
-  and `modo.components.tsx`). Pick dynamic classes from literal tables (`SURFACE_BG[level]`), never
+- **UnoCSS only sees literal class names**, scanned from disk (`{lib,primitives,components,blocks}/**`;
+  the docs chrome in `docs/` styles itself in `docs/chrome.css`, no classes). Pick dynamic classes from literal tables (`SURFACE_BG[level]`), never
   template strings. `transition-[x]` with a property wind4 doesn't know needs `theme.property` in
   `uno.config.ts`.
 - **One shared esbuild build** makes contexts (size, shape, surface, morph scope) cross items. Import the
   `lib/*` module; never copy a context into an item.
-- **The docs parser is strict** (authoring.md): props come only from members declared one per line in a
-  same-file interface; a `forwardRef`'s first type argument has no `<` or `,`; statics are attached by
-  assignment (`X.Part = …`) or `Object.assign` with a typed cast; examples are hook-free plain JS.
+- **The docs reader** (authoring.md) takes props from the TypeScript checker, inherited members
+  included, but not React's DOM attributes or other libraries' typings (re-declare what a reader
+  needs); statics are attached by assignment (`X.Part = …`) or `Object.assign` with a typed cast;
+  examples are hook-free plain JS.
 - **Base UI unmounts a closed popup when `getAnimations()` settles.** JS-driven exits need a hold
   (`holdExit` in `use-morph.ts`); `useMorph` already does it.
 - **Vendored files keep upstream formatting** and list every local change in their header; local files
