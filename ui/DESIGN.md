@@ -586,7 +586,8 @@ shared systems above (look and motion). Ready-made patterns to reach for before 
 - **Badges** — 24px (20px compact), caption medium, a 15% wash of the color into the background with
   foreground text; dot variant keeps a neutral outline; `outline` is that frame without the dot, and
   no color.
-- **Toasts** — a status pill that melts into a body; status color as text on a 16% wash. Shown from
+- **Toasts** — a status pill on the button radius that melts open into a card (title on top, details
+  beneath, on the container radius); status color as text on a 16% wash. Shown from
   anywhere through the global `toast()`; a custom icon sits in the same status disc.
 - **Cards** — transparent and borderless, inheriting the substrate; hairline dividers and the fluid
   hover do the framing; only clickable cards join the hover. `border="outlined"` gives a standalone

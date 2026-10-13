@@ -6,7 +6,7 @@ import GlobalDemo from './global-demo'
 
 Each state sets the icon and its color. A toast with a description melts from the pill into a body a beat after it lands, and folds back before it leaves; hover keeps it open.
 
-<Toast position="bottom-right">
+<Toast position="bottom-center">
   <div className="flex flex-wrap items-center justify-center gap-3">
     <Toast.Trigger type="success" title="Saved" description="Your changes are live for everyone on the team." render={<Button variant="secondary">Success</Button>} />
     <Toast.Trigger type="error" title="Upload failed" description="The file is larger than 25 MB." render={<Button variant="secondary">Error</Button>} />
@@ -19,7 +19,7 @@ Each state sets the icon and its color. A toast with a description melts from th
 
 Mount one `Toast` with `manager={toast}` near the root, then call `toast()` from any handler or module, inside React or not. Each call returns a handle to `update` or `dismiss` it: a `loading` toast spins until it is updated to another state, then leaves on the `Toast`'s timeout; titles and descriptions take any node, `icon` swaps the glyph and `action` adds a button.
 
-<Toast manager={toast} position="bottom-right">
+<Toast manager={toast} position="bottom-center">
   <GlobalDemo />
 </Toast>
 
@@ -27,7 +27,7 @@ Mount one `Toast` with `manager={toast}` near the root, then call `toast()` from
 
 `promise` runs a task: the pill spins while it is pending, then crossfades into the `success` or `error` toast.
 
-<Toast position="bottom-right">
+<Toast position="bottom-center">
   <Toast.Trigger
     title="Publishing…"
     promise={() => new Promise(resolve => setTimeout(resolve, 1800))}
@@ -41,7 +41,7 @@ Mount one `Toast` with `manager={toast}` near the root, then call `toast()` from
 
 An `action` puts a button in the body.
 
-<Toast position="bottom-right">
+<Toast position="bottom-center">
   <Toast.Trigger
     type="action"
     title="Message archived"
@@ -53,7 +53,7 @@ An `action` puts a button in the body.
 
 Any node works as the action: `Toast.Action` and `Toast.Close` are the toast's own buttons, so a custom row needs no Base UI import.
 
-<Toast position="bottom-right">
+<Toast position="bottom-center">
   <Toast.Trigger
     type="action"
     title="Invite sent"
@@ -70,16 +70,16 @@ Any node works as the action: `Toast.Action` and `Toast.Close` are the toast's o
 
 # Positions
 
-`position` puts the stack in a corner or centered on an edge; the pill sits on that side and the body opens away from the edge.
+`position` puts the stack in a corner or centered on an edge; the pill lands on that side and opens into a card.
 
 <div className="flex flex-wrap items-center justify-center gap-3">
   <Toast position="top-left">
-    <Toast.Trigger type="success" title="Top left" description="The body opens downward." render={<Button variant="secondary">Top left</Button>} />
+    <Toast.Trigger type="success" title="Top left" description="Slides in from the left edge." render={<Button variant="secondary">Top left</Button>} />
   </Toast>
   <Toast position="top-center">
     <Toast.Trigger type="info" title="Top center" description="Centered on the top edge." render={<Button variant="secondary">Top center</Button>} />
   </Toast>
-  <Toast position="bottom-center">
-    <Toast.Trigger type="info" title="Bottom center" description="The body opens upward." render={<Button variant="secondary">Bottom center</Button>} />
+  <Toast position="bottom-right">
+    <Toast.Trigger type="info" title="Bottom right" description="Slides in from the right edge." render={<Button variant="secondary">Bottom right</Button>} />
   </Toast>
 </div>

@@ -84,7 +84,8 @@ const TONES: Record<ToastType, string> = {
   action: 'text-status-action bg-status-action/16',
 }
 
-const VIEWPORT: Record<ToastPosition, string> = {
+// Where a position's shared stack sits, and how its toasts flow in it.
+const HOST: Record<ToastPosition, string> = {
   'top-left': 'top-4 left-4 items-start',
   'top-center': 'top-4 left-1/2 -translate-x-1/2 items-center',
   'top-right': 'top-4 right-4 items-end',
@@ -92,16 +93,54 @@ const VIEWPORT: Record<ToastPosition, string> = {
   'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2 flex-col-reverse items-center',
   'bottom-right': 'bottom-4 right-4 flex-col-reverse items-end',
 }
+const FLOW: Record<ToastPosition, string> = {
+  'top-left': 'items-start',
+  'top-center': 'items-center',
+  'top-right': 'items-end',
+  'bottom-left': 'flex-col-reverse items-start',
+  'bottom-center': 'flex-col-reverse items-center',
+  'bottom-right': 'flex-col-reverse items-end',
+}
 
-// The pill is one control tall, and the goo melts as much as its radius allows.
+// Every `Toast` at a position portals into one fixed stack, so toasts of
+// separate providers (a page of demos, a provider per route) line up instead
+// of covering each other. The stack leaves the page with its last provider.
+const hosts = new Map<ToastPosition, { el: HTMLElement; users: number }>()
+
+function useToastHost(position: ToastPosition) {
+  const [host, setHost] = useState<HTMLElement | null>(null)
+  useLayoutEffect(() => {
+    let entry = hosts.get(position)
+    if (!entry) {
+      const el = document.createElement('div')
+      el.dataset.toastStack = position
+      el.className = cn('fixed z-[60] flex flex-col gap-2', HOST[position])
+      document.body.append(el)
+      entry = { el, users: 0 }
+      hosts.set(position, entry)
+    }
+    const claimed = entry
+    claimed.users++
+    setHost(claimed.el)
+    return () => {
+      claimed.users--
+      if (claimed.users > 0) return
+      claimed.el.remove()
+      hosts.delete(position)
+    }
+  }, [position])
+  return host
+}
+
+// The pill is one control tall; its title sits after the 24px disc, 6px in and 8px apart.
 const PILL = sizeMap.default.controlHeight
-const BLUR = (PILL / 2) * GOO_BLUR_RATIO
+const TITLE_INSET = 38
 const SNAP = { duration: 0 }
 const AUTO_EXPAND_MS = 150
 const AUTO_COLLAPSE_BEFORE_MS = 2000
 
 const ToastSettings = createContext<{ position: ToastPosition; timeout: number }>({
-  position: 'top-right',
+  position: 'bottom-center',
   timeout: 6000,
 })
 
@@ -146,10 +185,15 @@ interface Box {
   y: number
   width: number
   height: number
+  /** Corner radius in px; the class's radius when left out. */
+  borderRadius?: number
+  /** 0 hides a shape folded flat, whose shadow would still draw a hairline. */
+  opacity?: number
 }
 
 function Shape({ box, className, shapeRef }: { box: Box; className: string; shapeRef?: Ref<HTMLDivElement> }) {
   const reduced = useReduceMotion()
+  const transition = reduced ? SNAP : spring.slow
   return (
     <motion.div
       ref={shapeRef}
@@ -157,7 +201,7 @@ function Shape({ box, className, shapeRef }: { box: Box; className: string; shap
       className={cn('pointer-events-none absolute top-0 left-0', className)}
       initial={false}
       animate={{ ...box }}
-      transition={reduced ? SNAP : spring.slow}
+      transition={{ ...transition, opacity: box.opacity ? transition : reduced ? SNAP : spring.slow.exit }}
     />
   )
 }
@@ -230,12 +274,13 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject<ToastData
     return () => hold.cancel()
   }, [ending])
 
-  // The pill sits on the toast's side of the screen; the body opens away from
-  // the edge. While open, the pill reaches into the body by the body's corner
-  // radius, covering that corner, so the outer edge runs straight and the goo
-  // only rounds the inner corner (Sileo's open pill). The body's padding on
-  // the pill side clears that reach. The header and the body content ride the
-  // same values as their shapes, so they never drift apart mid-spring.
+  // The pill lands on the toast's side of the screen. Opening, it spreads
+  // over the toast's full width as the card's header row while the body grows
+  // from behind it to the card's full height, the two melted by the goo, so
+  // the open toast is one card on the container radius with the title on top
+  // and the details beneath, aligned to the title. The header and the body
+  // content ride the same values as their shapes, so they never drift apart
+  // mid-spring.
   const bodyHeight = expanded ? size.body : 0
   const height = PILL + bodyHeight
   const pillX = position.endsWith('left')
@@ -243,12 +288,24 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject<ToastData
     : position.endsWith('right')
       ? size.width - size.pill
       : (size.width - size.pill) / 2
-  const pillHeight = PILL + Math.min(bodyHeight, size.radius)
-  const pill = { x: pillX, y: top ? 0 : height - pillHeight, width: size.pill, height: pillHeight }
-  const bodyBox = { x: 0, y: top ? PILL : 0, width: size.width, height: bodyHeight }
+  const headerX = expanded ? 0 : pillX
+  const pill = {
+    x: headerX,
+    y: 0,
+    width: expanded ? size.width : size.pill,
+    height: PILL,
+    borderRadius: expanded ? size.radius : shape.bgRadius,
+  }
+  // Folded, the body hides behind the pill, so it spreads from the pill's side.
+  const bodyBox = expanded
+    ? { x: 0, y: 0, width: size.width, height, opacity: 1 }
+    : { x: pillX, y: 0, width: size.pill, height: 0, opacity: 0 }
+  const blur = Math.max(size.radius, shape.bgRadius) * GOO_BLUR_RATIO
   const reduced = useReduceMotion()
   // Reduced motion keeps the fades and drops the travel.
-  const away = reduced ? { opacity: 0 } : { opacity: 0, y: top ? -6 : 6, scale: 0.95 }
+  // A toast slides in from the edge it is attached to, and back out to it.
+  const side = position.endsWith('left') ? -1 : position.endsWith('right') ? 1 : 0
+  const away = reduced ? { opacity: 0 } : { opacity: 0, x: side * 24, y: side ? 0 : top ? -12 : 12, scale: 0.95 }
   const move = reduced ? SNAP : spring.slow
 
   return (
@@ -261,18 +318,18 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject<ToastData
       render={
         <motion.div
           initial={{ ...away, height: PILL }}
-          animate={ending ? { ...away, height } : { opacity: 1, y: 0, scale: 1, height }}
+          animate={ending ? { ...away, height } : { opacity: 1, x: 0, y: 0, scale: 1, height }}
           transition={ending ? spring.moderate.exit : { ...spring.moderate, height: move }}
         />
       }
       className="relative w-[min(22rem,calc(100vw-2rem))] select-none outline-none [translate:var(--toast-swipe-movement-x)_var(--toast-swipe-movement-y)]"
     >
-      <GooFilter id={gooId} blur={BLUR} />
-      <Shape box={pill} className={cn('rounded-full', SURFACE_SHADOW[3])} />
+      <GooFilter id={gooId} blur={blur} />
+      <Shape box={pill} className={cn(SURFACE_SHADOW[3])} />
       {hasBody && <Shape box={bodyBox} className={cn(shape.container, SURFACE_SHADOW[3])} />}
       {/* The filter is the effect itself: it melts the two token-filled shapes into one. */}
       <div aria-hidden className="pointer-events-none absolute inset-0" style={{ filter: `url(#${gooId})` }}>
-        <Shape box={pill} className={cn('rounded-full', SURFACE_BG[level])} />
+        <Shape box={pill} className={cn(SURFACE_BG[level])} />
         {hasBody && <Shape box={bodyBox} shapeRef={bodyShape} className={cn(shape.container, SURFACE_BG[level])} />}
       </div>
 
@@ -281,7 +338,7 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject<ToastData
           ref={header}
           className="absolute top-0 left-0 flex h-9 w-max items-center py-1.5 pr-4 pl-1.5"
           initial={false}
-          animate={{ x: pillX, y: top ? 0 : height - PILL }}
+          animate={{ x: headerX }}
           transition={move}
         >
           <ToastPrimitive.Title className="relative inline-flex items-center whitespace-nowrap">
@@ -307,10 +364,14 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject<ToastData
           <motion.div
             className="absolute top-0 left-0 w-full overflow-hidden"
             initial={false}
-            animate={{ y: bodyBox.y, height: bodyHeight, opacity: expanded ? 1 : 0 }}
+            animate={{ y: PILL, height: bodyHeight, opacity: expanded ? 1 : 0 }}
             transition={{ ...move, opacity: expanded ? spring.slow : spring.slow.exit }}
           >
-            <div ref={body} className={cn('flex flex-col items-start gap-3 p-4', top ? 'pt-6' : 'pb-6')}>
+            <div
+              ref={body}
+              className="flex flex-col items-start gap-3 pr-4 pb-3.5"
+              style={{ paddingLeft: TITLE_INSET }}
+            >
               <ToastPrimitive.Description className="text-caption text-muted-foreground" />
               {toast.actionProps && <ToastPrimitive.Action render={<Button size="compact" variant="secondary" />} />}
               {customAction}
@@ -453,7 +514,7 @@ const ToastClose = forwardRef<HTMLButtonElement, ToastCloseProps>(
 ToastClose.displayName = 'ToastClose'
 
 interface ToastProps {
-  /** Where toasts stack; the pill sits on that side and the body opens away from the edge. Defaults to `'top-right'`. */
+  /** Where toasts stack; the pill lands on that side and opens into a card. Defaults to `'bottom-center'`. */
   position?: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
   /** How many toasts show at once; older ones wait. Defaults to `3`. */
   limit?: number
@@ -503,19 +564,22 @@ interface ToastProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Toast({ position = 'top-right', limit = 3, timeout = 6000, manager, children }: ToastProps) {
+function Toast({ position = 'bottom-center', limit = 3, timeout = 6000, manager, children }: ToastProps) {
   const settings = useMemo(() => ({ position, timeout }), [position, timeout])
+  const host = useToastHost(position)
 
   return (
     // The provider only ever subscribes to the manager, which is all a `ToastSource` promises.
     <ToastPrimitive.Provider limit={limit} timeout={timeout} toastManager={manager as ToastManager | undefined}>
       <ToastSettings.Provider value={settings}>
         {children}
-        <ToastPrimitive.Portal>
-          <ToastPrimitive.Viewport className={cn('fixed z-[60] flex flex-col gap-2 outline-none', VIEWPORT[position])}>
-            <ToastList />
-          </ToastPrimitive.Viewport>
-        </ToastPrimitive.Portal>
+        {host && (
+          <ToastPrimitive.Portal container={host}>
+            <ToastPrimitive.Viewport className={cn('flex flex-col gap-2 outline-none empty:hidden', FLOW[position])}>
+              <ToastList />
+            </ToastPrimitive.Viewport>
+          </ToastPrimitive.Portal>
+        )}
       </ToastSettings.Provider>
     </ToastPrimitive.Provider>
   )
