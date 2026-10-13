@@ -66,6 +66,8 @@ interface FileDropzoneProps
   required?: boolean
   /** Turns the zone destructive. Defaults to the surrounding Field's `invalid`. */
   invalid?: boolean
+  /** Ids of the elements describing the file input (a field's help text and error): set on the input, not the zone. */
+  'aria-describedby'?: string
   /** Dims the zone and turns files away. Defaults to the surrounding Field's `disabled`. */
   disabled?: boolean
   /** Shows the zone without taking files: no browse, no drop, no hover. Defaults to the surrounding Field's `readOnly`. */
@@ -74,7 +76,7 @@ interface FileDropzoneProps
   size?: SizeVariant
   /** Classes for the zone. */
   className?: string
-  /** Inline styles for the zone (its `<label>` root). The other attributes of a `<label>` (`title`, `data-*`, `aria-*`, `onClick`) reach it too, and drag handlers run before the zone's own. */
+  /** Inline styles for the zone (its `<label>` root). The other attributes of a `<label>` (`title`, `data-*`, `aria-*` but `aria-describedby`, `onClick`) reach it too, and drag handlers run before the zone's own. */
   style?: CSSProperties
 }
 
@@ -145,6 +147,7 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
       onDragOver: dragOver,
       onDragLeave: dragLeave,
       onDrop: dropped,
+      'aria-describedby': ariaDescribedBy,
       ...rest
     },
     ref,
@@ -260,6 +263,8 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
           // Not native `required`: the input is cleared after every pick, so it would always be missing.
           aria-required={(required ?? field?.required) || undefined}
           aria-invalid={isInvalid || undefined}
+          // only when given: an undefined one would override the Field's own
+          {...(ariaDescribedBy && { 'aria-describedby': ariaDescribedBy })}
           render={<input type="file" accept={accept} multiple={multiple} onChange={onChange} className="sr-only" />}
         />
         {children ?? (
