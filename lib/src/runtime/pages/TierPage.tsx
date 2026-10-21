@@ -1,3 +1,4 @@
+import { config } from 'virtual:modo-config'
 import { type ItemEntry, items } from 'virtual:modo-items'
 import type { Tier } from '../../lib/tiers'
 import { Heading } from '../anchor'
@@ -29,7 +30,7 @@ export function TierPage({ tier }: { tier: Tier }) {
           Nothing in <code>{tier}/</code> yet.
         </p>
       ) : (
-        <Groups tier={tier} tree={groupTree(list)} level={2} />
+        <Groups tier={tier} tree={groupTree(list, config.groups)} level={2} />
       )}
     </>
   )

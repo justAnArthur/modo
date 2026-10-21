@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactElement, ReactNode } from 'react'
+import { type CSSProperties, type ReactElement, type ReactNode, useSyncExternalStore } from 'react'
 import type { Group, Swatch } from '../../lib/css'
 import { Heading } from '../anchor'
 
@@ -10,12 +10,40 @@ export function declared(vars: Var[]): Var[] {
   return vars.filter((v, i) => vars.findIndex(w => w.name === v.name) === i)
 }
 
-/** Smallest first. A value the parser couldn't size (calc(), min(), var())
-    sorts by the length it resolves to on the page; one that resolves to none
-    goes last. */
+// A host switches theme through <html> (a class, an attribute, an inline
+// style) or follows the OS; either way the token views render again.
+const dark = typeof matchMedia === 'undefined' ? undefined : matchMedia('(prefers-color-scheme: dark)')
+
+function subscribeTheme(onChange: () => void) {
+  const observer = new MutationObserver(onChange)
+  observer.observe(document.documentElement, { attributes: true })
+  dark?.addEventListener('change', onChange)
+  return () => {
+    observer.disconnect()
+    dark?.removeEventListener('change', onChange)
+  }
+}
+
+function themeSnapshot(): string {
+  const attrs = [...document.documentElement.attributes].map(a => `${a.name}=${a.value}`)
+  return `${attrs.join(' ')} ${dark?.matches}`
+}
+
+/** Renders the caller again when the host switches theme, so live values are read anew. */
+export function useTheme(): void {
+  useSyncExternalStore(subscribeTheme, themeSnapshot, () => '')
+}
+
+/** Smallest first, by the length each token resolves to on the page (a host
+    theme can override the file's value, or write it as calc(), min(), var());
+    the file's own value where the page gives none, else last. */
 export function byLength(vars: Var[]): Var[] {
-  const px = (v: Var) =>
-    v.swatch?.kind === 'length' || v.swatch?.kind === 'font-size' ? v.swatch.px : resolvedPx(v.name)
+  const declaredPx = (v: Var) =>
+    v.swatch?.kind === 'length' || v.swatch?.kind === 'font-size' ? v.swatch.px : Infinity
+  const px = (v: Var) => {
+    const live = resolvedPx(v.name)
+    return live === Infinity ? declaredPx(v) : live
+  }
   const order = new Map(vars.map(v => [v, px(v)]))
   return [...vars].sort((a, b) => order.get(a)! - order.get(b)!)
 }

@@ -9,10 +9,12 @@ interface Group<T> {
 /**
  * Items as a tree of their group folders (`group` is the folder path,
  * `inputs/date-time`): each level lists its own items first, then its groups
- * in folder-name order; items keep their order. `form-controls` → `Form controls`.
+ * in folder-name order; items keep their order. `form-controls` → `Form controls`,
+ * unless `titles` names the folder (`{ ui: 'UI' }`).
  */
 export function groupTree<T extends { group?: string }>(
   list: readonly T[],
+  titles: Readonly<Record<string, string>> = {},
   depth = 0,
 ): { items: T[]; groups: Group<T>[] } {
   const folder = (it: T) => it.group?.split('/')[depth]
@@ -20,9 +22,10 @@ export function groupTree<T extends { group?: string }>(
   return {
     items: list.filter(it => folder(it) === undefined),
     groups: keys.map(key => ({
-      title: cap(key.replaceAll('-', ' ')),
+      title: titles[key] ?? cap(key.replaceAll('-', ' ')),
       ...groupTree(
         list.filter(it => folder(it) === key),
+        titles,
         depth + 1,
       ),
     })),

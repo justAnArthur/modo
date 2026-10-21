@@ -67,7 +67,7 @@ function NavSection({
           All {title.toLowerCase()}
         </Item>
       ) : null}
-      {groups(groupTree(items))}
+      {groups(groupTree(items, config.groups))}
     </Section>
   )
 

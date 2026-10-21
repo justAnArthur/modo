@@ -1,6 +1,6 @@
 import type { CSSProperties } from 'react'
 import { resolved } from './host-colors'
-import { byLength, OtherTokens, TokenLabel, TokenSection, type Var } from './token-row'
+import { byLength, OtherTokens, TokenLabel, TokenSection, useTheme, type Var } from './token-row'
 
 const SAMPLE = 'The quick brown fox jumps over the lazy dog'
 const GLYPHS = ['ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz', '0123456789 !?&@#%']
@@ -63,6 +63,7 @@ function sizeStyle(v: Var, weight?: Var): CSSProperties {
 }
 
 export function TypographyView({ vars }: { vars: Var[] }) {
+  useTheme()
   const { elements, families, sizes, weights, other, weightOf } = roles(vars)
   const paired = new Set(sizes.map(weightOf))
   const standalone = weights.filter(w => !paired.has(w))
@@ -172,6 +173,7 @@ function Step({ v, weight }: { v: Var; weight?: Var }) {
 
 /** The scale climbing in the first family, for the Foundations overview. */
 export function TypographyPreview({ vars }: { vars: Var[] }) {
+  useTheme()
   const { families, sizes, weightOf } = roles(vars)
   const family = families[0]
   return (

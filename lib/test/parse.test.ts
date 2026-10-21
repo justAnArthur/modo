@@ -130,4 +130,10 @@ describe('groupTree', () => {
     expect(tree.groups[0]?.items.map(it => it.id)).toEqual(['select'])
     expect(tree.groups[0]?.groups.map(g => [g.title, g.items.map(it => it.id)])).toEqual([['Date time', ['calendar']]])
   })
+
+  test('titles name folders at any depth', () => {
+    const tree = groupTree([{ id: 'select', group: 'ui/date-time' }], { ui: 'UI', 'date-time': 'Date & time' })
+    expect(tree.groups.map(g => g.title)).toEqual(['UI'])
+    expect(tree.groups[0]?.groups.map(g => g.title)).toEqual(['Date & time'])
+  })
 })
