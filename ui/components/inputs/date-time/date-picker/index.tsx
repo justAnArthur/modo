@@ -112,6 +112,8 @@ interface DatePickerProps extends PickerControlProps {
   startMonth?: Date
   /** The last month the calendar reaches. Defaults to 50 years ahead. */
   endMonth?: Date
+  /** The month the calendar opens on while no date is picked, e.g. a few decades back for a date of birth. A picked date wins. Defaults to the current month. */
+  defaultMonth?: Date
   /** Framed at rest, or invisible until hovered or focused. Defaults to `"bordered"`. */
   variant?: FieldVariant
   /** Marks the field invalid. Defaults to `false`. */
@@ -187,6 +189,10 @@ const keepTime = (day: Date, from: Date | null) =>
  * follow it, and `dir="rtl"` mirrors the panel. Every word it shows or
  * announces comes from `labels`, and `formatDate` writes the field's text.
  *
+ * The calendar opens on the picked date's month, else on `defaultMonth`
+ * (a date of birth's decade, say), else on the current one, with the month's
+ * name at the top.
+ *
  * `hidden` days leave gaps in the calendar and can't be typed. `required`
  * keeps the picked day when it is pressed again and stops an empty native
  * form submit; `unselectable` keeps a picked date from being cleared at all.
@@ -227,6 +233,7 @@ const DatePicker: ForwardRefExoticComponent<DatePickerProps & RefAttributes<HTML
       name,
       startMonth,
       endMonth,
+      defaultMonth,
       variant,
       invalid,
       size,
@@ -302,7 +309,8 @@ const DatePicker: ForwardRefExoticComponent<DatePickerProps & RefAttributes<HTML
         <PickerInput
           ref={dateInput}
           aria-label={dateLabel}
-          placeholder={placeholder}
+          // Never a blank box: without a placeholder, the field's name.
+          placeholder={placeholder ?? dateLabel}
           formatted={value ? format(value, 'PP', { locale }) : ''}
           onText={readDate}
           onEnter={() => setOpen(false)}
@@ -400,6 +408,7 @@ const DatePicker: ForwardRefExoticComponent<DatePickerProps & RefAttributes<HTML
           columnLabels={labels}
           startMonth={startMonth}
           endMonth={endMonth}
+          defaultMonth={defaultMonth}
           dir={dir}
           columnsSide={columnsSide}
           extraColumnsSide={timeColumnsSide}

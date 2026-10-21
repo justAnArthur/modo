@@ -116,6 +116,8 @@ interface DateRangePickerProps extends PickerControlProps {
   startMonth?: Date
   /** The last month the calendar reaches. Defaults to 50 years ahead. */
   endMonth?: Date
+  /** The month the calendar opens on while no range is picked. A picked start wins. Defaults to the current month. */
+  defaultMonth?: Date
   /** Framed at rest, or invisible until hovered or focused. Defaults to `"bordered"`. */
   variant?: FieldVariant
   /** Marks the field invalid. Defaults to `false`. */
@@ -217,6 +219,7 @@ const DateRangePicker: ForwardRefExoticComponent<
     endInputProps,
     startMonth,
     endMonth,
+    defaultMonth,
     variant,
     invalid,
     size,
@@ -474,6 +477,7 @@ const DateRangePicker: ForwardRefExoticComponent<
         hidden={hidden}
         startMonth={startMonth}
         endMonth={endMonth}
+        defaultMonth={defaultMonth}
         dir={dir}
         columnsSide={columnsSide}
         columnLabels={labels}

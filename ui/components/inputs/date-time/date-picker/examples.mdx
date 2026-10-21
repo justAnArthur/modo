@@ -120,6 +120,21 @@ Every word comes from `labels`, and `formatDate` writes the field's text. `actio
   />
 </div>
 
+## A date of birth
+
+`defaultMonth` is where the calendar opens while nothing is picked, here thirty years back; `endMonth` and a `disabled` matcher stop it at today.
+
+<div className="w-72 max-w-full">
+  <DatePicker
+    editable
+    aria-label="Date of birth"
+    defaultMonth={new Date(new Date().getFullYear() - 30, 0, 1)}
+    startMonth={new Date(new Date().getFullYear() - 100, 0, 1)}
+    endMonth={new Date()}
+    disabled={{ after: new Date() }}
+  />
+</div>
+
 ## Hidden days
 
 `hidden` leaves days out of the calendar: here the weekends are gaps, and typing one is refused.

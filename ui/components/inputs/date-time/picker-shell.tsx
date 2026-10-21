@@ -377,7 +377,8 @@ function PanelHeader({
   const sizeClasses = useSize()
   return (
     <div className="flex items-center gap-1 border-b border-border pb-1">
-      <div className="flex min-w-0 flex-1 items-center">{header}</div>
+      {/* The gap keeps a focused input's ring clear of the next input's fill (a date and a time side by side). */}
+      <div className="flex min-w-0 flex-1 items-center gap-1">{header}</div>
       <Button variant="ghost" size="icon-sm" aria-label={closeLabel} onClick={close}>
         <X size={sizeClasses.icon} strokeWidth={1.5} />
       </Button>
@@ -539,7 +540,8 @@ interface PickerInputProps extends Omit<InputProps, 'value' | 'defaultValue' | '
  * A header input: shows the formatted value, selects it all on focus, and
  * commits what is typed as soon as it reads as a value (marking it invalid
  * until then). Leaving it restores the formatted value. Hover and focus fill
- * it without the field ring.
+ * it without the field ring. The input carries `data-picker-input`, so a host
+ * that restyles its fields' focus can leave the panel's inputs out.
  */
 const PickerInput = forwardRef<HTMLInputElement, PickerInputProps>(
   ({ formatted, onText, onEnter, onFocus, onBlur, onKeyDown, className, ...props }, ref) => {
@@ -548,6 +550,8 @@ const PickerInput = forwardRef<HTMLInputElement, PickerInputProps>(
     return (
       <Input
         ref={ref}
+        // A hook for hosts restyling fields: the panel's own inputs aren't fields of the form.
+        data-picker-input=""
         {...props}
         // The header is already framed by the panel: hover and focus change
         // the fill only (an invalid entry keeps its destructive ring).
