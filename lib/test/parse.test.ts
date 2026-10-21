@@ -74,6 +74,11 @@ describe('parseCss', () => {
     ])
   })
 
+  test('a unitless number is a ratio, not a font size', () => {
+    const vars = parseCss(':root { --type-scale: 1.25; --text-body: 1rem }')
+    expect(buildGroup('typography', vars).vars.map(v => v.swatch?.kind)).toEqual([undefined, 'font-size'])
+  })
+
   test('a type role classifies by what it references; its color has no swatch', () => {
     const vars = parseCss(
       ':root { --text-body: 13px; --font-size-p: var(--text-body); --line-height-p: 20px; --color-p: var(--muted) }',
