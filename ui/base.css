@@ -312,9 +312,13 @@ html.transitioning *::after {
   }
 }
 
-.scroll-fade,
-.scroll-fade-x {
-  --scroll-fade-size: 48px;
+/* The fade's depth. Registered rather than declared on `.scroll-fade`, so a size utility on the same element
+   (`[--scroll-fade-size:16px]`) wins whatever layer or order it lands in, and a nested scroller doesn't
+   inherit its parent's size. */
+@property --scroll-fade-size {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 48px;
 }
 
 /* Static fallback: fade both edges. */
