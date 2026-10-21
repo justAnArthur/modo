@@ -105,27 +105,83 @@
   }
 }
 
+/* The phone header with the nav toggle; only below md. */
+[data-modo="mobile-bar"],
+[data-modo="sidebar-scrim"] {
+  display: none;
+}
+
+/* Below md the nav is a drawer over the page, opened from the mobile bar
+   (renderer.tsx); the panel (its controls) and the content stack under the
+   bar. Closed, the drawer is hidden from focus and assistive tech too. */
 @media (max-width: 767px) {
   [data-modo="app"] {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto;
-    grid-template-areas: "sidebar" "panel" "content";
+    grid-template-areas: "bar" "panel" "content";
   }
 
-  /* A capped, scrollable nav keeps the page itself reachable. */
+  [data-modo="mobile-bar"] {
+    grid-area: bar;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2, 8px);
+    min-width: 0;
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+    border-bottom: 1px solid var(--modo-border);
+    background: var(--background, Canvas);
+  }
+
+  [data-modo="mobile-bar-title"] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: var(--modo-font-weight-semibold);
+  }
+
   [data-modo="sidebar"] {
-    position: static;
-    height: auto;
-    max-height: 45vh;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    width: min(20rem, 85vw);
+    height: 100dvh;
+    overscroll-behavior: contain;
+    background: var(--background, Canvas);
+    box-shadow: 0 0 2rem color-mix(in oklab, currentColor 25%, transparent);
+    translate: -100% 0;
+    visibility: hidden;
+    transition:
+      translate var(--duration-fast, 150ms) ease-out,
+      visibility 0s linear var(--duration-fast, 150ms);
   }
 
-  [data-modo="sidebar"] [data-modo="sidebar-nav"] {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  [data-modo="sidebar"][data-open] {
+    translate: 0 0;
+    visibility: visible;
+    transition: translate var(--duration-fast, 150ms) ease-out;
+  }
+
+  [data-modo="sidebar-scrim"] {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: color-mix(in oklab, currentColor 45%, transparent);
   }
 
   [data-modo="content"] {
     padding: var(--space-4, 16px);
+  }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  [data-modo="sidebar"],
+  [data-modo="sidebar"][data-open] {
+    transition: none;
   }
 }
 
