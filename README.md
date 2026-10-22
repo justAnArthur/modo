@@ -154,7 +154,7 @@ the docs chrome looks for your components per slot (`Button`, `Link`, `Code`, `I
 - discovery + parsing: `tokens/*.css` (file-per-group or var prefixes), `<tier>/<name>/index.tsx` items with TSDoc-extracted name/description/props, and their live examples from `examples.mdx`
 - the docs site chrome (sidebar / content / panel / example cards / prop tables / foundation pages / canvas) as **structural CSS only** — every visual reads your tokens; the chrome brings only its own labels
 - shell inheritance with graceful Plain fallbacks for unmatched slots
-- user hooks: `modo.config.ts` → `css` (global stylesheet), `vite` (extend the internal Vite config — e.g. add `@tailwindcss/vite`), `shell` (pin slots explicitly), `panel`, `examples` (names in scope in every example)
+- user hooks: `modo.config.ts` → `css` (global stylesheet), `vite` (extend the internal Vite config — e.g. add `@tailwindcss/vite`), `shell` (pin slots explicitly), `panel`, `examples` (names in scope in every example), `groups` (titles of group folders, `{ ui: 'UI' }`)
 
 ## structure
 

@@ -1,11 +1,11 @@
 import { tokens as groups } from 'virtual:modo-tokens'
-import { type ReactNode, useSyncExternalStore } from 'react'
+import type { ReactNode } from 'react'
 import type { GroupName } from '../../lib/css'
 import { cap, count } from '../text'
 import { colorExpr, colorValue, resolved } from './host-colors'
 import { RadiusPreview, RadiusView, SpacingPreview, SpacingView } from './lengths'
 import { MotionPreview, MotionView } from './motion'
-import { declared, OtherTokens, TokenSection, type Var } from './token-row'
+import { declared, OtherTokens, TokenSection, useTheme, type Var } from './token-row'
 import { TypographyPreview, TypographyView } from './typography'
 
 type View = (props: { vars: Var[] }) => ReactNode
@@ -77,27 +77,8 @@ interface Tile {
   fg?: Var
 }
 
-// A host switches theme through <html> (a class, an attribute, an inline
-// style) or follows the OS; either way the tiles are measured again.
-const dark = matchMedia('(prefers-color-scheme: dark)')
-
-function subscribeTheme(onChange: () => void) {
-  const observer = new MutationObserver(onChange)
-  observer.observe(document.documentElement, { attributes: true })
-  dark.addEventListener('change', onChange)
-  return () => {
-    observer.disconnect()
-    dark.removeEventListener('change', onChange)
-  }
-}
-
-function themeSnapshot(): string {
-  const attrs = [...document.documentElement.attributes].map(a => `${a.name}=${a.value}`)
-  return `${attrs.join(' ')} ${dark.matches}`
-}
-
 function ColorGroups({ vars }: { vars: Var[] }) {
-  useSyncExternalStore(subscribeTheme, themeSnapshot)
+  useTheme()
   // A token counts as a color when its resolved value is one, either on its
   // own or wrapped the way the host wraps it (`hsl(var(--border))`).
   const colors = vars.filter(v => colorValue(v.name, resolved(v.name, v.value)) !== null)

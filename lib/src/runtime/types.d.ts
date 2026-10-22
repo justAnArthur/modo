@@ -46,7 +46,7 @@ declare module 'virtual:modo-shell' {
     Link: ModoHostComponent
     Code: ModoHostComponent
     Select: ModoHostComponent
-    Icon: import('react').ComponentType<{ name: 'code' | 'copy' | 'check' | 'link'; label: string }>
+    Icon: import('react').ComponentType<{ name: 'code' | 'copy' | 'check' | 'link' | 'menu' | 'close'; label: string }>
     Sidebar: { Root: ModoHostComponent; Item: ModoHostComponent; Section: ModoHostComponent }
   }
   export const shell: ResolvedShellExport

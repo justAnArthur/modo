@@ -37,6 +37,8 @@ export interface SiteConfig {
   vite?: string
   /** A module whose named exports are in scope in every example (icons, helpers). Item names win on collision. */
   examples?: string
+  /** Titles of group folders by folder name (`{ ui: 'UI' }`); others are the folder name, capitalized. */
+  groups?: Record<string, string>
 }
 
 const ref = z.string().optional()
@@ -57,5 +59,6 @@ export const siteConfigSchema = z
     css: z.string().optional(),
     vite: z.string().optional(),
     examples: z.string().optional(),
+    groups: z.record(z.string()).optional(),
   })
   .strict() satisfies z.ZodType<SiteConfig>

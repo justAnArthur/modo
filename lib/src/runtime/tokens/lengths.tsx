@@ -1,6 +1,7 @@
-import { byLength, TokenLabel, type Var } from './token-row'
+import { byLength, TokenLabel, useTheme, type Var } from './token-row'
 
 export function RadiusView({ vars }: { vars: Var[] }) {
+  useTheme()
   return (
     <section data-modo="section">
       <div data-modo="radius-grid">
@@ -16,6 +17,7 @@ export function RadiusView({ vars }: { vars: Var[] }) {
 }
 
 export function RadiusPreview({ vars }: { vars: Var[] }) {
+  useTheme()
   return (
     <div data-modo="token-preview">
       {byLength(vars)
@@ -28,6 +30,7 @@ export function RadiusPreview({ vars }: { vars: Var[] }) {
 }
 
 export function SpacingView({ vars }: { vars: Var[] }) {
+  useTheme()
   return (
     <section data-modo="section">
       <div data-modo="space-scale">
@@ -43,6 +46,7 @@ export function SpacingView({ vars }: { vars: Var[] }) {
 }
 
 export function SpacingPreview({ vars }: { vars: Var[] }) {
+  useTheme()
   return (
     <div data-modo="space-preview">
       {byLength(vars)

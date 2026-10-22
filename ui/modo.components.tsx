@@ -3,7 +3,7 @@
  * modo.config.ts picks each one by export name: `./modo.components.tsx#Select`.
  */
 
-import { Check, CodeXml, Copy, Link2, Monitor, Moon, Sun } from 'lucide-react'
+import { Check, CodeXml, Copy, Link2, Menu, Monitor, Moon, Sun, X } from 'lucide-react'
 import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useState } from 'react'
 import FluidSelect from './components/inputs/select'
 import Sidebar, {
@@ -14,7 +14,7 @@ import Sidebar, {
 } from './components/navigation/sidebar'
 import { cn } from './lib/utils'
 
-const icons = { code: CodeXml, copy: Copy, check: Check, link: Link2 }
+const icons = { code: CodeXml, copy: Copy, check: Check, link: Link2, menu: Menu, close: X }
 
 /** Icon slot: the chrome asks for icons by name; lucide draws them. */
 export function Icon({

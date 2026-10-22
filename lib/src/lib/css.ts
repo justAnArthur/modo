@@ -118,6 +118,8 @@ function typographySwatch(name: string, value: string): Swatch | undefined {
   if (name.includes('weight') || value.includes('"wght"') || /^[1-9]00$/.test(value))
     return { kind: 'font-weight', value }
   if (/^--(leading|tracking)-|line-height|letter-spacing|color/.test(name)) return undefined
+  // A bare number is a ratio (a type scale) or a line height, never a font size.
+  if (/^-?\d*\.?\d+$/.test(value.trim())) return undefined
   if (/^\d/.test(value)) return fontSizeSwatch(value) ?? lengthSwatch(value)
   return { kind: 'font-family', family: value }
 }

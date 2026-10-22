@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactElement, ReactNode } from 'react'
+import { type CSSProperties, type ReactElement, type ReactNode, useSyncExternalStore } from 'react'
 import type { Group, Swatch } from '../../lib/css'
 import { Heading } from '../anchor'
 
@@ -10,10 +10,56 @@ export function declared(vars: Var[]): Var[] {
   return vars.filter((v, i) => vars.findIndex(w => w.name === v.name) === i)
 }
 
-/** Smallest first; values the parser couldn't size (calc(), var()) go last. */
+// A host switches theme through <html> (a class, an attribute, an inline
+// style) or follows the OS; either way the token views render again.
+const dark = typeof matchMedia === 'undefined' ? undefined : matchMedia('(prefers-color-scheme: dark)')
+
+function subscribeTheme(onChange: () => void) {
+  const observer = new MutationObserver(onChange)
+  observer.observe(document.documentElement, { attributes: true })
+  dark?.addEventListener('change', onChange)
+  return () => {
+    observer.disconnect()
+    dark?.removeEventListener('change', onChange)
+  }
+}
+
+function themeSnapshot(): string {
+  const attrs = [...document.documentElement.attributes].map(a => `${a.name}=${a.value}`)
+  return `${attrs.join(' ')} ${dark?.matches}`
+}
+
+/** Renders the caller again when the host switches theme, so live values are read anew. */
+export function useTheme(): void {
+  useSyncExternalStore(subscribeTheme, themeSnapshot, () => '')
+}
+
+/** Smallest first, by the length each token resolves to on the page (a host
+    theme can override the file's value, or write it as calc(), min(), var());
+    the file's own value where the page gives none, else last. */
 export function byLength(vars: Var[]): Var[] {
-  const px = (v: Var) => (v.swatch?.kind === 'length' || v.swatch?.kind === 'font-size' ? v.swatch.px : Infinity)
-  return [...vars].sort((a, b) => px(a) - px(b))
+  const declaredPx = (v: Var) =>
+    v.swatch?.kind === 'length' || v.swatch?.kind === 'font-size' ? v.swatch.px : Infinity
+  const px = (v: Var) => {
+    const live = resolvedPx(v.name)
+    return live === Infinity ? declaredPx(v) : live
+  }
+  const order = new Map(vars.map(v => [v, px(v)]))
+  return [...vars].sort((a, b) => order.get(a)! - order.get(b)!)
+}
+
+/** The token as the page lays it out, in px (Infinity when it is no length). */
+function resolvedPx(name: string): number {
+  if (typeof document === 'undefined') return Infinity
+  // An invalid var() makes the whole width `auto` (0 on an empty absolute box),
+  // so the offset tells a resolved 0 from no length at all.
+  const OFFSET = 100_000
+  const probe = document.createElement('div')
+  probe.style.cssText = `position:absolute;visibility:hidden;width:calc(var(${name}) + ${OFFSET}px)`
+  document.body.append(probe)
+  const width = probe.getBoundingClientRect().width
+  probe.remove()
+  return width >= OFFSET / 2 ? width - OFFSET : Infinity
 }
 
 /** A titled part of a token page, anchored so the TOC lists it. */

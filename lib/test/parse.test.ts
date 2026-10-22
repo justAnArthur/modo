@@ -74,6 +74,11 @@ describe('parseCss', () => {
     ])
   })
 
+  test('a unitless number is a ratio, not a font size', () => {
+    const vars = parseCss(':root { --type-scale: 1.25; --text-body: 1rem }')
+    expect(buildGroup('typography', vars).vars.map(v => v.swatch?.kind)).toEqual([undefined, 'font-size'])
+  })
+
   test('a type role classifies by what it references; its color has no swatch', () => {
     const vars = parseCss(
       ':root { --text-body: 13px; --font-size-p: var(--text-body); --line-height-p: 20px; --color-p: var(--muted) }',
@@ -124,5 +129,11 @@ describe('groupTree', () => {
     expect(tree.groups.map(g => g.title)).toEqual(['Inputs', 'Overlays'])
     expect(tree.groups[0]?.items.map(it => it.id)).toEqual(['select'])
     expect(tree.groups[0]?.groups.map(g => [g.title, g.items.map(it => it.id)])).toEqual([['Date time', ['calendar']]])
+  })
+
+  test('titles name folders at any depth', () => {
+    const tree = groupTree([{ id: 'select', group: 'ui/date-time' }], { ui: 'UI', 'date-time': 'Date & time' })
+    expect(tree.groups.map(g => g.title)).toEqual(['UI'])
+    expect(tree.groups[0]?.groups.map(g => g.title)).toEqual(['Date & time'])
   })
 })

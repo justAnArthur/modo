@@ -5,9 +5,9 @@
  * this maps them onto the lucide set the design system already uses.
  */
 
-import { Check, CodeXml, Copy, Link2 } from 'lucide-react'
+import { Check, CodeXml, Copy, Link2, Menu, X } from 'lucide-react'
 
-const icons = { code: CodeXml, copy: Copy, check: Check, link: Link2 }
+const icons = { code: CodeXml, copy: Copy, check: Check, link: Link2, menu: Menu, close: X }
 
 export default function Icon({
   name,
