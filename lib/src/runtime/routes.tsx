@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { Tier } from '../lib/tiers'
 import { ItemPage } from './items/item-page'
+import { CanvasPage } from './pages/CanvasPage'
 import { HomePage } from './pages/HomePage'
 import { TierPage } from './pages/TierPage'
 import { TokensPage } from './pages/TokensPage'
@@ -13,6 +14,7 @@ interface Route {
 
 export const routes: Route[] = [
   { pattern: /^\/$/, render: () => <HomePage /> },
+  { pattern: /^\/canvas$/, render: () => <CanvasPage /> },
   { pattern: /^\/docs\/tokens$/, render: () => <TokensPage /> },
   { pattern: /^\/docs\/tokens\/([^/]+)$/, render: m => <TokenGroupView group={m[1]!} /> },
   { pattern: /^\/docs\/(primitives|components|blocks)$/, render: m => <TierPage tier={m[1] as Tier} /> },

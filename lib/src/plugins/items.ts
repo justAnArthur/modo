@@ -85,6 +85,7 @@ export function itemsPlugin(options: Options): Plugin {
       async handler(_, bundle) {
         const { items } = await bundler.get()
         emitRoutes(this, bundle, [
+          'canvas',
           ...new Set(items.map(it => `docs/${it.tier}`)),
           ...items.map(it => `docs/${it.tier}/${it.id}`),
         ])

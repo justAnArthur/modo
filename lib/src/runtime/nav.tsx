@@ -13,7 +13,14 @@ export function SidebarNav() {
   const isActive = (href: string) => path === href || path.startsWith(`${href}/`)
   return (
     <>
-      <NavSection title={config.name} items={[{ id: '/', name: 'Overview' }]} isActive={isActive} />
+      <NavSection
+        title={config.name}
+        items={[
+          { id: '/', name: 'Overview' },
+          { id: '/canvas', name: 'Canvas' },
+        ]}
+        isActive={isActive}
+      />
       <NavSection
         title="Foundations"
         overview="/docs/tokens"
