@@ -2,7 +2,7 @@
 
 # modo
 
-a lightweight CLI that renders a **docs site / playground for your design system**. zero config: the lib enforces a simple folder structure (`tokens/ → primitives/ → components/ → blocks/`), discovers it, and produces the site — including **shell inheritance**: when your components match the docs chrome's slots (Button, Link, Select, Sidebar…), the chrome itself renders with *your* components. one Sidebar drives both the left nav and the right panel.
+a lightweight CLI that renders a **docs site / playground for your design system**. zero config: the lib enforces a simple folder structure (`tokens/ → primitives/ → components/ → blocks/ → pages/`), discovers it, and produces the site — plus a **canvas**: every foundation and item live on one pan-and-zoom surface — including **shell inheritance**: when your components match the docs chrome's slots (Button, Link, Select, Sidebar…), the chrome itself renders with *your* components. one Sidebar drives both the left nav and the right panel.
 
 **live demo: https://justanarthur.github.io/modo/** — every design system below, switchable from the panel.
 
@@ -49,10 +49,11 @@ my-ds/
 │       ├── examples.mdx    — its live examples
 │       └── button.css      — co-located CSS is auto-injected
 ├── components/             — tier 2: composites (Dialog, Select, …)
-└── blocks/                 — tier 3: page-level patterns
+├── blocks/                 — tier 3: page-level patterns
+└── pages/                  — tier 4: full screens assembled from blocks
 ```
 
-`tokens/`, `primitives/`, `components/`, `blocks/` are auto-discovered by directory. any of them can be omitted; tiers render in that order. add more later with `bunx modo add primitive my-thing` (or `component`, `block`, `token`); it writes `index.tsx` and `examples.mdx` from `lib/templates/stubs`.
+`tokens/`, `primitives/`, `components/`, `blocks/`, `pages/` are auto-discovered by directory. any of them can be omitted; tiers render in that order. add more later with `bunx modo add primitive my-thing` (or `component`, `block`, `page`, `token`); it writes `index.tsx` and `examples.mdx` from `lib/templates/stubs`.
 
 ## how it works
 
@@ -60,12 +61,20 @@ modo discovers the tiers by directory, reads each item's TSDoc contract and its 
 
 ```mermaid
 flowchart LR
-  T[tokens/] --> P[primitives/] --> C[components/] --> B[blocks/]
+  T[tokens/] --> P[primitives/] --> C[components/] --> B[blocks/] --> PG[pages/]
   CFG[modo.config.ts] --> M[modo dev / modo build]
-  B --> M
+  PG --> M
   M --> S[Docs site and playground]
   C -. matching slots: Button, Link, Select, Sidebar .-> S
 ```
+
+## canvas
+
+`/canvas` (in the sidebar, under Overview) lays out every token group and every item as a live, interactive frame: a column per tier, in sidebar order. new items show up on their own.
+
+- scroll pans; pinch or ⌘/Ctrl+scroll zooms toward the cursor; drag the background (or hold Space) to pan; Shift+0 is 100%, Shift+1 fits everything.
+- built to stay fast with hundreds of items: gestures move one transform without re-rendering React, frames mount only near the view and above 25% zoom (a few per frame), and off-screen frames skip layout and paint. a mounted frame keeps its state.
+- restyle it like the rest of the chrome through `data-modo="canvas-*"` attributes.
 
 ## authoring items
 
@@ -143,7 +152,7 @@ the docs chrome looks for your components per slot (`Button`, `Link`, `Code`, `I
 ## what the lib ships
 
 - discovery + parsing: `tokens/*.css` (file-per-group or var prefixes), `<tier>/<name>/index.tsx` items with TSDoc-extracted name/description/props, and their live examples from `examples.mdx`
-- the docs site chrome (sidebar / content / panel / example cards / prop tables / foundation pages) as **structural CSS only** — every visual reads your tokens; the chrome brings only its own labels
+- the docs site chrome (sidebar / content / panel / example cards / prop tables / foundation pages / canvas) as **structural CSS only** — every visual reads your tokens; the chrome brings only its own labels
 - shell inheritance with graceful Plain fallbacks for unmatched slots
 - user hooks: `modo.config.ts` → `css` (global stylesheet), `vite` (extend the internal Vite config — e.g. add `@tailwindcss/vite`), `shell` (pin slots explicitly), `panel`, `examples` (names in scope in every example)
 

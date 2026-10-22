@@ -48,6 +48,10 @@ Tokens, primitives, components, blocks and pages are discovered by directory (`t
 
 The CLI accepts any user content — `modo` ships no design tokens, no React components, and no copy. You own the visual layer end-to-end.
 
+## Canvas
+
+`/canvas` shows every token group and item as a live, interactive frame on one pan-and-zoom surface, a column per tier. Scroll pans, pinch or ⌘/Ctrl+scroll zooms, dragging the background (or holding Space) pans; Shift+0 is 100%, Shift+1 fits everything. Frames mount lazily near the view, so it stays fast with hundreds of items.
+
 ## How it works
 
 `modo` discovers your design system files at the configured paths, parses each via a TSDoc-aware extractor, and renders an interactive docs site where the chrome (sidebar, page headers, prop tables, example cards) is structural-only. The example content is your components — `modo` doesn't generate fake components to fill the chrome.
