@@ -502,6 +502,10 @@
   --modo-frame-width: 1280px;
 }
 
+[data-modo="canvas-column"][data-kind="pages"] {
+  --modo-frame-width: 1440px;
+}
+
 [data-modo="canvas-frames"] {
   display: grid;
   grid-template-columns: repeat(var(--modo-canvas-cols), var(--modo-frame-width));

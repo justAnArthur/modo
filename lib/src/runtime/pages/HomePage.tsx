@@ -1,7 +1,7 @@
 import { config } from 'virtual:modo-config'
 import { items } from 'virtual:modo-items'
 import { tokens } from 'virtual:modo-tokens'
-import { TIERS } from '../../lib/tiers'
+import { isScreenSized, TIERS } from '../../lib/tiers'
 import { ExamplePreview, hasPreview } from '../items/preview'
 import { cap, count } from '../text'
 import { GroupPreview } from '../tokens/token-page'
@@ -16,7 +16,7 @@ export function HomePage() {
       <header data-modo="hero">
         <h1 data-modo="page-title">{config.name}</h1>
         <p data-modo="page-lead">
-          {config.description ?? 'Tokens, primitives, components, and blocks in this design system.'}
+          {config.description ?? 'Tokens, primitives, components, blocks, and pages in this design system.'}
         </p>
         <p data-modo="hero-stats">
           {count(vars, 'token')} · {count(items.length, 'item')}
@@ -39,8 +39,8 @@ export function HomePage() {
               title={cap(tier)}
               meta={count(list.length, 'item')}
               description={list.map(it => it.name).join(', ')}
-              span={tier === 'blocks' ? 'full' : undefined}
-              zoom={tier === 'blocks' ? 0.7 : undefined}
+              span={isScreenSized(tier) ? 'full' : undefined}
+              zoom={isScreenSized(tier) ? 0.7 : undefined}
             >
               <ExamplePreview itemId={`${tier}:${shown.id}`} />
             </BentoCard>

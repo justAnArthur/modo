@@ -2,7 +2,7 @@ import { type ItemEntry, items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import { type CSSProperties, type ReactNode, useRef } from 'react'
-import { TIERS } from '../../lib/tiers'
+import { isScreenSized, TIERS, type Tier } from '../../lib/tiers'
 import { useLive, Viewport } from '../canvas/viewport'
 import { groupTree } from '../groups'
 import { ExamplePreview } from '../items/preview'
@@ -45,9 +45,19 @@ function flatten(tree: ReturnType<typeof groupTree<ItemEntry>>): ItemEntry[] {
   return [...tree.items, ...tree.groups.flatMap(flatten)]
 }
 
-function Column({ kind, title, size, children }: { kind: string; title: string; size: number; children: ReactNode }) {
-  // A roughly square block of frames; page-sized blocks stay two across.
-  const cols = Math.min(kind === 'blocks' ? 2 : 6, Math.ceil(Math.sqrt(size)))
+function Column({
+  kind,
+  title,
+  size,
+  children,
+}: {
+  kind: Tier | 'foundations'
+  title: string
+  size: number
+  children: ReactNode
+}) {
+  // A roughly square block of frames; screen-sized ones stay two across.
+  const cols = Math.min(kind !== 'foundations' && isScreenSized(kind) ? 2 : 6, Math.ceil(Math.sqrt(size)))
   return (
     <section data-modo="canvas-column" data-kind={kind} style={{ '--modo-canvas-cols': cols } as CSSProperties}>
       <h2 data-modo="section-title">{title}</h2>

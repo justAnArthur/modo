@@ -159,7 +159,7 @@ Rules:
   - Var prefixes (`--space-*`) work as an alternative to one file per group.
   - A bare shorthand like `--radius` joins its prefix family.
   - In a group file, an unprefixed var belongs to that group (`--sm` in `spacing.css`); a var whose prefix names another group goes there (`--radius-sm` in `colors.css`).
-- `<tier>/<name>/index.tsx` — the item. Tiers are `primitives/`, `components/` and `blocks/`, auto-discovered.
+- `<tier>/<name>/index.tsx` — the item. Tiers are `primitives/`, `components/`, `blocks/` and `pages/` (full screens assembled from blocks), auto-discovered.
   - Optional group folders: `<tier>/<group>/<name>/index.tsx`, nesting further (`components/inputs/date-time/calendar/`). A folder without an `index.tsx` is a group.
   - A group is a nested sidebar `Section` and a headed section of the tier overview (`form-controls` → "Form controls"), a nested group one level deeper in both. Each level lists its own items first, then its groups by folder name.
   - The id stays `<name>`, so urls, bundle keys and `tier:id` don't change; ids stay unique per tier across groups.

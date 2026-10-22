@@ -1,5 +1,5 @@
 import { type ItemEntry, items } from 'virtual:modo-items'
-import type { Tier } from '../../lib/tiers'
+import { isScreenSized, type Tier } from '../../lib/tiers'
 import { Heading } from '../anchor'
 import { groupTree } from '../groups'
 import { ExamplePreview } from '../items/preview'
@@ -11,6 +11,7 @@ const LEAD: Record<Tier, string> = {
   primitives: 'The smallest building blocks of this design system.',
   components: 'Composed pieces built from the primitives.',
   blocks: 'Whole sections, assembled from components.',
+  pages: 'Full screens, assembled from blocks.',
 }
 
 export function TierPage({ tier }: { tier: Tier }) {
@@ -75,10 +76,10 @@ function Cards({ tier, list }: { tier: Tier; list: ItemEntry[] }) {
           href={`/docs/${tier}/${it.id}`}
           title={it.name}
           description={<Lead source={it.description} />}
-          // Blocks are page-sized, so they take the whole row; elsewhere
-          // every fifth cell widens so the grid reads as a bento.
-          span={tier === 'blocks' ? 'full' : i % 5 === 0 ? 'wide' : undefined}
-          zoom={tier === 'blocks' ? 0.7 : undefined}
+          // Blocks and pages take the whole row; elsewhere every fifth cell
+          // widens so the grid reads as a bento.
+          span={isScreenSized(tier) ? 'full' : i % 5 === 0 ? 'wide' : undefined}
+          zoom={isScreenSized(tier) ? 0.7 : undefined}
         >
           <ExamplePreview itemId={`${tier}:${it.id}`} />
         </BentoCard>

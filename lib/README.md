@@ -1,10 +1,10 @@
 # `@justanarthur/modo`
 
-> Atomic design system renderer — reads tokens / primitives / components / blocks and produces a docs site that uses the user's components in the chrome.
+> Atomic design system renderer — reads tokens / primitives / components / blocks / pages and produces a docs site that uses the user's components in the chrome.
 
 **Live demo:** https://justanarthur.github.io/modo/ — five design systems documented by modo.
 
-`modo` enforces the structure of an atomic design system (`tokens → primitives → components → blocks`) and auto-renders its documentation site. The lib ships the renderer and a CLI; the design system itself is **zero content** — you bring your own tokens, components, and blocks.
+`modo` enforces the structure of an atomic design system (`tokens → primitives → components → blocks → pages`) and auto-renders its documentation site. The lib ships the renderer and a CLI; the design system itself is **zero content** — you bring your own tokens, components, blocks, and pages.
 
 ## Install
 
@@ -22,7 +22,7 @@ npx @justanarthur/modo init my-ds
 
 # inside the project
 modo dev                    # dev server
-modo add primitive badge    # primitives/badge/index.tsx + examples.mdx (also component, block, token)
+modo add primitive badge    # primitives/badge/index.tsx + examples.mdx (also component, block, page, token)
 modo add component overlays/dialog  # components/overlays/dialog/: a group folder (groups nest: inputs/date-time/calendar)
 modo check                  # validate modo.config.ts
 modo build                  # static site in ./dist, every route its own page
@@ -44,7 +44,7 @@ export default defineConfig({
 })
 ```
 
-Tokens, primitives, components and blocks are discovered by directory (`tokens/`, `primitives/`, `components/`, `blocks/`). An item folder may sit down in group folders (`components/overlays/dialog/`, nested `components/inputs/date-time/calendar/`); each group becomes a sidebar sub-section and a heading on the tier overview. `examples` points at a module whose named exports (e.g. `export { Plus, Search } from 'lucide-react'`) are in scope in every `@example`, next to your items.
+Tokens, primitives, components, blocks and pages are discovered by directory (`tokens/`, `primitives/`, `components/`, `blocks/`, `pages/`). An item folder may sit down in group folders (`components/overlays/dialog/`, nested `components/inputs/date-time/calendar/`); each group becomes a sidebar sub-section and a heading on the tier overview. `examples` points at a module whose named exports (e.g. `export { Plus, Search } from 'lucide-react'`) are in scope in every `@example`, next to your items.
 
 The CLI accepts any user content — `modo` ships no design tokens, no React components, and no copy. You own the visual layer end-to-end.
 
