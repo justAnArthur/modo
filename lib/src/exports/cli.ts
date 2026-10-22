@@ -109,12 +109,17 @@ function flag(args: string[], name: string): string | undefined {
 
 // An item is <tier>/[<group>/…]<id>/index.tsx with its examples beside it; a
 // token group is a flat tokens/<id>.css.
-const TIERS: Record<string, string> = { primitive: 'primitives', component: 'components', block: 'blocks' }
+const TIERS: Record<string, string> = {
+  primitive: 'primitives',
+  component: 'components',
+  block: 'blocks',
+  page: 'pages',
+}
 
 async function runAdd(args: string[]) {
   const [kind, name] = args
   if (!kind || !name || !(kind in TIERS || kind === 'token')) {
-    throw new Error('add requires `<kind> <name>`, kind one of primitive, component, block, token')
+    throw new Error('add requires `<kind> <name>`, kind one of primitive, component, block, page, token')
   }
   // `overlays/dialog` puts the item in a group folder, `inputs/date-time/calendar` in a nested one.
   const path = name.split('/').map(kebab)

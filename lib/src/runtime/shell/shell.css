@@ -233,7 +233,7 @@
    Layered, so an example's own styles win even from a host's layers
    (an unlayered rule would beat Tailwind's at any specificity). */
 @layer modo-preview {
-  [data-modo="bento-stage"] > * {
+  :is([data-modo="bento-stage"], [data-modo="canvas-stage"]) > * {
     max-width: 100%;
   }
 
@@ -436,6 +436,129 @@
   color: var(--modo-color-h2);
   margin: 0 0 var(--space-3, 12px);
   text-wrap: balance;
+}
+
+/* ── Canvas: every page live on one pan-and-zoom surface ── */
+
+/* The canvas takes the whole content cell, one screen tall. */
+[data-modo="content"]:has(> [data-modo="canvas"]) {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100dvh;
+  padding: 0;
+}
+
+[data-modo="canvas"] {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  /* Touch drags on the background pan; a frame's own controls keep theirs. */
+  touch-action: none;
+}
+
+[data-modo="canvas"]:is([data-space], [data-panning]) {
+  cursor: grab;
+}
+
+[data-modo="canvas"][data-panning] {
+  cursor: grabbing;
+}
+
+[data-modo="canvas-world"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--space-6, 32px) * 4);
+  width: max-content;
+  padding: calc(var(--space-6, 32px) * 2);
+  transform-origin: 0 0;
+}
+
+[data-modo="canvas"][data-moving] > [data-modo="canvas-world"] {
+  will-change: transform;
+}
+
+/* While panning, frames neither react nor set their own cursor. */
+[data-modo="canvas"]:is([data-space], [data-panning]) > [data-modo="canvas-world"] {
+  pointer-events: none;
+}
+
+[data-modo="canvas-column"] {
+  --modo-frame-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+}
+
+[data-modo="canvas-column"][data-kind="components"] {
+  --modo-frame-width: 480px;
+}
+
+[data-modo="canvas-column"][data-kind="blocks"] {
+  --modo-frame-width: 1280px;
+}
+
+[data-modo="canvas-column"][data-kind="pages"] {
+  --modo-frame-width: 1440px;
+}
+
+[data-modo="canvas-frames"] {
+  display: grid;
+  grid-template-columns: repeat(var(--modo-canvas-cols), var(--modo-frame-width));
+  align-items: start;
+  gap: var(--space-6, 32px);
+}
+
+[data-modo="canvas-frame"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+  /* Off-screen frames skip layout and paint; `auto` keeps a mounted frame's
+     last height so the grid doesn't jump. */
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 240px;
+}
+
+[data-modo="canvas-frame-title"] {
+  font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
+  font-weight: var(--modo-font-weight-semibold);
+}
+
+[data-modo="canvas-stage"] {
+  /* Container queries in a block answer to the frame, not the viewport. */
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: safe center;
+  gap: var(--space-3, 12px);
+  min-height: 132px;
+  padding: var(--space-5, 24px);
+  overflow: hidden;
+  border: 1px solid;
+  border-color: var(--modo-border);
+  border-radius: var(--modo-radius-lg);
+}
+
+[data-modo="canvas-controls"] {
+  position: absolute;
+  right: var(--space-4, 16px);
+  bottom: var(--space-4, 16px);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+}
+
+[data-modo="canvas-zoom"] {
+  min-width: 5ch;
+  text-align: center;
+  font-size: var(--modo-font-size-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--modo-muted);
 }
 
 /* ── Headings: ids, hover-revealed anchors ── */
@@ -883,7 +1006,7 @@
 
 /* The chrome's own focus ring. A live example keeps its design system's, and
    so does whatever it portals out of the app (a popover, a dialog). */
-[data-modo="app"] :focus-visible:not(:is([data-modo="example-card-stage"], [data-modo="bento-stage"]) *) {
+[data-modo="app"] :focus-visible:not([data-modo$="-stage"] *) {
   outline: 2px solid var(--modo-ring);
   outline-offset: 2px;
 }

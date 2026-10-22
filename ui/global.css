@@ -34,6 +34,17 @@
   margin-inline: auto;
 }
 
+/* The canvas is the whole card, less the margin around it. */
+[data-modo="content"] > [data-modo="canvas"] {
+  max-width: none;
+  margin-inline: 0;
+}
+
+[data-modo="content"]:has(> [data-modo="canvas"]) {
+  height: calc(100dvh - 2 * var(--space-2));
+  overflow: hidden;
+}
+
 /* The inset layout, as Sidebar.Inset draws it: both asides are inset
    Sidebars (DocsNav) and the content is the card between them. Each aside's
    column follows its sidebar's width spring, so hiding one reflows the card;
