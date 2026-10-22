@@ -1,0 +1,26 @@
+.my-dashboard {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: 480px;
+}
+
+.my-dashboard-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md);
+  padding: var(--md);
+}
+
+.my-dashboard-title {
+  display: flex;
+  align-items: center;
+  gap: var(--sm);
+  margin: 0;
+  color: var(--fg);
+}
+
+.my-dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--md);
+}
