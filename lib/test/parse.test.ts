@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { buildGroup, parseCss } from '../src/lib/css'
+import { buildGroup, lightDark, parseCss, schemePair } from '../src/lib/css'
 import { discoverItems } from '../src/lib/discover-items'
 import { compileExampleBody, isCompiledExample, loadBabel } from '../src/lib/example'
 import { headTags, withHead } from '../src/lib/head'
@@ -10,6 +10,7 @@ import { credits, itemMeta, repoBlobUrl, sourceLink } from '../src/lib/item-meta
 import { resolveShellSlots } from '../src/lib/slots'
 import { parseItemSource } from '../src/lib/tsdoc'
 import { groupTree } from '../src/runtime/groups'
+import { lengthMeta, primaryFamily, px, range, rem } from '../src/runtime/tokens/format'
 
 describe('parseItemSource', () => {
   test("a prop's doc is not the item's", () => {
@@ -118,6 +119,54 @@ describe('parseCss', () => {
       undefined,
       undefined,
     ])
+  })
+})
+
+describe('color schemes', () => {
+  test('a block is dark only when every selector in it is', () => {
+    const css =
+      ':root { --a: white } .dark { --a: black } :root, .light, .dark { --b: red } @media (prefers-color-scheme: dark) { :root { --c: gray } }'
+    expect(parseCss(css).map(v => [v.name, v.scheme])).toEqual([
+      ['--a', undefined],
+      ['--a', 'dark'],
+      ['--b', undefined],
+      ['--c', 'dark'],
+    ])
+  })
+
+  test('a pair comes from a dark redeclaration or from light-dark()', () => {
+    const vars = parseCss(
+      ':root { --a: white; --b: light-dark(snow, color-mix(in oklab, black 50%, transparent)); --c: red } .dark { --a: black }',
+    )
+    expect(schemePair(vars, '--a')).toEqual({ light: 'white', dark: 'black' })
+    expect(schemePair(vars, '--b')).toEqual({ light: 'snow', dark: 'color-mix(in oklab, black 50%, transparent)' })
+    expect(schemePair(vars, '--c')).toBeNull()
+    expect(lightDark('red')).toBeNull()
+  })
+})
+
+describe('token formatting', () => {
+  test('px and rem trim trailing zeros', () => {
+    expect([px(16), px(0.5), px(2.3333), rem(12), rem(10)]).toEqual(['16px', '0.5px', '2.33px', '0.75rem', '0.625rem'])
+  })
+
+  test('a length shows its declared value, then the units it is not in', () => {
+    expect(lengthMeta('0.25rem', 4)).toBe('0.25rem · 4px')
+    expect(lengthMeta('8px', 8)).toBe('8px · 0.5rem')
+    expect(lengthMeta('calc(var(--radius) - 4px)', 6)).toBe('calc(var(--radius) - 4px) · 6px · 0.375rem')
+    expect(lengthMeta('9999px', 9999)).toBe('9999px')
+    expect(lengthMeta('auto', null)).toBe('auto')
+  })
+
+  test('a range needs two distinct known sizes', () => {
+    expect(range([4, null, 32, 8])).toBe('4px to 32px')
+    expect(range([4, 4])).toBeNull()
+    expect(range([null])).toBeNull()
+  })
+
+  test('the primary family is the first in the stack, unquoted', () => {
+    expect(primaryFamily('"Inter Variable", ui-sans-serif')).toBe('Inter Variable')
+    expect(primaryFamily('system-ui')).toBe('system-ui')
   })
 })
 
