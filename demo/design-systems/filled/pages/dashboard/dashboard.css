@@ -26,3 +26,9 @@
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: var(--md);
 }
+
+@media (max-width: 640px) {
+  .my-dashboard {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
