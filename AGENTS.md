@@ -177,11 +177,11 @@ Rules:
 - All DSs: `bun dev` at the root or in `demo/` (ports 5173+i). The runner builds the lib's CLI first if it isn't built.
 - One DS: `bun dev <name>` in `demo/`.
 - The site: `bun run build` in `demo/` builds every DS into `demo/dist/<name>/` (`SITE_BASE` sets the public path). `.github/workflows/pages.yml` deploys it to GitHub Pages on push to `main`.
-- Checks (CI runs them on every push and pull request): `bun run lint`, `bun run build && bun run check` (typechecks every workspace), `bun run test` (the lib's parser tests).
+- Checks (CI runs them on every push and pull request): `bun run lint`, `bun run build && bun run check` (typechecks every workspace), `bun run test` (the lib's parser tests), `.github/scripts/check-ui-pack.sh` (the ui tarball holds its entry, styles and licence) and `.github/scripts/smoke-init.sh` (packs the lib, `modo init`s a project with it and builds it). Pull requests also build the demo site.
 
 ## commits
 
-- Conventional commits drive releases: any commit scoped to the lib (`lib`, `modo`, `@justanarthur/modo`) bumps and publishes it, and one scoped to ui (`ui`, `modo-ui`, `@justanarthur/modo-ui`) bumps and publishes `@justanarthur/modo-ui`, `refactor`/`docs`/`chore` included (`feat`/`perf` minor, `!` major, the rest patch); other scopes (`demo`) and unscoped commits don't. `[skip bump]` in the message suppresses it. Details in `.github/AGENTS.md`.
+- Conventional commits drive releases: any commit scoped to the lib (`lib`, `modo`, `@justanarthur/modo`) bumps and publishes it, and one scoped to ui (`ui`, `modo-ui`, `@justanarthur/modo-ui`) bumps and publishes `@justanarthur/modo-ui`, `refactor`/`docs`/`chore` included (`feat`/`perf` minor, a breaking change major, the rest patch; how the toolkit reads `!` is in `.github/AGENTS.md` §11); other scopes (`demo`) and unscoped commits don't. `[skip bump]` in the message suppresses it. Details in `.github/AGENTS.md`.
 
 ## chrome hooks (data-modo attrs)
 
