@@ -144,12 +144,12 @@ Rules:
     - Button gets `variant="ghost"`, `size="icon-sm"`, `aria-label`, `aria-pressed`.
     - Link gets `aria-label` on icon-only anchors and `title` from Markdown links; forward them.
     - Code gets `language` and a string child.
-    - Icon gets `name` (`code` | `copy` | `check` | `link`) and `label`. The host draws its own glyph; `PlainIcon` shows the label as text.
+    - Icon gets `name` (`code` | `copy` | `check` | `link` | `menu` | `sun` | `moon`, or a `socials` key) and `label`. The host draws its own glyph; `PlainIcon` shows the label as text.
   - A host Link needn't forward data attributes: the chrome puts its hooks on wrappers.
   - One Sidebar drives both sides: each `panel.items` entry is a `Sidebar.Section`.
 - **`modo.config.ts` hooks:**
   - `css` — injected right after the lib's structural CSS, before tokens.
-  - `examples` — a module whose named exports are in scope in every example. Alias any export that collides with an item name; an unresolvable path yields scope `{}`.
+  - `examples` — a module whose named exports are in scope in every example. Alias any export that collides with an item name; an unresolvable path yields scope `{}` in dev and fails `modo build`.
   - `vite` — default-exports `(config) => config`, imported natively. This is how Tailwind/Uno get added.
 - **Users write no Vite config and no Next.js:** the lib owns the app.
 
@@ -185,7 +185,7 @@ Rules:
 
 ## chrome hooks (data-modo attrs)
 
-- layout: `app`, `sidebar`, `content`, `panel`.
+- layout: `app`, `sidebar` (`data-open` while the small-screen menu is open), `content`, `panel`, `footer`; header `header`, `brand`, `brand-logo`, `brand-name`, `header-actions`, `menu-toggle`.
 - nav: `sidebar-nav`, `sidebar-section`, `sidebar-section-title`, `sidebar-section-items`, `sidebar-item` (`aria-current="page"` when active), `toc`, `toc-label` (`data-level`).
 - page: `page-eyebrow`, `page-title`, `page-lead`, `page-meta`, `page-meta-entry` (`data-kind`: `deprecated`, `status`, `since`, `repo`, `source`, `license`), `prose`, `section`, `section-title`, `anchor`, `hero`, `hero-stats`.
 - canvas (`/canvas`, every foundation and item live on one pan-and-zoom surface): `canvas` (`data-moving`, `data-panning`, `data-space` while in use), `canvas-world`, `canvas-column` (`data-kind`), `canvas-frames`, `canvas-frame`, `canvas-frame-title`, `canvas-stage`, `canvas-controls`, `canvas-zoom`.
