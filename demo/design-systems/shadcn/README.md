@@ -40,6 +40,11 @@ formatting, and modo docs (TSDoc, default exports, documented prop literals).
 - `tokens/colors.css` — raw `:root` / `.dark` oklch variable blocks from the
   scaffold (the `--radius` line moved out).
 - `tokens/radius.css` — the raw `--radius` variable.
+- `tokens/typography.css`, `tokens/spacing.css`, `tokens/motion.css` — the
+  Tailwind v4 defaults the components set type, spacing and transitions with
+  (tailwindcss@4.3.3 `theme.css`: the text scale and its line-heights,
+  weights, leading, `--spacing`, easings, the default transition), plus the
+  Geist family and modo's generic `--space-1…6` steps.
 - `primitives/<name>/` — the compound single-file pattern: the vendored file
   is renamed to `index.tsx` with TSDoc on the component and a default export
   (`button`, `badge`, `input`; no adapter).
