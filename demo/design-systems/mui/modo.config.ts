@@ -6,5 +6,5 @@ export default defineConfig({
   css: './global.css',
   socials: { github: 'https://github.com/justAnArthur/modo' },
   theme: {},
-  shell: { Sidebar: './modo.components.tsx#Sidebar' },
+  shell: { Sidebar: './modo.components.tsx#Sidebar', Icon: './modo.components.tsx#Icon' },
 })
