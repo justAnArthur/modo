@@ -287,7 +287,7 @@ type CardComponent = ForwardRefExoticComponent<CardProps & RefAttributes<HTMLDiv
  * is selected), Card.Description, Card.Action, Card.Content, Card.Footer (the
  * actions row), Card.Media (an icon tile, a logo or a [logoA, logoB] pair),
  * Card.Image (full-bleed banner, or a leading image when inline),
- * Card.Eyebrow (small uppercase label), Card.Feature (icon + title +
+ * Card.Eyebrow (small muted label), Card.Feature (icon + title +
  * description row) and Card.Button (primary | secondary | ghost | link
  * action; an anchor when given `href`).
  *
