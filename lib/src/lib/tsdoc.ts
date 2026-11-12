@@ -186,6 +186,8 @@ function extractProps(src: string, fnStart: number): ExtractPropsResult {
   const closeIdx = matchClosing(src, openIdx, '(', ')')
   if (closeIdx === undefined) return { props, errors: ['Unbalanced parens in parameter list'] }
   const paramsText = src.slice(openIdx + 1, closeIdx)
+  // A component that takes no props has nothing to document.
+  if (!paramsText.trim()) return { props, errors }
 
   const destructured: Array<{ name: string; default?: string }> = []
   let typeLiteral = ''

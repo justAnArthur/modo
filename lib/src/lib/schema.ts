@@ -46,7 +46,7 @@ export interface RepoConfig {
 
 /** A design system's modo.config.ts. */
 export interface SiteConfig {
-  /** The design system's name: the home page title and the sidebar's first section. */
+  /** The design system's name: the header brand, the home page title and every page's `<title>`. */
   name: string
   /** One line under the name on the home page, and the pages' meta description where they have none. */
   description?: string

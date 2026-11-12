@@ -40,6 +40,11 @@ describe('parseItemSource', () => {
     expect(r.props).toEqual([{ name: 'a', optional: false, type: 'string', description: 'A.' }])
   })
 
+  test('a component without props has no props and no errors', () => {
+    const r = parseItemSource(`/** Divider. */\nexport default function Divider() {}`)
+    expect([r.props, r.errors]).toEqual([[], []])
+  })
+
   test('an anonymous default export leaves the name to the bundler', () => {
     expect(parseItemSource(`export default function ({ a }: { a?: string }) {}`).name).toBe('')
   })
