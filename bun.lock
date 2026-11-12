@@ -83,7 +83,7 @@
     },
     "lib": {
       "name": "@justanarthur/modo",
-      "version": "0.7.3",
+      "version": "0.9.0",
       "bin": {
         "modo": "./dist/cli.js",
       },
@@ -114,7 +114,7 @@
     },
     "ui": {
       "name": "@justanarthur/modo-ui",
-      "version": "0.1.0",
+      "version": "0.6.0",
       "dependencies": {
         "@base-ui/react": "1.4.1",
         "@fontsource-variable/inter": "^5.3.0",
@@ -123,7 +123,6 @@
         "date-fns": "^4.4.0",
         "lucide-react": "^1.47.0",
         "motion": "^13.4.0",
-        "pdfjs-dist": "^5.7.284",
         "react-day-picker": "^10.0.2",
         "sugar-high": "^2.5.1",
       },
@@ -133,6 +132,7 @@
         "@types/react-dom": "^18.3.0",
         "bunup": "^0.16.0",
         "esbuild": "^0.20.0",
+        "pdfjs-dist": "^5.7.284",
         "react": "^18.3.0",
         "react-dom": "^18.3.0",
         "typescript": "^5.4.0",
@@ -140,9 +140,13 @@
         "vite": "^5.4.0",
       },
       "peerDependencies": {
+        "pdfjs-dist": "^5.7.284",
         "react": ">=18",
         "react-dom": ">=18",
       },
+      "optionalPeers": [
+        "pdfjs-dist",
+      ],
     },
   },
   "packages": {

@@ -1,18 +1,21 @@
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/file-thumbnail.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here); the `@next/next/no-img-element`
- *   eslint-disable comment dropped (no Next.js).
+ * - The `@next/next/no-img-element` eslint-disable comment dropped (no Next.js).
  * - `@/lib/{utils,shape-context}` rewritten to `../../../lib/*`.
- * - The lazy `import("pdfjs-dist")` is kept as-is: verified against modo's own
+ * - `pdfjs-dist` is an optional peer: a failed lazy import warns once and the
+ *   thumbnail falls back to the file icon.
+ * - The lazy `import("pdfjs-dist")` is otherwise kept: verified against modo's own
  *   esbuild settings (bundle, `platform: "browser"`, `target: "es2022"`, both
  *   with and without `splitting: true`) — it resolves cleanly and lands in a
  *   ~790kB chunk that is only fetched when a PDF is actually attached. No CDN
  *   fallback was needed. The worker still comes from jsDelivr, so no
  *   bundler-side worker config is required.
  */
+
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useShape } from '../../../lib/shape-context'
@@ -21,17 +24,27 @@ import { cn } from '../../../lib/utils'
 // ─── Lazy pdfjs loader ────────────────────────────────────────────────────
 // Imports pdfjs-dist on first PDF, caches the module, and points the worker
 // at the matching CDN build. Consumers don't need bundler-side worker config.
+// pdfjs-dist is an optional peer: the `.catch` right on `import()` also lets
+// esbuild (Vite's dep optimizer) bundle a host that didn't install it.
 type PdfjsModule = typeof import('pdfjs-dist')
 let pdfjsPromise: Promise<PdfjsModule> | null = null
 
+const PDFJS_MISSING =
+  '@justanarthur/modo-ui: PDF thumbnails need the optional peer dependency `pdfjs-dist` (npm install pdfjs-dist); showing the file icon instead.'
+
 async function loadPdfjs(): Promise<PdfjsModule> {
   if (!pdfjsPromise) {
-    pdfjsPromise = import('pdfjs-dist').then(mod => {
-      if (!mod.GlobalWorkerOptions.workerSrc) {
-        mod.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${mod.version}/build/pdf.worker.min.mjs`
-      }
-      return mod
-    })
+    pdfjsPromise = import('pdfjs-dist')
+      .catch(error => {
+        console.warn(PDFJS_MISSING)
+        throw error
+      })
+      .then(mod => {
+        if (!mod.GlobalWorkerOptions.workerSrc) {
+          mod.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${mod.version}/build/pdf.worker.min.mjs`
+        }
+        return mod
+      })
   }
   return pdfjsPromise
 }
@@ -93,7 +106,7 @@ function FileThumbnail({ file, size, className }: FileThumbnailProps) {
 
   // PDFs need async rendering — loading flash is unavoidable for the first
   // ~100–300ms while pdfjs loads. Falls back to the generic icon on error
-  // (corrupt/password-protected file, CDN worker blocked).
+  // (corrupt/password-protected file, CDN worker blocked, pdfjs-dist absent).
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [pdfError, setPdfError] = useState(false)
   useEffect(() => {
