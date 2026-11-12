@@ -4,7 +4,7 @@ import Button from './index'
 
 The four @fluid styles: primary fill, secondary accent, tertiary outline, ghost.
 
-<div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
   <Button>Primary</Button>
   <Button variant="secondary">Secondary</Button>
   <Button variant="tertiary">Tertiary</Button>
@@ -15,7 +15,7 @@ The four @fluid styles: primary fill, secondary accent, tertiary outline, ghost.
 
 The two-step size ladder: default 36px, compact 28px for dense surfaces. The sm/md/lg aliases resolve onto it.
 
-<div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
   <Button size="compact">Compact</Button>
   <Button>Default</Button>
   <Button size="sm">Small (alias)</Button>
@@ -26,7 +26,7 @@ The two-step size ladder: default 36px, compact 28px for dense surfaces. The sm/
 
 Square icon sizes; any child svg is sized automatically.
 
-<div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
   <Button size="icon-compact" aria-label="Compact icon">+</Button>
   <Button size="icon" aria-label="Icon">+</Button>
 </div>
@@ -35,7 +35,7 @@ Square icon sizes; any child svg is sized automatically.
 
 The loading spinner replaces the label while keeping the button's width stable.
 
-<div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+<div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
   <Button loading>Sending</Button>
   <Button disabled>Cannot click</Button>
 </div>
