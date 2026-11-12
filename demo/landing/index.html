@@ -127,10 +127,10 @@
         animation: drop 720ms cubic-bezier(0.2, 0.9, 0.3, 1) 200ms both;
       }
 
+      /* Motion only, never opacity: a paused or throttled animation must still show the piece. */
       @keyframes drop {
         from {
           translate: -6px -10px;
-          opacity: 0;
         }
       }
 
