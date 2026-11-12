@@ -3,6 +3,8 @@
  * read for the morph layer and the liquid indicators.
  */
 
+'use client'
+
 import { useReducedMotion, useReducedMotionConfig } from 'motion/react'
 
 /**

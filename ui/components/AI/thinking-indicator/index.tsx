@@ -1,9 +1,9 @@
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/thinking-indicator.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*` →
+ * - `framer-motion` → `motion/react`; `@/lib/*` →
  *   `../../../lib/*`.
  * - Prop JSDoc kept from upstream (it matches the FF docs API table);
  *   modo TSDoc and examples on `ThinkingIndicator`. The `.shimmer-text` rule
@@ -20,6 +20,8 @@
  *   counts for the shimmer look) holds them split and still. The default stays upstream's
  *   `shimmer` look.
  */
+
+'use client'
 
 import { AnimatePresence, motion } from 'motion/react'
 import { forwardRef, type HTMLAttributes, useEffect, useId, useState } from 'react'

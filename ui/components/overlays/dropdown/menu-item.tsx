@@ -1,10 +1,10 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/menu-item.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*` and
+ * - `framer-motion` → `motion/react`; `@/lib/*` and
  *   `@/hooks/*` imports rewritten to `../../../lib/*`.
  * - Uncontrolled selection: when the surrounding panel owns the selection
  *   (`defaultCheckedIndex` / `defaultCheckedIndices` on Dropdown or
@@ -23,6 +23,8 @@
  *   Base UI's Enter/Space activation calls only the primitive's own `onClick`
  *   prop, so a keyboard pick used to close the menu without selecting.
  */
+
+'use client'
 
 import { AnimatePresence, motion } from 'motion/react'
 import {

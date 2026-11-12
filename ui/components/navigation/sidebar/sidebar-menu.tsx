@@ -1,10 +1,10 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/sidebar-menu.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*` and
+ * - `framer-motion` → `motion/react`; `@/lib/*` and
  *   `@/hooks/*` imports rewritten to `../../../lib/*`, `SizeProvider` from
  *   `../../../primitives/sizes`, `@/components/ui/sidebar-core` → `./sidebar-core`.
  * - Styling reads DS tokens (AGENTS.md styling): inline
@@ -27,6 +27,8 @@
  * - A folded `SidebarMenuSub` is `inert`: an active sub-row inside it stayed a
  *   tab stop while `aria-hidden` and clipped away.
  */
+
+'use client'
 
 import { cva, type VariantProps } from 'class-variance-authority'
 import { AnimatePresence, motion } from 'motion/react'

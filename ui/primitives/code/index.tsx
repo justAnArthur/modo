@@ -1,3 +1,5 @@
+'use client'
+
 import { Fragment } from 'react'
 import type { TokenType } from 'sugar-high'
 import { parse } from 'sugar-high/core'

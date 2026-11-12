@@ -1,9 +1,9 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/checkbox-group.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications: `"use client"` dropped; `@/lib/*` and `@/hooks/*` imports
+ * Local modifications: `@/lib/*` and `@/hooks/*` imports
  * rewritten to `../../../lib/*` (`SizeProvider` to `../../../primitives/sizes`),
  * `@/components/ui/fluid-hover-highlight` to `../../../lib/fluid-hover-highlight`,
  * `framer-motion` to `motion/react`;
@@ -29,6 +29,8 @@
  * static. A row's `index` is optional: the group numbers its rows in order
  * (`lib/row-index.tsx`).
  */
+
+'use client'
 
 import { Checkbox as CheckboxPrimitive } from '@base-ui/react/checkbox'
 import { AnimatePresence, motion } from 'motion/react'

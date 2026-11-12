@@ -1,9 +1,8 @@
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/lib/elevated.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `@/lib/{utils,surface-context,surface-classes}` imports rewritten to `../../lib/*`.
  * - `className` / `children` re-declared on `ElevatedProps` with descriptions (modo's parser
  *   lists only members declared in the interface body); `children` doc added.
@@ -15,6 +14,8 @@
  *   `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
  *   `spring.*`.
  */
+
+'use client'
 
 import {
   type ComponentPropsWithoutRef,

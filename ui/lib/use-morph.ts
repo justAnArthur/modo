@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition (not part of Fluid Functionalism): the morph engine every
  * overlay shares. One 0→1 progress value on a spring tier grows the overlay's
  * surface from where it was opened (the source rect) to its own box; the
@@ -11,6 +11,8 @@
  * the surface layers move their real box instead of a clip-path, so their
  * `shadow-surface-N` is never cut off.
  */
+
+'use client'
 
 import { animate, clamp, useMotionValue } from 'motion/react'
 import { type RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'

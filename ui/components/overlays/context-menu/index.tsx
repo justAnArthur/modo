@@ -7,6 +7,8 @@
  * `Dropdown.Separator`, with the fluid hover highlight gliding between them.
  */
 
+'use client'
+
 import { ContextMenu as ContextMenuPrimitive } from '@base-ui/react/context-menu'
 import {
   createContext,

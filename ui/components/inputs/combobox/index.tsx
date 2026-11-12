@@ -1,10 +1,9 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/combobox.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped (no RSC here).
  * - Imports rewritten: `@/lib/*` → `../../../lib/*` (`SizeProvider` →
  *   `../../../primitives/sizes`), `@/hooks/*` → `../../../lib/*`,
  *   `@/lib/elevated` → `../../../primitives/surface`, `@/components/ui/scroll-area` →
@@ -50,6 +49,8 @@
  *   attributes, radius, inset), as every text field does; `variant` is typed
  *   `FieldVariant` (no `null`).
  */
+
+'use client'
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox'
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'

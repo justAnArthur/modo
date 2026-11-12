@@ -1,4 +1,4 @@
-/*
+/*!
  * Fluid Functionalism's sidebar app shell as the preset `sa1FQfCxH6`
  * (fluidfunctionalism.com/docs/sidebar?preset=sa1FQfCxH6) configures it: the
  * inset layout starting collapsed, a workspace switcher, search and a "New"
@@ -15,6 +15,8 @@
  * (`defaultCheckedIndex`); the footer's icon buttons are the DS's ghost
  * `Button`; `variant`, `side`, `openOnHover` and `contained` are props.
  */
+
+'use client'
 
 import { useState } from 'react'
 import Button from '../../components/button'

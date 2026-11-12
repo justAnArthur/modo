@@ -39,6 +39,12 @@
     "README.md",
     "LICENSE*"
   ],
+  "sideEffects": [
+    "*.css"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -82,13 +88,18 @@
     "date-fns": "^4.4.0",
     "lucide-react": "^1.47.0",
     "motion": "^13.4.0",
-    "pdfjs-dist": "^5.7.284",
     "react-day-picker": "^10.0.2",
     "sugar-high": "^2.5.1"
   },
   "peerDependencies": {
+    "pdfjs-dist": "^5.7.284",
     "react": ">=18",
     "react-dom": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "pdfjs-dist": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@justanarthur/modo": "workspace:*",
@@ -96,6 +107,7 @@
     "@types/react-dom": "^18.3.0",
     "bunup": "^0.16.0",
     "esbuild": "^0.20.0",
+    "pdfjs-dist": "^5.7.284",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "typescript": "^5.4.0",

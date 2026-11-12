@@ -1,4 +1,4 @@
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/lib/springs.ts` + docs `app/docs/motion/page.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
@@ -24,6 +24,8 @@
  *   `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
  *   `spring.*`.
  */
+
+'use client'
 
 import { MotionConfig, motion } from 'motion/react'
 import type { ReactNode } from 'react'

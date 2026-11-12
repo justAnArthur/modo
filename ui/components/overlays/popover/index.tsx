@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition (not part of Fluid Functionalism): a morphing popover. The
  * panel grows out of its trigger through `lib/use-morph.ts`, with the goo neck
  * by default. After beUI's gooey popover (github.com/starc007/ui-components
@@ -10,6 +10,8 @@
  * UI's Popover; neither project's own dismissal, gesture or positioning code
  * is ported.
  */
+
+'use client'
 
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover'
 import {
