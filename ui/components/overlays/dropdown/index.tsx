@@ -358,6 +358,8 @@ type DropdownComponent = ForwardRefExoticComponent<DropdownProps & RefAttributes
  * Dropdown.Label, Dropdown.Separator, Dropdown.Search and Dropdown.Empty.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/dropdown.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
   (

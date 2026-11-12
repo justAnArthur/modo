@@ -394,6 +394,8 @@ interface ToastProps {
  *   `success` / `error` toasts.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/hiaaryan/sileo/blob/9793f844349983e140cf33cebbb8f51626d41407/src/sileo.tsx Sileo
+ * @license MIT © 2026 hiaaryan
  */
 function Toast({ position = 'top-right', limit = 3, timeout = 6000, children }: ToastProps) {
   const settings = useMemo(() => ({ position, timeout }), [position, timeout])

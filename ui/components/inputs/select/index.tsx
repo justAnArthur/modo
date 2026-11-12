@@ -183,6 +183,8 @@ interface SelectProps {
  * Select.Label and Select.Separator.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/select.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 function Select({ children, value, defaultValue, onValueChange, disabled = false, name, required, size }: SelectProps) {
   const [internalValue, setInternalValue] = useState(defaultValue ?? '')

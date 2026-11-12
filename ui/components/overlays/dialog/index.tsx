@@ -323,6 +323,8 @@ interface DialogProps {
  *   `showCloseButton={false}`.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/dialog.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 function Dialog({ children, open, defaultOpen, onOpenChange, modal }: DialogProps) {
   return (

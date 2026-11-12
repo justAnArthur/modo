@@ -85,6 +85,8 @@ type TableComponent = ForwardRefExoticComponent<TableProps & RefAttributes<HTMLT
  * (`<td>`). Each forwards its ref and native attributes.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/default/table.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Table = forwardRef<HTMLTableElement, TableProps>(({ children, size, className, ...props }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null)

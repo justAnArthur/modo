@@ -123,6 +123,8 @@ type TabsComponent = ForwardRefExoticComponent<TabsProps & RefAttributes<HTMLDiv
  * - `Tabs.Panel` — content shown while the tab with the same `value` is active.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/tabs.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Tabs = forwardRef<HTMLDivElement, TabsProps>(
   (

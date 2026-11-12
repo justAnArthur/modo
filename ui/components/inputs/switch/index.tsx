@@ -153,6 +153,8 @@ const DRAG_DEAD_ZONE = 2
  *   row; name the group with `aria-label` or `aria-labelledby`.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/switch.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Switch = forwardRef<HTMLDivElement, SwitchProps>(
   (

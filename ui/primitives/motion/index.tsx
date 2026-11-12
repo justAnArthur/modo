@@ -100,6 +100,8 @@ interface MotionProps {
  * Hidden children keep their space and leave the accessibility tree.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/default/lib/springs.ts Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 export default function Motion({
   tier = 'moderate',

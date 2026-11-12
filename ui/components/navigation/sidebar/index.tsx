@@ -221,6 +221,8 @@ type SidebarComponent = ForwardRefExoticComponent<SidebarProps & RefAttributes<H
  * - `useSidebar()` (named export) reads the provider's state.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/sidebar.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
   (
