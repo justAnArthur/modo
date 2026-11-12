@@ -12,16 +12,16 @@ the same color as the dialog it sits in. Here the role menu hard-codes the
 dialog's own `bg-surface-5`: a real elevation shadow, but the body melts
 straight into the dialog.
 
-<div className="dark bg-background text-foreground rounded-2xl p-6 w-full flex justify-center">
+<div className="dark bg-background text-foreground rounded-2xl p-6 w-full flex flex-wrap justify-center">
   <Elevated.Provider value={1}>
     <Elevated offset={4} className="w-[320px] max-w-full rounded-2xl p-6 flex flex-col gap-5">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <span className="text-title-compact weight-semibold">Invite to your workspace</span>
         <X size={16} strokeWidth={1.5} className="text-muted-foreground" />
       </div>
       <div className="flex flex-col gap-2">
         <span className="text-body weight-medium">Select role</span>
-        <div className="flex items-center justify-between gap-2 h-10 px-3 rounded-xl bg-active text-body border border-border">
+        <div className="flex flex-wrap items-center justify-between gap-2 h-10 px-3 rounded-xl bg-active text-body border border-border">
           <span>Member</span>
           <ChevronDown size={14} strokeWidth={1.5} className="text-muted-foreground rotate-180" />
         </div>
@@ -47,12 +47,12 @@ layered shadow recipe. A `dark` or `light` class on any subtree
 re-resolves the whole ladder inside it.
 
 <Elevated.Provider value={1}>
-  <div className="dark bg-background text-foreground rounded-2xl p-4 flex flex-col gap-4 w-full">
+  <div className="dark bg-background text-foreground rounded-2xl p-4 flex flex-col flex-nowrap gap-4 w-full">
     {['dark', 'light'].map((scheme) => (
       <div key={scheme} className={scheme === 'dark' ? 'dark flex flex-col gap-2' : 'light flex flex-col gap-2'}>
         <span className="text-caption-compact weight-semibold text-muted-foreground tracking-wider capitalize">{scheme}</span>
         <ScrollArea orientation="horizontal" viewportClassName="scroll-fade-x" className="rounded-2xl bg-background">
-          <div className="flex gap-3 p-4 w-max">
+          <div className="flex flex-wrap gap-3 p-4 w-max">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
               <div key={n} className="flex flex-col items-center gap-2 shrink-0">
                 <Elevated offset={n - 1} aria-hidden className="size-14 rounded-xl" />
@@ -122,12 +122,12 @@ whether you span two levels or all eight. Hover a surface to see its
 level. (The FF page picks the slice with a range slider; this one spans
 the whole ladder.)
 
-<div className="dark bg-background text-foreground rounded-2xl p-4 w-full flex justify-center">
+<div className="dark bg-background text-foreground rounded-2xl p-4 w-full flex flex-wrap justify-center">
   <Elevated.Provider value={1}>
-    <div data-surface className="relative rounded-2xl p-6 flex items-center justify-center bg-surface-1 shadow-surface-1 [&:hover>span]:opacity-100 [&:has([data-surface]:hover)>span]:opacity-0">
+    <div data-surface className="relative rounded-2xl p-3 sm:p-6 flex flex-wrap items-center justify-center bg-surface-1 shadow-surface-1 [&:hover>span]:opacity-100 [&:has([data-surface]:hover)>span]:opacity-0">
       <span className="absolute top-2 left-2.5 text-caption text-muted-foreground opacity-0 transition-opacity duration-moderate">surface-1</span>
       {[2, 3, 4, 5, 6, 7, 8].reduceRight((inner, level) => (
-        <Elevated offset={1} data-surface className={inner ? 'relative rounded-2xl p-6 flex items-center justify-center [&:hover>span]:opacity-100 [&:has([data-surface]:hover)>span]:opacity-0' : 'relative rounded-2xl p-6 flex items-center justify-center size-24 [&:hover>span]:opacity-100 [&:has([data-surface]:hover)>span]:opacity-0'}>
+        <Elevated offset={1} data-surface className={inner ? 'relative rounded-2xl p-2 sm:p-6 flex items-center justify-center [&:hover>span]:opacity-100 [&:has([data-surface]:hover)>span]:opacity-0' : 'relative rounded-2xl p-2 sm:p-6 flex items-center justify-center size-24 [&:hover>span]:opacity-100 [&:has([data-surface]:hover)>span]:opacity-0'}>
           <span className="absolute top-2 left-2.5 text-caption text-muted-foreground opacity-0 transition-opacity duration-moderate">surface-{level}</span>
           {inner}
         </Elevated>
@@ -142,16 +142,16 @@ Dialog at surface 5, role picker at surface 7 — no props passed between
 them. The menu keeps the dropdown's fixed `shadowLevel={3}` while its
 background tracks the substrate.
 
-<div className="dark bg-background text-foreground rounded-2xl p-6 w-full flex justify-center">
+<div className="dark bg-background text-foreground rounded-2xl p-6 w-full flex flex-wrap justify-center">
   <Elevated.Provider value={1}>
     <Elevated offset={4} className="w-[320px] max-w-full rounded-2xl p-6 flex flex-col gap-5">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <span className="text-title-compact weight-semibold">Invite to your workspace</span>
         <X size={16} strokeWidth={1.5} className="text-muted-foreground" />
       </div>
       <div className="flex flex-col gap-2">
         <span className="text-body weight-medium">Select role</span>
-        <div className="flex items-center justify-between gap-2 h-10 px-3 rounded-xl bg-active text-body border border-border">
+        <div className="flex flex-wrap items-center justify-between gap-2 h-10 px-3 rounded-xl bg-active text-body border border-border">
           <span>Member</span>
           <ChevronDown size={14} strokeWidth={1.5} className="text-muted-foreground rotate-180" />
         </div>
@@ -164,7 +164,7 @@ background tracks the substrate.
           ))}
         </Elevated>
       </div>
-      <div className="flex justify-end items-center gap-2 pt-2">
+      <div className="flex flex-wrap justify-end items-center gap-2 pt-2">
         <Button variant="ghost">Cancel</Button>
         <Button disabled>Send invites</Button>
       </div>
