@@ -6,7 +6,7 @@ import remarkGfm from 'remark-gfm'
 import { loadModoConfig } from '../lib/config.loader'
 import { discoverCssForFile } from '../lib/discover-css'
 import { discoverItems } from '../lib/discover-items'
-import type { SiteConfig } from '../lib/schema'
+import { isComponentRef, type SiteConfig } from '../lib/schema'
 import { TIERS, type Tier } from '../lib/tiers'
 import { type ParsedExample, type ParsedItem, parseItemSource } from '../lib/tsdoc'
 import { remarkModoExamples } from './mdx-examples'
@@ -154,6 +154,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     const extraPaths = [
       ...Object.values(config?.shell ?? {}),
       ...(config?.panel?.items ?? []).map(it => it.component),
+      config?.logo && isComponentRef(config.logo) ? config.logo : undefined,
     ].filter((p): p is string => typeof p === 'string')
     // `./modo.components.tsx#Select` names an export; several refs into one
     // file share its entry.

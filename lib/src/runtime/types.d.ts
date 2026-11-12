@@ -4,8 +4,14 @@
 // biome-ignore lint/suspicious/noExplicitAny: a host component's props are whatever its design system declares
 type ModoHostComponent = import('react').ComponentType<any>
 
+/** The chrome's icon names, plus any `socials` key. */
+// biome-ignore lint/complexity/noBannedTypes: `string & {}` keeps the literal names in autocomplete
+type ModoIconName = 'code' | 'copy' | 'check' | 'link' | 'external' | 'menu' | 'sun' | 'moon' | (string & {})
+
 declare module 'virtual:modo-config' {
   export const config: import('../lib/schema').SiteConfig
+  /** The built URL of an image `logo`; null when there is none or it is a component. */
+  export const logoUrl: string | null
 }
 
 declare module 'virtual:modo-tokens' {
@@ -46,11 +52,13 @@ declare module 'virtual:modo-shell' {
     Link: ModoHostComponent
     Code: ModoHostComponent
     Select: ModoHostComponent
-    Icon: import('react').ComponentType<{ name: 'code' | 'copy' | 'check' | 'link'; label: string }>
+    Icon: import('react').ComponentType<{ name: ModoIconName; label: string }>
     Sidebar: { Root: ModoHostComponent; Item: ModoHostComponent; Section: ModoHostComponent }
   }
   export const shell: ResolvedShellExport
   export const panelItems: PanelItemExport[]
+  /** A component `logo` from modo.config.ts; null when there is none or it is an image. */
+  export const Logo: ModoHostComponent | null
 }
 
 // Stylesheet-only modules.

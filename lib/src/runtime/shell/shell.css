@@ -109,14 +109,17 @@
   [data-modo="app"] {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto;
-    grid-template-areas: "sidebar" "panel" "content";
+    grid-template-areas: "sidebar" "content" "panel";
   }
 
-  /* A capped, scrollable nav keeps the page itself reachable. */
+  /* The header stays; the nav folds behind the menu toggle. */
   [data-modo="sidebar"] {
     position: static;
     height: auto;
-    max-height: 45vh;
+  }
+
+  [data-modo="sidebar"]:not([data-open]) > :not([data-modo="header"]) {
+    display: none;
   }
 
   [data-modo="sidebar"] [data-modo="sidebar-nav"] {
@@ -127,6 +130,55 @@
   [data-modo="content"] {
     padding: var(--space-4, 16px);
   }
+}
+
+@media (min-width: 768px) {
+  [data-modo="menu-toggle"] {
+    display: none;
+  }
+}
+
+[data-modo="header"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 8px);
+  padding: var(--space-4, 16px) var(--space-4, 16px) 0;
+}
+
+[data-modo="brand"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  font-weight: var(--modo-font-weight-semibold);
+}
+
+/* An image or component logo sits at the name's cap height. */
+[data-modo="brand"] > :not([data-modo="brand-name"]) {
+  display: block;
+  height: 1.5em;
+  width: auto;
+}
+
+[data-modo="header-actions"] {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+}
+
+[data-modo="footer"] {
+  margin-top: var(--space-6, 32px);
+  padding-top: var(--space-4, 16px);
+  border-top: 1px solid;
+  border-top-color: var(--modo-border);
+  color: var(--modo-muted);
+  font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
+}
+
+[data-modo="footer"] p {
+  margin: 0;
 }
 
 /* Interior spacing of both asides belongs to the Sidebar Root component

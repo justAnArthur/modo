@@ -1,5 +1,6 @@
 import { resolve, sep } from 'node:path'
 import { isCSSRequest, normalizePath, type Plugin } from 'vite'
+import { cap } from '../runtime/text'
 import type { Bundler } from './bundle'
 import { cssModule } from './css-module'
 import { emitRoutes } from './static-routes'
@@ -83,13 +84,15 @@ export function itemsPlugin(options: Options): Plugin {
       // After Vite emits index.html.
       order: 'post',
       async handler(_, bundle) {
-        const { items, errorCount } = await bundler.get()
+        const { config, items, errorCount } = await bundler.get()
         // Dev keeps serving what built; a build must not ship a site with missing pages.
         if (errorCount > 0) this.error('the bundle has errors (reported above), so the site was not written')
-        emitRoutes(this, bundle, [
-          'canvas',
-          ...new Set(items.map(it => `docs/${it.tier}`)),
-          ...items.map(it => `docs/${it.tier}/${it.id}`),
+        if (!config) return
+        emitRoutes(this, bundle, config, [
+          { path: 'canvas', title: 'Canvas' },
+          { path: '404', title: 'Not found' },
+          ...[...new Set(items.map(it => it.tier))].map(tier => ({ path: `docs/${tier}`, title: cap(tier) })),
+          ...items.map(it => ({ path: `docs/${it.tier}/${it.id}`, title: it.name, description: it.description })),
         ])
       },
     },

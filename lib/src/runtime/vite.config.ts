@@ -25,6 +25,8 @@ type ViteExtension = (config: UserConfig) => UserConfig | Promise<UserConfig>
 async function applyUserViteExtension(base: UserConfig): Promise<UserConfig> {
   // configPlugin reports config errors with full detail once Vite starts.
   const cfg = await loadModoConfig(CONFIG_PATH).catch(() => null)
+  // `modo build --base` passes its own, which wins over this.
+  if (cfg?.base) base.base = cfg.base
   if (!cfg?.vite) return base
 
   const extPath = resolve(USER_ROOT, cfg.vite)
@@ -43,7 +45,7 @@ export default defineConfig(async () => {
     root: RUNTIME_DIR,
     plugins: [
       configPlugin({ userRoot: USER_ROOT, configPath: CONFIG_PATH }),
-      tokensPlugin({ userRoot: USER_ROOT }),
+      tokensPlugin({ userRoot: USER_ROOT, configPath: CONFIG_PATH }),
       itemsPlugin({ userRoot: USER_ROOT, bundler }),
       shellPlugin({ libDir: LIB_DIR, bundler }),
       react(),
