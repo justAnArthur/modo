@@ -31,7 +31,8 @@ New since 0.9:
 - Item pages show a metadata row from doc-comment block tags (`@since`, `@source`, `@license`, …) and link to the item's source in the repo.
 - Builds fail on item errors instead of shipping a broken page; Babel for inline examples loads lazily.
 - The canvas opens fitted to the view; bento previews fit and pack, example rows and token labels wrap; the nav no longer repeats the design system's name.
-- `engines`: Node 20.11 or newer.
+- Built on Vite 8 (Rolldown and Oxc) and `@vitejs/plugin-react` 6; the shared item build runs on esbuild 0.28.
+- `engines`: Node 20.19+ or 22.12+, the floor of Vite 8.
 
 ### @justanarthur/modo-ui
 

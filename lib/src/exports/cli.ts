@@ -59,9 +59,21 @@ interface Args {
 
 class UsageError extends Error {}
 
+// Vite 8's build() throws a BundleError whose message embeds every inner
+// error's stack; the inner errors say it in one line each.
+interface PluginError extends Error {
+  plugin?: string
+}
+
+function errorLines(err: unknown): string[] {
+  if (!(err instanceof Error)) return [String(err)]
+  const inner = (err as { errors?: unknown }).errors
+  if (!Array.isArray(inner) || inner.length === 0) return [err.message]
+  return inner.map((e: PluginError) => (e.plugin ? `[${e.plugin}] ${e.message}` : e.message))
+}
+
 function exitWithError(err: unknown) {
-  const msg = err instanceof Error ? err.message : String(err)
-  process.stderr.write(`Error: ${msg}\n`)
+  for (const line of errorLines(err)) process.stderr.write(`Error: ${line}\n`)
   if (err instanceof UsageError) process.stderr.write(`\n${HELP}`)
   if (DEBUG && err instanceof Error) {
     process.stderr.write(`${err.stack ?? ''}\n`)
@@ -195,6 +207,10 @@ async function prepareRuntime(args: Args): Promise<string> {
   await loadModoConfig(configPath)
   process.env.MODO_USER_ROOT = cwd
   process.env.MODO_CONFIG_PATH = configPath
+  // Vite 8 warns that this config won't load under `configLoader: 'native'`.
+  // It can't (the plugins import .tsx; Node strips types only from 22.18), and
+  // the user can't act on a config modo owns.
+  process.env.VITE_CONFIG_NATIVE_IGNORE_WARNING ??= 'true'
   process.chdir(runtimeRoot)
   return cwd
 }

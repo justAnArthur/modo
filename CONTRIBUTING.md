@@ -4,7 +4,7 @@ Thanks for helping. This is a bun monorepo: the lib (`lib/`, `@justanarthur/modo
 
 ## Setup
 
-You need [bun](https://bun.sh) and Node 20.11 or newer.
+You need [bun](https://bun.sh) and Node 20.19+ or 22.12+ (what Vite 8 needs).
 
 ```sh
 git clone https://github.com/justAnArthur/modo.git

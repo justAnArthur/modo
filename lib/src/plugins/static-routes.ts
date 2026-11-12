@@ -1,4 +1,4 @@
-import type { Rollup } from 'vite'
+import type { Rolldown } from 'vite'
 import { headTags, type PageHead, withHead } from '../lib/head'
 import type { SiteConfig } from '../lib/schema'
 
@@ -6,8 +6,8 @@ import type { SiteConfig } from '../lib/schema'
 // link, so each route gets a copy of the built shell, with its own head.
 // `404.html` is what GitHub Pages and most static hosts serve for anything else.
 export function emitRoutes(
-  ctx: Rollup.PluginContext,
-  bundle: Rollup.OutputBundle,
+  ctx: Rolldown.PluginContext,
+  bundle: Rolldown.OutputBundle,
   site: SiteConfig,
   pages: PageHead[],
 ): void {
