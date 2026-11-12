@@ -24,6 +24,7 @@ import Sidebar, {
   type SidebarSide,
   useSidebar,
 } from './components/navigation/sidebar'
+import { useIsMobile } from './lib/use-is-mobile'
 import { cn } from './lib/utils'
 
 const icons: Record<string, LucideIcon> = {
@@ -101,8 +102,9 @@ declare global {
  * Sidebar slot: both asides of the chrome, each an inset `Sidebar` with its
  * own `openOnHover` provider, so the content between them is the inset card
  * (global.css). The trigger in the card's corner (or `[` for the nav, `]` for
- * the panel) switches a side between open and on hover. Below md each side
- * is a drawer. The panel starts on hover below xl.
+ * the panel) switches a side between open and on hover. Below md both sit in
+ * flow, as the chrome stacks them: the nav under the header's menu toggle,
+ * the panel below the content. The panel starts on hover below xl.
  *
  * A section of links is a collapsible `Sidebar.Group` whose rows share one
  * `Sidebar.Menu`, so the current page and the hover highlight melt from link
@@ -119,6 +121,23 @@ export function DocsNav({ children }: { children?: ReactNode }) {
 }
 
 function DocsSidebar({ side, children }: { side: SidebarSide; children?: ReactNode }) {
+  const isMobile = useIsMobile(768)
+  const nav = (
+    <Sidebar.Content>
+      <nav aria-label={side === 'left' ? 'Docs' : 'Page'}>{children}</nav>
+    </Sidebar.Content>
+  )
+  // Below md the chrome stacks: the nav folds under the header's menu toggle
+  // and the panel sits below the content, so both render in flow, not as drawers.
+  if (isMobile) {
+    return (
+      <Sidebar.Provider persist={false} shortcut={null} className="min-h-0">
+        <Sidebar variant="inset" side={side} collapsible="none" className="static h-auto" style={{ width: '100%' }}>
+          {nav}
+        </Sidebar>
+      </Sidebar.Provider>
+    )
+  }
   return (
     <Sidebar.Provider
       defaultOpen={side === 'left' || window.matchMedia('(min-width: 1280px)').matches}
@@ -127,9 +146,7 @@ function DocsSidebar({ side, children }: { side: SidebarSide; children?: ReactNo
       shortcut={null}
     >
       <Sidebar variant="inset" side={side}>
-        <Sidebar.Content>
-          <nav aria-label={side === 'left' ? 'Docs' : 'Page'}>{children}</nav>
-        </Sidebar.Content>
+        {nav}
       </Sidebar>
       <DocsNavTrigger side={side} />
     </Sidebar.Provider>

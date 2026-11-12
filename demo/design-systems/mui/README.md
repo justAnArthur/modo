@@ -14,7 +14,7 @@ draws the docs nav with MUI's list parts.
 modo.config.ts            name 'MUI', css, theme toggle, the Sidebar slot pin
 modo.components.tsx       the docs nav (Sidebar slot) over ListItemButton
 global.css                Roboto imports, the chrome's contract, page colors, dividers
-theme.tsx                 createTheme({ cssVariables: true }) + MuiProvider
+theme.tsx                 createTheme (light + dark schemes, CSS vars) + MuiProvider
 scripts/extract-tokens.ts rerunnable token extraction (bun)
 tokens/*.css              generated from MUI's default theme
 primitives/               button, link, chip
@@ -34,9 +34,7 @@ blocks/                   login-form
   fallback is the real default value. `*Channel` entries (`r g b` triplets MUI
   keeps for internal color mixing), `*Opacity` numbers and entries that read a
   skipped channel are skipped. 111 vars. A `:root.dark` block holds the same
-  names from MUI's dark scheme (`colorSchemes: { dark: true }`,
-  `generateStyleSheets()`); it outranks the `:root` vars MuiProvider injects,
-  so the header's theme toggle repaints MUI's components too.
+  names from MuiProvider's dark scheme (`generateStyleSheets()`).
 - `tokens/spacing.css` — `theme.spacing(n)` for n = 0–12 plus the half steps.
   With cssVariables on, spacing resolves through `var(--mui-spacing, 8px)`,
   so each step is n × 8px (`--mui-spacing-1: 8px`, `--mui-spacing-0_5: 4px`,
@@ -53,6 +51,12 @@ The token files are data for modo's Foundations pages; MUI components at
 runtime keep using their own theme (see `theme.tsx`). Adapters import
 `@mui/material/*` subpaths directly — modo's item bundler (esbuild
 `platform: 'browser'`) resolves MUI's full dependency graph, emotion included.
+
+MuiProvider's theme has both schemes, keyed to the `.dark` class the header's
+theme toggle writes on `<html>` (`colorSchemeSelector: 'class'`), so MUI
+injects the complete dark palette, channels and opacities included (outlines
+and hover tints mix from them), and its dark-only styles. It gets no
+`colorSchemeNode` and no `storageManager`: the toggle alone owns the class.
 
 ## Shell slots
 
