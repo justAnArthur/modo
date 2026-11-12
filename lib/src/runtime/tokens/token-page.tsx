@@ -1,14 +1,15 @@
 import { tokens as groups } from 'virtual:modo-tokens'
 import { type ReactNode, useSyncExternalStore } from 'react'
-import type { GroupName } from '../../lib/css'
+import { type GroupName, lightDark, schemePair } from '../../lib/css'
 import { cap, count } from '../text'
+import { range } from './format'
 import { colorExpr, colorValue, resolved } from './host-colors'
 import { RadiusPreview, RadiusView, SpacingPreview, SpacingView } from './lengths'
 import { MotionPreview, MotionView } from './motion'
-import { declared, OtherTokens, TokenSection, type Var } from './token-row'
+import { declared, lengthOf, OtherTokens, TokenSection, type Var } from './token-row'
 import { TypographyPreview, TypographyView } from './typography'
 
-type View = (props: { vars: Var[] }) => ReactNode
+type View = (props: { vars: Var[]; all: Var[] }) => ReactNode
 
 /* The shadcn/ui theme schema, one column per family. Tokens a design system
    defines under these names render first; everything else follows as custom. */
@@ -22,28 +23,53 @@ const THEME = [
 ].map(col => col.map(n => `--${n}`))
 const THEME_NAMES = new Set(THEME.flat())
 const MAX_STACK = 5
+const STRIP = 16
+
+/** What each group holds, in the chrome's words: never the host's. */
+const ABOUT: Record<GroupName, string> = {
+  colors: 'Fills, text and borders, each beside its foreground where the system pairs one.',
+  typography: 'Families, the type scale and the text roles built from them.',
+  spacing: 'The steps for gaps, padding and insets, smallest first.',
+  radius: 'Corner rounding, from the subtlest to the roundest.',
+  motion: 'Durations and easing curves for transitions.',
+}
+
+export function about(group: GroupName): string {
+  return ABOUT[group]
+}
+
+/** `7 variables, 4px to 32px`: the count, plus the range for length scales. */
+export function summary(group: GroupName, vars: Var[]): string {
+  const n = count(vars.length, 'variable')
+  const span = group === 'spacing' || group === 'radius' ? range(vars.map(lengthOf)) : null
+  return span ? `${n}, ${span}` : n
+}
 
 export function TokenGroupView({ group }: { group: string }) {
   const g = groups.find(gg => gg.name === group)
-  if (!g) {
-    return (
-      <article>
-        <h1 data-modo="page-title">Tokens / {group}</h1>
-        <p data-modo="page-lead">No tokens found for group "{group}".</p>
-      </article>
-    )
-  }
-  const vars = declared(g.vars)
-  const View = VIEWS[g.name]
+  const vars = g ? declared(g.vars) : []
   return (
     <article>
       <header>
         <p data-modo="page-eyebrow">Foundations</p>
-        <h1 data-modo="page-title">{cap(g.name)}</h1>
-        <p data-modo="page-lead">{count(vars.length, 'variable')}</p>
+        <h1 data-modo="page-title">{cap(group)}</h1>
+        <p data-modo="page-lead">{g ? `${ABOUT[g.name]} ${summary(g.name, vars)}.` : null}</p>
       </header>
-      <View vars={vars} />
+      {g && vars.length > 0 ? <GroupBody group={g.name} vars={vars} all={g.vars} /> : <Empty />}
     </article>
+  )
+}
+
+function GroupBody({ group, vars, all }: { group: GroupName; vars: Var[]; all: Var[] }) {
+  const View = VIEWS[group]
+  return <View vars={vars} all={all} />
+}
+
+function Empty() {
+  return (
+    <p data-modo="token-empty">
+      No variables in this group. Add them to <code>tokens/*.css</code>.
+    </p>
   )
 }
 
@@ -52,21 +78,17 @@ export function GroupPreview({ group }: { group: string }) {
   const g = groups.find(gg => gg.name === group)
   if (!g) return null
   const Preview = PREVIEWS[g.name]
-  return <Preview vars={declared(g.vars)} />
+  return <Preview vars={declared(g.vars)} all={g.vars} />
 }
 
+/** The palette as a strip: theme tokens first, foregrounds left out. */
 function ColorPreview({ vars }: { vars: Var[] }) {
+  const { theme, custom } = colorTiles(vars)
   return (
-    <div data-modo="token-preview">
-      {vars
-        .flatMap(v => {
-          const fill = colorExpr(v.name)
-          return fill ? [{ v, fill }] : []
-        })
-        .slice(0, 12)
-        .map(({ v, fill }) => (
-          <span key={v.name} data-modo="token-chip" style={{ background: fill }} title={`${v.name}: ${v.value}`} />
-        ))}
+    <div data-modo="color-strip">
+      {[...theme.flat(), ...custom.flat()].slice(0, STRIP).map(({ v }) => (
+        <span key={v.name} data-modo="token-chip" style={{ background: colorExpr(v.name) ?? v.value }} title={v.name} />
+      ))}
     </div>
   )
 }
@@ -96,24 +118,31 @@ function themeSnapshot(): string {
   return `${attrs.join(' ')} ${dark.matches}`
 }
 
-function ColorGroups({ vars }: { vars: Var[] }) {
-  useSyncExternalStore(subscribeTheme, themeSnapshot)
-  // A token counts as a color when its resolved value is one, either on its
-  // own or wrapped the way the host wraps it (`hsl(var(--border))`).
+/** The color tokens as tiles, each fill with its foreground partner: the
+    theme schema's columns, then the custom families, then the non-colors.
+    A token counts as a color when its resolved value is one, either on its
+    own or wrapped the way the host wraps it (`hsl(var(--border))`). */
+function colorTiles(vars: Var[]) {
   const colors = vars.filter(v => colorValue(v.name, resolved(v.name, v.value)) !== null)
   const byName = new Map(colors.map(v => [v.name, v]))
   const partner = (name: string) => byName.get(name === '--background' ? '--foreground' : `${name}-foreground`)
   const partners = new Set(colors.map(v => partner(v.name)?.name))
   const tiles = new Map(colors.filter(v => !partners.has(v.name)).map(v => [v.name, { v, fg: partner(v.name) }]))
+  return {
+    theme: THEME.map(col => col.flatMap(n => tiles.get(n) ?? [])),
+    custom: families([...tiles.values()].filter(t => !THEME_NAMES.has(t.v.name))),
+    other: vars.filter(v => !byName.has(v.name)),
+  }
+}
 
-  const theme = THEME.map(col => col.flatMap(n => tiles.get(n) ?? []))
-  const custom = families([...tiles.values()].filter(t => !THEME_NAMES.has(t.v.name)))
-  const other = vars.filter(v => !byName.has(v.name))
+function ColorGroups({ vars, all }: { vars: Var[]; all: Var[] }) {
+  useSyncExternalStore(subscribeTheme, themeSnapshot)
+  const { theme, custom, other } = colorTiles(vars)
   const page = pageColors()
   return (
     <>
-      <ColorSection title="Theme" stacks={theme} page={page} />
-      <ColorSection title="Custom" stacks={custom} page={page} />
+      <ColorSection title="Theme" stacks={theme} page={page} all={all} />
+      <ColorSection title="Custom" stacks={custom} page={page} all={all} />
       <OtherTokens vars={other} />
     </>
   )
@@ -140,9 +169,10 @@ interface SectionProps {
   title: string
   stacks: Tile[][]
   page: PageColors
+  all: Var[]
 }
 
-function ColorSection({ title, stacks, page }: SectionProps) {
+function ColorSection({ title, stacks, page, all }: SectionProps) {
   const filled = stacks.filter(s => s.length > 0)
   if (filled.length === 0) return null
   return (
@@ -151,7 +181,7 @@ function ColorSection({ title, stacks, page }: SectionProps) {
         {filled.map(s => (
           <div data-modo="color-stack" key={s[0]!.v.name}>
             {s.map(t => (
-              <ColorTile key={t.v.name} tile={t} page={page} />
+              <ColorTile key={t.v.name} tile={t} page={page} all={all} />
             ))}
           </div>
         ))}
@@ -160,11 +190,13 @@ function ColorSection({ title, stacks, page }: SectionProps) {
   )
 }
 
-function ColorTile({ tile: { v, fg }, page }: { tile: Tile; page: PageColors }) {
+function ColorTile({ tile: { v, fg }, page, all }: { tile: Tile; page: PageColors; all: Var[] }) {
   const value = colorValue(v.name, resolved(v.name, v.value)) ?? v.value
   const own = paint(value)
   const seen = paint(value, page.bg)
   const hex = own[3] === 255 ? toHex(own) : null
+  // The value in the current scheme: the first declaration may be the other one's.
+  const live = schemeValue(resolved(v.name, v.value), page)
   // No host pairing: write in whichever page color (its text or its canvas)
   // reads best on this fill.
   const ink = contrast(seen, paint(page.fg)) >= contrast(seen, paint(page.bg)) ? page.fg : page.bg
@@ -176,13 +208,41 @@ function ColorTile({ tile: { v, fg }, page }: { tile: Tile; page: PageColors }) 
       title={[`${v.name}: ${v.value}`, hex, fg && `${fg.name}: ${fg.value}`].filter(Boolean).join('\n')}
     >
       <span data-modo="color-tile-name">{v.name}</span>
-      <span data-modo="color-tile-value">
-        <span>{v.value}</span>
-        {hex && !v.value.startsWith('#') ? <span>{hex}</span> : null}
-      </span>
       {fg ? <span data-modo="color-tile-pair">{fg.name}</span> : null}
+      <div data-modo="color-tile-foot">
+        <span data-modo="color-tile-value">
+          {hex ? <span>{hex}</span> : null}
+          {live !== hex ? <span>{live}</span> : null}
+        </span>
+        <SchemeChips v={v} all={all} />
+      </div>
     </div>
   )
+}
+
+/** The token's light and dark values side by side, when the host declares
+    both as plain colors (a value that references other tokens would resolve
+    in the current scheme only, so it gets no chip). */
+function SchemeChips({ v, all }: { v: Var; all: Var[] }) {
+  const pair = schemePair(all, v.name)
+  if (!pair) return null
+  const fill = (raw: string) => (raw.includes('var(') ? null : colorValue(v.name, raw))
+  const [light, dark] = [fill(pair.light), fill(pair.dark)]
+  if (!light || !dark) return null
+  return (
+    <span
+      data-modo="color-tile-schemes"
+      title={`Light: ${pair.light}\nDark: ${pair.dark}`}
+      style={{ background: `linear-gradient(135deg, ${light} 50%, ${dark} 50%)` }}
+    />
+  )
+}
+
+/** `light-dark(a, b)` as the side the page renders: the darker canvas picks b. */
+function schemeValue(value: string, page: PageColors): string {
+  const both = lightDark(value)
+  if (!both) return value
+  return luminance(paint(page.bg)) < 0.5 ? both[1] : both[0]
 }
 
 interface PageColors {
