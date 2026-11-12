@@ -48,6 +48,8 @@
  *   their box with the shared `useFieldBox` (ladder in the variant, state
  *   attributes, radius, inset), as every text field does; `variant` is typed
  *   `FieldVariant` (no `null`).
+ * - Both fields' wrappers cap at their container's width (`max-w-full`), so a
+ *   field given `w-[Npx] max-w-full` shrinks on a narrow screen.
  */
 
 'use client'
@@ -538,7 +540,7 @@ const ComboboxInput = forwardRef<HTMLInputElement, ComboboxInputProps>(
     const { anchorRef } = useComboboxContext()
 
     return (
-      <div className="flex flex-col gap-1">
+      <div className="flex max-w-full flex-col gap-1">
         {/* The group is the popup's anchor, so the list spans the whole
             field (icon to chevron), not just the text input. */}
         <ComboboxPrimitive.InputGroup
@@ -635,7 +637,7 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
     const rowHeight = useChipRowHeight(compact ? 8 : 12)
 
     return (
-      <div className="flex flex-col gap-1">
+      <div className="flex max-w-full flex-col gap-1">
         <ComboboxPrimitive.Chips
           ref={anchorRef}
           // The field springs to the chip rows' measured height as they

@@ -16,6 +16,8 @@
  * The active indicator and the hover pill are `GooIndicator`s
  * (`lib/goo-indicator.tsx`, local): they melt from tab to tab instead of
  * sliding; the hover pill now always returns to the active tab as it fades.
+ * The list caps at its container's width and scrolls sideways past it
+ * (`max-w-full overflow-x-auto scrollbar-hide`, as TabsSubtle's list does).
  */
 
 'use client'
@@ -317,7 +319,9 @@ const TabsList = forwardRef<HTMLDivElement, TabsListProps>(({ children, classNam
           // segmentPad + segmentItem add up to the ladder's control height
           // (36px default, 28px compact) so the segmented control's outer
           // box lines up with buttons, selects, and inputs beside it.
-          'relative inline-flex items-center select-none bg-muted',
+          // Wider than its container, the list scrolls inside its own pill;
+          // segmentPad leaves room for the 2px-outset focus ring.
+          'relative inline-flex max-w-full items-center overflow-x-auto scrollbar-hide select-none bg-muted',
           sizeClasses.segmentPad,
           shape.container,
           className,
