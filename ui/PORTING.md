@@ -424,7 +424,7 @@ Notable local behavior changes beyond the `default*` props:
 | — | `@justanarthur/modo` (workspace) | The design system's own host |
 | — | `sugar-high` ^2.5.1 | Tokenizer for the local `primitives/code` item |
 | — | `react-day-picker` ^10.0.2, `date-fns` ^4.4.0 | The calendar under the date pickers, and its date math, formats and locales (`react-day-picker/locale`); date-fns is declared because the pickers import it directly |
-| — | `vite` ^5.4, `esbuild` ^0.20, `typescript` ^5.4, `@types/react(-dom)` ^18.3 (dev) | `vite` ^5.4 makes UnoCSS's peer reuse modo's Vite 5. The others serve the scripts and `tsc`. |
+| — | `vite` ^8.3, `esbuild` ^0.28, `typescript` ^5.4, `@types/react(-dom)` ^18.3 (dev) | `vite` ^8.3 makes UnoCSS's peer reuse modo's Vite 8. The others serve the scripts and `tsc`. |
 
 Every import is declared here, because bun's isolated linker only exposes
 declared packages.
