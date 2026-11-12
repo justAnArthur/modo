@@ -42,6 +42,7 @@
     "src/plugins",
     "src/exports",
     "templates",
+    "docs",
     "README.md"
   ],
   "module": "./dist/index.js",

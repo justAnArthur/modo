@@ -1,12 +1,37 @@
 # `@justanarthur/modo`
 
-> Atomic design system renderer — reads tokens / primitives / components / blocks / pages and produces a docs site that uses the user's components in the chrome.
+modo turns your design system into its own docs site. You bring the tokens, components and prose; modo discovers them by folder and renders a site whose chrome is built from your own components.
 
-**Live demo:** https://justanarthur.github.io/modo/ — five design systems documented by modo.
+**Live demo:** https://justanarthur.github.io/modo/ (five design systems documented by modo, switchable from the panel).
 
-`modo` enforces the structure of an atomic design system (`tokens → primitives → components → blocks → pages`) and auto-renders its documentation site. The lib ships the renderer and a CLI; the design system itself is **zero content** — you bring your own tokens, components, blocks, and pages.
+- **No content of its own.** Every token, visual, component and line of docs comes from your project. The chrome adds only its labels.
+- **Discovered by folder.** `tokens/`, `primitives/`, `components/`, `blocks/`, `pages/`. No registry, no Vite config.
+- **TSDoc is the docs.** An item's comment is its page; its props table comes from the source; its examples are live.
+- **Shell inheritance.** When your Button, Link, Code, Icon, Select or Sidebar fit the chrome's slots, the chrome renders with them.
+- **Canvas.** `/canvas` shows every token group and item live on one pan-and-zoom surface.
+- **Static output.** `modo build` writes a page per route, ready for GitHub Pages, Netlify or Vercel.
 
 ## Install
+
+Scaffold a new project:
+
+```sh
+bunx @justanarthur/modo init my-ds
+cd my-ds
+bun install
+bun dev
+```
+
+With npm:
+
+```sh
+npx @justanarthur/modo init my-ds
+cd my-ds
+npm install
+npm run dev
+```
+
+Or add it to an existing design system:
 
 ```sh
 bun add -D @justanarthur/modo
@@ -14,84 +39,104 @@ bun add -D @justanarthur/modo
 npm install --save-dev @justanarthur/modo
 ```
 
-## CLI
-
-```sh
-# scaffold a design system in ./my-ds (or `init <dir> my-ds`)
-npx @justanarthur/modo init my-ds
-
-# inside the project
-modo dev                    # dev server
-modo add primitive badge    # primitives/badge/index.tsx + examples.mdx (also component, block, page, token)
-modo add component overlays/dialog  # components/overlays/dialog/: a group folder (groups nest: inputs/date-time/calendar)
-modo check                  # validate modo.config.ts
-modo build                  # static site in ./dist, every route its own page
-modo build --base /my-ds/   # …served under a sub-path, e.g. a GitHub Pages project site
-modo build --out docs-dist  # …into another dir, when ./dist holds your package build
-```
-
-Run `npx @justanarthur/modo`, not `npx modo`: the unscoped `modo` on npm is someone else's package. The CLI reads `modo.config.ts` from the project root (`--config <file>` for another); the [scaffolded config](https://github.com/justAnArthur/modo/blob/main/lib/templates/default/modo.config.ts) is a starting point.
-
-## Programmatic API
+Then create a `modo.config.ts` at the project root:
 
 ```ts
 import { defineConfig } from '@justanarthur/modo/config'
 
 export default defineConfig({
-  name: 'My DS',
+  name: 'my-ds',
   css: './global.css',
-  examples: './examples.ts',
 })
 ```
 
-Tokens, primitives, components, blocks and pages are discovered by directory (`tokens/`, `primitives/`, `components/`, `blocks/`, `pages/`). An item folder may sit down in group folders (`components/overlays/dialog/`, nested `components/inputs/date-time/calendar/`); each group becomes a sidebar sub-section and a heading on the tier overview. `examples` points at a module whose named exports (e.g. `export { Plus, Search } from 'lucide-react'`) are in scope in every `@example`, next to your items.
+Run `npx @justanarthur/modo`, not `npx modo`, outside a project: the unscoped `modo` on npm is someone else's package. Inside a project with modo installed, `npx modo` and `bunx modo` run the local CLI.
 
-The CLI accepts any user content — `modo` ships no design tokens, no React components, and no copy. You own the visual layer end-to-end.
+Requires React 18+ as a peer. Vite comes with modo; you don't install or configure it.
 
-## Canvas
+## Quickstart
 
-`/canvas` shows every token group and item as a live, interactive frame on one pan-and-zoom surface, a column per tier. Scroll pans, pinch or ⌘/Ctrl+scroll zooms, dragging the background (or holding Space) pans; Shift+0 is 100%, Shift+1 fits everything. Frames mount lazily near the view, so it stays fast with hundreds of items.
+`modo init my-ds` creates:
 
-## How it works
+```
+my-ds/
+├── modo.config.ts          site config
+├── global.css              global styles and chrome restyling
+├── package.json            scripts: dev, build, check
+├── tsconfig.json
+├── tokens/
+│   └── colors.css, radius.css, spacing.css, typography.css
+└── primitives/
+    └── button/
+        ├── index.tsx       the item: default export + TSDoc block
+        ├── examples.mdx    its live examples
+        └── button.css      co-located CSS, injected automatically
+```
 
-`modo` discovers your design system files at the configured paths, parses each via a TSDoc-aware extractor, and renders an interactive docs site where the chrome (sidebar, page headers, prop tables, example cards) is structural-only. The example content is your components — `modo` doesn't generate fake components to fill the chrome.
+Add `.modo-tmp/` and `dist/` to your `.gitignore`.
 
-## Writing docs
-
-An item's JSDoc is Markdown: the first paragraph is the page lead, the rest renders below it; prop and example descriptions are Markdown too. Links and fenced code go through your shell `Link` / `Code`.
-
-Prose lives in the comment; examples live in an `.mdx` file the comment includes:
+An item is a folder with an `index.tsx`. Its TSDoc block is the page; its examples sit beside it:
 
 ```tsx
+// primitives/badge/index.tsx
 /**
- * Three spring speeds, exits a little faster than entrances.
- *
- * Every component picks one of three springs…
+ * Badge — a short status label.
  *
  * @example {@include ./examples.mdx}
  */
-export default function Motion(/* … */) {}
+export default function Badge({ tone = 'neutral', children }: {
+  /** How loud the badge is. */
+  tone?: 'neutral' | 'accent'
+  children?: React.ReactNode
+}) {
+  return <span data-tone={tone}>{children}</span>
+}
 ```
+
+`primitives/badge/examples.mdx`:
 
 ```mdx
-import Motion from './index'
+import Badge from './index'
 
-# Three speeds
+# Neutral
 
-Toggle each to feel the pace.
+<Badge>Draft</Badge>
 
-<Motion tier="fast">…</Motion>
+# Accent
+
+<Badge tone="accent">New</Badge>
 ```
 
-An `@example` that is only `{@include ./x.mdx}` is compiled into the same build as your items (real imports, shared contexts). Each `# Title` names an example and the JSX block below it becomes a live example with Show code / Copy. For prose too long for the comment, `{@include ./x.md}` inlines a Markdown file; `{@includeCode ./x}` inlines a file as a code block. Includes are not recursive; a missing file is a build warning.
+`modo add primitive badge` writes both files from a stub.
 
-Block tags show in a row under the page lead: `@status` (or `@alpha` / `@beta` / `@experimental`), `@since`, `@deprecated` (Markdown), `@source <url> [label]` and `@license`, the last two as often as an item has upstreams. With `repo: { url, branch?, dir? }` in `modo.config.ts`, the row also links each item's `index.tsx` in the repository.
+## CLI
 
-## Compatibility
+```sh
+modo init <name>                  # scaffold ./<name>
+modo init <dir> <name>            # scaffold <dir>/<name>
+modo dev                          # dev server at http://127.0.0.1:5173 (MODO_PORT to change)
+modo build                        # static site in ./dist
+modo build --base /my-ds/         # served under a sub-path
+modo build --out docs-dist        # into another dir
+modo add primitive badge          # primitives/badge/index.tsx + examples.mdx
+modo add component overlays/dialog  # in a group folder (groups nest)
+modo add page dashboard           # also: block, token
+modo check                        # validate modo.config.ts
+```
 
-- React 18+, as a peer: modo renders with your project's own React.
-- Vite comes with modo, which runs its own Vite app; you don't install or configure it.
-- Bun 1.x recommended for development; npm-compatible for publishing
+`dev`, `build` and `check` take `--config <file>` for a config other than `modo.config.ts`.
+
+## Docs
+
+- [Configuration](https://github.com/justAnArthur/modo/blob/main/lib/docs/config.md): every `modo.config.ts` field.
+- [Items](https://github.com/justAnArthur/modo/blob/main/lib/docs/items.md): tiers, groups, TSDoc, props, examples, block tags.
+- [Tokens](https://github.com/justAnArthur/modo/blob/main/lib/docs/tokens.md): `tokens/*.css` and the token contract the chrome reads.
+- [Shell inheritance](https://github.com/justAnArthur/modo/blob/main/lib/docs/shell.md): the chrome's slots and how your components fill them.
+- [Theming](https://github.com/justAnArthur/modo/blob/main/lib/docs/theming.md): restyling the chrome through `data-modo` hooks, dark mode.
+- [Deploying](https://github.com/justAnArthur/modo/blob/main/lib/docs/deploy.md): `--base`, GitHub Pages, Netlify, Vercel.
+- [Troubleshooting](https://github.com/justAnArthur/modo/blob/main/lib/docs/troubleshooting.md): what `[modo:bundle]` and `[modo:shell]` messages mean.
+
+The same files ship in the package under `node_modules/@justanarthur/modo/docs/`.
 
 ## License
 

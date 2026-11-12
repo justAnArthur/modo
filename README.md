@@ -43,17 +43,26 @@ my-ds/
 ├── tsconfig.json
 ├── tokens/                 — design tokens as plain CSS custom properties
 │   └── colors.css, radius.css, spacing.css, typography.css
-├── primitives/             — tier 1: atoms (Button, Surface, …)
-│   └── button/
-│       ├── index.tsx       — the item: default export + TSDoc contract
-│       ├── examples.mdx    — its live examples
-│       └── button.css      — co-located CSS is auto-injected
-├── components/             — tier 2: composites (Dialog, Select, …)
-├── blocks/                 — tier 3: page-level patterns
-└── pages/                  — tier 4: full screens assembled from blocks
+└── primitives/             — tier 1: atoms (Button, Surface, …)
+    └── button/
+        ├── index.tsx       — the item: default export + TSDoc contract
+        ├── examples.mdx    — its live examples
+        └── button.css      — co-located CSS is auto-injected
 ```
 
-`tokens/`, `primitives/`, `components/`, `blocks/`, `pages/` are auto-discovered by directory. any of them can be omitted; tiers render in that order. add more later with `bunx modo add primitive my-thing` (or `component`, `block`, `page`, `token`); it writes `index.tsx` and `examples.mdx` from `lib/templates/stubs`.
+the other tiers are folders you add when you need them: `components/` (composites: Dialog, Select, …), `blocks/` (page-level patterns) and `pages/` (full screens assembled from blocks). `tokens/`, `primitives/`, `components/`, `blocks/`, `pages/` are auto-discovered by directory; any of them can be omitted, and tiers render in that order. add items with `bunx modo add primitive my-thing` (or `component`, `block`, `page`, `token`) inside the project; it writes `index.tsx` and `examples.mdx` from `lib/templates/stubs`. add `.modo-tmp/` (modo's build cache) and `dist/` to your `.gitignore`.
+
+## docs
+
+the user guide ships with the package, in [`lib/docs/`](lib/docs):
+
+- [configuration](lib/docs/config.md) — every `modo.config.ts` field
+- [items](lib/docs/items.md) — tiers, groups, TSDoc, props, `examples.mdx`, block tags
+- [tokens](lib/docs/tokens.md) — `tokens/*.css` and the token contract the chrome reads
+- [shell inheritance](lib/docs/shell.md) — the chrome's slots and how your components fill them
+- [theming](lib/docs/theming.md) — `data-modo` hooks, dark mode
+- [deploying](lib/docs/deploy.md) — `--base`, GitHub Pages, Netlify, Vercel
+- [troubleshooting](lib/docs/troubleshooting.md) — `[modo:bundle]` and `[modo:shell]` messages
 
 ## how it works
 
@@ -110,6 +119,8 @@ tokens are plain CSS, one file per group (`colors.css`, `typography.css`, `spaci
 
 ## integrating into your project (`modo.config.ts`)
 
+the common fields; every field is in [config.md](lib/docs/config.md).
+
 ```ts
 import { defineConfig } from '@justanarthur/modo/config'
 
@@ -147,7 +158,7 @@ export default defineConfig({
 
 ### shell inheritance
 
-the docs chrome looks for your components per slot (`Button`, `Link`, `Code`, `Icon` in primitives; `Select`, `Sidebar Root/Item/Section` in components) matched by parsed name + required props — `children` must be visible in the parsed type (`href` for `Link`). unmatched slots fall back to the lib's structural Plain components. to style the chrome itself, target the `data-modo` attributes (`data-modo="sidebar"`, `"example-card"`, `"swatch"`, …) from your `css` — the lib ships structure, you ship the look.
+the docs chrome looks for your components per slot (`Button`, `Link`, `Code`, `Icon` in primitives; `Select`, `Sidebar Root/Item/Section` in components) matched by parsed name + required props — `children` must be visible in the parsed type (`href` for `Link`). unmatched slots fall back to the lib's structural Plain components. to style the chrome itself, target the `data-modo` attributes (`data-modo="sidebar"`, `"example-card"`, `"swatch"`, …) from your `css` — the lib ships structure, you ship the look. details in [shell.md](lib/docs/shell.md) and [theming.md](lib/docs/theming.md).
 
 ## what the lib ships
 
@@ -165,6 +176,7 @@ modo/
 │   ├── src/plugins/              — Vite plugins: the shared item build, tokens, shell
 │   ├── src/lib/                  — schemas, TSDoc parser, token/css parsing, slot matching
 │   ├── templates/                — `modo init` scaffold and `modo add` stubs
+│   ├── docs/                     — the user guide, shipped in the package
 │   └── test/                     — parser tests
 ├── ui/                           — the npm package `@justanarthur/modo-ui`, documented with modo
 ├── demo/                         — harness: multi-DS runner + demo-switcher
