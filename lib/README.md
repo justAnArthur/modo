@@ -114,7 +114,7 @@ import Badge from './index'
 ```sh
 modo init <name>                  # scaffold ./<name>
 modo init <dir> <name>            # scaffold <dir>/<name>
-modo dev                          # dev server at http://127.0.0.1:5173 (--port, --host to change)
+modo dev                          # dev server at http://localhost:5173 (--port, --host to change)
 modo preview                      # serve the built site
 modo build                        # static site in ./dist
 modo build --base /my-ds/         # served under a sub-path

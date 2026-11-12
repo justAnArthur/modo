@@ -13,8 +13,6 @@ export default defineConfig({
     github: 'https://github.com/justAnArthur/modo',
     npm: 'https://www.npmjs.com/package/@justanarthur/modo-ui',
   },
-  footer:
-    'MIT © 2026 justAnArthur. Ported from [Fluid Functionalism](https://github.com/mickadesign/fluid-functionalism), MIT © 2026 Micka Touillaud.',
   vite: './vite.ts',
   shell: {
     Button: './components/button',

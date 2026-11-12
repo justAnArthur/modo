@@ -51,7 +51,7 @@ export default defineConfig(async () => {
       react(),
     ],
     server: {
-      host: '127.0.0.1',
+      host: 'localhost',
       port: PORT,
       strictPort: true,
       // Build output is rewritten on every rebuild; the items plugin reloads

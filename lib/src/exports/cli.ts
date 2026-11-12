@@ -29,7 +29,7 @@ Usage:
 Options (--flag value or --flag=value):
   --config <file>          dev, build, preview, check: the config file (default modo.config.ts)
   --port <port>            dev, preview: the port (default 5173 for dev, 4173 for preview)
-  --host [<host>]          dev, preview: the address to listen on (default 127.0.0.1; a bare --host listens on all)
+  --host [<host>]          dev, preview: the address to listen on (default localhost; a bare --host listens on all)
   --base <path>            build, preview: public path the site is served under (default /)
   --out <dir>              build, preview: the output dir (default ./dist)
   --help, -h               Show this help
@@ -245,7 +245,7 @@ async function runPreview(args: Args) {
     root: cwd,
     base: stringFlag(args, '--base') ?? cfg.base ?? '/',
     build: { outDir },
-    preview: { port: portFlag(args), host: args.flags.get('--host') ?? '127.0.0.1' },
+    preview: { port: portFlag(args), host: args.flags.get('--host') ?? 'localhost' },
   })
   server.printUrls()
 }

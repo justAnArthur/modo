@@ -77,7 +77,8 @@ State attributes are listed in parentheses.
 **Page**
 
 - `page-eyebrow`, `page-title`, `page-lead`, `prose`.
-- `page-meta`, `page-meta-entry` (`data-kind="deprecated|status|since|repo|source|license"`): the [block tag](./items.md#block-tags) row.
+- `page-meta`, `page-meta-entry` (`data-kind="deprecated|status|since|repo"`): the [block tag](./items.md#block-tags) row.
+- `credits`, `credits-list`, `credit`: the overview's Credits section, built from `@source` / `@license`.
 - `section`, `section-title`, `anchor` (the `#` link in a heading).
 - `hero`, `hero-stats`: the home page.
 

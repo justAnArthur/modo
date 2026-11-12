@@ -5,12 +5,12 @@ import { itemMeta, repoBlobUrl } from '../../lib/item-meta'
 import { Markdown } from '../markdown'
 import { cap } from '../text'
 
-/** Lifecycle and provenance from the item's block tags, plus its Source link when `repo` is set. */
+/** Lifecycle from the item's block tags, plus its Source link when `repo` is set. Upstreams and
+    licenses (`@source`, `@license`) are credited once, on the overview (pages/credits.tsx). */
 export function PageMeta({ entry }: { entry: ItemEntry }) {
-  const { status, since, deprecated, licenses, sources } = itemMeta(entry.tags)
+  const { status, since, deprecated } = itemMeta(entry.tags)
   const { repo } = config
-  const empty = deprecated === undefined && !status && !since && !repo && licenses.length === 0 && sources.length === 0
-  if (empty) return null
+  if (deprecated === undefined && !status && !since && !repo) return null
 
   return (
     <div data-modo="page-meta">
@@ -39,16 +39,6 @@ export function PageMeta({ entry }: { entry: ItemEntry }) {
           <shell.Link href={repoBlobUrl(repo, entry.path)}>Source</shell.Link>
         </span>
       ) : null}
-      {sources.map(source => (
-        <span data-modo="page-meta-entry" data-kind="source" key={source.href}>
-          Upstream <shell.Link href={source.href}>{source.label}</shell.Link>
-        </span>
-      ))}
-      {licenses.map(license => (
-        <span data-modo="page-meta-entry" data-kind="license" key={license}>
-          {license}
-        </span>
-      ))}
     </div>
   )
 }

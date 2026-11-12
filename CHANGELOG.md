@@ -28,7 +28,7 @@ New since 0.9:
 - `modo dev --port` and `--host`; every flag also takes `--flag=value`; an unknown flag fails with the help text.
 - `modo add page` is listed in the help.
 - Site branding: a header and footer from the config, socials, per-page head tags.
-- Item pages show a metadata row from doc-comment block tags (`@since`, `@source`, `@license`, …) and link to the item's source in the repo.
+- Item pages show a metadata row from doc-comment block tags (`@status`, `@since`, `@deprecated`) and link to the item's source in the repo. `@source` / `@license` upstreams are credited once, in a Credits section on the overview.
 - Builds fail on item errors instead of shipping a broken page; Babel for inline examples loads lazily.
 - The canvas opens fitted to the view; bento previews fit and pack, example rows and token labels wrap; the nav no longer repeats the design system's name.
 - Built on Vite 8 (Rolldown and Oxc) and `@vitejs/plugin-react` 6; the shared item build runs on esbuild 0.28.

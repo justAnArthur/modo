@@ -44,3 +44,40 @@ export function repoBlobUrl({ url, branch = 'main', dir }: RepoConfig, path: str
   const prefix = dir ? `${dir.replace(/^\/+|\/+$/g, '')}/` : ''
   return `${url.replace(/\/+$/, '')}/blob/${branch}/${prefix}${path}`
 }
+
+/** One upstream the design system builds on, gathered from its items' `@source` / `@license` tags. */
+export interface Credit {
+  label: string
+  /** The upstream's repository (`https://github.com/owner/repo`), else its site. */
+  href: string
+  licenses: string[]
+  /** How many items cite it. */
+  items: number
+}
+
+/** Every upstream cited across the items, in first-seen order: an item's nth `@license` belongs to its nth `@source`. */
+export function credits(itemTags: ParsedTag[][]): Credit[] {
+  const byLabel = new Map<string, Credit>()
+  for (const tags of itemTags) {
+    const { sources, licenses } = itemMeta(tags)
+    sources.forEach((source, i) => {
+      const license = licenses[i] ?? (licenses.length === 1 ? licenses[0] : undefined)
+      const credit = byLabel.get(source.label) ?? {
+        label: source.label,
+        href: repoRoot(source.href),
+        licenses: [],
+        items: 0,
+      }
+      credit.items++
+      if (license && !credit.licenses.includes(license)) credit.licenses.push(license)
+      byLabel.set(source.label, credit)
+    })
+  }
+  return [...byLabel.values()]
+}
+
+function repoRoot(href: string): string {
+  const url = new URL(href)
+  const [owner, repo] = url.pathname.split('/').filter(Boolean)
+  return owner && repo ? `${url.origin}/${owner}/${repo}` : url.origin
+}

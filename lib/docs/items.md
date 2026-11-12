@@ -213,15 +213,15 @@ A missing file is a `[modo:bundle] warning:` and the include renders as nothing.
 
 ## Block tags
 
-These tags show in a row under the page lead (`data-modo="page-meta"`):
+The lifecycle tags show in a row under the page lead (`data-modo="page-meta"`). Provenance tags stay in the code and are credited once, on the overview:
 
 | Tag | Shows |
 | --- | --- |
 | `@status <text>` | A status label. `@alpha`, `@beta` or `@experimental` set it too, when there's no `@status`. |
 | `@since <version>` | "Since 1.2". |
 | `@deprecated [text]` | "Deprecated", with the Markdown text after it if any. |
-| `@source <url> [label]` | "Upstream" and a link. The label defaults to the URL without its scheme. Repeat it for several upstreams. |
-| `@license <text>` | The license text. Repeat it for several. |
+| `@source <url> [label]` | An upstream this item derives from. Repeat it for several. The overview's Credits section lists each upstream once (by label, linked to its repository) with how many items cite it. The label defaults to the URL without its scheme. |
+| `@license <text>` | The upstream's license; the nth `@license` belongs to the nth `@source`. Shown beside that upstream in Credits. |
 
 With [`repo`](./config.md#repo) set, the row also links the item's `index.tsx` in the repository.
 
