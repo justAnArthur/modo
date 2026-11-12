@@ -1,10 +1,10 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/card.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `@/lib/*`, `@/hooks/*` and
+ * - `@/lib/*`, `@/hooks/*` and
  *   `@/components/ui/fluid-hover-highlight` → `../../lib/*`, except
  *   `SizeProvider` → `../../primitives/sizes`.
  * - `next/link` replaced with plain anchors (no Next.js in modo) — the
@@ -20,7 +20,12 @@
  *   hex focus-ring fallback → `ring-focus-ring` / `border-focus-ring`;
  *   `rounded-[Npx]` → radius tokens; `duration-80|120|160` and tier-length JS
  *   durations → `duration-<tier>` / `spring.*`.
+ * - `CardEyebrow` drops upstream's `uppercase tracking-wide`: the DS sets no
+ *   case or letter-spacing, so the eyebrow is the caption role, semibold and
+ *   muted, capitalized in its content.
  */
+
+'use client'
 
 import {
   Children,
@@ -809,8 +814,8 @@ function CardImage({ src, alt, className }: CardImageProps) {
 CardImage.displayName = 'CardImage'
 
 // ── CardEyebrow ──────────────────────────────────────────
-// Small uppercase label above the title (e.g. "New Model"). Typographically
-// it's the caption role of the type scale in uppercase — see /docs/sizes.
+// Small label above the title (e.g. "New model"): the caption role, semibold
+// and muted — see /docs/sizes.
 
 const CardEyebrow = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>(({ className, ...props }, ref) => {
   const compact = useSize().variant === 'compact'
@@ -820,8 +825,7 @@ const CardEyebrow = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>
       data-slot="card-eyebrow"
       className={cn(
         compact ? 'text-caption-compact' : 'text-caption',
-        'uppercase tracking-wide text-muted-foreground',
-        'weight-semibold',
+        'text-muted-foreground weight-semibold',
         className,
       )}
       {...props}
