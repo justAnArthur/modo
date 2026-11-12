@@ -189,7 +189,7 @@ Rules:
 - nav: `sidebar-nav`, `sidebar-section`, `sidebar-section-title`, `sidebar-section-items`, `sidebar-item` (`aria-current="page"` when active), `toc`, `toc-label` (`data-level`).
 - page: `page-eyebrow`, `page-title`, `page-lead`, `page-meta`, `page-meta-entry` (`data-kind`: `deprecated`, `status`, `since`, `repo`, `source`, `license`), `prose`, `section`, `section-title`, `anchor`, `hero`, `hero-stats`.
 - canvas (`/canvas`, every foundation and item live on one pan-and-zoom surface): `canvas` (`data-moving`, `data-panning`, `data-space` while in use), `canvas-world`, `canvas-column` (`data-kind`), `canvas-frames`, `canvas-frame`, `canvas-frame-title`, `canvas-stage`, `canvas-controls`, `canvas-zoom`.
-- overviews: `bento`, `bento-card` (`data-span="wide|full"`), `bento-stage`, `bento-meta`, `bento-title`, `bento-count`, `bento-desc`, `bento-empty`, `token-preview`, `token-chip`.
+- overviews: `bento`, `bento-card` (`data-span="wide|full"`), `bento-stage` (`data-clipped` when the preview is cut off), `bento-fit` (the preview's scaled layer), `bento-meta`, `bento-title`, `bento-count`, `bento-desc`, `bento-empty`, `token-preview`, `token-chip`.
 - examples: `example-card`, `example-card-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`, `code-block`, `code-actions`, `icon-label`.
 - tables and tokens: `prop-table-scroll`, `prop-table`, `token-list`, `token-row`, `token-name`, `token-meta`, `swatch` (`data-kind`).
 - colors: `color-grid`, `color-stack`, `color-tile` (`data-flush` when it matches the page), `color-tile-name`, `color-tile-value`, `color-tile-pair`.

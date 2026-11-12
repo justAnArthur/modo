@@ -281,32 +281,51 @@
   overflow: hidden;
 }
 
+/* The window a preview shows through. One that would overflow it scales down
+   (bento.tsx sets --modo-stage-zoom on the fit layer); one too big even then
+   is clipped under a fade. */
 [data-modo="bento-stage"] {
-  /* A single full-width track, so previews written against a full-width stage
-     (percentage widths, forms) keep a definite width instead of collapsing. */
   display: grid;
   flex: 1;
   grid-template-columns: minmax(0, 1fr);
   /* Center short previews; fall back to the top when one overflows. */
   align-content: safe center;
-  gap: var(--space-3, 12px);
   min-height: 132px;
   max-height: 320px;
   padding: var(--space-5, 24px);
   overflow: hidden;
-  /* Page-sized previews (blocks) set this to shrink into the cell. */
+}
+
+/* A mask, not a color: only the (opaque) text color's alpha is read. */
+[data-modo="bento-stage"][data-clipped] {
+  mask-image: linear-gradient(to bottom, currentColor calc(100% - var(--space-6, 32px)), transparent);
+}
+
+/* A single full-width track, so previews written against a full-width stage
+   (percentage widths, forms) keep a definite width instead of collapsing. */
+[data-modo="bento-fit"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3, 12px);
   zoom: var(--modo-stage-zoom, 1);
 }
 
 /* Examples are written for a full-width stage; in a cell they have to wrap.
-   Layered, so an example's own styles win even from a host's layers
-   (an unlayered rule would beat Tailwind's at any specificity). */
+   Block containers fill the track; inline content (a badge, a button) keeps
+   its own width, centered. Layered, so an example's own styles win even from
+   a host's layers (an unlayered rule would beat Tailwind's at any specificity). */
 @layer modo-preview {
-  :is([data-modo="bento-stage"], [data-modo="canvas-stage"]) > * {
+  :is([data-modo="bento-fit"], [data-modo="canvas-stage"]) > * {
     max-width: 100%;
+    justify-self: center;
   }
 
-  [data-modo="bento-stage"] > :where(div) {
+  :is([data-modo="bento-fit"], [data-modo="canvas-stage"])
+    > :where(div, form, section, article, aside, nav, header, footer, main, fieldset, table, ul, ol, dl, figure) {
+    justify-self: stretch;
+  }
+
+  :is([data-modo="bento-fit"], [data-modo="example-card-stage"]) > :where(div) {
     flex-wrap: wrap;
   }
 }
@@ -758,9 +777,11 @@
   overflow-x: auto;
 }
 
+/* Past the floor the wrapper scrolls instead of crushing the columns. */
 [data-modo="prop-table"] {
   border-collapse: collapse;
   width: 100%;
+  min-width: 36rem;
   font-size: var(--modo-font-size-sm);
   line-height: var(--modo-line-height-sm);
 }
@@ -916,9 +937,7 @@
 [data-modo="token-label"] > * {
   max-width: 100%;
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 [data-modo="type-families"],
@@ -994,9 +1013,7 @@
 
 [data-modo="type-sample"] {
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 [data-modo="radius-tile"] {
