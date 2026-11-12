@@ -294,11 +294,12 @@ export function ThemeSwitcher() {
   )
 }
 
-/** The header mark: modo's ladder (tokens → pages), drawn in the text color so it follows the theme. */
+/** The header mark: modo's frame and drop (a docs page, a component settled into it), drawn in the text color so it follows the theme. */
 export function Logo() {
   return (
-    <svg viewBox="0 0 26 26" fill="currentColor" aria-hidden>
-      <path d="M0 0H4a2 2 0 0 1 0 4H0ZM0 5.5H9a2 2 0 0 1 0 4H0ZM0 11H14a2 2 0 0 1 0 4H0ZM0 16.5H19a2 2 0 0 1 0 4H0ZM0 22H24a2 2 0 0 1 0 4H0Z" />
+    <svg viewBox="0 0 32 32" aria-hidden>
+      <rect x="2" y="2" width="28" height="28" rx="8" fill="none" stroke="currentColor" strokeWidth="3.5" />
+      <rect x="13" y="13" width="17" height="17" rx="8" fill="currentColor" />
     </svg>
   )
 }
