@@ -123,10 +123,16 @@ Foundations pages list every one with its value.
   `'use client'`, kept at the top of each built chunk, so the components work
   from Server Components (Next.js App Router) as client components. `cn` and
   the class tables stay server-safe.
+- In a Server Component, use the named parts (`CardHeader`, `DialogContent`, …)
+  rather than the dotted form (`Card.Header`): React can't read a property off
+  a client module from the server. Both are exported; the dotted form works in
+  client components.
 - `pdfjs-dist` is an optional peer, used only for PDF thumbnails in
   `InputMessage` (`npm install pdfjs-dist`). It loads lazily on the first PDF
   attachment, and fetches its worker from `cdn.jsdelivr.net`. Without it, a
-  PDF attachment shows the file icon and a console warning.
+  PDF attachment shows the file icon and a console warning. Webpack-based
+  builds (Next.js) resolve the dynamic import at build time, so there install
+  `pdfjs-dist` or alias it to `false`.
 
 ## Hooks for your own components
 
@@ -153,7 +159,7 @@ The morph layer takes techniques from three more MIT projects:
 
 | Project | Repository @ commit | License | What it contributes |
 |---|---|---|---|
-| beUI | `github.com/starc007/ui-components` @ `de52f337e520e7ee37749b36eb1c32df86137bcb` | MIT © 2026 Saurabh Chauhan, [`LICENSE.beui`](./LICENSE.beui) | the gooey popover's rect interpolation, rounded-rect path, source cutout and goo filter; the morph select; the morphing search (idea only) |
+| beUI | `github.com/starc007/ui-components` @ `de52f337e520e7ee37749b36eb1c32df86137bcb` | MIT © 2026 Saurabh Chauhan, [`LICENSE.beui`](./LICENSE.beui) | the gooey popover's rect interpolation, rounded-rect path, source cutout and goo filter; the morphing search (idea only) |
 | motion-primitives | `github.com/ibelick/motion-primitives` @ `120f64f6ca60348e251f929e9c81f11ccbe45eda` | MIT © 2024 ibelick, [`LICENSE.motion-primitives`](./LICENSE.motion-primitives) | the morphing popover and morphing dialog (trigger growing into the panel, shared parts) |
 | Sileo | `github.com/hiaaryan/sileo` @ `9793f844349983e140cf33cebbb8f51626d41407` | MIT, [`LICENSE.sileo`](./LICENSE.sileo) | the goo blur as a share of the surface radius; the gooey toast |
 
