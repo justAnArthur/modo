@@ -61,7 +61,7 @@ Upstream's craft, docs and snippets assume a shadcn + Tailwind + Next app. Read 
 | React 19 (`ref` as a prop, 1-arg `useRef(null)`) | React 18.3: `forwardRef`, `useRef<T \| null>(null)`, `MutableRefObject` casts where a forwarded ref is written. |
 | `next/link`, `"use client"`, RSC | Plain anchors. A module with hooks, context, handlers or browser APIs keeps `'use client'` as its first statement (after the `/*!` header); the build hoists it per output chunk. The docs site itself has no server components. |
 | `nestedRadius()`, `useSize().field` / `fieldTouchClass`, `.typeset`, Banner, ChatMessage, AskUserQuestions, ThinkingSteps, CommandMenu, CarouselDots | Not in this port (pinned at `b3587bd`). Don't import them. Port one as its own item if you need it (authoring.md). |
-| `scripts/stack.mjs`, audit files, decisions records | Not needed: the stack is fixed and documented in `README.md`. Verify with the checks in authoring.md. |
+| `scripts/stack.mjs`, audit files, decisions records | Not needed: the stack is fixed and documented in `PORTING.md`. Verify with the checks in authoring.md. |
 
 ## Workflow: a new component
 
@@ -234,7 +234,7 @@ What makes it read as this system rather than "a component library":
   (`holdExit` in `use-morph.ts`); `useMorph` already does it.
 - **Vendored files keep upstream formatting** and list every local change in their header; local files
   use the repo style (single quotes, no semicolons). Don't restyle a vendored component in place:
-  compose or wrap it. If its behavior must change, record the change in its header and in `README.md`'s
+  compose or wrap it. If its behavior must change, record the change in its header and in `PORTING.md`'s
   file map.
 - **Two `modo dev` servers in one DS share `.modo-tmp/build`.** Use the runner (it kills strays).
 - **Chrome restyling** goes through `data-modo` attributes in `global.css`, never lib CSS.

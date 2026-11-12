@@ -62,7 +62,7 @@ A port of an upstream FF file keeps upstream's formatting and lists every change
 'use client'
 ```
 
-Then add its row to `README.md`'s file map (and the tier mapping table for a new item).
+Then add its row to `PORTING.md`'s file map (and the tier mapping table for a new item).
 
 ## Props interface
 
@@ -408,7 +408,7 @@ What each part shows:
 
 ## Porting an upstream FF component
 
-The mechanical pass every ported item went through (README › Items):
+The mechanical pass every ported item went through (PORTING › Items):
 
 1. Take `registry/base/<name>.tsx` when upstream ships a flavored file, else `registry/default/`. Note
    the commit. Components newer than the port's pin (`b3587bd`) may lean on upstream libs this port
@@ -426,7 +426,7 @@ The mechanical pass every ported item went through (README › Items):
 7. Re-declare the props interface one member per line with the FF docs API-table text; write the TSDoc
    from the FF docs page; one `# <FF section title>` example per docs section in `examples.mdx`
    (Playground and API Reference are never ported).
-8. Header comment listing every change; README file-map row.
+8. Header comment listing every change; PORTING file-map row.
 
 ## Adding a token
 
