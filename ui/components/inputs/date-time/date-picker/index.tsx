@@ -5,6 +5,8 @@
  * other pickers here.
  */
 
+'use client'
+
 import { endOfMonth, format, type Locale, set } from 'date-fns'
 import { type RefObject, useRef } from 'react'
 import { dateMatchModifiers, type Matcher } from 'react-day-picker'

@@ -1,10 +1,9 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/table.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `@/lib/*`, `@/hooks/*` and `@/components/ui/fluid-hover-highlight`
  *   imports rewritten to relative `../../lib/*` paths, except `SizeProvider`
  *   → `../../primitives/sizes`.
@@ -21,6 +20,8 @@
  *   `fontVariationSettings` → `weight-*`; `duration-80|120|160` and
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
+
+'use client'
 
 import {
   createContext,

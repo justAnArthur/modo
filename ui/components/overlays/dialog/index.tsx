@@ -1,9 +1,8 @@
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/dialog.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react`; `@/lib/{utils,icon-context,springs,shape-context,
  *   size-context,surface-context,surface-classes}` rewritten to `../../../lib/*`;
  *   `@/components/ui/button` → `../../button`.
@@ -32,6 +31,8 @@
  * - The trigger / close slot shape moved to `lib/slot.ts`, shared with the
  *   other overlays.
  */
+
+'use client'
 
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { motion } from 'motion/react'

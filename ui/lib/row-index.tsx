@@ -4,6 +4,8 @@
  * `index` for the fluid hover and the group's index-keyed state.
  */
 
+'use client'
+
 import { Children, createContext, isValidElement, type ReactNode, useContext } from 'react'
 
 const RowIndexContext = createContext(0)

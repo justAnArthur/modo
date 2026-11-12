@@ -34,6 +34,16 @@ root, or one item per subpath (`@justanarthur/modo-ui/components/button`,
 import { Button, Switch } from '@justanarthur/modo-ui'
 ```
 
+Every module with state, effects or handlers opens with `"use client"`, so the
+components render under React Server Components (Next.js App Router) as client
+components; `cn` and the class tables stay server-safe. The morph layer is
+exported too (`useMorph`, `MorphSurface`, `GooIndicator`, `useReduceMotion`,
+`useControllableState`), for components of your own that move the way these do.
+
+PDF thumbnails in `InputMessage` need the optional peer `pdfjs-dist`
+(`npm install pdfjs-dist`). Without it, a PDF attachment shows the file icon
+and a console warning.
+
 ### Styles
 
 Pick one of three ways in. The components are styled with utility classes,
@@ -155,17 +165,17 @@ positioning) are ported.
 | `lib/springs.ts` | `lib/springs.ts` | `goo` tier added (the morph engine's goo: 250ms to land, bounce 0.15, a 200ms spring back); `exitFallbackMs` also reads a spring exit's `visualDuration` |
 | `lib/font-weight.ts` | — | not ported: its `fontWeights` became the `--weight-*` tokens in `tokens/typography.css` (the `weight-*` utilities) |
 | `lib/popup.ts` | `lib/popup.ts` | `popupMotionClass` dropped (unused since the popups morph) |
-| `lib/shape-context.tsx` | `lib/shape-context.tsx` | `"use client"` dropped |
-| `lib/size-context.tsx` | `lib/size-context.tsx` | `"use client"` dropped; `SizeProvider` moved to `primitives/sizes` (the documented item), with `SizeContext` exported for it; `sizeMap` text classes → `text-body` / `text-body-compact` |
-| `lib/icon-context.tsx` | `lib/icon-context.tsx` | `"use client"` dropped; `size`/`strokeWidth` widened to `number \| string` for lucide v1 + React 18 types |
-| `lib/surface-context.tsx` | `lib/surface-context.tsx` | `"use client"` dropped |
+| `lib/shape-context.tsx` | `lib/shape-context.tsx` | Unchanged |
+| `lib/size-context.tsx` | `lib/size-context.tsx` | `SizeProvider` moved to `primitives/sizes` (the documented item), with `SizeContext` exported for it; `sizeMap` text classes → `text-body` / `text-body-compact` |
+| `lib/icon-context.tsx` | `lib/icon-context.tsx` | `size`/`strokeWidth` widened to `number \| string` for lucide v1 + React 18 types |
+| `lib/surface-context.tsx` | `lib/surface-context.tsx` | Unchanged |
 | `lib/surface-classes.ts` | `lib/surface-classes.ts` | `SURFACE_HOVER_*` and `surfaceHoverClasses` dropped (only Sidebar used them) |
-| `hooks/use-fluid-hover.ts` | `lib/use-fluid-hover.ts` | `"use client"` dropped; `sessionRef` typed `MutableRefObject<number>` (React 18) |
-| `hooks/use-merge-split.tsx` | `lib/use-merge-split.tsx` | `"use client"` dropped; `framer-motion` → `motion/react`; relative imports; the merge/split choreography replaced by per-row blocks melted through `GooLayer`; exports and `SelBlock`'s `key`/rect/`radii`/`instant` kept |
-| `hooks/use-keyboard-nav-gate.ts` | `lib/use-keyboard-nav-gate.ts` | `"use client"` dropped; relative imports |
-| `hooks/use-touch-primary.tsx` | `lib/use-touch-primary.tsx` | `"use client"` dropped |
+| `hooks/use-fluid-hover.ts` | `lib/use-fluid-hover.ts` | `sessionRef` typed `MutableRefObject<number>` (React 18) |
+| `hooks/use-merge-split.tsx` | `lib/use-merge-split.tsx` | `framer-motion` → `motion/react`; relative imports; the merge/split choreography replaced by per-row blocks melted through `GooLayer`; exports and `SelBlock`'s `key`/rect/`radii`/`instant` kept |
+| `hooks/use-keyboard-nav-gate.ts` | `lib/use-keyboard-nav-gate.ts` | relative imports |
+| `hooks/use-touch-primary.tsx` | `lib/use-touch-primary.tsx` | Unchanged |
 | `sidebar-core.tsx` (`useIsMobile`) | `lib/use-is-mobile.ts` | Moved out of the sidebar, unchanged, so the date and time pickers share it |
-| `fluid-hover-highlight.tsx` | `lib/fluid-hover-highlight.tsx` | `"use client"` dropped; `framer-motion` → `motion/react`; relative imports; the fill is a `GooIndicator` (melts from row to row), props unchanged |
+| `fluid-hover-highlight.tsx` | `lib/fluid-hover-highlight.tsx` | `framer-motion` → `motion/react`; relative imports; the fill is a `GooIndicator` (melts from row to row), props unchanged |
 | — (new) | `lib/use-controllable-state.ts` | Local addition: controlled + uncontrolled state, Base UI style |
 | — (new) | `lib/use-morph.ts` | Local addition: the morph engine (source rect → popup box on a spring tier, exit hold for Base UI's unmount), geometry after beUI's popover; goo runs on its own `spring.goo` with a blur of at least 8px that eases to nothing as the surface lands, so the neck pinches off; a close-only `exit` override, an `instant` predicate that ends a run at once, press points from clicks, context menus and long presses (a droplet source for `from="pointer"`), cleanup when the popup unmounts mid-run; focus goes back to the trigger when a closed popup that held it is gone and Base UI skipped the return (the exit hold makes a menu read the pointer leaving the inert popup as a hover close) |
 | — (new) | `lib/reduced-motion.ts` | Local addition: `useReduceMotion`, the one reduced-motion read for the morph layer and the liquid indicators — the OS setting, or a `MotionConfig` asking for it (motion's `useReducedMotionConfig` alone ignores the OS without `<MotionConfig reducedMotion="user">`) |
@@ -193,7 +203,6 @@ positioning) are ported.
 Every item goes through the same mechanical pass, so the tables below list
 only what is specific to it:
 
-- `"use client"` dropped (no RSC here).
 - Imports rewritten: `@/lib/*` → `../../lib/*`, `@/hooks/*` →
   `../../lib/*`, `SizeProvider` from `@/lib/size-context` →
   `../../primitives/sizes`, `@/lib/elevated` → `../../primitives/surface`,
@@ -228,7 +237,7 @@ only what is specific to it:
 | `Badge` | `registry/default/badge.tsx` | `components/badge/index.tsx` | `variant` re-declared (it came from cva's `VariantProps` upstream); changes animate: a new label or variant springs the width (inner content span, `spring.moderate`) while the label blur-crossfades, a new color fades, the dot scales in and out; "Changes" example over a local `change-demo.tsx` stage |
 | `Button` | `registry/base/button.tsx` | `components/button/index.tsx` | `variant`/`disabled`/`children` re-declared; extra Sizes / Active / As-child / Loading morph examples; `loading` folds the surface into a circle around the spinner and back (`spring.moderate`, box unchanged), label and spinner crossfade, `aria-busy`, the disabled dim fades; "Loading morph" example over a local `loading-demo.tsx` stage; also serves modo's chrome Button (`shell.Button`) |
 | `Calendar` | — (local, on react-day-picker) | `components/inputs/date-time/calendar/index.tsx` (+ `use-month-window.ts`) | DayPicker props pass through (as shadcn's Calendar); styled through `classNames` and custom `Month` / `Day` / `DayButton` (no react-day-picker stylesheet); one scrolling list of months rendered as a 25-month window that moves as you scroll; a pinned weekday row, muted weekends, today's dot; FF's fills (the pick `bg-foreground text-background` like the primary button, a range `bg-active`, its preview `bg-hover`); month and year columns that mark the month being read and jump on click, before or after the days (`columnsSide`), turning into strips when narrow; `extraColumns` / `extraColumnsSide` for the date picker's time |
-| `Card` | `registry/default/card.tsx` | `components/card/index.tsx` | `next/link` → plain anchors (stretched card link, `CardButton`'s `href` form); statics `.Group/.Header/.Title/.Description/.Action/.Content/.Footer/.Media/.Image/.Eyebrow/.Feature/.Button` |
+| `Card` | `registry/default/card.tsx` | `components/card/index.tsx` | `next/link` → plain anchors (stretched card link, `CardButton`'s `href` form); statics `.Group/.Header/.Title/.Description/.Action/.Content/.Footer/.Media/.Image/.Eyebrow/.Feature/.Button`; the eyebrow drops `uppercase tracking-wide` (no case or letter-spacing in the DS) |
 | `Checkbox` (upstream `CheckboxItem`), `Checkbox.Group` (upstream `CheckboxGroup`) | `registry/base/checkbox-group.tsx` | `components/inputs/checkbox/index.tsx` | renamed; the row stands alone too (own state from `defaultChecked`, `onCheckedChange`, own hover and focus ring, `size`); rows numbered by the group (`lib/row-index.tsx`), so `index` is optional; uncontrolled mode + group-level callback; item `checked`/`onToggle` optional, falling back to group context; arrow-key focus guarded for `noUncheckedIndexedAccess`; shared `useSelectionRuns`, picks melt and split through the goo |
 | `ColorPicker` | `registry/default/color-picker.tsx` | `components/inputs/color-picker/index.tsx` | `@/registry/radix/{slider,tooltip}` → the Base siblings `../slider` / `../../overlays/tooltip`; `noUncheckedIndexedAccess` guards on regex captures, `rgb()`/`hsl()`/`oklch()` parts, `itemRects[i]` and the Slider's array value; static `.Popover`; uncontrolled support was already upstream (verified, kept); `ColorPicker.Popover` (goo on `spring.goo`; `from` / `effect` / `hideSource` / `tier`) and the format menu morph out of their triggers, replacing the motion wrappers and the ignored `actionsRef` |
 | `Combobox` | `registry/base/combobox.tsx` | `components/inputs/combobox/index.tsx` | root de-generified (the parser needs a plain function plus a same-file `interface ComboboxProps`): items gained an index signature, `value`/`defaultValue` are `string \| string[]` and `onValueChange` is a union of the two handler shapes; `ComboboxValue<Multiple>` still exported; `creatable` added; `React.*` type refs replaced by named type imports; statics `.Input/.Chips/.Content/.List/.Item/.Empty`; the popup morphs out of the field (morph layer, goo on `spring.goo`; `from` / `effect` / `hideSource` / `tier` on `Combobox.Content`), replacing the `scaleY` wrapper and the `actionsRef` deferred unmount |
@@ -509,7 +518,7 @@ Notable local behavior changes beyond the `default*` props:
 | `lucide-react` ^0.564 | `lucide-react` ^1.47.0 | Workspace version; `icon-context`'s `size`/`strokeWidth` widened to `number \| string` for it |
 | `react` / `react-dom` ^19 | ^18.3 | The workspace pins React 18. React 19's ref typings are adapted per file: `MutableRefObject` casts where a forwarded ref is written, `useRef<T \| null>(null)` instead of the 1-arg null form, and `FilePreviewTile` turned into a `forwardRef` (React 19 passes `ref` as a plain prop; React 18 warns and drops it). |
 | self-hosted `InterVariable.ttf` | `@fontsource-variable/inter` ^5.3.0 (`opsz.css`) | npm-distributed. The opsz axis is needed by the `--weight-*` ladder. |
-| `pdfjs-dist` ^5.7.284 | same | InputMessage PDF thumbnails. It bundles under modo's esbuild as a lazy ~790 kB chunk; the worker is loaded from `cdn.jsdelivr.net`, as upstream does. |
+| `pdfjs-dist` ^5.7.284 | optional peer (and a devDependency for the docs) | InputMessage PDF thumbnails. It bundles under modo's esbuild as a lazy ~790 kB chunk; the worker is loaded from `cdn.jsdelivr.net`, as upstream does. Absent, PDFs fall back to the file icon. |
 | `class-variance-authority` ^0.7.1 | same | |
 | `next` (`next/link`, `next/image` lint) | — | No Next.js here |
 | — | `@justanarthur/modo` (workspace) | The design system's own host |

@@ -1,10 +1,9 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/button.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `@/lib/{icon-context,utils,shape-context,size-context}` imports rewritten to `../../lib/*`.
  * - `ButtonProps`: `variant`, `disabled` and `children` re-declared in the interface body (modo's
  *   parser lists only members declared there); member docs replaced by the FF docs API-table text
@@ -25,6 +24,8 @@
  *   The root's `transition-colors` → `transition-[color,opacity]`, so the disabled dim fades
  *   in step instead of jumping (the root draws no background or border of its own).
  */
+
+'use client'
 
 import { Button as ButtonPrimitive } from '@base-ui/react/button'
 import { cva, type VariantProps } from 'class-variance-authority'

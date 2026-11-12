@@ -1,4 +1,4 @@
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `app/docs/fluid-hover/page.tsx` + `app/docs/fluid-hover/demos.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
@@ -23,6 +23,8 @@
  *   `text-<role>[-compact]`; the hex focus-ring fallback →
  *   `ring-focus-ring` / `border-focus-ring`.
  */
+
+'use client'
 
 import {
   Children,

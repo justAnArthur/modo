@@ -1,17 +1,18 @@
-/*
+/*!
  * Vendored from Fluid Functionalism — `registry/default/lib/icon-context.tsx` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
  *
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - lucide-react v1 + React 18 types: `IconComponentProps.size` /
  *   `strokeWidth` widened to `number | string` (lucide icons' propTypes
  *   accept both, and @types/react 18 compares propTypes).
  * - `panel-left-dashed` / `panel-right-dashed`: the sidebar trigger's glyph
  *   while the sidebar opens on hover.
  */
+
+'use client'
 
 import {
   ArrowDown,

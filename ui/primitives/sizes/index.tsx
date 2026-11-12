@@ -1,4 +1,4 @@
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/lib/size-context.tsx` + docs `app/docs/sizes/page.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
@@ -16,6 +16,8 @@
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
  */
+
+'use client'
 
 import { type ReactNode, useCallback, useMemo, useState } from 'react'
 import { SizeContext, type SizeVariant, sizeMap } from '../../lib/size-context'

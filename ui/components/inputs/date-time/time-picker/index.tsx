@@ -4,6 +4,8 @@
  * (`hourCycle`, a string value), kept in line with the other pickers here.
  */
 
+'use client'
+
 import { format, type Locale, set } from 'date-fns'
 import { type RefObject, useRef } from 'react'
 import { defaultLocale, type HourCycle, hourCycleOf, parseTimeText } from '../../../../lib/date-locale'

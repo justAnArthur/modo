@@ -1,10 +1,10 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/dropdown-search.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `@/lib/*` imports rewritten to `../../../lib/*`.
+ * - `@/lib/*` imports rewritten to `../../../lib/*`.
  * - `filter` mode (local addition): `value` / `onValueChange` become optional
  *   and, with `filter`, the field reads and writes the query the surrounding
  *   panel holds (`DropdownFilterContext`), which filters the rows itself. The
@@ -12,6 +12,8 @@
  * - Styling reads DS tokens (AGENTS.md styling): `duration-80|120|160` and
  *   tier-length JS durations → `duration-<tier>` / `spring.*`.
  */
+
+'use client'
 
 import {
   createContext,

@@ -43,6 +43,9 @@ is specific to this package.
 - **Both ways.** `value` / `defaultValue` / `onValueChange` through `useControllableState`, so examples
   stay hook-free.
 - **Vendored files** keep upstream formatting and list every change in their header and in `README.md`.
+  A provenance header opens with `/*!` (a legal comment), so the build keeps it in `dist/`.
+- **Client modules.** A module with hooks, context, handlers or browser APIs puts `'use client'` right
+  after its header; `bunup.config.ts` hoists it to the top of each output chunk for RSC hosts.
 
 ## checks
 

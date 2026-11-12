@@ -1,8 +1,8 @@
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/tabs.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications: `"use client"` dropped; `@/lib/*` and `@/hooks/*`
+ * Local modifications: `@/lib/*` and `@/hooks/*`
  * imports rewritten to `../../../lib/*` (`SizeProvider` to
  * `../../../primitives/sizes`), `framer-motion` to `motion/react`; `defaultSelectedIndex` added as the index-mode twin of the
  * existing value-mode `defaultValue` (it only seeds the first render, like
@@ -17,6 +17,8 @@
  * (`lib/goo-indicator.tsx`, local): they melt from tab to tab instead of
  * sliding; the hover pill now always returns to the active tab as it fades.
  */
+
+'use client'
 
 import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
 import { AnimatePresence, motion } from 'motion/react'

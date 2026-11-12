@@ -1,10 +1,10 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/color-picker.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `@/lib/*`, `@/hooks/*` and
+ * - `@/lib/*`, `@/hooks/*` and
  *   `@/components/ui/fluid-hover-highlight` → `../../../lib/*` (`SizeProvider`
  *   → `../../../primitives/sizes`), `@/lib/elevated` → `../../../primitives/surface`,
  *   `framer-motion` → `motion/react`.
@@ -45,6 +45,8 @@
  * - `effect="morph"` with `hideSource` opens the popover in place over its
  *   trigger: the positioner's `sideOffset` becomes the engine's `inPlaceOffset`.
  */
+
+'use client'
 
 import { Menu } from '@base-ui/react/menu'
 import { NumberField } from '@base-ui/react/number-field'

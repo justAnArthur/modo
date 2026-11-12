@@ -59,7 +59,7 @@ Upstream's craft, docs and snippets assume a shadcn + Tailwind + Next app. Read 
 | Popups enter with `scaleY`, tooltips slide + fade, indicators slide | The morph layer (`lib/use-morph.ts` + `lib/morph-layers.tsx`) and the liquid indicators (`lib/goo-indicator.tsx`). |
 | `<MotionConfig reducedMotion="user">` at the root | No root wrapper here. Read `useReduceMotion()` (`lib/reduced-motion.ts`): the OS setting or a MotionConfig asking for it. |
 | React 19 (`ref` as a prop, 1-arg `useRef(null)`) | React 18.3: `forwardRef`, `useRef<T \| null>(null)`, `MutableRefObject` casts where a forwarded ref is written. |
-| `next/link`, `"use client"`, RSC | Plain anchors; no directive; no server components. |
+| `next/link`, `"use client"`, RSC | Plain anchors. A module with hooks, context, handlers or browser APIs keeps `'use client'` as its first statement (after the `/*!` header); the build hoists it per output chunk. The docs site itself has no server components. |
 | `nestedRadius()`, `useSize().field` / `fieldTouchClass`, `.typeset`, Banner, ChatMessage, AskUserQuestions, ThinkingSteps, CommandMenu, CarouselDots | Not in this port (pinned at `b3587bd`). Don't import them. Port one as its own item if you need it (authoring.md). |
 | `scripts/stack.mjs`, audit files, decisions records | Not needed: the stack is fixed and documented in `README.md`. Verify with the checks in authoring.md. |
 
@@ -256,7 +256,7 @@ every hit is a question, not a verdict (a `hover:bg-hover` on a standalone contr
 of a fluid-hover list it's a bug; `transition-colors` is fine unless the weight changes too):
 
 ```bash
-rg -n -e 'font-(normal|medium|semibold|bold)\b' -e "from 'framer-motion'" -e '\b(uppercase|tracking-[a-z]+)\b' -e 'text-(foreground|muted-foreground)/[0-9]' -e '(duration|delay): ?[0-9.]+' -e 'useReducedMotion\(' -e 'hover:bg-' -e 'transition-colors' -e '"use client"' ui/<your files>
+rg -n -e 'font-(normal|medium|semibold|bold)\b' -e "from 'framer-motion'" -e '\b(uppercase|tracking-[a-z]+)\b' -e 'text-(foreground|muted-foreground)/[0-9]' -e '(duration|delay): ?[0-9.]+' -e 'useReducedMotion\(' -e 'hover:bg-' -e 'transition-colors' ui/<your files>
 ```
 
 Then answer, for the change as a user sees it: does every list have one highlight? does every overlay
