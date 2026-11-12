@@ -336,8 +336,9 @@
   zoom: var(--modo-stage-zoom, 1);
 }
 
-/* Examples are written for a full-width stage; in a cell they have to wrap.
-   Block containers fill the track; inline content (a badge, a button) keeps
+/* Examples are written for a full-width stage; a cell scales them down (bento.tsx).
+   Wrapping is the example's own call: a forced flex-wrap would stop a column's
+   children stretching. Block containers fill the track; inline content (a badge, a button) keeps
    its own width, centered. Layered, so an example's own styles win even from
    a host's layers (an unlayered rule would beat Tailwind's at any specificity). */
 @layer modo-preview {
@@ -351,9 +352,6 @@
     justify-self: stretch;
   }
 
-  :is([data-modo="bento-fit"], [data-modo="example-card-stage"]) > :where(div) {
-    flex-wrap: wrap;
-  }
 }
 
 [data-modo="bento-meta"] {
