@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { execFileSync, spawn } from 'node:child_process'
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { basename, join, relative } from 'node:path'
 
 const ROOT = join(import.meta.dirname, '..')
@@ -12,6 +12,10 @@ const SWITCHER = join(ROOT, 'components', 'demo-switcher')
 const PEERS_FILE = join(ROOT, 'components', 'demo-switcher', '.peers.json')
 const TEMP_CONFIG = '.modo.config.ts'
 const SITE_DIR = join(ROOT, 'dist')
+const LANDING_DIR = join(ROOT, 'landing')
+const BRAND_DIR = join(ROOT, '..', '.github', 'brand')
+// Scrapers want an absolute og:image, and the site's own origin isn't known here.
+const OG_IMAGE = 'https://raw.githubusercontent.com/justAnArthur/modo/main/.github/brand/og.png'
 const BASE_PORT = 5173
 // By path, not `bunx modo`: before the lib is built its bin has nothing to
 // run, and bunx then fetches the unrelated `modo` from npm. Node runs Vite
@@ -80,7 +84,7 @@ writeFileSync(
 )
 for (const name of targets) writeFileSync(join(dirOf(name), TEMP_CONFIG), withSwitcher(dirOf(name)))
 
-function buildSite() {
+async function buildSite() {
   rmSync(SITE_DIR, { recursive: true, force: true })
   mkdirSync(SITE_DIR)
   for (const name of targets) {
@@ -88,10 +92,38 @@ function buildSite() {
     const args = ['build', '--config', TEMP_CONFIG, '--base', `${SITE_BASE}${name}/`, '--out', join(SITE_DIR, name)]
     execFileSync('node', [MODO_CLI, ...args], { cwd: dirOf(name), stdio: 'inherit' })
   }
-  writeFileSync(
-    join(SITE_DIR, 'index.html'),
-    `<!doctype html><title>modo</title><meta http-equiv="refresh" content="0; url=${targets[0]}/">\n`,
-  )
+  writeFileSync(join(SITE_DIR, 'index.html'), await landing())
+}
+
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+const read = (path: string) => readFileSync(path, 'utf8')
+
+async function card(name: string) {
+  const dir = dirOf(name)
+  const config = (await import(join(dir, 'modo.config.ts'))).default
+  const description = config.description ?? JSON.parse(read(join(dir, 'package.json'))).description ?? ''
+  const href = `${SITE_BASE}${name}/`
+  return `<a class="card" href="${esc(href)}"><div class="card-title">${esc(config.name ?? name)}<span aria-hidden="true">→</span></div><p>${esc(description)}</p><code>${esc(href)}</code></a>`
+}
+
+// The template links its colors so it previews on its own; the build inlines them.
+const COLORS_LINK = '<link rel="stylesheet" href="./tokens/colors.css" />'
+
+// Self-contained: the brand assets are inlined, so the page works under any SITE_BASE.
+async function landing() {
+  const fills: Record<string, string> = {
+    base: esc(SITE_BASE),
+    description: esc(
+      'modo reads the tokens, primitives, components, blocks and pages of a design system and renders its docs site, with chrome built from its own components.',
+    ),
+    logo: read(join(BRAND_DIR, 'logo.svg')).trim(),
+    favicon: `data:image/svg+xml,${encodeURIComponent(read(join(BRAND_DIR, 'favicon.svg')).trim())}`,
+    og: OG_IMAGE,
+    cards: (await Promise.all(targets.map(card))).join(''),
+  }
+  return read(join(LANDING_DIR, 'index.html'))
+    .replace(COLORS_LINK, `<style>\n${read(join(LANDING_DIR, 'tokens', 'colors.css'))}</style>`)
+    .replace(/\{\{(\w+)\}\}/g, (_, key: string) => fills[key]!)
 }
 
 // Each server takes its port strictly, so a stale one from another run fails
@@ -114,7 +146,7 @@ function serve() {
 
 if (build) {
   try {
-    buildSite()
+    await buildSite()
   } finally {
     removeTemp(targets)
   }
