@@ -202,8 +202,8 @@ Not part of the toolkit template: re-add this section after an `update` rewrites
 
 | Package | Dir | Scopes |
 |---------|-----|--------|
-| `@justanarthur/modo` | `lib/` | `lib`, `modo`, `@justanarthur/modo` |
-| `@justanarthur/modo-ui` | `ui/` | `ui`, `modo-ui`, `@justanarthur/modo-ui` |
+| `@justanarthur/modo` | `lib/` | `lib`, `modo`, `justanarthur`, `justanarthur/modo`, `@justanarthur/modo` |
+| `@justanarthur/modo-ui` | `ui/` | `ui`, `modo-ui`, `justanarthur/modo-ui`, `@justanarthur/modo-ui` |
 
 `demo` and the demo design systems are private: their scopes never bump anything.
 

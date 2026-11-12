@@ -4,7 +4,7 @@
 
 a lightweight CLI that renders a **docs site / playground for your design system**. zero config: the lib enforces a simple folder structure (`tokens/ → primitives/ → components/ → blocks/ → pages/`), discovers it, and produces the site — plus a **canvas**: every foundation and item live on one pan-and-zoom surface — including **shell inheritance**: when your components match the docs chrome's slots (Button, Link, Select, Sidebar…), the chrome itself renders with *your* components. one Sidebar drives both the left nav and the right panel.
 
-**live demo: https://justanarthur.github.io/modo/** — every design system below, switchable from the panel.
+**live demo: https://justanarthur.github.io/modo/** — a landing page with every design system below; switch between them from each site's panel.
 
 ```bash
 bunx @justanarthur/modo init my-ds
@@ -217,13 +217,6 @@ The bump + publish + release pipeline is driven by [`just-github-actions-n-workf
 1. Conventional commit to `main` → `bump-version.yml` reads the scope (`lib`, `modo`, `justanarthur`, `@justanarthur/modo` or `justanarthur/modo`), bumps `lib/package.json`, creates annotated tag `@justanarthur/modo@<version>` with JSON `{"deployTargets":["npm"]}`, pushes the tag, then dispatches the tag workflows for it (a push made with `GITHUB_TOKEN` starts no workflows on its own).
 2. Dispatch, or a tag pushed by hand → `publish-npm-on-tag.yml` resolves metadata, installs deps, builds, runs `bun publish -p --access public --tag <dist-tag>` to npmjs.com.
 3. `publish-npm-on-tag.yml` creates the GitHub Release with conventional-commit notes. It is the only workflow that writes release notes.
-
-### Local publish
-
-```sh
-cd lib
-NPM_CONFIG_TOKEN=… bun publish -p --access public
-```
 
 ## license
 

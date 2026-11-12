@@ -10,4 +10,7 @@ for file in dist/index.js dist/index.d.ts dist/styles.css LICENSE; do
   grep -qx "$file" <<<"$files" || { echo "missing $file in the ui tarball" >&2; exit 1; }
   echo "ok $file"
 done
+# The package root must load: a tree-shaking slip once left the barrel exporting names it never bound.
+node --input-type=module -e "await import('./dist/index.js')" || { echo "dist/index.js does not load" >&2; exit 1; }
+echo "ok dist/index.js loads"
 echo "ui tarball ok ($(wc -l <<<"$files" | tr -d ' ') files)"

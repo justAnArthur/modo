@@ -1,7 +1,7 @@
 # pages.yml
 # ---
 # builds every demo design system into one static site and deploys it to
-# GitHub Pages: <base>/<design-system>/, with <base>/ redirecting to the first.
+# GitHub Pages: <base>/<design-system>/, with a landing page at <base>/.
 #
 # one-time setup: Settings → Pages → Source: GitHub Actions.
 # ---

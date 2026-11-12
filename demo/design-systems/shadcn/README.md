@@ -73,5 +73,5 @@ formatting, and modo docs (TSDoc, default exports, documented prop literals).
 
 ```sh
 cd demo/design-systems/shadcn
-MODO_PORT=5201 bunx modo dev
+bunx modo dev --port 5201
 ```

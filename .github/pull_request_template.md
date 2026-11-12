@@ -6,6 +6,7 @@
 - [ ] `bun run lint`
 - [ ] `bun run build && bun run check`
 - [ ] `bun run test`
+- [ ] `.github/scripts/check-ui-pack.sh` and `.github/scripts/smoke-init.sh` when packaging or the CLI changed
 - [ ] Looked at it in `bun dev` (screenshot below for anything visible)
 
 ## Release

@@ -143,5 +143,5 @@ lists exactly what was touched.
 
 ```sh
 cd demo/design-systems/fluid-functionalism
-MODO_PORT=5202 bunx modo dev
+bunx modo dev --port 5202
 ```

@@ -41,8 +41,8 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/) with
 
 | Scope | Releases |
 |-------|----------|
-| `lib`, `modo`, `@justanarthur/modo` | `@justanarthur/modo` |
-| `ui`, `modo-ui`, `@justanarthur/modo-ui` | `@justanarthur/modo-ui` |
+| `lib`, `modo`, `justanarthur`, `justanarthur/modo`, `@justanarthur/modo` | `@justanarthur/modo` |
+| `ui`, `modo-ui`, `justanarthur/modo-ui`, `@justanarthur/modo-ui` | `@justanarthur/modo-ui` |
 | `demo`, anything else, or none | nothing |
 
 On a released scope, `feat` and `perf` bump the minor and everything else (`fix`, `refactor`, `docs`, `chore`, …) the patch, as soon as the commit lands on `main`. Put `[skip bump]` in the message when it shouldn't release anything (CI, repo files). A breaking change bumps the major: since 1.0 that is a deliberate decision, so read the release notes in [.github/AGENTS.md](.github/AGENTS.md#11-this-repo-modo) before you mark one.
