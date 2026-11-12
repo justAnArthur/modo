@@ -7,7 +7,8 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { type CssVarsTheme, createTheme } from '@mui/material/styles'
+import { createTheme } from '@mui/material/styles'
+import { muiTheme } from '../theme'
 
 const dsRoot = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const tokensDir = resolve(dsRoot, 'tokens')
@@ -30,8 +31,7 @@ function flattenVars(obj: object, prefix = ''): Array<[string, string]> {
 
 const VAR_RE = /^var\((--[a-zA-Z0-9-]+),\s*(.+)\)$/
 
-// `vars` is typed optional unless CssThemeVariables is augmented; cssVariables: true sets it
-const paletteVars = flattenVars(theme.vars!.palette)
+const paletteVars = flattenVars(theme.vars.palette)
 const colorLines: string[] = []
 for (const [path, raw] of paletteVars) {
   if (/(Channel|Opacity)$/.test(path)) continue // "r g b" triplets and alpha numbers, not CSS colors
@@ -44,13 +44,8 @@ for (const [path, raw] of paletteVars) {
   colorLines.push(`  ${name}: ${fallback};`)
 }
 
-// MUI's dark palette, as its own stylesheet generator writes it, for the names the light block has.
-// Typed as plain Theme unless CssThemeVariables is augmented; cssVariables adds the generators
-const schemes = createTheme({
-  cssVariables: { colorSchemeSelector: 'class' },
-  colorSchemes: { light: true, dark: true },
-}) as unknown as CssVarsTheme
-const darkSheet = schemes.generateStyleSheets().find(sheet => '.dark' in sheet)!['.dark'] as Record<string, string>
+// MUI's dark palette, as its own stylesheet generator writes it for MuiProvider, for the names the light block has.
+const darkSheet = muiTheme.generateStyleSheets().find(sheet => '.dark' in sheet)!['.dark'] as Record<string, string>
 const lightNames = new Set(colorLines.map(line => line.trim().split(':')[0]))
 const darkLines = Object.entries(darkSheet)
   .filter(([name]) => lightNames.has(name))
@@ -85,7 +80,7 @@ const files: Array<[string, string[], string[]?]> = [
   ['radius.css', radiusLines],
   ['typography.css', typographyLines],
 ]
-// `:root.dark` outranks the `:root` vars MuiProvider injects at runtime.
+// `:root.dark` repeats MuiProvider's runtime `.dark` values for the names the light block has.
 for (const [name, lines, dark] of files) {
   const darkBody = dark ? `\n:root.dark {\n${dark.join('\n')}\n}\n` : ''
   const body = `:root {\n${lines.join('\n')}\n}\n${darkBody}`
