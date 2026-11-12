@@ -47,7 +47,7 @@ layered shadow recipe. A `dark` or `light` class on any subtree
 re-resolves the whole ladder inside it.
 
 <Elevated.Provider value={1}>
-  <div className="dark bg-background text-foreground rounded-2xl p-4 flex flex-col flex-nowrap gap-4 w-full">
+  <div className="dark bg-background text-foreground rounded-2xl p-4 flex flex-col gap-4 w-full">
     {['dark', 'light'].map((scheme) => (
       <div key={scheme} className={scheme === 'dark' ? 'dark flex flex-col gap-2' : 'light flex flex-col gap-2'}>
         <span className="text-caption-compact weight-semibold text-muted-foreground tracking-wider capitalize">{scheme}</span>
