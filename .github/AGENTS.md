@@ -111,7 +111,6 @@ git tag -l --format='%(contents)' '@myorg/api@0.2.0'
 | `publish-npm-on-tag.yml`       | `tag` (e.g. `@scope/pkg@1.2.3`) |
 | `publish-docker-on-tag.yml`    | `tag` |
 | `deploy-vercel-on-tag.yml`     | `tag` |
-| `release-on-tag.yml`           | `tag` |
 | `deploy-docker-compose.yml`    | `environment`, `module_versions` (JSON), `ssh_target_path`, `compose_file` |
 
 Re-dispatch is the right tool when a tag annotation is missing or the workflow errored non-deterministically.
@@ -194,3 +193,58 @@ For repo-specific agent instructions, write a separate `CONTRIBUTING.md` or root
 - Copying a tag workflow (e.g. `publish-npm-on-tag.yml` → `publish-gh-packages.yml`) and removing its `workflow_dispatch` `tag` input — bump-version can then no longer start it.
 - Hand-editing `publish-npm-on-tag.yml` to swap `.npmrc` for dual-registry, comment out the release step, or hard-code a registry — overwritten by `update`. Use `publishConfig` / `.npmrc` / `.justactions.yml` instead (see section 9).
 - Adding `# toolkit-ref:` / `# local-edit:` comments to track manual workflow edits — deleted on next `update`. The lockfile already tracks the ref.
+
+## 11. This repo (modo)
+
+Not part of the toolkit template: re-add this section after an `update` rewrites the file. Setup, checks and commit conventions for contributors are in [`CONTRIBUTING.md`](../CONTRIBUTING.md).
+
+### Packages and scopes
+
+| Package | Dir | Scopes |
+|---------|-----|--------|
+| `@justanarthur/modo` | `lib/` | `lib`, `modo`, `@justanarthur/modo` |
+| `@justanarthur/modo-ui` | `ui/` | `ui`, `modo-ui`, `@justanarthur/modo-ui` |
+
+`demo` and the demo design systems are private: their scopes never bump anything.
+
+### GitHub releases
+
+`publish-npm-on-tag.yml` publishes to npm and creates the GitHub release for the tag (section 9: the bundled release). `release-on-tag.yml` was removed from this repo because it created a second release for the same tag; don't reinstall it.
+
+### Cutting 1.0.0
+
+Both packages go to 1.0.0 together (`@justanarthur/modo` from 0.9.x, `@justanarthur/modo-ui` from 0.6.x). Do it from the Actions tab; never `npm version` or a hand-pushed tag.
+
+1. **Land the work without a bump.** A push to `main` bumps from the pushed commits' messages, so merging a branch full of `feat(lib)` commits would release 0.10.0 first. Put `[skip bump]` in the merge (or squash) commit message: the job skips when the head commit carries it. Wait for `ci` to pass on `main` (check, smoke).
+2. **Canary dry run.** Run `bump-version` on `main` with:
+   - `bump_type`: `major:canary`
+   - `bump_manifest_names`: `@justanarthur/modo,@justanarthur/modo-ui` (required: a manual dispatch without names bumps nothing)
+
+   A prerelease channel only advances the prerelease counter, so this tags `@justanarthur/modo@0.9.0-canary.0` and `@justanarthur/modo-ui@0.6.0-canary.0`, and `publish-npm-on-tag` publishes them under the `canary` dist-tag with a prerelease GitHub release. Check them:
+
+   ```sh
+   npm view @justanarthur/modo dist-tags
+   npm view @justanarthur/modo-ui dist-tags
+   cd "$(mktemp -d)" && npx @justanarthur/modo@canary init try-modo && cd try-modo && npm install && npm run build
+   ```
+3. **Stable.** Run `bump-version` on `main` again with:
+   - `bump_type`: `major:stable`
+   - `bump_manifest_names`: `@justanarthur/modo,@justanarthur/modo-ui`
+
+   `stable` strips the prerelease and bumps the core version: `0.9.0-canary.0 → 1.0.0` and `0.6.0-canary.0 → 1.0.0`. The tags `@justanarthur/modo@1.0.0` and `@justanarthur/modo-ui@1.0.0` publish under `latest`, each with its GitHub release. Leave `bump_to_calculated_stable` at `false`: it derives the level from the commits (minor for a `feat`) and then moves on to the next canary.
+4. **After.** Rename the `Unreleased` heading of `CHANGELOG.md` to `1.0.0` with the date, in a `chore: … [skip bump]` commit.
+
+If a publish fails after its tag exists, re-run `publish-npm-on-tag` with the tag as `tag` (section 5) instead of bumping again.
+
+### After 1.0: majors
+
+From 1.0 on, a major is the version change that can't be taken back. Any commit on a `lib` or `ui` scope that marks a breaking change bumps that package to the next major and publishes it as soon as it reaches `main`: treat every `!` and every `BREAKING CHANGE:` footer as a deliberate 2.0 decision, and keep them out of commits that aren't one.
+
+How the pinned toolkit (1.0.3) reads them today, so nothing surprises you:
+
+- `BREAKING-CHANGE(lib): …` as a commit line is what triggers a major.
+- `feat!(lib): …` parses, but the `!` is ignored: a minor.
+- `feat(lib)!: …` (the Conventional Commits form) does not parse at all: no bump, silently.
+- A `BREAKING CHANGE:` footer is ignored.
+
+A toolkit update that honours `!` and `BREAKING CHANGE:` (the Conventional Commits meaning) turns the last three into majors too, so write commits as if it already does.
