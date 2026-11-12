@@ -76,7 +76,7 @@ Shell slot resolution. These are warnings; the site still builds.
 | `Cannot resolve "@justanarthur/modo" while loading modo.config.ts` | Install dependencies (`bun install` or `npm install`). |
 | A list of Zod issues (`Unrecognized key(s) in object`, `base starts and ends with \`/\``, `Invalid url`) | The config doesn't match the schema. See [config.md](./config.md). |
 | `modo: vite extension at <path> must default-export a function` | Fix the [`vite`](./config.md#vite) module's default export. |
-| `Port 5173 is already in use` | Another server holds the port. Set `MODO_PORT=5180 modo dev`. |
+| `Port 5173 is already in use` | Another server holds the port. Pick another: `modo dev --port 5180`. |
 
 Set `MODO_DEBUG=1` to print stack traces with CLI errors.
 
@@ -88,6 +88,6 @@ Set `MODO_DEBUG=1` to print stack traces with CLI errors.
 ## Other gotchas
 
 - **`npx modo` runs the wrong package** outside a project. The unscoped `modo` on npm is someone else's. Use `npx @justanarthur/modo init`; inside a project with modo installed, `npx modo` and `bunx modo` run the local CLI.
-- **`.modo-tmp/`** is modo's build cache next to your config. Add it, and `dist/`, to `.gitignore`.
+- **`.modo-tmp/`** is modo's build cache next to your config. `modo init`'s `.gitignore` skips it and `dist/`; add both if your project predates that.
 - **Classes from examples are missing** with Tailwind or UnoCSS: the scanner must include `.mdx` files.
 - **A new file doesn't show up** in dev: modo rebuilds on source changes anywhere in the project. If a CSS tool still misses it, restart `modo dev`.

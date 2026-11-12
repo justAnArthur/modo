@@ -73,7 +73,7 @@ my-ds/
         └── button.css      co-located CSS, injected automatically
 ```
 
-Add `.modo-tmp/` and `dist/` to your `.gitignore`.
+`modo init` writes a `.gitignore` that skips `.modo-tmp/` (modo's build cache) and `dist/`.
 
 An item is a folder with an `index.tsx`. Its TSDoc block is the page; its examples sit beside it:
 
@@ -114,7 +114,8 @@ import Badge from './index'
 ```sh
 modo init <name>                  # scaffold ./<name>
 modo init <dir> <name>            # scaffold <dir>/<name>
-modo dev                          # dev server at http://127.0.0.1:5173 (MODO_PORT to change)
+modo dev                          # dev server at http://127.0.0.1:5173 (--port, --host to change)
+modo preview                      # serve the built site
 modo build                        # static site in ./dist
 modo build --base /my-ds/         # served under a sub-path
 modo build --out docs-dist        # into another dir

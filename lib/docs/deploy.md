@@ -6,6 +6,7 @@
 modo build                   # ./dist, served at /
 modo build --base /my-ds/    # served under a sub-path
 modo build --out docs-dist   # another output dir, relative to the project
+modo preview                 # serve ./dist locally before you deploy
 ```
 
 ## What the build writes

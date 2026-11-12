@@ -50,7 +50,7 @@ my-ds/
         └── button.css      — co-located CSS is auto-injected
 ```
 
-the other tiers are folders you add when you need them: `components/` (composites: Dialog, Select, …), `blocks/` (page-level patterns) and `pages/` (full screens assembled from blocks). `tokens/`, `primitives/`, `components/`, `blocks/`, `pages/` are auto-discovered by directory; any of them can be omitted, and tiers render in that order. add items with `bunx modo add primitive my-thing` (or `component`, `block`, `page`, `token`) inside the project; it writes `index.tsx` and `examples.mdx` from `lib/templates/stubs`. add `.modo-tmp/` (modo's build cache) and `dist/` to your `.gitignore`.
+the other tiers are folders you add when you need them: `components/` (composites: Dialog, Select, …), `blocks/` (page-level patterns) and `pages/` (full screens assembled from blocks). `tokens/`, `primitives/`, `components/`, `blocks/`, `pages/` are auto-discovered by directory; any of them can be omitted, and tiers render in that order. add items with `bunx modo add primitive my-thing` (or `component`, `block`, `page`, `token`) inside the project; it writes `index.tsx` and `examples.mdx` from `lib/templates/stubs`. `modo init` writes a `.gitignore` that skips `.modo-tmp/` (modo's build cache) and `dist/`.
 
 ## docs
 
@@ -216,7 +216,7 @@ The bump + publish + release pipeline is driven by [`just-github-actions-n-workf
 
 1. Conventional commit to `main` → `bump-version.yml` reads the scope (`lib`, `modo`, `justanarthur`, `@justanarthur/modo` or `justanarthur/modo`), bumps `lib/package.json`, creates annotated tag `@justanarthur/modo@<version>` with JSON `{"deployTargets":["npm"]}`, pushes the tag, then dispatches the tag workflows for it (a push made with `GITHUB_TOKEN` starts no workflows on its own).
 2. Dispatch, or a tag pushed by hand → `publish-npm-on-tag.yml` resolves metadata, installs deps, builds, runs `bun publish -p --access public --tag <dist-tag>` to npmjs.com.
-3. `publish-npm-on-tag.yml` creates the GitHub Release with conventional-commit notes. `release-on-tag.yml` runs for the same tag too; whichever finishes second finds the release already there.
+3. `publish-npm-on-tag.yml` creates the GitHub Release with conventional-commit notes. It is the only workflow that writes release notes.
 
 ### Local publish
 
