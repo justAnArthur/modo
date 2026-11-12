@@ -234,6 +234,23 @@
   margin: 0 0 var(--space-5, 24px);
 }
 
+[data-modo="page-lead"]:has(+ [data-modo="page-meta"]) {
+  margin-bottom: var(--space-3, 12px);
+}
+
+/* Status, since, deprecation, source links and licenses from the item's block tags. */
+[data-modo="page-meta"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1, 4px) var(--space-4, 16px);
+  font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
+  color: var(--modo-muted);
+  max-width: var(--modo-measure);
+  margin: 0 0 var(--space-5, 24px);
+}
+
 [data-modo="hero"] {
   margin: 0 0 var(--space-6, 32px);
 }

@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, statSync } from 'node:fs'
-import { join, relative, resolve } from 'node:path'
+import { join, relative, resolve, sep } from 'node:path'
 import mdx from '@mdx-js/esbuild'
 import esbuild, { type BuildOptions, type Message, type Metafile } from 'esbuild'
 import remarkGfm from 'remark-gfm'
@@ -28,9 +28,13 @@ export interface BundledItem {
   examples: ParsedExample[]
   /** Built `@example {@include ./x.mdx}` files (.modo-tmp/build/examples/<tier>/<id>.mjs). */
   exampleDocs: string[]
+  /** Block tags other than `@example`, in source order. */
+  tags: ParsedItem['tags']
   cssFiles: string[]
   /** Source `index.tsx`. */
   file: string
+  /** `file` relative to the project root, with `/` separators. */
+  path: string
   /** Absolute path of the entry's output (.modo-tmp/build/items/<tier>/<id>.mjs). */
   bundlePath: string
 }
@@ -130,8 +134,10 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
           props: p.props,
           examples: p.examples,
           exampleDocs: exampleDocs.filter(d => existsSync(d)),
+          tags: p.tags,
           cssFiles: discoverCssForFile(file),
           file,
+          path: relative(userRoot, file).split(sep).join('/'),
         })
       }
     }

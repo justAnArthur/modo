@@ -85,6 +85,8 @@ Toggle each to feel the pace.
 
 An `@example` that is only `{@include ./x.mdx}` is compiled into the same build as your items (real imports, shared contexts). Each `# Title` names an example and the JSX block below it becomes a live example with Show code / Copy. For prose too long for the comment, `{@include ./x.md}` inlines a Markdown file; `{@includeCode ./x}` inlines a file as a code block. Includes are not recursive; a missing file is a build warning.
 
+Block tags show in a row under the page lead: `@status` (or `@alpha` / `@beta` / `@experimental`), `@since`, `@deprecated` (Markdown), `@source <url> [label]` and `@license`, the last two as often as an item has upstreams. With `repo: { url, branch?, dir? }` in `modo.config.ts`, the row also links each item's `index.tsx` in the repository.
+
 ## Compatibility
 
 - React 18+, as a peer: modo renders with your project's own React.

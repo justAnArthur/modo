@@ -27,6 +27,10 @@ declare module 'virtual:modo-items' {
     name: string
     description: string
     props: import('../lib/tsdoc').ParsedProp[]
+    /** Block tags other than `@example` (`@since`, `@license`, `@source`, …), in source order. */
+    tags: import('../lib/tsdoc').ParsedTag[]
+    /** The item's `index.tsx`, relative to the project root. */
+    path: string
   }
   export const items: ItemEntry[]
   /** The items keyed `tier:id`. */
