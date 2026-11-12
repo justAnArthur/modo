@@ -76,7 +76,7 @@ function cliIsStale() {
 if (cliIsStale()) execFileSync('bun', ['run', 'build'], { cwd: LIB_DIR, stdio: 'inherit' })
 // A previous run killed hard leaves its temp configs behind.
 removeTemp(all)
-const peerUrl = (name: string, i: number) => (build ? `${SITE_BASE}${name}/` : `http://127.0.0.1:${BASE_PORT + i}/`)
+const peerUrl = (name: string, i: number) => (build ? `${SITE_BASE}${name}/` : `http://localhost:${BASE_PORT + i}/`)
 writeFileSync(
   PEERS_FILE,
   JSON.stringify(
