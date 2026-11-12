@@ -1,10 +1,12 @@
-<a href="https://justanarthur.github.io/modo/"><img src=".github/banner.svg" alt="Docs for your design system: Point it at tokens, primitives, components and blocks. It renders a docs site whose chrome is built from your own components." width="100%"></a>
+<a href="https://justanarthur.github.io/modo/"><img src=".github/banner.svg" alt="Docs for your design system: Point it at tokens, primitives, components, blocks and pages. It renders a docs site whose chrome is built from your own components." width="100%"></a>
 
 # modo
 
-a lightweight CLI that renders a **docs site / playground for your design system**. zero config: the lib enforces a simple folder structure (`tokens/ → primitives/ → components/ → blocks/ → pages/`), discovers it, and produces the site — plus a **canvas**: every foundation and item live on one pan-and-zoom surface — including **shell inheritance**: when your components match the docs chrome's slots (Button, Link, Select, Sidebar…), the chrome itself renders with *your* components. one Sidebar drives both the left nav and the right panel.
+[![npm](https://img.shields.io/npm/v/@justanarthur/modo?label=%40justanarthur%2Fmodo)](https://www.npmjs.com/package/@justanarthur/modo) [![npm](https://img.shields.io/npm/v/@justanarthur/modo-ui?label=%40justanarthur%2Fmodo-ui)](https://www.npmjs.com/package/@justanarthur/modo-ui) [![CI](https://github.com/justAnArthur/modo/actions/workflows/ci.yml/badge.svg)](https://github.com/justAnArthur/modo/actions/workflows/ci.yml) [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-**live demo: https://justanarthur.github.io/modo/** — a landing page with every design system below; switch between them from each site's panel.
+a CLI that turns a design system into its own docs site. point it at `tokens/ → primitives/ → components/ → blocks/ → pages/` and it renders foundations, live examples, prop tables and a pan-and-zoom **canvas**; the chrome itself is built from **your** components wherever they match its slots (Button, Link, Select, Sidebar…).
+
+**[Live demo →](https://justanarthur.github.io/modo/)**
 
 ```bash
 bunx @justanarthur/modo init my-ds
@@ -18,7 +20,7 @@ proven against real-world design systems — see `demo/design-systems/` and `ui/
 - **ui** — Fluid Functionalism (Base UI) on UnoCSS: springs, fluid hover, size ladder, surface elevation, plus a morph layer (overlays grow out of their trigger, indicators melt between items). Published as [`@justanarthur/modo-ui`](./ui#install). it ships its design language as [`DESIGN.md`](ui/DESIGN.md), an agent guide in [`AGENTS.md`](ui/AGENTS.md) with the [`modo-ui` skill](.claude/skills/modo-ui/SKILL.md), and a Craft page of bad / good pairs
 - **MUI** — adapters over `@mui/material`, default theme extracted into token files
 
-## getting started
+## use
 
 modo is published as [`@justanarthur/modo`](https://www.npmjs.com/package/@justanarthur/modo). scaffold a new design-system workspace and run it:
 
@@ -169,6 +171,18 @@ the docs chrome looks for your components per slot (`Button`, `Link`, `Code`, `I
 
 ## structure
 
+```mermaid
+flowchart LR
+  lib["lib · @justanarthur/modo"]
+  ui["ui · @justanarthur/modo-ui"]
+  demo["demo · runner + landing"]
+  ds["demo/design-systems/*"]
+  ui -- documented with --> lib
+  ds -- documented with --> lib
+  demo -- builds every DS --> ui
+  demo -- builds every DS --> ds
+```
+
 ```
 modo/
 ├── lib/                          — the npm package `@justanarthur/modo` (bin `modo`)
@@ -204,19 +218,8 @@ bun run test
 
 ## releases
 
-Published to **npmjs.com only** (the package name `modo` is taken on npmjs.com by another user; this repo publishes under the `@justanarthur/modo` scope).
-
-The bump + publish + release pipeline is driven by [`just-github-actions-n-workflows`](https://github.com/justAnArthur/just-github-actions-n-workflows) (`v1.0.3`, stock workflows installed via the toolkit CLI).
-
-### Required secret on the GitHub repo
-
-- `NPM_TOKEN` — npm automation token (publishes to npmjs.com).
-
-### Pipeline
-
-1. Conventional commit to `main` → `bump-version.yml` reads the scope (`lib`, `modo`, `justanarthur`, `@justanarthur/modo` or `justanarthur/modo`), bumps `lib/package.json`, creates annotated tag `@justanarthur/modo@<version>` with JSON `{"deployTargets":["npm"]}`, pushes the tag, then dispatches the tag workflows for it (a push made with `GITHUB_TOKEN` starts no workflows on its own).
-2. Dispatch, or a tag pushed by hand → `publish-npm-on-tag.yml` resolves metadata, installs deps, builds, runs `bun publish -p --access public --tag <dist-tag>` to npmjs.com.
-3. `publish-npm-on-tag.yml` creates the GitHub Release with conventional-commit notes. It is the only workflow that writes release notes.
+Versioning, npm publishing and GitHub releases run via
+[just-github-actions-n-workflows](https://github.com/justAnArthur/just-github-actions-n-workflows). A conventional commit on `main` scoped `lib` (or `modo`, `@justanarthur/modo`) releases `@justanarthur/modo`; scoped `ui` (or `modo-ui`, `@justanarthur/modo-ui`) releases `@justanarthur/modo-ui`; `[skip bump]` releases nothing. Tags are `@justanarthur/<package>@<version>`, published to npmjs.com (the repo needs the `NPM_TOKEN` secret). The full scope list and the 1.0 steps are in [CONTRIBUTING.md](CONTRIBUTING.md) and [.github/AGENTS.md](.github/AGENTS.md).
 
 ## license
 
