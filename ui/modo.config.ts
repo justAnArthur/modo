@@ -5,6 +5,13 @@ export default defineConfig({
   description:
     'Fluid Functionalism (Base UI flavor, MIT © 2026 Micka Touillaud) ported to UnoCSS and cn: motion springs, fluid hover, a two-step size ladder and an eight-level elevated surface system.',
   css: './global.css',
+  url: 'https://justanarthur.github.io/modo/ui/',
+  socials: {
+    github: 'https://github.com/justAnArthur/modo',
+    npm: 'https://www.npmjs.com/package/@justanarthur/modo-ui',
+  },
+  footer:
+    'MIT © 2026 justAnArthur. Ported from [Fluid Functionalism](https://github.com/mickadesign/fluid-functionalism), MIT © 2026 Micka Touillaud.',
   vite: './vite.ts',
   shell: {
     Button: './components/button',
