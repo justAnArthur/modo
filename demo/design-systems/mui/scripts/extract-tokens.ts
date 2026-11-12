@@ -7,7 +7,7 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { createTheme } from '@mui/material/styles'
+import { type CssVarsTheme, createTheme } from '@mui/material/styles'
 
 const dsRoot = resolve(fileURLToPath(new URL('..', import.meta.url)))
 const tokensDir = resolve(dsRoot, 'tokens')
@@ -44,10 +44,22 @@ for (const [path, raw] of paletteVars) {
   colorLines.push(`  ${name}: ${fallback};`)
 }
 
+// MUI's dark palette, as its own stylesheet generator writes it, for the names the light block has.
+// Typed as plain Theme unless CssThemeVariables is augmented; cssVariables adds the generators
+const schemes = createTheme({
+  cssVariables: { colorSchemeSelector: 'class' },
+  colorSchemes: { light: true, dark: true },
+}) as unknown as CssVarsTheme
+const darkSheet = schemes.generateStyleSheets().find(sheet => '.dark' in sheet)!['.dark'] as Record<string, string>
+const lightNames = new Set(colorLines.map(line => line.trim().split(':')[0]))
+const darkLines = Object.entries(darkSheet)
+  .filter(([name]) => lightNames.has(name))
+  .map(([name, value]) => `  ${name}: ${value};`)
+
 const spacingFallback = theme.spacing(1).match(/var\(--mui-spacing,\s*([\d.]+)px\)/)
 const spacingUnit = spacingFallback ? Number(spacingFallback[1]) : 8
 const spacingSteps = [...Array(13).keys(), 0.5, 1.5, 2.5, 3.5].sort((a, b) => a - b)
-const spacingLines = spacingSteps.map(n => `  --space-${String(n).replace('.', '_')}: ${n * spacingUnit}px;`)
+const spacingLines = spacingSteps.map(n => `  --mui-spacing-${String(n).replace('.', '_')}: ${n * spacingUnit}px;`)
 
 const unit = Number(theme.shape.borderRadius)
 const radiusLines = [
@@ -67,14 +79,16 @@ for (const name of variants) {
 }
 
 await mkdir(tokensDir, { recursive: true })
-const files: Array<[string, string[]]> = [
-  ['colors.css', colorLines],
+const files: Array<[string, string[], string[]?]> = [
+  ['colors.css', colorLines, darkLines],
   ['spacing.css', spacingLines],
   ['radius.css', radiusLines],
   ['typography.css', typographyLines],
 ]
-for (const [name, lines] of files) {
-  const body = `:root {\n${lines.join('\n')}\n}\n`
+// `:root.dark` outranks the `:root` vars MuiProvider injects at runtime.
+for (const [name, lines, dark] of files) {
+  const darkBody = dark ? `\n:root.dark {\n${dark.join('\n')}\n}\n` : ''
+  const body = `:root {\n${lines.join('\n')}\n}\n${darkBody}`
   await writeFile(resolve(tokensDir, name), HEADER + body, 'utf8')
   console.log(`extract-tokens: tokens/${name} — ${lines.length} vars`)
 }

@@ -151,10 +151,22 @@
   border-left: 1px solid var(--border);
 }
 
-/* The chrome's generic type contract: Tailwind's small steps. Its weights
-   already carry the generic names; larger steps aren't wired because Tailwind
-   only emits the variables its utilities use. */
+/* The chrome's generic type contract, by reference to tokens/typography.css.
+   Its weights already carry the generic names. */
 :root {
   --font-size-sm: var(--text-sm);
   --font-size-xs: var(--text-xs);
+  --line-height-sm: var(--text-sm--line-height);
+  --line-height-xs: var(--text-xs--line-height);
+  --duration-fast: var(--default-transition-duration);
+}
+
+/* Inline code in docs prose, as shadcn's own docs set it: a step smaller
+   than the text around it on a muted chip, so the mono face doesn't read
+   larger than Geist. */
+:is([data-modo="page-lead"], [data-modo="prose"]) code:not(pre code) {
+  font-size: var(--text-sm);
+  background: var(--muted);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-1);
 }
