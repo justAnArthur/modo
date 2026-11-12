@@ -15,7 +15,9 @@ const CLOSE = '<!--/modo:head-->'
 export function headTags(site: SiteConfig, page: PageHead): string {
   const title = page.title ? `${page.title} · ${site.name}` : site.name
   const description = plainText(page.description ?? '') || site.description
-  const url = site.url && new URL(page.path ? `${page.path}/` : '', site.url.replace(/\/?$/, '/')).href
+  // 404.html answers for any missing path, so it names no canonical URL.
+  const url =
+    site.url && page.path !== '404' && new URL(page.path ? `${page.path}/` : '', site.url.replace(/\/?$/, '/')).href
   const tags = [
     `<title>${esc(title)}</title>`,
     description && `<meta name="description" content="${esc(description)}" />`,
@@ -33,7 +35,8 @@ export function headTags(site: SiteConfig, page: PageHead): string {
 /** Replaces the marked block (or the bare `<title>` of the runtime's index.html) with `tags`. */
 export function withHead(html: string, tags: string): string {
   const marked = new RegExp(`${OPEN}[\\s\\S]*?${CLOSE}`)
-  return marked.test(html) ? html.replace(marked, tags) : html.replace(/<title>[\s\S]*?<\/title>/, tags)
+  // Function replacers: the tags hold page text, where `$&` and friends must stay literal.
+  return marked.test(html) ? html.replace(marked, () => tags) : html.replace(/<title>[\s\S]*?<\/title>/, () => tags)
 }
 
 /** The first paragraph of Markdown as one plain line, cut near 160 characters. */
@@ -54,7 +57,7 @@ export function themeScript(theme: ThemeConfig): string {
   const { attribute = 'class', dark = 'dark', light } = theme
   return `<script>(() => {
   const KEY = 'modo-theme', root = document.documentElement
-  const cfg = ${JSON.stringify({ attribute, dark, light: light ?? null })}
+  const cfg = ${JSON.stringify({ attribute, dark, light: light ?? null }).replace(/</g, '\\u003c')}
   const apply = mode => {
     const value = mode === 'dark' ? cfg.dark : cfg.light
     if (cfg.attribute === 'class') {

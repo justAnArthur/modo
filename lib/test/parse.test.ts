@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { buildGroup, parseCss } from '../src/lib/css'
 import { discoverItems } from '../src/lib/discover-items'
 import { compileExampleBody, isCompiledExample, loadBabel } from '../src/lib/example'
+import { headTags, withHead } from '../src/lib/head'
 import { credits, itemMeta, repoBlobUrl, sourceLink } from '../src/lib/item-meta'
 import { resolveShellSlots } from '../src/lib/slots'
 import { parseItemSource } from '../src/lib/tsdoc'
@@ -249,5 +250,33 @@ describe('credits', () => {
       { label: 'beUI', href: 'https://github.com/a/beui', licenses: ['MIT © A'], items: 1 },
       { label: 'mp', href: 'https://github.com/b/mp', licenses: ['MIT © B'], items: 1 },
     ])
+  })
+})
+
+describe('review fixes', () => {
+  test('a modifier tag leaves the lines after it to the description', () => {
+    const r = parseItemSource('/**\n * Button.\n * @beta\n * Second paragraph.\n */\nexport default function X() {}')
+    expect([r.description, r.tags]).toEqual(['Button.\nSecond paragraph.', [{ tag: 'beta', text: '' }]])
+  })
+
+  test('an @ line inside a ~~~ fence is code, not a tag', () => {
+    const r = parseItemSource('/**\n * Lead.\n * ~~~css\n * @deprecated\n * ~~~\n */\nexport default function X() {}')
+    expect(r.tags).toEqual([])
+  })
+
+  test('a non-URL @source is credited as written', () => {
+    expect(credits([[{ tag: 'source', text: 'shadcn/ui' }]])).toEqual([
+      { label: 'shadcn/ui', href: 'shadcn/ui', licenses: [], items: 1 },
+    ])
+  })
+
+  test('$ patterns in page text stay literal, 404 has no canonical', () => {
+    const site = { name: 'DS', url: 'https://a.github.io/ds/' }
+    const html = withHead(
+      '<head><title>x</title></head>',
+      headTags(site, { path: 'x', description: 'Shows $$ and $& here' }),
+    )
+    expect(html).toContain('Shows $$ and $&amp; here')
+    expect(headTags(site, { path: '404', title: 'Not found' })).not.toContain('canonical')
   })
 })

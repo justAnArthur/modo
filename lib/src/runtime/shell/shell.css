@@ -238,7 +238,7 @@
   margin-bottom: var(--space-3, 12px);
 }
 
-/* Status, since, deprecation, source links and licenses from the item's block tags. */
+/* Status, since and deprecation from the item's block tags, and its Source link. Upstreams and licenses are on the overview. */
 [data-modo="page-meta"] {
   display: flex;
   flex-wrap: wrap;

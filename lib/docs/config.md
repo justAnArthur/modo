@@ -1,6 +1,6 @@
 # modo.config.ts
 
-The CLI reads `modo.config.ts` from the project root. Pass `--config <file>` to `dev`, `build` or `check` to use another file. `modo check` validates it and exits non-zero on an error.
+The CLI reads `modo.config.ts` from the project root. Pass `--config <file>` to `dev`, `build`, `preview` or `check` to use another file. `modo check` validates it and exits non-zero on an error.
 
 ```ts
 import { defineConfig } from '@justanarthur/modo/config'

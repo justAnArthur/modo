@@ -135,21 +135,27 @@ const BLOCK_TAGS = new Set([
   'public',
 ])
 
+const MODIFIER_TAGS = new Set(['alpha', 'beta', 'experimental', 'internal', 'public'])
+
 // A block tag opens at the start of a (`*`-stripped) line, outside a code
 // fence, so `you@example.com` or a CSS `@media` in an example is left alone.
 function splitBlockTags(jsdoc: string): { lead: string; sections: TagSection[] } {
   const lead: string[] = []
   const sections: TagSection[] = []
-  let fenced = false
+  // A modifier tag carries no text, so the lines after it belong to whatever came before it.
+  let open: TagSection | null = null
+  let fence: string | null = null
   for (const line of jsdoc.split('\n')) {
-    const tag = fenced ? null : line.match(/^[ \t]*@([A-Za-z]\w*)\b(.*)$/)
-    if (tag && BLOCK_TAGS.has(tag[1]!)) sections.push({ tag: tag[1]!, text: tag[2]! })
-    else {
-      const current = sections.at(-1)
-      if (current) current.text += `\n${line}`
-      else lead.push(line)
-    }
-    if (/^[ \t]*```/.test(line)) fenced = !fenced
+    const tag = fence ? null : line.match(/^[ \t]*@([A-Za-z]\w*)\b(.*)$/)
+    if (tag && BLOCK_TAGS.has(tag[1]!)) {
+      const section = { tag: tag[1]!, text: tag[2]! }
+      sections.push(section)
+      open = MODIFIER_TAGS.has(section.tag) ? open : section
+    } else if (open) open.text += `\n${line}`
+    else lead.push(line)
+
+    const marker = line.match(/^[ \t]*(```|~~~)/)?.[1]
+    if (marker && (!fence || marker === fence)) fence = fence ? null : marker
   }
   return { lead: lead.join('\n'), sections }
 }

@@ -77,6 +77,8 @@ export function credits(itemTags: ParsedTag[][]): Credit[] {
 }
 
 function repoRoot(href: string): string {
+  // `@source` is free text in the doc comment; anything that isn't a URL is shown as written.
+  if (!URL.canParse(href)) return href
   const url = new URL(href)
   const [owner, repo] = url.pathname.split('/').filter(Boolean)
   return owner && repo ? `${url.origin}/${owner}/${repo}` : url.origin

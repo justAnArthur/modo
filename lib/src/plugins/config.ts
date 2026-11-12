@@ -60,7 +60,10 @@ export function configPlugin(options: Options): Plugin {
         const extra = [href && `<link rel="icon" href="${href}" />`, cfg.theme && themeScript(cfg.theme)].filter(
           Boolean,
         )
-        return withHead(html, headTags(cfg, { path: '' })).replace('</head>', `  ${extra.join('\n    ')}\n  </head>`)
+        return withHead(html, headTags(cfg, { path: '' })).replace(
+          '</head>',
+          () => `  ${extra.join('\n    ')}\n  </head>`,
+        )
       },
     },
     async generateBundle() {

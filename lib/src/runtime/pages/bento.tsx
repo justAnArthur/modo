@@ -75,7 +75,11 @@ function useFit(stage: RefObject<HTMLDivElement | null>, fit: RefObject<HTMLDivE
 
 function fitInto(stage: HTMLElement, fit: HTMLElement, base: number) {
   const style = getComputedStyle(stage)
-  const room = parseFloat(style.maxHeight) - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom)
+  // A host may lift the stage's max-height (`none`); then only the width limits the preview.
+  const maxHeight = parseFloat(style.maxHeight)
+  const room = Number.isFinite(maxHeight)
+    ? maxHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom)
+    : Number.POSITIVE_INFINITY
   // Shrinking widens the preview's own layout, which reflows it: a few passes converge.
   let zoom = base
   for (let pass = 0; pass < 4; pass++) {
