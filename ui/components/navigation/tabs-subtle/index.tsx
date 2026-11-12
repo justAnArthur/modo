@@ -1,9 +1,9 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/tabs-subtle.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications: `"use client"` dropped; `@/lib/*` and `@/hooks/*`
+ * Local modifications: `@/lib/*` and `@/hooks/*`
  * imports rewritten to `../../../lib/*` (`SizeProvider` to
  * `../../../primitives/sizes`), `framer-motion` to `motion/react`; uncontrolled mode added — `selectedIndex` and `onSelect` are
  * optional, with a `defaultSelectedIndex` twin backed by
@@ -25,6 +25,8 @@
  * local): they melt from tab to tab instead of sliding; the hover pill now
  * always returns to the selected tab as it fades.
  */
+
+'use client'
 
 import { Tabs } from '@base-ui/react/tabs'
 import { AnimatePresence, motion } from 'motion/react'
@@ -115,6 +117,8 @@ type TabsSubtleComponent = ForwardRefExoticComponent<TabsSubtleProps & RefAttrib
  * - `TabsSubtle.Panel` — content for the tab with the same `index`.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/tabs-subtle.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const TabsSubtle = forwardRef<HTMLDivElement, TabsSubtleProps>(
   (

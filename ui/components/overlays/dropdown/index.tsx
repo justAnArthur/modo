@@ -1,10 +1,10 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/dropdown.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*` and
+ * - `framer-motion` → `motion/react`; `@/lib/*` and
  *   `@/hooks/*` → `../../../lib/*` (`SizeProvider` → `../../../primitives/sizes`);
  *   `@/lib/elevated` → `../../../primitives/surface`; `@/components/ui/scroll-area`
  *   → `../../../primitives/scroll-area`; `@/components/ui/fluid-hover-highlight` →
@@ -54,6 +54,8 @@
  * - `effect="morph"` with `hideSource` opens the menu in place over its
  *   trigger: the positioner's `sideOffset` becomes the engine's `inPlaceOffset`.
  */
+
+'use client'
 
 import type { MenuTriggerProps } from '@base-ui/react/menu'
 import { Menu } from '@base-ui/react/menu'
@@ -358,6 +360,8 @@ type DropdownComponent = ForwardRefExoticComponent<DropdownProps & RefAttributes
  * Dropdown.Label, Dropdown.Separator, Dropdown.Search and Dropdown.Empty.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/dropdown.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
   (

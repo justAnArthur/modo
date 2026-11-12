@@ -1,10 +1,10 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/card.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `@/lib/*`, `@/hooks/*` and
+ * - `@/lib/*`, `@/hooks/*` and
  *   `@/components/ui/fluid-hover-highlight` → `../../lib/*`, except
  *   `SizeProvider` → `../../primitives/sizes`.
  * - `next/link` replaced with plain anchors (no Next.js in modo) — the
@@ -20,7 +20,12 @@
  *   hex focus-ring fallback → `ring-focus-ring` / `border-focus-ring`;
  *   `rounded-[Npx]` → radius tokens; `duration-80|120|160` and tier-length JS
  *   durations → `duration-<tier>` / `spring.*`.
+ * - `CardEyebrow` drops upstream's `uppercase tracking-wide`: the DS sets no
+ *   case or letter-spacing, so the eyebrow is the caption role, semibold and
+ *   muted, capitalized in its content.
  */
+
+'use client'
 
 import {
   Children,
@@ -282,11 +287,13 @@ type CardComponent = ForwardRefExoticComponent<CardProps & RefAttributes<HTMLDiv
  * is selected), Card.Description, Card.Action, Card.Content, Card.Footer (the
  * actions row), Card.Media (an icon tile, a logo or a [logoA, logoB] pair),
  * Card.Image (full-bleed banner, or a leading image when inline),
- * Card.Eyebrow (small uppercase label), Card.Feature (icon + title +
+ * Card.Eyebrow (small muted label), Card.Feature (icon + title +
  * description row) and Card.Button (primary | secondary | ghost | link
  * action; an anchor when given `href`).
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/default/card.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Card = forwardRef<HTMLDivElement, CardProps>(
   (
@@ -809,8 +816,8 @@ function CardImage({ src, alt, className }: CardImageProps) {
 CardImage.displayName = 'CardImage'
 
 // ── CardEyebrow ──────────────────────────────────────────
-// Small uppercase label above the title (e.g. "New Model"). Typographically
-// it's the caption role of the type scale in uppercase — see /docs/sizes.
+// Small label above the title (e.g. "New model"): the caption role, semibold
+// and muted — see /docs/sizes.
 
 const CardEyebrow = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>(({ className, ...props }, ref) => {
   const compact = useSize().variant === 'compact'
@@ -820,8 +827,7 @@ const CardEyebrow = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>
       data-slot="card-eyebrow"
       className={cn(
         compact ? 'text-caption-compact' : 'text-caption',
-        'uppercase tracking-wide text-muted-foreground',
-        'weight-semibold',
+        'text-muted-foreground weight-semibold',
         className,
       )}
       {...props}

@@ -1,12 +1,12 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, statSync } from 'node:fs'
-import { join, relative, resolve } from 'node:path'
+import { join, relative, resolve, sep } from 'node:path'
 import mdx from '@mdx-js/esbuild'
 import esbuild, { type BuildOptions, type Message, type Metafile } from 'esbuild'
 import remarkGfm from 'remark-gfm'
 import { loadModoConfig } from '../lib/config.loader'
 import { discoverCssForFile } from '../lib/discover-css'
 import { discoverItems } from '../lib/discover-items'
-import type { SiteConfig } from '../lib/schema'
+import { isComponentRef, type SiteConfig } from '../lib/schema'
 import { TIERS, type Tier } from '../lib/tiers'
 import { type ParsedExample, type ParsedItem, parseItemSource } from '../lib/tsdoc'
 import { remarkModoExamples } from './mdx-examples'
@@ -28,9 +28,13 @@ export interface BundledItem {
   examples: ParsedExample[]
   /** Built `@example {@include ./x.mdx}` files (.modo-tmp/build/examples/<tier>/<id>.mjs). */
   exampleDocs: string[]
+  /** Block tags other than `@example`, in source order. */
+  tags: ParsedItem['tags']
   cssFiles: string[]
   /** Source `index.tsx`. */
   file: string
+  /** `file` relative to the project root, with `/` separators. */
+  path: string
   /** Absolute path of the entry's output (.modo-tmp/build/items/<tier>/<id>.mjs). */
   bundlePath: string
 }
@@ -53,6 +57,8 @@ export interface BundleResult {
   extras: Map<string, BundledExtra>
   /** The `examples` module; `exports` excludes `default`. */
   scope: { bundlePath: string; exports: string[] } | null
+  /** Errors reported for this build (failed entries, skipped items, a broken config); `modo build` fails on any. */
+  errorCount: number
 }
 
 export interface Bundler {
@@ -128,8 +134,10 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
           props: p.props,
           examples: p.examples,
           exampleDocs: exampleDocs.filter(d => existsSync(d)),
+          tags: p.tags,
           cssFiles: discoverCssForFile(file),
           file,
+          path: relative(userRoot, file).split(sep).join('/'),
         })
       }
     }
@@ -152,6 +160,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     const extraPaths = [
       ...Object.values(config?.shell ?? {}),
       ...(config?.panel?.items ?? []).map(it => it.component),
+      config?.logo && isComponentRef(config.logo) ? config.logo : undefined,
     ].filter((p): p is string => typeof p === 'string')
     // `./modo.components.tsx#Select` names an export; several refs into one
     // file share its entry.
@@ -219,7 +228,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     }
 
     lastReport = await report(failures, errors, warnings, lastReport)
-    return { config, items, extras, scope }
+    return { config, items, extras, scope, errorCount: failures.length + errors.length }
   }
 
   return {

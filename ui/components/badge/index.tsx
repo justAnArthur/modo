@@ -1,9 +1,8 @@
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/badge.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `@/lib/*` imports rewritten to relative `../../lib/*` paths.
  * - `BadgeProps` re-declares `variant` (inherited from cva's VariantProps
  *   upstream) and carries the FF docs API-table descriptions on every prop,
@@ -21,6 +20,8 @@
  *   sits in one inner span that carries the morph, so the root keeps the
  *   caller's `style`.
  */
+
+'use client'
 
 import { cva, type VariantProps } from 'class-variance-authority'
 import { AnimatePresence, animate, motion } from 'motion/react'
@@ -166,6 +167,8 @@ interface BadgeProps
  * recipe as `badgeVariants`.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/default/badge.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
   ({ className, variant = 'solid', size: sizeProp, color = 'gray', children, style, ...props }, ref) => {

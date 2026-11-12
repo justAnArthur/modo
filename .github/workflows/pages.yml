@@ -1,7 +1,7 @@
 # pages.yml
 # ---
 # builds every demo design system into one static site and deploys it to
-# GitHub Pages: <base>/<design-system>/, with <base>/ redirecting to the first.
+# GitHub Pages: <base>/<design-system>/, with a landing page at <base>/.
 #
 # one-time setup: Settings → Pages → Source: GitHub Actions.
 # ---
@@ -31,6 +31,10 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
+      # The demo runner builds each site with `node`; Vite 8 needs 20.19+ or 22.12+.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - id: pages
         uses: actions/configure-pages@v6
       - run: bun install --frozen-lockfile

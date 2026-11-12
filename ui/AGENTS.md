@@ -12,7 +12,8 @@ is specific to this package.
 | `DESIGN.md` | The design language: every token (front matter) and the rules (prose), in Google's DESIGN.md format. |
 | `.claude/skills/modo-ui/` (repo root) | The `modo-ui` skill: the systems as code, a new-item workflow, recipes, the catalog, upstream's craft notes. Load it before writing UI here. |
 | `primitives/craft` | The rules made visible: bad / good pairs (weight shift, blinking hover, warping press, copy target, overlay origin, snapping indicator, flat surfaces, click ring). Open it in the dev server. |
-| `README.md` | The port: upstream → local file map, every local modification, the UnoCSS translation. |
+| `README.md` | The consumer docs: install, the three CSS setups, theming, the exported hooks, credits. |
+| `PORTING.md` | The port: upstream → local file map, every local modification, the UnoCSS translation. |
 
 ## where things live
 
@@ -42,7 +43,10 @@ is specific to this package.
 - **Lift relative to the substrate** (`useSurface() + offset`) and re-provide the level.
 - **Both ways.** `value` / `defaultValue` / `onValueChange` through `useControllableState`, so examples
   stay hook-free.
-- **Vendored files** keep upstream formatting and list every change in their header and in `README.md`.
+- **Vendored files** keep upstream formatting and list every change in their header and in `PORTING.md`.
+  A provenance header opens with `/*!` (a legal comment), so the build keeps it in `dist/`.
+- **Client modules.** A module with hooks, context, handlers or browser APIs puts `'use client'` right
+  after its header; `bunup.config.ts` hoists it to the top of each output chunk for RSC hosts.
 
 ## checks
 

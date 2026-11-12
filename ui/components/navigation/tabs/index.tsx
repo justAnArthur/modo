@@ -1,8 +1,8 @@
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/tabs.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications: `"use client"` dropped; `@/lib/*` and `@/hooks/*`
+ * Local modifications: `@/lib/*` and `@/hooks/*`
  * imports rewritten to `../../../lib/*` (`SizeProvider` to
  * `../../../primitives/sizes`), `framer-motion` to `motion/react`; `defaultSelectedIndex` added as the index-mode twin of the
  * existing value-mode `defaultValue` (it only seeds the first render, like
@@ -16,7 +16,11 @@
  * The active indicator and the hover pill are `GooIndicator`s
  * (`lib/goo-indicator.tsx`, local): they melt from tab to tab instead of
  * sliding; the hover pill now always returns to the active tab as it fades.
+ * The list caps at its container's width and scrolls sideways past it
+ * (`max-w-full overflow-x-auto scrollbar-hide`, as TabsSubtle's list does).
  */
+
+'use client'
 
 import { Tabs as TabsPrimitive } from '@base-ui/react/tabs'
 import { AnimatePresence, motion } from 'motion/react'
@@ -123,6 +127,8 @@ type TabsComponent = ForwardRefExoticComponent<TabsProps & RefAttributes<HTMLDiv
  * - `Tabs.Panel` — content shown while the tab with the same `value` is active.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/tabs.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Tabs = forwardRef<HTMLDivElement, TabsProps>(
   (
@@ -313,7 +319,9 @@ const TabsList = forwardRef<HTMLDivElement, TabsListProps>(({ children, classNam
           // segmentPad + segmentItem add up to the ladder's control height
           // (36px default, 28px compact) so the segmented control's outer
           // box lines up with buttons, selects, and inputs beside it.
-          'relative inline-flex items-center select-none bg-muted',
+          // Wider than its container, the list scrolls inside its own pill;
+          // segmentPad leaves room for the 2px-outset focus ring.
+          'relative inline-flex max-w-full items-center overflow-x-auto scrollbar-hide select-none bg-muted',
           sizeClasses.segmentPad,
           shape.container,
           className,

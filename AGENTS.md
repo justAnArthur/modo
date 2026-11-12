@@ -144,12 +144,12 @@ Rules:
     - Button gets `variant="ghost"`, `size="icon-sm"`, `aria-label`, `aria-pressed`.
     - Link gets `aria-label` on icon-only anchors and `title` from Markdown links; forward them.
     - Code gets `language` and a string child.
-    - Icon gets `name` (`code` | `copy` | `check` | `link`) and `label`. The host draws its own glyph; `PlainIcon` shows the label as text.
+    - Icon gets `name` (`code` | `copy` | `check` | `link` | `menu` | `sun` | `moon`, or a `socials` key) and `label`. The host draws its own glyph; `PlainIcon` shows the label as text.
   - A host Link needn't forward data attributes: the chrome puts its hooks on wrappers.
   - One Sidebar drives both sides: each `panel.items` entry is a `Sidebar.Section`.
 - **`modo.config.ts` hooks:**
   - `css` — injected right after the lib's structural CSS, before tokens.
-  - `examples` — a module whose named exports are in scope in every example. Alias any export that collides with an item name; an unresolvable path yields scope `{}`.
+  - `examples` — a module whose named exports are in scope in every example. Alias any export that collides with an item name; an unresolvable path yields scope `{}` in dev and fails `modo build`.
   - `vite` — default-exports `(config) => config`, imported natively. This is how Tailwind/Uno get added.
 - **Users write no Vite config and no Next.js:** the lib owns the app.
 
@@ -174,25 +174,25 @@ Rules:
 
 ## running
 
-- All DSs: `bun dev` at the root or in `demo/` (ports 5173+i). The runner builds the lib's CLI first if it isn't built.
+- All DSs: `bun dev` at the root or in `demo/` (ports 5173+i). The runner builds the lib's CLI first when it's missing or older than `lib/src`.
 - One DS: `bun dev <name>` in `demo/`.
 - The site: `bun run build` in `demo/` builds every DS into `demo/dist/<name>/` (`SITE_BASE` sets the public path). `.github/workflows/pages.yml` deploys it to GitHub Pages on push to `main`.
-- Checks (CI runs them on every push and pull request): `bun run lint`, `bun run build && bun run check` (typechecks every workspace), `bun run test` (the lib's parser tests).
+- Checks (CI runs them on every push and pull request): `bun run lint`, `bun run build && bun run check` (typechecks every workspace), `bun run test` (the lib's parser tests), `.github/scripts/check-ui-pack.sh` (the ui tarball holds its entry, styles and licence) and `.github/scripts/smoke-init.sh` (packs the lib, `modo init`s a project with it and builds it). Pull requests also build the demo site.
 
 ## commits
 
-- Conventional commits drive releases: any commit scoped to the lib (`lib`, `modo`, `@justanarthur/modo`) bumps and publishes it, and one scoped to ui (`ui`, `modo-ui`, `@justanarthur/modo-ui`) bumps and publishes `@justanarthur/modo-ui`, `refactor`/`docs`/`chore` included (`feat`/`perf` minor, `!` major, the rest patch); other scopes (`demo`) and unscoped commits don't. `[skip bump]` in the message suppresses it. Details in `.github/AGENTS.md`.
+- Conventional commits drive releases: any commit scoped to the lib (`lib`, `modo`, `justanarthur`, `justanarthur/modo`, `@justanarthur/modo`) bumps and publishes it, and one scoped to ui (`ui`, `modo-ui`, `justanarthur/modo-ui`, `@justanarthur/modo-ui`) bumps and publishes `@justanarthur/modo-ui`, `refactor`/`docs`/`chore` included (`feat`/`perf` minor, a breaking change major, the rest patch; how the toolkit reads `!` is in `.github/AGENTS.md` §11); other scopes (`demo`) and unscoped commits don't. `[skip bump]` in the message suppresses it. Details in `.github/AGENTS.md`.
 
 ## chrome hooks (data-modo attrs)
 
-- layout: `app`, `sidebar`, `content`, `panel`.
+- layout: `app`, `sidebar` (`data-open` while the small-screen menu is open), `content`, `panel`, `footer`; header `header`, `brand`, `brand-logo`, `brand-name`, `header-actions`, `menu-toggle`.
 - nav: `sidebar-nav`, `sidebar-section`, `sidebar-section-title`, `sidebar-section-items`, `sidebar-item` (`aria-current="page"` when active), `toc`, `toc-label` (`data-level`).
-- page: `page-eyebrow`, `page-title`, `page-lead`, `prose`, `section`, `section-title`, `anchor`, `hero`, `hero-stats`.
+- page: `page-eyebrow`, `page-title`, `page-lead`, `page-meta`, `page-meta-entry` (`data-kind`: `deprecated`, `status`, `since`, `repo`), `credits`, `credits-list`, `credit` (the overview's upstreams from `@source` / `@license`), `prose`, `section`, `section-title`, `anchor`, `hero`, `hero-stats`.
 - canvas (`/canvas`, every foundation and item live on one pan-and-zoom surface): `canvas` (`data-moving`, `data-panning`, `data-space` while in use), `canvas-world`, `canvas-column` (`data-kind`), `canvas-frames`, `canvas-frame`, `canvas-frame-title`, `canvas-stage`, `canvas-controls`, `canvas-zoom`.
-- overviews: `bento`, `bento-card` (`data-span="wide|full"`), `bento-stage`, `bento-meta`, `bento-title`, `bento-count`, `bento-desc`, `bento-empty`, `token-preview`, `token-chip`.
+- overviews: `bento`, `bento-card` (`data-span="wide|full"`), `bento-stage` (`data-clipped` when the preview is cut off), `bento-fit` (the preview's scaled layer), `bento-meta`, `bento-title`, `bento-count`, `bento-desc`, `bento-empty`; previews `color-strip`, `token-chip`, `type-preview`, `type-preview-lines`, `type-preview-line`, `space-preview`, `space-stair`, `radius-preview`, `radius-corner`, `motion-preview`, `motion-curves`, `motion-bar`.
 - examples: `example-card`, `example-card-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`, `code-block`, `code-actions`, `icon-label`.
 - tables and tokens: `prop-table-scroll`, `prop-table`, `token-list`, `token-row`, `token-name`, `token-meta`, `swatch` (`data-kind`).
-- colors: `color-grid`, `color-stack`, `color-tile` (`data-flush` when it matches the page), `color-tile-name`, `color-tile-value`, `color-tile-pair`.
-- foundations: `token-label`; typography `type-elements`, `type-element`, `type-families`, `type-family`, `type-family-sample`, `type-glyph`, `type-scale`, `type-step`, `type-sample`, `type-weights`, `type-weight`, `type-preview`; radius `radius-grid`, `radius-tile`, `radius-shape`; spacing `space-scale`, `space-step`, `space-bar`, `space-preview`; motion `motion-list`, `motion-row`, `motion-track`, `motion-dot`, `motion-curve`, `motion-preview`, `motion-bar`.
+- colors: `color-grid`, `color-stack`, `color-tile` (`data-flush` when it matches the page), `color-tile-name`, `color-tile-pair`, `color-tile-foot`, `color-tile-value`, `color-tile-schemes` (the light / dark chip, when the host declares both).
+- foundations: `token-label`, `token-empty` (a group without variables); typography `type-elements`, `type-element`, `type-families`, `type-family`, `type-family-head`, `type-family-name`, `type-family-sample`, `type-family-weights`, `type-family-weight`, `type-glyph`, `type-scale`, `type-step`, `type-sample`, `type-metrics`, `type-weights`, `type-weight`; radius `radius-grid`, `radius-tile`, `radius-stage`, `radius-shape`, `radius-uses`, `radius-use` (`data-kind="control|card"`); spacing `space-scale`, `space-step`, `space-ruler`, `space-bar`, `space-specimen`, `space-insets`, `space-inset`, `space-inset-box`; motion `motion-list` (`data-end` while the dots sit at the far end), `motion-row`, `motion-lane`, `motion-track`, `motion-dot`, `motion-curve`, `motion-curve-axis`.
 
 The lib styles their structure, including the hover reveal of `example-actions`, `code-actions` and `anchor` (shown on hover or focus-within, always shown on touch) and the responsive grid (panel strip below 1280px, stacked below 768px). The host styles everything else through the same attrs (**styling: Chrome restyling**), e.g. ui's `global.css` chrome section.

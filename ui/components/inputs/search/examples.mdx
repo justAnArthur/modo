@@ -6,7 +6,7 @@ import { AlignLeft, Bell, Bold, FileText, Hash, Heading, Italic, Link, Settings,
 
 Press it, or press `/` anywhere on the page: the pill grows into the field in place, over the buttons beside it. Type and the suggestions ooze out below; Escape clears the query, then collapses it.
 
-<div className="flex w-full max-w-md items-center gap-1">
+<div className="flex flex-wrap w-full max-w-md items-center gap-1">
   <Search
     placeholder="Search components"
     shortcut="/"
@@ -24,7 +24,7 @@ Press it, or press `/` anywhere on the page: the pill grows into the field in pl
 
 `variant="icon"` rests as a lone search icon. At the end of a toolbar, `align="end"` grows it leftward over the other tools.
 
-<div className="flex items-center gap-1">
+<div className="flex flex-wrap items-center gap-1">
   <Button variant="ghost" size="icon" aria-label="Bold">
     <Bold />
   </Button>
@@ -62,7 +62,7 @@ Leave out `items` for a plain search field: the same growth, no panel. Enter rep
 
 `defaultExpanded` starts it open; leaving it empty still collapses it.
 
-<Search defaultExpanded placeholder="Filter" items={['Open', 'In progress', 'In review', 'Done', 'Cancelled']} />
+<Search defaultExpanded width={240} placeholder="Filter" items={['Open', 'In progress', 'In review', 'Done', 'Cancelled']} />
 
 # Morph effects
 

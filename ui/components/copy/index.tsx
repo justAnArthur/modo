@@ -1,10 +1,9 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/input-copy.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react`; `@/lib/{utils,icon-context,shape-context,
  *   size-context,springs}` rewritten to `../../lib/*` (the `@/lib/font-weight`
  *   import went with the inline `fontVariationSettings`, below);
@@ -32,6 +31,8 @@
  *   crossfade over one fixed slot instead of `mode="wait"`; the button
  *   variant keeps that one glyph slot and swaps only its word.
  */
+
+'use client'
 
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
 import {
@@ -257,6 +258,8 @@ interface CopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
  * follows the surrounding SizeProvider unless `size` pins it.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/default/input-copy.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Copy = forwardRef<HTMLDivElement, CopyProps>(
   ({ value, label, onCopy, disabled, variant = 'icon', align = 'right', size, className, ...props }, ref) => {

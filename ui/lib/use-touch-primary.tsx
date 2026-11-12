@@ -1,12 +1,13 @@
-/*
+/*!
  * Vendored from Fluid Functionalism — `registry/default/hooks/use-touch-primary.tsx` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
  *
- * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
+ * Local modifications: none.
  */
+
+'use client'
 
 // Adapted from Lina by SameerJS6 (https://lina.sameer.sh) — use-has-primary-touch.
 // Detects touch-primary devices (coarse pointer + touch points), updating live

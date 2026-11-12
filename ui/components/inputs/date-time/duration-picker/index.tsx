@@ -5,6 +5,8 @@
  * decimal hours.
  */
 
+'use client'
+
 import { type Duration, formatDuration, type Locale } from 'date-fns'
 import { type RefObject, useMemo, useRef } from 'react'
 import { defaultLocale, fieldLabel } from '../../../../lib/date-locale'

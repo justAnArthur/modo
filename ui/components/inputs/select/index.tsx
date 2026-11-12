@@ -1,10 +1,10 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/select.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*` and
+ * - `framer-motion` → `motion/react`; `@/lib/*` and
  *   `@/hooks/*` → `../../../lib/*` (`SizeProvider` → `../../../primitives/sizes`);
  *   `@/lib/elevated` → `../../../primitives/surface`; `@/components/ui/scroll-area`
  *   → `../../../primitives/scroll-area`; `@/components/ui/fluid-hover-highlight` →
@@ -35,6 +35,8 @@
  * - `effect="morph"` with `hideSource` opens the menu in place over its
  *   trigger: the positioner's `sideOffset` becomes the engine's `inPlaceOffset`.
  */
+
+'use client'
 
 import { Select as SelectPrimitive } from '@base-ui/react/select'
 import { cva, type VariantProps } from 'class-variance-authority'
@@ -183,6 +185,8 @@ interface SelectProps {
  * Select.Label and Select.Separator.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/select.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 function Select({ children, value, defaultValue, onValueChange, disabled = false, name, required, size }: SelectProps) {
   const [internalValue, setInternalValue] = useState(defaultValue ?? '')

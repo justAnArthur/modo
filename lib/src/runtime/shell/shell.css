@@ -109,14 +109,17 @@
   [data-modo="app"] {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto;
-    grid-template-areas: "sidebar" "panel" "content";
+    grid-template-areas: "sidebar" "content" "panel";
   }
 
-  /* A capped, scrollable nav keeps the page itself reachable. */
+  /* The header stays; the nav folds behind the menu toggle. */
   [data-modo="sidebar"] {
     position: static;
     height: auto;
-    max-height: 45vh;
+  }
+
+  [data-modo="sidebar"]:not([data-open]) > :not([data-modo="header"]) {
+    display: none;
   }
 
   [data-modo="sidebar"] [data-modo="sidebar-nav"] {
@@ -127,6 +130,55 @@
   [data-modo="content"] {
     padding: var(--space-4, 16px);
   }
+}
+
+@media (min-width: 768px) {
+  [data-modo="menu-toggle"] {
+    display: none;
+  }
+}
+
+[data-modo="header"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 8px);
+  padding: var(--space-4, 16px) var(--space-4, 16px) 0;
+}
+
+[data-modo="brand"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  font-weight: var(--modo-font-weight-semibold);
+}
+
+/* An image or component logo sits at the name's cap height. */
+[data-modo="brand"] > :not([data-modo="brand-name"]) {
+  display: block;
+  height: 1.5em;
+  width: auto;
+}
+
+[data-modo="header-actions"] {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+}
+
+[data-modo="footer"] {
+  margin-top: var(--space-6, 32px);
+  padding-top: var(--space-4, 16px);
+  border-top: 1px solid;
+  border-top-color: var(--modo-border);
+  color: var(--modo-muted);
+  font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
+}
+
+[data-modo="footer"] p {
+  margin: 0;
 }
 
 /* Interior spacing of both asides belongs to the Sidebar Root component
@@ -182,6 +234,49 @@
   margin: 0 0 var(--space-5, 24px);
 }
 
+[data-modo="page-lead"]:has(+ [data-modo="page-meta"]) {
+  margin-bottom: var(--space-3, 12px);
+}
+
+/* Status, since and deprecation from the item's block tags, and its Source link. Upstreams and licenses are on the overview. */
+[data-modo="page-meta"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1, 4px) var(--space-4, 16px);
+  font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
+  color: var(--modo-muted);
+  max-width: var(--modo-measure);
+  margin: 0 0 var(--space-5, 24px);
+}
+
+/* The overview's upstreams: one row each, name then license and item count. */
+[data-modo="credits"] {
+  margin-top: var(--space-6, 32px);
+}
+
+[data-modo="credits-list"] {
+  display: grid;
+  gap: var(--space-2, 8px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-modo="credit"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1, 4px) var(--space-3, 12px);
+}
+
+[data-modo="credit"] > span {
+  color: var(--modo-muted);
+  font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
+}
+
 [data-modo="hero"] {
   margin: 0 0 var(--space-6, 32px);
 }
@@ -212,33 +307,49 @@
   overflow: hidden;
 }
 
+/* The window a preview shows through. One that would overflow it scales down
+   (bento.tsx sets --modo-stage-zoom on the fit layer); one too big even then
+   is clipped under a fade. */
 [data-modo="bento-stage"] {
-  /* A single full-width track, so previews written against a full-width stage
-     (percentage widths, forms) keep a definite width instead of collapsing. */
   display: grid;
   flex: 1;
   grid-template-columns: minmax(0, 1fr);
   /* Center short previews; fall back to the top when one overflows. */
   align-content: safe center;
-  gap: var(--space-3, 12px);
   min-height: 132px;
   max-height: 320px;
   padding: var(--space-5, 24px);
   overflow: hidden;
-  /* Page-sized previews (blocks) set this to shrink into the cell. */
+}
+
+/* A mask, not a color: only the (opaque) text color's alpha is read. */
+[data-modo="bento-stage"][data-clipped] {
+  mask-image: linear-gradient(to bottom, currentColor calc(100% - var(--space-6, 32px)), transparent);
+}
+
+/* A single full-width track, so previews written against a full-width stage
+   (percentage widths, forms) keep a definite width instead of collapsing. */
+[data-modo="bento-fit"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3, 12px);
   zoom: var(--modo-stage-zoom, 1);
 }
 
-/* Examples are written for a full-width stage; in a cell they have to wrap.
-   Layered, so an example's own styles win even from a host's layers
-   (an unlayered rule would beat Tailwind's at any specificity). */
+/* Examples are written for a full-width stage; a cell scales them down (bento.tsx).
+   Wrapping is the example's own call: a forced flex-wrap would stop a column's
+   children stretching. Block containers fill the track; inline content (a badge, a button) keeps
+   its own width, centered. Layered, so an example's own styles win even from
+   a host's layers (an unlayered rule would beat Tailwind's at any specificity). */
 @layer modo-preview {
-  :is([data-modo="bento-stage"], [data-modo="canvas-stage"]) > * {
+  :is([data-modo="bento-fit"], [data-modo="canvas-stage"]) > * {
     max-width: 100%;
+    justify-self: center;
   }
 
-  [data-modo="bento-stage"] > :where(div) {
-    flex-wrap: wrap;
+  :is([data-modo="bento-fit"], [data-modo="canvas-stage"])
+    > :where(div, form, section, article, aside, nav, header, footer, main, fieldset, table, ul, ol, dl, figure) {
+    justify-self: stretch;
   }
 }
 
@@ -291,17 +402,17 @@
   }
 }
 
-[data-modo="token-preview"] {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2, 8px);
+/* The palette preview: a strip of chips, eight to a row. */
+[data-modo="color-strip"] {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: var(--space-1, 4px);
   width: 100%;
 }
 
 [data-modo="token-chip"] {
-  flex: 1 1 0;
-  height: 56px;
-  border-radius: var(--modo-radius-md);
+  block-size: 48px;
+  border-radius: var(--modo-radius-sm);
   outline: 1px solid var(--modo-border);
   outline-offset: -1px;
 }
@@ -689,9 +800,11 @@
   overflow-x: auto;
 }
 
+/* Past the floor the wrapper scrolls instead of crushing the columns. */
 [data-modo="prop-table"] {
   border-collapse: collapse;
   width: 100%;
+  min-width: 36rem;
   font-size: var(--modo-font-size-sm);
   line-height: var(--modo-line-height-sm);
 }
@@ -759,14 +872,14 @@
   padding: 0 var(--space-1, 4px);
 }
 
-/* Color tokens: columns of horizontal rectangles, name top-left, values
-   running up the bottom-right edge. Fill, text, border and radius all come
-   from the host (its tokens, its -foreground pairs, its page colors) — never a
-   literal color. */
+/* Color tokens: columns of tiles, name top-left, values along the foot with
+   the light and dark chips beside them. Fill, text, border and radius all
+   come from the host (its tokens, its -foreground pairs, its page colors) —
+   never a literal color. */
 
 [data-modo="color-grid"] {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
   align-items: start;
   gap: var(--space-3, 12px);
 }
@@ -778,13 +891,12 @@
 }
 
 [data-modo="color-tile"] {
-  --modo-tile-pad: var(--space-3, 12px);
-  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  aspect-ratio: 2 / 1;
-  padding: var(--modo-tile-pad);
+  min-width: 0;
+  min-block-size: 96px;
+  padding: var(--space-3, 12px);
   border-radius: var(--modo-radius-lg);
   font-size: var(--modo-font-size-sm);
   line-height: var(--modo-line-height-sm);
@@ -795,10 +907,8 @@
   outline-offset: -1px;
 }
 
-/* Name and pair keep clear of the value column on the right edge. */
 [data-modo="color-tile-name"],
 [data-modo="color-tile-pair"] {
-  padding-right: 2.25rem;
   overflow-wrap: anywhere;
 }
 
@@ -807,35 +917,57 @@
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+  font-weight: var(--modo-font-weight-medium);
 }
 
-[data-modo="color-tile-pair"] {
-  margin-top: auto;
+[data-modo="color-tile-pair"],
+[data-modo="color-tile-foot"] {
   font-size: var(--modo-font-size-xs);
   line-height: var(--modo-line-height-xs);
+}
+
+[data-modo="color-tile-foot"] {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2, 8px);
+  margin-top: auto;
+  padding-top: var(--space-2, 8px);
 }
 
 [data-modo="color-tile-value"] {
-  position: absolute;
-  top: var(--modo-tile-pad);
-  right: var(--modo-tile-pad);
-  bottom: var(--modo-tile-pad);
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  font-size: var(--modo-font-size-xs);
-  line-height: var(--modo-line-height-xs);
+  display: grid;
+  min-width: 0;
 }
 
 [data-modo="color-tile-value"] > * {
-  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* The declared light and dark values, split diagonally in one chip. */
+[data-modo="color-tile-schemes"] {
+  flex: none;
+  inline-size: var(--space-4, 16px);
+  block-size: var(--space-4, 16px);
+  border: 1px solid currentColor;
+  border-radius: var(--modo-radius-sm);
+}
+
 /* Foundation pages. Every specimen is the host's token applied live (its
    font, size, weight, radius, length, duration, easing); around it the lib
-   adds structure only, plus the shared border and muted text. */
+   adds structure only, plus the shared border, muted text and tints mixed
+   from the inherited text color. */
+
+[data-modo="token-empty"] {
+  margin: 0;
+  padding: var(--space-6, 32px);
+  border: 1px dashed var(--modo-border);
+  border-radius: var(--modo-radius-lg);
+  text-align: center;
+  color: var(--modo-muted);
+}
 
 [data-modo="token-label"] {
   display: grid;
@@ -847,9 +979,7 @@
 [data-modo="token-label"] > * {
   max-width: 100%;
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 [data-modo="type-families"],
@@ -863,8 +993,7 @@
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
 }
 
-[data-modo="type-weights"],
-[data-modo="radius-grid"] {
+[data-modo="type-weights"] {
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
 }
 
@@ -883,19 +1012,68 @@
   font-size: var(--modo-font-size-h1);
 }
 
+[data-modo="type-family-head"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1, 4px) var(--space-3, 12px);
+}
+
+[data-modo="type-family-name"] {
+  color: var(--modo-color-h3);
+  font-size: var(--modo-font-size-h3);
+  font-weight: var(--modo-font-weight-semibold);
+}
+
 [data-modo="type-family-sample"] {
   display: grid;
   overflow-wrap: anywhere;
 }
 
-[data-modo="type-preview"] {
+[data-modo="type-family-weights"] {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-3, 12px);
+  gap: var(--space-4, 16px);
+  padding-top: var(--space-4, 16px);
+  border-top: 1px solid var(--modo-border);
+  font-size: var(--modo-font-size-h3);
 }
 
-/* Scale rows: the token on the left, its specimen on the right. */
+[data-modo="type-family-weight"] {
+  display: grid;
+  justify-items: start;
+}
+
+[data-modo="type-family-weight"] > [data-modo="token-meta"] {
+  margin: 0;
+}
+
+/* The overview card: the family's glyph beside the scale set in it. */
+[data-modo="type-preview"] {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-5, 24px);
+  width: 100%;
+}
+
+[data-modo="type-preview"] > [data-modo="type-glyph"] {
+  font-size: calc(var(--modo-font-size-h1) * 2);
+}
+
+[data-modo="type-preview-lines"] {
+  display: grid;
+  gap: var(--space-1, 4px);
+  min-width: 0;
+}
+
+[data-modo="type-preview-line"] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Scale rows: the token on the left, its specimen beside it. */
 [data-modo="type-element"],
 [data-modo="type-step"],
 [data-modo="space-step"],
@@ -913,43 +1091,228 @@
   align-items: baseline;
 }
 
+[data-modo="type-step"] {
+  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) auto;
+}
+
+[data-modo="type-step"] > code {
+  justify-self: start;
+}
+
+[data-modo="space-step"] {
+  grid-template-columns: minmax(0, 12rem) auto minmax(0, 1fr);
+  gap: var(--space-4, 16px) var(--space-6, 32px);
+}
+
 [data-modo="motion-row"]:has([data-modo="motion-curve"]) {
   grid-template-columns: minmax(0, 12rem) auto minmax(0, 1fr);
 }
 
-@container (max-width: 560px) {
-  :is([data-modo="type-element"], [data-modo="type-step"], [data-modo="space-step"], [data-modo="motion-row"]) {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 [data-modo="type-sample"] {
   margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* A scale step stays on one line, so the steps read as a ladder. */
+[data-modo="type-step"] > [data-modo="type-sample"] {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+[data-modo="type-metrics"] {
+  display: grid;
+  justify-items: end;
+  font-size: var(--modo-font-size-xs);
+  line-height: var(--modo-line-height-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--modo-muted);
+}
+
+@container (max-width: 640px) {
+  [data-modo="type-element"],
+  [data-modo="type-step"],
+  [data-modo="motion-row"],
+  [data-modo="motion-row"]:has([data-modo="motion-curve"]) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2, 8px);
+  }
+
+  /* Spacing keeps its bar and specimen side by side under the label. */
+  [data-modo="space-step"] {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-2, 8px) var(--space-4, 16px);
+  }
+
+  [data-modo="space-step"] > [data-modo="token-label"] {
+    grid-column: 1 / -1;
+  }
+
+  [data-modo="type-metrics"] {
+    grid-auto-flow: column;
+    justify-content: start;
+    gap: var(--space-3, 12px);
+  }
+
+  [data-modo="type-step"] > [data-modo="type-sample"] {
+    white-space: normal;
+  }
+}
+
+/* Radius: a large shape per step, outlined and filled so the corner reads,
+   beside the same radius on a control and a card. */
+[data-modo="radius-grid"] {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+}
+
 [data-modo="radius-tile"] {
   display: grid;
+  grid-template-rows: 1fr auto;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--modo-border);
+  border-radius: var(--modo-radius-lg);
+  overflow: hidden;
+}
+
+[data-modo="radius-tile"] > [data-modo="token-label"] {
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border-top: 1px solid var(--modo-border);
+}
+
+[data-modo="radius-stage"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5, 24px);
+  padding: var(--space-5, 24px);
+}
+
+[data-modo="radius-shape"] {
+  flex: none;
+  inline-size: 112px;
+  aspect-ratio: 1;
+  border: 2px solid currentColor;
+  background: color-mix(in oklab, currentColor 12%, transparent);
+}
+
+[data-modo="radius-uses"] {
+  display: grid;
+  justify-items: start;
   gap: var(--space-3, 12px);
+}
+
+[data-modo="radius-use"] {
+  display: block;
+  inline-size: 72px;
+}
+
+[data-modo="radius-use"][data-kind="control"] {
+  block-size: 28px;
+  background: currentColor;
+}
+
+[data-modo="radius-use"][data-kind="card"] {
+  block-size: 48px;
+  border: 1px solid var(--modo-border);
+  background: color-mix(in oklab, currentColor 8%, transparent);
+}
+
+/* The overview card: one corner per step. */
+[data-modo="radius-preview"] {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3, 12px);
+  width: 100%;
+}
+
+[data-modo="radius-corner"] {
+  flex: 0 1 64px;
+  aspect-ratio: 1;
+  border-block-start: 2px solid currentColor;
+  border-inline-start: 2px solid currentColor;
+  background: color-mix(in oklab, currentColor 10%, transparent);
+}
+
+/* Spacing: each step as a bar at its real size, on a ruler ticked every
+   --space-2, beside the step used as a gap. */
+[data-modo="space-ruler"] {
+  inline-size: max(var(--modo-space-max, 0px), 96px);
+  max-inline-size: 100%;
+  padding-block: var(--space-2, 8px);
+  border-inline-start: 1px solid currentColor;
+  background:
+    repeating-linear-gradient(to right, var(--modo-border) 0 1px, transparent 1px var(--space-2, 8px)) left bottom /
+    100% 6px no-repeat;
+}
+
+[data-modo="space-bar"] {
+  block-size: var(--space-4, 16px);
+  max-inline-size: 100%;
+  background: color-mix(in oklab, currentColor 35%, transparent);
+}
+
+[data-modo="space-specimen"] {
+  display: flex;
+}
+
+[data-modo="space-specimen"] > *,
+[data-modo="space-inset-box"] > * {
+  display: block;
+  inline-size: var(--space-3, 12px);
+  block-size: var(--space-5, 24px);
+  border-radius: var(--modo-radius-sm);
+  background: color-mix(in oklab, currentColor 55%, transparent);
+}
+
+[data-modo="space-insets"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-5, 24px);
+}
+
+[data-modo="space-inset"] {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2, 8px);
   min-width: 0;
   margin: 0;
 }
 
-/* Filled and component-sized, so a few pixels of radius still read. */
-[data-modo="radius-shape"] {
-  inline-size: 5rem;
-  aspect-ratio: 1;
-  background: var(--modo-border);
+/* The padding is the hatched band around the solid block. */
+[data-modo="space-inset-box"] {
+  display: grid;
+  border: 1px dashed var(--modo-border);
+  border-radius: var(--modo-radius-sm);
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklab, currentColor 30%, transparent) 0 1px,
+    transparent 1px 6px
+  );
 }
 
-[data-modo="token-preview"] > [data-modo="radius-shape"] {
+[data-modo="space-inset-box"] > * {
+  inline-size: calc(var(--space-6, 32px) * 2);
+}
+
+/* The overview card: the scale as a staircase on a shared baseline. */
+[data-modo="space-preview"] {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-1, 4px);
+  width: 100%;
+  border-bottom: 1px solid var(--modo-border);
+}
+
+[data-modo="space-stair"] {
   flex: 1 1 0;
-  max-inline-size: 4rem;
+  max-inline-size: 40px;
+  border-radius: var(--modo-radius-sm) var(--modo-radius-sm) 0 0;
+  background: color-mix(in oklab, currentColor 45%, transparent);
 }
 
-[data-modo="space-preview"],
 [data-modo="motion-preview"] {
   display: grid;
   justify-items: start;
@@ -957,20 +1320,31 @@
   width: 100%;
 }
 
-[data-modo="space-bar"],
+[data-modo="motion-curves"] {
+  display: flex;
+  gap: var(--space-3, 12px);
+  margin-bottom: var(--space-2, 8px);
+}
+
 [data-modo="motion-bar"] {
-  block-size: var(--space-3, 12px);
+  block-size: var(--space-2, 8px);
   max-inline-size: 100%;
   border-radius: var(--modo-radius-sm);
-  background: var(--modo-muted);
+  background: color-mix(in oklab, currentColor 45%, transparent);
+}
+
+[data-modo="motion-lane"] {
+  min-width: 0;
 }
 
 /* The dot crosses its track (a container, so 100cqi is the track's length)
-   with the row's own duration and easing set inline. */
+   with the row's own duration and easing set inline; motion.tsx flips
+   data-end on the list. */
 [data-modo="motion-track"] {
   container-type: inline-size;
   padding-block-end: var(--space-1, 4px);
   border-bottom: 1px solid var(--modo-border);
+  border-inline: 1px solid var(--modo-border);
 }
 
 [data-modo="motion-dot"] {
@@ -982,20 +1356,30 @@
   transition-property: translate;
 }
 
-[data-modo="motion-row"]:hover [data-modo="motion-dot"] {
+[data-modo="motion-list"][data-end] [data-modo="motion-dot"] {
   translate: calc(100cqi - 100%) 0;
 }
 
 [data-modo="motion-curve"] {
-  inline-size: var(--space-6, 32px);
-  block-size: var(--space-6, 32px);
+  flex: none;
+  inline-size: 48px;
+  block-size: 48px;
+  padding: var(--space-1, 4px);
   overflow: visible;
   fill: none;
   stroke: currentColor;
+  stroke-width: 2px;
+  border: 1px solid var(--modo-border);
+  border-radius: var(--modo-radius-sm);
 }
 
 [data-modo="motion-curve"] path {
   vector-effect: non-scaling-stroke;
+}
+
+[data-modo="motion-curve"] [data-modo="motion-curve-axis"] {
+  stroke: var(--modo-border);
+  stroke-width: 1px;
 }
 
 @media (prefers-reduced-motion: reduce) {

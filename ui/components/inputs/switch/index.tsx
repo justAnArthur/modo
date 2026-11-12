@@ -1,10 +1,9 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/switch.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react`; `@/lib/*` imports rewritten to relative
  *   `../../../lib/*` paths.
  * - Uncontrolled support (local addition, Base UI style): `checked` and
@@ -39,6 +38,8 @@
  *   reads the group from context: track at the end, roomier padding, its
  *   position from `lib/row-index.tsx`.
  */
+
+'use client'
 
 import { Switch as SwitchPrimitive } from '@base-ui/react/switch'
 import type { Transition } from 'motion/react'
@@ -153,6 +154,8 @@ const DRAG_DEAD_ZONE = 2
  *   row; name the group with `aria-label` or `aria-labelledby`.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/switch.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Switch = forwardRef<HTMLDivElement, SwitchProps>(
   (

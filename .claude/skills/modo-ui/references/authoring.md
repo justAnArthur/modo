@@ -49,18 +49,20 @@ A port of an upstream FF file keeps upstream's formatting and lists every change
 
 ```ts
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/<name>.tsx` @ <commit>
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; imports rewritten to `../../../lib/*`; `framer-motion` → `motion/react`.
+ * - Imports rewritten to `../../../lib/*`; `framer-motion` → `motion/react`.
  * - Styling reads DS tokens: `text-[Npx]` → `text-<role>`; `fontVariationSettings` → `weight-*`; …
  * - <every behavior change>
  */
+
+'use client'
 ```
 
-Then add its row to `README.md`'s file map (and the tier mapping table for a new item).
+Then add its row to `PORTING.md`'s file map (and the tier mapping table for a new item).
 
 ## Props interface
 
@@ -406,12 +408,12 @@ What each part shows:
 
 ## Porting an upstream FF component
 
-The mechanical pass every ported item went through (README › Items):
+The mechanical pass every ported item went through (PORTING › Items):
 
 1. Take `registry/base/<name>.tsx` when upstream ships a flavored file, else `registry/default/`. Note
    the commit. Components newer than the port's pin (`b3587bd`) may lean on upstream libs this port
    lacks (`typeClass`, `nestedRadius`, `useSize().field`); port those pieces or translate them.
-2. Drop `"use client"`; rewrite `@/lib/*` and `@/hooks/*` to `../../../lib/*`, `SizeProvider` to
+2. Keep `"use client"` (below the header); rewrite `@/lib/*` and `@/hooks/*` to `../../../lib/*`, `SizeProvider` to
    `primitives/sizes`, `Elevated` to `primitives/surface`, `@/registry/radix/*` to the Base sibling,
    `framer-motion` to `motion/react`, `next/link` to an anchor.
 3. Translate styling to tokens: `text-[Npx]` → `text-<role>[-compact]`, `fontVariationSettings` →
@@ -424,7 +426,7 @@ The mechanical pass every ported item went through (README › Items):
 7. Re-declare the props interface one member per line with the FF docs API-table text; write the TSDoc
    from the FF docs page; one `# <FF section title>` example per docs section in `examples.mdx`
    (Playground and API Reference are never ported).
-8. Header comment listing every change; README file-map row.
+8. Header comment listing every change; PORTING file-map row.
 
 ## Adding a token
 
@@ -450,7 +452,7 @@ cd ui && bunx tsc -p . --noEmit
 ```
 
 ```bash
-rg -n -e 'font-(normal|medium|semibold|bold)\b' -e "from 'framer-motion'" -e '\b(uppercase|tracking-[a-z]+)\b' -e 'text-(foreground|muted-foreground)/[0-9]' -e '(duration|delay): ?[0-9.]+' -e 'useReducedMotion\(' -e 'hover:bg-' -e 'transition-colors' -e '"use client"' ui/components/navigation/pagination
+rg -n -e 'font-(normal|medium|semibold|bold)\b' -e "from 'framer-motion'" -e '\b(uppercase|tracking-[a-z]+)\b' -e 'text-(foreground|muted-foreground)/[0-9]' -e '(duration|delay): ?[0-9.]+' -e 'useReducedMotion\(' -e 'hover:bg-' -e 'transition-colors' ui/components/navigation/pagination
 ```
 
 Then run it and look (the runner kills stray servers and builds the lib CLI if needed):

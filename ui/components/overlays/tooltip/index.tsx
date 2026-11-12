@@ -1,9 +1,8 @@
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/tooltip.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react`; `@/lib/{utils,springs,shape-context}` imports
  *   rewritten to `../../../lib/*` (the `@/lib/font-weight` import went with the inline
  *   `fontVariationSettings`, below).
@@ -23,6 +22,8 @@
  *   morph (Base UI's `data-instant="delay"` hand-off): the next label shows
  *   in place and the last one goes at once.
  */
+
+'use client'
 
 import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip'
 import { motion, useMotionValue } from 'motion/react'
@@ -139,6 +140,8 @@ interface TooltipProps {
  *   descendant tooltip into a given element instead of the body.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/tooltip.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 function Tooltip({
   content,

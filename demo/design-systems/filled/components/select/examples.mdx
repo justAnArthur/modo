@@ -1,0 +1,17 @@
+import Select from './index'
+
+# Default
+
+<Select
+  aria-label="Fruit"
+  defaultValue="pear"
+  options={[
+    { value: 'apple', label: 'Apple' },
+    { value: 'pear', label: 'Pear' },
+    { value: 'plum', label: 'Plum' },
+  ]}
+/>
+
+# Disabled
+
+<Select aria-label="Plan" disabled defaultValue="free" options={[{ value: 'free', label: 'Free' }]} />

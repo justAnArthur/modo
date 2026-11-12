@@ -1,3 +1,5 @@
+'use client'
+
 import { addMonths, differenceInCalendarMonths, format, startOfMonth } from 'date-fns'
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 

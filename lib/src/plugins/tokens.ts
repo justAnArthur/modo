@@ -1,12 +1,15 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve, sep } from 'node:path'
 import type { Plugin } from 'vite'
+import { loadModoConfig } from '../lib/config.loader'
 import { buildGroup, GROUPS, type Group, type GroupName, parseCss, prefixGroup } from '../lib/css'
+import { cap } from '../runtime/text'
 import { cssModule } from './css-module'
 import { emitRoutes } from './static-routes'
 
 interface Options {
   userRoot: string
+  configPath: string
 }
 
 const TOKENS_VIRTUAL = 'virtual:modo-tokens'
@@ -74,8 +77,11 @@ export function tokensPlugin(options: Options): Plugin {
     generateBundle: {
       // After Vite emits index.html.
       order: 'post',
-      handler(_, bundle) {
-        emitRoutes(this, bundle, ['docs/tokens', ...getCache().groups.map(g => `docs/tokens/${g.name}`)])
+      async handler(_, bundle) {
+        emitRoutes(this, bundle, await loadModoConfig(options.configPath), [
+          { path: 'docs/tokens', title: 'Foundations' },
+          ...getCache().groups.map(g => ({ path: `docs/tokens/${g.name}`, title: cap(g.name) })),
+        ])
       },
     },
     configureServer(server) {

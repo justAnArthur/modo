@@ -75,7 +75,13 @@ scaffold's `theme-provider` (modo has no theme toggle of its own).
   (`--shadow-1…8`, `--shadow-color`, dark-mode `--dm-*`).
 - `tokens/radius.css` — the shadcn `--radius` var. (FF's real corner system
   is the JS shape context: rounded 8px / pill 20px.)
-- `tokens/typography.css` — `--font-sans: 'Inter Variable', …`.
+- `tokens/typography.css` — `--font-sans: 'Inter Variable', …`, the type
+  roles `--fs-display|title|subtitle|body|caption` (the default column of
+  `typeScale` in `_fluid/size-context.tsx`) and the weight ladder `--fw-*`
+  (`_fluid/font-weight.ts`, wght + opsz). global.css maps the roles to
+  `text-<role>` utilities.
+- `tokens/spacing.css` — Tailwind's `--spacing` base unit and modo's
+  generic `--space-1…6` steps as its multiples.
 - No `tokens/motion.css` — FF's motion is JS-only: the spring tiers
   (`fast` 80ms / `moderate` 160ms critically damped / `slow` 240ms with
   bounce 0.12, in `_fluid/springs.ts`) are framer-motion configs consumed by
@@ -137,5 +143,5 @@ lists exactly what was touched.
 
 ```sh
 cd demo/design-systems/fluid-functionalism
-MODO_PORT=5202 bunx modo dev
+bunx modo dev --port 5202
 ```

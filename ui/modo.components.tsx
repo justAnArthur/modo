@@ -3,7 +3,19 @@
  * modo.config.ts picks each one by export name: `./modo.components.tsx#Select`.
  */
 
-import { Check, CodeXml, Copy, Link2, Monitor, Moon, Sun } from 'lucide-react'
+import {
+  Check,
+  CodeXml,
+  Copy,
+  ExternalLink,
+  Link2,
+  type LucideIcon,
+  Menu,
+  Monitor,
+  Moon,
+  Package,
+  Sun,
+} from 'lucide-react'
 import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useState } from 'react'
 import FluidSelect from './components/inputs/select'
 import Sidebar, {
@@ -12,21 +24,43 @@ import Sidebar, {
   type SidebarSide,
   useSidebar,
 } from './components/navigation/sidebar'
+import { useIsMobile } from './lib/use-is-mobile'
 import { cn } from './lib/utils'
 
-const icons = { code: CodeXml, copy: Copy, check: Check, link: Link2 }
+const icons: Record<string, LucideIcon> = {
+  code: CodeXml,
+  copy: Copy,
+  check: Check,
+  link: Link2,
+  external: ExternalLink,
+  menu: Menu,
+  sun: Sun,
+  moon: Moon,
+  npm: Package,
+}
 
 /** Icon slot: the chrome asks for icons by name; lucide draws them. */
 export function Icon({
   name,
+  label,
 }: {
-  /** Which chrome icon to draw. */
-  name: keyof typeof icons
-  /** Accessible text; the button around the icon carries it. */
+  /** Which icon to draw: a chrome name or a `socials` key. */
+  name: string
+  /** Accessible text; the button around the icon carries it. Drawn for a name with no glyph. */
   label: string
 }) {
+  if (name === 'github') return <GithubMark />
   const Glyph = icons[name]
-  return <Glyph size={16} strokeWidth={1.5} aria-hidden />
+  return Glyph ? <Glyph size={16} strokeWidth={1.5} aria-hidden /> : <>{label}</>
+}
+
+/** lucide ships no brand marks; this is GitHub's (Simple Icons, CC0). */
+function GithubMark() {
+  return (
+    <svg viewBox="0 0 24 24" width={16} height={16} fill="currentColor" aria-hidden>
+      <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+    </svg>
+  )
 }
 
 /**
@@ -68,8 +102,9 @@ declare global {
  * Sidebar slot: both asides of the chrome, each an inset `Sidebar` with its
  * own `openOnHover` provider, so the content between them is the inset card
  * (global.css). The trigger in the card's corner (or `[` for the nav, `]` for
- * the panel) switches a side between open and on hover. Below md each side
- * is a drawer. The panel starts on hover below xl.
+ * the panel) switches a side between open and on hover. Below md both sit in
+ * flow, as the chrome stacks them: the nav under the header's menu toggle,
+ * the panel below the content. The panel starts on hover below xl.
  *
  * A section of links is a collapsible `Sidebar.Group` whose rows share one
  * `Sidebar.Menu`, so the current page and the hover highlight melt from link
@@ -86,6 +121,23 @@ export function DocsNav({ children }: { children?: ReactNode }) {
 }
 
 function DocsSidebar({ side, children }: { side: SidebarSide; children?: ReactNode }) {
+  const isMobile = useIsMobile(768)
+  const nav = (
+    <Sidebar.Content>
+      <nav aria-label={side === 'left' ? 'Docs' : 'Page'}>{children}</nav>
+    </Sidebar.Content>
+  )
+  // Below md the chrome stacks: the nav folds under the header's menu toggle
+  // and the panel sits below the content, so both render in flow, not as drawers.
+  if (isMobile) {
+    return (
+      <Sidebar.Provider persist={false} shortcut={null} className="min-h-0">
+        <Sidebar variant="inset" side={side} collapsible="none" className="static h-auto" style={{ width: '100%' }}>
+          {nav}
+        </Sidebar>
+      </Sidebar.Provider>
+    )
+  }
   return (
     <Sidebar.Provider
       defaultOpen={side === 'left' || window.matchMedia('(min-width: 1280px)').matches}
@@ -94,9 +146,7 @@ function DocsSidebar({ side, children }: { side: SidebarSide; children?: ReactNo
       shortcut={null}
     >
       <Sidebar variant="inset" side={side}>
-        <Sidebar.Content>
-          <nav aria-label={side === 'left' ? 'Docs' : 'Page'}>{children}</nav>
-        </Sidebar.Content>
+        {nav}
       </Sidebar>
       <DocsNavTrigger side={side} />
     </Sidebar.Provider>
@@ -258,5 +308,15 @@ export function ThemeSwitcher() {
         ))}
       </FluidSelect.Content>
     </FluidSelect>
+  )
+}
+
+/** The header mark: modo's frame and drop (a docs page, a component settled into it), drawn in the text color so it follows the theme. */
+export function Logo() {
+  return (
+    <svg viewBox="0 0 32 32" aria-hidden>
+      <rect x="2" y="2" width="28" height="28" rx="8" fill="none" stroke="currentColor" strokeWidth="3.5" />
+      <rect x="13" y="13" width="17" height="17" rx="8" fill="currentColor" />
+    </svg>
   )
 }

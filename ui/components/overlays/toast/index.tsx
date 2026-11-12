@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition (not part of Fluid Functionalism): gooey toasts after Sileo
  * (github.com/hiaaryan/sileo `src/sileo.tsx` + `src/styles.css` @
  * 9793f844349983e140cf33cebbb8f51626d41407 — MIT, notice: LICENSE.sileo). A
@@ -13,6 +13,8 @@
  * control ladder's, and the motion the spring tiers; reduced motion keeps the
  * fades and snaps the shapes.
  */
+
+'use client'
 
 import { Toast as ToastPrimitive } from '@base-ui/react/toast'
 import { ArrowRight, Check, CircleAlert, Info, LoaderCircle, type LucideIcon, X } from 'lucide-react'
@@ -394,6 +396,8 @@ interface ToastProps {
  *   `success` / `error` toasts.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/hiaaryan/sileo/blob/9793f844349983e140cf33cebbb8f51626d41407/src/sileo.tsx Sileo
+ * @license MIT © 2026 hiaaryan
  */
 function Toast({ position = 'top-right', limit = 3, timeout = 6000, children }: ToastProps) {
   const settings = useMemo(() => ({ position, timeout }), [position, timeout])

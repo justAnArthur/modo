@@ -5,6 +5,8 @@
  * between the two, so the panel morphs exactly like Dialog's.
  */
 
+'use client'
+
 import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog'
 import { forwardRef, type ReactNode } from 'react'
 import {

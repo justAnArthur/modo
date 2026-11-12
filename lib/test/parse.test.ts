@@ -2,11 +2,15 @@ import { describe, expect, test } from 'bun:test'
 import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { buildGroup, parseCss } from '../src/lib/css'
+import { buildGroup, lightDark, parseCss, schemePair } from '../src/lib/css'
 import { discoverItems } from '../src/lib/discover-items'
-import { compileExampleBody, isCompiledExample } from '../src/lib/example'
+import { compileExampleBody, isCompiledExample, loadBabel } from '../src/lib/example'
+import { headTags, withHead } from '../src/lib/head'
+import { credits, itemMeta, repoBlobUrl, sourceLink } from '../src/lib/item-meta'
+import { resolveShellSlots } from '../src/lib/slots'
 import { parseItemSource } from '../src/lib/tsdoc'
 import { groupTree } from '../src/runtime/groups'
+import { lengthMeta, primaryFamily, px, range, rem } from '../src/runtime/tokens/format'
 
 describe('parseItemSource', () => {
   test("a prop's doc is not the item's", () => {
@@ -38,8 +42,39 @@ describe('parseItemSource', () => {
     expect(r.props).toEqual([{ name: 'a', optional: false, type: 'string', description: 'A.' }])
   })
 
+  test('a component without props has no props and no errors', () => {
+    const r = parseItemSource(`/** Divider. */\nexport default function Divider() {}`)
+    expect([r.props, r.errors]).toEqual([[], []])
+  })
+
   test('an anonymous default export leaves the name to the bundler', () => {
     expect(parseItemSource(`export default function ({ a }: { a?: string }) {}`).name).toBe('')
+  })
+
+  test('block tags around @example neither leak into prose nor drop examples', () => {
+    const r = parseItemSource(
+      `/**\n * Lead.\n * @deprecated Use Y.\n * @example {@include ./examples.mdx}\n * @since 1.2\n */\nexport default function X() {}`,
+    )
+    expect([r.description, r.exampleDocs, r.tags]).toEqual([
+      'Lead.',
+      ['./examples.mdx'],
+      [
+        { tag: 'deprecated', text: 'Use Y.' },
+        { tag: 'since', text: '1.2' },
+      ],
+    ])
+  })
+
+  test('an unknown @word at line start stays prose', () => {
+    const r = parseItemSource(`/**\n * Built over the\n * @fluid sidebar.\n */\nexport default function X() {}`)
+    expect([r.description, r.tags]).toEqual(['Built over the\n@fluid sidebar.', []])
+  })
+
+  test('an @ line inside an example fence is code, not a tag', () => {
+    const r = parseItemSource(
+      '/**\n * @example\n * ```tsx\n * @media\n * <X />\n * ```\n */\nexport default function X() {}',
+    )
+    expect([r.examples.map(e => e.code), r.tags]).toEqual([['@media\n<X />'], []])
   })
 
   test('@default fills the column; @values drops for literal unions', () => {
@@ -87,8 +122,57 @@ describe('parseCss', () => {
   })
 })
 
+describe('color schemes', () => {
+  test('a block is dark only when every selector in it is', () => {
+    const css =
+      ':root { --a: white } .dark { --a: black } :root, .light, .dark { --b: red } @media (prefers-color-scheme: dark) { :root { --c: gray } }'
+    expect(parseCss(css).map(v => [v.name, v.scheme])).toEqual([
+      ['--a', undefined],
+      ['--a', 'dark'],
+      ['--b', undefined],
+      ['--c', 'dark'],
+    ])
+  })
+
+  test('a pair comes from a dark redeclaration or from light-dark()', () => {
+    const vars = parseCss(
+      ':root { --a: white; --b: light-dark(snow, color-mix(in oklab, black 50%, transparent)); --c: red } .dark { --a: black }',
+    )
+    expect(schemePair(vars, '--a')).toEqual({ light: 'white', dark: 'black' })
+    expect(schemePair(vars, '--b')).toEqual({ light: 'snow', dark: 'color-mix(in oklab, black 50%, transparent)' })
+    expect(schemePair(vars, '--c')).toBeNull()
+    expect(lightDark('red')).toBeNull()
+  })
+})
+
+describe('token formatting', () => {
+  test('px and rem trim trailing zeros', () => {
+    expect([px(16), px(0.5), px(2.3333), rem(12), rem(10)]).toEqual(['16px', '0.5px', '2.33px', '0.75rem', '0.625rem'])
+  })
+
+  test('a length shows its declared value, then the units it is not in', () => {
+    expect(lengthMeta('0.25rem', 4)).toBe('0.25rem · 4px')
+    expect(lengthMeta('8px', 8)).toBe('8px · 0.5rem')
+    expect(lengthMeta('calc(var(--radius) - 4px)', 6)).toBe('calc(var(--radius) - 4px) · 6px · 0.375rem')
+    expect(lengthMeta('9999px', 9999)).toBe('9999px')
+    expect(lengthMeta('auto', null)).toBe('auto')
+  })
+
+  test('a range needs two distinct known sizes', () => {
+    expect(range([4, null, 32, 8])).toBe('4px to 32px')
+    expect(range([4, 4])).toBeNull()
+    expect(range([null])).toBeNull()
+  })
+
+  test('the primary family is the first in the stack, unquoted', () => {
+    expect(primaryFamily('"Inter Variable", ui-sans-serif')).toBe('Inter Variable')
+    expect(primaryFamily('system-ui')).toBe('system-ui')
+  })
+})
+
 describe('compileExampleBody', () => {
-  test('one-line siblings compile', () => {
+  test('one-line siblings compile', async () => {
+    await loadBabel()
     expect(isCompiledExample(compileExampleBody('<b>a</b> <b>b</b>'))).toBe(true)
   })
 })
@@ -124,5 +208,124 @@ describe('groupTree', () => {
     expect(tree.groups.map(g => g.title)).toEqual(['Inputs', 'Overlays'])
     expect(tree.groups[0]?.items.map(it => it.id)).toEqual(['select'])
     expect(tree.groups[0]?.groups.map(g => [g.title, g.items.map(it => it.id)])).toEqual([['Date time', ['calendar']]])
+  })
+})
+
+describe('resolveShellSlots', () => {
+  test('unmatched slots are one summary warning, a matched one is not named', async () => {
+    const warnings: string[] = []
+    const button = {
+      name: 'Button',
+      id: 'button',
+      tier: 'primitives' as const,
+      props: [{ name: 'children', optional: true }],
+      bundleUrl: '/b.mjs',
+    }
+    const shell = await resolveShellSlots({}, [button], async () => null, { warnings })
+    expect([shell.Button.source, warnings]).toEqual([
+      'interface-match',
+      [
+        'Plain fallbacks for Link, Code, Select, Icon, Sidebar: no item matches by name and required props, and modo.config.ts `shell` pins none',
+      ],
+    ])
+  })
+})
+
+describe('itemMeta', () => {
+  test('several sources and licenses, in order', () => {
+    const r = itemMeta(
+      parseItemSource(
+        `/**\n * Doc.\n * @source https://github.com/a/b\n * @source https://github.com/c/d abc123\n * @license MIT © A\n * @license MIT © C\n */\nexport default function X() {}`,
+      ).tags,
+    )
+    expect(r.sources).toEqual([
+      { href: 'https://github.com/a/b', label: 'github.com/a/b' },
+      { href: 'https://github.com/c/d', label: 'abc123' },
+    ])
+    expect(r.licenses).toEqual(['MIT © A', 'MIT © C'])
+  })
+
+  test('@status wins over a modifier; a bare @deprecated is still deprecated', () => {
+    const r = itemMeta([
+      { tag: 'beta', text: '' },
+      { tag: 'status', text: 'stable' },
+      { tag: 'deprecated', text: '' },
+      { tag: 'since', text: '1.2' },
+    ])
+    expect([r.status, r.deprecated, r.since]).toEqual(['stable', '', '1.2'])
+    expect(itemMeta([{ tag: 'alpha', text: '' }]).status).toBe('alpha')
+  })
+
+  test('a source label may have spaces', () => {
+    expect(sourceLink('https://x.dev/y Fluid Functionalism')).toEqual({
+      href: 'https://x.dev/y',
+      label: 'Fluid Functionalism',
+    })
+  })
+})
+
+describe('repoBlobUrl', () => {
+  test('defaults to main at the repo root', () => {
+    expect(repoBlobUrl({ url: 'https://github.com/me/ds/' }, 'components/button/index.tsx')).toBe(
+      'https://github.com/me/ds/blob/main/components/button/index.tsx',
+    )
+  })
+
+  test('a branch and a subfolder', () => {
+    expect(repoBlobUrl({ url: 'https://github.com/me/ds', branch: 'dev', dir: '/ui/' }, 'a/index.tsx')).toBe(
+      'https://github.com/me/ds/blob/dev/ui/a/index.tsx',
+    )
+  })
+})
+
+describe('credits', () => {
+  test('upstreams gathered once across items, nth license to nth source, repo root links', () => {
+    const ff = { tag: 'source', text: 'https://github.com/micka/ff/blob/abc/button.tsx Fluid' }
+    const mit = { tag: 'license', text: 'MIT © Micka' }
+    expect(
+      credits([
+        [ff, mit],
+        [ff, mit],
+        [
+          { tag: 'source', text: 'https://github.com/a/beui/blob/x/p.tsx beUI' },
+          { tag: 'source', text: 'https://github.com/b/mp/blob/y/p.tsx mp' },
+          { tag: 'license', text: 'MIT © A' },
+          { tag: 'license', text: 'MIT © B' },
+        ],
+        [{ tag: 'since', text: '1.0' }],
+      ]),
+    ).toEqual([
+      { label: 'Fluid', href: 'https://github.com/micka/ff', licenses: ['MIT © Micka'], items: 2 },
+      { label: 'beUI', href: 'https://github.com/a/beui', licenses: ['MIT © A'], items: 1 },
+      { label: 'mp', href: 'https://github.com/b/mp', licenses: ['MIT © B'], items: 1 },
+    ])
+  })
+})
+
+describe('review fixes', () => {
+  test('a modifier tag leaves the lines after it to the description', () => {
+    const r = parseItemSource('/**\n * Button.\n * @beta\n * Second paragraph.\n */\nexport default function X() {}')
+    expect([r.description, r.tags]).toEqual(['Button.\nSecond paragraph.', [{ tag: 'beta', text: '' }]])
+  })
+
+  test('an @ line inside a ~~~ fence is code, not a tag', () => {
+    const r = parseItemSource('/**\n * Lead.\n * ~~~css\n * @deprecated\n * ~~~\n */\nexport default function X() {}')
+    expect(r.tags).toEqual([])
+  })
+
+  test('a non-URL @source is credited as written', () => {
+    expect(credits([[{ tag: 'source', text: 'shadcn/ui' }]])).toEqual([
+      { label: 'shadcn/ui', href: 'shadcn/ui', licenses: [], items: 1 },
+    ])
+  })
+
+  test('$ patterns in page text stay literal, 404 has no canonical', () => {
+    const site = { name: 'DS', url: 'https://a.github.io/ds/' }
+    const html = withHead(
+      '<head><title>x</title></head>',
+      headTags(site, { path: 'x', description: 'Shows $$ and $& here' }),
+    )
+    expect(html).toContain('Shows $$ and $&amp; here')
+    expect(headTags(site, { path: '404', title: 'Not found' })).not.toContain('canonical')
   })
 })

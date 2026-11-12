@@ -1,4 +1,3 @@
-import * as Babel from '@babel/standalone'
 import { createElement, Fragment, type ReactElement } from 'react'
 
 /** Identifiers an example may reference: item components + `examples` exports. */
@@ -10,6 +9,23 @@ export type ExampleRenderer = ((scope: ExampleScope) => ReactElement | null) & {
 }
 
 const cache = new Map<string, ExampleRenderer | string>()
+
+type Babel = typeof import('@babel/standalone')
+let babel: Babel | null = null
+let loading: Promise<Babel> | null = null
+
+/** Babel standalone is about 3 MB, so it loads only once a page shows an inline `@example`. */
+export function loadBabel(): Promise<Babel> {
+  loading ??= import('@babel/standalone').then(m => {
+    babel = m
+    return m
+  })
+  return loading
+}
+
+export function babelReady(): boolean {
+  return babel !== null
+}
 
 const REACT_STUB = { createElement, Fragment }
 const RESERVED = new Set(['React', 'default', '__scope'])
@@ -31,11 +47,12 @@ function stripImports(code: string): string {
  * `new Function('React', '__scope', …)` with a `var` declaration for each
  * identifier in the code that is an own key of the scope — nothing is written
  * to globals and unrelated globals (Map, Set, Math…) are never shadowed.
- * Returns the source string when it doesn't compile.
+ * Returns the source string when it doesn't compile. Call `loadBabel()` first.
  */
 export function compileExampleBody(code: string): ExampleRenderer | string {
   const cached = cache.get(code)
   if (cached !== undefined) return cached
+  if (!babel) throw new Error('[modo] compileExampleBody before loadBabel()')
 
   let js: string
   try {
@@ -43,7 +60,7 @@ export function compileExampleBody(code: string): ExampleRenderer | string {
     // Sibling elements need a fragment, on one line or several; only wrap
     // JSX (a JS expression would otherwise turn into text children).
     const wrapped = body.startsWith('<') ? `<>${body}</>` : body
-    const out = Babel.transform(`return (${wrapped});`, {
+    const out = babel.transform(`return (${wrapped});`, {
       presets: ['typescript', 'react'],
       filename: 'example.tsx',
       parserOpts: { allowReturnOutsideFunction: true },

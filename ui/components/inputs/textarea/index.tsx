@@ -4,6 +4,8 @@
  * InputMessage's composer does.
  */
 
+'use client'
+
 import { Field } from '@base-ui/react/field'
 import { forwardRef, type TextareaHTMLAttributes, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { type FieldVariant, focusControlOnPress, useFieldBox } from '../../../lib/field-classes'

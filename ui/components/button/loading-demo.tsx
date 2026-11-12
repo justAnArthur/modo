@@ -4,6 +4,8 @@
  * so the example stays hook-free.
  */
 
+'use client'
+
 import { useEffect, useState } from 'react'
 import Button, { type ButtonProps } from './index'
 

@@ -1,4 +1,6 @@
 .my-dashboard {
+  /* Fills an example stage, a flex row that would shrink it to its content. */
+  inline-size: 100%;
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
   min-height: 480px;
@@ -21,6 +23,12 @@
 
 .my-dashboard-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: var(--md);
+}
+
+@media (max-width: 640px) {
+  .my-dashboard {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

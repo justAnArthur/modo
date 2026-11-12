@@ -1,4 +1,4 @@
-/*
+/*!
  * Fluid Functionalism's sidebar app shell as the preset `sa1FQfCxH6`
  * (fluidfunctionalism.com/docs/sidebar?preset=sa1FQfCxH6) configures it: the
  * inset layout starting collapsed, a workspace switcher, search and a "New"
@@ -13,10 +13,13 @@
  * Local changes: the selected thread rides the Sidebar's `value` (the rows
  * carry `value`s) and the topbar shows it; the switcher keeps its own pick
  * (`defaultCheckedIndex`); the footer's icon buttons are the DS's ghost
- * `Button`; `variant`, `side`, `openOnHover` and `contained` are props.
+ * `Button`; `variant`, `side`, `openOnHover` and `contained` are props; the
+ * main area renders `children`, else a placeholder page for the thread.
  */
 
-import { useState } from 'react'
+'use client'
+
+import { type ReactNode, useState } from 'react'
 import Button from '../../components/button'
 import Sidebar from '../../components/navigation/sidebar'
 import { DropdownContent, DropdownMenu, DropdownTrigger, MenuItem } from '../../components/overlays/dropdown'
@@ -26,6 +29,7 @@ import { cn } from '../../lib/utils'
 import { SidebarInsetTopbar } from './inset-topbar'
 import { NAV_SECTIONS } from './nav-data'
 import { SidebarSearchField } from './search-field'
+import { ThreadPage } from './thread-page'
 import { SidebarUserFooter } from './user-footer'
 import { SidebarWorkspaceHeader, WorkspaceTile } from './workspace-header'
 
@@ -40,6 +44,8 @@ interface SidebarAppProps {
   openOnHover?: boolean
   /** Fill the parent box instead of the viewport, as the examples do. Defaults to `false`. */
   contained?: boolean
+  /** The page in the main area, under the topbar. Defaults to a placeholder page for the selected thread. */
+  children?: ReactNode
 }
 
 interface AppSidebarProps {
@@ -180,7 +186,12 @@ function AppSidebar({ variant, side, className, value, onValueChange }: AppSideb
  * a collapsed sidebar with `openOnHover` slides open from its edge, and below
  * the `md` breakpoint the sidebar is a Sheet growing out of the left edge.
  *
+ * The page beside it is `children`; without them the block shows a
+ * placeholder page for the selected thread.
+ *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/c367a0d066bc10e663b3d269bc40539ea8417b25/lib/preset/sidebar-install.ts Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 export default function SidebarApp({
   defaultOpen = false,
@@ -188,8 +199,11 @@ export default function SidebarApp({
   side = 'left',
   openOnHover = false,
   contained = false,
+  children,
 }: SidebarAppProps) {
   const [thread, setThread] = useState(NAV_SECTIONS[0]?.items[0]?.label ?? '')
+  const section = NAV_SECTIONS.find(s => s.items.some(item => item.label === thread))
+  const item = section?.items.find(i => i.label === thread)
 
   return (
     <Sidebar.Provider
@@ -209,7 +223,9 @@ export default function SidebarApp({
         <SidebarInsetTopbar>
           <span className="truncate text-body text-muted-foreground">{thread}</span>
         </SidebarInsetTopbar>
-        <main className="flex flex-1 flex-col gap-4 p-4" />
+        <main className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4">
+          {children ?? (section && item && <ThreadPage section={section.label} thread={item} />)}
+        </main>
       </Sidebar.Inset>
     </Sidebar.Provider>
   )
