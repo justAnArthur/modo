@@ -293,3 +293,12 @@ export function ThemeSwitcher() {
     </FluidSelect>
   )
 }
+
+/** The header mark: modo's ladder (tokens → pages), drawn in the text color so it follows the theme. */
+export function Logo() {
+  return (
+    <svg viewBox="0 0 26 26" fill="currentColor" aria-hidden>
+      <path d="M0 0H4a2 2 0 0 1 0 4H0ZM0 5.5H9a2 2 0 0 1 0 4H0ZM0 11H14a2 2 0 0 1 0 4H0ZM0 16.5H19a2 2 0 0 1 0 4H0ZM0 22H24a2 2 0 0 1 0 4H0Z" />
+    </svg>
+  )
+}
