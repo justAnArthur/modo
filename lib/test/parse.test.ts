@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { buildGroup, parseCss } from '../src/lib/css'
 import { discoverItems } from '../src/lib/discover-items'
-import { compileExampleBody, isCompiledExample } from '../src/lib/example'
+import { compileExampleBody, isCompiledExample, loadBabel } from '../src/lib/example'
+import { resolveShellSlots } from '../src/lib/slots'
 import { parseItemSource } from '../src/lib/tsdoc'
 import { groupTree } from '../src/runtime/groups'
 
@@ -40,6 +41,32 @@ describe('parseItemSource', () => {
 
   test('an anonymous default export leaves the name to the bundler', () => {
     expect(parseItemSource(`export default function ({ a }: { a?: string }) {}`).name).toBe('')
+  })
+
+  test('block tags around @example neither leak into prose nor drop examples', () => {
+    const r = parseItemSource(
+      `/**\n * Lead.\n * @deprecated Use Y.\n * @example {@include ./examples.mdx}\n * @since 1.2\n */\nexport default function X() {}`,
+    )
+    expect([r.description, r.exampleDocs, r.tags]).toEqual([
+      'Lead.',
+      ['./examples.mdx'],
+      [
+        { tag: 'deprecated', text: 'Use Y.' },
+        { tag: 'since', text: '1.2' },
+      ],
+    ])
+  })
+
+  test('an unknown @word at line start stays prose', () => {
+    const r = parseItemSource(`/**\n * Built over the\n * @fluid sidebar.\n */\nexport default function X() {}`)
+    expect([r.description, r.tags]).toEqual(['Built over the\n@fluid sidebar.', []])
+  })
+
+  test('an @ line inside an example fence is code, not a tag', () => {
+    const r = parseItemSource(
+      '/**\n * @example\n * ```tsx\n * @media\n * <X />\n * ```\n */\nexport default function X() {}',
+    )
+    expect([r.examples.map(e => e.code), r.tags]).toEqual([['@media\n<X />'], []])
   })
 
   test('@default fills the column; @values drops for literal unions', () => {
@@ -88,7 +115,8 @@ describe('parseCss', () => {
 })
 
 describe('compileExampleBody', () => {
-  test('one-line siblings compile', () => {
+  test('one-line siblings compile', async () => {
+    await loadBabel()
     expect(isCompiledExample(compileExampleBody('<b>a</b> <b>b</b>'))).toBe(true)
   })
 })
@@ -124,5 +152,25 @@ describe('groupTree', () => {
     expect(tree.groups.map(g => g.title)).toEqual(['Inputs', 'Overlays'])
     expect(tree.groups[0]?.items.map(it => it.id)).toEqual(['select'])
     expect(tree.groups[0]?.groups.map(g => [g.title, g.items.map(it => it.id)])).toEqual([['Date time', ['calendar']]])
+  })
+})
+
+describe('resolveShellSlots', () => {
+  test('unmatched slots are one summary warning, a matched one is not named', async () => {
+    const warnings: string[] = []
+    const button = {
+      name: 'Button',
+      id: 'button',
+      tier: 'primitives' as const,
+      props: [{ name: 'children', optional: true }],
+      bundleUrl: '/b.mjs',
+    }
+    const shell = await resolveShellSlots({}, [button], async () => null, { warnings })
+    expect([shell.Button.source, warnings]).toEqual([
+      'interface-match',
+      [
+        'Plain fallbacks for Link, Code, Select, Icon, Sidebar: no item matches by name and required props, and modo.config.ts `shell` pins none',
+      ],
+    ])
   })
 })

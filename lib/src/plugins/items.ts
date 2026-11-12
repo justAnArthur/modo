@@ -83,7 +83,9 @@ export function itemsPlugin(options: Options): Plugin {
       // After Vite emits index.html.
       order: 'post',
       async handler(_, bundle) {
-        const { items } = await bundler.get()
+        const { items, errorCount } = await bundler.get()
+        // Dev keeps serving what built; a build must not ship a site with missing pages.
+        if (errorCount > 0) this.error('the bundle has errors (reported above), so the site was not written')
         emitRoutes(this, bundle, [
           'canvas',
           ...new Set(items.map(it => `docs/${it.tier}`)),

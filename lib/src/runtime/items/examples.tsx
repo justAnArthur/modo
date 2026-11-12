@@ -1,7 +1,7 @@
 import { byName, exampleScope } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
-import { Component, type ReactNode, useState } from 'react'
-import { compileExampleBody, isCompiledExample } from '../../lib/example'
+import { Component, type ReactNode, useEffect, useState } from 'react'
+import { babelReady, compileExampleBody, isCompiledExample, loadBabel } from '../../lib/example'
 import type { ParsedExample } from '../../lib/tsdoc'
 import { Heading, slug } from '../anchor'
 import { CopyButton } from '../code-block'
@@ -11,6 +11,15 @@ import { Markdown } from '../markdown'
 // exports, then the items by name (items win on collision). Module-level so
 // compiled examples cache their bindings per this one object.
 export const bindings: Record<string, unknown> = { ...exampleScope, ...byName }
+
+/** Re-renders once Babel has loaded; until then an inline example's stage stays empty. */
+export function useBabel(): boolean {
+  const [ready, setReady] = useState(babelReady)
+  useEffect(() => {
+    if (!ready) loadBabel().then(() => setReady(true))
+  }, [ready])
+  return ready
+}
 
 /** `@example` cards, then the item's included .mdx examples (`children`). */
 export function ItemExamples({ examples, children }: { examples: ParsedExample[]; children?: ReactNode }) {
@@ -40,7 +49,7 @@ export class ExampleBoundary extends Component<{ children: ReactNode }, { failed
 }
 
 function ExampleCard({ example: { title, description, code } }: { example: ParsedExample }) {
-  const compiled = compileExampleBody(code)
+  const compiled = useBabel() ? compileExampleBody(code) : null
   return (
     <div data-modo="example-card">
       {title ? <Heading level={3} label={title} id={`example-${slug(title)}`} modo="example-card-title" /> : null}

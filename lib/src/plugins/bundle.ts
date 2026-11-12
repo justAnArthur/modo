@@ -53,6 +53,8 @@ export interface BundleResult {
   extras: Map<string, BundledExtra>
   /** The `examples` module; `exports` excludes `default`. */
   scope: { bundlePath: string; exports: string[] } | null
+  /** Errors reported for this build (failed entries, skipped items, a broken config); `modo build` fails on any. */
+  errorCount: number
 }
 
 export interface Bundler {
@@ -219,7 +221,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     }
 
     lastReport = await report(failures, errors, warnings, lastReport)
-    return { config, items, extras, scope }
+    return { config, items, extras, scope, errorCount: failures.length + errors.length }
   }
 
   return {

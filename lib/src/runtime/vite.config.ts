@@ -70,6 +70,8 @@ export default defineConfig(async () => {
     build: {
       outDir: resolve(USER_ROOT, 'dist'),
       emptyOutDir: true,
+      // Babel standalone (inline `@example` compiling) is one lazy ~3 MB chunk by design.
+      chunkSizeWarningLimit: 3200,
     },
   }
   return applyUserViteExtension(base)
