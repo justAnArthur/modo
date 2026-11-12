@@ -1,3 +1,11 @@
+/* The page reads the palette, so the `.dark` block in tokens/colors.css
+   repaints it. */
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+}
+
 /* Host-owned chrome visuals (the lib ships structure only): dividers on the
    docs shell asides. */
 [data-modo="sidebar"] {

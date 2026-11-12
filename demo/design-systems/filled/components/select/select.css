@@ -1,0 +1,19 @@
+.my-select {
+  padding: var(--xs) var(--sm);
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--font-size-sm);
+}
+
+.my-select:focus-visible {
+  outline: 1px solid var(--ring);
+  border-color: var(--ring);
+}
+
+.my-select:disabled {
+  color: var(--muted-foreground);
+  background: var(--muted);
+}
