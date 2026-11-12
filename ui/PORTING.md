@@ -32,7 +32,7 @@ Files written for this port (`preset.ts`, `uno.config.ts`, `vite.ts`, `index.ts`
 `scripts/build-css.ts`, `modo.components.tsx`,
 `lib/use-controllable-state.ts`, `primitives/code/index.tsx`, `primitives/craft/*`, the morph files
 in `lib/` (`use-morph.ts`, `reduced-motion.ts`, `morph-layers.tsx`, `morph-part.tsx`, `goo-indicator.tsx`,
-`slot.ts`) and `primitives/morph/index.tsx`, `blocks/sidebar-app/index.tsx`,
+`slot.ts`) and `primitives/morph/index.tsx`, `blocks/sidebar-app/index.tsx`, `blocks/sidebar-app/thread-page.tsx`,
 and the local components marked "— (local)" below) use this repo's style: single quotes and no semicolons.
 
 ## Layout
@@ -173,7 +173,7 @@ only what is specific to it:
 
 | Item | Upstream | Local | Specific modifications |
 |---|---|---|---|
-| `SidebarApp` | the app-sidebar.tsx and page.tsx FF's preset generator emits for `sa1FQfCxH6` (`lib/preset/sidebar-install.ts` @ `c367a0d066bc10e663b3d269bc40539ea8417b25`, later than the pin: the generator postdates it) | `blocks/sidebar-app/index.tsx` (+ `nav-data.ts`) | the selected thread rides `Sidebar`'s `value` and shows in the topbar; the switcher keeps its own pick (`defaultCheckedIndex`); the footer's raw icon buttons are the ghost `Button`; `variant`, `side`, `openOnHover`, `contained` props |
+| `SidebarApp` | the app-sidebar.tsx and page.tsx FF's preset generator emits for `sa1FQfCxH6` (`lib/preset/sidebar-install.ts` @ `c367a0d066bc10e663b3d269bc40539ea8417b25`, later than the pin: the generator postdates it) | `blocks/sidebar-app/index.tsx` (+ `nav-data.ts`) | the selected thread rides `Sidebar`'s `value` and shows in the topbar; the switcher keeps its own pick (`defaultCheckedIndex`); the footer's raw icon buttons are the ghost `Button`; `variant`, `side`, `openOnHover`, `contained` props; `children` for the main area, else a placeholder thread page (`thread-page.tsx`, local) |
 | — | `registry/blocks/sidebar-workspace-header.tsx` | `blocks/sidebar-app/workspace-header.tsx` | `fontVariationSettings` → `weight-semibold`, `text-[13px]` / `text-[10px]` → `text-body` / `text-micro-compact`; `defaultCheckedIndex` passed through; the peek-only trigger over the tile dropped |
 | — | `registry/blocks/sidebar-user-footer.tsx` | `blocks/sidebar-app/user-footer.tsx` | `text-[13px]` → `text-body` |
 | — | `registry/blocks/sidebar-app/search-field.tsx` | `blocks/sidebar-app/search-field.tsx` | `text-[11px]` → `text-micro` |
