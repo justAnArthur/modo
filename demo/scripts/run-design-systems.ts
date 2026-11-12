@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { execFileSync, spawn } from 'node:child_process'
-import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { basename, join, relative } from 'node:path'
 
 const ROOT = join(import.meta.dirname, '..')
@@ -59,7 +59,14 @@ function removeTemp(names: string[]) {
   rmSync(PEERS_FILE, { force: true })
 }
 
-if (!existsSync(MODO_CLI)) execFileSync('bun', ['run', 'build'], { cwd: LIB_DIR, stdio: 'inherit' })
+// Rebuilt when any lib source is newer: a stale CLI runs old flags silently (an old one ignored --out).
+function cliIsStale() {
+  if (!existsSync(MODO_CLI)) return true
+  const built = statSync(MODO_CLI).mtimeMs
+  const src = join(LIB_DIR, 'src')
+  return readdirSync(src, { recursive: true, encoding: 'utf8' }).some(rel => statSync(join(src, rel)).mtimeMs > built)
+}
+if (cliIsStale()) execFileSync('bun', ['run', 'build'], { cwd: LIB_DIR, stdio: 'inherit' })
 // A previous run killed hard leaves its temp configs behind.
 removeTemp(all)
 const peerUrl = (name: string, i: number) => (build ? `${SITE_BASE}${name}/` : `http://127.0.0.1:${BASE_PORT + i}/`)
