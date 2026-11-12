@@ -265,6 +265,8 @@ type CheckboxComponent = ForwardRefExoticComponent<CheckboxProps & RefAttributes
  *   for that row.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/checkbox-group.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
   (

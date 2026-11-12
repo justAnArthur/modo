@@ -257,6 +257,8 @@ interface CopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
  * follows the surrounding SizeProvider unless `size` pins it.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/default/input-copy.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Copy = forwardRef<HTMLDivElement, CopyProps>(
   ({ value, label, onCopy, disabled, variant = 'icon', align = 'right', size, className, ...props }, ref) => {

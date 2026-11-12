@@ -85,6 +85,8 @@ interface ElevatedStatics {
  * `Elevated`.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/default/lib/elevated.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Elevated = forwardRef<HTMLDivElement, ElevatedProps>(
   ({ offset, shadowLevel, className, children, ...props }, ref) => {

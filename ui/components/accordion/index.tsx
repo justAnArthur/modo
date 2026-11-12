@@ -519,6 +519,8 @@ type AccordionComponent = ForwardRefExoticComponent<AccordionProps & RefAttribut
  * `'morph'` — and the spring `tier`, `'slow'` or `'moderate'`).
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/accordion.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Accordion = forwardRef<HTMLDivElement, AccordionProps>(
   (

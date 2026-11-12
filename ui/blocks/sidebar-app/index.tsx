@@ -181,6 +181,8 @@ function AppSidebar({ variant, side, className, value, onValueChange }: AppSideb
  * the `md` breakpoint the sidebar is a Sheet growing out of the left edge.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/c367a0d066bc10e663b3d269bc40539ea8417b25/lib/preset/sidebar-install.ts Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 export default function SidebarApp({
   defaultOpen = false,

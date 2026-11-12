@@ -103,6 +103,8 @@ interface ThinkingIndicatorProps extends HTMLAttributes<HTMLDivElement> {
  * reduced motion holds them split.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/default/thinking-indicator.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const ThinkingIndicator = forwardRef<HTMLDivElement, ThinkingIndicatorProps>(
   ({ className, variant = 'shimmer', showIcon = true, size, ...props }, ref) => {

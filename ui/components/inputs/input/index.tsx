@@ -117,6 +117,8 @@ interface InputProps
  *   Textarea, which joins the group's hover and takes the error.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/default/input-group.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Input = forwardRef<HTMLInputElement, InputProps>(
   (

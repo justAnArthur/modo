@@ -321,6 +321,8 @@ type RadioComponent = ForwardRefExoticComponent<RadioProps & RefAttributes<HTMLD
  *   integration; `size` pins every row to one step of the size ladder.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/radio-group.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Radio = forwardRef<HTMLDivElement, RadioProps>(
   ({ label, index: indexProp, selected, onSelect, value, className, ...props }, ref) => {

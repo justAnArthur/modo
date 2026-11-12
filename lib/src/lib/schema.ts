@@ -34,6 +34,16 @@ export interface ThemeConfig {
   light?: string
 }
 
+/** The repository the design system lives in: each item page links to its source there. */
+export interface RepoConfig {
+  /** The repository's web URL (`https://github.com/me/my-ds`). */
+  url: string
+  /** @default 'main' */
+  branch?: string
+  /** The project root's folder inside the repository (`packages/ui`), when it isn't the repository root. */
+  dir?: string
+}
+
 /** A design system's modo.config.ts. */
 export interface SiteConfig {
   /** The design system's name: the home page title and the sidebar's first section. */
@@ -52,6 +62,8 @@ export interface SiteConfig {
   socials?: Record<string, string>
   /** Markdown at the foot of every page: copyright, license, links. */
   footer?: string
+  /** Where the source lives: each item page gets a Source link to its `index.tsx`. */
+  repo?: RepoConfig
   /** Adds a light / dark toggle to the header that writes the theme on `<html>`. */
   theme?: ThemeConfig
   /** Components the docs chrome renders with, by slot. */
@@ -76,6 +88,10 @@ export const themeSchema = z
   .object({ attribute: z.string().optional(), dark: z.string().optional(), light: z.string().optional() })
   .strict() satisfies z.ZodType<ThemeConfig>
 
+export const repoSchema = z
+  .object({ url: z.string().url(), branch: z.string().optional(), dir: z.string().optional() })
+  .strict() satisfies z.ZodType<RepoConfig>
+
 export const siteConfigSchema = z
   .object({
     name: z.string(),
@@ -89,6 +105,7 @@ export const siteConfigSchema = z
     url: z.string().url().optional(),
     socials: z.record(z.string().url()).optional(),
     footer: z.string().optional(),
+    repo: repoSchema.optional(),
     theme: themeSchema.optional(),
     shell: shellSchema.optional(),
     panel: z

@@ -465,6 +465,8 @@ function SuggestionRow({ text, index, active, keyHint, optionId, registerItem, o
  * its own draft, attachments and queue with no state in the caller.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/default/input-message.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
   (

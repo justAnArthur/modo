@@ -174,6 +174,8 @@ interface PreviewCardProps {
  *   morph options `from`, `effect`, `hideSource`, `tier`.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/starc007/ui-components/blob/de52f337e520e7ee37749b36eb1c32df86137bcb/components/motion/popover.tsx beUI
+ * @license MIT © 2026 Saurabh Chauhan
  */
 function PreviewCard({ open, defaultOpen = false, onOpenChange, children }: PreviewCardProps) {
   const [current, setCurrent] = useControllableState(open, defaultOpen, onOpenChange)
