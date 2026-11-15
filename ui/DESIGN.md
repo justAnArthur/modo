@@ -405,8 +405,8 @@ A popup row is exactly as tall as the trigger that opened it. Density is a regio
 region in one `SizeProvider size="compact"` and every control in it (menus it opens included) follows.
 A component's own `size` prop wins over the provider.
 
-Other fixed measures: popovers cap at `min(92vw, 20rem)`; dialogs are 400 / 540 / 880px wide (`sm`,
-`lg`, `xl`), one notch narrower in compact regions; popup lists cap at `min(300px,
+Other fixed measures: popovers cap at `min(92vw, 20rem)`; dialogs are 400 / 540 / 880px wide (`width`
+`sm`, `lg`, `xl`), one notch narrower in compact regions; popup lists cap at `min(300px,
 var(--available-height))` and scroll inside `ScrollArea` with a scroll-aware `scroll-fade`; reading
 columns cap at `--modo-measure` (45rem). Native scrollbars are thin and low-contrast (overlay 8% → 12% on
 hover → 16% while dragging), matching the `ScrollArea` thumb.
@@ -435,8 +435,8 @@ above the dialog without any prop:
 
 Menus keep a fixed `shadow-surface-3` whatever their depth, so a menu still reads as a menu three layers
 down. Hover and pressed states are overlays (`bg-hover`, `bg-active`), not levels, so they work at any
-elevation. Use `Elevated offset={n}` (or `surfaceClasses(level)` / `SURFACE_BG[level]`) for anything new
-that floats; never hard-code a surface.
+elevation. Use `useLift(offset)` with `SurfaceProvider`, `Elevated offset={n}` or `PopupSurface` (or
+`surfaceClasses(level)` / `SURFACE_BG[level]`) for anything new that floats; never hard-code a surface.
 
 ## Shapes
 
@@ -504,15 +504,25 @@ shared systems above (look and motion). Ready-made patterns to reach for before 
   text. `active` holds the pressed look while a menu it opened is showing. One primary per view.
 - **Inputs** — transparent and ringless at rest, a `bg-muted/50` wash plus a `ring-border` ring on
   hover, `bg-card` plus the ring on focus; the label sits above in muted body text. Errors: destructive caption at
-  `weight-medium`, a `destructive-light` wash.
+  `weight-medium`, a `destructive-light` wash. A text field signals focus by its fill alone; a button
+  field (Select's trigger, the date and time pickers, ColorPicker.Popover's trigger) takes the same
+  fill and also the brand ring on `:focus-visible`, since a keyboard user has no caret to follow.
 - **Lists and menus** — rows on the control height, `itemPx` inset, one fluid hover highlight, rows
   without their own `:hover` fill. Disabled rows stay registered but are skipped. Keyboard focus earns a
-  1px brand ring that springs between rows; pointer focus never shows it.
+  1px brand ring that springs between rows; pointer focus never shows it. Every popup list opens 6px
+  from its trigger (`sideOffset` 6). They differ only where the control does:
+  - Select keeps that keyboard ring in its list; Combobox draws none, since its input keeps focus and
+    the highlight is the cursor. Menus (Dropdown, ContextMenu) show the highlight only.
+  - Only Dropdown focuses its first enabled row on open, so the menu opens ready to act.
+  - Only Select holds a pick open for a 300ms acknowledgment, so the check and the selected
+    background land before it closes.
+  - Base UI keeps a Select's popup mounted after its first pick, so it is mounted while closed: it
+    resets its row indices on close and remeasures on open.
 - **Selection** — checkbox and radio rows melt their selected backgrounds into one run; tabs and
   subtle tabs carry an elevated (+3) or translucent indicator that melts between items; the selected
   label goes `weight-semibold`.
 - **Overlays** — popup surfaces at +2 with `shadow-surface-3`, dialogs at +4, `rounded-xl` containers,
-  12px goo neck between trigger and panel, content padding 16px (popover) or 24px (dialog).
+  a 12px goo neck between trigger and panel (6px for lists), content padding 16px (popover) or 24px (dialog).
 - **Tooltips** — inverted (`bg-foreground` / `text-background`), caption at `weight-medium`, morph from
   the trigger, a hand-off between grouped tooltips is instant.
 - **Badges** — 24px (20px compact), caption medium, a 15% wash of the color into the background with
@@ -526,7 +536,7 @@ shared systems above (look and motion). Ready-made patterns to reach for before 
 - Do compose from an existing item before writing a new one; wrap rather than fork vendored code.
 - Do read every visual from a token utility: `text-<role>`, `weight-*`, `bg-surface-N`,
   `shadow-surface-N`, `bg-hover`, `shape.*`, `duration-<tier>`, `spring.*`.
-- Do lift floating surfaces relative to the substrate (`useSurface()` + offset) and re-provide the level.
+- Do lift floating surfaces relative to the substrate (`useLift(offset)`) and re-provide the level.
 - Do size controls from `useSize()` and let regions choose density with `SizeProvider`.
 - Do give every list exactly one fluid hover highlight, and every traveling indicator a `GooIndicator`.
 - Do grow every new overlay out of its source through `useMorph` + `MorphSurface`.

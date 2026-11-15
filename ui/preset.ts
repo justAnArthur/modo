@@ -146,6 +146,8 @@ export const utilities: Record<string, Record<string, string>> = Object.fromEntr
     ]),
   ),
   ...RADII.map(radius => [`rounded-${radius}`, { 'border-radius': `var(--radius-${radius})` }]),
+  // A label's box from cap height to baseline, so it centres in a fixed-height row.
+  ['text-trim', { 'text-box': 'trim-both cap alphabetic' }],
 ])
 
 // In the published package this file is dist/preset.js beside the built

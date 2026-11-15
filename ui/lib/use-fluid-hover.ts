@@ -1,12 +1,9 @@
 /*!
- * Vendored from Fluid Functionalism — `registry/default/hooks/use-fluid-hover.ts` at
+ * Ported from Fluid Functionalism — `registry/default/hooks/use-fluid-hover.ts` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
- *
- * Local modifications:
- * - React 18 types: `sessionRef` typed `MutableRefObject<number>` (upstream
- *   targets React 19, where `RefObject.current` is mutable and non-null).
+ * Local changes: see PORTING.md.
  */
 
 'use client'
@@ -102,7 +99,7 @@ export interface UseFluidHoverReturn {
   measureItems: () => void
 }
 
-export interface PickNearestInput {
+interface PickNearestInput {
   axis: 'x' | 'y' | 'xy'
   /** The pointer, in viewport coordinates. */
   point: { x: number; y: number }
@@ -129,7 +126,7 @@ export interface PickNearestInput {
  * first item. The hook calls this once per animation frame; the docs page
  * times it.
  */
-export function pickNearest({
+function pickNearest({
   axis,
   point,
   rects,
@@ -187,9 +184,9 @@ export function pickNearest({
 }
 
 /** Set on the highlighted item (boolean attribute). */
-export const ACTIVE_ATTR = 'data-fluid-hover-active'
+const ACTIVE_ATTR = 'data-fluid-hover-active'
 /** Set on the container: the highlighted index, or absent. */
-export const ACTIVE_INDEX_ATTR = 'data-fluid-hover-active-index'
+const ACTIVE_INDEX_ATTR = 'data-fluid-hover-active-index'
 
 const ACTIVATOR_SELECTOR =
   "a[href], button, [role='menuitem'], [role='menuitemradio'], [role='menuitemcheckbox'], [role='option'], [role='radio'], [role='checkbox'], [role='tab'], [role='link'], [role='button']"

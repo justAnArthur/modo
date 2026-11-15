@@ -8,7 +8,7 @@
 export default function Select({
   value,
   defaultValue,
-  onChange,
+  onValueChange,
   options,
   disabled,
   'aria-label': ariaLabel,
@@ -18,7 +18,7 @@ export default function Select({
   /** The initially selected value (uncontrolled). */
   defaultValue?: string
   /** Called with the newly selected value. */
-  onChange?: (value: string) => void
+  onValueChange?: (value: string) => void
   /** The options to pick from. */
   options: { value: string; label: string }[]
   /** Whether the select is disabled. @default false */
@@ -30,7 +30,7 @@ export default function Select({
       className="my-select"
       value={value}
       defaultValue={defaultValue}
-      onChange={event => onChange?.(event.target.value)}
+      onChange={event => onValueChange?.(event.target.value)}
       disabled={disabled}
       aria-label={ariaLabel}
     >

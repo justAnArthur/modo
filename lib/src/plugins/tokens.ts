@@ -1,77 +1,54 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve, sep } from 'node:path'
 import type { Plugin } from 'vite'
-import { loadModoConfig } from '../lib/config.loader'
-import { buildGroup, GROUPS, type Group, type GroupName, parseCss, prefixGroup } from '../lib/css'
-import { cap } from '../runtime/text'
-import { cssModule } from './css-module'
+import { buildGroup, GROUPS, type Group, parseTokenFile } from '../lib/css'
+import { tokenPath } from '../lib/paths'
+import { cap } from '../lib/text'
+import { loadModoConfig } from '../node/config-loader'
 import { emitRoutes } from './static-routes'
+import { cssModule, reload, virtualModules } from './virtual'
 
 interface Options {
   userRoot: string
   configPath: string
 }
 
-const TOKENS_VIRTUAL = 'virtual:modo-tokens'
-const TOKENS_RESOLVED = '\0virtual:modo-tokens'
-const TOKENS_CSS_VIRTUAL = 'virtual:modo-tokens-css'
-const TOKENS_CSS_RESOLVED = '\0virtual:modo-tokens-css'
-
-interface ParsedTokensResult {
+interface Tokens {
   groups: Group[]
   cssFiles: string[]
 }
 
-function parseTokens(userRoot: string): ParsedTokensResult {
-  const tokensDir = resolve(userRoot, 'tokens')
-  const cssFiles: string[] = []
-  const byGroup = new Map<GroupName, ReturnType<typeof parseCss>>()
-  for (const g of GROUPS) byGroup.set(g, [])
-  if (!existsSync(tokensDir)) return { groups: [], cssFiles }
+function readTokens(userRoot: string): Tokens {
+  const dir = resolve(userRoot, 'tokens')
+  if (!existsSync(dir)) return { groups: [], cssFiles: [] }
   // Sorted: the files' import order is the cascade order.
-  for (const entry of readdirSync(tokensDir).sort()) {
-    if (!entry.endsWith('.css')) continue
-    const file = resolve(tokensDir, entry)
-    const base = entry.replace(/\.css$/i, '').toLowerCase()
-    const group = (GROUPS as readonly string[]).includes(base) ? (base as GroupName) : null
-    const src = readFileSync(file, 'utf8')
-    cssFiles.push(file)
-    // A file named for a group owns its unprefixed vars (ui's `--sm` in
-    // spacing.css); a var whose name claims another group goes there.
-    for (const v of parseCss(src)) {
-      const g = group ? (prefixGroup(v.name) ?? group) : v.group
-      byGroup.get(g)!.push({ ...v, group: g })
-    }
-  }
-  const all = [...byGroup.values()].flat()
-  const groups = GROUPS.map(g => buildGroup(g, byGroup.get(g)!, all)).filter(g => g.vars.length > 0)
+  const cssFiles = readdirSync(dir)
+    .sort()
+    .filter(f => f.endsWith('.css'))
+    .map(f => resolve(dir, f))
+  const all = cssFiles.flatMap(file => parseTokenFile(readFileSync(file, 'utf8'), file.slice(dir.length + 1)))
+  const groups = GROUPS.map(g =>
+    buildGroup(
+      g,
+      all.filter(v => v.group === g),
+      all,
+    ),
+  ).filter(g => g.vars.length > 0)
   return { groups, cssFiles }
 }
 
 export function tokensPlugin(options: Options): Plugin {
-  let cache: ParsedTokensResult | null = null
-
-  function getCache(): ParsedTokensResult {
-    if (!cache) cache = parseTokens(options.userRoot)
-    return cache
-  }
+  const modules = virtualModules('tokens')
+  let cache: Tokens | null = null
+  const tokens = () => (cache ??= readTokens(options.userRoot))
 
   return {
     name: 'modo:tokens',
     enforce: 'pre',
-    resolveId(id) {
-      if (id === TOKENS_VIRTUAL) return TOKENS_RESOLVED
-      if (id === TOKENS_CSS_VIRTUAL) return TOKENS_CSS_RESOLVED
-      return null
-    },
+    resolveId: modules.resolveId,
     load(id) {
-      if (id === TOKENS_RESOLVED) {
-        return `export const tokens = ${JSON.stringify(getCache().groups)};`
-      }
-      if (id === TOKENS_CSS_RESOLVED) {
-        const { cssFiles } = getCache()
-        return cssModule(cssFiles)
-      }
+      if (id === modules.id) return `export const tokens = ${JSON.stringify(tokens().groups)};`
+      if (id === modules.css) return cssModule(tokens().cssFiles)
       return null
     },
     generateBundle: {
@@ -79,8 +56,8 @@ export function tokensPlugin(options: Options): Plugin {
       order: 'post',
       async handler(_, bundle) {
         emitRoutes(this, bundle, await loadModoConfig(options.configPath), [
-          { path: 'docs/tokens', title: 'Foundations' },
-          ...getCache().groups.map(g => ({ path: `docs/tokens/${g.name}`, title: cap(g.name) })),
+          { path: tokenPath().slice(1), title: 'Foundations' },
+          ...tokens().groups.map(g => ({ path: tokenPath(g.name).slice(1), title: cap(g.name) })),
         ])
       },
     },
@@ -91,11 +68,7 @@ export function tokensPlugin(options: Options): Plugin {
       server.watcher.on('all', (_event, file) => {
         if (!file.startsWith(dir) || !file.endsWith('.css')) return
         cache = null
-        for (const id of [TOKENS_RESOLVED, TOKENS_CSS_RESOLVED]) {
-          const mod = server.moduleGraph.getModuleById(id)
-          if (mod) server.moduleGraph.invalidateModule(mod)
-        }
-        server.ws.send({ type: 'full-reload' })
+        reload(server, id => id === modules.id || id === modules.css)
       })
     },
   }

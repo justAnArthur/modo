@@ -45,7 +45,8 @@ A local addition (single quotes, no semicolons, repo style):
  */
 ```
 
-A port of an upstream FF file keeps upstream's formatting and lists every change:
+A port of an upstream FF file keeps upstream's code (formatted in the repo style) under a legal
+comment that names its source and points at `PORTING.md`:
 
 ```ts
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
@@ -53,16 +54,16 @@ A port of an upstream FF file keeps upstream's formatting and lists every change
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/<name>.tsx` @ <commit>
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - Imports rewritten to `../../../lib/*`; `framer-motion` → `motion/react`.
- * - Styling reads DS tokens: `text-[Npx]` → `text-<role>`; `fontVariationSettings` → `weight-*`; …
- * - <every behavior change>
+ * Local changes: see PORTING.md.
  */
 
 'use client'
 ```
 
-Then add its row to `PORTING.md`'s file map (and the tier mapping table for a new item).
+The `biome-ignore-all` line only when upstream's code trips the linter. A module split out of one
+upstream file carries the same header. Then record every change in `PORTING.md`'s file map, one row
+per file (and the tier mapping table for a new item): the mechanical pass is listed there once, so a
+row holds only what is specific to the file.
 
 ## Props interface
 
@@ -77,7 +78,9 @@ modo's parser (`lib/src/lib/tsdoc.ts`) reads props from a same-file `interface <
 - **The item is the file's default export**, a `function X(…)` or `const X = forwardRef<HTMLDivElement,
   XProps>(…)`; the forwardRef's first type argument holds no `<` or `,`.
 - Shared prop prose is shared verbatim: the morph options (`from`, `effect`, `hideSource`, `tier`) copy
-  their docs from [motion.md](motion.md#morphing-overlays); `size` reads "Pins … to one step of the size
+  their docs from [motion.md](motion.md#morphing-overlays) (or extend `MorphProps` / `AnchorProps`);
+  a value is `value` / `defaultValue` / `onValueChange`, and `onValueChange` takes the value, not an
+  event; `size` is a `SizeVariant` and reads "Pins … to one step of the size
   ladder (36px default, 28px compact). Defaults to the surrounding SizeProvider."
 
 ## TSDoc
@@ -116,7 +119,7 @@ export default Popover
 
 For a `forwardRef` root, type the parts on a cast (`as ForwardRefExoticComponent<…> & { Item: typeof
 Item }`) and `Object.assign(Root, { Item })`. Keep upstream's named exports as well. A part that wraps a
-control takes `SlotProps` from `lib/slot.ts` (`render={<Button/>}` or `asChild`).
+control takes `SlotProps` from `lib/slot.tsx` (`render={<Button/>}` or `asChild`).
 
 ## examples.mdx
 
@@ -147,7 +150,7 @@ One-line caption: what to try and what to notice.
 ## Template: Pagination
 
 A complete control built only from the shared systems: size ladder, shape, one fluid hover
-highlight, a liquid current-page indicator, a weight ghost-span, controlled + uncontrolled state,
+highlight, a liquid current-page indicator, a `WeightLabel`, controlled + uncontrolled state,
 icons from the icon context, the ghost `Button`, and a `size` prop that pins the subtree. It
 typechecks, passes Biome and renders in light, dark and compact. Use it as the starting shape for any
 strip or list of choices; for overlays start from Popover (see
@@ -177,7 +180,8 @@ import {
   useRegisterFluidHoverItem,
 } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
-import { SizeProvider } from '../../../primitives/sizes'
+import { WeightLabel } from '../../../lib/weight-label'
+import { SizeScope } from '../../../primitives/sizes'
 import Button from '../../button'
 
 // Literal tables: UnoCSS only generates the classes it can read whole.
@@ -231,20 +235,9 @@ function PageButton({ page, index, current, lit, register, onSelect }: PageButto
       )}
     >
       {/* The invisible semibold copy holds the width, so the current page turns semibold without moving its neighbours. */}
-      <span className={cn('inline-grid', size.text)}>
-        <span aria-hidden="true" className="invisible col-start-1 row-start-1 weight-semibold">
-          {page}
-        </span>
-        <span
-          className={cn(
-            'col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast',
-            current || lit ? 'text-foreground' : 'text-muted-foreground',
-            current ? 'weight-semibold' : 'weight-normal',
-          )}
-        >
-          {page}
-        </span>
-      </span>
+      <WeightLabel emphasized={current} lit={current || lit} className={size.text}>
+        {page}
+      </WeightLabel>
     </button>
   )
 }
@@ -252,12 +245,12 @@ function PageButton({ page, index, current, lit, register, onSelect }: PageButto
 interface PaginationProps {
   /** Number of pages. */
   total: number
-  /** Controlled current page, counted from 1. Pair with `onPageChange`. */
-  page?: number
+  /** Controlled current page, counted from 1. Pair with `onValueChange`. */
+  value?: number
   /** Initial page, for an uncontrolled pagination. Defaults to `1`. */
-  defaultPage?: number
+  defaultValue?: number
   /** Called with the new page whenever it changes. */
-  onPageChange?: (page: number) => void
+  onValueChange?: (page: number) => void
   /** Pages shown on each side of the current one before a gap. Defaults to `1`. */
   siblings?: number
   /** Pins the strip to one step of the size ladder (36px default, 28px compact). Defaults to the surrounding SizeProvider. */
@@ -274,20 +267,20 @@ interface PaginationProps {
  * across the strip (see the liquid indicators in Morph), and its number turns
  * semibold without moving the others. One fluid hover highlight runs along
  * the page buttons, so a click between two pages lands on the lit one. Works
- * controlled (`page` + `onPageChange`) or uncontrolled (`defaultPage`).
+ * controlled (`value` + `onValueChange`) or uncontrolled (`defaultValue`).
  *
  * @example {@include ./examples.mdx}
  */
 function Pagination({
   total,
-  page,
-  defaultPage = 1,
-  onPageChange,
+  value,
+  defaultValue = 1,
+  onValueChange,
   siblings = 1,
   size: sizeProp,
   className,
 }: PaginationProps) {
-  const [current, setCurrent] = useControllableState(page, defaultPage, onPageChange)
+  const [current, setCurrent] = useControllableState(value, defaultValue, onValueChange)
   const size = useSize(sizeProp)
   const shape = useShape()
   const containerRef = useRef<HTMLDivElement>(null)
@@ -360,7 +353,7 @@ function Pagination({
   )
 
   // A size prop pins the whole strip, the page buttons included.
-  return sizeProp ? <SizeProvider size={sizeProp}>{nav}</SizeProvider> : nav
+  return <SizeScope size={sizeProp}>{nav}</SizeScope>
 }
 
 export type { PaginationProps }
@@ -378,31 +371,31 @@ import Pagination from './index'
 
 The current page melts from page to page, and the hover glides along the strip. A click between two pages lands on the lit one.
 
-<Pagination total={12} defaultPage={5} />
+<Pagination total={12} defaultValue={5} />
 
 # Few pages
 
 With nothing to skip, every page shows.
 
-<Pagination total={5} defaultPage={2} />
+<Pagination total={5} defaultValue={2} />
 
 # Compact
 
 The strip steps down the size ladder with everything around it.
 
-<Pagination total={20} defaultPage={10} size="compact" />
+<Pagination total={20} defaultValue={10} size="compact" />
 ```
 
 What each part shows:
 
 - **`SQUARE` table** — dynamic classes come from literal tables so UnoCSS can see them.
-- **`useSize(sizeProp)` + `<SizeProvider>`** — the root resolves its own step and pins its subtree, so
+- **`useSize(sizeProp)` + `<SizeScope>`** — the root resolves its own step and pins its subtree, so
   `PageButton`'s `useSize()` and the `Button`s follow.
 - **One `useFluidHover` on the strip**, `axis: 'x'`, handlers spread on the `relative` container; only
   page buttons register (the gap is not a click target); rows have no `:hover` fill and sit at `z-10`.
 - **`GooIndicator` from `itemRects`**, held at the last measured rect while a page change re-keys the
   strip, so it travels instead of blinking.
-- **Ghost-span** on the page number; text color follows the highlight (`lit`), weight follows the
+- **`WeightLabel`** on the page number; text color follows the highlight (`lit`), weight follows the
   persistent state (`current`).
 - **`aria-current="page"`**, labelled icon buttons, native buttons for focus and activation.
 
@@ -417,16 +410,21 @@ The mechanical pass every ported item went through (PORTING › Items):
    `primitives/sizes`, `Elevated` to `primitives/surface`, `@/registry/radix/*` to the Base sibling,
    `framer-motion` to `motion/react`, `next/link` to an anchor.
 3. Translate styling to tokens: `text-[Npx]` → `text-<role>[-compact]`, `fontVariationSettings` →
-   `weight-*`, `duration-80|160|240` → `duration-<tier>`, hex rings → `ring-focus-ring`.
+   `weight-*`, `duration-80|160|240` → `duration-<tier>`, hex rings → `ring-focus-ring`. Sizes go on
+   the ladder (`SizeVariant`), dropping upstream's aliases.
 4. Replace upstream motion with the local layer where it applies: popups and tooltips morph
    (`useMorph` + `MorphSurface`), traveling fills become `GooIndicator`s.
-5. Add `default*` twins through `useControllableState` for every controlled-only prop.
+5. Add `default*` twins through `useControllableState` for every controlled-only prop; values report
+   through `onValueChange`. Swap FF's per-file copies for the shared helpers (`ui/lib/README.md`):
+   `useMergeRefs`, `FocusRing`, `WeightLabel`, `useRowFocus`, `useOverlayRoot`, `PopupSurface`,
+   `POPUP_SHAPE`, `springEnter`, `useLift`, `SizeScope`.
 6. React 18: `MutableRefObject` casts where a forwarded ref is written, `useRef<T | null>(null)`,
    `forwardRef` for components that receive refs.
 7. Re-declare the props interface one member per line with the FF docs API-table text; write the TSDoc
    from the FF docs page; one `# <FF section title>` example per docs section in `examples.mdx`
    (Playground and API Reference are never ported).
-8. Header comment listing every change; PORTING file-map row.
+8. The provenance header ("Local changes: see PORTING.md"); a PORTING file-map row per file listing
+   every change.
 
 ## Adding a token
 

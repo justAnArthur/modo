@@ -160,7 +160,7 @@ export default defineConfig({
 
 ### shell inheritance
 
-the docs chrome looks for your components per slot (`Button`, `Link`, `Code`, `Icon` in primitives; `Select`, `Sidebar Root/Item/Section` in components) matched by parsed name + required props — `children` must be visible in the parsed type (`href` for `Link`). unmatched slots fall back to the lib's structural Plain components. to style the chrome itself, target the `data-modo` attributes (`data-modo="sidebar"`, `"example-card"`, `"swatch"`, …) from your `css` — the lib ships structure, you ship the look. details in [shell.md](lib/docs/shell.md) and [theming.md](lib/docs/theming.md).
+the docs chrome looks for your components per slot (`Button`, `Link`, `Code`, `Icon` in primitives; `Select`, `Sidebar Root/Item/Section` in components) matched by parsed name + required props — `children` must be visible in the parsed type (`href` for `Link`; `value`, `onValueChange`, `options` for `Select`). the slot prop types are exported for adapters and panel items (`import type { SelectSlotProps, PanelItemProps } from '@justanarthur/modo'`). unmatched slots fall back to the lib's structural Plain components. to style the chrome itself, target the `data-modo` attributes (`data-modo="sidebar"`, `"example-card"`, `"swatch"`, …) from your `css` — the lib ships structure, you ship the look. details in [shell.md](lib/docs/shell.md) and [theming.md](lib/docs/theming.md).
 
 ## what the lib ships
 
@@ -186,9 +186,11 @@ flowchart LR
 ```
 modo/
 ├── lib/                          — the npm package `@justanarthur/modo` (bin `modo`)
-│   ├── src/runtime/              — internal renderer (plain Vite SPA) + structural CSS
-│   ├── src/plugins/              — Vite plugins: the shared item build, tokens, shell
-│   ├── src/lib/                  — schemas, TSDoc parser, token/css parsing, slot matching
+│   ├── src/exports/              — public entry points (config and shell contract types) and the CLI
+│   ├── src/runtime/              — internal renderer (plain Vite SPA) + structural CSS (`shell/css/`)
+│   ├── src/plugins/              — Vite plugins: the shared item build, tokens, shell slot matching
+│   ├── src/node/                 — node-only code: config loader, item discovery, the Vite config
+│   ├── src/lib/                  — pure code: schemas, TSDoc parser, token/css parsing
 │   ├── templates/                — `modo init` scaffold and `modo add` stubs
 │   ├── docs/                     — the user guide, shipped in the package
 │   └── test/                     — parser tests

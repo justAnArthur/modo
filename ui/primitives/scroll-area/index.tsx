@@ -1,23 +1,8 @@
-// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
 /*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/scroll-area.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - `@/lib/{utils,shape-context}` / `@/hooks/use-touch-primary` imports rewritten to `../../lib/*`.
- * - The root's forwardRef element type `ComponentRef<typeof ScrollAreaPrimitive.Root>` written out
- *   as `HTMLDivElement` (what Base UI's Root forwards): modo's parser needs a first type argument
- *   without `<`/`,`. Same type, no behavior change.
- * - `viewportClassName` / `className` / `children` documented in `ScrollAreaProps` (modo's parser
- *   lists only members declared in the interface body).
- * - modo item: TSDoc (from the FF "Scrollbars" docs page), `ScrollArea.Bar` static (= `ScrollBar`,
- *   still exported by name) and a default export.
- * - Styling reads DS tokens (AGENTS.md styling): literal colors → color
- *   tokens; `duration-80|120|160` and tier-length JS durations →
- *   `duration-<tier>` / `spring.*`.
- * - The Base UI viewport carries `data-scroll-edges`, so `scroll-fade` reads Base UI's
- *   `--scroll-area-overflow-*` vars there (scroll-aware in browsers without scroll-driven
- *   animations, e.g. Firefox).
+ * Local changes: see PORTING.md.
  */
 
 'use client'
@@ -37,9 +22,8 @@ import { useShape } from '../../lib/shape-context'
 import { useTouchPrimary } from '../../lib/use-touch-primary'
 import { cn } from '../../lib/utils'
 
-// On touch-primary devices the Base UI machinery is skipped entirely in
-// favour of native overflow scrolling (better physics, momentum,
-// rubber-banding); the context lets the exported ScrollBar no-op there.
+// Touch-primary devices get native overflow scrolling (momentum,
+// rubber-banding); the exported ScrollBar no-ops there.
 const ScrollAreaContext = createContext<boolean>(false)
 
 type Orientation = 'vertical' | 'horizontal' | 'both'
@@ -55,8 +39,7 @@ interface ScrollAreaProps extends ComponentPropsWithoutRef<'div'> {
   children?: ReactNode
 }
 
-interface ScrollAreaStatics {
-  /** `ScrollBar` — one scrollbar, for composing a Base UI scroll area by hand. */
+type ScrollAreaComponent = ForwardRefExoticComponent<ScrollAreaProps & RefAttributes<HTMLDivElement>> & {
   Bar: typeof ScrollBar
 }
 
@@ -90,6 +73,7 @@ const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
     return (
       <ScrollAreaContext.Provider value={isTouch}>
         {isTouch ? (
+          // biome-ignore lint/a11y/useSemanticElements: a scroll container, not a form group
           <div
             ref={ref}
             role="group"
@@ -107,6 +91,7 @@ const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
                 orientation === 'both' && 'overflow-auto',
                 viewportClassName,
               )}
+              // biome-ignore lint/a11y/noNoninteractiveTabindex: a scrollable region must be keyboard-reachable
               tabIndex={0}
             >
               {children}
@@ -124,8 +109,7 @@ const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
               data-scroll-edges=""
               className={cn('size-full rounded-[inherit]', viewportClassName)}
             >
-              {/* Content gives Base UI an intrinsic size to measure
-                  horizontal overflow against. */}
+              {/* An intrinsic size to measure horizontal overflow against. */}
               <ScrollAreaPrimitive.Content>{children}</ScrollAreaPrimitive.Content>
             </ScrollAreaPrimitive.Viewport>
             {orientation !== 'horizontal' && <ScrollBar orientation="vertical" />}
@@ -136,7 +120,7 @@ const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
       </ScrollAreaContext.Provider>
     )
   },
-) as ForwardRefExoticComponent<ScrollAreaProps & RefAttributes<HTMLDivElement>> & ScrollAreaStatics
+) as ScrollAreaComponent
 
 ScrollArea.displayName = 'ScrollArea'
 
@@ -154,19 +138,10 @@ const ScrollBar = forwardRef<
       ref={ref}
       orientation={orientation}
       data-slot="scroll-area-scrollbar"
-      // Base UI keeps the scrollbar mounted while scrollable; visibility is
-      // a plain opacity transition off its hover/scroll state attributes,
-      // matching the cue fade — 160ms in, 120ms out (exits faster, per the
-      // animation guidelines); spring tokens are framer-motion configs and
-      // don't apply here.
       className={cn(
-        // The 10px track stays as a comfortable hit target; the thumb inside
-        // it rests narrow and low-contrast, then widens + darkens on hover so
-        // it gets out of the way until you reach for it.
+        // The 10px track is the hit target; the thumb inside rests narrow.
         'group/scrollbar absolute z-20 flex touch-none select-none',
-        // Show immediately; on hide, wait out the 150ms thumb shrink before
-        // fading so the thumb visibly narrows back first instead of the fade
-        // masking it.
+        // Hiding waits out the thumb's shrink, so it visibly narrows before it fades.
         'opacity-0 transition-opacity duration-moderate-exit ease-out delay-moderate',
         'data-[hovering]:duration-moderate data-[scrolling]:duration-moderate',
         'data-[hovering]:opacity-100 data-[scrolling]:opacity-100',
@@ -180,13 +155,10 @@ const ScrollBar = forwardRef<
       <ScrollAreaPrimitive.Thumb
         data-slot="scroll-area-thumb"
         className={cn(
-          // Fixed surface-relative overlay ramp (8 → 12 → 16%) — same tint
-          // direction as the menu hover/active tokens, one notch stronger.
           'relative bg-overlay/8 transition-[background-color,width,height] duration-moderate ease-in-out',
           'group-hover/scrollbar:bg-overlay/12 active:!bg-overlay/16',
           shape.bg,
-          // -translate nudges the thumb 2px off the container edge; the track
-          // (and its 10px hit target) stays flush so edge-throws still land.
+          // The thumb sits 2px off the edge; the track stays flush so edge throws land.
           orientation === 'vertical' &&
             'mx-auto my-1 w-1 -translate-x-0.5 h-[var(--scroll-area-thumb-height)] group-hover/scrollbar:w-1.5',
           orientation === 'horizontal' &&

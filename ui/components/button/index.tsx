@@ -1,28 +1,8 @@
-// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
 /*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/button.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - `@/lib/{icon-context,utils,shape-context,size-context}` imports rewritten to `../../lib/*`.
- * - `ButtonProps`: `variant`, `disabled` and `children` re-declared in the interface body (modo's
- *   parser lists only members declared there); member docs replaced by the FF docs API-table text
- *   (upstream's size-alias and `active` notes folded in).
- * - modo item: TSDoc (from the FF "Button" docs page, plus Sizes / Active / As child examples for
- *   the API-table props the page has no section for) and a default export.
- * - Also the modo docs-chrome Button (`modo.config.ts` shell.Button): the chrome renders its
- *   icon buttons as `<Button variant="ghost" size="icon-sm">`, served by upstream's legacy
- *   `icon-sm` → `icon-compact` alias.
- * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
- *   `text-<role>[-compact]`; the hex focus-ring fallback →
- *   `ring-focus-ring` / `border-focus-ring`; `duration-80|120|160` and
- *   tier-length JS durations → `duration-<tier>` / `spring.*`.
- * - `loading` morphs (local, in the morph layer's language): the surface layer contracts into
- *   a circle around the spinner on `spring.moderate` and springs back when loading ends, while
- *   the button's own box keeps its size; the label and the spinner crossfade instead of
- *   swapping. The spinner centres on the button, not on the label. `aria-busy` while loading.
- *   The root's `transition-colors` → `transition-[color,opacity]`, so the disabled dim fades
- *   in step instead of jumping (the root draws no background or border of its own).
+ * Local changes: see PORTING.md.
  */
 
 'use client'
@@ -32,9 +12,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
 import {
   type ButtonHTMLAttributes,
-  cloneElement,
   forwardRef,
-  isValidElement,
   type ReactElement,
   type ReactNode,
   useLayoutEffect,
@@ -44,7 +22,8 @@ import type { IconComponent } from '../../lib/icon-context'
 import { useReduceMotion } from '../../lib/reduced-motion'
 import { useShape } from '../../lib/shape-context'
 import { useSizeVariant } from '../../lib/size-context'
-import { spring } from '../../lib/springs'
+import { resolveSlotTemplate, slotElement } from '../../lib/slot'
+import { spring, springEnter } from '../../lib/springs'
 import { cn } from '../../lib/utils'
 
 const buttonVariants = cva(
@@ -62,8 +41,6 @@ const buttonVariants = cva(
         tertiary: 'text-foreground',
         ghost: 'text-muted-foreground hover:text-foreground',
       },
-      // The two-step size ladder shared by every control — see /docs/sizes.
-      // default = 36px control height, compact = 28px for dense surfaces.
       size: {
         default: 'h-9 px-4 text-body gap-1.5',
         compact: 'h-7 px-3 text-body-compact gap-1',
@@ -90,27 +67,19 @@ const buttonVariants = cva(
 
 type ButtonSizeCanonical = 'default' | 'compact' | 'icon' | 'icon-compact'
 
-/** Public size values: the canonical two-size scale plus the pre-sizes-system
- *  aliases, kept so existing call sites keep compiling. Aliases resolve onto
- *  the canonical ladder (sm → compact; md/lg → default). */
-type ButtonSize = ButtonSizeCanonical | 'sm' | 'md' | 'lg' | 'icon-sm' | 'icon-lg'
-
-const legacySizeAliases: Partial<Record<ButtonSize, ButtonSizeCanonical>> = {
-  sm: 'compact',
-  md: 'default',
-  lg: 'default',
-  'icon-sm': 'icon-compact',
-  'icon-lg': 'icon',
-}
+/** `icon-sm` is the modo chrome's name for `icon-compact` (its shell Button contract). */
+type ButtonSize = ButtonSizeCanonical | 'icon-sm'
 
 interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     Omit<VariantProps<typeof buttonVariants>, 'size'> {
   /** Visual style of the button. Defaults to `"primary"`. */
   variant?: 'primary' | 'secondary' | 'tertiary' | 'ghost'
-  /** Step on the size ladder (36px default, 28px compact — see Sizes): `"default"` | `"compact"` | `"icon"` | `"icon-compact"`. Omitted, the button follows the surrounding SizeProvider. Legacy sm/md/lg values resolve as aliases (sm → compact; md/lg → default; icon-sm → icon-compact; icon-lg → icon). */
+  /** Step on the size ladder (36px default, 28px compact — see Sizes), or its square icon-only step. `"icon-sm"` is `"icon-compact"` (the modo chrome's name). Omitted, the button follows the surrounding SizeProvider. */
   size?: ButtonSize
-  /** Merge props onto the child element instead of rendering a `<button>` — the single React-element child becomes the rendered element (slot-style). Defaults to `false`. */
+  /** Render this element (a link) with the button's styling and internals; its handlers and refs merge with the button's. */
+  render?: ReactElement
+  /** `render` spelled as the single child element: the child becomes the button and its children the label. Defaults to `false`. */
   asChild?: boolean
   /** Folds the button into a circle around a spinner and disables it; the button keeps its box, so nothing around it moves. Defaults to `false`. */
   loading?: boolean
@@ -161,15 +130,13 @@ const activeBgVariants: Record<string, string> = {
   ghost: 'bg-active shadow-[0_0_0_1px_var(--active)] group-active:shadow-[0_0_0_0px_var(--active)]',
 }
 
-const { exit: _exit, ...enter } = spring.moderate
+const enter = springEnter(spring.moderate)
 
-/* Loading morph (local): the surface layer contracts from the button's box
-   into a circle one control tall around the spinner, on one progress value
-   like the morph layer (lib/use-morph.ts). The button's own box never
-   changes, so nothing around it moves. Left and right mix a share of the
-   button's width with pixels, so a stretched (w-full) button keeps the
-   circle centred without measuring its width. At rest the inline geometry
-   is dropped and the classes (inset-px, the inherited radius) take over. */
+/* The surface contracts from the button's box into a circle one control tall
+   around the spinner; the button's own box never changes. Left and right mix
+   a share of the width with pixels, so a stretched (w-full) button keeps the
+   circle centred without measuring itself. At rest the inline geometry goes
+   and the classes take over. */
 function useLoadingMorph(loading: boolean) {
   const surface = useRef<HTMLSpanElement>(null)
   const progress = useMotionValue(loading ? 1 : 0)
@@ -215,8 +182,8 @@ function useLoadingMorph(loading: boolean) {
  * the fill by exactly 1px per side at any width, icons thicken their stroke
  * on hover, and `loading` folds the surface into a circle around a spinner
  * (and back when it ends) while the button keeps its box, so nothing around
- * it moves. Built on Base UI's Button; `asChild` renders your own
- * element (e.g. a link) with the button's styling instead.
+ * it moves. Built on Base UI's Button; `render` (or `asChild`) renders your
+ * own element, e.g. a link, with the button's styling instead.
  *
  * @example {@include ./examples.mdx}
  * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/button.tsx Fluid Functionalism
@@ -228,6 +195,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       className,
       variant,
       size,
+      render,
       asChild = false,
       loading = false,
       leadingIcon: LeadingIcon,
@@ -240,36 +208,14 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) => {
-    // asChild: the user's element becomes the root while the button's internal
-    // structure (bg layer, content wrapper, spinner, icons) survives as its
-    // children — the element's own children become the label. We clone the
-    // element directly instead of routing through ButtonPrimitive's `render`:
-    // Base UI would bolt button semantics (role="button", Space activation)
-    // onto e.g. a link, where plain-link output is wanted.
-    const asChildElement =
-      asChild && isValidElement(children)
-        ? (children as ReactElement<{
-            children?: ReactNode
-            className?: string
-            style?: React.CSSProperties
-            ref?: React.Ref<HTMLButtonElement>
-            'aria-busy'?: boolean
-          }>)
-        : null
-    const label = asChildElement ? asChildElement.props.children : children
-    // Resolve the size: explicit prop (legacy aliases mapped onto the
-    // canonical ladder) > surrounding SizeProvider > default.
+    // A template is cloned rather than handed to Base UI's `render`, which
+    // would bolt button semantics (role, Space activation) onto a link.
+    const { template, content: label } = resolveSlotTemplate(render, asChild, children)
     const contextSize = useSizeVariant()
-    const resolvedSize: ButtonSizeCanonical = size
-      ? (legacySizeAliases[size] ?? (size as ButtonSizeCanonical))
-      : contextSize === 'compact'
-        ? 'compact'
-        : 'default'
+    const resolvedSize: ButtonSizeCanonical = size === 'icon-sm' ? 'icon-compact' : (size ?? contextSize)
     const isIconOnly = resolvedSize === 'icon' || resolvedSize === 'icon-compact'
     const isCompact = resolvedSize === 'compact' || resolvedSize === 'icon-compact'
     const iconSize = isCompact ? 14 : 16
-    // Spinner box tracks the button height so the loading glyph stays
-    // proportionate across sizes.
     const spinnerSizeClass = isCompact ? 'h-7 w-7' : 'h-9 w-9'
     const shape = useShape()
     const bgClass = active ? activeBgVariants[variant ?? 'primary'] : bgVariants[variant ?? 'primary']
@@ -282,13 +228,11 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           ref={surface}
           aria-hidden
           className={cn(
-            'absolute inset-px rounded-[inherit] transition-[box-shadow,background-color] [transition-duration:180ms,80ms] [transition-timing-function:cubic-bezier(0.23,1,0.32,1),ease] group-active:[transition-duration:80ms,80ms]',
+            'absolute inset-px rounded-[inherit] transition-[box-shadow,background-color] [transition-duration:var(--duration-moderate),var(--duration-fast)] [transition-timing-function:cubic-bezier(0.23,1,0.32,1),ease] group-active:duration-fast',
             bgClass,
           )}
         />
-        {/* The label keeps its place while loading, so the button keeps its
-            box. Whatever leaves goes on the fast exit, so the label and the
-            spinner barely overlap while the surface folds or unfolds. */}
+        {/* The label keeps its place while loading, so the button keeps its box. */}
         <motion.span
           className="relative inline-flex items-center justify-center gap-[inherit]"
           initial={false}
@@ -308,11 +252,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
                   className="transition-[stroke-width] duration-fast group-hover:stroke-[2]"
                 />
               )}
-              {/* text-box only applies to block containers, so the trim lives
-                  on the label span (a blockified flex item), not the flex root.
-                  The button's height is fixed (h-*), so this doesn't change
-                  layout — it just centers the cap-to-baseline box optically. */}
-              <span className="[text-box:trim-both_cap_alphabetic]">{label}</span>
+              {/* text-box needs a block container: the flex item, not the root. */}
+              <span className="text-trim">{label}</span>
               {TrailingIcon && (
                 <TrailingIcon
                   size={iconSize}
@@ -334,7 +275,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
               exit={{ opacity: 0, scale: 0.6, transition: spring.fast.exit }}
               transition={enter}
             >
-              <svg className={spinnerSizeClass} viewBox="0 0 24 24" fill="none">
+              <svg aria-hidden className={spinnerSizeClass} viewBox="0 0 24 24" fill="none">
                 <path
                   d="M 12 12 C 14 8.5 19 8.5 19 12 C 19 15.5 14 15.5 12 12 C 10 8.5 5 8.5 5 12 C 5 15.5 10 15.5 12 12 Z"
                   stroke="currentColor"
@@ -364,26 +305,18 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       className,
     )
 
-    if (asChildElement) {
-      const childProps = asChildElement.props
-      return cloneElement(
-        asChildElement,
-        {
-          ...props,
-          ref,
-          'aria-busy': loading || undefined,
-          className: cn(rootClassName, childProps.className),
-          style: { ...style, ...childProps.style },
-        },
+    if (template) {
+      return slotElement(
+        template,
+        'button',
+        { ...props, ref, 'aria-busy': loading || undefined, className: rootClassName, style },
         internals,
       )
     }
 
     return (
       <ButtonPrimitive
-        // Base UI's `ButtonPrimitive` forwards to an HTMLButtonElement;
-        // keep the public ref type narrow so consumers see the right type.
-        ref={ref as React.Ref<HTMLButtonElement>}
+        ref={ref}
         className={rootClassName}
         disabled={disabled || loading}
         aria-busy={loading || undefined}

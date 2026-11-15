@@ -16,10 +16,32 @@ For each slot, in order:
 | Link | `primitives/` | `Link` | `href`, `children` | `<a>` |
 | Code | `primitives/` | `Code` | `children` | `<pre><code>` |
 | Icon | `primitives/` | `Icon` | `name` | the label as text |
-| Select | `components/` | `Select` | `value`, `onChange`, `options` | `<select>` |
+| Select | `components/` | `Select` | `value`, `onValueChange`, `options` | `<select>` |
 | Sidebar | `components/` | `Sidebar` | `children` | `<nav>` |
 
-The name is the default export's function or const name, not the folder name. Props come from the parsed TSDoc type (see [items.md](./items.md#props)), so `children` must be visible there: a props type imported from another file hides it.
+The name is the default export's function or const name, not the folder name. Props come from the parsed TSDoc type (see [items.md](./items.md#props)), so `children` must be visible there: a props type imported from another file hides it. A Select that declares `onChange` instead of `onValueChange` doesn't match.
+
+## Typing slot components
+
+Each slot's props are exported from `@justanarthur/modo`: `ButtonSlotProps`, `LinkSlotProps`, `CodeSlotProps`, `IconSlotProps` (and `IconName`), `SelectSlotProps` (and `SelectOption`), `SidebarSlotProps`, `SidebarItemProps`, `SidebarSectionProps`. `ShellComponents` is the whole resolved chrome and `PanelItemProps` a panel item's props. Type a pinned adapter with them:
+
+```tsx
+// modo.components.tsx
+import type { SelectSlotProps } from '@justanarthur/modo'
+import MySelect from './components/select'
+
+export function Select({ value, onValueChange, options }: SelectSlotProps) {
+  return (
+    <MySelect value={value} onValueChange={onValueChange}>
+      {options.map(o => (
+        <MySelect.Item key={o.value} value={o.value}>{o.label}</MySelect.Item>
+      ))}
+    </MySelect>
+  )
+}
+```
+
+A matched item still needs the props declared in its own same-file type, since matching reads the parsed props.
 
 A pin wins even over a matching item. A pin that doesn't load (missing file, failed build, no such export) prints a `[modo:shell] warning:` and the slot falls through to matching.
 
@@ -96,13 +118,14 @@ The chrome asks for icons by name and draws them inside your Button or Link.
 
 ```tsx
 // demo/design-systems/shadcn/_shell/icon.tsx, trimmed
+import type { IconSlotProps } from '@justanarthur/modo'
 import { Check, CodeXml, Copy, Link2, type LucideIcon, Menu, Moon, Sun } from 'lucide-react'
 
 const icons: Record<string, LucideIcon> = { code: CodeXml, copy: Copy, check: Check, link: Link2, menu: Menu, sun: Sun, moon: Moon }
 
-export default function Icon({ name, label }: { name: string; label: string }) {
+export default function Icon({ name, label }: IconSlotProps) {
   const Glyph = icons[name]
-  return Glyph ? <Glyph size={16} strokeWidth={1.5} aria-hidden /> : <>{label}</>
+  return Glyph ? <Glyph size={16} strokeWidth={1.5} aria-hidden /> : label
 }
 ```
 
@@ -111,10 +134,10 @@ export default function Icon({ name, label }: { name: string; label: string }) {
 The chrome itself doesn't render a Select. It is handed to [panel items](./config.md#panel) through their `shell` prop, for switchers and similar controls.
 
 ```tsx
-<shell.Select value={current} onChange={(value: string) => go(value)} options={[{ value: 'a', label: 'A' }]} />
+<shell.Select value={current} onValueChange={(value: string) => go(value)} options={[{ value: 'a', label: 'A' }]} />
 ```
 
-It gets `value`, `onChange(value: string)` (the value, not an event) and `options: { value: string; label: string }[]`.
+It gets `value`, `onValueChange(value: string)` (the value, not an event) and `options: { value: string; label: string }[]` (`SelectSlotProps`).
 
 ### Sidebar
 

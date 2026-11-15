@@ -1,15 +1,9 @@
 /*!
- * Vendored from Fluid Functionalism — `registry/default/lib/icon-context.tsx` at
+ * Ported from Fluid Functionalism — `registry/default/lib/icon-context.tsx` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
- *
- * Local modifications:
- * - lucide-react v1 + React 18 types: `IconComponentProps.size` /
- *   `strokeWidth` widened to `number | string` (lucide icons' propTypes
- *   accept both, and @types/react 18 compares propTypes).
- * - `panel-left-dashed` / `panel-right-dashed`: the sidebar trigger's glyph
- *   while the sidebar opens on hover.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
@@ -27,6 +21,7 @@ import {
   ChevronRight,
   ChevronsUpDown,
   Circle,
+  CircleAlert,
   Clock,
   Copy,
   CornerDownLeft,
@@ -40,6 +35,7 @@ import {
   Home,
   ImageIcon,
   Inbox,
+  Info,
   Lightbulb,
   Link,
   Loader,
@@ -87,6 +83,8 @@ export interface IconComponentProps {
 export type IconComponent = ComponentType<IconComponentProps>
 
 export type IconName =
+  | 'circle-alert'
+  | 'info'
   | 'chevron-right'
   | 'chevron-down'
   | 'x'
@@ -148,7 +146,7 @@ export type IconName =
   | 'folder'
   | 'sliders-horizontal'
 
-export const defaultIcons: Record<IconName, IconComponent> = {
+const defaultIcons: Record<IconName, IconComponent> = {
   'chevron-right': ChevronRight,
   'chevron-down': ChevronDown,
   pipette: Pipette,
@@ -209,6 +207,8 @@ export const defaultIcons: Record<IconName, IconComponent> = {
   calendar: Calendar,
   folder: Folder,
   'sliders-horizontal': SlidersHorizontal,
+  'circle-alert': CircleAlert,
+  info: Info,
 }
 
 const IconContext = createContext<Record<IconName, IconComponent> | null>(null)
@@ -223,15 +223,6 @@ function useIcon(name: IconName): IconComponent {
 }
 
 /**
- * Returns the full icon map.
- * Falls back to the default (Lucide) set if no provider is present.
- */
-function useIcons(): Record<IconName, IconComponent> {
-  const icons = useContext(IconContext)
-  return icons ?? defaultIcons
-}
-
-/**
  * Swap some or all icons for components from another library.
  * Names left out of `icons` keep their default (Lucide) component.
  */
@@ -240,4 +231,4 @@ function IconProvider({ children, icons }: { children: ReactNode; icons?: Partia
   return <IconContext.Provider value={value}>{children}</IconContext.Provider>
 }
 
-export { IconProvider, useIcon, useIcons }
+export { IconProvider, useIcon }

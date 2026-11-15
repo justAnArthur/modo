@@ -1,18 +1,7 @@
 /*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/file-thumbnail.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
- * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - The `@next/next/no-img-element` eslint-disable comment dropped (no Next.js).
- * - `@/lib/{utils,shape-context}` rewritten to `../../../lib/*`.
- * - `pdfjs-dist` is an optional peer: a failed lazy import warns once and the
- *   thumbnail falls back to the file icon.
- * - The lazy `import("pdfjs-dist")` is otherwise kept: verified against modo's own
- *   esbuild settings (bundle, `platform: "browser"`, `target: "es2022"`, both
- *   with and without `splitting: true`) — it resolves cleanly and lands in a
- *   ~790kB chunk that is only fetched when a PDF is actually attached. No CDN
- *   fallback was needed. The worker still comes from jsDelivr, so no
- *   bundler-side worker config is required.
+ * MIT License © 2026 Micka Touillaud (notice: LICENSE.fluid-functionalism). Local changes: see PORTING.md.
  */
 
 'use client'
@@ -21,11 +10,8 @@ import { useEffect, useState } from 'react'
 import { useShape } from '../../../lib/shape-context'
 import { cn } from '../../../lib/utils'
 
-// ─── Lazy pdfjs loader ────────────────────────────────────────────────────
-// Imports pdfjs-dist on first PDF, caches the module, and points the worker
-// at the matching CDN build. Consumers don't need bundler-side worker config.
-// pdfjs-dist is an optional peer: the `.catch` right on `import()` also lets
-// esbuild (Vite's dep optimizer) bundle a host that didn't install it.
+// pdfjs-dist is an optional peer, loaded on the first PDF with its worker from the CDN.
+// The `.catch` right on `import()` also lets esbuild bundle a host that didn't install it.
 type PdfjsModule = typeof import('pdfjs-dist')
 let pdfjsPromise: Promise<PdfjsModule> | null = null
 
@@ -55,7 +41,7 @@ async function renderPdfFirstPage(file: File, targetWidth: number): Promise<stri
   const pdf = await pdfjs.getDocument({ data: buffer }).promise
   const page = await pdf.getPage(1)
   const baseViewport = page.getViewport({ scale: 1 })
-  const scale = (targetWidth * 2) / baseViewport.width // 2× for retina
+  const scale = (targetWidth * 2) / baseViewport.width
   const viewport = page.getViewport({ scale })
   const canvas = document.createElement('canvas')
   canvas.width = viewport.width
@@ -64,12 +50,6 @@ async function renderPdfFirstPage(file: File, targetWidth: number): Promise<stri
   return canvas.toDataURL('image/png')
 }
 
-// ─── File thumbnail ───────────────────────────────────────────────────────
-// Read-only square preview of a File. Images use object-cover via
-// `URL.createObjectURL`; PDFs render the first page via pdfjs; while either is
-// resolving a spinner is shown. Self-contained (border + surface + sizing) so
-// it can be reused both inside the composer's preview row and to render
-// already-sent attachments in a chat transcript.
 interface FileThumbnailProps {
   file: File
   /** Side length of the square thumbnail in pixels. */
@@ -77,25 +57,17 @@ interface FileThumbnailProps {
   className?: string
 }
 
+/** A square preview of a File: images cover it, PDFs show their first page, anything else a document glyph. */
 function FileThumbnail({ file, size, className }: FileThumbnailProps) {
   const shape = useShape()
   const isImage = file.type.startsWith('image/')
   const isPdf = file.type === 'application/pdf'
 
-  // Create blob URL inside an effect (NOT useMemo) so the cleanup-revoke
-  // and the URL-creation stay in sync. In React 18 StrictMode dev, a
-  // useMemo-created URL gets revoked by the simulated effect-cleanup but
-  // useMemo doesn't re-run on the simulated re-mount (no re-render happens),
-  // leaving the DOM with a stale, revoked `blob:` URL — broken image.
-  // Putting both in the same effect means the simulated re-mount creates a
-  // fresh URL and updates state. The one-frame "before URL" state is
-  // covered by the bg-accent (no fallback icon shown for images), so the
-  // transition is visually clean.
+  // Created and revoked in one effect: under StrictMode a memoized URL is
+  // revoked by the simulated cleanup and never recreated.
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   useEffect(() => {
     if (!isImage) {
-      // Clear stale state if the `file` prop swaps type on the same mount —
-      // otherwise a revoked blob URL would keep winning over the new preview.
       setImageUrl(null)
       return
     }
@@ -104,9 +76,7 @@ function FileThumbnail({ file, size, className }: FileThumbnailProps) {
     return () => URL.revokeObjectURL(url)
   }, [isImage, file])
 
-  // PDFs need async rendering — loading flash is unavoidable for the first
-  // ~100–300ms while pdfjs loads. Falls back to the generic icon on error
-  // (corrupt/password-protected file, CDN worker blocked, pdfjs-dist absent).
+  // Any failure (corrupt file, blocked worker, pdfjs-dist missing) shows the glyph.
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [pdfError, setPdfError] = useState(false)
   useEffect(() => {
@@ -129,8 +99,6 @@ function FileThumbnail({ file, size, className }: FileThumbnailProps) {
   }, [file, isPdf, size])
 
   const previewUrl = imageUrl ?? pdfUrl
-  // Spinner only while a preview is genuinely pending; anything that can't
-  // produce one (failed PDF, unsupported type) gets the generic icon instead.
   const isPending = (isImage && !imageUrl) || (isPdf && !pdfUrl && !pdfError)
 
   return (
@@ -141,11 +109,6 @@ function FileThumbnail({ file, size, className }: FileThumbnailProps) {
       {previewUrl ? (
         <img src={previewUrl} alt={file.name} className="absolute inset-0 w-full h-full object-cover" />
       ) : isPending ? (
-        // Circular spinner while we wait for the preview to be ready.
-        // Used for both images (brief URL-creation gap) and PDFs (longer
-        // pdfjs render). The thin ring is mostly subtle (border-border)
-        // with one quadrant accented (border-t-muted-foreground) so the
-        // `animate-spin` rotation reads as a moving arc.
         <div className="absolute inset-0 flex items-center justify-center">
           <div
             className="w-6 h-6 rounded-full border-2 border-border border-t-muted-foreground animate-spin"
@@ -154,9 +117,6 @@ function FileThumbnail({ file, size, className }: FileThumbnailProps) {
           />
         </div>
       ) : (
-        // Generic document glyph for files with no renderable preview.
-        // Inline SVG (not the icon system) so the thumbnail stays
-        // self-contained for registry consumers.
         <div
           className="absolute inset-0 flex items-center justify-center text-muted-foreground"
           role="img"
@@ -183,4 +143,4 @@ function FileThumbnail({ file, size, className }: FileThumbnailProps) {
 }
 
 export type { FileThumbnailProps }
-export { FileThumbnail, loadPdfjs, renderPdfFirstPage }
+export { FileThumbnail }

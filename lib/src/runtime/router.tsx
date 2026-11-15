@@ -1,40 +1,36 @@
 import { config } from 'virtual:modo-config'
-import { type ReactNode, useEffect, useSyncExternalStore } from 'react'
+import { type ReactNode, useEffect } from 'react'
+import { pageTitle } from '../lib/head'
+import { CANVAS_PAGE, HOME_PATH, tierPath, tokenPath } from '../lib/paths'
+import { TIERS } from '../lib/tiers'
 import { PageIdScope } from './anchor'
-import { NotFoundPage } from './pages/NotFoundPage'
-import { routes } from './routes'
+import { ItemPage } from './items/item-page'
+import { appPath, BASE, NAVIGATE, usePath } from './location'
+import { CanvasPage } from './pages/canvas'
+import { HomePage } from './pages/home'
+import { NotFoundPage } from './pages/not-found'
+import { TierPage } from './pages/tier'
+import { TokensPage } from './pages/tokens'
+import { TokenGroupView } from './tokens/group-page'
 
-const NAVIGATE = 'modo:navigate'
-// '' or the `--base` the site was built with, minus its trailing slash.
-const BASE = import.meta.env.BASE_URL.slice(0, -1)
-
-/** An app path (`/docs/...`) as a URL under the site's base. */
-export function withBase(path: string): string {
-  return BASE + path
+/** The one segment under `parent` (`/docs/tokens/colors` → `colors`). */
+function child(path: string, parent: string): string | undefined {
+  const rest = path.startsWith(`${parent}/`) ? path.slice(parent.length + 1) : ''
+  return rest && !rest.includes('/') ? rest : undefined
 }
 
-/** A content link's href: root-relative ones are app paths, so they get the base. */
-export function contentHref(href: string): string {
-  return href.startsWith('/') && !href.startsWith('//') ? withBase(href) : href
-}
-
-// Static hosts redirect a route dir to its trailing-slash form.
-function appPath(pathname: string): string {
-  return pathname.slice(BASE.length).replace(/(.)\/$/, '$1') || '/'
-}
-
-function subscribe(onChange: () => void) {
-  window.addEventListener('popstate', onChange)
-  window.addEventListener(NAVIGATE, onChange)
-  return () => {
-    window.removeEventListener('popstate', onChange)
-    window.removeEventListener(NAVIGATE, onChange)
+function page(path: string): ReactNode {
+  if (path === HOME_PATH) return <HomePage />
+  if (path === CANVAS_PAGE.path) return <CanvasPage />
+  if (path === tokenPath()) return <TokensPage />
+  const group = child(path, tokenPath())
+  if (group) return <TokenGroupView group={group} />
+  for (const tier of TIERS) {
+    if (path === tierPath(tier)) return <TierPage tier={tier} />
+    const id = child(path, tierPath(tier))
+    if (id) return <ItemPage tier={tier} id={id} />
   }
-}
-
-/** The current app path; re-renders on client navigation and history moves. */
-export function usePath(): string {
-  return useSyncExternalStore(subscribe, () => appPath(window.location.pathname))
+  return <NotFoundPage />
 }
 
 function scrollToHash(hash: string) {
@@ -67,12 +63,12 @@ export function Router(): ReactNode {
   // `#hash` misses it. The tab names the page and the design system.
   useEffect(() => {
     scrollToHash(window.location.hash)
-    const title = document.querySelector('[data-modo="page-title"]')?.textContent
-    document.title = title && title !== config.name ? `${title} · ${config.name}` : config.name
+    document.title = pageTitle(
+      config.name,
+      document.querySelector('[data-modo="page-title"]')?.textContent ?? undefined,
+    )
   }, [path])
 
-  const route = routes.find(r => r.pattern.test(path))
-  const match = route && path.match(route.pattern)
   // Keyed by path so page state (an open code panel, heading ids) doesn't carry over.
-  return <PageIdScope key={path}>{route && match ? route.render(match) : <NotFoundPage />}</PageIdScope>
+  return <PageIdScope key={path}>{page(path)}</PageIdScope>
 }

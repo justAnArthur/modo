@@ -71,6 +71,16 @@ response, and that streaming→idle edge dispatches the row at the top.
   />
 </div>
 
+# History
+
+`history` lists sent messages, oldest first. With the caret on the first
+line, ArrowUp recalls the previous one; ArrowDown on the last line walks
+forward and, past the newest, brings back the draft.
+
+<div className="w-full max-w-xl">
+  <InputMessage history={['Summarize the release notes', 'Now as a bulleted list']} />
+</div>
+
 # Left Slot Only
 
 `leftSlot` takes the bottom-left action area — an attach button, a model

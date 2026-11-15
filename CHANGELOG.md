@@ -33,6 +33,21 @@ New since 0.9:
 - The canvas opens fitted to the view; bento previews fit and pack, example rows and token labels wrap; the nav no longer repeats the design system's name.
 - Built on Vite 8 (Rolldown and Oxc) and `@vitejs/plugin-react` 6; the shared item build runs on esbuild 0.28.
 - `engines`: Node 20.19+ or 22.12+, the floor of Vite 8.
+- The shell contract is public: `@justanarthur/modo` exports the slot prop types (`ButtonSlotProps`, `LinkSlotProps`, `CodeSlotProps`, `IconSlotProps`, `SelectSlotProps`, `SidebarSlotProps`, `SidebarItemProps`, `SidebarSectionProps`), `ShellComponents`, `PanelItemProps`, `SelectOption`, `IconName` and the config interfaces (`ShellConfig`, `ThemeConfig`, `RepoConfig`, `PanelConfig`, `PanelItem`).
+- The `vite` extension path resolves like every other module path: the extension is optional.
+
+Breaking:
+
+- `SelectSlotProps.onChange` is `onValueChange`, and slot matching requires `value`, `onValueChange` and `options`: a host Select that declares `onChange` now falls back to the Plain one.
+- The CLI hands Vite its whole config inline (`createViteConfig`, `configFile: false`). `MODO_USER_ROOT`, `MODO_CONFIG_PATH` and `MODO_PORT` are gone: use `--config` and `--port`.
+- `virtual:modo-shell` no longer exports `ResolvedShellExport` / `PanelItemExport`: type panel items with `PanelItemProps`.
+- The chrome no longer asks the Icon slot for `external`.
+
+Fixes:
+
+- An unknown item or token group renders the not-found page.
+- Host colors pick up `--color-sm` and `--color-xs` too.
+- A `Sidebar` member slot never reads the root's pin.
 
 ### @justanarthur/modo-ui
 
@@ -49,3 +64,29 @@ New since 0.6:
 - The morph layer and Craft export from the package root.
 - `dist` keeps `'use client'` and the licence headers of derived code; `pdfjs-dist` is an optional peer; `sideEffects` and `engines` are set.
 - The card eyebrow drops uppercase and letter-spacing.
+- `Select`, `Combobox` and `ColorPicker.Popover` take `open` / `defaultOpen` / `onOpenChange`; anchored contents take `side`, `align`, `sideOffset` and `container`; `Tooltip` takes `open` / `defaultOpen`, `align` and `container`; `Search` takes `size` and `container`.
+- Form controls take `name`: Checkbox (with `disabled` and `value`), `Radio.Group`, Switch, Select, Combobox, Slider, ColorPicker and the date and time pickers.
+- `Tabs variant="subtle"`; `Card.Group` selects both ways (`value` / `defaultValue` / `onValueChange`); `Dropdown.Item` takes `shortcut`; ContextMenu shares Dropdown's selection and search.
+- `useLift`, `SizeScope` and a named `SidebarApp` / `Craft` export from the package root.
+
+Breaking:
+
+- `onChange` is `onValueChange` on Input, Textarea and Slider, and gets the value, not an event.
+- `TabsSubtle` is gone: use `Tabs variant="subtle"`. Tabs take `value` / `defaultValue` / `onValueChange` only: `selectedIndex`, `defaultSelectedIndex` and `onSelect` are removed.
+- Sizes are the ladder only: Button drops `sm`, `md`, `lg` and `icon-lg` (`icon-sm` stays, for the modo shell); Badge drops `sm`, `md` and `lg`; Sidebar's menu and sub-menu buttons take `default` / `compact` instead of `sm` / `lg` and `sm` / `md`.
+- `Dialog.Content` / `AlertDialog.Content` `size` is `width`.
+- Tooltip `forceOpen` is `open`.
+- DatePicker and DateRangePicker split `disabled`: `disabled` is a boolean for the field, `disabledDays` takes the matchers.
+- `Card.Button` takes Button's variants (`ghost` by default); its `link` variant and `CardButtonVariant` are gone.
+- Removed: `SliderComfortable` / `SliderComfortableProps`, `ColorPickerPortalContainer` (use `Tooltip.PortalContainer`, which now scopes every overlay), `ContextMenuItem` / `ContextMenuItemProps` (`ContextMenu.Item` is Dropdown's `MenuItem`), `useDropdownMaybe`, Select's `triggerVariants` and Combobox's `comboboxFieldVariants`.
+
+Fixes:
+
+- `Radio.Group` with `onValueChange` and no `defaultValue` reports picks.
+- `Sidebar.Provider` and `Sidebar.Group` with only `onOpenChange` open and close.
+- `Accordion` `collapsible={false}` keeps one item open.
+- A picker inside `InputGroup.Field` takes the field's error and disabled state; clearing a picker's text clears its value.
+- ContextMenu's radio rows are real radio items.
+- Arrow keys skip `aria-disabled` rows in Checkbox and Radio groups.
+- Toast's glyphs come from the icon context, so an `IconProvider` restyles them.
+- A child's handlers chain with Button's under `render` / `asChild`.

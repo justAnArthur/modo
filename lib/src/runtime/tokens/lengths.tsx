@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import { lengthMeta, spread } from './format'
-import { byLength, lengthOf, OtherTokens, TokenLabel, TokenSection, type Var } from './token-row'
+import { lengthOf } from './measure'
+import { byLength, OtherTokens, TokenLabel, TokenSection, type Var } from './parts'
 
 /** Tallest step in the overview's staircase, in px; the rest scale with it. */
 const STAIRS = 96

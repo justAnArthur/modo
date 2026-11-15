@@ -7,14 +7,15 @@
 
 'use client'
 
-import { endOfMonth, format, type Locale, set } from 'date-fns'
+import { format, type Locale, set } from 'date-fns'
 import { type RefObject, useRef } from 'react'
-import { dateMatchModifiers, type Matcher } from 'react-day-picker'
+import type { Matcher } from 'react-day-picker'
 import { defaultLocale, type HourCycle, hourCycleOf, parseDateText, parseTimeText } from '../../../../lib/date-locale'
 import type { FieldVariant } from '../../../../lib/field-classes'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
 import Calendar from '../calendar'
+import { isDayAllowed } from '../day-rules'
 import { PickerInput, PickerShell } from '../picker-shell'
 import { TimeColumns } from '../time-columns'
 
@@ -35,8 +36,10 @@ interface DatePickerProps {
   locale?: Locale
   /** Shown while empty. */
   placeholder?: string
-  /** `true` disables the field; any other react-day-picker matcher (a date, `{ before }`, `{ dayOfWeek }`, a function…) disables the days it matches. */
-  disabled?: Matcher | Matcher[]
+  /** Disables the field. Defaults to `false`. */
+  disabled?: boolean
+  /** Days that can't be picked or typed: any react-day-picker matcher (a date, `{ before }`, `{ dayOfWeek }`, a function…). */
+  disabledDays?: Matcher | Matcher[]
   /** The first month the calendar reaches. Defaults to 100 years back. */
   startMonth?: Date
   /** The last month the calendar reaches. Defaults to 50 years ahead. */
@@ -61,6 +64,8 @@ interface DatePickerProps {
   timeColumnsSide?: 'start' | 'end'
   /** Id of the field, for a `Label`'s `htmlFor`. */
   id?: string
+  /** Submits the value under this name in a form (`"yyyy-MM-dd"`, or `"yyyy-MM-ddTHH:mm"` with `withTime`). */
+  name?: string
   /** Where the panel grows from (see Morph): the field, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'` (the field). */
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
   /** How the panel grows (see Morph), as Combobox's list does: with the liquid goo neck, a plain morph, a slide or a fade. `'morph'` with `hideSource` opens it in place over the field. Defaults to `'goo'`. */
@@ -106,45 +111,24 @@ function DatePicker({
   hourCycle,
   minuteStep = 1,
   locale = defaultLocale,
-  placeholder,
-  disabled,
+  disabledDays,
   startMonth,
   endMonth,
-  variant,
-  invalid,
-  size,
   open: openProp,
   defaultOpen = false,
   onOpenChange,
   dir,
   columnsSide,
   timeColumnsSide,
-  id,
-  from,
-  effect,
-  hideSource,
-  tier,
-  className,
+  ...shell
 }: DatePickerProps) {
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
   const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
   const dateInput = useRef<HTMLInputElement>(null)
-  // `true` turns the field off; any other matcher picks out days.
-  const off = typeof disabled === 'boolean' && disabled
-  const days = off ? undefined : disabled
-
-  const allowed = (date: Date) =>
-    (!startMonth || date >= startMonth) &&
-    (!endMonth || date <= endOfMonth(endMonth)) &&
-    !(days && dateMatchModifiers(date, days))
 
   const readDate = (text: string) => {
-    if (!text.trim()) {
-      setValue(null)
-      return true
-    }
     const date = parseDateText(text, locale, value ?? undefined)
-    if (!date || !allowed(date)) return false
+    if (!date || !isDayAllowed(date, { startMonth, endMonth, disabledDays })) return false
     setValue(withTime ? keepTime(date, value) : date)
     return true
   }
@@ -160,10 +144,11 @@ function DatePicker({
     <>
       <PickerInput
         ref={dateInput}
-        aria-label={placeholder ?? 'Date'}
-        placeholder={placeholder}
+        aria-label={shell.placeholder ?? 'Date'}
+        placeholder={shell.placeholder}
         formatted={value ? format(value, 'PP', { locale }) : ''}
         onText={readDate}
+        onClear={() => setValue(null)}
         onEnter={() => setOpen(false)}
         className="flex-1"
       />
@@ -172,6 +157,7 @@ function DatePicker({
           aria-label="Time"
           formatted={value ? format(value, 'p', { locale }) : ''}
           onText={readTime}
+          onClear={() => setValue(null)}
           onEnter={() => setOpen(false)}
           className="w-28 shrink-0"
         />
@@ -181,24 +167,15 @@ function DatePicker({
 
   return (
     <PickerShell
+      {...shell}
       open={open}
       onOpenChange={setOpen}
-      size={size}
-      variant={variant}
-      invalid={invalid}
-      disabled={off}
       icon="calendar"
       display={value ? format(value, withTime ? 'PP, p' : 'PP', { locale }) : ''}
-      placeholder={placeholder}
+      formValue={value ? format(value, withTime ? "yyyy-MM-dd'T'HH:mm" : 'yyyy-MM-dd') : undefined}
       header={header}
       initialFocus={dateInput}
-      id={id}
       dir={dir}
-      from={from}
-      effect={effect}
-      hideSource={hideSource}
-      tier={tier}
-      className={className}
     >
       <Calendar
         mode="single"
@@ -208,7 +185,7 @@ function DatePicker({
           setValue(day ? (withTime ? keepTime(day, value) : day) : null)
           if (day && !withTime) setOpen(false)
         }}
-        disabled={days}
+        disabled={disabledDays}
         startMonth={startMonth}
         endMonth={endMonth}
         dir={dir}

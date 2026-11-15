@@ -1,35 +1,8 @@
-// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
 /*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/input-copy.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - `framer-motion` → `motion/react`; `@/lib/{utils,icon-context,shape-context,
- *   size-context,springs}` rewritten to `../../lib/*` (the `@/lib/font-weight`
- *   import went with the inline `fontVariationSettings`, below);
- *   `@/registry/radix/tooltip` → `../overlays/tooltip`.
- * - React 18 types: `useRef<ReturnType<typeof setTimeout>>(null)` →
- *   `useRef<ReturnType<typeof setTimeout> | null>(null)` (React 19 allows the
- *   1-arg null form, React 18's overloads don't).
- * - `CopyProps`: member docs replaced by the FF docs API-table text with the
- *   defaults spelled into the prose (modo reads defaults from the description, not
- *   from the destructuring), and `className` re-declared so it is documented.
- * - The tooltip comment's "Radix closes it on pointer down" reads "Base UI" here —
- *   this port's Tooltip is the Base UI flavor; behaviour is the same.
- * - modo item: TSDoc from the FF "InputCopy" docs page. Renamed `Copy` (item
- *   `copy`, outside the inputs group): `InputCopy*` exports → `Copy*`.
- * - Styling reads DS tokens (AGENTS.md styling): inline
- *   `fontVariationSettings` → `weight-*`; the hex focus-ring fallback →
- *   `ring-focus-ring` / `border-focus-ring`; literal colors → color tokens;
- *   `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
- *   `spring.*`.
- * - The copied state morphs (local, in the morph layer's language): the copy
- *   glyph's two sheets melt through the shared goo filter (`GooFilter`,
- *   `GOO_BLUR_RATIO`) into a disc tinted like Toast's state chip
- *   (`--status-success`, `--status-error` for a failure), behind the check or
- *   ✕, and split back into the glyph when the state times out. The glyphs
- *   crossfade over one fixed slot instead of `mode="wait"`; the button
- *   variant keeps that one glyph slot and swaps only its word.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
@@ -47,10 +20,11 @@ import {
 } from 'react'
 import { type IconComponent, useIcon } from '../../lib/icon-context'
 import { GooFilter } from '../../lib/morph-layers'
+import { clampRect, lerpRect, placeRect, type Rect } from '../../lib/rect'
 import { useReduceMotion } from '../../lib/reduced-motion'
 import { useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
-import { spring } from '../../lib/springs'
+import { spring, springEnter } from '../../lib/springs'
 import { GOO_BLUR_RATIO } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
 import { Tooltip } from '../overlays/tooltip'
@@ -59,27 +33,24 @@ type CopyVariant = 'icon' | 'button'
 type CopyAlign = 'right' | 'left'
 type CopyStatus = 'idle' | 'copied' | 'error'
 
-interface Rect {
-  x: number
-  y: number
-  w: number
-  h: number
-  r: number
-}
-
-// The copied state's disc (local): lucide's copy glyph is two sheets on a
-// 24-unit grid; scaled to the 14px glyph, they melt through the goo filter
-// into one disc behind the check, and split back when the state times out.
+// lucide's copy glyph is two sheets on a 24-unit grid; scaled to the 14px
+// glyph, they melt through the goo into one disc behind the check. Rects are
+// in the goo layer's coordinates: the disc plus room for the blur.
 const GLYPH = 14
 const DISC = 20
 const UNIT = GLYPH / 24
-const sheet = (at: number): Rect => ({ x: at * UNIT, y: at * UNIT, w: 14 * UNIT, h: 14 * UNIT, r: 2 * UNIT })
-const BACK = sheet(2)
-const FRONT = sheet(8)
-const DISC_RECT: Rect = { x: (GLYPH - DISC) / 2, y: (GLYPH - DISC) / 2, w: DISC, h: DISC, r: DISC / 2 }
 const BLUR = (DISC / 2) * GOO_BLUR_RATIO
-// The goo layer: the disc plus room for the blur on every side, in glyph coordinates.
-const LAYER = { at: DISC_RECT.x - BLUR * 3, size: DISC + BLUR * 6 }
+const LAYER = { at: (GLYPH - DISC) / 2 - BLUR * 3, size: DISC + BLUR * 6 }
+const inLayer = (at: number, size: number, r: number): Rect => ({
+  x: at - LAYER.at,
+  y: at - LAYER.at,
+  w: size,
+  h: size,
+  r,
+})
+const BACK = inLayer(2 * UNIT, 14 * UNIT, 2 * UNIT)
+const FRONT = inLayer(8 * UNIT, 14 * UNIT, 2 * UNIT)
+const DISC_RECT = inLayer((GLYPH - DISC) / 2, DISC, DISC / 2)
 
 // Literal per state so the class extractor sees each one. The disc's tint is
 // the layer's opacity, applied after the goo filter, which needs opaque shapes.
@@ -90,20 +61,7 @@ const CHECK_STROKE: Record<CopyVariant, string> = {
   button: '[&_svg]:stroke-[2]',
 }
 
-const { exit: _exit, ...enter } = spring.slow
-
-function placeSheet(el: HTMLElement | null, a: Rect, b: Rect, p: number) {
-  if (!el) return
-  const lerp = (from: number, to: number) => from + (to - from) * p
-  // The slow tier overshoots; a size never goes below zero on the way back.
-  const w = Math.max(0, lerp(a.w, b.w))
-  const h = Math.max(0, lerp(a.h, b.h))
-  el.style.left = `${lerp(a.x, b.x) - LAYER.at}px`
-  el.style.top = `${lerp(a.y, b.y) - LAYER.at}px`
-  el.style.width = `${w}px`
-  el.style.height = `${h}px`
-  el.style.borderRadius = `${Math.min(Math.max(0, lerp(a.r, b.r)), w / 2, h / 2)}px`
-}
+const enter = springEnter(spring.slow)
 
 /** The goo layer behind the glyph: two sheets on one progress value, idle at 0, copied (or failed) at 1. */
 function CopyDisc({ status }: { status: CopyStatus }) {
@@ -121,8 +79,9 @@ function CopyDisc({ status }: { status: CopyStatus }) {
     if (!on && progress.get() === 0) return
     const render = (p: number) => {
       if (layer.current) layer.current.style.visibility = p > 0 ? 'visible' : 'hidden'
-      placeSheet(back.current, BACK, DISC_RECT, p)
-      placeSheet(front.current, FRONT, DISC_RECT, p)
+      // The slow tier overshoots: clamped, a size never goes below zero on the way back.
+      placeRect(back.current, clampRect(lerpRect(BACK, DISC_RECT, p)))
+      placeRect(front.current, clampRect(lerpRect(FRONT, DISC_RECT, p)))
     }
     const target = on ? 1 : 0
     if (reduced) {
@@ -134,14 +93,12 @@ function CopyDisc({ status }: { status: CopyStatus }) {
   }, [on, reduced])
 
   return (
-    // Structural geometry: the layer box around the glyph slot, sized for the blur.
     <span
       aria-hidden
       className="pointer-events-none absolute"
       style={{ left: LAYER.at, top: LAYER.at, width: LAYER.size, height: LAYER.size }}
     >
       <GooFilter id={gooId} blur={BLUR} />
-      {/* The filter is the effect itself: it melts the two token-filled sheets into one. */}
       <span ref={layer} className="invisible absolute inset-0 opacity-16" style={{ filter: `url(#${gooId})` }}>
         <span ref={back} className={cn('absolute', TONE_BG[tone.current])} />
         <span ref={front} className={cn('absolute', TONE_BG[tone.current])} />
@@ -198,6 +155,7 @@ function CopyGlyph({
             )}
           >
             <svg
+              aria-hidden
               width={14}
               height={14}
               viewBox="2 4 20 16"
@@ -264,34 +222,29 @@ interface CopyProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
 const Copy = forwardRef<HTMLDivElement, CopyProps>(
   ({ value, label, onCopy, disabled, variant = 'icon', align = 'right', size, className, ...props }, ref) => {
     const CopyIcon = useIcon('copy')
-    // "copied" and "error" both occupy the same animation slot on the button
     const [status, setStatus] = useState<CopyStatus>('idle')
     const [copyCount, setCopyCount] = useState(0)
-    // "idle" = normal tooltip behavior, "copied" = force open, "suppressed" = force closed
+    // `copied` forces the tooltip open, `suppressed` closed.
     const [tooltipState, setTooltipState] = useState<'idle' | 'copied' | 'suppressed'>('idle')
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const tooltipVisibleRef = useRef(false)
     const tooltipWasVisibleRef = useRef(false)
     const shape = useShape()
     const sizeClasses = useSize(size)
-    // The row's height comes from the padded children, so the paddings step
-    // down with the ladder (py-2 → 36px total, py-1 → 28px).
+    // The padded children set the row height: py-2 → 36px, py-1 → 28px.
     const rowPy = sizeClasses.variant === 'compact' ? 'py-1' : 'py-2'
 
-    // Associate the visible label with the button: the button's accessible
-    // name reads "Copy <label>" (its own state label + the field label).
+    // The button's accessible name reads "Copy <label>".
     const generatedId = useId()
     const labelId = label ? `${generatedId}-label` : undefined
     const buttonId = `${generatedId}-button`
 
     const handlePointerDown = useCallback(() => {
-      // Capture tooltip visibility before Base UI closes it on pointer down
+      // Base UI closes the tooltip on pointer down; read it first.
       tooltipWasVisibleRef.current = tooltipVisibleRef.current
     }, [])
 
-    // execCommand fallback for when the async Clipboard API is unavailable or
-    // denied (insecure context, permissions policy) — copies via a temporary
-    // off-screen textarea.
+    // For an insecure context or a permissions policy that denies the Clipboard API.
     const copyViaExecCommand = useCallback(() => {
       const textarea = document.createElement('textarea')
       textarea.value = value
@@ -333,11 +286,7 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
       tooltipVisibleRef.current = open
     }, [])
 
-    useEffect(() => {
-      return () => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current)
-      }
-    }, [])
+    useEffect(() => () => clearTimeout(timeoutRef.current ?? undefined), [])
 
     const handleMouseEnter = useCallback(() => {
       setTooltipState(prev => (prev === 'suppressed' ? 'idle' : prev))
@@ -440,6 +389,7 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
     )
 
     return (
+      // biome-ignore lint/a11y/noStaticElementInteractions: hover only re-arms the tooltip; the button inside is the control
       <div
         ref={ref}
         className={cn('flex flex-col gap-0.5', disabled && 'opacity-50 pointer-events-none', className)}
@@ -465,7 +415,7 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
             content={tooltipState === 'idle' ? 'Copy to clipboard' : status === 'error' ? 'Copy failed' : 'Copied'}
             delayDuration={500}
             sideOffset={2}
-            forceOpen={tooltipState === 'copied' ? true : tooltipState === 'suppressed' ? false : undefined}
+            open={tooltipState === 'copied' ? true : tooltipState === 'suppressed' ? false : undefined}
             onOpenChange={handleTooltipOpenChange}
           >
             {button}

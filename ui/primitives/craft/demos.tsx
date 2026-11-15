@@ -16,7 +16,7 @@ import { useShape } from '../../lib/shape-context'
 import { useSize } from '../../lib/size-context'
 import { spring } from '../../lib/springs'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
-import { useSurface } from '../../lib/surface-context'
+import { useLift } from '../../lib/surface-context'
 import { cn } from '../../lib/utils'
 
 /** The selected label turns bold on the bare text node, so it widens and shoves its neighbours. */
@@ -146,7 +146,7 @@ export function SnapSwitch({ label }: { label: string }) {
 /** The panel pops in beside the trigger with no link to it, and vanishes the same way. */
 export function PlainPopover({ label, title, description }: { label: string; title: string; description: string }) {
   const shape = useShape()
-  const level = Math.min(useSurface() + 2, 8)
+  const level = useLift(2)
 
   return (
     <PopoverPrimitive.Root>

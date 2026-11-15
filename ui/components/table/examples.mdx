@@ -2,8 +2,8 @@ import Table from './index'
 
 # Basic
 
-Header row without an index, body rows indexed from 0 for the fluid hover
-highlight.
+The rows in `Table.Body` share the fluid hover highlight, numbered in
+order; the header row stays out of it.
 
 <div className="w-full">
   <Table>
@@ -15,17 +15,17 @@ highlight.
       </Table.Row>
     </Table.Header>
     <Table.Body>
-      <Table.Row index={0}>
+      <Table.Row>
         <Table.Cell>Alice</Table.Cell>
         <Table.Cell>Engineer</Table.Cell>
         <Table.Cell>Active</Table.Cell>
       </Table.Row>
-      <Table.Row index={1}>
+      <Table.Row>
         <Table.Cell>Bob</Table.Cell>
         <Table.Cell>Designer</Table.Cell>
         <Table.Cell>Away</Table.Cell>
       </Table.Row>
-      <Table.Row index={2}>
+      <Table.Row>
         <Table.Cell>Carol</Table.Cell>
         <Table.Cell>Manager</Table.Cell>
         <Table.Cell>Active</Table.Cell>
@@ -49,8 +49,8 @@ dense data.
       </Table.Row>
     </Table.Header>
     <Table.Body>
-      {[['Alice', 'Engineer', 'Active'], ['Bob', 'Designer', 'Away'], ['Carol', 'Manager', 'Active'], ['Dan', 'Researcher', 'Offline']].map((row, i) => (
-        <Table.Row key={row[0]} index={i}>
+      {[['Alice', 'Engineer', 'Active'], ['Bob', 'Designer', 'Away'], ['Carol', 'Manager', 'Active'], ['Dan', 'Researcher', 'Offline']].map((row) => (
+        <Table.Row key={row[0]}>
           {row.map((cell) => (
             <Table.Cell key={cell}>{cell}</Table.Cell>
           ))}

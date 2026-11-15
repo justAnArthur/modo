@@ -3,7 +3,7 @@ import { SelectContent, SelectItem, SelectTrigger, SelectValue, Select as Shadcn
 /**
  * shadcn/ui Select — single-choice dropdown backed by Radix.
  * Pulled via `bunx shadcn@latest add select` (radix-nova style, neutral base color).
- * This adapter implements modo's Select shell contract (value / onChange /
+ * This adapter implements modo's Select shell contract (value / onValueChange /
  * options), so the docs chrome and demo switcher render with it.
  *
  * @example {@include ./examples.mdx}
@@ -11,7 +11,7 @@ import { SelectContent, SelectItem, SelectTrigger, SelectValue, Select as Shadcn
 export default function Select({
   value,
   defaultValue,
-  onChange,
+  onValueChange,
   options,
   placeholder = 'Select an option',
   size = 'default',
@@ -21,7 +21,7 @@ export default function Select({
   /** Initially selected value when uncontrolled. */
   defaultValue?: string
   /** Called with the newly selected value. */
-  onChange?: (value: string) => void
+  onValueChange?: (value: string) => void
   /** Options to choose from. */
   options: { value: string; label: string }[]
   /** Placeholder shown while no value is selected. @default 'Select an option' */
@@ -30,7 +30,7 @@ export default function Select({
   size?: 'default' | 'sm'
 }) {
   return (
-    <ShadcnSelect value={value} defaultValue={defaultValue} onValueChange={onChange}>
+    <ShadcnSelect value={value} defaultValue={defaultValue} onValueChange={onValueChange}>
       <SelectTrigger size={size}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>

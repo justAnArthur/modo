@@ -12,8 +12,8 @@ is specific to this package.
 | `DESIGN.md` | The design language: every token (front matter) and the rules (prose), in Google's DESIGN.md format. |
 | `.claude/skills/modo-ui/` (repo root) | The `modo-ui` skill: the systems as code, a new-item workflow, recipes, the catalog, upstream's craft notes. Load it before writing UI here. |
 | `primitives/craft` | The rules made visible: bad / good pairs (weight shift, blinking hover, warping press, copy target, overlay origin, snapping indicator, flat surfaces, click ring). Open it in the dev server. |
-| `README.md` | The consumer docs: install, the three CSS setups, theming, the exported hooks, credits. |
-| `PORTING.md` | The port: upstream → local file map, every local modification, the UnoCSS translation. |
+| `README.md` | The consumer docs: install, the three CSS setups, theming, the component API conventions, Server Components, the exported hooks, credits. |
+| `PORTING.md` | The port: upstream → local file map, every local modification per file, the UnoCSS translation. |
 
 ## where things live
 
@@ -21,9 +21,13 @@ is specific to this package.
   (`--duration-*`), radius, spacing. The surface ladder and shadows are in `primitives/surface/surface.css`.
 - `uno.config.ts` — the utilities over the tokens (`text-<role>`, `weight-*`, `duration-<tier>`,
   `bg-surface-N`, `shadow-surface-N`, `rounded-box|glyph`). `lib/utils.ts` — `cn`, which knows them.
-- `lib/` — the shared systems: `springs`, `size-context`, `shape-context`, `surface-*`,
-  `use-fluid-hover` + `fluid-hover-highlight`, `goo-indicator`, `use-morph` + `morph-layers` +
-  `morph-part`, `reduced-motion`, `use-controllable-state`, `slot`, `icon-context`.
+- `lib/` — the shared systems: `springs` (+ `springEnter`), `size-context`, `shape-context`,
+  `surface-*` (+ `useLift`), `use-fluid-hover` + `fluid-hover-highlight`, `goo-indicator`,
+  `use-morph` + `morph-layers` + `morph-part`, `reduced-motion`, `use-controllable-state`, `slot`,
+  `icon-context`, `field-classes`, `date-locale` (+ `monthRange`), `popup` (`POPUP_SHAPE`), and the
+  helpers listed in `lib/README.md` (refs, rects, focus ring, `WeightLabel`, row groups that skip
+  `aria-disabled` rows, overlay roots and surfaces, popup rows). Use them before writing the pattern
+  by hand.
 - `primitives/` — the systems as documented items (Surface, Sizes, FluidHover, Motion, Morph,
   ScrollArea, Code, Craft). `components/[inputs|navigation|overlays]/` — controls. `blocks/` —
   compositions.
@@ -40,11 +44,20 @@ is specific to this package.
   weights, no uppercase, no letter-spacing, no arbitrary visual values.
 - **Motion has a source.** One fluid hover highlight per list; a `GooIndicator` for anything that
   travels; `useMorph` + `MorphSurface` for any new overlay; `useReduceMotion()` wherever you drive motion.
-- **Lift relative to the substrate** (`useSurface() + offset`) and re-provide the level.
+- **Lift relative to the substrate** (`useLift(offset)`, or `PopupSurface` for an overlay) and
+  re-provide the level.
 - **Both ways.** `value` / `defaultValue` / `onValueChange` through `useControllableState`, so examples
-  stay hook-free.
-- **Vendored files** keep upstream formatting and list every change in their header and in `PORTING.md`.
-  A provenance header opens with `/*!` (a legal comment), so the build keeps it in `dist/`.
+  stay hook-free. `onValueChange` gets the value, never an event; form controls take `name`.
+- **Sizes on the ladder.** `size` is `SizeVariant` (`default` | `compact`; Button adds `icon` /
+  `icon-compact`). `icon-sm` exists only for modo's shell contract.
+- **Popups behave alike** (DESIGN.md › Components): lists open 6px below their trigger
+  (`sideOffset` 6); text fields signal focus by their fill, button fields (Select's trigger, the
+  pickers, ColorPicker.Popover's trigger) also ring on `:focus-visible`; Select keeps a keyboard
+  focus ring in its list, Combobox none (its input keeps focus); only Dropdown focuses its first row
+  on open; only Select holds a pick for its 300ms acknowledgment.
+- **Vendored files** open with a `/*!` provenance header (a legal comment, so the build keeps it in
+  `dist/`) ending in "Local changes: see PORTING.md". Record every local change in `PORTING.md`'s
+  file map, not in the header.
 - **Client modules.** A module with hooks, context, handlers or browser APIs puts `'use client'` right
   after its header; `bunup.config.ts` hoists it to the top of each output chunk for RSC hosts.
 

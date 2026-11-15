@@ -7,25 +7,15 @@
 
 'use client'
 
-import {
-  addDays,
-  addYears,
-  endOfYear,
-  format,
-  isSameYear,
-  type Locale,
-  startOfMonth,
-  startOfWeek,
-  startOfYear,
-} from 'date-fns'
+import { addDays, format, isSameYear, type Locale, startOfWeek } from 'date-fns'
 import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { type DayButtonProps, DayPicker, type DayPickerProps, type DayProps, type MonthProps } from 'react-day-picker'
-import { defaultLocale, fieldLabel } from '../../../../lib/date-locale'
+import { defaultLocale, fieldLabel, monthRange } from '../../../../lib/date-locale'
 import { dividedColumns, ScrollColumn } from '../../../../lib/scroll-column'
 import { useShape } from '../../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../../lib/size-context'
 import { cn } from '../../../../lib/utils'
-import { SizeProvider } from '../../../../primitives/sizes'
+import { SizeScope } from '../../../../primitives/sizes'
 import { monthKey, useMonthWindow } from './use-month-window'
 
 const WEEKEND = { dayOfWeek: [0, 6] }
@@ -145,8 +135,7 @@ function Calendar({
   const sizeClasses = useSize(size)
   const picked = pickedDate(props)
   const today = useMemo(() => new Date(), [])
-  const start = startOfMonth(props.startMonth ?? startOfYear(addYears(today, -100)))
-  const end = startOfMonth(props.endMonth ?? endOfYear(addYears(today, 50)))
+  const { start, end } = monthRange(today, props.startMonth, props.endMonth)
   const anchor = picked ?? props.month ?? props.defaultMonth ?? today
   const scroll = useMonthWindow(start, end, anchor)
   const { jumpTo, visible } = scroll
@@ -342,9 +331,10 @@ function Calendar({
     </div>
   )
 
-  return size ? <SizeProvider size={size}>{content}</SizeProvider> : content
+  return <SizeScope size={size}>{content}</SizeScope>
 }
 
+// A type, not an interface: DayPicker's props are a union an interface can't extend.
 type CalendarProps = Parameters<typeof Calendar>[0]
 
 export type { CalendarProps }

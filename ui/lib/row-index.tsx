@@ -8,7 +8,7 @@
 
 import { Children, createContext, isValidElement, type ReactNode, useContext } from 'react'
 
-const RowIndexContext = createContext(0)
+const RowIndexContext = createContext<number | undefined>(undefined)
 
 /** Gives each element child its position among them. */
 function IndexedRows({ children }: { children: ReactNode }) {
@@ -22,10 +22,15 @@ function IndexedRows({ children }: { children: ReactNode }) {
   )
 }
 
-/** A row's index: its own `index`, else its position in the group. */
-function useRowIndex(own?: number) {
-  const position = useContext(RowIndexContext)
-  return own ?? position
+/** A row's position among `IndexedRows`, or `undefined` outside them (a table's header row). */
+function useRowPosition() {
+  return useContext(RowIndexContext)
 }
 
-export { IndexedRows, useRowIndex }
+/** A row's index: its own `index`, else its position in the group, else 0. */
+function useRowIndex(own?: number) {
+  const position = useRowPosition()
+  return own ?? position ?? 0
+}
+
+export { IndexedRows, useRowIndex, useRowPosition }

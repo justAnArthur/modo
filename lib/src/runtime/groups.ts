@@ -1,4 +1,4 @@
-import { cap } from './text'
+import { cap } from '../lib/text'
 
 interface Group<T> {
   title: string

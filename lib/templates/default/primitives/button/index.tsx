@@ -2,12 +2,13 @@ import type { MouseEventHandler, ReactNode } from 'react'
 
 /**
  * Button — triggers an action. Also the docs chrome's Button: the chrome
- * passes `variant="ghost"`, `aria-label` and `aria-pressed`.
+ * passes `variant="ghost"`, `size="icon-sm"`, `aria-label` and `aria-pressed`.
  *
  * @example {@include ./examples.mdx}
  */
 export default function Button({
   variant = 'primary',
+  size = 'md',
   disabled,
   onClick,
   className,
@@ -16,6 +17,8 @@ export default function Button({
 }: {
   /** Visual style. */
   variant?: 'primary' | 'secondary' | 'ghost'
+  /** `icon-sm` is a square button around an icon. */
+  size?: 'md' | 'icon-sm'
   /** Disables interaction. */
   disabled?: boolean
   /** Click handler. */
@@ -28,7 +31,15 @@ export default function Button({
   'aria-pressed'?: boolean
 }) {
   return (
-    <button type="button" data-variant={variant} disabled={disabled} onClick={onClick} className={className} {...aria}>
+    <button
+      type="button"
+      data-variant={variant}
+      data-size={size}
+      disabled={disabled}
+      onClick={onClick}
+      className={className}
+      {...aria}
+    >
       {children}
     </button>
   )

@@ -1,22 +1,18 @@
 import { readFileSync } from 'node:fs'
 import { extname, resolve } from 'node:path'
 import type { Plugin } from 'vite'
-import { loadModoConfig } from '../lib/config.loader'
 import { headTags, themeScript, withHead } from '../lib/head'
-import { isComponentRef } from '../lib/schema'
-import { cssModule } from './css-module'
+import { isComponentRef } from '../lib/refs'
+import { loadModoConfig } from '../node/config-loader'
+import { cssModule, virtualModules } from './virtual'
 
 interface Options {
   userRoot: string
   configPath: string
 }
 
-const VIRTUAL_ID = 'virtual:modo-config'
-const RESOLVED_ID = '\0virtual:modo-config'
-const CSS_VIRTUAL_ID = 'virtual:modo-config-css'
-const CSS_RESOLVED_ID = '\0virtual:modo-config-css'
-
 export function configPlugin(options: Options): Plugin {
+  const modules = virtualModules('config')
   let base = '/'
   let build = false
   const load = () => loadModoConfig(options.configPath)
@@ -28,16 +24,12 @@ export function configPlugin(options: Options): Plugin {
       base = c.base
       build = c.command === 'build'
     },
-    resolveId(id) {
-      if (id === VIRTUAL_ID) return RESOLVED_ID
-      if (id === CSS_VIRTUAL_ID) return CSS_RESOLVED_ID
-      return null
-    },
+    resolveId: modules.resolveId,
     async load(id) {
-      if (id !== RESOLVED_ID && id !== CSS_RESOLVED_ID) return null
+      if (id !== modules.id && id !== modules.css) return null
       const cfg = await load()
 
-      if (id === RESOLVED_ID) {
+      if (id === modules.id) {
         // An image logo goes through Vite's asset pipeline; a component logo is a shell module.
         const image = cfg.logo && !isComponentRef(cfg.logo)
         return [

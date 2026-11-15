@@ -28,11 +28,12 @@ import {
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
-import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
-import { shapeMap } from '../../../lib/shape-context'
+import { isDisabledRow, POPUP_SHAPE, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
+import { PopupLabel, RowIcon, rowClasses, rowLabelClass } from '../../../lib/popup-rows'
 import { useSize } from '../../../lib/size-context'
 import type { SlotProps } from '../../../lib/slot'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
+import type { MorphProps } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import { ScrollArea } from '../../../primitives/scroll-area'
 import { DialogContent, DialogState, DialogTrigger } from '../dialog'
@@ -55,10 +56,6 @@ interface CommandGroup {
 }
 
 type CommandItems = CommandItem[] | CommandGroup[]
-
-// Like Select's and Combobox's popups, the rows keep the "rounded" radii
-// whatever the global shape, so their highlight sits concentric in the panel.
-const listShape = shapeMap.rounded
 
 const CommandContext = createContext<{ trigger: RefObject<HTMLButtonElement>; close: () => void; session: number }>({
   trigger: { current: null },
@@ -122,24 +119,12 @@ function CommandRow({
       disabled={item.disabled}
       onClick={() => onPick(item)}
       className={cn(
-        'relative z-10 flex shrink-0 cursor-pointer select-none items-center outline-none transition-[color] duration-fast',
+        rowClasses({ size, shape: POPUP_SHAPE, lit: active }),
         'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-        size.control,
-        size.gap,
-        size.itemPx,
-        size.text,
-        listShape.item,
-        active ? 'text-foreground' : 'text-muted-foreground',
       )}
     >
-      {Icon && (
-        <Icon
-          size={size.icon}
-          strokeWidth={active ? 2 : 1.5}
-          className="shrink-0 transition-[color,stroke-width] duration-fast"
-        />
-      )}
-      <span className="min-w-0 flex-1 truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1">{item.label}</span>
+      {Icon && <RowIcon icon={Icon} lit={active} />}
+      <span className={rowLabelClass}>{item.label}</span>
       {item.shortcut && <CommandShortcut>{item.shortcut}</CommandShortcut>}
     </Autocomplete.Item>
   )
@@ -155,7 +140,6 @@ interface CommandListProps {
 function CommandList({ onPick, emptyMessage, className }: CommandListProps) {
   const filtered = Autocomplete.useFilteredItems<CommandItem | CommandGroup>() as CommandItems
   const highlight = useContext(CommandHighlight)
-  const compact = useSize().variant === 'compact'
   const containerRef = useRef<HTMLDivElement>(null)
   const { itemRects, isMeasured, registerItem } = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
   const rect = isMeasured && highlight !== null ? (itemRects[highlight] ?? null) : null
@@ -173,19 +157,14 @@ function CommandList({ onPick, emptyMessage, className }: CommandListProps) {
           {emptyMessage}
         </Autocomplete.Empty>
         <Autocomplete.List ref={containerRef} className="relative flex flex-col p-1 outline-none data-[empty]:p-0">
-          <FluidHoverHighlight rect={rect} session={0} className={listShape.bg} />
+          <FluidHoverHighlight rect={rect} session={0} className={POPUP_SHAPE.bg} />
           {isGrouped(filtered)
             ? filtered.map(group => {
                 const first = start
                 start += group.items.length
                 return (
                   <Autocomplete.Group key={group.label} className="flex flex-col">
-                    <Autocomplete.GroupLabel
-                      className={cn(
-                        'shrink-0 px-2 pt-2 pb-1 text-muted-foreground',
-                        compact ? 'text-caption-compact' : 'text-caption',
-                      )}
-                    >
+                    <Autocomplete.GroupLabel render={<PopupLabel className="pt-2 pb-1" />}>
                       {group.label}
                     </Autocomplete.GroupLabel>
                     {rows(group.items, first)}
@@ -267,34 +246,30 @@ const CommandTrigger = forwardRef<HTMLButtonElement, SlotProps>((props, ref) => 
 })
 CommandTrigger.displayName = 'CommandTrigger'
 
-interface CommandContentProps extends CommandPaletteProps {
+interface CommandContentProps
+  extends CommandPaletteProps,
+    MorphProps,
+    Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'className' | 'placeholder'> {
   /** Accessible name of the panel. Defaults to `'Command menu'`. */
   label?: string
-  /** Where the panel grows from (see Morph): the pressed trigger (its center when none), the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
-  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
-  /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
-  effect?: 'goo' | 'morph' | 'slide' | 'fade'
-  /** Hide the trigger while open, so it reads as turning into the panel. Defaults to `false`. */
-  hideSource?: boolean
-  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'slow'`. */
-  tier?: 'moderate' | 'slow'
+  /** Portal target, as Dialog's: an element with `position: relative; overflow: hidden`. Defaults to the document body. */
+  container?: HTMLElement | null
 }
 
 const CommandContent = forwardRef<HTMLDivElement, CommandContentProps>(
-  ({ items, placeholder, emptyMessage, className, label = 'Command menu', ...morph }, ref) => {
+  ({ items, placeholder, emptyMessage, className, label = 'Command menu', ...props }, ref) => {
     const { session } = useContext(CommandContext)
     return (
       <DialogContent
         ref={ref}
         position="top"
-        size="lg"
+        width="lg"
         showCloseButton={false}
         aria-label={label}
         className="p-0"
-        {...morph}
+        {...props}
       >
-        {/* Fresh per open: a palette reopened before it finished closing
-            would keep the old query and lose the first row's highlight. */}
+        {/* Fresh per open: a palette reopened mid-close would keep the old query and lose the first row's highlight. */}
         <CommandPalette
           key={session}
           items={items}
@@ -387,7 +362,8 @@ interface CommandProps {
  * - `Command.Trigger` — the control that opens it: `render={<Button/>}` or
  *   `asChild`.
  * - `Command.Content` — the panel: `items`, `placeholder`, `emptyMessage`,
- *   `label`, and the morph options `from`, `effect`, `hideSource`, `tier`.
+ *   `label`, `container`, and the morph options `from`, `effect`,
+ *   `hideSource`, `tier` (default `'slow'`).
  * - `Command.Palette` — the search field and list on their own, for a
  *   palette that lives in the page: `items`, `placeholder`, `emptyMessage`.
  * - `Command.Shortcut` — a key hint, as the rows show it, e.g. in the

@@ -36,8 +36,9 @@ Read in this order and stop when you have what you need:
 | [references/upstream-craft.md](references/upstream-craft.md) | Upstream's per-component craft: exact behaviors, values and why. Translate through the table below. |
 
 Repo rules in `AGENTS.md` (tokens only, TSDoc, file naming, sparse code style) apply throughout. The
-installed source and its header comments are the final word over every document, this one included:
-read the item's `index.tsx` before wrapping, extending or imitating it.
+installed source is the final word over every document, this one included: read the item's
+`index.tsx` before wrapping, extending or imitating it, and `ui/PORTING.md` for what a vendored file
+changed from upstream.
 
 ## Upstream → here
 
@@ -61,12 +62,17 @@ Upstream's craft, docs and snippets assume a shadcn + Tailwind + Next app. Read 
 | React 19 (`ref` as a prop, 1-arg `useRef(null)`) | React 18.3: `forwardRef`, `useRef<T \| null>(null)`, `MutableRefObject` casts where a forwarded ref is written. |
 | `next/link`, `"use client"`, RSC | Plain anchors. A module with hooks, context, handlers or browser APIs keeps `'use client'` as its first statement (after the `/*!` header); the build hoists it per output chunk. The docs site itself has no server components. |
 | `nestedRadius()`, `useSize().field` / `fieldTouchClass`, `.typeset`, Banner, ChatMessage, AskUserQuestions, ThinkingSteps, CommandMenu, CarouselDots | Not in this port (pinned at `b3587bd`). Don't import them. Port one as its own item if you need it (authoring.md). |
+| `CheckboxItem` / `CheckboxGroup`, `RadioItem` / `RadioGroup`, `InputCopy`, `InputField` | `Checkbox` / `Checkbox.Group`, `Radio` / `Radio.Group`, `Copy`, `Input` (+ `Label`, `InputGroup.Field`). |
+| `TabsSubtle` | `Tabs variant="subtle"` (same `Tabs.List` / `Tabs.Item` / `Tabs.Panel`). |
+| `selectedIndex` / `onSelect` on tabs, `onChange` on Input / Slider | `value` / `defaultValue` / `onValueChange` (the value, not an event). |
+| Tooltip `forceOpen`, Dialog `size` | Tooltip `open` / `defaultOpen`; `Dialog.Content width`. |
+| `size="sm" \| "md" \| "lg"`, `icon-sm` / `icon-lg` | The ladder only: `default` / `compact` (Button adds `icon` / `icon-compact`). `icon-sm` is kept for modo's shell contract alone. |
 | `scripts/stack.mjs`, audit files, decisions records | Not needed: the stack is fixed and documented in `PORTING.md`. Verify with the checks in authoring.md. |
 
 ## Workflow: a new component
 
 1. **Does it need to exist?** Search [references/components.md](references/components.md). Most asks are
-   a composition (a settings panel is Dialog + TabsSubtle + InputGroup + Switch) or a prop on an
+   a composition (a settings panel is Dialog + `Tabs variant="subtle"` + InputGroup + Switch) or a prop on an
    existing item. Compose in an example or a block before adding an item; wrap a shipped item rather
    than forking it (AlertDialog is 77 lines over Dialog's parts).
 2. **Pick the home.** `primitives/` for a system or building piece, `components/[inputs|navigation|overlays]/`
@@ -77,7 +83,9 @@ Upstream's craft, docs and snippets assume a shadcn + Tailwind + Next app. Read 
 4. **Look and motion from the systems** below. Each one is a checklist item, not an option.
 5. **State both ways.** `value` / `defaultValue` / `onValueChange` (and `open` / `defaultOpen` /
    `onOpenChange`) through `useControllableState`, so examples run without hooks.
-6. **Document.** Header comment, a `interface XProps` with one member per line, each described and
+6. **Document.** Header comment (a local file: "Local addition (not part of Fluid Functionalism)";
+   a vendored one: provenance ending in "Local changes: see PORTING.md", with the changes in
+   `PORTING.md`), a `interface XProps` with one member per line, each described and
    ending in "Defaults to `x`." where it has one, then TSDoc (lead sentence, concept paragraph, Statics
    list) and `@example {@include ./examples.mdx}`.
 7. **Verify** ([authoring.md](references/authoring.md#verify)): typecheck, lint, the style grep, then look
@@ -116,8 +124,9 @@ size.px / size.itemPx / size.gap / size.icon / size.segmentItem / size.segmentPa
 size.variant      // 'default' | 'compact' — for `compact ? 'text-caption-compact' : 'text-caption'`
 ```
 
-A compound that takes `size` wraps its subtree in `<SizeProvider size={size}>` so its parts and the
-menus it opens follow (see `Tabs`). Never invent a third height.
+A compound that takes `size` wraps its subtree in `<SizeScope size={size}>` (`primitives/sizes`: a
+provider only when `size` is set) so its parts and the menus it opens follow (see `Tabs`). `size` is
+always `SizeVariant`; never invent a third height or a size alias.
 
 ### Shape (`lib/shape-context.tsx`)
 
@@ -128,29 +137,30 @@ pill), `shape.container` (12 / 24), `shape.focusRing` (10 / 22, for a ring drawn
 ### Surfaces (`primitives/surface`, `lib/surface-*`)
 
 ```tsx
-const level = Math.min(useSurface() + 2, 8) // +1 code, +2 popups, +3 the tabs indicator, +4 dialogs
+const level = useLift(2) // min(substrate + 2, 8): +1 code, +2 popups, +3 the tabs indicator, +4 dialogs
 <SurfaceProvider value={level}>
   <div className={cn(SURFACE_BG[level], SURFACE_SHADOW[3], shape.container)}>…</div>
 </SurfaceProvider>
 ```
 
 Re-provide the level so anything nested lifts above you. Menus keep a fixed `SURFACE_SHADOW[3]`;
-dialogs and sheets use `SURFACE_SHADOW[level]`. `<Elevated offset={2}>` does both for a plain div.
+dialogs and sheets use `SURFACE_SHADOW[level]`. `<Elevated offset={2}>` does both for a plain div;
+`<PopupSurface morph lift="popup|panel">` (`lib/popup-surface.tsx`) does both for an overlay.
 
 ### Type and weight
 
 Pick the role by purpose (DESIGN.md › Typography): body for controls and rows, caption for secondary
 lines, subtitle for card/popover titles, title for dialog and section titles, display for the page
-title only. Text that changes weight with state uses the ghost-span pattern
-([motion.md](references/motion.md#weight-without-reflow)). Fixed-height labels add
-`[text-box:trim-both_cap_alphabetic]`. Sentence case; no `uppercase`, no `tracking-*`.
+title only. Text that changes weight with state is a `WeightLabel` (`lib/weight-label.tsx`, the ghost-span
+pattern: [motion.md](references/motion.md#weight-without-reflow)). Fixed-height labels add
+`text-trim` (or `<WeightLabel trim>`). Sentence case; no `uppercase`, no `tracking-*`.
 
 ### Motion (`lib/springs.ts`)
 
 ```tsx
 transition={spring.moderate}                              // enter: spring
 exit={{ opacity: 0, transition: spring.moderate.exit }}   // exit: tween, one tier quicker
-const { exit: _exit, ...enter } = spring.moderate         // when a transition object must not carry `exit`
+const enter = springEnter(spring.moderate)                // when a transition object must not carry `exit`
 transition={open ? spring.fast : spring.fast.exit}        // a flipped target with no unmount
 ```
 
@@ -177,19 +187,24 @@ contiguous selections use `useSelectionRuns` + `useMergeSplitBlocks` + `Selectio
 
 ### Morphing overlays (`lib/use-morph.ts`, `lib/morph-layers.tsx`, `lib/morph-part.tsx`)
 
-Every new floating surface grows out of its source. Root: `useMorphOrigin()` and call `capture(details)`
-in Base UI's `onOpenChange` on open. Content: `useMorph(open, origin, { from, effect, hideSource,
-tier })`, `popupRef` on the Base UI `Popup`, `<MorphSurface>` inside it with the level's bg and shadow
-and `shape.container`. Expose `from` / `effect` / `hideSource` / `tier` with the standard prop docs.
+Every new floating surface grows out of its source. Root: `useOverlayRoot({ open, defaultOpen,
+onOpenChange })` (`lib/overlay.tsx`): pass its `onOpenChange` to the Base UI root (it captures the
+origin) and its `state` to `OverlayContext.Provider`. Content: `useOverlay('X.Content')`, then
+`useMorph(open, origin, { from, effect, hideSource, tier })`, `popupRef` on the Base UI `Popup`
+(through `useMergeRefs`), `positionerProps(...)` on the `Positioner`, `usePortalContainer(container)`
+on the `Portal` and `<PopupSurface morph>` inside the popup. Extend `AnchorProps` and `MorphProps` for
+the standard prop docs.
 Shared parts between trigger and panel are `MorphPart`s. Recipe and the copyable reference:
 [motion.md](references/motion.md#morphing-overlays).
 
 ### Focus and keyboard
 
-Controls: `outline-none focus-visible:ring-1 focus-visible:ring-focus-ring`. Lists and popups: one
-ring rect (`border border-focus-ring`, `shape.focusRing`, 2px outside the row) that springs between
-rows on `spring.fast`, shown only for keyboard focus (`useKeyboardNavGate` in popups; `:focus-visible`
-elsewhere). Natively focusable things nothing styles get the global fallback ring from `global.css`.
+Controls: `outline-none focus-visible:ring-1 focus-visible:ring-focus-ring`. Text fields signal focus
+by the field ladder's fill alone; button fields (a Select trigger, a picker) also take the ring. Lists
+and popups: one `<FocusRing rect>` (`lib/focus-ring.tsx`, 2px outside the row) that springs between
+rows on `spring.fast`, shown only for keyboard focus (`useRowFocus` / `useRowGroup` from
+`lib/row-group.tsx`; `useKeyboardNavGate` in popups). A list whose input keeps focus (Combobox) draws
+none. Natively focusable things nothing styles get the global fallback ring from `global.css`.
 
 ### Icons (`lib/icon-context.tsx`)
 
@@ -232,10 +247,9 @@ What makes it read as this system rather than "a component library":
   assignment (`X.Part = …`) or `Object.assign` with a typed cast; examples are hook-free plain JS.
 - **Base UI unmounts a closed popup when `getAnimations()` settles.** JS-driven exits need a hold
   (`holdExit` in `use-morph.ts`); `useMorph` already does it.
-- **Vendored files keep upstream formatting** and list every local change in their header; local files
-  use the repo style (single quotes, no semicolons). Don't restyle a vendored component in place:
-  compose or wrap it. If its behavior must change, record the change in its header and in `PORTING.md`'s
-  file map.
+- **Vendored files keep upstream's code** (formatted in the repo style, lint-exempt where needed); their
+  header ends in "Local changes: see PORTING.md". Don't restyle a vendored component in place: compose
+  or wrap it. If its behavior must change, record the change in `PORTING.md`'s file map.
 - **Two `modo dev` servers in one DS share `.modo-tmp/build`.** Use the runner (it kills strays).
 - **Chrome restyling** goes through `data-modo` attributes in `global.css`, never lib CSS.
 

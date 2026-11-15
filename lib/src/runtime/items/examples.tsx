@@ -1,24 +1,33 @@
 import { byName, exampleScope } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { Component, type ReactNode, useEffect, useState } from 'react'
-import { babelReady, compileExampleBody, isCompiledExample, loadBabel } from '../../lib/example'
 import type { ParsedExample } from '../../lib/tsdoc'
 import { Heading, slug } from '../anchor'
 import { CopyButton } from '../code-block'
 import { Markdown } from '../markdown'
+import { babelReady, compileExampleBody, type ExampleRenderer, loadBabel } from './compile'
 
 // Identifiers available to every example: the `examples` config module's
 // exports, then the items by name (items win on collision). Module-level so
 // compiled examples cache their bindings per this one object.
 export const bindings: Record<string, unknown> = { ...exampleScope, ...byName }
 
-/** Re-renders once Babel has loaded; until then an inline example's stage stays empty. */
-export function useBabel(): boolean {
+/** An inline example, compiled: undefined until Babel has loaded, null when it doesn't compile. */
+export function useExample(code: string): ExampleRenderer | null | undefined {
   const [ready, setReady] = useState(babelReady)
   useEffect(() => {
     if (!ready) loadBabel().then(() => setReady(true))
   }, [ready])
-  return ready
+  return ready ? compileExampleBody(code) : undefined
+}
+
+/** An example's title: an anchored h3 with an `example-<slug>` id. */
+export function ExampleTitle({ label, children }: { label: string; children?: ReactNode }) {
+  return (
+    <Heading level={3} label={label} id={`example-${slug(label)}`} modo="example-card-title">
+      {children}
+    </Heading>
+  )
 }
 
 /** `@example` cards, then the item's included .mdx examples (`children`). */
@@ -49,16 +58,16 @@ export class ExampleBoundary extends Component<{ children: ReactNode }, { failed
 }
 
 function ExampleCard({ example: { title, description, code } }: { example: ParsedExample }) {
-  const compiled = useBabel() ? compileExampleBody(code) : null
+  const example = useExample(code)
   return (
     <div data-modo="example-card">
-      {title ? <Heading level={3} label={title} id={`example-${slug(title)}`} modo="example-card-title" /> : null}
+      {title ? <ExampleTitle label={title} /> : null}
       {description ? (
         <div data-modo="prose">
           <Markdown source={description} />
         </div>
       ) : null}
-      <ExampleFrame code={code}>{isCompiledExample(compiled) ? compiled(bindings) : null}</ExampleFrame>
+      <ExampleFrame code={code}>{example ? example(bindings) : null}</ExampleFrame>
     </div>
   )
 }

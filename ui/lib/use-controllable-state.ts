@@ -1,31 +1,44 @@
+/*
+ * Local addition (not part of Fluid Functionalism): controlled + uncontrolled
+ * state the way Base UI components take it.
+ */
+
 'use client'
 
 import { useCallback, useRef, useState } from 'react'
 
-/*
- * Local addition (not part of Fluid Functionalism): controlled + uncontrolled
- * state the way Base UI components take it. Several FF wrappers are
- * controlled-only (`checked`, `value`, `selectedIndex`, …); each gains a
- * `default*` counterpart backed by this hook, so a component works with no
- * state of its own in the caller.
+type SetState<T, Prev = T> = (next: T | ((prev: Prev) => T)) => void
+
+/**
+ * Controlled while `value !== undefined`: renders `value` and reports changes
+ * through `onChange`. Otherwise keeps its own state, seeded once from
+ * `defaultValue`, and still reports. The setter is stable, takes an updater
+ * and skips no-op updates (`Object.is`).
  *
- * The component is controlled while `value !== undefined`: it renders
- * `value` and only reports changes through `onChange`. Otherwise it keeps its
- * own state, seeded from `defaultValue` (read once, like `useState`), and
- * still reports every change. The setter is stable, accepts an updater
- * function, and skips no-op updates (`Object.is`).
+ * With an optional `defaultValue` (no selection yet), the state may be
+ * `undefined` but every change, and so `onChange`, carries a value.
  */
 export function useControllableState<T>(
   value: T | undefined,
   defaultValue: T,
   onChange?: (value: T) => void,
-): [T, (next: T | ((prev: T) => T)) => void] {
+): [T, SetState<T>]
+export function useControllableState<T>(
+  value: T | undefined,
+  defaultValue: T | undefined,
+  onChange?: (value: NonNullable<T>) => void,
+): [T | undefined, SetState<NonNullable<T>, T | undefined>]
+export function useControllableState<T>(
+  value: T | undefined,
+  defaultValue: T,
+  onChange?: (value: T) => void,
+): [T, SetState<T>] {
   const [internal, setInternal] = useState<T>(defaultValue)
   const controlled = value !== undefined
-  const current = controlled ? (value as T) : internal
+  const current = controlled ? value : internal
 
-  // Latest render's values, so the stable setter never reads a stale closure
-  // and back-to-back updater calls chain off each other.
+  // The latest render's values, so the stable setter never reads a stale
+  // closure and back-to-back updaters chain off each other.
   const currentRef = useRef(current)
   currentRef.current = current
   const controlledRef = useRef(controlled)

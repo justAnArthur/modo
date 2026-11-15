@@ -11,12 +11,11 @@ import { type Duration, formatDuration, type Locale } from 'date-fns'
 import { type RefObject, useMemo, useRef } from 'react'
 import { defaultLocale, fieldLabel } from '../../../../lib/date-locale'
 import type { FieldVariant } from '../../../../lib/field-classes'
-import { dividedColumns, ScrollColumn } from '../../../../lib/scroll-column'
+import { ScrollColumn } from '../../../../lib/scroll-column'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
-import { cn } from '../../../../lib/utils'
-import { PickerInput, PickerShell } from '../picker-shell'
-import { pad } from '../time-columns'
+import { ColumnsPanel, columnsPopupClass, PickerInput, PickerShell } from '../picker-shell'
+import { minuteOptions, pad } from '../time-columns'
 
 interface DurationPickerProps {
   /** The picked duration, a date-fns `Duration` (`{ hours, minutes }`); `null` when empty. */
@@ -49,6 +48,8 @@ interface DurationPickerProps {
   onOpenChange?: (open: boolean) => void
   /** Id of the field, for a `Label`'s `htmlFor`. */
   id?: string
+  /** Submits the value under this name in a form (ISO 8601, `"PT1H30M"`). */
+  name?: string
   /** Where the panel grows from (see Morph): the field, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'` (the field). */
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
   /** How the panel grows (see Morph), as Combobox's list does: with the liquid goo neck, a plain morph, a slide or a fade. `'morph'` with `hideSource` opens it in place over the field. Defaults to `'goo'`. */
@@ -81,20 +82,10 @@ function DurationPicker({
   maxHours = 99,
   minuteStep = 1,
   locale = defaultLocale,
-  placeholder,
-  disabled,
-  variant,
-  invalid,
-  size,
   open: openProp,
   defaultOpen = false,
   onOpenChange,
-  id,
-  from,
-  effect,
-  hideSource,
-  tier,
-  className,
+  ...shell
 }: DurationPickerProps) {
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
   const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
@@ -109,10 +100,6 @@ function DurationPicker({
     : ''
 
   const readDuration = (text: string) => {
-    if (!text.trim()) {
-      setValue(null)
-      return true
-    }
     const match = TYPED.exec(text)
     const h = Number(match?.[1])
     const m = Number(match?.[2] ?? 0)
@@ -125,47 +112,32 @@ function DurationPicker({
     () => Array.from({ length: maxHours + 1 }, (_, h) => ({ value: h, label: String(h) })),
     [maxHours],
   )
-  const minuteOptions = useMemo(
-    () =>
-      Array.from({ length: Math.ceil(60 / minuteStep) }, (_, i) => ({
-        value: i * minuteStep,
-        label: pad(i * minuteStep),
-      })),
-    [minuteStep],
-  )
+  const minutesList = useMemo(() => minuteOptions(minuteStep), [minuteStep])
 
   return (
     <PickerShell
+      {...shell}
       open={open}
       onOpenChange={setOpen}
-      size={size}
-      variant={variant}
-      invalid={invalid}
-      disabled={disabled}
       icon="clock"
       display={display}
-      placeholder={placeholder}
+      formValue={value ? `PT${hours}H${minutes}M` : undefined}
       header={
         <PickerInput
           ref={input}
-          aria-label={placeholder ?? 'Duration'}
+          aria-label={shell.placeholder ?? 'Duration'}
           placeholder="0:00"
           formatted={value ? `${hours}:${pad(minutes)}` : ''}
           onText={readDuration}
+          onClear={() => setValue(null)}
           onEnter={() => setOpen(false)}
           className="flex-1"
         />
       }
       initialFocus={input}
-      popupClassName="w-[max(var(--anchor-width,0px),14rem)]"
-      id={id}
-      from={from}
-      effect={effect}
-      hideSource={hideSource}
-      tier={tier}
-      className={className}
+      popupClassName={columnsPopupClass}
     >
-      <div className={cn(dividedColumns, 'h-56')}>
+      <ColumnsPanel>
         <ScrollColumn
           label={fieldLabel(locale, 'hour')}
           options={hourOptions}
@@ -175,12 +147,12 @@ function DurationPicker({
         />
         <ScrollColumn
           label={fieldLabel(locale, 'minute')}
-          options={minuteOptions}
+          options={minutesList}
           value={value ? minutes : null}
           onValueChange={m => setValue({ hours, minutes: m })}
           className="min-w-0 flex-1"
         />
-      </div>
+      </ColumnsPanel>
     </PickerShell>
   )
 }

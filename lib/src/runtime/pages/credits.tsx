@@ -1,8 +1,8 @@
 import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { credits } from '../../lib/item-meta'
+import { count } from '../../lib/text'
 import { Heading } from '../anchor'
-import { count } from '../text'
 
 /** The upstreams the items' `@source` / `@license` tags cite, listed once for the whole system. */
 export function Credits() {

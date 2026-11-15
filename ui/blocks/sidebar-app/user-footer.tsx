@@ -1,17 +1,13 @@
-// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
 /*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/blocks/sidebar-user-footer.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - `@/components/ui/{sidebar,dropdown}` → `../../components/*`,
- *   `@/lib/sidebar-menu-grid` → `./menu-grid`, `@/lib/*` → `../../lib/*`.
- * - Styling reads DS tokens (AGENTS.md styling): `text-[13px]` → `text-body`.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
 
-import { type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '../../components/navigation/sidebar'
 import { DropdownContent, DropdownMenu, DropdownTrigger } from '../../components/overlays/dropdown'
 import { useIcon } from '../../lib/icon-context'
@@ -19,14 +15,9 @@ import { useSize } from '../../lib/size-context'
 import { cn } from '../../lib/utils'
 import { SIDEBAR_MENU_POPUP } from './menu-grid'
 
-// ---------------------------------------------------------------------------
-// Footer user row: identity anchors the sidebar's outer edge. The 20px
-// avatar pulls -ml-0.5 to centre on the rows' leading icon axis; the
-// chevron rides a 24px slot pulled -mr-0.5 onto the trailing action axis —
-// the same axes every other sidebar row uses. Its menu opens upward on the
-// shared sidebar menu grid, so labels and trailing glyphs line up with the
-// trigger row exactly.
-// ---------------------------------------------------------------------------
+// The 20px avatar pulls -ml-0.5 onto the rows' leading axis and the chevron's
+// 24px slot -mr-0.5 onto the trailing action axis. The menu opens upward on
+// the shared sidebar menu grid.
 
 export interface SidebarUserFooterProps {
   /** Display name shown in the row. */

@@ -11,9 +11,14 @@ export interface PageHead {
 const OPEN = '<!--modo:head-->'
 const CLOSE = '<!--/modo:head-->'
 
+/** `<page> · <site>`, or the site's name alone for a page without its own title. */
+export function pageTitle(siteName: string, title?: string): string {
+  return title && title !== siteName ? `${title} · ${siteName}` : siteName
+}
+
 /** The per-page tags between markers, so each emitted route can swap them. */
 export function headTags(site: SiteConfig, page: PageHead): string {
-  const title = page.title ? `${page.title} · ${site.name}` : site.name
+  const title = pageTitle(site.name, page.title)
   const description = plainText(page.description ?? '') || site.description
   // 404.html answers for any missing path, so it names no canonical URL.
   const url =
@@ -40,7 +45,7 @@ export function withHead(html: string, tags: string): string {
 }
 
 /** The first paragraph of Markdown as one plain line, cut near 160 characters. */
-export function plainText(md: string): string {
+function plainText(md: string): string {
   const text = (md.trim().split(/\n\s*\n/)[0] ?? '')
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
     .replace(/[`*_~]/g, '')

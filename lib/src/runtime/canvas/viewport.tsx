@@ -12,8 +12,10 @@ import {
 
 const MIN_SCALE = 0.05
 const MAX_SCALE = 4
-/** Below this a frame that hasn't mounted stays empty: too small to use, and
-    zoomed out far enough that every frame would mount at once. */
+/**
+ * Below this a frame that hasn't mounted stays empty: too small to use, and
+ * zoomed out far enough that every frame would mount at once.
+ */
 const LIVE_SCALE = 0.25
 /** Frames mounted per animation frame, so arriving somewhere never stalls a gesture. */
 const MOUNTS_PER_FRAME = 3
@@ -37,8 +39,10 @@ function clamp(k: number): number {
   return Math.min(MAX_SCALE, Math.max(MIN_SCALE, k))
 }
 
-/** The pan/zoom state, written straight to the world's transform: a gesture
-    never re-renders React, only the zoom label and frames going live. */
+/**
+ * The pan/zoom state, written straight to the world's transform: a gesture
+ * never re-renders React, only the zoom label and frames going live.
+ */
 function createCamera(root: RefObject<HTMLDivElement | null>, world: RefObject<HTMLDivElement | null>) {
   const view = { ...(saved ?? { x: 0, y: 0, k: 1 }) }
   const listeners = new Set<() => void>()
@@ -114,8 +118,10 @@ function createCamera(root: RefObject<HTMLDivElement | null>, world: RefObject<H
       view.y += dy
       move()
     },
-    /** Fits the whole world in the view, but no smaller than `floor`; past
-        it the world starts at the top left. */
+    /**
+     * Fits the whole world in the view, but no smaller than `floor`; past
+     * it the world starts at the top left.
+     */
     fit(floor = MIN_SCALE) {
       const r = root.current!
       const w = world.current!
@@ -130,8 +136,10 @@ function createCamera(root: RefObject<HTMLDivElement | null>, world: RefObject<H
       listeners.add(fn)
       return () => listeners.delete(fn)
     },
-    /** Calls `onLive` once, when `el` is within half a viewport of the view
-        and the view is zoomed in enough to use it. */
+    /**
+     * Calls `onLive` once, when `el` is within half a viewport of the view
+     * and the view is zoomed in enough to use it.
+     */
     observe(el: Element, onLive: () => void) {
       // Created on first use: child effects run before the viewport's own.
       observer ??= new IntersectionObserver(
@@ -151,8 +159,10 @@ function createCamera(root: RefObject<HTMLDivElement | null>, world: RefObject<H
   }
 }
 
-/** Whether `ref` has come near the view while it was zoomed in enough to use.
-    Stays true after: a mounted frame keeps its state wherever the view goes. */
+/**
+ * Whether `ref` has come near the view while it was zoomed in enough to use.
+ * Stays true after: a mounted frame keeps its state wherever the view goes.
+ */
 export function useLive(ref: RefObject<Element | null>): boolean {
   const camera = useContext(CameraContext)!
   const [live, setLive] = useState(false)
@@ -183,9 +193,11 @@ function scrollsInside(target: Element | null, root: Element, dx: number, dy: nu
 // What a press keeps for itself instead of starting a pan.
 const OWN_PRESS = '[data-modo="canvas-stage"], [data-modo="canvas-controls"], a, button, input, select, textarea'
 
-/** An endless surface: wheel or drag the background to pan, pinch or
-    ⌘/Ctrl-wheel to zoom, hold Space to pan from anywhere. Shift+0 is 100%,
-    Shift+1 fits everything. */
+/**
+ * An endless surface: wheel or drag the background to pan, pinch or
+ * ⌘/Ctrl-wheel to zoom, hold Space to pan from anywhere. Shift+0 is 100%,
+ * Shift+1 fits everything.
+ */
 export function Viewport({ children }: { children: ReactNode }) {
   const root = useRef<HTMLDivElement>(null)
   const world = useRef<HTMLDivElement>(null)

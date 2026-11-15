@@ -1,96 +1,83 @@
 /*
  * Local addition (not part of Fluid Functionalism): the field and panel every
- * date and time picker shares. Not an item (a file in a group folder): the
- * pickers import it.
- *
- * The field is a text field on the shared field box (`useFieldBox` in
- * `lib/field-classes.ts`, `bordered` unless the picker's `variant` says
- * otherwise) showing the formatted value. Pressed, it opens its panel through Base UI's
- * Popover and the morph layer, with Combobox's options: goo out of the field
- * by default, or in place over it (`effect="morph"` with `hideSource`), the
- * panel's header landing where the field was. On a phone-width screen the
- * panel is the Sheet item instead, from the bottom edge.
+ * date and time picker shares. A file in a group folder, not an item.
  */
 
 'use client'
 
 import { Popover } from '@base-ui/react/popover'
-import { type ButtonHTMLAttributes, forwardRef, type ReactNode, type RefObject, useCallback, useState } from 'react'
-import { type FieldVariant, fieldIconClasses, useFieldBox } from '../../../lib/field-classes'
+import { type ButtonHTMLAttributes, forwardRef, type ReactNode, type RefObject, useContext, useState } from 'react'
+import { FieldStateContext, type FieldVariant, fieldIconClasses, useFieldBox } from '../../../lib/field-classes'
 import { type IconName, useIcon } from '../../../lib/icon-context'
-import { MorphSurface } from '../../../lib/morph-layers'
-import { useShape } from '../../../lib/shape-context'
+import { OverlayContext, positionerProps, useOverlay, useOverlayRoot } from '../../../lib/overlay'
+import { PopupSurface } from '../../../lib/popup-surface'
+import { dividedColumns } from '../../../lib/scroll-column'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
-import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
-import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
-import { useControllableState } from '../../../lib/use-controllable-state'
 import { useIsMobile } from '../../../lib/use-is-mobile'
-import {
-  inPlaceOffset,
-  type MorphEffect,
-  type MorphFrom,
-  type MorphTier,
-  opensInPlace,
-  useMorph,
-  useMorphOrigin,
-} from '../../../lib/use-morph'
+import { type MorphProps, useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import { SizeProvider } from '../../../primitives/sizes'
+import { SizeScope } from '../../../primitives/sizes'
 import Button from '../../button'
 import Sheet from '../../overlays/sheet'
 import Input, { type InputProps } from '../input'
 
-interface PickerShellProps {
-  open?: boolean
-  defaultOpen?: boolean
-  onOpenChange?: (open: boolean) => void
+/** What every picker hands its shell unchanged. */
+interface PickerFieldOptions extends MorphProps {
   size?: SizeVariant
   variant?: FieldVariant
   invalid?: boolean
   disabled?: boolean
+  placeholder?: string
+  /** Submits the value under this name in a form. */
+  name?: string
+  id?: string
+  /** Classes for the field. */
+  className?: string
+}
+
+interface PickerShellProps extends PickerFieldOptions {
+  open: boolean
+  onOpenChange: (open: boolean) => void
   /** The field's leading icon. */
   icon: IconName
   /** The formatted value; empty shows the placeholder. */
   display: string
-  placeholder?: string
+  /** What a form receives under `name`: one entry per string, none while empty. */
+  formValue?: string | string[]
   /** The panel header's inputs; the shell adds the close button after them. */
   header: ReactNode
   /** What the panel focuses when it opens on a desktop (its header input). */
   initialFocus?: RefObject<HTMLElement | null>
   /** Accessible name of the close button. */
   closeLabel?: string
-  id?: string
   dir?: string
-  /** Classes for the field. */
-  className?: string
   /** Classes for the panel on a desktop: its width. */
   popupClassName?: string
-  /** The desktop panel's morph (see Morph); a phone's sheet grows from its edge. */
-  from?: MorphFrom
-  effect?: MorphEffect
-  hideSource?: boolean
-  tier?: MorphTier
   /** The panel body under the header. */
   children: ReactNode
 }
 
-/** The field and its panel: a popover out of the field (or in place of it), or a bottom sheet on a phone. */
-function PickerShell({ open: openProp, defaultOpen = false, onOpenChange, size, ...props }: PickerShellProps) {
-  const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
+/**
+ * The field and its panel: a popover out of the field (goo by default, or in
+ * place over it with `effect="morph"` + `hideSource`), or a bottom sheet on a
+ * phone. Controlled: the picker owns `open`, since a pick or Enter closes it.
+ */
+function PickerShell({ size, name, formValue, disabled: disabledProp, ...props }: PickerShellProps) {
   const mobile = useIsMobile(640)
-  const shell = mobile ? (
-    <PickerSheet open={open} setOpen={setOpen} {...props} />
-  ) : (
-    <PickerPopover open={open} setOpen={setOpen} {...props} />
+  const fieldState = useContext(FieldStateContext)
+  // Resolved here as well as in the box: the trigger, not only the field, must turn off.
+  const disabled = disabledProp ?? fieldState?.disabled ?? false
+  const values = formValue === undefined ? [] : [formValue].flat()
+
+  return (
+    <SizeScope size={size}>
+      {mobile ? <PickerSheet {...props} disabled={disabled} /> : <PickerPopover {...props} disabled={disabled} />}
+      {name && values.map((value, i) => <input key={i} type="hidden" name={name} value={value} disabled={disabled} />)}
+    </SizeScope>
   )
-  // A size pins the field and the portalled panel (context crosses portals).
-  return size ? <SizeProvider size={size}>{shell}</SizeProvider> : shell
 }
 
-type PanelProps = Omit<PickerShellProps, 'open' | 'defaultOpen' | 'onOpenChange' | 'size'> & {
-  open: boolean
-  setOpen: (open: boolean) => void
-}
+type PanelProps = Omit<PickerShellProps, 'size' | 'name' | 'formValue'>
 
 type PickerFieldProps = Pick<
   PanelProps,
@@ -102,30 +89,29 @@ type PickerFieldProps = Pick<
 const PickerField = forwardRef<HTMLButtonElement, PickerFieldProps>(
   ({ icon, display, placeholder, variant = 'bordered', invalid, disabled, id, className, ...props }, ref) => {
     const Icon = useIcon(icon)
-    const { size: sizeClasses, props: boxProps } = useFieldBox({ variant, invalid, disabled })
+    const box = useFieldBox({ variant, invalid, disabled })
 
     return (
       <button
         ref={ref}
         type="button"
         id={id}
-        disabled={disabled}
-        aria-invalid={invalid || undefined}
-        {...boxProps}
+        {...box.props}
         // Base UI's trigger props (open state, handlers, aria) arrive here.
         {...props}
+        disabled={box.disabled}
+        aria-invalid={box.invalid || undefined}
         className={cn(
-          boxProps.className,
+          box.props.className,
+          // A button field has no caret: keyboard focus rings it.
           'flex w-full min-w-0 items-center text-left cursor-pointer outline-none focus-visible:ring-focus-ring',
-          sizeClasses.gap,
-          sizeClasses.control,
+          box.size.gap,
+          box.size.control,
           className,
         )}
       >
-        <Icon size={sizeClasses.icon} strokeWidth={1.5} className={fieldIconClasses} />
-        <span
-          className={cn('flex-1 truncate', sizeClasses.text, display ? 'text-foreground' : 'text-muted-foreground')}
-        >
+        <Icon size={box.size.icon} strokeWidth={1.5} className={fieldIconClasses} />
+        <span className={cn('flex-1 truncate', box.size.text, display ? 'text-foreground' : 'text-muted-foreground')}>
           {display || placeholder}
         </span>
       </button>
@@ -148,7 +134,7 @@ function PanelHeader({
   return (
     <div className="flex items-center gap-1 border-b border-border pb-1">
       <div className="flex min-w-0 flex-1 items-center">{header}</div>
-      <Button variant="ghost" size="icon-sm" aria-label={closeLabel} onClick={close}>
+      <Button variant="ghost" size="icon-compact" aria-label={closeLabel} onClick={close}>
         <X size={sizeClasses.icon} strokeWidth={1.5} />
       </Button>
     </div>
@@ -157,7 +143,7 @@ function PanelHeader({
 
 function PickerPopover({
   open,
-  setOpen,
+  onOpenChange,
   header,
   initialFocus,
   closeLabel,
@@ -170,68 +156,79 @@ function PickerPopover({
   children,
   ...field
 }: PanelProps) {
-  const { origin, capture } = useMorphOrigin()
-  const morph = useMorph(open, origin, { from, effect, hideSource, tier })
-  const shape = useShape()
-  const level = Math.min(useSurface() + 2, 8)
-
-  const handleOpenChange = useCallback(
-    (next: boolean, details: { trigger?: Element; event?: Event }) => {
-      if (next) capture(details)
-      setOpen(next)
-    },
-    [capture, setOpen],
-  )
+  const root = useOverlayRoot({ open, onOpenChange })
 
   return (
-    // Non-modal: the page keeps scrolling and the panel follows its field.
-    <Popover.Root open={open} onOpenChange={handleOpenChange} modal={false}>
-      <Popover.Trigger disabled={field.disabled} render={<PickerField {...field} />} />
-      <Popover.Portal>
-        <Popover.Positioner
-          side="bottom"
-          align="start"
-          sideOffset={opensInPlace({ effect, hideSource }) ? inPlaceOffset : 6}
-          className="z-50 outline-none"
+    <OverlayContext.Provider value={root.state}>
+      {/* Non-modal: the page keeps scrolling and the panel follows its field. */}
+      <Popover.Root open={root.open} onOpenChange={root.onOpenChange} modal={false}>
+        <Popover.Trigger disabled={field.disabled} render={<PickerField {...field} />} />
+        <PickerPanel
+          morphProps={{ from, effect, hideSource, tier }}
+          initialFocus={initialFocus}
+          popupClassName={popupClassName}
         >
-          <Popover.Popup ref={morph.popupRef} initialFocus={initialFocus} className="relative outline-none">
-            <SurfaceProvider value={level}>
-              <MorphSurface
-                morph={morph}
-                bg={SURFACE_BG[level]}
-                shadow={SURFACE_SHADOW[3]}
-                radius={shape.container}
-                className={cn('flex max-w-[calc(100vw-1rem)] flex-col gap-1 p-1', popupClassName)}
-              >
-                <div dir={dir} className="flex min-h-0 flex-col gap-1">
-                  <PanelHeader header={header} closeLabel={closeLabel} close={() => setOpen(false)} />
-                  {children}
-                </div>
-              </MorphSurface>
-            </SurfaceProvider>
-          </Popover.Popup>
-        </Popover.Positioner>
-      </Popover.Portal>
-    </Popover.Root>
+          <div dir={dir} className="flex min-h-0 flex-col gap-1">
+            <PanelHeader header={header} closeLabel={closeLabel} close={() => root.setOpen(false)} />
+            {children}
+          </div>
+        </PickerPanel>
+      </Popover.Root>
+    </OverlayContext.Provider>
   )
 }
 
-function PickerSheet({ open, setOpen, header, closeLabel, dir, children, ...field }: PanelProps) {
-  const {
-    initialFocus: _focus,
-    popupClassName: _width,
-    from: _from,
-    effect: _effect,
-    hideSource: _hide,
-    tier: _tier,
-    ...fieldProps
-  } = field
+function PickerPanel({
+  morphProps,
+  initialFocus,
+  popupClassName,
+  children,
+}: {
+  morphProps: MorphProps
+  initialFocus?: RefObject<HTMLElement | null>
+  popupClassName?: string
+  children: ReactNode
+}) {
+  const { open, origin } = useOverlay('PickerShell')
+  const morph = useMorph(open, origin, morphProps)
+
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <Sheet.Trigger disabled={field.disabled} render={<PickerField {...fieldProps} />} />
+    <Popover.Portal>
+      <Popover.Positioner {...positionerProps(morphProps, { side: 'bottom', align: 'start', sideOffset: 6 })}>
+        <Popover.Popup ref={morph.popupRef} initialFocus={initialFocus} className="relative outline-none">
+          <PopupSurface
+            morph={morph}
+            className={cn('flex max-w-[calc(100vw-1rem)] flex-col gap-1 p-1', popupClassName)}
+          >
+            {children}
+          </PopupSurface>
+        </Popover.Popup>
+      </Popover.Positioner>
+    </Popover.Portal>
+  )
+}
+
+function PickerSheet({
+  open,
+  onOpenChange,
+  header,
+  closeLabel,
+  dir,
+  initialFocus: _focus,
+  popupClassName: _width,
+  from: _from,
+  effect: _effect,
+  hideSource: _hide,
+  tier: _tier,
+  children,
+  ...field
+}: PanelProps) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <Sheet.Trigger disabled={field.disabled} render={<PickerField {...field} />} />
       <Sheet.Content className="gap-2 p-3 pt-3">
         <div dir={dir} className="flex min-h-0 flex-col gap-2">
-          <PanelHeader header={header} closeLabel={closeLabel} close={() => setOpen(false)} />
+          <PanelHeader header={header} closeLabel={closeLabel} close={() => onOpenChange(false)} />
           {children}
         </div>
       </Sheet.Content>
@@ -239,11 +236,21 @@ function PickerSheet({ open, setOpen, header, closeLabel, dir, children, ...fiel
   )
 }
 
-interface PickerInputProps extends Omit<InputProps, 'value' | 'defaultValue' | 'onChange'> {
+/** The desktop panel's width for a picker of columns: the field's, at least 14rem. */
+const columnsPopupClass = 'w-[max(var(--anchor-width,0px),14rem)]'
+
+/** Scroll columns side by side, divided, at the panel's fixed height. */
+function ColumnsPanel({ children }: { children: ReactNode }) {
+  return <div className={cn(dividedColumns, 'h-56')}>{children}</div>
+}
+
+interface PickerInputProps extends Omit<InputProps, 'value' | 'defaultValue' | 'onValueChange'> {
   /** The value as the field shows it, while nothing is being typed. */
   formatted: string
-  /** Reads typed text and commits it; returns whether it could. */
+  /** Reads typed text and commits it; returns whether it could. Blank text goes to `onClear` instead. */
   onText: (text: string) => boolean
+  /** Blank text: the picker clears its value. */
+  onClear: () => void
   /** Enter, after a valid entry: the pickers close. */
   onEnter?: () => void
 }
@@ -255,21 +262,22 @@ interface PickerInputProps extends Omit<InputProps, 'value' | 'defaultValue' | '
  * it without the field ring.
  */
 const PickerInput = forwardRef<HTMLInputElement, PickerInputProps>(
-  ({ formatted, onText, onEnter, onFocus, onBlur, onKeyDown, className, ...props }, ref) => {
+  ({ formatted, onText, onClear, onEnter, onFocus, onBlur, onKeyDown, className, ...props }, ref) => {
     const [draft, setDraft] = useState<string | null>(null)
     const [invalid, setInvalid] = useState(false)
     return (
       <Input
         ref={ref}
         {...props}
-        // The header is already framed by the panel: hover and focus change
-        // the fill only (an invalid entry keeps its destructive ring).
+        // The panel already frames the header: hover and focus change the fill only.
         className={cn('hover:ring-transparent focus-within:ring-transparent data-[active]:ring-transparent', className)}
         value={draft ?? formatted}
         invalid={invalid}
-        onChange={text => {
+        onValueChange={text => {
           setDraft(text)
-          setInvalid(!onText(text))
+          if (text.trim()) return setInvalid(!onText(text))
+          onClear()
+          setInvalid(false)
         }}
         onFocus={e => {
           e.currentTarget.select()
@@ -290,5 +298,5 @@ const PickerInput = forwardRef<HTMLInputElement, PickerInputProps>(
 )
 PickerInput.displayName = 'PickerInput'
 
-export type { PickerShellProps }
-export { PickerInput, PickerShell }
+export type { PickerFieldOptions }
+export { ColumnsPanel, columnsPopupClass, PickerInput, PickerShell }

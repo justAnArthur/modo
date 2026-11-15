@@ -1,9 +1,9 @@
 import { shell } from 'virtual:modo-shell'
 import { isValidElement, type ReactNode } from 'react'
-import { Heading, slug } from './anchor'
+import { Heading } from './anchor'
 import { CodeBlock } from './code-block'
-import { bindings, ExampleFrame } from './items/examples'
-import { contentHref } from './router'
+import { bindings, ExampleFrame, ExampleTitle } from './items/examples'
+import { contentHref } from './location'
 
 function textOf(node: ReactNode): string {
   if (typeof node === 'string' || typeof node === 'number') return String(node)
@@ -13,13 +13,8 @@ function textOf(node: ReactNode): string {
 }
 
 // `# Title` names the example below it, like `@example # Title`.
-function ExampleTitle({ children }: { children?: ReactNode }) {
-  const label = textOf(children)
-  return (
-    <Heading level={3} label={label} id={`example-${slug(label)}`} modo="example-card-title">
-      {children}
-    </Heading>
-  )
+function MdxExampleTitle({ children }: { children?: ReactNode }) {
+  return <ExampleTitle label={textOf(children)}>{children}</ExampleTitle>
 }
 
 function SubHeading({ children }: { children?: ReactNode }) {
@@ -50,8 +45,8 @@ export const mdxComponents: Record<string, unknown> = {
     <shell.Link href={contentHref(href)}>{children}</shell.Link>
   ),
   pre: Pre,
-  h1: ExampleTitle,
-  h2: ExampleTitle,
+  h1: MdxExampleTitle,
+  h2: MdxExampleTitle,
   h3: SubHeading,
   ModoExample: ({ code, children }: { code: string; children: ReactNode }) => (
     <div data-modo="example-card">

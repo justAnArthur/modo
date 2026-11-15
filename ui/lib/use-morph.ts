@@ -16,6 +16,7 @@
 
 import { animate, clamp, useMotionValue } from 'motion/react'
 import { type RefObject, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { clampRect, lerpRect, placeRect, type Rect } from './rect'
 import { useReduceMotion } from './reduced-motion'
 import { exitFallbackMs, spring } from './springs'
 
@@ -24,15 +25,22 @@ type MorphFrom = 'trigger' | 'pointer' | 'center' | MorphSide | RefObject<HTMLEl
 type MorphEffect = 'goo' | 'morph' | 'slide' | 'fade'
 type MorphTier = 'moderate' | 'slow'
 
-interface MorphOptions {
-  /** Where the surface grows from. */
+/**
+ * The morph options an overlay's content takes, documented once. A content
+ * props interface extends it and states its own defaults in its TSDoc.
+ */
+interface MorphProps {
+  /** Where the surface grows from (see Morph): the pressed trigger, the press point, its own center, a viewport edge, or a ref to any element. */
   from?: MorphFrom
-  /** How it gets there. */
+  /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. */
   effect?: MorphEffect
-  /** Hide the source while open, so it reads as becoming the overlay. */
+  /** Hide the source while open, so it reads as turning into the overlay. */
   hideSource?: boolean
-  /** Spring tier. */
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. */
   tier?: MorphTier
+}
+
+interface MorphOptions extends MorphProps {
   /** Overrides `effect` (and `from`) for the close only, read as it starts: a swiped sheet slides on off its edge. */
   exit?: { effect: 'slide' | 'fade'; from?: MorphFrom }
   /**
@@ -47,14 +55,6 @@ interface MorphOptions {
 interface MorphOrigin {
   trigger?: HTMLElement
   point?: { x: number; y: number }
-}
-
-interface Rect {
-  x: number
-  y: number
-  w: number
-  h: number
-  r: number
 }
 
 interface Geometry {
@@ -81,26 +81,7 @@ const GOO_SURFACE_BLUR = 8
 const GOO_RELEASE = 0.3
 const GOO_SETTLE = 0.1
 
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t
 const drawsShape = (effect: MorphEffect) => effect === 'goo' || effect === 'morph'
-
-function lerpRect(a: Rect, b: Rect, t: number): Rect {
-  return {
-    x: lerp(a.x, b.x, t),
-    y: lerp(a.y, b.y, t),
-    w: lerp(a.w, b.w, t),
-    h: lerp(a.h, b.h, t),
-    r: lerp(a.r, b.r, t),
-  }
-}
-
-// The slow tier overshoots past 1, which would push a size below zero on the
-// way back.
-function clampRect(rect: Rect): Rect {
-  const w = Math.max(0, rect.w)
-  const h = Math.max(0, rect.h)
-  return { x: rect.x, y: rect.y, w, h, r: Math.max(0, Math.min(rect.r, w / 2, h / 2)) }
-}
 
 function roundedRectPath({ x, y, w, h, r }: Rect) {
   const n = (value: number) => value.toFixed(3)
@@ -189,16 +170,6 @@ function layerBox(source: Rect, target: Rect, pad: number): Rect {
 
 function overlaps(a: Rect, b: Rect) {
   return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h
-}
-
-function place(el: HTMLElement | null, { x, y, w, h, r }: Rect) {
-  if (!el) return
-  el.style.inset = 'auto'
-  el.style.left = `${x}px`
-  el.style.top = `${y}px`
-  el.style.width = `${w}px`
-  el.style.height = `${h}px`
-  el.style.borderRadius = `${r}px`
 }
 
 function within(rect: Rect, layer: Rect): Rect {
@@ -340,8 +311,8 @@ function useMorph(
     const slide = { ...g.target, x: g.offset.x * (1 - p), y: g.offset.y * (1 - p) }
     const rect = clampRect(shaped ? lerpRect(g.source, g.target, p) : effect === 'slide' ? slide : g.target)
 
-    place(shaped ? shape.current : bg.current, shaped ? within(rect, g.layer) : rect)
-    place(shadow.current, rect)
+    placeRect(shaped ? shape.current : bg.current, shaped ? within(rect, g.layer) : rect)
+    placeRect(shadow.current, rect)
 
     // While the goo melts, its outline stands in for the shadow, which would
     // draw the bare rect around the neck; they cross over as it lets go. The
@@ -399,8 +370,8 @@ function useMorph(
     shapes.current.style.display = shaped ? 'block' : ''
     if (!shaped) return
 
-    place(shapes.current, { ...layer, r: 0 })
-    if (effect === 'goo') place(copy.current, within(source, layer))
+    placeRect(shapes.current, { ...layer, r: 0 })
+    if (effect === 'goo') placeRect(copy.current, within(source, layer))
     // The layer sits above the page, so the surface growing out of the source
     // would cover it; punching the source back out keeps it visible. Not when
     // the overlay lands on top of its source (a dialog over its trigger): the
@@ -548,5 +519,5 @@ function useMorph(
 
 type Morph = ReturnType<typeof useMorph>
 
-export type { Morph, MorphEffect, MorphFrom, MorphOptions, MorphOrigin, MorphSide, MorphTier }
+export type { Morph, MorphEffect, MorphFrom, MorphOptions, MorphOrigin, MorphProps, MorphSide, MorphTier }
 export { GOO_BLUR_RATIO, GOO_MATRIX, holdExit, inPlaceOffset, opensInPlace, useMorph, useMorphOrigin }

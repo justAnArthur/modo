@@ -3,7 +3,7 @@ import { BoldTabs, IconCopy, PlainPopover, RowHover, ScalePress, SnapSwitch } fr
 import Button from '../../components/button'
 import Copy from '../../components/copy'
 import Switch from '../../components/inputs/switch'
-import TabsSubtle from '../../components/navigation/tabs-subtle'
+import Tabs from '../../components/navigation/tabs'
 import Popover from '../../components/overlays/popover'
 import FluidHover from '../fluid-hover'
 import Elevated from '../surface'
@@ -16,11 +16,13 @@ Click through the tabs on each side and watch the labels next to the one you pic
   bad={<BoldTabs labels={['Overview', 'Activity', 'Settings']} />}
   badNote="The selected label gets wider, so every tab after it shifts."
   good={
-    <TabsSubtle defaultSelectedIndex={0}>
-      {['Overview', 'Activity', 'Settings'].map((label, i) => (
-        <TabsSubtle.Item key={label} index={i} label={label} />
-      ))}
-    </TabsSubtle>
+    <Tabs variant="subtle" defaultValue="Overview">
+      <Tabs.List>
+        {['Overview', 'Activity', 'Settings'].map(label => (
+          <Tabs.Item key={label} value={label} label={label} />
+        ))}
+      </Tabs.List>
+    </Tabs>
   }
   goodNote="An invisible semibold copy holds the width, and the weight is paired with an optical size. Nothing moves."
 />

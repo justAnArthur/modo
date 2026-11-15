@@ -1,10 +1,9 @@
 /*!
- * Vendored from Fluid Functionalism — `registry/default/hooks/use-touch-primary.tsx` at
+ * Ported from Fluid Functionalism — `registry/default/hooks/use-touch-primary.tsx` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
- *
- * Local modifications: none.
+ * Local changes: see PORTING.md.
  */
 
 'use client'

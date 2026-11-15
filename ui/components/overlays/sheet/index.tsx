@@ -1,11 +1,6 @@
 /*!
- * Local addition (not part of Fluid Functionalism): a sheet attached to an edge
- * of the window. Base UI's Drawer owns the behavior (swipe to dismiss, snap
- * points, focus, scroll lock); the panel grows through the shared morph layer
- * (`lib/use-morph.ts`), from its own edge with the goo neck by default, and a
- * swipe that dismisses it slides it on off its edge (the morph's `exit`). Its
- * title, description, close and trigger are Dialog's parts, which Base UI
- * shares with the Drawer. Replaces beUI's bottom sheet and drawer
+ * Local addition (not part of Fluid Functionalism): an edge sheet on Base UI's
+ * Drawer and the shared morph. Replaces beUI's bottom sheet and drawer
  * (github.com/starc007/ui-components @ de52f337e520e7ee37749b36eb1c32df86137bcb
  * — MIT © 2026 Saurabh Chauhan, notice: LICENSE.beui) without porting their
  * drag, snap or focus code.
@@ -15,21 +10,12 @@
 
 import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer'
 import { motion } from 'motion/react'
-import {
-  createContext,
-  forwardRef,
-  type HTMLAttributes,
-  type ReactNode,
-  type RefObject,
-  useContext,
-  useImperativeHandle,
-  useState,
-} from 'react'
-import { MorphSurface } from '../../../lib/morph-layers'
+import { createContext, forwardRef, type HTMLAttributes, type ReactNode, useContext, useState } from 'react'
+import { useMergeRefs } from '../../../lib/merge-refs'
+import { type Side, usePortalContainer } from '../../../lib/overlay'
+import { PopupSurface } from '../../../lib/popup-surface'
 import { useShape } from '../../../lib/shape-context'
-import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
-import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
-import { useMorph } from '../../../lib/use-morph'
+import { type MorphProps, useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import {
   DialogClose,
@@ -42,7 +28,7 @@ import {
   useDialogState,
 } from '../dialog'
 
-type SheetSide = 'top' | 'right' | 'bottom' | 'left'
+type SheetSide = Side
 
 /** The sheet's edge, and whether its last close was a swipe. */
 const SheetContext = createContext<{ side: SheetSide; swiped: boolean }>({ side: 'bottom', swiped: false })
@@ -61,21 +47,11 @@ const PLACEMENT: Record<SheetSide, string> = {
   right: 'inset-y-2 right-2 w-[min(24rem,calc(100%-1rem))]',
 }
 
-const DRAWER_OFFSET = 4
-
 // Literal per shape so the class extractor sees each one.
 const INDENT_RADIUS = { pill: 'data-[active]:rounded-3xl', rounded: 'data-[active]:rounded-xl' }
 
-interface SheetContentProps extends HTMLAttributes<HTMLDivElement> {
-  /** Where the sheet grows from (see Morph): its own edge, the pressed trigger, the press point, its center, another edge, or a ref to any element. Defaults to the sheet's `side`. */
-  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
-  /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
-  effect?: 'goo' | 'morph' | 'slide' | 'fade'
-  /** Hide the trigger while open, so it reads as turning into the sheet. Defaults to `false`. */
-  hideSource?: boolean
-  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'slow'`. */
-  tier?: 'moderate' | 'slow'
-  /** Portal target. Defaults to the document body. */
+interface SheetContentProps extends MorphProps, HTMLAttributes<HTMLDivElement> {
+  /** Portal target. Defaults to the nearest `PortalContainer`, else the document body. */
   container?: HTMLElement | null
   /** Classes for the sheet's content box: padding, layout. */
   className?: string
@@ -94,21 +70,21 @@ const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(
       tier,
       exit: swiped ? { effect: 'slide', from: side } : undefined,
     })
-    useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
-    const shape = useShape()
-    const level = Math.min(useSurface() + DRAWER_OFFSET, 8)
+    const popupRef = useMergeRefs(ref, morph.popupRef)
+    const portal = usePortalContainer(container)
+    const inset = portal ? 'absolute' : 'fixed'
     const edge = side === 'top' || side === 'bottom'
 
     return (
-      <DrawerPrimitive.Portal container={container ?? undefined}>
+      <DrawerPrimitive.Portal container={portal}>
         <DrawerPrimitive.Backdrop
           render={<motion.div style={{ opacity: morph.progress }} />}
-          className={cn(container ? 'absolute' : 'fixed', 'inset-0 z-50 bg-scrim')}
+          className={cn(inset, 'inset-0 z-50 bg-scrim')}
         />
-        {/* The viewport carries Base UI's swipe handling; the popup sits in it. */}
-        <DrawerPrimitive.Viewport className={cn(container ? 'absolute' : 'fixed', 'inset-0 z-50')}>
+        {/* The viewport carries Base UI's swipe handling. */}
+        <DrawerPrimitive.Viewport className={cn(inset, 'inset-0 z-50')}>
           <DrawerPrimitive.Popup
-            ref={morph.popupRef}
+            ref={popupRef}
             {...props}
             className={cn(
               'absolute flex flex-col focus:outline-none',
@@ -120,18 +96,14 @@ const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(
               'transition-[transform] duration-slow',
             )}
           >
-            <SurfaceProvider value={level}>
-              <MorphSurface
-                morph={morph}
-                bg={SURFACE_BG[level]}
-                shadow={SURFACE_SHADOW[level]}
-                radius={shape.container}
-                className={cn('flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-6', edge && 'pt-3', className)}
-              >
-                {edge && <div aria-hidden className="mx-auto h-1 w-10 shrink-0 rounded-full bg-overlay/16" />}
-                {children}
-              </MorphSurface>
-            </SurfaceProvider>
+            <PopupSurface
+              morph={morph}
+              lift="panel"
+              className={cn('flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-6', edge && 'pt-3', className)}
+            >
+              {edge && <div aria-hidden className="mx-auto h-1 w-10 shrink-0 rounded-full bg-overlay/16" />}
+              {children}
+            </PopupSurface>
           </DrawerPrimitive.Popup>
         </DrawerPrimitive.Viewport>
       </DrawerPrimitive.Portal>
@@ -157,7 +129,7 @@ const SheetIndent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>((
 SheetIndent.displayName = 'SheetIndent'
 
 interface SheetProps {
-  /** Controlled open state. */
+  /** Controlled open state. Pair with `onOpenChange`. */
   open?: boolean
   /** Initial open state, for an uncontrolled sheet. Defaults to `false`. */
   defaultOpen?: boolean
@@ -191,8 +163,9 @@ interface SheetProps {
  * - `Sheet.Trigger`, `Sheet.Header`, `Sheet.Footer`, `Sheet.Title`,
  *   `Sheet.Description`, `Sheet.Close` — Dialog's parts, which work the same
  *   here.
- * - `Sheet.Content` — the panel, with the morph options `from`, `effect`,
- *   `hideSource`, `tier`.
+ * - `Sheet.Content` — the panel: `container`, and the morph options `from`
+ *   (default: the sheet's `side`), `effect` (default `'goo'`), `hideSource`,
+ *   `tier` (default `'slow'`).
  * - `Sheet.Provider` / `Sheet.Indent` — wrap the page in an `Indent` under a
  *   `Provider` and it eases back while any sheet inside is open.
  *

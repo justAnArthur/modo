@@ -6,7 +6,7 @@
 
 @import "./base.css";
 
-/* modo's structural shell.css draws an unlayered `*:focus-visible` outline,
+/* modo's structural chrome CSS (shell/css) draws an unlayered `*:focus-visible` outline,
    which would outrank the layered fallback above and every component's own
    ring (a second ring on every control). Reverting both properties to the
    layered cascade hands focus styling back to @layer base and the utilities. */
@@ -24,6 +24,8 @@
   /* A fixed length: the lib's 72ch resolves per element, so the lead,
      captions and paragraphs each ended at a different width. */
   --modo-measure: 45rem;
+  /* The inset topbar's band, where the corner triggers sit (DocsNavTrigger's top-2 h-12). */
+  --docs-band: calc(3rem + var(--space-2));
 }
 
 /* One reading column on every page: the article (example cards and prop
@@ -71,7 +73,7 @@
     top: 0;
     /* Over the card: the corner triggers overlap it. */
     z-index: 1;
-    height: 100vh;
+    height: 100dvh;
     max-height: none;
     /* The Sidebar scrolls its own rows. */
     overflow: visible;
@@ -102,9 +104,9 @@
     white-space: nowrap;
     /* Its own padding would still widen the column; the children carry it. */
     padding-inline: 0;
-    /* The corner triggers' band (top-2, h-12): the brand centres on the toggle. */
+    /* The brand centres on the corner toggle. */
     box-sizing: border-box;
-    height: calc(3rem + var(--space-2));
+    height: var(--docs-band);
     padding-top: var(--space-2);
     padding-bottom: 0;
   }
@@ -118,8 +120,7 @@
   }
 
   [data-modo="content"] {
-    /* The inset topbar's band, where the corner triggers sit. */
-    padding-top: calc(3rem + var(--space-2));
+    padding-top: var(--docs-band);
   }
 
   /* Flush with an open sidebar: its rows keep their own gutter. */

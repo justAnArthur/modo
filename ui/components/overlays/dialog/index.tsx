@@ -2,128 +2,57 @@
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/dialog.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - `framer-motion` → `motion/react`; `@/lib/{utils,icon-context,springs,shape-context,
- *   size-context,surface-context,surface-classes}` rewritten to `../../../lib/*`;
- *   `@/components/ui/button` → `../../button`.
- * - `DialogProps`: every member re-declared with the FF docs API-table text (modo's parser
- *   lists only members declared in the interface body and needs a description on each);
- *   same for `DialogSlotProps` and `DialogContentProps`.
- * - modo item: TSDoc (from the FF "Dialog" docs page) on the root `Dialog`, the compound
- *   statics attached as `Dialog.Trigger = …` (expando properties, so TypeScript types
- *   `<Dialog.Content>` without a cast and modo's check-items sees them), upstream's named
- *   exports kept, and a default export.
- * - FF's "With a sidebar" docs example is not ported: Sidebar is omitted from this port.
- *   A "Surfaces inside a dialog" example (a Select popover lifting off the dialog's own
- *   level) stands in for it — it makes the same point the sidebar dialog made about
- *   composing inside an `xl` panel, using only items this port ships.
- * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
- *   `text-<role>[-compact]`; inline `fontVariationSettings` and `font-bold`
- *   → `weight-*`; the `bg-black/40` / `dark:bg-black/80` backdrop → `bg-scrim`.
- * - The panel morphs out of its trigger through the shared morph layer
- *   (`lib/use-morph.ts` + `MorphSurface`, goo by default on `spring.goo`;
- *   `Dialog.Content` takes `from` / `effect` / `hideSource` / `tier`), and the
- *   backdrop's opacity follows the morph's progress. The popup is a
- *   transparent, centered box; its level is painted by the morph's surface
- *   layers and the padding sits on their content box. `Dialog` holds the open
- *   state itself (`useControllableState`) to feed the morph, and scopes
- *   `Morph.Part` pairs to the dialog.
- * - The trigger / close slot shape moved to `lib/slot.ts`, shared with the
- *   other overlays.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
 
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { motion } from 'motion/react'
-import {
-  createContext,
-  forwardRef,
-  type HTMLAttributes,
-  type ReactNode,
-  type RefObject,
-  useContext,
-  useId,
-  useImperativeHandle,
-  useMemo,
-} from 'react'
+import { forwardRef, type HTMLAttributes, type ReactNode, useId, useMemo } from 'react'
 import { useIcon } from '../../../lib/icon-context'
-import { MorphSurface } from '../../../lib/morph-layers'
+import { useMergeRefs } from '../../../lib/merge-refs'
 import { MorphPartScope } from '../../../lib/morph-part'
-import { useShape } from '../../../lib/shape-context'
-import { useSize, useSizeVariant } from '../../../lib/size-context'
-import { type SlotProps, slotRender } from '../../../lib/slot'
-import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
-import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
-import { useControllableState } from '../../../lib/use-controllable-state'
-import { type MorphOrigin, useMorph, useMorphOrigin } from '../../../lib/use-morph'
+import {
+  type OpenChangeDetails,
+  OverlayContext,
+  type OverlayRootProps,
+  useOverlay,
+  useOverlayRoot,
+  usePortalContainer,
+} from '../../../lib/overlay'
+import { PopupSurface } from '../../../lib/popup-surface'
+import { type SizeVariant, useSizeVariant } from '../../../lib/size-context'
+import { type SlotProps, slotPart } from '../../../lib/slot'
+import { type MorphProps, useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import { Button } from '../../button'
 
-const DIALOG_OFFSET = 4
-
 type DialogSlotProps = SlotProps
-
-const DialogContext = createContext<{ open: boolean; origin: RefObject<MorphOrigin> }>({
-  open: false,
-  origin: { current: {} },
-})
+type DialogWidth = 'sm' | 'lg' | 'xl'
 
 /** The open state and origin `DialogState` provides, for content built on another Base UI popup (Sheet). */
-const useDialogState = () => useContext(DialogContext)
+const useDialogState = () => useOverlay('Dialog part')
 
-const DialogTrigger = forwardRef<HTMLButtonElement, DialogSlotProps>(({ render, asChild, children, ...props }, ref) => {
-  const el = slotRender(render, asChild, children)
-  return el ? (
-    <DialogPrimitive.Trigger ref={ref} render={el} {...props} />
-  ) : (
-    <DialogPrimitive.Trigger ref={ref} {...props}>
-      {children}
-    </DialogPrimitive.Trigger>
-  )
-})
-DialogTrigger.displayName = 'DialogTrigger'
+const DialogTrigger = slotPart(DialogPrimitive.Trigger, 'DialogTrigger')
+const DialogClose = slotPart(DialogPrimitive.Close, 'DialogClose')
 
-const DialogClose = forwardRef<HTMLButtonElement, DialogSlotProps>(({ render, asChild, children, ...props }, ref) => {
-  const el = slotRender(render, asChild, children)
-  return el ? (
-    <DialogPrimitive.Close ref={ref} render={el} {...props} />
-  ) : (
-    <DialogPrimitive.Close ref={ref} {...props}>
-      {children}
-    </DialogPrimitive.Close>
-  )
-})
-DialogClose.displayName = 'DialogClose'
+// Literal per step so the class extractor sees each one.
+const WIDTH: Record<DialogWidth, Record<SizeVariant, string>> = {
+  sm: { default: 'max-w-[400px]', compact: 'max-w-[360px]' },
+  lg: { default: 'max-w-[540px]', compact: 'max-w-[480px]' },
+  xl: { default: 'max-w-[880px]', compact: 'max-w-[800px]' },
+}
 
-interface DialogContentProps extends HTMLAttributes<HTMLDivElement> {
-  /** Width: 400, 540, or 880. Compact regions narrow each by 1 notch: 360,
-   *  480, 800. `xl` is the canvas for composed layouts — a sidebar beside a
-   *  panel — which usually pair it with `className="p-0"` and a fixed
-   *  height. Defaults to `"sm"`. */
-  size?: 'sm' | 'lg' | 'xl'
-  /** Portal target. When set, the overlay and panel render inside this element
-   *  (positioned `absolute`) instead of covering the viewport (`fixed`). Pair
-   *  with a `position: relative; overflow: hidden` container — and usually
-   *  `<Dialog modal={false}>` — to scope a dialog to a bounded region, e.g. a
-   *  docs preview. Defaults to the document body / full-viewport behaviour. */
+interface DialogContentProps extends MorphProps, HTMLAttributes<HTMLDivElement> {
+  /** Width: 400, 540 or 880px, each one notch narrower in a compact region (360, 480, 800). `xl` is the canvas for a composed layout, usually with `className="p-0"` and a fixed height. Defaults to `'sm'`. */
+  width?: DialogWidth
+  /** Portal target. Inside it the backdrop and panel are `absolute` instead of covering the viewport; pair it with a `relative overflow-hidden` box and usually `<Dialog modal={false}>`. Defaults to the nearest `PortalContainer`, else the document body. */
   container?: HTMLElement | null
-  /** The ✕ in the top-right corner. Drop it when the content has its own
-   *  way out, e.g. a command menu that closes on Escape and on a pick.
-   *  Defaults to `true`. */
+  /** The ✕ in the top-right corner. Drop it when the content has its own way out. Defaults to `true`. */
   showCloseButton?: boolean
-  /** Where the panel sits: centered, or anchored 12dvh from the top so a
-   *  panel whose height follows its content (a command menu) keeps its top
-   *  edge still. Defaults to `"center"`. */
+  /** Centered, or 12dvh from the top so a panel whose height follows its content keeps its top edge still. Defaults to `'center'`. */
   position?: 'center' | 'top'
-  /** Where the panel grows from (see Morph): the pressed trigger (its center when none), the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
-  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
-  /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
-  effect?: 'goo' | 'morph' | 'slide' | 'fade'
-  /** Hide the trigger while open, so it reads as turning into the panel. Defaults to `false`. */
-  hideSource?: boolean
-  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'slow'`. */
-  tier?: 'moderate' | 'slow'
   /** Dialog content. Everything inside reads the dialog's surface level as its substrate. */
   children?: ReactNode
 }
@@ -133,7 +62,7 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
     {
       className,
       children,
-      size = 'sm',
+      width = 'sm',
       container,
       showCloseButton = true,
       position = 'center',
@@ -146,55 +75,42 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
     ref,
   ) => {
     const XIcon = useIcon('x')
-    const shape = useShape()
-    const substrate = useSurface()
-    const dialogLevel = Math.min(substrate + DIALOG_OFFSET, 8)
-    // The size ladder narrows the dialog one notch in compact regions —
-    // width only, the padding stays put (see Sizes).
-    const compact = useSize().variant === 'compact'
+    const variant = useSizeVariant()
+    const portal = usePortalContainer(container)
     const { open, origin } = useDialogState()
     const morph = useMorph(open, origin, { from, effect, hideSource, tier })
-    useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
+    const popupRef = useMergeRefs(ref, morph.popupRef)
+    const inset = portal ? 'absolute' : 'fixed'
 
     return (
-      <DialogPrimitive.Portal container={container ?? undefined}>
+      <DialogPrimitive.Portal container={portal}>
         <DialogPrimitive.Backdrop
           render={<motion.div style={{ opacity: morph.progress }} />}
-          className={cn(container ? 'absolute' : 'fixed', 'inset-0 z-50 bg-scrim')}
+          className={cn(inset, 'inset-0 z-50 bg-scrim')}
         />
         <DialogPrimitive.Popup
-          ref={morph.popupRef}
+          ref={popupRef}
           {...props}
           className={cn(
-            container ? 'absolute' : 'fixed',
+            inset,
             'left-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 focus:outline-none',
             position === 'top' ? 'top-[12dvh]' : 'top-1/2 -translate-y-1/2',
-            size === 'sm' && (compact ? 'max-w-[360px]' : 'max-w-[400px]'),
-            size === 'lg' && (compact ? 'max-w-[480px]' : 'max-w-[540px]'),
-            size === 'xl' && (compact ? 'max-w-[800px]' : 'max-w-[880px]'),
+            WIDTH[width][variant],
           )}
         >
-          <SurfaceProvider value={dialogLevel}>
-            <MorphSurface
-              morph={morph}
-              bg={SURFACE_BG[dialogLevel]}
-              shadow={SURFACE_SHADOW[dialogLevel]}
-              radius={shape.container}
-              className={cn('p-6', className)}
-            >
-              {children}
-              {showCloseButton && (
-                <DialogPrimitive.Close
-                  render={
-                    <Button variant="ghost" size="icon-sm" className="absolute right-3 top-3">
-                      <XIcon />
-                      <span className="sr-only">Close</span>
-                    </Button>
-                  }
-                />
-              )}
-            </MorphSurface>
-          </SurfaceProvider>
+          <PopupSurface morph={morph} lift="panel" className={cn('p-6', className)}>
+            {children}
+            {showCloseButton && (
+              <DialogPrimitive.Close
+                render={
+                  <Button variant="ghost" size="icon-compact" className="absolute right-3 top-3">
+                    <XIcon />
+                    <span className="sr-only">Close</span>
+                  </Button>
+                }
+              />
+            )}
+          </PopupSurface>
         </DialogPrimitive.Popup>
       </DialogPrimitive.Portal>
     )
@@ -212,7 +128,6 @@ function DialogFooter({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
 
 const DialogTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => {
-    // The title role of the type scale — see Sizes.
     const compact = useSizeVariant() === 'compact'
     return (
       <DialogPrimitive.Title
@@ -243,45 +158,30 @@ const DialogDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLPa
 )
 DialogDescription.displayName = 'DialogDescription'
 
-interface DialogStateProps {
-  open?: boolean
-  defaultOpen?: boolean
-  onOpenChange?: (open: boolean) => void
-  children: (root: {
-    open: boolean
-    onOpenChange: (next: boolean, details: { trigger?: Element; event?: Event }) => void
-  }) => ReactNode
+interface DialogStateProps extends OverlayRootProps {
+  children: (root: { open: boolean; onOpenChange: (next: boolean, details: OpenChangeDetails) => void }) => ReactNode
 }
 
 /**
- * A dialog's open state, held here (not in Base UI's Root) because the morph
- * reads it, and the open event tells it which trigger was pressed. Also
- * scopes `Morph.Part` pairs. AlertDialog shares it.
+ * A dialog's root state, for any dialog-like Base UI root (AlertDialog,
+ * Drawer, Command): spread `root` on it. Also scopes `Morph.Part` pairs.
  */
-function DialogState({ open, defaultOpen = false, onOpenChange, children }: DialogStateProps) {
-  const [current, setCurrent] = useControllableState(open, defaultOpen, onOpenChange)
-  const { origin, capture } = useMorphOrigin()
+function DialogState({ open, defaultOpen, onOpenChange, children }: DialogStateProps) {
+  const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
   const id = useId()
-  const ctx = useMemo(() => ({ open: current, origin }), [current, origin])
-  const parts = useMemo(() => ({ id, open: current }), [id, current])
+  const parts = useMemo(() => ({ id, open: root.open }), [id, root.open])
 
   return (
-    <DialogContext.Provider value={ctx}>
+    <OverlayContext.Provider value={root.state}>
       <MorphPartScope.Provider value={parts}>
-        {children({
-          open: current,
-          onOpenChange: (next, details) => {
-            if (next) capture(details)
-            setCurrent(next)
-          },
-        })}
+        {children({ open: root.open, onOpenChange: root.onOpenChange })}
       </MorphPartScope.Provider>
-    </DialogContext.Provider>
+    </OverlayContext.Provider>
   )
 }
 
 interface DialogProps {
-  /** Controlled open state. */
+  /** Controlled open state. Pair with `onOpenChange`. */
   open?: boolean
   /** Initial open state, for an uncontrolled dialog. Defaults to `false`. */
   defaultOpen?: boolean
@@ -299,7 +199,7 @@ interface DialogProps {
  * The panel lifts 4 surface levels off whatever substrate it opens on and
  * re-provides that level, so a dropdown or select inside it keeps climbing
  * the ladder instead of melting into the dialog. Width comes from
- * `Dialog.Content`'s `size` — 400, 540 or 880, each one notch narrower in
+ * `Dialog.Content`'s `width` — 400, 540 or 880, each one notch narrower in
  * compact regions. The panel grows out of its trigger through the shared
  * morph (see Morph): goo by default on `spring.goo`, or from the press
  * point, its own center, a viewport edge or any element, and the backdrop
@@ -312,9 +212,10 @@ interface DialogProps {
  * Statics:
  * - `Dialog.Trigger` — the control that opens it. `render={<Button/>}` or
  *   Radix-style `asChild` with a single child both work.
- * - `Dialog.Content` — the panel: `size`, `position`, `showCloseButton`,
- *   `container`, and the morph options `from`, `effect`, `hideSource`,
- *   `tier`.
+ * - `Dialog.Content` — the panel: `width` (default `'sm'`), `position`
+ *   (default `'center'`), `showCloseButton` (default `true`), `container`,
+ *   and the morph options `from` (default `'trigger'`), `effect` (default
+ *   `'goo'`), `hideSource`, `tier` (default `'slow'`).
  * - `Dialog.Header` / `Dialog.Footer` — the stacked title block, and the
  *   right-aligned action row.
  * - `Dialog.Title` / `Dialog.Description` — the labelled heading and its
@@ -352,6 +253,7 @@ export type {
   DialogProps,
   DialogSlotProps as DialogTriggerProps,
   DialogSlotProps as DialogCloseProps,
+  DialogWidth,
 }
 export {
   Dialog,

@@ -1,12 +1,11 @@
 import { shell } from 'virtual:modo-shell'
 import { type ReactNode, type RefObject, useLayoutEffect, useRef } from 'react'
-import { withBase } from '../router'
+import { withBase } from '../location'
 
 /** Below this a preview stops shrinking and is clipped (with a fade) instead. */
 const MIN_ZOOM = 0.4
 
-/** One bento cell: a live preview over a labelled footer. `wide` cells span
-    two columns once the content column is wide enough (see shell.css). */
+/** One bento cell: a live preview over a labelled footer. */
 export function BentoCard({
   href,
   title,
@@ -121,8 +120,10 @@ export function Bento({ children }: { children: ReactNode }) {
   )
 }
 
-/** Gives each card its span for the current column count, widening the last
-    card of a row that the next one can't share, so no row ends in a hole. */
+/**
+ * Gives each card its span for the current column count, widening the last
+ * card of a row that the next one can't share, so no row ends in a hole.
+ */
 function pack(grid: HTMLElement) {
   const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length
   let free = cols

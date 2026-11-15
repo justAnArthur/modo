@@ -5,7 +5,7 @@
  * what date-fns doesn't carry (the hour cycle, field names).
  */
 
-import { isValid, type Locale, parse } from 'date-fns'
+import { addYears, endOfYear, isValid, type Locale, parse, startOfMonth, startOfYear } from 'date-fns'
 import { enUS } from 'react-day-picker/locale'
 
 type HourCycle = 'h11' | 'h12' | 'h23' | 'h24'
@@ -41,10 +41,18 @@ function parseMonthText(text: string, locale: Locale, reference = new Date()) {
   return parseWith(text, ['LLLL y', 'LLL y', 'MM/y', 'M/y', 'MM.y'], locale, reference)
 }
 
+/** The first and last month a picker offers: `startMonth` / `endMonth`, else 100 years back and 50 ahead of `today`. */
+function monthRange(today: Date, startMonth?: Date, endMonth?: Date) {
+  return {
+    start: startOfMonth(startMonth ?? startOfYear(addYears(today, -100))),
+    end: startOfMonth(endMonth ?? endOfYear(addYears(today, 50))),
+  }
+}
+
 /** The locale's name for a date field, for a column's accessible label. */
 function fieldLabel(locale: Locale, field: 'month' | 'year' | 'hour' | 'minute' | 'dayPeriod') {
   return new Intl.DisplayNames(locale.code, { type: 'dateTimeField' }).of(field) ?? field
 }
 
 export type { HourCycle }
-export { defaultLocale, fieldLabel, hourCycleOf, parseDateText, parseMonthText, parseTimeText }
+export { defaultLocale, fieldLabel, hourCycleOf, monthRange, parseDateText, parseMonthText, parseTimeText }

@@ -1,9 +1,9 @@
 import './demo-switcher.css'
-import type { ResolvedShellExport } from 'virtual:modo-shell'
+import type { PanelItemProps } from '@justanarthur/modo'
 import peers from './.peers.json'
 
 // Cross-kit navigation: one option per peer in the host's Select; hidden with fewer than two.
-export default function DemoSwitcher({ shell }: { shell: ResolvedShellExport }) {
+export default function DemoSwitcher({ shell }: PanelItemProps) {
   if (peers.length < 2) return null
   // A peer is an origin in dev (one server per port) and a path when built.
   const here = window.location.href
@@ -16,7 +16,7 @@ export default function DemoSwitcher({ shell }: { shell: ResolvedShellExport }) 
     <div data-modo="demo-switcher">
       <shell.Select
         value={current.url}
-        onChange={(url: string) => {
+        onValueChange={url => {
           window.location.href = url
         }}
         options={options}

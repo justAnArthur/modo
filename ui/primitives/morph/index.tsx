@@ -14,7 +14,7 @@ import { MorphSurface } from '../../lib/morph-layers'
 import { MorphPart } from '../../lib/morph-part'
 import { useShape } from '../../lib/shape-context'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
-import { SurfaceProvider, useSurface } from '../../lib/surface-context'
+import { SurfaceProvider, useLift } from '../../lib/surface-context'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { opensInPlace, useMorph, useMorphOrigin } from '../../lib/use-morph'
 import { cn } from '../../lib/utils'
@@ -92,7 +92,7 @@ interface MorphProps {
  * ## Liquid indicators
  *
  * The same goo moves everything that travels between items: the active tab
- * of Tabs and TabsSubtle, the Switch thumb, Radio.Group's selection and the
+ * of both Tabs variants, the Switch thumb, Radio.Group's selection and the
  * fluid hover highlight of every list (Select, Dropdown, Combobox, Card,
  * Accordion, FluidHover). The indicator springs to its new item and leaves
  * a blob behind. The blob lingers for a third of the spring, then follows
@@ -148,7 +148,7 @@ export default function Morph({
   const { origin, capture } = useMorphOrigin()
   const morph = useMorph(shown, origin, { from, effect, tier, hideSource }, () => setMounted(false))
   const shape = useShape()
-  const level = Math.min(useSurface() + 2, 8)
+  const level = useLift(2)
   const inPlace = opensInPlace({ effect, hideSource })
 
   return (

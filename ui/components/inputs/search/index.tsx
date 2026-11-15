@@ -18,16 +18,19 @@ import { motion } from 'motion/react'
 import { type KeyboardEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useIcon } from '../../../lib/icon-context'
-import { MorphSurface } from '../../../lib/morph-layers'
+import { positionerProps, usePortalContainer } from '../../../lib/overlay'
+import { POPUP_SHAPE } from '../../../lib/popup'
+import { PopupSurface } from '../../../lib/popup-surface'
 import { useReduceMotion } from '../../../lib/reduced-motion'
-import { shapeMap, useShape } from '../../../lib/shape-context'
-import { useSize } from '../../../lib/size-context'
+import { useShape } from '../../../lib/shape-context'
+import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
-import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
+import { useLift } from '../../../lib/surface-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
-import { type MorphOrigin, useMorph } from '../../../lib/use-morph'
+import { type MorphEffect, type MorphOrigin, type MorphTier, useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
+import { SizeScope } from '../../../primitives/sizes'
 import { type CommandItem, CommandList, CommandListRoot, CommandShortcut } from '../../overlays/command'
 
 // The icon sits where the square button centers it, in both states and both
@@ -69,9 +72,13 @@ interface SearchProps {
   /** Shown in the suggestions when none matches. Defaults to `'No results found.'`. */
   emptyMessage?: string
   /** How the suggestions grow out of the field (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
-  effect?: 'goo' | 'morph' | 'slide' | 'fade'
+  effect?: MorphEffect
   /** Spring tier of the suggestions' plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
-  tier?: 'moderate' | 'slow'
+  tier?: MorphTier
+  /** Portal target of the suggestions. Defaults to the nearest `PortalContainer`, else the document body. */
+  container?: HTMLElement | null
+  /** Pins the field and its suggestions to one step of the size ladder (default 36px, compact 28px — see Sizes). Omitted, they follow the surrounding SizeProvider. */
+  size?: SizeVariant
   /** Classes for the root, the box the resting button keeps in the layout. */
   className?: string
 }
@@ -118,6 +125,8 @@ function Search({
   emptyMessage = 'No results found.',
   effect,
   tier = 'moderate',
+  container,
+  size: sizeProp,
   className,
 }: SearchProps) {
   const [query, setQuery] = useControllableState(value, defaultValue, onValueChange)
@@ -129,8 +138,9 @@ function Search({
   const [rest, setRest] = useState(0)
   const reduced = useReduceMotion()
   const shape = useShape()
-  const size = useSize()
-  const level = Math.min(useSurface() + 2, 8)
+  const size = useSize(sizeProp)
+  // The field's own lift matches its suggestions', so the two read as one liquid.
+  const level = useLift(2)
   const SearchIcon = useIcon('search')
   const XIcon = useIcon('x')
   const button = useRef<HTMLButtonElement>(null)
@@ -291,41 +301,36 @@ function Search({
     </search>
   )
 
-  if (!suggestions) return root
+  if (!suggestions) return <SizeScope size={sizeProp}>{root}</SizeScope>
 
   return (
-    <CommandListRoot
-      items={suggestions}
-      value={query}
-      onValueChange={setQuery}
-      open={open}
-      onOpenChange={setSuggesting}
-    >
-      {root}
-      <Autocomplete.Portal>
-        <Autocomplete.Positioner
-          anchor={field}
-          side="bottom"
-          align={align}
-          sideOffset={8}
-          className="z-50 outline-none"
-        >
-          <Autocomplete.Popup ref={morph.popupRef} className="relative outline-none">
-            <SurfaceProvider value={level}>
-              <MorphSurface
+    <SizeScope size={sizeProp}>
+      <CommandListRoot
+        items={suggestions}
+        value={query}
+        onValueChange={setQuery}
+        open={open}
+        onOpenChange={setSuggesting}
+      >
+        {root}
+        <Autocomplete.Portal container={usePortalContainer(container)}>
+          <Autocomplete.Positioner
+            anchor={field}
+            {...positionerProps({ effect }, { side: 'bottom', align, sideOffset: 6 })}
+          >
+            <Autocomplete.Popup ref={morph.popupRef} className="relative outline-none">
+              <PopupSurface
                 morph={morph}
-                bg={SURFACE_BG[level]}
-                shadow={SURFACE_SHADOW[3]}
-                radius={shapeMap.rounded.container}
+                radius={POPUP_SHAPE.container}
                 className="flex max-h-[min(300px,var(--available-height))] w-[var(--anchor-width)] flex-col overflow-hidden"
               >
                 <CommandList emptyMessage={emptyMessage} onPick={item => onSubmit?.(item.label)} />
-              </MorphSurface>
-            </SurfaceProvider>
-          </Autocomplete.Popup>
-        </Autocomplete.Positioner>
-      </Autocomplete.Portal>
-    </CommandListRoot>
+              </PopupSurface>
+            </Autocomplete.Popup>
+          </Autocomplete.Positioner>
+        </Autocomplete.Portal>
+      </CommandListRoot>
+    </SizeScope>
   )
 }
 

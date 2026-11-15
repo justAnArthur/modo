@@ -1,28 +1,20 @@
-import { byId, exampleDocs, examples as examplesMap } from 'virtual:modo-items'
+import { byId } from 'virtual:modo-items'
+import { itemKey } from '../../lib/paths'
+import { cap } from '../../lib/text'
 import type { Tier } from '../../lib/tiers'
 import { Heading } from '../anchor'
 import { Blocks, Inlines, splitLead } from '../markdown'
 import { mdxComponents } from '../mdx'
-import { cap } from '../text'
+import { NotFoundPage } from '../pages/not-found'
 import { ExampleBoundary, ItemExamples } from './examples'
 import { PageMeta } from './page-meta'
 import { PropTable } from './prop-table'
 
 export function ItemPage({ tier, id }: { tier: Tier; id: string }) {
-  const entry = byId[`${tier}:${id}`]
-  if (!entry) {
-    return (
-      <article>
-        <h1 data-modo="page-title">
-          {tier}/{id}
-        </h1>
-        <p data-modo="page-lead">Item not found.</p>
-      </article>
-    )
-  }
+  const entry = byId[itemKey(tier, id)]
+  if (!entry) return <NotFoundPage />
   const { lead, body } = splitLead(entry.description)
-  const examples = examplesMap[`${tier}:${id}`] ?? []
-  const docs = exampleDocs[`${tier}:${id}`] ?? []
+  const { examples, mdxExamples } = entry
   return (
     <article>
       <header>
@@ -40,9 +32,9 @@ export function ItemPage({ tier, id }: { tier: Tier; id: string }) {
           <Blocks tokens={body} />
         </div>
       ) : null}
-      {examples.length > 0 || docs.length > 0 ? (
+      {examples.length > 0 || mdxExamples.length > 0 ? (
         <ItemExamples examples={examples}>
-          {docs.map((Doc, i) => (
+          {mdxExamples.map((Doc, i) => (
             <div data-modo="prose" key={i}>
               {/* A broken .mdx (an unbound tag, a dropped item) stays in its box. */}
               <ExampleBoundary>
@@ -54,7 +46,7 @@ export function ItemPage({ tier, id }: { tier: Tier; id: string }) {
       ) : null}
       <section data-modo="section">
         <Heading level={2} label="Props" modo="section-title" />
-        <PropTable itemId={`${tier}:${id}`} />
+        <PropTable props={entry.props} />
       </section>
     </article>
   )

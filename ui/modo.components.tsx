@@ -3,27 +3,17 @@
  * modo.config.ts picks each one by export name: `./modo.components.tsx#Select`.
  */
 
-import {
-  Check,
-  CodeXml,
-  Copy,
-  ExternalLink,
-  Link2,
-  type LucideIcon,
-  Menu,
-  Monitor,
-  Moon,
-  Package,
-  Sun,
-} from 'lucide-react'
+import type {
+  IconSlotProps,
+  SelectSlotProps,
+  SidebarItemProps,
+  SidebarSectionProps,
+  SidebarSlotProps,
+} from '@justanarthur/modo'
+import { Check, CodeXml, Copy, Link2, type LucideIcon, Menu, Monitor, Moon, Package, Sun } from 'lucide-react'
 import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useState } from 'react'
 import FluidSelect from './components/inputs/select'
-import Sidebar, {
-  SIDEBAR_KEYBOARD_SHORTCUT,
-  SIDEBAR_KEYBOARD_SHORTCUT_RIGHT,
-  type SidebarSide,
-  useSidebar,
-} from './components/navigation/sidebar'
+import Sidebar, { type SidebarSide, useSidebar } from './components/navigation/sidebar'
 import { useIsMobile } from './lib/use-is-mobile'
 import { cn } from './lib/utils'
 
@@ -32,7 +22,6 @@ const icons: Record<string, LucideIcon> = {
   copy: Copy,
   check: Check,
   link: Link2,
-  external: ExternalLink,
   menu: Menu,
   sun: Sun,
   moon: Moon,
@@ -40,18 +29,10 @@ const icons: Record<string, LucideIcon> = {
 }
 
 /** Icon slot: the chrome asks for icons by name; lucide draws them. */
-export function Icon({
-  name,
-  label,
-}: {
-  /** Which icon to draw: a chrome name or a `socials` key. */
-  name: string
-  /** Accessible text; the button around the icon carries it. Drawn for a name with no glyph. */
-  label: string
-}) {
+export function Icon({ name, label }: IconSlotProps) {
   if (name === 'github') return <GithubMark />
   const Glyph = icons[name]
-  return Glyph ? <Glyph size={16} strokeWidth={1.5} aria-hidden /> : <>{label}</>
+  return Glyph ? <Glyph size={16} strokeWidth={1.5} aria-hidden /> : label
 }
 
 /** lucide ships no brand marks; this is GitHub's (Simple Icons, CC0). */
@@ -64,20 +45,12 @@ function GithubMark() {
 }
 
 /**
- * Select slot: the chrome passes a flat `value` / `onChange` / `options`
+ * Select slot: the chrome passes a flat `value` / `onValueChange` / `options`
  * contract; FF's Select is compositional, so this maps one onto the other.
  */
-export function Select({
-  value,
-  onChange,
-  options,
-}: {
-  value: string
-  onChange: (value: string) => void
-  options: { value: string; label: string }[]
-}) {
+export function Select({ value, onValueChange, options }: SelectSlotProps) {
   return (
-    <FluidSelect value={value} onValueChange={onChange}>
+    <FluidSelect value={value} onValueChange={onValueChange}>
       <FluidSelect.Trigger />
       <FluidSelect.Content>
         {options.map((option, index) => (
@@ -102,7 +75,8 @@ declare global {
  * Sidebar slot: both asides of the chrome, each an inset `Sidebar` with its
  * own `openOnHover` provider, so the content between them is the inset card
  * (global.css). The trigger in the card's corner (or `[` for the nav, `]` for
- * the panel) switches a side between open and on hover. Below md both sit in
+ * the panel, page-scoped so a demo's own sidebar keeps its key only while
+ * focus is inside it) switches a side between open and on hover. Below md both sit in
  * flow, as the chrome stacks them: the nav under the header's menu toggle,
  * the panel below the content. The panel starts on hover below xl.
  *
@@ -113,7 +87,7 @@ declare global {
  * in modo.config.ts, since by name alone modo would adopt the documented
  * `Sidebar`, an app shell that needs its provider.
  */
-export function DocsNav({ children }: { children?: ReactNode }) {
+export function DocsNav({ children }: SidebarSlotProps) {
   const [side, setSide] = useState<SidebarSide>()
   // The slot gets no side: which aside it landed in tells, before first paint.
   if (!side) return <div ref={node => node && setSide(node.closest('[data-modo="panel"]') ? 'right' : 'left')} />
@@ -145,7 +119,7 @@ function DocsSidebar({ side, children }: { side: SidebarSide; children?: ReactNo
       defaultOpen={side === 'left' || window.matchMedia('(min-width: 1280px)').matches}
       openOnHover
       persist={false}
-      shortcut={null}
+      shortcutScope="page"
       className="h-full min-h-0"
     >
       <Sidebar variant="inset" side={side} className="h-full">
@@ -159,12 +133,10 @@ function DocsSidebar({ side, children }: { side: SidebarSide; children?: ReactNo
 /**
  * The trigger, in the card's top corner where the inset topbar keeps it. The
  * card sits flush with an open sidebar and a gutter away from a hidden one,
- * so the trigger follows.
+ * so the trigger follows. Its band (`top-2 h-12`) is global.css's `--docs-band`.
  */
 function DocsNavTrigger({ side }: { side: SidebarSide }) {
-  const { state, isMobile, toggleSidebar } = useSidebar()
-  useDocsShortcut(side === 'left' ? SIDEBAR_KEYBOARD_SHORTCUT : SIDEBAR_KEYBOARD_SHORTCUT_RIGHT, toggleSidebar)
-
+  const { state, isMobile } = useSidebar()
   return (
     <div
       className={cn(
@@ -178,33 +150,10 @@ function DocsNavTrigger({ side }: { side: SidebarSide }) {
   )
 }
 
-/**
- * `[` / `]` for the docs sidebars, owned here rather than by their providers:
- * a provider's key goes to the first one mounted when focus is on the page,
- * and on a fresh load that is a demo in the content, mounted a render before
- * the chrome's. The demos keep the key while focus is inside one.
- */
-function useDocsShortcut(key: string, toggle: () => void) {
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== key || event.metaKey || event.ctrlKey || event.altKey) return
-      const target = event.target as HTMLElement
-      if (target.isContentEditable) return
-      if (target.closest('input, textarea, select, [data-modo="content"] [data-slot="sidebar-wrapper"]')) return
-      // Capture phase: the demos' providers listen on window too, and must not toggle with it.
-      event.stopImmediatePropagation()
-      event.preventDefault()
-      toggle()
-    }
-    window.addEventListener('keydown', onKeyDown, true)
-    return () => window.removeEventListener('keydown', onKeyDown, true)
-  }, [key, toggle])
-}
-
 /** How deep a nav element sits: a tier is a section, a group folder a section inside it, a nested group deeper still. */
 const NavDepth = createContext(0)
 
-function DocsNavItem({ href, active, children }: { href: string; active?: boolean; children?: ReactNode }) {
+function DocsNavItem({ href, active, children }: SidebarItemProps) {
   const { setOpenMobile } = useSidebar()
   if (useContext(NavDepth) >= 2) {
     return (
@@ -224,7 +173,7 @@ function DocsNavItem({ href, active, children }: { href: string; active?: boolea
   )
 }
 
-function DocsNavSection({ title, children }: { title: string; children?: ReactNode }) {
+function DocsNavSection({ title, children }: SidebarSectionProps) {
   const depth = useContext(NavDepth)
   if (depth >= 1) return <DocsNavGroup title={title}>{children}</DocsNavGroup>
   const onlyLinks = Children.toArray(children).every(
@@ -257,7 +206,7 @@ const holdsActive = (children: ReactNode): boolean =>
   )
 
 /** A group folder inside a tier (or inside another group): a collapsible row, opened while it holds the current page. */
-function DocsNavGroup({ title, children }: { title: string; children?: ReactNode }) {
+function DocsNavGroup({ title, children }: SidebarSectionProps) {
   const depth = useContext(NavDepth)
   const current = holdsActive(children)
   const [open, setOpen] = useState(current)

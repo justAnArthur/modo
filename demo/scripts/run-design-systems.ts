@@ -133,10 +133,9 @@ async function landing() {
 // loudly instead of being silently replaced.
 function serve() {
   const children = targets.map((name, i) =>
-    spawn('node', [MODO_CLI, 'dev', '--config', TEMP_CONFIG], {
+    spawn('node', [MODO_CLI, 'dev', '--config', TEMP_CONFIG, '--port', String(BASE_PORT + i)], {
       cwd: dirOf(name),
       stdio: 'inherit',
-      env: { ...process.env, MODO_PORT: String(BASE_PORT + i) },
     }),
   )
   const cleanup = () => {

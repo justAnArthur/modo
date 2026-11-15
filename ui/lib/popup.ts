@@ -1,20 +1,21 @@
 /*!
- * Vendored from Fluid Functionalism — `registry/default/lib/popup.ts` at
+ * Ported from Fluid Functionalism — `registry/default/lib/popup.ts` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
- *
- * Local modifications:
- * - `popupMotionClass` (the side-aware transform origin and slide offset of
- *   the old `scaleY` enter/exit) dropped: the dropdown, select and combobox
- *   popups now morph out of their trigger through `lib/use-morph.ts`.
+ * Local changes: see PORTING.md.
  */
 
 // ---------------------------------------------------------------------------
 // Shared popup chrome for the dropdown, select, and combobox popups: the
-// ScrollArea sizing the list scrolls inside. One definition, so the three
-// popups never drift apart.
+// shape and the ScrollArea sizing the list scrolls inside. One definition,
+// so the popups never drift apart.
 // ---------------------------------------------------------------------------
+
+import { shapeMap } from './shape-context'
+
+/** Popups keep the rounded radii whatever the global shape: pill corners distort their padding and break the rows' concentric fit. */
+export const POPUP_SHAPE = shapeMap.rounded
 
 /**
  * Popup lists scroll inside ScrollArea: the hover-revealed thumb instead of

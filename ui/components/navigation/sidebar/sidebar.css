@@ -2,16 +2,13 @@
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `app/globals.css` (`.scroll-divider`) @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications: none (modo injects this file beside the Sidebar).
+ * Local changes: see PORTING.md.
  */
 
-/* ── scroll-divider — a hairline marking a scroll edge ──────────────────────
-   Pairs with .scroll-fade on a descendant viewport: where the fade dissolves
-   content, this draws the line that says "the region continues". The line
-   can't live inside the scroller — the fade's own mask would erase it at
-   exactly the edge it belongs on — so it rides the parent's pseudo-elements
-   and borrows the scroller's timeline by name. Browsers without scroll-driven
-   timelines simply get the fade, as before. */
+/* A hairline at a scroll edge, paired with .scroll-fade on a descendant
+   viewport. It can't live in the scroller (the fade's mask would erase it),
+   so it rides the parent's pseudo-elements and borrows the scroller's
+   timeline by name. Without scroll-driven timelines there is only the fade. */
 @keyframes sf-divider-start {
   from {
     opacity: 0;
@@ -42,8 +39,7 @@
   .scroll-divider::after {
     content: "";
     position: absolute;
-    /* Inset so the line can hug the content's own gutter rather than the
-       panel edge — the sidebar's inset variant sets this to 8px. */
+    /* The inset variant hugs the rows' 8px gutter. */
     left: var(--scroll-divider-inset, 0px);
     right: var(--scroll-divider-inset, 0px);
     height: 1px;

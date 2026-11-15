@@ -1,24 +1,7 @@
 /*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/thinking-indicator.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
- * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - `framer-motion` → `motion/react`; `@/lib/*` →
- *   `../../../lib/*`.
- * - Prop JSDoc kept from upstream (it matches the FF docs API table);
- *   modo TSDoc and examples on `ThinkingIndicator`. The `.shimmer-text` rule
- *   the label rides lives in base.css.
- * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
- *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`;
- *   `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
- *   `spring.*`.
- * - A `variant="goo"` look (local, the morph style's goo): three
- *   `muted-foreground` dots that melt into one blob (swelling to hold their
- *   area) and split again through the shared `GooFilter`, one loop every
- *   eight slow-tier lengths, beside a plain cycling label. Reduced motion
- *   (`useReduceMotion`: the OS setting or MotionConfig's, which now also
- *   counts for the shimmer look) holds them split and still. The default stays upstream's
- *   `shimmer` look.
+ * MIT License © 2026 Micka Touillaud (notice: LICENSE.fluid-functionalism). Local changes: see PORTING.md.
  */
 
 'use client'
@@ -41,9 +24,8 @@ const circleB =
 
 const words = ['Thinking', 'Moonwalking', 'Planning', 'Refining']
 
-// Per ladder step, as literal classes for the extractor: the dot, the box of
-// the three split dots, and the spacing between dot centers, wide enough that
-// split dots let go of each other through the goo.
+// Literal classes for the extractor. `gap` (between dot centers) is wide
+// enough that split dots let go of each other through the goo.
 const DOTS: Record<SizeVariant, { box: string; dot: string; radius: number; gap: number }> = {
   default: { box: 'h-5 w-[26px]', dot: 'size-1.5', radius: 3, gap: 10 },
   compact: { box: 'h-[18px] w-[23px]', dot: 'size-[5px]', radius: 2.5, gap: 9 },
@@ -56,15 +38,12 @@ const MERGED = Math.sqrt(3)
 function GooDots({ step, still }: { step: SizeVariant; still: boolean }) {
   const gooId = `thinking-goo-${useId().replace(/:/g, '')}`
   const { box, dot, radius, gap } = DOTS[step]
-  // Split → merged → split over eight slow-tier lengths. A spring per move
-  // is over in a frame or two at this size, too quick to see a neck form;
-  // eased all the way, the necks stretch and snap in view.
+  // Eased, not sprung: a spring at this size settles too fast to see a neck form.
   const loop = { duration: spring.slow.duration * 8, ease: 'easeInOut' as const, repeat: Infinity }
 
   return (
     <span aria-hidden className={cn('relative shrink-0', box)}>
       <GooFilter id={gooId} blur={radius * GOO_BLUR_RATIO} />
-      {/* The filter is the effect itself: it melts the token-colored dots into one shape. */}
       <span className="absolute inset-0 flex items-center justify-center" style={{ filter: `url(#${gooId})` }}>
         {[-1, 0, 1].map(side => (
           <motion.span
@@ -113,8 +92,6 @@ const ThinkingIndicator = forwardRef<HTMLDivElement, ThinkingIndicatorProps>(
     const step = useSize(size).variant
     const compactStep = step === 'compact'
     const [index, setIndex] = useState(0)
-    // Reduced motion drops the infinite glyph morph and the word cycling — a
-    // static glyph and label carry the same meaning without the movement.
     const reduceMotion = useReduceMotion()
     const label = variant === 'goo' ? 'text-muted-foreground' : 'shimmer-text'
 
@@ -128,9 +105,6 @@ const ThinkingIndicator = forwardRef<HTMLDivElement, ThinkingIndicatorProps>(
 
     return (
       <div ref={ref} role="status" className={cn('flex items-center gap-2 px-3 py-2', className)} {...props}>
-        {/* Static announcement — the cycling word display below is aria-hidden
-          so screen readers hear one "Thinking…" instead of a re-announcement
-          every 4 seconds. */}
         <span className="sr-only">Thinking…</span>
         {showIcon && variant === 'goo' && <GooDots step={step} still={reduceMotion} />}
         {showIcon && variant === 'shimmer' && (
