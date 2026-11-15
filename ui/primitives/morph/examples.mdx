@@ -2,7 +2,6 @@ import Checkbox from '../../components/inputs/checkbox'
 import Radio from '../../components/inputs/radio'
 import Switch from '../../components/inputs/switch'
 import Tabs from '../../components/navigation/tabs'
-import TabsSubtle from '../../components/navigation/tabs-subtle'
 import FluidHover from '../fluid-hover'
 import Morph from './index'
 
@@ -98,11 +97,13 @@ Click a tab next door: the indicator stretches toward it and lets go. Click a fa
       <Tabs.Item value="settings" label="Settings" />
     </Tabs.List>
   </Tabs>
-  <TabsSubtle defaultSelectedIndex={0}>
-    {['Teamspaces', 'Recents', 'Favorites', 'Shared'].map((label, i) => (
-      <TabsSubtle.Item key={label} index={i} label={label} />
-    ))}
-  </TabsSubtle>
+  <Tabs variant="subtle" defaultValue="Teamspaces">
+    <Tabs.List>
+      {['Teamspaces', 'Recents', 'Favorites', 'Shared'].map(label => (
+        <Tabs.Item key={label} value={label} label={label} />
+      ))}
+    </Tabs.List>
+  </Tabs>
 </div>
 
 # Thumbs, picks and highlights

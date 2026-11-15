@@ -2,20 +2,7 @@
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/lib/size-context.tsx` + docs `app/docs/sizes/page.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - `SizeProvider` moved here from `lib/size-context.tsx` (which keeps the
- *   context, hooks and maps every sized component reads) so modo documents it;
- *   its props are written inline with docs. Sized components import it from
- *   here. The hooks, maps and types are re-exported.
- * - The docs page's live demos (toolbar ladder, compact-region callout, token
- *   inspector overlay, type-scale specimen) are rewritten as static examples;
- *   Select, TabsSubtle, InputGroup, CheckboxGroup and Dropdown in upstream's demos
- *   are swapped for Button, Badge, Switch and Tabs; the inspector overlay is dropped.
- * - The token table and type scale are written out in the examples (values
- *   mirror `sizeMap` / `typeScale`) instead of being rendered from them.
- * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
- *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
- * - `SizeScope` added: pins a subtree only when a `size` is given.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
@@ -36,7 +23,7 @@ import { useControllableState } from '../../lib/use-controllable-state'
  * `SizeProvider` and every sized component inside follows — menus included,
  * since React context crosses portals. Precedence is explicit `size` prop on
  * the component > nearest `SizeProvider` > `'default'`. Button, Badge,
- * Select, Tabs, TabsSubtle, Dropdown, Checkbox, Radio, Input,
+ * Select, Tabs, Dropdown, Checkbox, Radio, Input,
  * InputGroup, Copy, InputMessage, Table, Switch, Slider, Accordion, Card,
  * ColorPicker, ThinkingIndicator, Calendar and the date and time pickers all
  * take that per-component `size`. Type follows the ladder too: compact drops

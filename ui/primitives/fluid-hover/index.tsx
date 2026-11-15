@@ -2,40 +2,16 @@
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `app/docs/fluid-hover/page.tsx` + `app/docs/fluid-hover/demos.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - Upstream ships fluid hover as a hook plus a highlight component, demoed on the
- *   docs page through local `FluidRow` / `CostRow` helpers. This item wraps that
- *   pair in one documented container (`FluidHover` + `FluidHover.Item`) so the modo
- *   examples can show all three axes without hooks. The mechanism is untouched and
- *   still lives in `lib/use-fluid-hover.ts` and
- *   `lib/fluid-hover-highlight.tsx`; both are re-exported here unchanged.
- * - `items`, `renderItem`, `disabledIndices`, `columns` and `highlightClassName` are
- *   this container's own API; `axis` and `gapClick` are the hook's options, passed
- *   straight through.
- * - Row classes are upstream's `rowClass` from `demos.tsx`, with per-axis variants
- *   for the strip and the grid; the highlight rides the shape system (`shape.bg`),
- *   as in upstream's `FluidHoverList`.
- * - Prose and examples follow the FF `/docs/fluid-hover` page (its five sections,
- *   minus the two scripted-cursor demos that only exist to film the mechanism).
- * - The prose describes the highlight as it now moves: it melts from row to
- *   row (`lib/goo-indicator.tsx`, local), with the cost of that while it moves.
- * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
- *   `text-<role>[-compact]`; the hex focus-ring fallback →
- *   `ring-focus-ring` / `border-focus-ring`.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
 
 import {
-  Children,
-  cloneElement,
   createContext,
   type ForwardRefExoticComponent,
   forwardRef,
   type HTMLAttributes,
-  isValidElement,
-  type MutableRefObject,
-  type ReactElement,
   type ReactNode,
   type RefAttributes,
   useContext,
@@ -43,6 +19,8 @@ import {
   useRef,
 } from 'react'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { mergeRefs } from '../../lib/merge-refs'
+import { IndexedRows, useRowIndex } from '../../lib/row-index'
 import { useShape } from '../../lib/shape-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { cn } from '../../lib/utils'
@@ -52,6 +30,7 @@ type FluidHoverAxis = 'x' | 'y' | 'xy'
 interface FluidHoverContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void
   axis: FluidHoverAxis
+  disabledIndices: ReadonlySet<number>
 }
 
 const FluidHoverContext = createContext<FluidHoverContextValue | null>(null)
@@ -76,9 +55,9 @@ const containerAxisClass: Record<FluidHoverAxis, string> = {
 }
 
 interface FluidHoverItemProps extends HTMLAttributes<HTMLButtonElement> {
-  /** Position in the list. Assigned automatically to direct children of `FluidHover`; pass it by hand for rows rendered inside a wrapper of your own. */
+  /** Position in the list. Defaults to the row's place among `FluidHover`'s children. */
   index?: number
-  /** Skips the row: never lit, never the target of a gap click. It stays registered, so its neighbours keep their indices. Defaults to `false`. */
+  /** Skips the row: never lit, never the target of a gap click. It stays registered, so its neighbours keep their indices. Defaults to whether `disabledIndices` lists it. */
   disabled?: boolean
   /** The row's content — a label, or an icon plus text, or (on `xy`) a title over a description. */
   children?: ReactNode
@@ -93,23 +72,20 @@ interface FluidHoverItemProps extends HTMLAttributes<HTMLButtonElement> {
  * just a button.
  */
 const FluidHoverItem = forwardRef<HTMLButtonElement, FluidHoverItemProps>(
-  ({ index, disabled = false, className, children, ...props }, ref) => {
+  ({ index: indexProp, disabled: disabledProp, className, children, ...props }, ref) => {
     const list = useContext(FluidHoverContext)
     const shape = useShape()
     const innerRef = useRef<HTMLButtonElement | null>(null)
+    const index = useRowIndex(indexProp)
+    const disabled = disabledProp ?? list?.disabledIndices.has(index) ?? false
     useRegisterFluidHoverItem(list?.registerItem, index, innerRef)
     const axis = list?.axis ?? 'y'
     return (
       <button
-        ref={node => {
-          innerRef.current = node
-          if (typeof ref === 'function') ref(node)
-          else if (ref) (ref as MutableRefObject<HTMLButtonElement | null>).current = node
-        }}
+        ref={mergeRefs(innerRef, ref)}
         type="button"
         data-slot="fluid-hover-item"
-        // Read back by `isItemDisabled` on every move: the hit test skips the
-        // row without the list having to re-measure.
+        // Read by `isItemDisabled` on every move, so the list needn't re-measure.
         data-disabled={disabled || undefined}
         disabled={disabled}
         {...props}
@@ -146,7 +122,7 @@ interface FluidHoverProps extends HTMLAttributes<HTMLDivElement> {
   highlightClassName?: string
   /** Classes for the list container. Padding here is part of the list: a click in it still lands on the lit row. */
   className?: string
-  /** `FluidHover.Item` rows, when `items` is not enough. Direct Item children are indexed in order. */
+  /** `FluidHover.Item` rows, when `items` is not enough. Children are indexed in order. */
   children?: ReactNode
 }
 
@@ -181,9 +157,8 @@ type FluidHoverComponent = ForwardRefExoticComponent<FluidHoverProps & RefAttrib
  * over cached rectangles per animation frame, with no DOM reads per row, and
  * the highlight travels on a transform. While it melts, a shrinking blob and
  * the goo filter join it, and both are gone once it settles, so a resting
- * highlight is filtered by nothing. Reduced motion is honoured on its own,
- * read straight off the OS media query with no MotionConfig wrapper needed:
- * the highlight still fades in on the nearest row, it just stops travelling
+ * highlight is filtered by nothing. Reduced motion (the OS setting or a
+ * `MotionConfig`) keeps the fade onto the nearest row and drops the travel
  * between rows.
  *
  * Use it when everything in the list can be clicked (a menu, a list, tabs, a
@@ -192,9 +167,10 @@ type FluidHoverComponent = ForwardRefExoticComponent<FluidHoverProps & RefAttrib
  * only some of the cards can be clicked, when there is a lot of empty space
  * around the items, or when rows change place as you scroll.
  *
- * Statics: FluidHover.Item — one row, rendered as a real button (focusable,
- * activatable from the keyboard, announced by its label); the hook only lights
- * it, it never moves focus.
+ * Statics:
+ * - `FluidHover.Item` — one row, rendered as a real button (focusable,
+ *   activatable from the keyboard, announced by its label); the hook only
+ *   lights it, it never moves focus.
  *
  * For a list this container cannot express, the machinery is re-exported
  * unchanged. `useFluidHover(containerRef, { axis, isItemDisabled, gapClick })`
@@ -243,39 +219,25 @@ const FluidHover = forwardRef<HTMLDivElement, FluidHoverProps>(
     })
     const { handlers, registerItem } = hover
 
+    // Keyed on the indices' contents: an inline array is new every render.
+    const disabledKey = disabledIndices?.join() ?? ''
     const contextValue = useMemo<FluidHoverContextValue>(
-      () => ({ registerItem, axis: resolvedAxis }),
-      [registerItem, resolvedAxis],
+      () => ({ registerItem, axis: resolvedAxis, disabledIndices: new Set(disabledIndices) }),
+      [registerItem, resolvedAxis, disabledKey],
     )
 
-    const disabled = new Set(disabledIndices)
-    // Rows come either from `items` (the container renders them) or from
-    // Item children (the container only hands them their index). A child that
-    // is not an Item keeps its slot but never registers, and the hit test
-    // skips the hole it leaves in the rects.
+    // A child that is not an Item keeps its slot but never registers; the hit
+    // test skips the hole it leaves.
     const rows = items
       ? items.map((item, i) => (
-          <FluidHoverItem key={`${i}-${item}`} index={i} disabled={disabled.has(i)}>
-            {renderItem ? renderItem(item, i) : item}
-          </FluidHoverItem>
+          <FluidHoverItem key={`${i}-${item}`}>{renderItem ? renderItem(item, i) : item}</FluidHoverItem>
         ))
-      : Children.toArray(children).map((child, i) => {
-          if (!isValidElement(child) || child.type !== FluidHoverItem) return child
-          const row = child as ReactElement<FluidHoverItemProps>
-          return cloneElement(row, {
-            index: row.props.index ?? i,
-            disabled: row.props.disabled ?? disabled.has(i),
-          })
-        })
+      : children
 
     return (
       <FluidHoverContext.Provider value={contextValue}>
         <div
-          ref={node => {
-            containerRef.current = node
-            if (typeof ref === 'function') ref(node)
-            else if (ref) (ref as MutableRefObject<HTMLDivElement | null>).current = node
-          }}
+          ref={mergeRefs(containerRef, ref)}
           {...props}
           {...handlers}
           data-slot="fluid-hover"
@@ -291,7 +253,7 @@ const FluidHover = forwardRef<HTMLDivElement, FluidHoverProps>(
           }
         >
           <FluidHoverHighlight hover={hover} className={cn('z-0', shape.bg, highlightClassName)} />
-          {rows}
+          <IndexedRows>{rows}</IndexedRows>
         </div>
       </FluidHoverContext.Provider>
     )
@@ -309,7 +271,6 @@ export type {
   UseFluidHoverOptions,
   UseFluidHoverReturn,
 } from '../../lib/use-fluid-hover'
-// The mechanism itself, unchanged — for lists this container cannot express.
 export {
   useFluidHover,
   useRegisterFluidHoverItem,
