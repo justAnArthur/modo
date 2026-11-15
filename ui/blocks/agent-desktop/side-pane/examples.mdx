@@ -1,0 +1,41 @@
+import SidePane from './index'
+
+# Changes
+
+The touched files; pick one and its diff shows under the list.
+
+<div className="flex h-[640px] w-full max-w-md overflow-hidden rounded-xl border border-border bg-background">
+  <SidePane className="flex-1" />
+</div>
+
+# Pull request
+
+CI checks as they run, Auto-fix on, merge held while a check fails.
+
+<div className="flex h-[520px] w-full max-w-md overflow-hidden rounded-xl border border-border bg-background">
+  <SidePane className="flex-1" defaultPane="pr" />
+</div>
+
+# Terminal
+
+The session's shell, in its folder.
+
+<div className="flex h-[480px] w-full max-w-md overflow-hidden rounded-xl border border-border bg-background">
+  <SidePane className="flex-1" defaultPane="terminal" />
+</div>
+
+# Tasks
+
+Background agents, shells and child sessions; each running one can be stopped.
+
+<div className="flex h-[420px] w-full max-w-md overflow-hidden rounded-xl border border-border bg-background">
+  <SidePane className="flex-1" defaultPane="tasks" />
+</div>
+
+# Extensions slot
+
+The last tab is yours: a pane from your own MCP server or plugin, here usage across every profile. The + menu adds optional plugin panes.
+
+<div className="flex h-[640px] w-full max-w-md overflow-hidden rounded-xl border border-border bg-background">
+  <SidePane className="flex-1" defaultPane="extension" />
+</div>
