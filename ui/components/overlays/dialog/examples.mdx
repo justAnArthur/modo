@@ -24,20 +24,20 @@ in the corner comes with `Dialog.Content`.
   </Dialog.Content>
 </Dialog>
 
-# Sizes
+# Widths
 
 3 widths: `sm` for a confirmation, `lg` for a short form, `xl` for a
 layout of its own. Each is one notch narrower inside a compact region.
 
 <div className="flex flex-wrap items-center gap-2">
   {[
-    { size: 'sm', label: 'Small', copy: '400px: a confirmation, 1 field, a short message.' },
-    { size: 'lg', label: 'Large', copy: '540px: a short form, or a longer confirmation.' },
-    { size: 'xl', label: 'Extra large', copy: '880px: 2 columns, a table, or a sidebar beside a panel.' },
-  ].map(({ size, label, copy }) => (
+    { width: 'sm', label: 'Small', copy: '400px: a confirmation, 1 field, a short message.' },
+    { width: 'lg', label: 'Large', copy: '540px: a short form, or a longer confirmation.' },
+    { width: 'xl', label: 'Extra large', copy: '880px: 2 columns, a table, or a sidebar beside a panel.' },
+  ].map(({ width, label, copy }) => (
     <Dialog key={label}>
       <Dialog.Trigger render={<Button variant="secondary">{label}</Button>} />
-      <Dialog.Content size={size}>
+      <Dialog.Content width={width}>
         <Dialog.Header>
           <Dialog.Title>{label} dialog</Dialog.Title>
           <Dialog.Description>{copy}</Dialog.Description>
@@ -52,9 +52,7 @@ layout of its own. Each is one notch narrower inside a compact region.
 
 # Surfaces inside a dialog
 
-Not an FF docs section — a modo addition standing in for FF's "With a
-sidebar" example, which this port omits along with Sidebar. The dialog
-settles at `substrate + 4` and re-provides that level, so the Select's
+The dialog settles at `substrate + 4` and re-provides that level, so the Select's
 popover lifts 2 more from there instead of painting the dialog's own
 background. Nothing is passed between them.
 
@@ -134,7 +132,7 @@ The trigger can be any element. `Morph.Part` pairs the card's cover and title wi
     <Morph.Part id="cover" className="h-28 w-full rounded-lg bg-brand/20" />
     <Morph.Part id="title" className="text-subtitle weight-semibold text-foreground">Liquid glass</Morph.Part>
   </Dialog.Trigger>
-  <Dialog.Content size="lg" effect="morph" hideSource>
+  <Dialog.Content width="lg" effect="morph" hideSource>
     <div className="flex flex-col gap-4">
       <Morph.Part id="cover" className="h-48 w-full rounded-lg bg-brand/20" />
       <Morph.Part id="title" className="text-title weight-bold text-foreground">Liquid glass</Morph.Part>
