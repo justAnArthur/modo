@@ -22,8 +22,8 @@ Reach for these before writing the pattern by hand. One line each: what it is, w
 ## Rows, focus, labels
 
 - `focus-ring.tsx` — `<FocusRing rect instant? className? />`: the keyboard ring that springs between rows, 2px outside the row. `instant` for a reflow; `className` for another shape's `focusRing`.
-- `row-group.tsx` — `useRowFocus(hover, gate?)`: the hover follows focus, `focusRect` is set on keyboard focus (`gate`: a popup's `useKeyboardNavGate` ref). `useRowGroup(hover, { axis, activateOnFocus })`: that plus arrows / Home / End over the rows, for a group that navigates itself (Checkbox `axis: 'y'`, Radio `axis: 'xy', activateOnFocus: true`). Spread `.handlers` on the container. `focusRowOnPress`: a row's `onMouseDown`, so a press focuses the row, not the hidden control. `rowIndexOf(target)`: the fluid-hover index under an event target.
-- `weight-label.tsx` — `<WeightLabel emphasized lit? weight? trim? truncate? className>`: a label that changes weight without reflowing (the invisible heavy copy). Replaces every ghost-span pair.
+- `row-group.tsx` — `useRowFocus(hover, gate?)`: the hover follows focus, `focusRect` is set on keyboard focus (`gate`: a popup's `useKeyboardNavGate` ref). `useRowGroup(hover, { axis, activateOnFocus })`: that plus arrows / Home / End over the rows, skipping `aria-disabled` ones, for a group that navigates itself (Checkbox `axis: 'y'`, Radio `axis: 'xy', activateOnFocus: true`). A disabled row keeps its index. Spread `.handlers` on the container. `focusRowOnPress`: a row's `onMouseDown`, so a press focuses the row, not the hidden control. `rowIndexOf(target)`: the fluid-hover index under an event target.
+- `weight-label.tsx` — `<WeightLabel emphasized lit? weight? trim? truncate? className>`: a label that changes weight without reflowing (the invisible heavy copy). Replaces every ghost-span pair. It forwards its ref and HTML props to the wrapper; `truncate` is `'line'` (one line, ellipsis) or `'inherit'` (an ellipsis only under an inherited `nowrap`, a consumer's `truncate`); `weight` is `'medium'` or `'semibold'` (default).
 - `text-trim` (utility in `preset.ts`) — the text box from cap height to baseline. Replaces `[text-box:trim-both_cap_alphabetic]`.
 
 ## Overlays
@@ -37,9 +37,12 @@ Reach for these before writing the pattern by hand. One line each: what it is, w
   - A popup may be mounted while closed (Select): reset overlay indices on close, remeasure on open.
 - `use-morph.ts` `MorphProps` — `from`, `effect`, `hideSource`, `tier`, documented once: extend it in a content's props.
 - `popup-surface.tsx` — `<PopupSurface morph lift="popup|panel" radius? className>`: the lift, the re-provided level, the background, the shadow (fixed 3 for popups, the level's for panels) and `MorphSurface`.
+- `popup.ts` — `POPUP_SHAPE`: the shape every popup list reads (`shapeMap.rounded`, whatever the global shape: pill corners break the rows' concentric fit). Never `shapeMap.rounded` inline. Also `popupScrollAreaClass` / `popupViewportClass`, `POPUP_NAV_KEYS`, `isDisabledRow`.
 - `popup-rows.tsx` — `rowClasses({ size, shape, lit, disabled })`, `rowLabelClass`, `<RowIcon icon lit />`, `<CheckMark checked reserve? />` (reduced-motion aware), `PopupLabel`, `PopupSeparator`. A checked row's background is a `<GooIndicator rect className={cn('bg-active', shape.bg)} />`.
 - `slot.tsx` — `slotPart<Props>(Primitive.Trigger, 'Name')`: a Base UI trigger or close part that takes `render` / `asChild`. `slotRender`: the same for a part you write by hand. `resolveSlotTemplate` + `slotElement`: `render` / `asChild` on a plain element, merging classes, styles, handlers and refs (Button, Sidebar).
 
-## Text fields
+## Text fields and dates
 
+- `field-classes.ts` — `useFieldBox({ variant, invalid, disabled, active, size })`: the box around a text field's control (the ladder in its `variant`, `data-active` / `data-invalid` / `data-disabled`, radius, inset); `focusControlOnPress(ref)` for a press in its padding; `fieldIconClasses` for a leading icon; `fieldTextInset[size]` lines a label or message up with the text inside; `FieldStateContext` carries a field's state to the control inside it.
 - `use-autosize-textarea.ts` — `useAutosizeTextarea(ref, { minRows, maxRows }, deps)`: grows a textarea with its text, then scrolls; returns the measure.
+- `date-locale.ts` — `monthRange(today, startMonth?, endMonth?)`: the `{ start, end }` months a picker offers: `startMonth` / `endMonth`, else 100 years back and 50 ahead. Calendar and MonthPicker share it. Also the locale readers (`hourCycleOf`, `parseDateText`, `parseTimeText`, `parseMonthText`, `fieldLabel`).

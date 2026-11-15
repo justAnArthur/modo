@@ -117,16 +117,52 @@ The tokens live in five groups: colors (`--background`, `--foreground`,
 (`--surface-1…8`, `--shadow-1…8`) re-points per scheme. The docs'
 Foundations pages list every one with its value.
 
+## Component API
+
+The same conventions run through every component:
+
+- **State both ways.** Values are `value` / `defaultValue` / `onValueChange`
+  (`checked` / `defaultChecked` / `onCheckedChange` on Checkbox and Switch),
+  and `onValueChange` gets the value, not an event: `Input`, `Textarea` and
+  `Slider` included. Overlays and other popups take `open` / `defaultOpen` /
+  `onOpenChange`. Leave the value prop out and the component keeps its own
+  state.
+- **Sizes.** `size` is `default` (36px) or `compact` (28px); Button adds
+  `icon` and `icon-compact`. Leave it out and a component follows the nearest
+  `SizeProvider`, so one `<SizeProvider size="compact">` makes a whole
+  region dense, menus included.
+- **Forms.** Checkbox, `Radio.Group`, Switch, Select, Combobox, Slider,
+  ColorPicker and the date and time pickers take `name` and submit their value
+  with the surrounding form; Input and Textarea are native fields.
+- **Overlays.** Content parts that anchor to a trigger (Popover, PreviewCard,
+  Dropdown, Select, Combobox) take `side`, `align`, `sideOffset` and
+  `container`, plus the morph options `from`, `effect`, `hideSource` and
+  `tier`. `Tooltip.PortalContainer` portals every overlay inside it into
+  another element (a preview frame, a shadow root). `Dialog.Content` and
+  `AlertDialog.Content` take `width`: `sm` (400px), `lg` (540px) or `xl`
+  (880px). `Tooltip` takes `open` / `defaultOpen` to pin it, `side`, `align`
+  and `container`.
+- **Tabs** take `variant`: `segmented` (a track with an elevated indicator,
+  the default) or `subtle` (a borderless strip with a pill).
+- **Date pickers.** `disabled` turns the field off; `disabledDays` takes
+  react-day-picker matchers for the days that can't be picked.
+
+```tsx
+<Select name="plan" defaultValue="pro" onValueChange={setPlan}>…</Select>
+<Input size="compact" onValueChange={setQuery} />
+<DatePicker disabledDays={{ before: new Date() }} />
+```
+
 ## Next.js and React Server Components
 
 - Every module with state, effects, handlers or browser APIs opens with
   `'use client'`, kept at the top of each built chunk, so the components work
   from Server Components (Next.js App Router) as client components. `cn` and
   the class tables stay server-safe.
-- In a Server Component, use the named parts (`CardHeader`, `DialogContent`, …)
-  rather than the dotted form (`Card.Header`): React can't read a property off
-  a client module from the server. Both are exported; the dotted form works in
-  client components.
+- In a Server Component, use the named parts (`CardHeader`, `DialogContent`,
+  `TabsList`, `SidebarMenuButton`, …) rather than the dotted form
+  (`Card.Header`): React can't read a property off a client module from the
+  server. Both are exported; the dotted form works in client components.
 - `pdfjs-dist` is an optional peer, used only for PDF thumbnails in
   `InputMessage` (`npm install pdfjs-dist`). It loads lazily on the first PDF
   attachment, and fetches its worker from `cdn.jsdelivr.net`. Without it, a
@@ -136,8 +172,9 @@ Foundations pages list every one with its value.
 
 ## Hooks for your own components
 
-The motion systems are exported, so components of your own move the way these
-do (the docs' Morph page shows them):
+The motion and layout systems are exported, so components of your own move
+and stack the way these do (the docs' Morph, Motion, Sizes and Surface pages
+show them):
 
 | Export | What it does |
 |---|---|
@@ -146,6 +183,12 @@ do (the docs' Morph page shows them):
 | `GooIndicator` | An indicator (a selection, a thumb) that travels between items' rects and melts like a drop of liquid on the way. |
 | `useReduceMotion()` | The one reduced-motion read: the OS setting, or a `<MotionConfig reducedMotion>` asking for it. |
 | `useControllableState(value, defaultValue, onChange)` | Controlled and uncontrolled state in one, Base UI style: controlled while `value` isn't `undefined`, reporting every change either way. |
+| `spring`, `exitFallbackMs` | The spring tiers (`fast`, `moderate`, `slow`, `goo`), each with its quicker `exit` tween, for motion's `transition`. |
+| `useSize`, `useSizeVariant`, `SizeProvider`, `SizeScope` | The size ladder: a component's classes for its step, the step a region chose, and the providers that set it (`SizeScope` only when a `size` is given). |
+| `useSurface`, `useLift(offset)`, `SurfaceProvider`, `Elevated` | The surface ladder: the substrate level, the level `offset` above it (capped at 8), re-providing it, and a raised `div`. |
+| `useFluidHover`, `FluidHoverHighlight`, `FluidHover` | The fluid hover highlight: the hook and its highlight for a custom list, or the container for a simple one. |
+| `IconProvider`, `ShapeProvider` | Swap the icon set, or switch every radius between rounded and pill. |
+| `cn` | Class merging that knows the token utilities (`cn('text-body', 'text-muted-foreground')` keeps both). |
 
 ## Credits
 
