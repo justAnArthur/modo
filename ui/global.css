@@ -84,6 +84,13 @@
     overflow: visible;
   }
 
+  /* The trigger belongs in the card's top corner, level with the panel's, so it
+     positions against the column (sticky, so a containing block), not the
+     Sidebar wrapper that starts under the brand. */
+  [data-modo="sidebar"] > [data-slot="sidebar-wrapper"] {
+    position: static;
+  }
+
   /* The brand rides along with the Sidebar: it never sets the column's width
      (inline-size containment), so the column follows the Sidebar's own slide
      and clips the brand as it closes. It keeps its height, so the Sidebar and
