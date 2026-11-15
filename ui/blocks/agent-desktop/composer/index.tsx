@@ -10,7 +10,7 @@
 
 'use client'
 
-import { type ButtonHTMLAttributes, forwardRef, useState } from 'react'
+import { type ButtonHTMLAttributes, type ComponentProps, forwardRef, useState } from 'react'
 import InputMessage from '../../../components/AI/input-message'
 import Button from '../../../components/button'
 import Select, { triggerVariants } from '../../../components/inputs/select'
@@ -23,6 +23,8 @@ import ShellCard from '../../../components/shell-card'
 import { type IconName, useIcon } from '../../../lib/icon-context'
 import { useShape } from '../../../lib/shape-context'
 import { useSize } from '../../../lib/size-context'
+import { SURFACE_BG } from '../../../lib/surface-classes'
+import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
 import { CHANGES, COMMANDS, EFFORTS, GROUPS, MODELS, OUTPUT_STYLES, PERMISSION_MODES } from '../mock'
@@ -330,6 +332,19 @@ function RunSettings({
   )
 }
 
+/**
+ * InputMessage paints a fixed surface 2; inside a lifted shell that reads as a
+ * hole. This lifts it one level above whatever holds it instead.
+ */
+function LiftedInput(props: ComponentProps<typeof InputMessage>) {
+  const level = Math.min(useSurface() + 1, 8)
+  return (
+    <SurfaceProvider value={level}>
+      <InputMessage {...props} className={cn(SURFACE_BG[level], props.className)} />
+    </SurfaceProvider>
+  )
+}
+
 interface ComposerProps {
   /** The models the active profile offers. Defaults to the Claude models. */
   models?: string[]
@@ -399,6 +414,7 @@ export default function Composer({
 }: ComposerProps) {
   return (
     <ShellCard
+      variant="elevated"
       className={cn('w-full', className)}
       footer={
         <SizeProvider size="compact">
@@ -420,7 +436,7 @@ export default function Composer({
         </SizeProvider>
       }
     >
-      <InputMessage
+      <LiftedInput
         placeholder={placeholder}
         defaultStatus={streaming ? 'streaming' : 'idle'}
         defaultFiles={[]}

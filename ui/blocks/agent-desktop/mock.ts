@@ -4,6 +4,8 @@
  * made up; nothing talks to a backend.
  */
 
+import type { ToolName } from './transcript/tools'
+
 export interface UsageLimit {
   label: string
   /** Used share, 0–1. */
@@ -88,6 +90,18 @@ export const PROFILES: Profile[] = [
 
 export type SessionStatus = 'running' | 'waiting' | 'unread' | 'idle'
 
+/** What a waiting session asks, as the AgentPrompt that answers it. */
+export type SessionPrompt =
+  | { kind: 'permission'; tool: string; command: string; rule?: string }
+  | { kind: 'question'; question: string; tag?: string; options: { label: string; description?: string }[] }
+
+/** A turn's work, folded to one row (see Transcript.Work). */
+export interface SessionWork {
+  summary: string
+  detail?: string
+  tools: { tool: ToolName; summary: string; meta?: string }[]
+}
+
 export interface Session {
   id: string
   title: string
@@ -107,6 +121,12 @@ export interface Session {
   lastLine?: string
   /** Its project, when it is listed outside the project's group (pinned). */
   project?: string
+  /** The latest assistant text. */
+  reply?: string
+  /** The latest turn's work. */
+  work?: SessionWork
+  /** What it waits on, to answer in place. */
+  prompt?: SessionPrompt
 }
 
 export interface SessionGroup {
@@ -129,6 +149,15 @@ export const PINNED: Session[] = [
     project: 'modo',
     tasks: { done: 3, total: 6 },
     lastLine: 'Running bun run check',
+    reply: 'The board now follows the sidebar: same groups, same glyphs. Typechecking before the narrow pass.',
+    work: {
+      summary: 'Working…',
+      detail: '3 tool calls',
+      tools: [
+        { tool: 'Edit', summary: 'ui/blocks/agent-desktop/session-board/index.tsx', meta: '+214 −160' },
+        { tool: 'Bash', summary: 'bunx tsc -p ui --noEmit' },
+      ],
+    },
   },
   {
     id: 'release-notes',
@@ -139,6 +168,15 @@ export const PINNED: Session[] = [
     pinned: true,
     project: 'jobiflow-api',
     lastLine: 'Posted to #releases',
+    reply: 'Posted the notes to #releases: 14 merged PRs, two of them breaking, each with its migration line.',
+    work: {
+      summary: 'Worked for 1m 12s',
+      detail: '3 tool calls',
+      tools: [
+        { tool: 'Bash', summary: 'gh pr list --state merged --search "merged:>=2026-11-08"', meta: '14 PRs' },
+        { tool: 'MCP', summary: 'slack · post_message #releases' },
+      ],
+    },
   },
 ]
 
@@ -157,6 +195,16 @@ export const GROUPS: SessionGroup[] = [
         branch: 'feat/lib-canvas',
         waitingOn: 'Permission · Bash: git worktree prune',
         tasks: { done: 4, total: 5 },
+        reply: 'The pages tier renders on the canvas. The lib-canvas worktree is merged, so I want to prune it.',
+        work: {
+          summary: 'Worked for 2m 04s',
+          detail: '11 tool calls · 1 agent',
+          tools: [
+            { tool: 'Edit', summary: 'lib/src/runtime/canvas/CanvasPage.tsx', meta: '+48 −12' },
+            { tool: 'Bash', summary: 'git branch --merged main', meta: '3 branches' },
+          ],
+        },
+        prompt: { kind: 'permission', tool: 'Bash', command: 'git worktree prune', rule: 'git worktree *' },
         children: [
           {
             id: 'canvas-zoom',
@@ -184,6 +232,16 @@ export const GROUPS: SessionGroup[] = [
         profile: 'jobiflow',
         updated: '12m',
         lastLine: 'Meter is in, with bar and ring variants',
+        reply:
+          'Meter is in, with bar, line and ring variants. It turns amber at 80% and red at 95% unless told otherwise.',
+        work: {
+          summary: 'Worked for 4m 30s',
+          detail: '18 tool calls',
+          tools: [
+            { tool: 'Write', summary: 'ui/components/meter/index.tsx', meta: '+186' },
+            { tool: 'Bash', summary: 'bun run lint', meta: 'clean' },
+          ],
+        },
       },
       {
         id: 'parser',
@@ -209,6 +267,15 @@ export const GROUPS: SessionGroup[] = [
         branch: 'fix/webhook-retries',
         tasks: { done: 2, total: 3 },
         lastLine: 'Running the webhook tests',
+        reply: 'Retries now back off exponentially and stop after five attempts. Running the webhook tests.',
+        work: {
+          summary: 'Working…',
+          detail: '7 tool calls',
+          tools: [
+            { tool: 'Edit', summary: 'src/billing/webhooks.ts', meta: '+31 −9' },
+            { tool: 'Bash', summary: 'bun test webhooks' },
+          ],
+        },
       },
       {
         id: 'pg',
@@ -217,6 +284,25 @@ export const GROUPS: SessionGroup[] = [
         profile: 'work',
         updated: '3h',
         waitingOn: 'Question · Run the migration on staging first?',
+        reply: 'The migration script is ready and passes against a local Postgres 17. Where should it run first?',
+        work: {
+          summary: 'Worked for 3m 41s',
+          detail: '9 tool calls',
+          tools: [
+            { tool: 'Write', summary: 'migrations/0042_pg17.sql', meta: '+64' },
+            { tool: 'Bash', summary: 'docker compose run db-17 psql -f migrations/0042_pg17.sql', meta: 'ok' },
+          ],
+        },
+        prompt: {
+          kind: 'question',
+          tag: 'Migration',
+          question: 'Run the migration on staging first?',
+          options: [
+            { label: 'Staging first (Recommended)', description: 'Run it there, compare row counts, then production' },
+            { label: 'Straight to production', description: 'In the next maintenance window' },
+            { label: 'Dry run only', description: 'Print the plan and stop' },
+          ],
+        },
       },
     ],
   },

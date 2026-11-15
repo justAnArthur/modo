@@ -39,6 +39,9 @@
  *   focus ring snap with rows a morph pushes around (instead of springing
  *   after them over the content) until the pointer or focus moves. `effect`
  *   and `tier` on `AccordionContent`; reduced motion snaps, as before.
+ * - A standalone `Accordion` resets the group context for its subtree, so one
+ *   nested in an `Accordion.Group`'s panel (a folded block inside an open
+ *   row) keeps its own open state instead of reading the group's.
  */
 
 'use client'
@@ -571,9 +574,15 @@ const Accordion = forwardRef<HTMLDivElement, AccordionProps>(
           const { style: _s, ...restRoot } = rootProps as React.HTMLAttributes<HTMLDivElement>
           return (
             <div {...restRoot} ref={ref} className={cn('w-72 max-w-full flex flex-col', className)} {...props}>
-              <StandaloneOpenContext.Provider value={openValues}>
-                <StandaloneHighlightContext.Provider value={highlight}>{children}</StandaloneHighlightContext.Provider>
-              </StandaloneOpenContext.Provider>
+              {/* Local: a standalone accordion nested in a group's panel is
+                  its own root, not one more row of that group. */}
+              <AccordionGroupContext.Provider value={null}>
+                <StandaloneOpenContext.Provider value={openValues}>
+                  <StandaloneHighlightContext.Provider value={highlight}>
+                    {children}
+                  </StandaloneHighlightContext.Provider>
+                </StandaloneOpenContext.Provider>
+              </AccordionGroupContext.Provider>
             </div>
           )
         }}

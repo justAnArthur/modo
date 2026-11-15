@@ -1,55 +1,96 @@
 /*!
- * Local addition: the agent desktop's sessions board — every session of
- * every project and profile at once, one compact row each, sorted by what it
- * needs from you (needs you, running, to review, idle) or grouped by project.
- * Each row answers, stops or replies in place (a reply is an InputMessage in
- * a Popover), so a session rarely needs opening.
+ * Local addition: the agent desktop's sessions board — the sessions sidebar,
+ * widened. The same groups in the same order (pinned, each project, the
+ * user's sections, the archive folded) or the same sessions by what they
+ * need from you, as one Accordion.Group: a row says what its session is
+ * doing and answers or stops it in place; open it and it is a small live
+ * session (the latest work and reply, the pending prompt, a reply box).
  */
 
 'use client'
 
+import { motion } from 'motion/react'
+import { useState } from 'react'
 import InputMessage from '../../../components/AI/input-message'
-import Badge from '../../../components/badge'
+import Accordion from '../../../components/accordion'
 import Button from '../../../components/button'
 import Meter from '../../../components/meter'
 import TabsSubtle from '../../../components/navigation/tabs-subtle'
-import Popover from '../../../components/overlays/popover'
-import Table from '../../../components/table'
+import Tooltip from '../../../components/overlays/tooltip'
 import { useIcon } from '../../../lib/icon-context'
-import { useShape } from '../../../lib/shape-context'
+import { useSize } from '../../../lib/size-context'
+import { spring } from '../../../lib/springs'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
-import FluidHover from '../../../primitives/fluid-hover'
 import { SizeProvider } from '../../../primitives/sizes'
-import { GROUPS, PINNED, PROFILES, type Session, type SessionGroup, type SessionStatus } from '../mock'
+import AgentPrompt from '../agent-prompt'
+import {
+  ARCHIVED,
+  GROUPS,
+  PINNED,
+  PROFILES,
+  type Session,
+  type SessionGroup,
+  type SessionPrompt,
+  type SessionStatus,
+} from '../mock'
 import { ProfileTile } from '../profile-switcher'
-import { STATUS_GLYPH } from '../status-glyph'
+import { STATUS_GLYPH, STATUS_LABEL } from '../status-glyph'
+import Transcript from '../transcript'
 
 interface BoardSession extends Session {
   projectLabel: string
+  /** A linked child, indented under its parent as in the sidebar. */
+  child?: boolean
 }
 
-/** Every session once, with its project; linked children ride with their parent's project. */
-function flatten(pinned: Session[], groups: SessionGroup[]): BoardSession[] {
-  const seen = new Set<string>()
-  const out: BoardSession[] = []
-  const add = (s: Session, projectLabel: string) => {
-    if (seen.has(s.id)) return
-    seen.add(s.id)
-    out.push({ ...s, projectLabel })
-    for (const child of s.children ?? []) add(child, projectLabel)
-  }
-  for (const s of pinned) add(s, s.project ?? 'Pinned')
-  for (const g of groups) for (const s of g.sessions) add(s, g.label)
-  return out
+interface BoardSection {
+  label: string
+  sessions: BoardSession[]
+  /** Folded until its heading is pressed (the archive). */
+  folded?: boolean
 }
 
-const COLUMNS: { status: SessionStatus; label: string }[] = [
+type Patch = Partial<Session>
+
+const STATES: { status: SessionStatus; label: string }[] = [
   { status: 'waiting', label: 'Needs you' },
   { status: 'running', label: 'Running' },
   { status: 'unread', label: 'To review' },
   { status: 'idle', label: 'Idle' },
 ]
+
+// Each column appears once the board is wide enough to give it room.
+const ROW_GRID =
+  'grid min-w-0 items-center gap-3 grid-cols-[minmax(0,1fr)_auto] @xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)_auto] @3xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.6fr)_minmax(0,1.6fr)_auto]'
+
+// Every row keeps room for the widest actions, so the chevrons and times line up.
+const ACTION_SLOT = 'w-15 @lg:w-28'
+const ACTION_ROOM = 'pr-19 @lg:pr-32'
+
+function withChildren(sessions: Session[], projectLabel: (s: Session) => string): BoardSession[] {
+  return sessions.flatMap(s => [
+    { ...s, projectLabel: projectLabel(s) },
+    ...(s.children ?? []).map(c => ({ ...c, projectLabel: projectLabel(s), child: true })),
+  ])
+}
+
+/** The sidebar's order: pinned, every group, the archive folded. */
+function byProject(pinned: Session[], groups: SessionGroup[], archived: Session[]): BoardSection[] {
+  return [
+    { label: 'Pinned', sessions: withChildren(pinned, s => s.project ?? 'Pinned') },
+    ...groups.map(g => ({ label: g.label, sessions: withChildren(g.sessions, s => s.project ?? g.label) })),
+    { label: 'Archived', sessions: withChildren(archived, s => s.project ?? 'Archived'), folded: true },
+  ]
+}
+
+/** What each live session needs from you, most urgent first; the archive stays out. */
+function byState(pinned: Session[], groups: SessionGroup[]): BoardSection[] {
+  const all = byProject(pinned, groups, [])
+    .flatMap(section => section.sessions)
+    .map(s => ({ ...s, child: false }))
+  return STATES.map(({ status, label }) => ({ label, sessions: all.filter(s => s.status === status) }))
+}
 
 function StatusDot({ status }: { status: SessionStatus }) {
   const Glyph = STATUS_GLYPH[status]
@@ -63,80 +104,6 @@ function StatusDot({ status }: { status: SessionStatus }) {
   )
 }
 
-function ReplyPopover({ session }: { session: BoardSession }) {
-  const Reply = useIcon('corner-down-left')
-  return (
-    <Popover>
-      <Popover.Trigger
-        render={
-          <Button variant="ghost" size="icon-compact" aria-label={`Reply to ${session.title}`}>
-            <Reply />
-          </Button>
-        }
-      />
-      <Popover.Content
-        side="bottom"
-        align="end"
-        sideOffset={8}
-        className="w-96 gap-[var(--space-2)] p-[var(--space-2)] pt-[var(--space-3)]"
-      >
-        {session.lastLine && (
-          <p className="m-0 px-[var(--space-2)] text-caption text-muted-foreground">{session.lastLine}</p>
-        )}
-        <SizeProvider size="compact">
-          <InputMessage minRows={1} maxRows={4} placeholder={`Reply to ${session.title}`} />
-        </SizeProvider>
-      </Popover.Content>
-    </Popover>
-  )
-}
-
-/** What a row can do without opening its session. */
-function RowActions({ session }: { session: BoardSession }) {
-  const Stop = useIcon('square')
-  const Check = useIcon('check')
-  if (session.status === 'waiting' && session.waitingOn?.startsWith('Permission')) {
-    return (
-      <>
-        <Button variant="ghost" size="compact">
-          Deny
-        </Button>
-        <Button size="compact">Allow</Button>
-      </>
-    )
-  }
-  if (session.status === 'waiting') {
-    return (
-      <>
-        <Button variant="tertiary" size="compact">
-          Answer
-        </Button>
-        <ReplyPopover session={session} />
-      </>
-    )
-  }
-  if (session.status === 'running') {
-    return (
-      <>
-        <Button variant="ghost" size="icon-compact" aria-label={`Stop ${session.title}`}>
-          <Stop />
-        </Button>
-        <ReplyPopover session={session} />
-      </>
-    )
-  }
-  return (
-    <>
-      {session.status === 'unread' && (
-        <Button variant="ghost" size="icon-compact" aria-label={`Mark ${session.title} done`}>
-          <Check />
-        </Button>
-      )}
-      <ReplyPopover session={session} />
-    </>
-  )
-}
-
 /** The one line that matters for the row's state. */
 function RowDetail({ session }: { session: BoardSession }) {
   if (session.status === 'waiting') return <span className="min-w-0 truncate text-foreground">{session.waitingOn}</span>
@@ -145,7 +112,7 @@ function RowDetail({ session }: { session: BoardSession }) {
       <span className="flex min-w-0 items-center gap-2">
         <Meter
           variant="line"
-          className="w-16 shrink-0"
+          className="w-12 shrink-0"
           label="Tasks done"
           value={session.tasks.done}
           max={session.tasks.total}
@@ -160,228 +127,352 @@ function RowDetail({ session }: { session: BoardSession }) {
   return <span className="min-w-0 truncate">{session.lastLine}</span>
 }
 
-function SessionRow({
+const ALLOWED: Patch = { status: 'running', prompt: undefined, waitingOn: undefined, lastLine: 'Allowed · resuming' }
+const DENIED: Patch = { status: 'running', prompt: undefined, waitingOn: undefined, lastLine: 'Denied · rethinking' }
+
+/** What a row can do without opening: allow or deny a permission, stop a run, mark a reply read. */
+function RowActions({ session, onPatch }: { session: BoardSession; onPatch: (patch: Patch) => void }) {
+  const Stop = useIcon('square')
+  const Check = useIcon('check')
+  const X = useIcon('x')
+
+  if (session.prompt?.kind === 'permission') {
+    return (
+      <>
+        <span className="hidden gap-1 @lg:flex">
+          <Button variant="ghost" size="compact" onClick={() => onPatch(DENIED)}>
+            Deny
+          </Button>
+          <Button size="compact" onClick={() => onPatch(ALLOWED)}>
+            Allow
+          </Button>
+        </span>
+        <span className="flex gap-1 @lg:hidden">
+          <Button variant="ghost" size="icon-compact" aria-label="Deny" onClick={() => onPatch(DENIED)}>
+            <X />
+          </Button>
+          <Button size="icon-compact" aria-label="Allow" onClick={() => onPatch(ALLOWED)}>
+            <Check />
+          </Button>
+        </span>
+      </>
+    )
+  }
+  if (session.status === 'running') {
+    return (
+      <Tooltip content="Stop" side="top">
+        <Button
+          variant="ghost"
+          size="icon-compact"
+          aria-label={`Stop ${session.title}`}
+          onClick={() => onPatch({ status: 'idle', lastLine: 'Stopped by you' })}
+        >
+          <Stop />
+        </Button>
+      </Tooltip>
+    )
+  }
+  if (session.status === 'unread') {
+    return (
+      <Tooltip content="Mark as read" side="top">
+        <Button
+          variant="ghost"
+          size="icon-compact"
+          aria-label={`Mark ${session.title} as read`}
+          onClick={() => onPatch({ status: 'idle' })}
+        >
+          <Check />
+        </Button>
+      </Tooltip>
+    )
+  }
+  return null
+}
+
+function PendingPrompt({ prompt, onPatch }: { prompt: SessionPrompt; onPatch: (patch: Patch) => void }) {
+  if (prompt.kind === 'permission') {
+    return (
+      <AgentPrompt.Permission
+        tool={prompt.tool}
+        command={prompt.command}
+        rule={prompt.rule}
+        onAnswer={answer => onPatch(answer === 'deny' ? DENIED : ALLOWED)}
+      />
+    )
+  }
+  return (
+    <AgentPrompt.Question
+      question={prompt.question}
+      tag={prompt.tag}
+      options={prompt.options}
+      onSubmit={(labels, other) =>
+        onPatch({ status: 'running', prompt: undefined, waitingOn: undefined, lastLine: other || labels.join(', ') })
+      }
+    />
+  )
+}
+
+/** An open row: the session's latest turn, what it waits on, and a reply. */
+function SessionPeek({
+  session,
+  onPatch,
+  onOpen,
+}: {
+  session: BoardSession
+  onPatch: (patch: Patch) => void
+  onOpen?: (id: string) => void
+}) {
+  const Open = useIcon('arrow-up-right')
+  const running = session.status === 'running'
+  const tools = session.work?.tools ?? []
+
+  return (
+    <div className="flex max-w-3xl flex-col gap-3 pl-5.5 pt-1">
+      {session.work && (
+        <Transcript.Work summary={session.work.summary} detail={session.work.detail} running={running}>
+          <Transcript.Tools>
+            {tools.map((t, i) => (
+              <Transcript.Tool
+                key={t.summary}
+                index={i}
+                value={t.summary}
+                tool={t.tool}
+                summary={t.summary}
+                meta={t.meta}
+                status={running && i === tools.length - 1 ? 'running' : 'done'}
+              />
+            ))}
+          </Transcript.Tools>
+        </Transcript.Work>
+      )}
+      {session.reply && (
+        <Transcript.Assistant streaming={running}>
+          <p className="m-0">{session.reply}</p>
+        </Transcript.Assistant>
+      )}
+      {running && session.tasks && (
+        <Meter
+          variant="line"
+          label="Tasks"
+          value={session.tasks.done}
+          max={session.tasks.total}
+          detail={`${session.tasks.done} of ${session.tasks.total} · ${session.lastLine}`}
+          warnAt={2}
+          errorAt={2}
+        />
+      )}
+      {session.prompt && <PendingPrompt prompt={session.prompt} onPatch={onPatch} />}
+      <InputMessage
+        size="compact"
+        minRows={1}
+        maxRows={4}
+        defaultStatus={running ? 'streaming' : 'idle'}
+        placeholder={session.prompt ? 'Or tell Claude what to do instead' : `Reply to ${session.title}`}
+      />
+      <div className="flex min-w-0 items-center gap-2">
+        <span className="min-w-0 flex-1 truncate text-caption text-muted-foreground">
+          {[STATUS_LABEL[session.status], session.profile, session.branch].filter(Boolean).join(' · ')}
+        </span>
+        <Button variant="ghost" size="compact" trailingIcon={Open} onClick={() => onOpen?.(session.id)}>
+          Open session
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function SessionItem({
   session,
   index,
+  onPatch,
   onOpen,
 }: {
   session: BoardSession
   index: number
+  onPatch: (id: string, patch: Patch) => void
   onOpen?: (id: string) => void
 }) {
+  const size = useSize()
   const profile = PROFILES.find(p => p.id === session.profile)
-  return (
-    <Table.Row index={index}>
-      <Table.Cell className="w-[32%]">
-        <span className="flex min-w-0 items-center gap-2">
-          <StatusDot status={session.status} />
-          <button
-            type="button"
-            onClick={() => onOpen?.(session.id)}
-            className="min-w-0 cursor-pointer truncate text-left text-foreground outline-none focus-visible:ring-1 focus-visible:ring-focus-ring"
-          >
-            {session.title}
-          </button>
-        </span>
-      </Table.Cell>
-      <Table.Cell className="w-[16%]">
-        <span className="flex min-w-0 items-center gap-1.5">
-          {profile && <ProfileTile profile={profile} className="size-4" />}
-          <span className="min-w-0 truncate">{session.projectLabel}</span>
-        </span>
-      </Table.Cell>
-      <Table.Cell>
-        <RowDetail session={session} />
-      </Table.Cell>
-      <Table.Cell className="w-12 text-right tabular-nums">{session.updated}</Table.Cell>
-      <Table.Cell className="w-40">
-        <span className="flex items-center justify-end gap-1">
-          <RowActions session={session} />
-        </span>
-      </Table.Cell>
-    </Table.Row>
-  )
-}
+  const patch = (p: Patch) => onPatch(session.id, p)
 
-function ByState({ sessions, onOpen }: { sessions: BoardSession[]; onOpen?: (id: string) => void }) {
   return (
-    <div className="flex flex-col gap-5">
-      {COLUMNS.map(column => {
-        const rows = sessions.filter(s => s.status === column.status)
-        if (rows.length === 0) return null
-        return (
-          <section key={column.status} aria-label={column.label} className="flex min-w-0 flex-col gap-1">
-            <div className="flex h-7 items-center gap-2">
-              <span className="text-caption weight-medium text-foreground">{column.label}</span>
-              <span className="text-caption tabular-nums text-muted-foreground">{rows.length}</span>
-            </div>
-            <div className="-mx-2.5 overflow-x-auto [&_table]:min-w-[640px] [&_table]:table-fixed">
-              <Table size="compact">
-                <Table.Body>
-                  {rows.map((session, i) => (
-                    <SessionRow key={session.id} session={session} index={i} onOpen={onOpen} />
-                  ))}
-                </Table.Body>
-              </Table>
-            </div>
-          </section>
-        )
-      })}
-    </div>
-  )
-}
-
-function ProjectPanel({
-  label,
-  path,
-  sessions,
-  onOpen,
-}: {
-  label: string
-  path?: string
-  sessions: BoardSession[]
-  onOpen?: (id: string) => void
-}) {
-  const shape = useShape()
-  const Folder = useIcon('folder')
-  const counts = COLUMNS.map(c => ({ ...c, n: sessions.filter(s => s.status === c.status).length })).filter(
-    c => c.n > 0,
-  )
-  return (
-    <section
-      aria-label={label}
-      className={cn('flex min-w-0 flex-col gap-2 border border-border p-[var(--space-3)]', shape.container)}
-    >
-      <div className="flex min-w-0 items-center gap-2">
-        <Folder size={16} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
-        <span className="min-w-0 truncate text-subtitle weight-semibold text-foreground">{label}</span>
-        <div className="ml-auto flex shrink-0 gap-1">
-          {counts.map(c => (
-            <Badge
-              key={c.status}
-              size="compact"
-              variant="dot"
-              color={c.status === 'waiting' ? 'amber' : c.status === 'running' ? 'green' : 'gray'}
-            >
-              {c.n} {c.label.toLowerCase()}
-            </Badge>
-          ))}
-        </div>
-      </div>
-      {path && <span className="truncate font-mono text-caption text-muted-foreground">{path}</span>}
-      <FluidHover className="-mx-3">
-        {sessions.map(session => (
-          <FluidHover.Item key={session.id} onClick={() => onOpen?.(session.id)} className="gap-2">
+    <Accordion.Item value={session.id} index={index}>
+      <Accordion.Trigger className={cn('[&>span:first-child]:min-w-0', ACTION_ROOM)}>
+        <span className={ROW_GRID}>
+          <span className={cn('flex min-w-0 items-center gap-2', session.child && 'pl-5.5')}>
             <StatusDot status={session.status} />
-            <span className="min-w-0 flex-1 truncate text-body text-foreground">{session.title}</span>
-            <span className="shrink-0 text-caption text-muted-foreground">
-              {session.profile} · {session.updated}
-            </span>
-          </FluidHover.Item>
-        ))}
-      </FluidHover>
-    </section>
+            <span className="min-w-0 truncate">{session.title}</span>
+          </span>
+          <span className="hidden min-w-0 items-center gap-1.5 weight-normal text-muted-foreground @xl:flex">
+            {profile && <ProfileTile profile={profile} className="size-4" />}
+            <span className="min-w-0 truncate">{session.projectLabel}</span>
+          </span>
+          <span className="hidden min-w-0 weight-normal text-muted-foreground @3xl:flex">
+            <RowDetail session={session} />
+          </span>
+          <span className="w-8 text-right text-caption weight-normal tabular-nums text-muted-foreground">
+            {session.updated}
+          </span>
+        </span>
+      </Accordion.Trigger>
+      {/* Beside the trigger, not in it: a press here never toggles the row. */}
+      <div className={cn('absolute right-1 top-0 z-20 flex items-center justify-end', size.control, ACTION_SLOT)}>
+        <RowActions session={session} onPatch={patch} />
+      </div>
+      <Accordion.Content>
+        <SessionPeek session={session} onPatch={patch} onOpen={onOpen} />
+      </Accordion.Content>
+    </Accordion.Item>
   )
 }
 
-function ByProject({
-  sessions,
-  groups,
-  onOpen,
-}: {
-  sessions: BoardSession[]
-  groups: SessionGroup[]
-  onOpen?: (id: string) => void
-}) {
+function SectionHeading({ section, open, onToggle }: { section: BoardSection; open: boolean; onToggle: () => void }) {
+  const Chevron = useIcon('chevron-right')
+  const label = (
+    <>
+      <span className="weight-medium text-foreground">{section.label}</span>
+      <span className="tabular-nums">{section.sessions.length}</span>
+    </>
+  )
   return (
-    <div className="grid items-start gap-4 @3xl:grid-cols-2 @6xl:grid-cols-3">
-      {groups.map(group => (
-        <ProjectPanel
-          key={group.label}
-          label={group.label}
-          path={group.path}
-          sessions={sessions.filter(s => s.projectLabel === group.label)}
-          onOpen={onOpen}
-        />
-      ))}
+    <div className="flex h-9 items-end gap-2 px-3 pb-1.5 text-caption text-muted-foreground">
+      {section.folded ? (
+        <button
+          type="button"
+          aria-expanded={open}
+          onClick={onToggle}
+          className="flex cursor-pointer items-center gap-2 rounded-glyph outline-none focus-visible:ring-1 focus-visible:ring-focus-ring"
+        >
+          {label}
+          <motion.span className="inline-flex" animate={{ rotate: open ? 90 : 0 }} transition={spring.fast}>
+            <Chevron size={12} strokeWidth={1.5} />
+          </motion.span>
+        </button>
+      ) : (
+        label
+      )}
     </div>
   )
 }
 
-type BoardView = 'state' | 'project'
+type BoardView = 'project' | 'state'
 
 interface SessionBoardProps {
-  /** Pinned sessions; each is shown under its own project. Defaults to the mock pins. */
+  /** Pinned sessions, first as in the sidebar. Defaults to the mock pins. */
   pinned?: Session[]
-  /** Projects and sections with their sessions. Defaults to the mock groups. */
+  /** Projects and sections with their sessions, in the sidebar's order. Defaults to the mock groups. */
   groups?: SessionGroup[]
+  /** Archived sessions, folded at the bottom. Defaults to the mock archive. */
+  archived?: Session[]
   /** Controlled view. Pair with `onViewChange`. */
   view?: BoardView
-  /** Initial view: by what each session needs, or by project. Defaults to `'state'`. */
+  /** Initial view: the sidebar's groups, or by what each session needs. Defaults to `'project'`. */
   defaultView?: BoardView
   /** Called with the new view. */
   onViewChange?: (view: BoardView) => void
-  /** Called with a session id when its card or row is opened. */
+  /** Controlled open rows, by session id. Pair with `onOpenChange`. */
+  open?: string[]
+  /** Rows open at first, by session id. Defaults to none. */
+  defaultOpen?: string[]
+  /** Called with the open rows. */
+  onOpenChange?: (open: string[]) => void
+  /** Called with a session id when its "Open session" is pressed. */
   onOpen?: (id: string) => void
   /** Classes for the root. */
   className?: string
 }
 
 /**
- * Every session of every project and profile on one screen, one row each,
- * and the controls to move them on without opening any.
+ * The sessions sidebar, widened into a control room: every session of
+ * every profile, what each is doing, and the controls to move it on without
+ * leaving the page.
  *
- * By state, the rows fall into what each session needs from you: needs you
- * first (a permission to allow or deny right in the row, a question to
- * answer), then running (task progress as a thin line and the latest
- * output, with stop), to review (an unread reply, marked done in one press)
- * and idle. Every row can take a reply: the arrow opens a small composer
- * under the row with the session's latest line above it. Each row names its
- * project and profile; its title opens the session. By project, each
- * project is a panel with a count per state and its sessions as rows.
+ * The rows are the sidebar's: pinned first, a group per project and per
+ * section you made, the archive folded; the same run-state glyphs and
+ * titles, linked children indented under their parent. Widened, a row also
+ * names its profile and project, says in one line what the session waits
+ * on or where its task list stands, and shows its last activity. What
+ * needs no reading sits at the row's end: allow or deny a permission, stop
+ * a run, mark a reply read. "By state" regroups the same rows by what each
+ * needs from you: needs you, running, to review, idle.
  *
- * Put it inside an `@container`: the panels reflow to the width it gets.
+ * Press a row and it opens in place into a small live session: the latest
+ * turn's work folded to one row, the latest reply, task progress while it
+ * runs, the pending prompt to answer right there, a reply box and "Open
+ * session". Several rows stay open at once, and one hover highlight runs
+ * down the whole board. Answer a prompt and the row goes back to running.
+ *
+ * Put it inside an `@container`: columns and labels fold away as it narrows.
  *
  * @example {@include ./examples.mdx}
  */
 export default function SessionBoard({
   pinned = PINNED,
   groups = GROUPS,
+  archived = ARCHIVED,
   view,
-  defaultView = 'state',
+  defaultView = 'project',
   onViewChange,
+  open,
+  defaultOpen,
+  onOpenChange,
   onOpen,
   className,
 }: SessionBoardProps) {
   const [current, setCurrent] = useControllableState(view, defaultView, onViewChange)
-  const Kanban = useIcon('square-kanban')
+  const [patches, setPatches] = useState<Record<string, Patch>>({})
+  const [archiveOpen, setArchiveOpen] = useState(false)
   const Folder = useIcon('folder')
-  const sessions = flatten(pinned, groups)
-  const projects = groups.filter(g => g.kind === 'project')
-  const waiting = sessions.filter(s => s.status === 'waiting').length
-  const running = sessions.filter(s => s.status === 'running').length
+  const Kanban = useIcon('square-kanban')
+
+  const live = (s: BoardSession): BoardSession => ({ ...s, ...patches[s.id] })
+  const sections = (current === 'project' ? byProject(pinned, groups, archived) : byState(pinned, groups))
+    .map(section => ({ ...section, sessions: section.sessions.map(live) }))
+    .filter(section => section.sessions.length > 0)
+  const all = byState(pinned, groups).flatMap(section => section.sessions.map(live))
+  const waiting = all.filter(s => s.status === 'waiting').length
+  const running = all.filter(s => s.status === 'running').length
+  const patch = (id: string, p: Patch) => setPatches(prev => ({ ...prev, [id]: { ...prev[id], ...p } }))
+
+  let index = 0
 
   return (
-    <div className={cn('flex min-w-0 flex-col gap-4', className)}>
-      <div className="flex flex-wrap items-center gap-3">
+    <div className={cn('@container flex min-w-0 flex-col gap-2', className)}>
+      <div className="flex flex-wrap items-center gap-3 px-3">
         <p className="m-0 min-w-0 flex-1 text-body text-muted-foreground">
-          {waiting} need you · {running} running · {sessions.length} sessions in {projects.length} projects
+          {waiting} need you · {running} running · {all.length} sessions
         </p>
         <SizeProvider size="compact">
           <TabsSubtle
-            selectedIndex={current === 'state' ? 0 : 1}
-            onSelect={i => setCurrent(i === 0 ? 'state' : 'project')}
+            selectedIndex={current === 'project' ? 0 : 1}
+            onSelect={i => setCurrent(i === 0 ? 'project' : 'state')}
           >
-            <TabsSubtle.Item index={0} icon={Kanban} label="By state" />
-            <TabsSubtle.Item index={1} icon={Folder} label="By project" />
+            <TabsSubtle.Item index={0} icon={Folder} label="By project" />
+            <TabsSubtle.Item index={1} icon={Kanban} label="By state" />
           </TabsSubtle>
         </SizeProvider>
       </div>
-      {current === 'state' ? (
-        <ByState sessions={sessions} onOpen={onOpen} />
-      ) : (
-        <ByProject sessions={sessions} groups={projects} onOpen={onOpen} />
-      )}
+      <Accordion.Group
+        type="multiple"
+        value={open}
+        defaultValue={defaultOpen}
+        onValueChange={onOpenChange}
+        className="w-full max-w-none"
+      >
+        {sections.map(section => {
+          const shown = !section.folded || archiveOpen
+          return (
+            <section key={section.label} aria-label={section.label} className="flex flex-col">
+              <SectionHeading section={section} open={shown} onToggle={() => setArchiveOpen(!archiveOpen)} />
+              {shown &&
+                section.sessions.map(session => (
+                  <SessionItem key={session.id} session={session} index={index++} onPatch={patch} onOpen={onOpen} />
+                ))}
+            </section>
+          )
+        })}
+      </Accordion.Group>
     </div>
   )
 }

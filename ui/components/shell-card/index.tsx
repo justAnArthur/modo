@@ -64,6 +64,8 @@ interface ShellCardProps extends HTMLAttributes<HTMLDivElement> {
   children?: ReactNode
   /** The row under the inner card: a `ShellCard.Footer`. */
   footer?: ReactNode
+  /** A tray set into the page, or a card lifted off it (two surface levels up with a popup's shadow, like the app's other floating cards). Defaults to `'sunken'`. */
+  variant?: 'sunken' | 'elevated'
   /** Classes for the shell. */
   className?: string
 }
@@ -74,8 +76,10 @@ interface ShellCardProps extends HTMLAttributes<HTMLDivElement> {
  * not its content (a category and a date, or the controls that set where
  * a message goes).
  *
- * The shell is a tray set into the page (greyer in light, darker in dark)
- * with a hairline inside its edge; the inner card lifts two surface levels
+ * By default the shell is a tray set into the page (greyer in light, darker
+ * in dark) with a hairline inside its edge; `variant="elevated"` lifts it
+ * off the page instead, two surface levels with a popup's shadow, so it
+ * matches the app's other floating cards (a composer, a prompt); the inner card lifts two surface levels
  * with its shadow, so the two read as a card resting in its holder in both
  * schemes. The inset is one spacing step (`--space-2`) and the corners
  * nest: the shell's is the inner card's plus that inset, in rounded and
@@ -93,20 +97,27 @@ interface ShellCardProps extends HTMLAttributes<HTMLDivElement> {
 // Literal table: UnoCSS only generates the classes it can read whole.
 const SHELL_RADIUS = { rounded: 'rounded-[var(--radius-shell)]', pill: 'rounded-[var(--radius-shell-pill)]' }
 
-function ShellCard({ children, footer, className, ...props }: ShellCardProps) {
+function ShellCard({ children, footer, variant = 'sunken', className, ...props }: ShellCardProps) {
   const shape = useShape()
+  const substrate = useSurface()
+  const level = variant === 'elevated' ? Math.min(substrate + 2, 8) : substrate
   return (
-    <div
-      className={cn(
-        'flex min-w-0 flex-col bg-sunken p-[var(--space-2)] ring-1 ring-inset ring-border',
-        SHELL_RADIUS[shape.variant],
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      {footer}
-    </div>
+    <SurfaceProvider value={level}>
+      <div
+        className={cn(
+          'flex min-w-0 flex-col p-[var(--space-2)]',
+          variant === 'elevated'
+            ? `${SURFACE_BG[level]} ${SURFACE_SHADOW[3]}`
+            : 'bg-sunken ring-1 ring-inset ring-border',
+          SHELL_RADIUS[shape.variant],
+          className,
+        )}
+        {...props}
+      >
+        {children}
+        {footer}
+      </div>
+    </SurfaceProvider>
   )
 }
 

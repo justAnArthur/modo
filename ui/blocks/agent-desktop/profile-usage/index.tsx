@@ -1,8 +1,7 @@
 /*!
- * Local addition: the agent desktop's usage at a glance — one Sidebar row per
- * profile with its short and long limit as two stacked lines and the
- * tightest share; a press opens a Popover with every limit, its reset time
- * and the profile's config dir.
+ * Local addition: the agent desktop's usage at a glance — one Sidebar row
+ * with every profile inline as its tile over two thin limit lines; a press
+ * opens one Popover with each profile's limits, reset times and runs.
  */
 
 'use client'
@@ -21,96 +20,94 @@ function tightest(profile: Profile) {
   return Math.max(...profile.limits.map(l => l.value))
 }
 
-function UsageRow({ profile, onManage }: { profile: Profile; onManage?: () => void }) {
-  const Settings = useIcon('settings')
+/** A profile in the row: its tile above its 5-hour and weekly lines. */
+function ProfileGlance({ profile }: { profile: Profile }) {
   const [short, long] = profile.limits
-  const top = tightest(profile)
-
   return (
-    <Sidebar.MenuItem>
-      <Popover>
-        <Popover.Trigger
-          render={
-            <Sidebar.MenuButton
-              aria-label={`${profile.name} usage: ${Math.round(top * 100)}% of its tightest limit`}
-              className="pl-8"
-            >
-              <span aria-hidden="true" className="pointer-events-none absolute left-1.5 top-1/2 -translate-y-1/2">
-                <ProfileTile profile={profile} />
-              </span>
-              <span className="min-w-0 flex-1 truncate">{profile.name}</span>
-              <span aria-hidden="true" className="flex w-14 shrink-0 flex-col gap-0.5">
-                {short && <Meter variant="line" label={short.label} value={short.value} />}
-                {long && <Meter variant="line" label={long.label} value={long.value} />}
-              </span>
-              <span className="w-8 shrink-0 text-right text-micro tabular-nums text-muted-foreground">
-                {Math.round(top * 100)}%
-              </span>
-            </Sidebar.MenuButton>
-          }
-        />
-        <Popover.Content side="right" align="end" sideOffset={12} className={POPOVER_FRAME}>
-          <SizeProvider size="default">
-            <PopoverSection title={`${profile.name} · ${profile.plan}`} aside={`${profile.running} running`}>
-              <PopoverRow label="Config">
-                <span className="max-w-40 truncate pr-[var(--space-3)] font-mono text-caption text-muted-foreground">
-                  {profile.provider === 'compatible' ? profile.baseUrl : profile.configDir}
-                </span>
-              </PopoverRow>
-              <PopoverRow label="Model">
-                <span className="pr-[var(--space-3)] text-caption text-muted-foreground">{profile.defaultModel}</span>
-              </PopoverRow>
-            </PopoverSection>
-            <PopoverSection title="Limits">
-              {profile.limits.map(limit => (
-                <PopoverRow key={limit.label} label={limit.label}>
-                  <Meter variant="line" className="w-16" label={limit.label} value={limit.value} />
-                  <span className="w-28 pr-[var(--space-3)] text-right text-caption tabular-nums text-muted-foreground">
-                    {limit.detail}
-                  </span>
-                </PopoverRow>
-              ))}
-            </PopoverSection>
-            <div className="flex justify-end">
-              <Button variant="ghost" size="compact" leadingIcon={Settings} onClick={onManage}>
-                Profiles
-              </Button>
-            </div>
-          </SizeProvider>
-        </Popover.Content>
-      </Popover>
-    </Sidebar.MenuItem>
+    <span className="flex w-7 shrink-0 flex-col items-center gap-[var(--space-1)]">
+      <ProfileTile profile={profile} className="size-4" />
+      <span className="flex w-full flex-col gap-0.5">
+        {short && <Meter variant="line" label={short.label} value={short.value} />}
+        {long && <Meter variant="line" label={long.label} value={long.value} />}
+      </span>
+    </span>
   )
 }
 
 interface ProfileUsageProps {
   /** The profiles to show. Defaults to the mock jobiflow, work, work-personal and zcode profiles. */
   profiles?: Profile[]
-  /** Called by a popover's Profiles button. */
+  /** Called by the popover's Profiles button. */
   onManage?: () => void
 }
 
 /**
- * How much each profile has left, in the sidebar, at a glance.
+ * How much each profile has left, in one sidebar row.
  *
  * Sessions of every profile already sit side by side in the sidebar, so it
- * needs no profile switch; what it needs is where there is room. Each row
- * is a profile: its tile and name, two thin lines for its short limit (the
- * 5-hour session) above its long one (the week), and the share of the
- * tightest, so a profile near a limit stands out by its amber or red line
- * rather than by a number to read. Press a row for the details: every
- * limit with its reset time, the config dir or base URL, what runs there.
+ * needs no profile switch, only where there is room. The row shows every
+ * profile at once: its tile above two thin lines, the 5-hour session over
+ * the week, so a profile near a limit stands out by its amber or red line
+ * without a number to read. Press the row for the details: per profile,
+ * every limit with its share and reset time, and what runs there.
  *
- * Put it in a `Sidebar.Group` (the session sidebar puts it in its footer).
+ * Put it in a Sidebar (the session sidebar puts it in its footer).
  *
  * @example {@include ./examples.mdx}
  */
 export default function ProfileUsage({ profiles = PROFILES, onManage }: ProfileUsageProps) {
+  const Settings = useIcon('settings')
+  const worst = [...profiles].sort((a, b) => tightest(b) - tightest(a))[0]
+
   return (
     <Sidebar.Menu aria-label="Profile usage">
-      {profiles.map(profile => (
-        <UsageRow key={profile.id} profile={profile} onManage={onManage} />
-      ))}
+      <Sidebar.MenuItem>
+        <Popover>
+          <Popover.Trigger
+            render={
+              <Sidebar.MenuButton
+                size="lg"
+                aria-label={
+                  worst
+                    ? `Usage of ${profiles.length} profiles; tightest: ${worst.name} at ${Math.round(tightest(worst) * 100)}%`
+                    : 'Usage'
+                }
+              >
+                <span className="flex min-w-0 flex-1 items-center gap-[var(--space-2)]">
+                  {profiles.map(profile => (
+                    <ProfileGlance key={profile.id} profile={profile} />
+                  ))}
+                </span>
+              </Sidebar.MenuButton>
+            }
+          />
+          <Popover.Content side="right" align="end" sideOffset={12} className={POPOVER_FRAME}>
+            <SizeProvider size="default">
+              {profiles.map(profile => (
+                <PopoverSection
+                  key={profile.id}
+                  title={`${profile.name} · ${profile.plan}`}
+                  aside={profile.running > 0 ? `${profile.running} running` : undefined}
+                >
+                  {profile.limits.map(limit => (
+                    <PopoverRow key={limit.label} label={limit.label}>
+                      <Meter variant="line" className="w-14" label={limit.label} value={limit.value} />
+                      <span className="w-28 pr-[var(--space-3)] text-right text-caption tabular-nums text-muted-foreground">
+                        {limit.detail}
+                      </span>
+                    </PopoverRow>
+                  ))}
+                </PopoverSection>
+              ))}
+              <div className="flex justify-end">
+                <Button variant="ghost" size="compact" leadingIcon={Settings} onClick={onManage}>
+                  Profiles
+                </Button>
+              </div>
+            </SizeProvider>
+          </Popover.Content>
+        </Popover>
+      </Sidebar.MenuItem>
     </Sidebar.Menu>
   )
 }

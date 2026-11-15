@@ -1,17 +1,25 @@
 import SessionBoard from './index'
 
-# By state
-
-Four columns by what each session needs from you; running cards show their task progress.
-
-<div className="@container w-full">
-  <SessionBoard />
-</div>
-
 # By project
 
-Each project as a panel with a count per state and its sessions as rows.
+The sidebar's groups and order, widened: each row names its profile and project, what it waits on or where its tasks stand, and its last activity. The canvas session waits on a permission: allow or deny it from the row, or read it in the open row and answer there.
 
-<div className="@container w-full">
-  <SessionBoard defaultView="project" />
+<div className="w-full">
+  <SessionBoard defaultOpen={['canvas']} />
+</div>
+
+# By state
+
+The same rows by what each session needs from you. The Postgres question opens with its options, answerable in place.
+
+<div className="w-full">
+  <SessionBoard defaultView="state" defaultOpen={['pg']} />
+</div>
+
+# Narrow
+
+Below the wide breakpoints the project and status columns fold away and Allow / Deny shrink to icons.
+
+<div className="w-full max-w-[420px]">
+  <SessionBoard defaultOpen={['canvas']} />
 </div>

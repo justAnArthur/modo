@@ -1,25 +1,25 @@
 import Overview from './index'
 import { ScreenFrame } from '../../../blocks/agent-desktop/screen-frame'
 
-# By state
+# Overview
 
-Every session on one board: what needs you first, then what runs, what waits for review and what is idle. The strip on top is each profile's tightest limit.
+The sidebar keeps its header and usage; its sessions fill the page. The canvas session is open on its permission prompt: answer it there, or allow it from the row.
 
-<ScreenFrame>
+<ScreenFrame height={900}>
   <Overview />
 </ScreenFrame>
 
-# By project
+# By state
 
-Each project as a panel, a count per state, its sessions as rows.
+The same rows by what each session needs; the Postgres question and the running webhook session open side by side.
 
-<ScreenFrame>
-  <Overview view="project" />
+<ScreenFrame height={900}>
+  <Overview view="state" open={['pg', 'billing']} />
 </ScreenFrame>
 
 # Narrow window
 
-The columns stack.
+The sidebar folded; the rows keep their title, last activity and actions.
 
 <ScreenFrame width={420} height={900}>
   <Overview sidebar={false} />

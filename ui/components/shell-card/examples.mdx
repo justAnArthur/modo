@@ -50,3 +50,23 @@ No media: the inner card holds a title and a line, the shell a status.
     </ShellCard.Inner>
   </ShellCard>
 </div>
+
+# Elevated
+
+`variant="elevated"` lifts the shell off the page like the app's floating cards; the inner card sits in it.
+
+<div className="w-full max-w-sm">
+  <ShellCard
+    variant="elevated"
+    footer={
+      <ShellCard.Footer>
+        <span>modo</span>
+        <span>jobiflow</span>
+      </ShellCard.Footer>
+    }
+  >
+    <ShellCard.Inner className="gap-0.5 p-3">
+      <span className="text-body text-muted-foreground">Ask, or type / for commands</span>
+    </ShellCard.Inner>
+  </ShellCard>
+</div>

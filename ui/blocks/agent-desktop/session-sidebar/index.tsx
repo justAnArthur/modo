@@ -98,6 +98,8 @@ interface SessionSidebarProps {
   groups?: SessionGroup[]
   /** Archived sessions, folded at the bottom. Defaults to the mock archive. */
   archived?: Session[]
+  /** List the sessions. Off on the overview, whose session board is this list widened. Defaults to `true`. */
+  sessions?: boolean
   /** Controlled selected session id. Pair with `onValueChange`. */
   value?: string
   /** Initial selected session id, for an uncontrolled sidebar. Defaults to `'agent-desktop'`. */
@@ -139,6 +141,7 @@ export default function SessionSidebar({
   pinned = PINNED,
   groups = GROUPS,
   archived = ARCHIVED,
+  sessions = true,
   value,
   defaultValue = 'agent-desktop',
   onValueChange,
@@ -181,41 +184,47 @@ export default function SessionSidebar({
       </Sidebar.Header>
 
       <Sidebar.Content>
-        <Sidebar.Group collapsible>
-          <Sidebar.GroupLabel>Pinned</Sidebar.GroupLabel>
-          <Sidebar.Menu>
-            {pinned.map(session => (
-              <SessionRow key={session.id} session={session} onOpenSplit={onOpenSplit} />
-            ))}
-          </Sidebar.Menu>
-        </Sidebar.Group>
+        {sessions && (
+          <>
+            <Sidebar.Group collapsible>
+              <Sidebar.GroupLabel>Pinned</Sidebar.GroupLabel>
+              <Sidebar.Menu>
+                {pinned.map(session => (
+                  <SessionRow key={session.id} session={session} onOpenSplit={onOpenSplit} />
+                ))}
+              </Sidebar.Menu>
+            </Sidebar.Group>
 
-        {groups.map(group => (
-          <Sidebar.Group key={group.label} collapsible>
-            <Sidebar.GroupLabel>{group.label}</Sidebar.GroupLabel>
-            <Sidebar.GroupActions>
-              <Tooltip content={group.kind === 'project' ? `New session in ${group.label}` : 'Filter'} side="top">
-                <Sidebar.GroupAction aria-label={group.kind === 'project' ? `New session in ${group.label}` : 'Filter'}>
-                  {group.kind === 'project' ? <Plus /> : <Filter />}
-                </Sidebar.GroupAction>
-              </Tooltip>
-            </Sidebar.GroupActions>
-            <Sidebar.Menu>
-              {group.sessions.map(session => (
-                <SessionRow key={session.id} session={session} onOpenSplit={onOpenSplit} />
-              ))}
-            </Sidebar.Menu>
-          </Sidebar.Group>
-        ))}
-
-        <Sidebar.Group collapsible defaultOpen={false}>
-          <Sidebar.GroupLabel>Archived</Sidebar.GroupLabel>
-          <Sidebar.Menu>
-            {archived.map(session => (
-              <SessionRow key={session.id} session={session} onOpenSplit={onOpenSplit} />
+            {groups.map(group => (
+              <Sidebar.Group key={group.label} collapsible>
+                <Sidebar.GroupLabel>{group.label}</Sidebar.GroupLabel>
+                <Sidebar.GroupActions>
+                  <Tooltip content={group.kind === 'project' ? `New session in ${group.label}` : 'Filter'} side="top">
+                    <Sidebar.GroupAction
+                      aria-label={group.kind === 'project' ? `New session in ${group.label}` : 'Filter'}
+                    >
+                      {group.kind === 'project' ? <Plus /> : <Filter />}
+                    </Sidebar.GroupAction>
+                  </Tooltip>
+                </Sidebar.GroupActions>
+                <Sidebar.Menu>
+                  {group.sessions.map(session => (
+                    <SessionRow key={session.id} session={session} onOpenSplit={onOpenSplit} />
+                  ))}
+                </Sidebar.Menu>
+              </Sidebar.Group>
             ))}
-          </Sidebar.Menu>
-        </Sidebar.Group>
+
+            <Sidebar.Group collapsible defaultOpen={false}>
+              <Sidebar.GroupLabel>Archived</Sidebar.GroupLabel>
+              <Sidebar.Menu>
+                {archived.map(session => (
+                  <SessionRow key={session.id} session={session} onOpenSplit={onOpenSplit} />
+                ))}
+              </Sidebar.Menu>
+            </Sidebar.Group>
+          </>
+        )}
       </Sidebar.Content>
 
       <Sidebar.Footer>
