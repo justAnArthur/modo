@@ -24,7 +24,7 @@ one `../` for an ungrouped item. The live pages are `primitives/motion`, `primit
 ## Spring tiers
 
 ```ts
-import { spring } from '../../../lib/springs'
+import { spring, springEnter } from '../../../lib/springs'
 ```
 
 | Token | Enter | Exit | Use for |
@@ -49,8 +49,7 @@ The bigger the thing that moves, the slower the tier. Never write a duration, an
 <motion.span animate={{ opacity: open ? 1 : 0 }} transition={open ? spring.fast : spring.fast.exit} />
 
 // A transition object that must not carry `exit` (animate(), layout transitions)
-const { exit: _exit, ...enter } = spring.moderate
-animate(progress, 1, { ...enter, onUpdate: render })
+animate(progress, 1, { ...springEnter(spring.moderate), onUpdate: render })
 
 // Deferred-unmount timers derive from the tier
 setTimeout(unmount, exitFallbackMs(spring.moderate))
@@ -154,8 +153,10 @@ Rules:
 - **One list per group of alternatives**; a divider between different kinds of rows means a new
   container. A popup that keeps rows mounted while hidden calls `hover.remeasure()` on open. Never
   re-measure on `children` changes.
-- **Keyboard:** light the focused row yourself (`hover.setActiveIndex(i)` on focus) and draw the ring
-  separately (see Focus in SKILL.md). Pass `from={itemRects[checked]}` so a fresh session starts on the
+- **Keyboard:** `const focus = useRowFocus(hover)` (`lib/row-group.tsx`; `useRowGroup(hover, { axis })`
+  when the group handles arrows, Home and End itself) lights the focused row; spread
+  `focus.handlers` on the container and draw `<FocusRing rect={focus.focusRect} />`
+  (`lib/focus-ring.tsx`; see Focus in SKILL.md). Pass `from={itemRects[checked]}` so a fresh session starts on the
   current choice; `hidden` keeps state while a popup is closed; `transition={false}` after a reflow.
 - **Skip fluid hover** where a wrong click would hurt, where only some items are clickable, where items
   sit far apart in empty space, or where rows move as you scroll.
@@ -169,10 +170,10 @@ beneath the items, in their `relative` container, from the rects `useFluidHover`
 ```tsx
 import { GooIndicator } from '../../../lib/goo-indicator'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
-import { useSurface } from '../../../lib/surface-context'
+import { useLift } from '../../../lib/surface-context'
 
 const { itemRects, activeIndex: hovered } = hover
-const level = Math.min(useSurface() + 3, 8)
+const level = useLift(3)
 const selectedRect = itemRects[selected]
 const hoverRect = hovered !== null ? itemRects[hovered] : undefined
 const hovering = hoverRect !== undefined && hovered !== selected
@@ -208,16 +209,28 @@ const hovering = hoverRect !== undefined && hovered !== selected
 ## Weight without reflow
 
 State (selected, active, open) makes a label `weight-semibold`. A heavier weight is wider, so reserve
-the width with an invisible semibold copy in the same grid cell:
+the width with an invisible semibold copy in the same grid cell. `WeightLabel` is that pair:
+
+```tsx
+import { WeightLabel } from '../../../lib/weight-label'
+
+<WeightLabel emphasized={selected} lit={active} trim truncate="line" className={cn('flex-1', size.text)}>
+  {label}
+</WeightLabel>
+```
+
+`emphasized` picks the weight, `lit` the color (foreground or muted; leave it out to inherit), `trim`
+adds `text-trim` for a fixed-height row, `truncate` ends a long label in an ellipsis (`'line'`, or
+`'inherit'` under a consumer's `truncate`). It forwards its ref and HTML props. By hand, the pair is:
 
 ```tsx
 <span className={cn('inline-grid whitespace-nowrap', size.text)}>
-  <span aria-hidden="true" className="invisible col-start-1 row-start-1 weight-semibold [text-box:trim-both_cap_alphabetic]">
+  <span aria-hidden="true" className="invisible col-start-1 row-start-1 weight-semibold text-trim">
     {label}
   </span>
   <span
     className={cn(
-      'col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast [text-box:trim-both_cap_alphabetic]',
+      'col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast text-trim',
       active ? 'text-foreground' : 'text-muted-foreground',
       selected ? 'weight-semibold' : 'weight-normal',
     )}
@@ -268,69 +281,62 @@ is:
 
 ```tsx
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover'
-import { createContext, type ReactNode, type RefObject, useContext, useMemo } from 'react'
-import { MorphSurface } from '../../../lib/morph-layers'
-import { useShape } from '../../../lib/shape-context'
-import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
-import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
-import { useControllableState } from '../../../lib/use-controllable-state'
-import { inPlaceOffset, type MorphOrigin, opensInPlace, useMorph, useMorphOrigin } from '../../../lib/use-morph'
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react'
+import { useMergeRefs } from '../../../lib/merge-refs'
+import {
+  type AnchorProps,
+  OverlayContext,
+  positionerProps,
+  useOverlay,
+  useOverlayRoot,
+  usePortalContainer,
+} from '../../../lib/overlay'
+import { PopupSurface } from '../../../lib/popup-surface'
+import { type MorphProps, useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 
-const FlyoutContext = createContext<{ open: boolean; origin: RefObject<MorphOrigin> }>({
-  open: false,
-  origin: { current: {} },
-})
-
-// Root: hold the open state and remember what opened it
-function Flyout({ open, defaultOpen = false, onOpenChange, children }: FlyoutProps) {
-  const [current, setCurrent] = useControllableState(open, defaultOpen, onOpenChange)
-  const { origin, capture } = useMorphOrigin()
-  const ctx = useMemo(() => ({ open: current, origin }), [current, origin])
+// Root: the open state both ways, and what opened it (captured by root.onOpenChange)
+function Flyout({ open, defaultOpen, onOpenChange, children }: FlyoutProps) {
+  const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
   return (
-    <FlyoutContext.Provider value={ctx}>
-      <PopoverPrimitive.Root
-        open={current}
-        onOpenChange={(next, details) => {
-          if (next) capture(details) // the pressed trigger and the press point
-          setCurrent(next)
-        }}
-      >
+    <OverlayContext.Provider value={root.state}>
+      <PopoverPrimitive.Root open={root.open} onOpenChange={root.onOpenChange}>
         {children}
       </PopoverPrimitive.Root>
-    </FlyoutContext.Provider>
+    </OverlayContext.Provider>
   )
 }
 
-// Content: the engine, the positioner, the surface
-function FlyoutContent({ from, effect, hideSource, tier, className, children }: FlyoutContentProps) {
-  const { open, origin } = useContext(FlyoutContext)
-  const morph = useMorph(open, origin, { from, effect, hideSource, tier })
-  const inPlace = opensInPlace({ effect, hideSource })
-  const shape = useShape()
-  const level = Math.min(useSurface() + 2, 8)
-  return (
-    <PopoverPrimitive.Portal>
-      <PopoverPrimitive.Positioner sideOffset={inPlace ? inPlaceOffset : 12} align={inPlace ? 'start' : 'center'} className="z-50 outline-none">
-        {/* The popup keeps its final size: positioning and collision never see the animation */}
-        <PopoverPrimitive.Popup ref={morph.popupRef} className="relative outline-none">
-          <SurfaceProvider value={level}>
-            <MorphSurface
-              morph={morph}
-              bg={SURFACE_BG[level]}
-              shadow={SURFACE_SHADOW[3]}
-              radius={shape.container}
-              className={cn('flex flex-col gap-1 p-4', className)}
-            >
+interface FlyoutContentProps extends AnchorProps, MorphProps, HTMLAttributes<HTMLDivElement> {}
+
+// Content: the engine, the positioner, the lifted surface
+const FlyoutContent = forwardRef<HTMLDivElement, FlyoutContentProps>(
+  ({ side, align, sideOffset, from, effect, hideSource, tier, container, className, children, ...props }, ref) => {
+    const { open, origin } = useOverlay('Flyout.Content')
+    const morph = useMorph(open, origin, { from, effect, hideSource, tier })
+    const popupRef = useMergeRefs(ref, morph.popupRef)
+    return (
+      <PopoverPrimitive.Portal container={usePortalContainer(container)}>
+        <PopoverPrimitive.Positioner
+          {...positionerProps({ side, align, sideOffset, effect, hideSource }, { side: 'bottom', align: 'center', sideOffset: 12 })}
+        >
+          {/* The popup keeps its final size: positioning and collision never see the animation */}
+          <PopoverPrimitive.Popup ref={popupRef} className="relative outline-none" {...props}>
+            {/* +2 above the substrate, re-provided, shadow-surface-3; lift="panel" for a dialog-like +4 */}
+            <PopupSurface morph={morph} className={cn('flex flex-col gap-1 p-4', className)}>
               {children}
-            </MorphSurface>
-          </SurfaceProvider>
-        </PopoverPrimitive.Popup>
-      </PopoverPrimitive.Positioner>
-    </PopoverPrimitive.Portal>
-  )
-}
+            </PopupSurface>
+          </PopoverPrimitive.Popup>
+        </PopoverPrimitive.Positioner>
+      </PopoverPrimitive.Portal>
+    )
+  },
+)
 ```
+
+`positionerProps` merges the content's anchoring props over the overlay's defaults and pulls the panel
+back over its trigger when it opens in place (`effect: 'morph'` + `hideSource`). `usePortalContainer`
+honors `container`, else the nearest `PortalContainer`.
 
 Options (`useMorph(open, origin, options, onExited?)`):
 
@@ -338,12 +344,14 @@ Options (`useMorph(open, origin, options, onExited?)`):
 |---|---|---|---|
 | `from` | `'trigger'`, `'pointer'`, `'center'`, `'top'`/`'right'`/`'bottom'`/`'left'` (window edges), a ref | `'trigger'` | `pointer` grows a droplet from the press point (context menus). |
 | `effect` | `'goo'`, `'morph'`, `'slide'`, `'fade'` | `'goo'` | Goo runs on `spring.goo` whatever the tier. Reduced motion forces `fade`. |
-| `hideSource` | boolean | `false` | The trigger fades out while open, so it reads as becoming the panel. With `effect: 'morph'` the panel opens in place: pass `inPlaceOffset` as `sideOffset`. |
+| `hideSource` | boolean | `false` | The trigger fades out while open, so it reads as becoming the panel. With `effect: 'morph'` the panel opens in place (`positionerProps` handles the offset). |
 | `tier` | `'moderate'`, `'slow'` | `'slow'` | For morph, slide and fade. Small panels (suggestions) take `moderate`. |
 | `exit` | `{ effect: 'slide' \| 'fade', from? }` | — | Close-only override, read as the close starts (a swiped sheet slides on off its edge). |
 | `instant` | `(popup) => boolean` | — | Show or hide at once while true (Base UI's `data-instant` tooltip hand-off). |
 
-Expose the options on your content part with the house prop docs, so every overlay reads the same:
+Expose the options on your content part with the house prop docs, so every overlay reads the same.
+Extending `MorphProps` (`lib/use-morph.ts`) and `AnchorProps` (`lib/overlay.tsx`) gives you them; their
+text is:
 
 ```ts
 /** Where the panel grows from (see Morph): the pressed trigger, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
@@ -361,7 +369,8 @@ mid-close, focus returning to the trigger, cutting the source out of the growing
 standing in for the shadow while the neck is attached, picking up a reopen mid-close. A modal's
 backdrop fades with the engine's progress: `render={<motion.div style={{ opacity: morph.progress }} />}`
 (see Dialog). Inverted surfaces pass `bg="bg-foreground"` and no shadow (see Tooltip). The neck's
-length is the gap between trigger and panel: keep `sideOffset` at 12.
+length is the gap between trigger and panel: keep `sideOffset` at 12 for a panel, 6 for a list (Select,
+Combobox, Dropdown, Search, the pickers).
 
 ## Shared parts
 
@@ -375,7 +384,7 @@ A part in the trigger and its twin in the panel fly between each other while the
     <Morph.Part id="cover" className="h-28 w-full rounded-lg bg-brand/20" />
     <Morph.Part id="title" className="text-subtitle weight-semibold text-foreground">Liquid glass</Morph.Part>
   </Dialog.Trigger>
-  <Dialog.Content size="lg" effect="morph" hideSource>
+  <Dialog.Content width="lg" effect="morph" hideSource>
     <Morph.Part id="cover" className="h-48 w-full rounded-lg bg-brand/20" />
     <Morph.Part id="title" className="text-title weight-semibold text-foreground">Liquid glass</Morph.Part>
   </Dialog.Content>
@@ -383,7 +392,7 @@ A part in the trigger and its twin in the panel fly between each other while the
 ```
 
 A new overlay root that wants parts provides `MorphPartScope` with a memoized `{ id: useId(), open }`
-(see `DialogState` in `dialog/index.tsx`); `MorphSurface` already marks its content as inside the
+(see `DialogState` in `overlays/dialog/index.tsx`); `MorphSurface` already marks its content as inside the
 overlay.
 
 ## State morphs inside a control
@@ -403,7 +412,7 @@ useLayoutEffect(() => {
     progress.jump(target)
     return on ? render(1) : settle()
   }
-  const controls = animate(progress, target, { ...enter, onUpdate: render, onComplete: on ? undefined : settle })
+  const controls = animate(progress, target, { ...springEnter(spring.moderate), onUpdate: render, onComplete: on ? undefined : settle })
   return () => controls.stop()
 }, [on, reduced])
 ```

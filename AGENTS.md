@@ -4,7 +4,13 @@ modo turns a design system (DS) into its own docs site. The lib brings no conten
 
 ## layout
 
-- `lib/` — the npm package `@justanarthur/modo` (bin `modo`): public entry points and the CLI (`src/exports`), pure code shared by node and the browser: schemas, parsers, helpers (`src/lib`), node-only code: config loader, discovery, the Vite config (`src/node`), Vite plugins (`src/plugins`), the renderer, a plain Vite SPA with its structural CSS (`src/runtime`), scaffold templates.
+- `lib/` — the npm package `@justanarthur/modo` (bin `modo`):
+  - `src/exports` — the public entry points and the CLI. `@justanarthur/modo` exports `defineConfig`'s types and the shell contract types (`ButtonSlotProps`, `LinkSlotProps`, `CodeSlotProps`, `IconSlotProps`, `SelectSlotProps`, `SidebarSlotProps`, `SidebarItemProps`, `SidebarSectionProps`, `PanelItemProps`, `ShellComponents`, `SelectOption`, `IconName`), from `src/lib/contract.ts`; `@justanarthur/modo/config` exports `defineConfig`.
+  - `src/lib` — pure code shared by node and the browser: schemas, the shell contract, parsers, paths, helpers.
+  - `src/node` — node-only code: the config loader, discovery, and `createViteConfig` (`vite-config.ts`), the whole Vite config the CLI passes inline (`configFile: false`); nothing reaches Vite through env vars.
+  - `src/plugins` — the Vite plugins.
+  - `src/runtime` — the renderer, a plain Vite SPA: its structural CSS in `shell/css/*.css` (imported in order from `main.tsx`, `contract.css` first), the virtual modules' types in `virtual/*.d.ts`.
+  - `templates/` — the scaffold and the `modo add` stubs.
 - `ui/` — the npm package `@justanarthur/modo-ui`: Fluid Functionalism (Base UI) on UnoCSS (springs, fluid hover, size ladder, surface elevation), a DS that is also published. `bun run build` writes the components, types and stylesheets to `dist/` (`index.ts` barrel, `bunup.config.ts`, `scripts/build-css.ts`); its docs build with `--out`, so they never touch `dist/`. `preset.ts` is the single source of the theme and token utilities: `uno.config.ts`, the shipped UnoCSS preset and the generated `tailwind.css` all read it. `base.css` holds the theme and base styles shipped to consumers; `global.css` imports it and adds the docs chrome. Its own guide is `ui/AGENTS.md`, its design language `ui/DESIGN.md`, its rules shown as bad / good pairs on the `primitives/craft` page; building in it follows the `modo-ui` skill (`.claude/skills/modo-ui`).
 - `demo/` — the harness. `scripts/run-design-systems.ts` runs the lib's CLI once per DS (one dev server per port, or one static build each) and splices in the demo-switcher. `components/demo-switcher/` renders `shell.Select` to navigate between peers.
 - `demo/design-systems/<name>/` — one workspace package per DS, each with its own deps (the runner also picks up `ui/`):
@@ -67,16 +73,16 @@ Two vocabularies:
   - `text-syntax-*` (code highlighting), `font-mono`;
   - `spring.*` and `--duration-*`;
   - the morph layer (`lib/use-morph.ts` + `MorphSurface`, docs `primitives/morph`) and the liquid indicators (`lib/goo-indicator.tsx`): overlays grow from their source and travelling indicators melt between items through them, never through hand-rolled animation.
-  - the field ladder (`lib/field-classes.ts`): a text field builds the box around its control with `useFieldBox` (the ladder in its `variant`, `data-active` / `data-invalid` / `data-disabled`, the shape's radius and inset; `focusControlOnPress` for a press in its padding) and re-declares `variant` / `invalid` / `disabled` / `size` in its props; a leading icon takes `fieldIconClasses`. Never its own hover, focus or invalid fills.
+  - the field ladder (`lib/field-classes.ts`): a text field builds the box around its control with `useFieldBox` (the ladder in its `variant`, `data-active` / `data-invalid` / `data-disabled`, the shape's radius and inset; `focusControlOnPress` for a press in its padding) and re-declares `variant` / `invalid` / `disabled` / `size` in its props; it takes `value` / `defaultValue` / `onValueChange` (the value, not an event); a leading icon takes `fieldIconClasses`; a label or message that lines up with the text inside reads `fieldTextInset`. Never its own hover, focus or invalid fills.
   - dates and times (`components/inputs/date-time/`): pickers sit on react-day-picker, styled through its `classNames` and custom components (never its stylesheet); they take a react-day-picker / date-fns `locale`, open through the group's `picker-shell.tsx`, and list months, years, hours and minutes in a `ScrollColumn` (`lib/scroll-column.tsx`).
 
 Rules:
 
-- **Lib (runtime TSX, `shell.css`):**
+- **Lib (runtime TSX, `shell/css/*.css`):**
   - Structure only (layout, grid, spacing rhythm, measure). Every visual reads a generic token, or the host's own token when that token is what the page shows (a radius specimen applies `var(--radius-box)`).
   - No literal colors and no color fallbacks. Leave the fallback off so an undefined token inherits, or derive it from `currentColor`.
   - Borders, muted text and the focus ring read `--modo-border` / `--modo-muted` / `--modo-ring`. `tokens/host-colors.ts` sets them at startup from the host's `--border` / `--muted-foreground` / `--ring` (wrapped when the token holds bare channels, e.g. `hsl(var(--border))`), else from `currentColor`. It sets `--modo-color-<role>` from `--color-<role>` the same way (lead and eyebrow fall back to `--modo-muted`).
-  - Defaults live in one place each. `shell.css` opens with the contract block: every generic type and radius token resolves once to a `--modo-*` var, falling back to a literal size or, for weights, the keyword `bold`. `tokens/host-colors.ts` does the same for colors. Rules read `--modo-*`, never a generic token with an inline fallback. Those two are the only literal visuals in the lib.
+  - Defaults live in one place each. `shell/css/contract.css` (imported first) holds the contract: every generic type and radius token resolves once to a `--modo-*` var, falling back to a literal size or, for weights, the keyword `bold`; the specimen tints are `--modo-tint-8|10|12|30|35|45|55`, `color-mix` of `currentColor` with transparent; it also applies the `sm` / `xs` roles to the chrome's small print. `tokens/host-colors.ts` does the same for colors. Rules read `--modo-*`, never a generic token with an inline fallback, and never write a `color-mix` of their own. Those two are the only literal visuals in the lib.
   - Spacing fallbacks stay inline (`var(--space-2, 8px)`): spacing is structure. Motion has no default; no token means no transition.
   - Inherit before you set: line-height, font family and link decoration come from the host. Capitalize in content (`cap()` in `lib/text.ts`), never with `text-transform`.
 - **DS code** (items, examples, `modo.components.tsx`):
@@ -87,7 +93,7 @@ Rules:
   - The same holds for the DS's own CSS (`global.css`, an item's `.css`): structure is free, visuals go through tokens.
 - **Missing step on the scale:** add a token (the `tokens/*.css` var plus its utility mapping), then use it. Don't hard-code it.
 - **Chrome restyling:** the host restyles the chrome through `data-modo` attrs in its `global.css`; never fork lib CSS.
-- **Vendored upstream code** keeps upstream values; note any local changes in its header comment.
+- **Vendored upstream code** keeps upstream values; note any local changes in its header comment (ui records them in `ui/PORTING.md`, which its headers point to).
 
 ## docs (TSDoc)
 
@@ -137,7 +143,8 @@ Rules:
   - A failing entry is isolated, dropped and reported once as `[modo:bundle]`. Stale outputs are swept.
   - In dev, a source change under the DS root rebuilds and reloads. It also re-transforms every stylesheet, so a scanner (Tailwind `@source`) sees new files, and hands the file to UnoCSS's extractor (Uno's `content.filesystem` watcher misses files created after startup).
 - **Shell inheritance:**
-  - The chrome looks for user components per slot, matched by name plus required props. Primitives: Button, Link, Code, Icon. Components: Select, Sidebar Root/Item/Section.
+  - The chrome looks for user components per slot, matched by name plus required props (`SLOTS` in `lib/src/lib/contract.ts`). Primitives: Button (`children`), Link (`href`, `children`), Code (`children`), Icon (`name`). Components: Select (`value`, `onValueChange`, `options`), Sidebar Root/Item/Section (`children`). A host Select that declares `onChange` instead falls back to Plain.
+  - Type a slot or panel component with the exported contract types: `import type { SelectSlotProps, PanelItemProps } from '@justanarthur/modo'`.
   - Unmatched slots fall back to the lib's Plain components; `modo.config.ts: shell` pins slots.
   - A `shell` / `panel.items[].component` reference may name an export: `./modo.components.tsx#Select` (else the default export). Several refs into one file share its build entry, so a DS can keep all its docs-only components in one `modo.components.tsx`.
   - Contracts beyond the matched props:
@@ -145,12 +152,13 @@ Rules:
     - Link gets `aria-label` on icon-only anchors and `title` from Markdown links; forward them.
     - Code gets `language` and a string child.
     - Icon gets `name` (`code` | `copy` | `check` | `link` | `menu` | `sun` | `moon`, or a `socials` key) and `label`. The host draws its own glyph; `PlainIcon` shows the label as text.
+    - Select (handed only to panel items, as `shell.Select`) gets `value`, `onValueChange(value)` (the value, not an event) and `options: { value, label }[]`.
   - A host Link needn't forward data attributes: the chrome puts its hooks on wrappers.
   - One Sidebar drives both sides: each `panel.items` entry is a `Sidebar.Section`.
 - **`modo.config.ts` hooks:**
   - `css` — injected right after the lib's structural CSS, before tokens.
   - `examples` — a module whose named exports are in scope in every example. Alias any export that collides with an item name; an unresolvable path yields scope `{}` in dev and fails `modo build`.
-  - `vite` — default-exports `(config) => config`, imported natively. This is how Tailwind/Uno get added.
+  - `vite` — default-exports `(config) => config`, imported natively; the path resolves like every other ref (extension optional). This is how Tailwind/Uno get added. The CLI applies it to `createViteConfig`'s result, then merges its own flags (`--port`, `--host`, `--base`, `--out`) over it.
 - **Users write no Vite config and no Next.js:** the lib owns the app.
 
 ## file naming
