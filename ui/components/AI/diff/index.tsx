@@ -68,6 +68,8 @@ interface DiffProps {
   path?: string
   /** Show the old and new line numbers in the gutter. Defaults to `true`. */
   lineNumbers?: boolean
+  /** Wrap long lines under their own text instead of scrolling sideways, for a narrow column. Defaults to `false`. */
+  wrap?: boolean
   /** Extra content on the right of the header, such as an action. */
   actions?: ReactNode
   /** Classes for the frame. */
@@ -82,18 +84,42 @@ interface DiffProps {
  * added line is tinted with the success hue and each removed line with the
  * error hue, as tinted text on a wash rather than a solid fill; hunk headers
  * sit on the hover overlay. With a `path` the header counts the change
- * (`+12 −3`). Long lines scroll sideways under a fading edge instead of
- * wrapping, and the frame lifts one surface step above whatever holds it, as
- * Code does.
+ * (`+12 −3`). Long lines scroll sideways under a fading edge, or with
+ * `wrap` break under their own text while the gutter holds still, and the
+ * frame lifts one surface step above whatever holds it, as Code does.
  *
  * @example {@include ./examples.mdx}
  */
-export default function Diff({ patch, path, lineNumbers = true, actions, className }: DiffProps) {
+export default function Diff({ patch, path, lineNumbers = true, wrap = false, actions, className }: DiffProps) {
   const level = Math.min(useSurface() + 1, 8)
   const FileIcon = useIcon('file-diff')
   const lines = parsePatch(patch)
   const added = lines.filter(l => l.kind === 'add').length
   const removed = lines.filter(l => l.kind === 'remove').length
+
+  const body = (
+    <div className={cn('py-1 font-mono text-caption', wrap ? 'min-w-0' : 'w-max min-w-full')}>
+      {lines.map((line, i) => (
+        <div key={i} className={cn('flex min-w-full', ROW[line.kind])}>
+          {lineNumbers && line.kind !== 'hunk' && (
+            <span aria-hidden="true" className="flex w-16 shrink-0 select-none text-muted-foreground tabular-nums">
+              <span className="w-8 pr-1 text-right">{line.oldNo ?? ''}</span>
+              <span className="w-8 pr-1 text-right">{line.newNo ?? ''}</span>
+            </span>
+          )}
+          <span aria-hidden="true" className={cn('w-5 shrink-0 select-none text-center', SIGN[line.kind])}>
+            {SIGN_CHAR[line.kind]}
+          </span>
+          <span className="sr-only">{line.kind === 'add' ? 'added' : line.kind === 'remove' ? 'removed' : ''}</span>
+          <span
+            className={cn('pr-4 text-foreground', wrap ? 'min-w-0 whitespace-pre-wrap break-words' : 'whitespace-pre')}
+          >
+            {line.text || ' '}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
 
   return (
     <div className={cn('flex min-w-0 flex-col overflow-hidden rounded-xl', SURFACE_BG[level], className)}>
@@ -106,25 +132,13 @@ export default function Diff({ patch, path, lineNumbers = true, actions, classNa
           {actions && <div className="ml-auto flex shrink-0 items-center gap-1">{actions}</div>}
         </div>
       )}
-      <ScrollArea orientation="horizontal" viewportClassName="scroll-fade-x">
-        <div className="w-max min-w-full py-1 font-mono text-caption">
-          {lines.map((line, i) => (
-            <div key={i} className={cn('flex min-w-full', ROW[line.kind])}>
-              {lineNumbers && line.kind !== 'hunk' && (
-                <span aria-hidden="true" className="flex w-16 shrink-0 select-none text-muted-foreground tabular-nums">
-                  <span className="w-8 pr-1 text-right">{line.oldNo ?? ''}</span>
-                  <span className="w-8 pr-1 text-right">{line.newNo ?? ''}</span>
-                </span>
-              )}
-              <span aria-hidden="true" className={cn('w-5 shrink-0 select-none text-center', SIGN[line.kind])}>
-                {SIGN_CHAR[line.kind]}
-              </span>
-              <span className="sr-only">{line.kind === 'add' ? 'added' : line.kind === 'remove' ? 'removed' : ''}</span>
-              <span className="whitespace-pre pr-4 text-foreground">{line.text || ' '}</span>
-            </div>
-          ))}
-        </div>
-      </ScrollArea>
+      {wrap ? (
+        body
+      ) : (
+        <ScrollArea orientation="horizontal" viewportClassName="scroll-fade-x">
+          {body}
+        </ScrollArea>
+      )}
     </div>
   )
 }

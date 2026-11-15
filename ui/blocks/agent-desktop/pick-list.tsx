@@ -1,10 +1,11 @@
 /*!
  * Local addition: a single-choice list whose rows hold any content (a title,
  * a description, meters), for the agent desktop's profile switcher, question
- * options and chapter list. Radio's systems on rich rows: one fluid hover
- * highlight, the selected background a GooIndicator that melts between rows,
- * a focus ring that springs between rows for keyboard focus only, and arrow
- * keys that move the pick.
+ * options, chapter list and the side pane's changed files. Radio's systems
+ * on rich rows: one fluid hover highlight, the selected background a
+ * GooIndicator that melts between rows, a focus ring that springs between
+ * rows for keyboard focus only, and arrow keys that move the pick. A row's
+ * optional actions sit beside its button and show on hover or focus.
  */
 
 'use client'
@@ -25,6 +26,8 @@ export interface PickOption {
   /** The accessible name when `content` is more than text. */
   label?: string
   disabled?: boolean
+  /** Controls at the row's right end, shown while it is hovered or holds focus (always on touch). They sit beside the row's button, not in it, so a press on them never picks the row. */
+  actions?: ReactNode
 }
 
 interface RowProps {
@@ -43,7 +46,7 @@ function Row({ option, index, selected, tabbable, register, onPick, onFocusRow, 
   const shape = useShape()
   useRegisterFluidHoverItem(register, index, ref)
 
-  return (
+  const row = (
     // biome-ignore lint/a11y/useSemanticElements: a radio row holds rich content (meters, two lines), so it is a button with radio semantics
     <button
       ref={ref}
@@ -65,6 +68,15 @@ function Row({ option, index, selected, tabbable, register, onPick, onFocusRow, 
     >
       {option.content}
     </button>
+  )
+  if (!option.actions) return row
+  return (
+    <div className="group/pick relative">
+      {row}
+      <div className="absolute inset-y-0 right-1 z-20 flex items-center gap-0.5 opacity-0 transition-[opacity] duration-fast focus-within:opacity-100 group-hover/pick:opacity-100 pointer-coarse:opacity-100">
+        {option.actions}
+      </div>
+    </div>
   )
 }
 

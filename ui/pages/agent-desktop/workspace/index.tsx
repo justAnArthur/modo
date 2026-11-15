@@ -21,6 +21,7 @@ import Button from '../../../components/button'
 import Sidebar from '../../../components/navigation/sidebar'
 import Tooltip from '../../../components/overlays/tooltip'
 import { useIcon } from '../../../lib/icon-context'
+import { cn } from '../../../lib/utils'
 
 type PromptKind = 'none' | 'permission' | 'edit' | 'question' | 'multi' | 'preview' | 'plan' | 'offer' | 'task'
 
@@ -135,7 +136,7 @@ function Prompt({ kind, onDone }: { kind: PromptKind; onDone: () => void }) {
   return null
 }
 
-function SplitSession({ id, onClose }: { id: string; onClose: () => void }) {
+function SplitSession({ id, onClose, trailing }: { id: string; onClose: () => void; trailing?: React.ReactNode }) {
   const session = findSession(id)
   const Close = useIcon('x')
   return (
@@ -148,9 +149,12 @@ function SplitSession({ id, onClose }: { id: string; onClose: () => void }) {
         <Badge size="compact" color="gray" className="shrink-0">
           {session?.profile}
         </Badge>
-        <Button variant="ghost" size="icon-compact" aria-label="Close split" className="ml-auto" onClick={onClose}>
-          <Close />
-        </Button>
+        <div className="ml-auto flex shrink-0 items-center gap-0.5">
+          <Button variant="ghost" size="icon-compact" aria-label="Close split" onClick={onClose}>
+            <Close />
+          </Button>
+          {trailing}
+        </div>
       </div>
       <Transcript>
         <DemoReading />
@@ -184,12 +188,18 @@ interface WorkspaceProps {
  * the latest message, whatever the agent waits on (a permission, a
  * question, a plan to approve, a session offer) and the composer with the
  * model, mode and context. A second session opens beside it in split view
- * from a row's menu or the split button. The side pane shows the changes,
- * a file, a terminal, the pull request with its checks, artifacts, tasks or
- * your own extension's pane. The side pane is a sidebar of its own on the
- * right: drag its rail to resize it, click the rail or press ] to fold it,
- * as the sessions sidebar does with [. On a narrow window the split drops
- * out and both sidebars start folded.
+ * from a row's menu or the split button, with its own header on the same
+ * line. The side pane shows the changes, a file, a terminal, the pull
+ * request with its checks, artifacts, tasks or your own extension's pane.
+ *
+ * The side pane is a sidebar of its own on the right and sits on the page
+ * the way the sessions sidebar does: its tab strip shares the session
+ * header's line, and the session card keeps an even gutter to whichever
+ * sidebar is open, or 8px from the window edge once one folds. Drag its
+ * rail to resize it, click the rail or press ] to fold it, as the sessions
+ * sidebar does with [; with a split open, its toggle moves to the split's
+ * header, beside the pane. On a narrow window the split drops out and both
+ * sidebars start folded.
  *
  * @example {@include ./examples.mdx}
  */
@@ -214,6 +224,21 @@ export default function Workspace({
   const PanelRight = useIcon('panel-right')
   const PanelLeft = useIcon('panel-left')
   const More = useIcon('more-horizontal')
+
+  const paneToggle = (
+    <Tooltip content="Side pane" side="bottom">
+      <Button
+        variant="ghost"
+        size="icon-compact"
+        aria-label="Side pane"
+        aria-pressed={paneOpen}
+        active={paneOpen}
+        onClick={() => setPaneOpen(!paneOpen)}
+      >
+        <PanelRight />
+      </Button>
+    </Tooltip>
+  )
 
   return (
     <div className="@container flex h-full min-h-[640px] w-full bg-background">
@@ -242,63 +267,53 @@ export default function Workspace({
               className="h-full"
             />
           </Sidebar>
-          <Sidebar.Inset className="@container min-h-0 min-w-0">
-            <header className="flex h-12 shrink-0 items-center gap-2 px-1.5">
-              <Button
-                variant="ghost"
-                size="icon-compact"
-                aria-label="Sessions sidebar"
-                aria-pressed={leftOpen}
-                onClick={() => setLeftOpen(!leftOpen)}
-              >
-                <PanelLeft />
-              </Button>
-              <span className="min-w-0 truncate text-body weight-medium text-foreground">{session?.title}</span>
-              {session?.branch && (
-                <span className="hidden min-w-0 items-center gap-1 text-caption text-muted-foreground @xl:flex">
-                  <Branch size={12} strokeWidth={1.5} className="shrink-0" />
-                  <span className="truncate font-mono">{session.branch}</span>
-                </span>
-              )}
-              {profile && (
-                <span className="hidden shrink-0 text-caption text-muted-foreground @2xl:inline">
-                  {profile.name} · {profile.defaultModel}
-                </span>
-              )}
-              <div className="ml-auto flex shrink-0 items-center gap-0.5">
-                <Tooltip content="Split view" side="bottom">
-                  <Button
-                    variant="ghost"
-                    size="icon-compact"
-                    aria-label="Split view"
-                    aria-pressed={splitId !== null}
-                    active={splitId !== null}
-                    className="hidden @3xl:inline-flex"
-                    onClick={() => setSplitId(splitId ? null : 'canvas')}
-                  >
-                    <Columns />
-                  </Button>
-                </Tooltip>
-                <Tooltip content="Side pane" side="bottom">
-                  <Button
-                    variant="ghost"
-                    size="icon-compact"
-                    aria-label="Side pane"
-                    aria-pressed={paneOpen}
-                    active={paneOpen}
-                    onClick={() => setPaneOpen(!paneOpen)}
-                  >
-                    <PanelRight />
-                  </Button>
-                </Tooltip>
-                <Button variant="ghost" size="icon-compact" aria-label="Session options">
-                  <More />
-                </Button>
-              </div>
-            </header>
-
+          {/* The inset's margins come from its peer, the side pane; the sessions sidebar is in the outer provider, so its side is set here: flush while it is open (its rows bring their own gutter), 8px once it folds. */}
+          <Sidebar.Inset className={cn('@container min-h-0 min-w-0', leftOpen && '!ml-0')}>
             <div className="flex min-h-0 flex-1">
-              <main className="flex min-w-0 flex-1 flex-col">
+              <div className="flex min-w-0 flex-1 flex-col">
+                <header className="flex h-12 shrink-0 items-center gap-2 px-1.5">
+                  <Button
+                    variant="ghost"
+                    size="icon-compact"
+                    aria-label="Sessions sidebar"
+                    aria-pressed={leftOpen}
+                    onClick={() => setLeftOpen(!leftOpen)}
+                  >
+                    <PanelLeft />
+                  </Button>
+                  <span className="min-w-0 truncate text-body weight-medium text-foreground">{session?.title}</span>
+                  {session?.branch && (
+                    <span className="hidden min-w-0 items-center gap-1 text-caption text-muted-foreground @xl:flex">
+                      <Branch size={12} strokeWidth={1.5} className="shrink-0" />
+                      <span className="truncate font-mono">{session.branch}</span>
+                    </span>
+                  )}
+                  {profile && (
+                    <span className="hidden shrink-0 text-caption text-muted-foreground @2xl:inline">
+                      {profile.name} · {profile.defaultModel}
+                    </span>
+                  )}
+                  <div className="ml-auto flex shrink-0 items-center gap-0.5">
+                    <Tooltip content="Split view" side="bottom">
+                      <Button
+                        variant="ghost"
+                        size="icon-compact"
+                        aria-label="Split view"
+                        aria-pressed={splitId !== null}
+                        active={splitId !== null}
+                        className="hidden @3xl:inline-flex"
+                        onClick={() => setSplitId(splitId ? null : 'canvas')}
+                      >
+                        <Columns />
+                      </Button>
+                    </Tooltip>
+                    <Button variant="ghost" size="icon-compact" aria-label="Session options">
+                      <More />
+                    </Button>
+                    {/* With a split open the toggle moves to the split's header: it stays at the window's right edge, beside the pane it opens. */}
+                    <span className={cn('inline-flex', splitId && '@3xl:hidden')}>{paneToggle}</span>
+                  </div>
+                </header>
                 <Transcript
                   chapters={DEMO_CHAPTERS}
                   footer={
@@ -321,8 +336,8 @@ export default function Workspace({
                 <div className="mx-auto w-full max-w-3xl px-6 pb-4">
                   <Composer streaming={pending === 'none' && !nextStep} />
                 </div>
-              </main>
-              {splitId && <SplitSession id={splitId} onClose={() => setSplitId(null)} />}
+              </div>
+              {splitId && <SplitSession id={splitId} onClose={() => setSplitId(null)} trailing={paneToggle} />}
             </div>
           </Sidebar.Inset>
         </Sidebar.Provider>

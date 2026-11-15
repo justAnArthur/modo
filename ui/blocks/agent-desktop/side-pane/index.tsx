@@ -1,8 +1,9 @@
 /*!
  * Local addition: the agent desktop's side pane, beside the transcript. A
  * strip of pill tabs (TabsSubtle, only the picked one spelled out) switches
- * between the panes in panes.tsx; a Dropdown adds optional panes from
- * plugins; the close button hands the room back to the transcript.
+ * between the panes in panes.tsx; a Dropdown beside the last tab adds
+ * optional panes from plugins; the close button hands the room back to the
+ * transcript. The whole pane is a compact region.
  */
 
 'use client'
@@ -10,6 +11,7 @@
 import Button from '../../../components/button'
 import TabsSubtle from '../../../components/navigation/tabs-subtle'
 import Dropdown from '../../../components/overlays/dropdown'
+import Tooltip from '../../../components/overlays/tooltip'
 import { type IconName, useIcon, useIcons } from '../../../lib/icon-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
@@ -59,14 +61,24 @@ interface SidePaneProps {
  *
  * Pill tabs at the top switch panes; only the picked tab spells out its
  * name, so the strip fits a narrow pane, and the pill melts from tab to
- * tab. Changes lists the touched files and shows the picked one's diff,
- * with commit and discard. The pull request pane lists the CI checks as
- * they run and turns Auto-fix on, so the session watches CI and answers
- * review comments. Tasks lists background agents, shells and child
- * sessions with a stop button for each running one. The last tab is the
- * extensions slot: a pane your own MCP server or plugin provides (here a
- * usage view across every profile); the + menu adds optional panes from
- * plugins, such as a browser or an iOS simulator.
+ * tab. The + beside the last tab adds optional panes from plugins (a
+ * browser, an iOS simulator); the close button sits at the far edge. The
+ * strip is as tall as the session's header, so the two share a line across
+ * the window.
+ *
+ * Every pane speaks one language: a section row with a title, its meta and
+ * icon actions, then rows on the control height whose text lines up with
+ * the title. Changes splits the files into staged and unstaged with a
+ * commit field on top; a row's stage, unstage and revert show on hover, and
+ * the picked file's diff wraps its long lines (toggle it to scroll). File
+ * shows a path crumb with copy and open. Terminal is a prompt you type at,
+ * not a form. The pull request lists its checks: a failed one opens to the
+ * tail of its log with Ask Claude to fix, and the merge waits while one
+ * fails. Artifacts open on press; tasks stop while they run and retry once
+ * they failed or stopped. The last tab is the extensions slot, a pane your
+ * own MCP server or plugin provides: here, every profile's limits as pace
+ * bars, read against the time until each resets. A pane with nothing in it
+ * says so and what lands there.
  *
  * @example {@include ./examples.mdx}
  */
@@ -85,13 +97,14 @@ export default function SidePane({ pane, defaultPane = 'changes', onPaneChange, 
   return (
     <section aria-label="Side pane" className={cn('flex min-h-0 min-w-0 flex-col', className)}>
       <SizeProvider size="compact">
-        <div className="flex h-12 shrink-0 items-center gap-1 px-1.5">
+        {/* One height with the session's header, so the two rows share a baseline across the window. */}
+        <div className="flex h-12 shrink-0 items-center gap-1 px-2">
           <TabsSubtle
             activeLabel
             idPrefix="side-pane"
             selectedIndex={index}
             onSelect={i => setCurrent(PANES[i]?.id ?? 'changes')}
-            className="min-w-0 flex-1"
+            className="min-w-0"
           >
             {PANES.map((p, i) => (
               <TabsSubtle.Item key={p.id} index={i} icon={icons[p.icon]} label={p.label} />
@@ -100,34 +113,42 @@ export default function SidePane({ pane, defaultPane = 'changes', onPaneChange, 
           <Dropdown.Menu>
             <Dropdown.Trigger
               render={
-                <Button variant="ghost" size="icon-compact" aria-label="Add a pane">
+                <Button variant="ghost" size="icon-compact" aria-label="Add a pane" className="shrink-0">
                   <Plus />
                 </Button>
               }
             />
-            <Dropdown.Content align="end" className="w-60">
+            <Dropdown.Content align="start" className="w-60">
               <Dropdown.Label>From plugins</Dropdown.Label>
               <Dropdown.Item index={0} icon={Globe} label="Browser (install)" />
               <Dropdown.Item index={1} icon={Phone} label="iOS simulator (install)" />
             </Dropdown.Content>
           </Dropdown.Menu>
           {onClose && (
-            <Button variant="ghost" size="icon-compact" aria-label="Close the pane" onClick={onClose}>
-              <Close />
-            </Button>
+            <Tooltip content="Close the pane" side="bottom">
+              <Button
+                variant="ghost"
+                size="icon-compact"
+                aria-label="Close the pane"
+                className="ml-auto shrink-0"
+                onClick={onClose}
+              >
+                <Close />
+              </Button>
+            </Tooltip>
           )}
         </div>
+        <ScrollArea className="min-h-0 flex-1" viewportClassName="scroll-fade">
+          <TabsSubtle.Panel
+            index={index}
+            selectedIndex={index}
+            idPrefix="side-pane"
+            className="px-2 pb-4 [contain:inline-size]"
+          >
+            {CONTENT[PANES[index]?.id ?? 'changes']()}
+          </TabsSubtle.Panel>
+        </ScrollArea>
       </SizeProvider>
-      <ScrollArea className="min-h-0 flex-1" viewportClassName="scroll-fade">
-        <TabsSubtle.Panel
-          index={index}
-          selectedIndex={index}
-          idPrefix="side-pane"
-          className="px-4 pb-4 [contain:inline-size]"
-        >
-          {CONTENT[PANES[index]?.id ?? 'changes']()}
-        </TabsSubtle.Panel>
-      </ScrollArea>
     </section>
   )
 }

@@ -122,6 +122,7 @@ import {
   Star,
   Sun,
   Terminal,
+  TextWrap,
   Trash2,
   TriangleAlert,
   User,
@@ -254,6 +255,7 @@ export type IconName =
   | 'history'
   | 'layout-dashboard'
   | 'square-kanban'
+  | 'text-wrap'
 
 export const defaultIcons: Record<IconName, IconComponent> = {
   'chevron-right': ChevronRight,
@@ -368,6 +370,7 @@ export const defaultIcons: Record<IconName, IconComponent> = {
   history: History,
   'layout-dashboard': LayoutDashboard,
   'square-kanban': SquareKanban,
+  'text-wrap': TextWrap,
 }
 
 const IconContext = createContext<Record<IconName, IconComponent> | null>(null)

@@ -55,3 +55,18 @@ Without a path there is no header; `lineNumbers={false}` drops the gutter, as in
 +Import the components and the stylesheet.`}
   />
 </div>
+
+# Wrapped
+
+In a narrow column, `wrap` breaks long lines under their own text instead of scrolling them sideways; the gutter holds still.
+
+<div className="w-full max-w-xs">
+  <Diff
+    wrap
+    path="ui/uno.config.ts"
+    patch={`@@ -25,3 +25,3 @@
+-const sources = resolve(root, '{lib,primitives,components,blocks}/**/*.{ts,tsx,mdx}')
++const sources = resolve(root, '{lib,primitives,components,blocks,pages}/**/*.{ts,tsx,mdx}')
+ const chrome = resolve(root, 'modo.components.tsx')`}
+  />
+</div>

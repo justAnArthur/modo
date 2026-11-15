@@ -11,7 +11,7 @@ A 1280 × 800 window, scaled to the column. A session mid-turn: the task list pi
 
 # Split view
 
-A second session beside the first, opened from a row's menu or the split button; the side pane stays open on a wide window.
+A second session beside the first, opened from a row's menu or the split button. All three headers share one line; the side pane's toggle moves to the split's header, beside the pane.
 
 <ScreenFrame width={1680} height={900}>
   <Workspace split pane="pr" />
@@ -23,6 +23,14 @@ The turn is done: the next-step box under the task list asks the one decision le
 
 <ScreenFrame>
   <Workspace wrapUp pane="tasks" />
+</ScreenFrame>
+
+# Terminal and a folded sessions sidebar
+
+With the sessions sidebar folded the session card keeps 8px to the window edge on both sides; the terminal is a prompt you type at.
+
+<ScreenFrame>
+  <Workspace sidebar={false} pane="terminal" />
 </ScreenFrame>
 
 # Extensions slot
