@@ -1,0 +1,31 @@
+import PromptCard from './index'
+import Button from '../../button'
+
+# Prompt
+
+A glyph, the question and a chip, a line of body, then the hint and the answers.
+
+<div className="w-full max-w-2xl">
+  <PromptCard
+    icon="message-circle"
+    title="Run the migration on the shared database?"
+    tag="Database"
+    hint="Esc cancels"
+    actions={
+      <>
+        <Button size="compact" variant="ghost">Cancel</Button>
+        <Button size="compact">Run it</Button>
+      </>
+    }
+  >
+    <p className="m-0 text-body text-muted-foreground">It adds two columns and backfills them; other sessions see the change at once.</p>
+  </PromptCard>
+</div>
+
+# Title only
+
+Without a body, hint or actions the card is one line: a notice the agent leaves while it waits.
+
+<div className="w-full max-w-2xl">
+  <PromptCard icon="clock" title="Waiting for the build to finish" />
+</div>

@@ -1,0 +1,37 @@
+import PlanApproval from './index'
+
+# Plan
+
+Approve with edits accepted, approve and review each edit, or keep planning with feedback.
+
+<div className="w-full max-w-2xl">
+  <PlanApproval>
+    <h3 className="m-0">AI app screens</h3>
+    <ol className="m-0">
+      <li>Add <code>Meter</code> and <code>Diff</code> to the components.</li>
+      <li>Build six blocks under <code>blocks/AI</code>.</li>
+      <li>Assemble five pages under <code>pages/AI</code>.</li>
+      <li>Lint, typecheck, check light, dark and a narrow window.</li>
+    </ol>
+  </PlanApproval>
+</div>
+
+# Long plan
+
+A plan taller than the frame scrolls inside it, fading at the edges.
+
+<div className="w-full max-w-2xl">
+  <PlanApproval title="Approve the migration plan?" tag="Review">
+    <h3 className="m-0">Move auth to sessions</h3>
+    <p className="m-0">Tokens stay valid until they expire; new sign-ins get a session cookie.</p>
+    <ol className="m-0">
+      <li>Add a <code>sessions</code> table with an expiry index.</li>
+      <li>Issue the cookie on sign-in, behind a flag.</li>
+      <li>Read either credential in the middleware.</li>
+      <li>Backfill sessions for active tokens.</li>
+      <li>Turn the flag on for staff, then everyone.</li>
+      <li>Drop token issuance after the longest expiry.</li>
+      <li>Remove the token path and the flag.</li>
+    </ol>
+  </PlanApproval>
+</div>

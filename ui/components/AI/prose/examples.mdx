@@ -1,0 +1,17 @@
+import Prose from './index'
+import Code from '../../../primitives/code'
+
+# Reply
+
+Paragraphs, a list, inline code and a code block.
+
+<div className="w-full max-w-xl">
+  <Prose>
+    <p className="m-0">The pages tier renders every example at screen size, so each screen is a page item.</p>
+    <ul className="m-0">
+      <li><strong>Blocks</strong> carry the reusable parts.</li>
+      <li>Two missing pieces become components: <code>Meter</code> and <code>Diff</code>.</li>
+    </ul>
+    <Code language="sh">bun run check</Code>
+  </Prose>
+</div>

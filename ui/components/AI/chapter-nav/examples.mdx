@@ -1,0 +1,30 @@
+import ChapterNav from './index'
+
+# Chapters
+
+Open the list and pick a chapter: its break scrolls to the top of the column.
+
+<div className="relative flex h-80 w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-border">
+  <div className="absolute right-3 top-2 z-10">
+    <ChapterNav
+      chapters={[
+        { id: 'example-chapter-plan', title: 'Planning', detail: '14:02 · 3 turns' },
+        { id: 'example-chapter-build', title: 'Building', detail: '14:20 · 5 turns' },
+        { id: 'example-chapter-ship', title: 'Shipping', detail: '14:51 · now' },
+      ]}
+    />
+  </div>
+  <div className="flex flex-col gap-24 overflow-y-auto px-6 py-6 pb-60">
+    <ChapterNav.Break id="example-chapter-plan" title="Planning" />
+    <ChapterNav.Break id="example-chapter-build" title="Building" />
+    <ChapterNav.Break id="example-chapter-ship" title="Shipping" />
+  </div>
+</div>
+
+# Break
+
+The titled hairline a chapter starts with.
+
+<div className="w-full max-w-2xl">
+  <ChapterNav.Break id="example-chapter-break" title="Verification" />
+</div>
