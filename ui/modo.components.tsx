@@ -10,11 +10,13 @@ import {
   ExternalLink,
   Link2,
   type LucideIcon,
+  Maximize2,
   Menu,
   Monitor,
   Moon,
   Package,
   Sun,
+  X,
 } from 'lucide-react'
 import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useState } from 'react'
 import FluidSelect from './components/inputs/select'
@@ -36,6 +38,8 @@ const icons: Record<string, LucideIcon> = {
   menu: Menu,
   sun: Sun,
   moon: Moon,
+  maximize: Maximize2,
+  close: X,
   npm: Package,
 }
 
