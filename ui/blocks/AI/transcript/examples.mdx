@@ -1,11 +1,9 @@
 import Transcript from './index'
-import Diff from '../../../components/diff'
-import Code from '../../../primitives/code'
-import { DEMO_CHAPTERS, DEMO_TASKS, DemoSession } from '../demo-session'
+import { DEMO_CHAPTERS, DEMO_TASKS, DemoBuilding, DemoSession } from '../demo-session'
 
 # Session
 
-A whole session: chapters, your turns with attachments and @-mentions, thinking, tool runs, an Explore run and a background agent, the live turn at the bottom. Open the chapter list in the corner to jump.
+A whole session: chapters, your turns with attachments and @-mentions, folded work with reasoning, tool runs, an Explore run and a background agent, the live turn at the bottom. Open the chapter list in the corner to jump.
 
 <div className="flex h-[720px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Transcript chapters={DEMO_CHAPTERS} footer={<Transcript.TaskList items={DEMO_TASKS} />}>
@@ -13,51 +11,33 @@ A whole session: chapters, your turns with attachments and @-mentions, thinking,
   </Transcript>
 </div>
 
-# Tool calls
+# Show work
 
-One hover highlight runs down the run; each call opens in place. An Edit shows its diff, a Bash call its output; a call still running turns its arc, a failed one shows the error mark.
+Every turn's work starts unfolded; the eye in the corner folds it all again.
 
-<div className="w-full max-w-2xl">
-  <Transcript.Tools defaultValue={['edit']}>
-    <Transcript.Tool index={0} value="read" tool="Read" summary="ui/components/badge/index.tsx" meta="214 lines" />
-    <Transcript.Tool index={1} value="edit" tool="Edit" summary="ui/components/badge/index.tsx" meta="+1 −1">
-      <Diff lineNumbers={false} patch={`@@ -56,3 +56,3 @@
--const badgeVariants = cva('inline-flex items-center', {
-+const badgeVariants = cva('inline-flex items-center weight-medium', {
-   variants: {`} />
-    </Transcript.Tool>
-    <Transcript.Tool index={2} value="test" tool="Bash" summary="bun run test" status="error" meta="exit 1">
-      <Code language="sh">{'✗ parser › keeps @values\n  Expected: "a, b"\n  Received: undefined'}</Code>
-    </Transcript.Tool>
-    <Transcript.Tool index={3} value="write" tool="Write" summary="ui/components/badge/badge.test.ts" status="waiting" />
-    <Transcript.Tool index={4} value="grep" tool="Grep" summary={'"@values" lib/src'} status="running" />
-  </Transcript.Tools>
-</div>
-
-# Agent runs
-
-A subagent's run frames its own calls; a background agent carries a badge and keeps turning after the turn ends.
-
-<div className="flex w-full max-w-2xl flex-col gap-3">
-  <Transcript.Agent agent="Explore" description="Find every overlay that skips the morph layer" meta="22 tool uses · 1m 04s">
-    <Transcript.Tools>
-      <Transcript.Tool index={0} value="g" tool="Grep" summary={'"Popup" components/overlays'} meta="9 files" />
-      <Transcript.Tool index={1} value="r" tool="Read" summary="components/overlays/toast/index.tsx" meta="402 lines" />
-    </Transcript.Tools>
-    <p className="m-0 text-body text-muted-foreground">Every overlay grows through useMorph; none hand-rolls its motion.</p>
-  </Transcript.Agent>
-  <Transcript.Agent agent="general-purpose" description="Run the full test suite on main" status="running" background meta="3 tool uses" />
+<div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Transcript defaultShowWork>
+    <DemoBuilding />
+  </Transcript>
 </div>
 
 # Closing a turn
 
-The pinned task list, then the wrap-up box: a recap, one question and its answers, the recommendation first.
+The footer stays under the column: the pinned task list folded to one row, then the wrap-up box with its question.
 
-<div className="flex w-full max-w-2xl flex-col gap-3">
-  <Transcript.TaskList items={DEMO_TASKS} />
-  <Transcript.NextStep
-    recap="The five pages and six blocks are in and pass lint and the typecheck. Nothing is committed yet, and the narrow window is checked only in the docs frame."
-    ask="Commit the AI app on its branch?"
-    actions={['Commit', 'Not yet']}
-  />
+<div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Transcript
+    footer={
+      <>
+        <Transcript.TaskList items={DEMO_TASKS} defaultOpen={false} />
+        <Transcript.NextStep
+          recap="The five pages and six blocks are in and pass lint and the typecheck. Nothing is committed yet, and the narrow window is checked only in the docs frame."
+          ask="Commit the AI app on its branch?"
+          actions={['Commit', 'Not yet']}
+        />
+      </>
+    }
+  >
+    <DemoBuilding />
+  </Transcript>
 </div>

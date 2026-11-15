@@ -1,31 +1,50 @@
 /*!
- * Local addition: the AI app's transcript. A scrolling reading column
- * for one session, with the chapter list floating in its corner; the parts
- * (messages, thinking, tool calls, agent runs, chapters, the task list and
- * the wrap-up box) hang off it as statics and live in the files beside it.
+ * Local addition: the AI app's transcript. A scrolling reading column for
+ * one session, with the show-work toggle and the chapter list floating in its
+ * corner. The parts are the generic AI components (Message, Reasoning,
+ * ToolCall, AgentRun, WorkSummary, ChapterNav, TodoList, Recap), aliased as
+ * statics.
  */
 
 'use client'
 
 import { type ReactNode, useLayoutEffect, useRef, useState } from 'react'
+import AgentRun from '../../../components/AI/agent-run'
+import ChapterNav, { type ChapterNavItem } from '../../../components/AI/chapter-nav'
+import Message, { type MessageProps } from '../../../components/AI/message'
+import Reasoning from '../../../components/AI/reasoning'
+import Recap from '../../../components/AI/recap'
+import TodoList from '../../../components/AI/todo-list'
+import ToolCall from '../../../components/AI/tool-call'
+import WorkSummary from '../../../components/AI/work-summary'
 import Button from '../../../components/button'
 import { useIcon } from '../../../lib/icon-context'
 import { cn } from '../../../lib/utils'
 import ScrollArea from '../../../primitives/scroll-area'
-import { AssistantMessage, Attachment, Chapter, Mention, Thinking, UserMessage, Working } from './messages'
-import { Toc, type TocChapter } from './toc'
-import { AgentRun, Tool, Tools } from './tools'
-import { NextStep, TaskList } from './turn'
-import { ShowWorkContext, Work } from './work'
+
+/** The tools the AI app's mock sessions call. */
+type ToolName = 'Bash' | 'Read' | 'Edit' | 'Write' | 'Grep' | 'Glob' | 'WebFetch' | 'Agent' | 'MCP' | 'TodoWrite'
+
+type TurnProps = Omit<MessageProps, 'role'>
+
+function User(props: TurnProps) {
+  // biome-ignore lint/a11y/useValidAriaRole: Message's `role` is who speaks, not an ARIA role
+  return <Message role="user" {...props} />
+}
+
+function Assistant(props: TurnProps) {
+  // biome-ignore lint/a11y/useValidAriaRole: Message's `role` is who speaks, not an ARIA role
+  return <Message role="assistant" {...props} />
+}
 
 interface TranscriptProps {
   /** The turns: `Transcript.User`, `Transcript.Assistant` and the parts below. */
   children: ReactNode
   /** The session's chapters, for the chapter list in the corner. Omit for no list. */
-  chapters?: TocChapter[]
+  chapters?: ChapterNavItem[]
   /** Start with every turn's work unfolded. Defaults to `false`. */
   defaultShowWork?: boolean
-  /** Pinned under the column, outside the scroll: the task list, a prompt, the next-step box. */
+  /** Pinned under the column, outside the scroll: a TodoList, a prompt, a Recap. */
   footer?: ReactNode
   /** Classes for the root. */
   className?: string
@@ -35,31 +54,26 @@ interface TranscriptProps {
  * One session's conversation: what you asked, what the agent said and did,
  * and where the turn left off.
  *
- * The turns sit in one reading column. Your messages are bubbles on the
- * right, with attachments, pasted text and @-mentions; the agent's replies
- * are markdown on the page. What the agent did on the way (thinking, tool
- * calls, agent runs) folds into one row per turn, "Worked for 52s · 4 tool
- * calls", so the output reads clean; press the row to open it, or the eye
- * in the corner to show every turn's work at once. Inside, a run of
- * tool calls shares one hover highlight, and each call (Bash, Read, Edit
- * with its diff, Write, Grep…) opens in place to show its output; a
- * subagent or background agent run is a framed card with its own calls.
- * Chapters break the column with a titled hairline, and the chapter list in
- * the corner jumps between them. The `footer` stays put under the column:
- * that is where the task list, a pending prompt and the next-step box live.
+ * The turns sit in one reading column and are the AI components: your
+ * messages and the agent's replies are Messages; what the agent did on the
+ * way (Reasoning, ToolCalls, AgentRuns) folds into one WorkSummary per
+ * turn, so the output reads clean. Press a row to open it, or the eye in the
+ * corner to show every turn's work at once. Chapters break the column with a
+ * titled hairline, and the ChapterNav in the corner jumps between them; in a
+ * narrow column both controls take a row of their own above it. The
+ * `footer` stays put under the column: that is where the TodoList, a pending
+ * prompt and the Recap live. The session opens scrolled to its latest turn.
  *
- * Statics:
- * - `Transcript.User` — your turn: `attachments`, children with `Transcript.Mention`s.
- * - `Transcript.Assistant` — the agent's markdown; `streaming` adds the working dots.
- * - `Transcript.Work` — a turn's work folded to one row: `summary`, `detail`, `running`; thinking, tools and agent runs inside.
- * - `Transcript.Thinking` — folded reasoning: `duration`, `defaultOpen`.
- * - `Transcript.Tools` / `Transcript.Tool` — a run of calls: `tool`, `summary`, `value`, `index`, `status`, `meta`, the output as children.
- * - `Transcript.Agent` — an agent run: `agent`, `description`, `status`, `background`, `meta`.
- * - `Transcript.Chapter` — a chapter break: `title`, `id`.
- * - `Transcript.Mention` / `Transcript.Attachment` — an @-file chip; a file, image or pasted-text chip.
- * - `Transcript.Working` — the in-flight dots.
- * - `Transcript.TaskList` — the pinned plan: `items`.
- * - `Transcript.NextStep` — the wrap-up box: `recap`, `ask`, `actions`.
+ * Statics (aliases of the components, named for the session):
+ * - `Transcript.User` / `Transcript.Assistant` — a Message with its `role` set.
+ * - `Transcript.Work` — WorkSummary.
+ * - `Transcript.Thinking` — Reasoning.
+ * - `Transcript.Tools` / `Transcript.Tool` — ToolCall.Group / ToolCall.
+ * - `Transcript.Agent` — AgentRun.
+ * - `Transcript.Chapter` — ChapterNav.Break.
+ * - `Transcript.Mention` / `Transcript.Attachment` / `Transcript.Working` — Message.Mention / Message.Attachment / Message.Working.
+ * - `Transcript.TaskList` — TodoList.
+ * - `Transcript.NextStep` — Recap.
  *
  * @example {@include ./examples.mdx}
  */
@@ -89,36 +103,36 @@ function Transcript({ children, chapters, defaultShowWork = false, footer, class
         >
           <Eye />
         </Button>
-        {chapters && chapters.length > 0 && <Toc chapters={chapters} />}
+        {chapters && chapters.length > 0 && <ChapterNav chapters={chapters} />}
       </div>
       <ScrollArea className="min-h-0 flex-1" viewportClassName="scroll-fade">
-        <ShowWorkContext.Provider value={showWork}>
+        <WorkSummary.Provider open={showWork}>
           <div ref={column} className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 py-6 [contain:inline-size]">
             {children}
           </div>
-        </ShowWorkContext.Provider>
+        </WorkSummary.Provider>
       </ScrollArea>
       {footer && <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-6 pb-3">{footer}</div>}
     </div>
   )
 }
 
-Transcript.User = UserMessage
-Transcript.Assistant = AssistantMessage
-Transcript.Work = Work
-Transcript.Thinking = Thinking
-Transcript.Tools = Tools
-Transcript.Tool = Tool
+Transcript.User = User
+Transcript.Assistant = Assistant
+Transcript.Work = WorkSummary
+Transcript.Thinking = Reasoning
+Transcript.Tools = ToolCall.Group
+Transcript.Tool = ToolCall
 Transcript.Agent = AgentRun
-Transcript.Chapter = Chapter
-Transcript.Mention = Mention
-Transcript.Attachment = Attachment
-Transcript.Working = Working
-Transcript.TaskList = TaskList
-Transcript.NextStep = NextStep
+Transcript.Chapter = ChapterNav.Break
+Transcript.Mention = Message.Mention
+Transcript.Attachment = Message.Attachment
+Transcript.Working = Message.Working
+Transcript.TaskList = TodoList
+Transcript.NextStep = Recap
 
-export type { TocChapter } from './toc'
-export type { TaskItem } from './turn'
-export type { TranscriptProps }
+export type { ChapterNavItem as TocChapter } from '../../../components/AI/chapter-nav'
+export type { TodoItem as TaskItem } from '../../../components/AI/todo-list'
+export type { ToolName, TranscriptProps }
 
 export default Transcript

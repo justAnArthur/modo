@@ -4,7 +4,7 @@
  * made up; nothing talks to a backend.
  */
 
-import type { ToolName } from './transcript/tools'
+import type { ToolName } from './transcript'
 
 export interface UsageLimit {
   label: string

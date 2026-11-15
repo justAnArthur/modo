@@ -49,6 +49,9 @@ controlled + uncontrolled.
 | A running / waiting / unread / idle state | `StatusDot` (`glyph(status)` for icon slots), `Spinner` |
 | A person, profile or workspace mark | `Avatar` (`.Group`) |
 | A shortcut | `Kbd` |
+| An AI chat transcript | `Message` (user bubble / assistant Prose, `.Mention`, `.Attachment`, `.Working`), `Reasoning`, `ToolCall` (`.Group`), `AgentRun`, `WorkSummary` (`.Provider`), `TodoList`, `Recap`, `ChapterNav` (`.Break`) in `components/AI` |
+| An agent asking the user | `PromptCard`, `PermissionRequest`, `QuestionPrompt`, `PlanApproval` in `components/AI` |
+| Rendered markdown | `Prose` |
 | A file's change | `Diff` (a unified patch string, `path` header with counts) |
 | A scroll region | `ScrollArea` (+ `scroll-fade`) |
 | A raised container | `Elevated` (`offset`) |
