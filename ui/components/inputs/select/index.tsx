@@ -34,6 +34,8 @@
  *   with `SurfaceProvider` as `Elevated` did.
  * - `effect="morph"` with `hideSource` opens the menu in place over its
  *   trigger: the positioner's `sideOffset` becomes the engine's `inPlaceOffset`.
+ * - Rows, their icon and check, `Select.Label` and `Select.Separator` come
+ *   from the shared `lib/popup-rows.tsx`; the check fades under reduced motion.
  */
 
 'use client'
@@ -60,6 +62,7 @@ import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import type { IconComponent } from '../../../lib/icon-context'
 import { MorphSurface } from '../../../lib/morph-layers'
 import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
+import { CheckMark, PopupLabel, PopupSeparator, RowIcon, rowClasses, rowLabelClass } from '../../../lib/popup-rows'
 import { shapeMap, useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
@@ -634,12 +637,6 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
     const internalRef = useRef<HTMLDivElement>(null)
     const shape = popupShape
     const sizeClasses = useSize()
-    const compact = sizeClasses.variant === 'compact'
-    const hasMounted = useRef(false)
-
-    useEffect(() => {
-      hasMounted.current = true
-    }, [])
 
     // Register with fluid hover. Depends on the (stable) registerItem
     // rather than the content context, which is rebuilt on every activeIndex
@@ -651,7 +648,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
 
     const isActive = contentCtx?.activeIndex === index
     const isChecked = selectCtx.value === value
-    const skipAnimation = !hasMounted.current
+    const lit = isActive || isChecked
 
     return (
       <SelectPrimitive.Item
@@ -667,74 +664,16 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
             }}
             data-fluid-hover-index={index}
             data-value={value}
-            className={cn(
-              // Fixed height (was py-2 around a 19.5px line box ≈ 35.5px) so
-              // the text-box trim on the item text doesn't shrink the row.
-              // shrink-0: the popup is a max-height flex column, so without it
-              // a long list compresses rows to fit instead of scrolling.
-              `relative z-10 flex ${sizeClasses.control} shrink-0 items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.itemPx} ${sizeClasses.text} cursor-pointer outline-none select-none`,
-              'transition-[color] duration-fast',
-              isActive || isChecked ? 'text-foreground' : 'text-muted-foreground',
-              disabled && 'opacity-50 pointer-events-none',
-              className,
-            )}
+            className={cn(rowClasses({ size: sizeClasses, shape, lit, disabled }), className)}
             {...props}
           />
         }
       >
-        {Icon && (
-          <Icon
-            size={sizeClasses.icon}
-            strokeWidth={isActive || isChecked ? 2 : 1.5}
-            className="shrink-0 transition-[color,stroke-width] duration-fast"
-          />
-        )}
+        {Icon && <RowIcon icon={Icon} lit={lit} />}
 
-        <SelectPrimitive.ItemText
-          // py-1/-my-1 keeps truncate's overflow:hidden from clipping
-          // ascenders/descenders outside the trimmed box.
-          render={<span className="flex-1 min-w-0 truncate [text-box:trim-both_cap_alphabetic] py-1 -my-1" />}
-        >
-          {children}
-        </SelectPrimitive.ItemText>
+        <SelectPrimitive.ItemText render={<span className={rowLabelClass} />}>{children}</SelectPrimitive.ItemText>
 
-        {/* Always-rendered fixed slot so the check appearing/disappearing
-            never changes the row's intrinsic width — without it the whole
-            popup resizes when a selection lands. */}
-        <span aria-hidden className={cn('shrink-0', compact ? 'w-3.5 h-3.5' : 'w-4 h-4')}>
-          <AnimatePresence>
-            {isChecked && (
-              <motion.svg
-                key="check"
-                width={sizeClasses.icon}
-                height={sizeClasses.icon}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="text-foreground"
-                initial={{ opacity: 1 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 1 }}
-              >
-                <motion.path
-                  d="M4 12L9 17L20 6"
-                  initial={{ pathLength: skipAnimation ? 1 : 0 }}
-                  animate={{
-                    pathLength: 1,
-                    transition: { duration: spring.fast.duration, ease: 'easeOut' },
-                  }}
-                  exit={{
-                    pathLength: 0,
-                    transition: { duration: 0.04, ease: 'easeIn' },
-                  }}
-                />
-              </motion.svg>
-            )}
-          </AnimatePresence>
-        </span>
+        <CheckMark checked={isChecked} reserve />
       </SelectPrimitive.Item>
     )
   },
@@ -756,30 +695,8 @@ function SelectGroup({ children, className, ...props }: HTMLAttributes<HTMLDivEl
 
 SelectGroup.displayName = 'SelectGroup'
 
-const SelectLabel = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => {
-  // Group labels are the caption role of the type scale — see /docs/sizes.
-  const compact = useSize().variant === 'compact'
-  return (
-    <div
-      ref={ref}
-      className={cn(
-        'px-2 py-1.5 shrink-0 text-muted-foreground',
-        compact ? 'text-caption-compact' : 'text-caption',
-        className,
-      )}
-      {...props}
-    />
-  )
-})
-
-SelectLabel.displayName = 'SelectLabel'
-
-const SelectSeparator = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => (
-  <div ref={ref} role="separator" className={cn('my-1 -mx-1 h-px shrink-0 bg-border/60', className)} {...props} />
-))
-
-SelectSeparator.displayName = 'SelectSeparator'
-
+const SelectLabel = PopupLabel
+const SelectSeparator = PopupSeparator
 // Compound statics: `<Select.Trigger>`, `<Select.Item>`, … Assigned directly
 // (not through Object.assign) so TypeScript's expando inference types them
 // onto the root function declaration.

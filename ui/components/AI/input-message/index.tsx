@@ -55,7 +55,6 @@ import {
   useCallback,
   useEffect,
   useId,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -69,13 +68,12 @@ import { surfaceClasses } from '../../../lib/surface-classes'
 import { SurfaceProvider } from '../../../lib/surface-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
+import { useIsoLayoutEffect } from '../../../lib/use-iso-layout-effect'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
 import { Button } from '../../button'
 import { Tooltip } from '../../overlays/tooltip'
 import { FileThumbnail } from './file-thumbnail'
-
-const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 /**
  * Measured layout height for one of the composer's collapsible regions

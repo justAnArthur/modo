@@ -5,7 +5,7 @@ import type { TokenType } from 'sugar-high'
 import { parse } from 'sugar-high/core'
 import { type Language, lang, languages } from 'sugar-high/lang'
 import { SURFACE_BG } from '../../lib/surface-classes'
-import { useSurface } from '../../lib/surface-context'
+import { useLift } from '../../lib/surface-context'
 import { cn } from '../../lib/utils'
 import ScrollArea from '../scroll-area'
 
@@ -63,7 +63,7 @@ export default function Code({
   /** Extra classes for the frame. */
   className?: string
 }) {
-  const level = Math.min(useSurface() + 1, 8)
+  const level = useLift(1)
   const source = children.trim()
   const id = lang(language)
   return (
