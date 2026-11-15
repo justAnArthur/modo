@@ -50,7 +50,7 @@ export interface SelectOption {
 export interface SelectSlotProps {
   value: string
   /** Called with the chosen value, not an event. */
-  onChange: (value: string) => void
+  onValueChange: (value: string) => void
   options: SelectOption[]
 }
 
@@ -107,7 +107,7 @@ export const SLOTS = {
   Link: { tier: 'primitives', requiredProps: ['href', 'children'] },
   Code: { tier: 'primitives', requiredProps: ['children'] },
   Icon: { tier: 'primitives', requiredProps: ['name'] },
-  Select: { tier: 'components', requiredProps: ['value', 'onChange', 'options'] },
+  Select: { tier: 'components', requiredProps: ['value', 'onValueChange', 'options'] },
   Sidebar: { tier: 'components', requiredProps: ['children'] },
 } as const satisfies {
   Button: SlotMatch<ButtonSlotProps>
