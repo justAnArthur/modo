@@ -11,15 +11,16 @@ declare module 'virtual:modo-items' {
     tags: import('../../lib/tsdoc').ParsedTag[]
     /** The item's `index.tsx`, relative to the project root. */
     path: string
+    /** Inline `@example` blocks, compiled in the browser. */
+    examples: import('../../lib/tsdoc').ParsedExample[]
+    /** Compiled `@example {@include ./x.mdx}` files. */
+    mdxExamples: import('react').ComponentType<{ components?: Record<string, unknown> }>[]
   }
   export const items: ItemEntry[]
   /** The items keyed `tier:id`. */
   export const byId: Record<string, ItemEntry>
   /** Item components by name, as examples bind them. */
   export const byName: Record<string, ModoHostComponent>
-  export const examples: Record<string, import('../../lib/tsdoc').ParsedExample[]>
-  /** Compiled `@example {@include ./x.mdx}` files per `tier:id`. */
-  export const exampleDocs: Record<string, import('react').ComponentType<{ components?: Record<string, unknown> }>[]>
   /** Named exports of the `examples` config module; `{}` when unset. */
   export const exampleScope: Record<string, unknown>
 }

@@ -2,7 +2,7 @@ import { type ItemEntry, items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import { type CSSProperties, type ReactNode, useRef } from 'react'
-import { itemKey, itemPath, tokenPath } from '../../lib/paths'
+import { itemPath, tokenPath } from '../../lib/paths'
 import { cap } from '../../lib/text'
 import { isScreenSized, TIERS, type Tier } from '../../lib/tiers'
 import { useLive, Viewport } from '../canvas/viewport'
@@ -31,7 +31,7 @@ export function CanvasPage() {
           <Column key={tier} kind={tier} title={cap(tier)} size={list.length}>
             {list.map(it => (
               <Frame key={it.id} href={itemPath(tier, it.id)} title={it.name}>
-                <ExamplePreview itemId={itemKey(tier, it.id)} />
+                <ExamplePreview entry={it} />
               </Frame>
             ))}
           </Column>

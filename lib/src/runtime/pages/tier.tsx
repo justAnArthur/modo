@@ -1,5 +1,5 @@
 import { type ItemEntry, items } from 'virtual:modo-items'
-import { itemKey, itemPath } from '../../lib/paths'
+import { itemPath } from '../../lib/paths'
 import { cap, count } from '../../lib/text'
 import { isScreenSized, type Tier } from '../../lib/tiers'
 import { Heading } from '../anchor'
@@ -82,7 +82,7 @@ function Cards({ tier, list }: { tier: Tier; list: ItemEntry[] }) {
           span={isScreenSized(tier) ? 'full' : i % 5 === 0 ? 'wide' : undefined}
           zoom={isScreenSized(tier) ? 0.7 : undefined}
         >
-          <ExamplePreview itemId={itemKey(tier, it.id)} />
+          <ExamplePreview entry={it} />
         </BentoCard>
       ))}
     </Bento>

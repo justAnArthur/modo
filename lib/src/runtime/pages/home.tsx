@@ -1,7 +1,7 @@
 import { config } from 'virtual:modo-config'
 import { items } from 'virtual:modo-items'
 import { tokens } from 'virtual:modo-tokens'
-import { itemKey, tierPath, tokenPath } from '../../lib/paths'
+import { tierPath, tokenPath } from '../../lib/paths'
 import { cap, count } from '../../lib/text'
 import { isScreenSized, TIERS } from '../../lib/tiers'
 import { ExamplePreview, hasPreview } from '../items/preview'
@@ -33,7 +33,7 @@ export function HomePage() {
         {TIERS.map(tier => {
           const list = items.filter(it => it.tier === tier)
           if (list.length === 0) return null
-          const shown = list.find(it => hasPreview(itemKey(tier, it.id))) ?? list[0]!
+          const shown = list.find(hasPreview) ?? list[0]!
           return (
             <BentoCard
               key={tier}
@@ -44,7 +44,7 @@ export function HomePage() {
               span={isScreenSized(tier) ? 'full' : undefined}
               zoom={isScreenSized(tier) ? 0.7 : undefined}
             >
-              <ExamplePreview itemId={itemKey(tier, shown.id)} />
+              <ExamplePreview entry={shown} />
             </BentoCard>
           )
         })}
