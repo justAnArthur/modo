@@ -10,71 +10,124 @@
  *   accept both, and @types/react 18 compares propTypes).
  * - `panel-left-dashed` / `panel-right-dashed`: the sidebar trigger's glyph
  *   while the sidebar opens on hover.
+ * - The agent desktop's glyphs (`terminal` … `history`): tools, panes,
+ *   session states and settings sections for `blocks/agent-desktop` and
+ *   `pages/agent-desktop`.
  */
 
 'use client'
 
 import {
+  Archive,
   ArrowDown,
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  ArrowUpRight,
+  AtSign,
+  Ban,
   Bell,
+  BookOpen,
+  Bot,
   Brain,
   Calendar,
   Check,
   ChevronDown,
   ChevronRight,
   ChevronsUpDown,
+  ChevronUp,
   Circle,
+  CircleAlert,
+  CircleCheck,
+  CircleDot,
+  CircleX,
+  Clipboard,
   Clock,
+  Cloud,
+  Columns2,
+  Command,
   Copy,
   CornerDownLeft,
   CornerDownRight,
+  Cpu,
   Dot,
   Ellipsis,
   EllipsisVertical,
+  ExternalLink,
+  Eye,
+  File,
+  FileDiff,
+  FilePlus,
+  FileText,
   Folder,
+  FolderOpen,
+  Gauge,
+  GitBranch,
+  GitFork,
+  GitPullRequest,
   Globe,
   Heart,
+  History,
   Home,
   ImageIcon,
   Inbox,
+  Key,
+  Layers,
   Lightbulb,
   Link,
+  ListChecks,
+  ListTree,
   Loader,
   Lock,
   Mail,
   Menu,
   MessageCircle,
+  Minus,
   Monitor,
   Moon,
+  Package,
   Paintbrush,
   Palette,
   PanelLeft,
   PanelLeftDashed,
   PanelRight,
   PanelRightDashed,
+  Paperclip,
   Pause,
   Pencil,
+  PenLine,
+  Pin,
   Pipette,
   Play,
+  Plug,
   Plus,
+  Puzzle,
   RectangleHorizontal,
+  RefreshCw,
   Rocket,
   RotateCcw,
   Scaling,
   Search,
+  Server,
   Settings,
   Shield,
+  ShieldCheck,
   SkipForward,
   SlidersHorizontal,
+  Split,
+  Square,
   SquareLibrary,
   Star,
   Sun,
+  Terminal,
+  Trash2,
+  TriangleAlert,
   User,
   Users,
+  Webhook,
+  Wrench,
   X,
+  Zap,
 } from 'lucide-react'
 import { type ComponentType, createContext, type ReactNode, useContext, useMemo } from 'react'
 
@@ -147,6 +200,56 @@ export type IconName =
   | 'calendar'
   | 'folder'
   | 'sliders-horizontal'
+  | 'terminal'
+  | 'git-branch'
+  | 'git-pull-request'
+  | 'file'
+  | 'file-text'
+  | 'file-diff'
+  | 'file-plus'
+  | 'pin'
+  | 'archive'
+  | 'columns-2'
+  | 'bot'
+  | 'zap'
+  | 'gauge'
+  | 'shield-check'
+  | 'puzzle'
+  | 'plug'
+  | 'webhook'
+  | 'git-fork'
+  | 'list-checks'
+  | 'layers'
+  | 'at-sign'
+  | 'paperclip'
+  | 'clipboard'
+  | 'circle-dot'
+  | 'circle-alert'
+  | 'circle-check'
+  | 'circle-x'
+  | 'triangle-alert'
+  | 'wrench'
+  | 'external-link'
+  | 'eye'
+  | 'list-tree'
+  | 'cpu'
+  | 'key'
+  | 'trash'
+  | 'square'
+  | 'chevron-up'
+  | 'pen-line'
+  | 'command'
+  | 'book-open'
+  | 'server'
+  | 'refresh-cw'
+  | 'arrow-up-right'
+  | 'split'
+  | 'ban'
+  | 'cloud'
+  | 'minus'
+  | 'package'
+  | 'folder-open'
+  | 'history'
 
 export const defaultIcons: Record<IconName, IconComponent> = {
   'chevron-right': ChevronRight,
@@ -209,6 +312,56 @@ export const defaultIcons: Record<IconName, IconComponent> = {
   calendar: Calendar,
   folder: Folder,
   'sliders-horizontal': SlidersHorizontal,
+  terminal: Terminal,
+  'git-branch': GitBranch,
+  'git-pull-request': GitPullRequest,
+  file: File,
+  'file-text': FileText,
+  'file-diff': FileDiff,
+  'file-plus': FilePlus,
+  pin: Pin,
+  archive: Archive,
+  'columns-2': Columns2,
+  bot: Bot,
+  zap: Zap,
+  gauge: Gauge,
+  'shield-check': ShieldCheck,
+  puzzle: Puzzle,
+  plug: Plug,
+  webhook: Webhook,
+  'git-fork': GitFork,
+  'list-checks': ListChecks,
+  layers: Layers,
+  'at-sign': AtSign,
+  paperclip: Paperclip,
+  clipboard: Clipboard,
+  'circle-dot': CircleDot,
+  'circle-alert': CircleAlert,
+  'circle-check': CircleCheck,
+  'circle-x': CircleX,
+  'triangle-alert': TriangleAlert,
+  wrench: Wrench,
+  'external-link': ExternalLink,
+  eye: Eye,
+  'list-tree': ListTree,
+  cpu: Cpu,
+  key: Key,
+  trash: Trash2,
+  square: Square,
+  'chevron-up': ChevronUp,
+  'pen-line': PenLine,
+  command: Command,
+  'book-open': BookOpen,
+  server: Server,
+  'refresh-cw': RefreshCw,
+  'arrow-up-right': ArrowUpRight,
+  split: Split,
+  ban: Ban,
+  cloud: Cloud,
+  minus: Minus,
+  package: Package,
+  'folder-open': FolderOpen,
+  history: History,
 }
 
 const IconContext = createContext<Record<IconName, IconComponent> | null>(null)

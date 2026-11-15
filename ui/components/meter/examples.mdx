@@ -1,0 +1,42 @@
+import Meter from './index'
+import { SizeProvider } from '../../primitives/sizes'
+
+# Bar
+
+A label, the share on the right and a bar under both.
+
+<div className="flex w-72 flex-col gap-4">
+  <Meter label="Session (5h)" value={0.42} detail="Resets in 2h 14m" />
+  <Meter label="Weekly" value={0.81} />
+  <Meter label="Opus weekly" value={0.96} />
+</div>
+
+# Thresholds
+
+From `warnAt` (0.75) the fill turns to the warning hue, from `errorAt` (0.9) to the error hue. Both move.
+
+<div className="flex w-72 flex-col gap-4">
+  <Meter label="Strict budget" value={0.55} warnAt={0.5} errorAt={0.7} />
+  <Meter label="Out of tokens" value={180000} max={200000} detail="180k / 200k" />
+</div>
+
+# Ring
+
+A glyph for toolbars: the label is its accessible name only.
+
+<div className="flex items-center gap-3">
+  <Meter variant="ring" label="Context" value={0.3} />
+  <Meter variant="ring" label="Context" value={0.78} />
+  <Meter variant="ring" label="Context" value={0.94} />
+</div>
+
+# Compact
+
+In a compact region the label steps down and the ring shrinks.
+
+<SizeProvider size="compact">
+  <div className="flex w-64 items-center gap-3">
+    <Meter className="flex-1" label="Session" value={0.42} />
+    <Meter variant="ring" label="Context" value={0.6} />
+  </div>
+</SizeProvider>
