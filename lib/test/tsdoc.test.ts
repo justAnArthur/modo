@@ -44,7 +44,7 @@ describe('parseItemSource', () => {
     const r = parseItemSource(
       `/**\n * Lead.\n * @deprecated Use Y.\n * @example {@include ./examples.mdx}\n * @since 1.2\n */\nexport default function X() {}`,
     )
-    expect([r.description, r.exampleDocs, r.tags]).toEqual([
+    expect([r.description, r.mdxExamples, r.tags]).toEqual([
       'Lead.',
       ['./examples.mdx'],
       [
@@ -79,6 +79,45 @@ describe('parseItemSource', () => {
   test('a modifier tag leaves the lines after it to the description', () => {
     const r = parseItemSource('/**\n * Button.\n * @beta\n * Second paragraph.\n */\nexport default function X() {}')
     expect([r.description, r.tags]).toEqual(['Button.\nSecond paragraph.', [{ tag: 'beta', text: '' }]])
+  })
+
+  test('a forwardRef const takes its props from the named type, an extending interface too', () => {
+    const r = parseItemSource(
+      `interface InputProps extends Base {\n  /** Size. */\n  size?: 'sm' | 'md'\n}\n/** Input. */\nconst Input = forwardRef<HTMLInputElement, InputProps>((props, ref) => null)\nexport default Input\n`,
+    )
+    expect([r.description, r.props, r.errors]).toEqual([
+      'Input.',
+      [{ name: 'size', optional: true, type: "'sm' | 'md'", description: 'Size.' }],
+      [],
+    ])
+  })
+
+  test('a forwardRef over a type alias', () => {
+    const r = parseItemSource(
+      `type P = { a: string }\nconst X = forwardRef<HTMLDivElement, P>(() => null)\nexport default X\n`,
+    )
+    expect(r.props.map(p => p.name)).toEqual(['a'])
+  })
+
+  test('{@include} inlines Markdown, {@includeCode} fences it with its language, a missing file is an error', () => {
+    const files: Record<string, string> = { './guide.md': 'Guide **text**.\n', './demo.ts': 'const a = 1\n' }
+    const r = parseItemSource(
+      `/**\n * Lead.\n *\n * {@include ./guide.md}\n *\n * {@includeCode ./demo.ts}\n *\n * {@include ./gone.md}\n */\nexport default function X() {}`,
+      { readFile: path => files[path] ?? null },
+    )
+    expect(r.description).toBe('Lead.\n\nGuide **text**.\n\n```ts\nconst a = 1\n```')
+    expect(r.errors).toEqual(['{@include ./gone.md}: file not found'])
+  })
+
+  test('@example {@include ./x.mdx} lands in mdxExamples; an inline example stays an example', () => {
+    const r = parseItemSource(
+      '/**\n * @example {@include ./examples.mdx}\n * @example\n * # Basic\n * ```tsx\n * <X />\n * ```\n */\nexport default function X() {}',
+      { readFile: () => 'never read' },
+    )
+    expect([r.mdxExamples, r.examples]).toEqual([
+      ['./examples.mdx'],
+      [{ title: 'Basic', description: undefined, code: '<X />' }],
+    ])
   })
 
   test('an @ line inside a ~~~ fence is code, not a tag', () => {

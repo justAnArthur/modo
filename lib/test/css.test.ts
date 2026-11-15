@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { buildGroup, lightDark, parseCss, schemePair } from '../src/lib/css'
+import { buildGroup, lightDark, parseCss, parseTokenFile, schemePair } from '../src/lib/css'
 
 describe('parseCss', () => {
   test('the last declaration in a block needs no `;`', () => {
@@ -55,5 +55,31 @@ describe('color schemes', () => {
     expect(schemePair(vars, '--b')).toEqual({ light: 'snow', dark: 'color-mix(in oklab, black 50%, transparent)' })
     expect(schemePair(vars, '--c')).toBeNull()
     expect(lightDark('red')).toBeNull()
+  })
+})
+
+describe('parseTokenFile', () => {
+  const groups = (src: string, file: string) => parseTokenFile(src, file).map(v => [v.name, v.group])
+
+  test('a file named for a group owns its unprefixed vars', () => {
+    expect(groups(':root { --sm: 4px; --lg: 16px }', 'spacing.css')).toEqual([
+      ['--sm', 'spacing'],
+      ['--lg', 'spacing'],
+    ])
+  })
+
+  test('a var whose prefix claims another group goes there, the bare shorthand too', () => {
+    expect(groups(':root { --primary: red; --radius-sm: 4px; --radius: 8px }', 'colors.css')).toEqual([
+      ['--primary', 'colors'],
+      ['--radius-sm', 'radius'],
+      ['--radius', 'radius'],
+    ])
+  })
+
+  test('any other file groups by prefix, an unprefixed var as a color', () => {
+    expect(groups(':root { --sm: 4px; --space-2: 8px }', 'theme.css')).toEqual([
+      ['--sm', 'colors'],
+      ['--space-2', 'spacing'],
+    ])
   })
 })

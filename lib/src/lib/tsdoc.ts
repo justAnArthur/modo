@@ -18,7 +18,7 @@ export interface ParsedItem {
   props: ParsedProp[]
   examples: ParsedExample[]
   /** `@example {@include ./x.mdx}` paths, relative to the item source. */
-  exampleDocs: string[]
+  mdxExamples: string[]
   /** Every block tag other than `@example` (`@since 1.2`, `@deprecated …`), in source order. */
   tags: ParsedTag[]
   errors: string[]
@@ -30,7 +30,7 @@ export interface ParsedTag {
   text: string
 }
 
-export interface ParseOptions {
+interface ParseOptions {
   /** Reads a `{@include}` / `{@includeCode}` path (relative to the item source); null when it can't. */
   readFile?: (path: string) => string | null
 }
@@ -79,15 +79,15 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
   // can't start a new tag.
   const include = (text: string) => expandIncludes(text, opts.readFile, errors)
   const description = include(lead).trim()
-  const exampleDocs: string[] = []
+  const mdxExamples: string[] = []
   const examples = extractExamples(
     sections.filter(s => s.tag === 'example').map(s => s.text),
     include,
-    exampleDocs,
+    mdxExamples,
   )
   const tags = sections.filter(s => s.tag !== 'example').map(s => ({ tag: s.tag, text: s.text.trim() }))
 
-  const result: ParsedItem = { name, description, props: [], examples, exampleDocs, tags, errors }
+  const result: ParsedItem = { name, description, props: [], examples, mdxExamples, tags, errors }
   if (fnStart === -1) {
     if (forwardRefPropsType) {
       const props = extractForwardRefProps(cleaned, forwardRefPropsType)
@@ -106,7 +106,7 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
 }
 
 function fail(msg: string): ParsedItem {
-  return { name: '', description: '', props: [], examples: [], exampleDocs: [], tags: [], errors: [msg] }
+  return { name: '', description: '', props: [], examples: [], mdxExamples: [], tags: [], errors: [msg] }
 }
 
 interface TagSection {
@@ -192,7 +192,6 @@ function extractProps(src: string, fnStart: number): ExtractPropsResult {
   const closeIdx = matchClosing(src, openIdx, '(', ')')
   if (closeIdx === undefined) return { props, errors: ['Unbalanced parens in parameter list'] }
   const paramsText = src.slice(openIdx + 1, closeIdx)
-  // A component that takes no props has nothing to document.
   if (!paramsText.trim()) return { props, errors }
 
   const destructured: Array<{ name: string; default?: string }> = []

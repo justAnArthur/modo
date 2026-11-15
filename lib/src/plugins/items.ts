@@ -2,38 +2,64 @@ import { resolve, sep } from 'node:path'
 import { isCSSRequest, normalizePath, type Plugin } from 'vite'
 import { itemKey, itemPath, STATIC_PAGES, tierPath } from '../lib/paths'
 import { cap } from '../lib/text'
-import type { Tier } from '../lib/tiers'
-import type { Bundler } from './bundle'
+import type { BundledItem, BundleResult, Bundler } from './bundle'
 import { emitRoutes } from './static-routes'
 import { unoExtractor } from './uno'
-import { cssModule } from './virtual'
+import { cssModule, reload, virtualModules } from './virtual'
 
 interface Options {
   userRoot: string
   bundler: Bundler
 }
 
-const ITEMS_VIRTUAL = 'virtual:modo-items'
-const ITEMS_RESOLVED = '\0virtual:modo-items'
-const ITEMS_CSS_VIRTUAL = 'virtual:modo-items-css'
-const ITEMS_CSS_RESOLVED = '\0virtual:modo-items-css'
-
 // Markdown too (`{@include}`d .md and .mdx), and what esbuild inlines.
 const SOURCE_EXT = /\.(?:[cm]?[jt]sx?|mdx?|json|svg)$/
 
+function itemsModule({ items, scope }: BundleResult): string {
+  const key = (it: BundledItem) => JSON.stringify(itemKey(it.tier, it.id))
+  // Bound by index: two ids that differ only in `-`/`_` stay distinct.
+  const compImports = items.map((it, i) => `import __c${i} from ${JSON.stringify(it.bundlePath)};`)
+  const mdxImports = items.flatMap((it, i) =>
+    it.mdxExamples.map((doc, j) => `import __x${i}_${j} from ${JSON.stringify(doc)};`),
+  )
+  const meta = items.map(({ id, tier, group, name, description, props, tags, path }) => ({
+    id,
+    tier,
+    group,
+    name,
+    description,
+    props,
+    tags,
+    path,
+  }))
+  const scopeCode = scope
+    ? [
+        `import * as __scope from ${JSON.stringify(scope.bundlePath)};`,
+        `export const exampleScope = Object.fromEntries(Object.entries(__scope).filter(([k]) => k !== 'default'));`,
+      ]
+    : [`export const exampleScope = {};`]
+  return [
+    ...compImports,
+    ...mdxImports,
+    ...scopeCode,
+    `export const items = ${JSON.stringify(meta)};`,
+    `export const byId = Object.fromEntries(items.map(it => [it.tier + ':' + it.id, it]));`,
+    `export const byName = {${items.map((it, i) => `${JSON.stringify(it.name)}: __c${i}`).join(',')}};`,
+    `export const examples = {${items.map(it => `${key(it)}: ${JSON.stringify(it.examples)}`).join(',')}};`,
+    `export const exampleDocs = {${items.map((it, i) => `${key(it)}: [${it.mdxExamples.map((_, j) => `__x${i}_${j}`).join(',')}]`).join(',')}};`,
+  ].join('\n')
+}
+
 export function itemsPlugin(options: Options): Plugin {
   const { bundler } = options
+  const modules = virtualModules('items')
   // Module ids are posix even on Windows.
   const outPrefix = `${normalizePath(bundler.outdir)}/`
 
   return {
     name: 'modo:items',
     enforce: 'pre',
-    async resolveId(id) {
-      if (id === ITEMS_VIRTUAL) return ITEMS_RESOLVED
-      if (id === ITEMS_CSS_VIRTUAL) return ITEMS_CSS_RESOLVED
-      return null
-    },
+    resolveId: modules.resolveId,
     async load(id) {
       // A build output is only read once the current build has finished
       // writing it (Vite's own fs load takes over after this).
@@ -41,47 +67,8 @@ export function itemsPlugin(options: Options): Plugin {
         await bundler.get()
         return null
       }
-
-      if (id === ITEMS_RESOLVED) {
-        const { items, scope } = await bundler.get()
-        const key = (it: { tier: Tier; id: string }) => JSON.stringify(itemKey(it.tier, it.id))
-        // Bound by index: two ids that differ only in `-`/`_` stay distinct.
-        const compImports = items.map((it, i) => `import __c${i} from ${JSON.stringify(it.bundlePath)};`)
-        const docImports = items.flatMap((it, i) =>
-          it.exampleDocs.map((doc, j) => `import __x${i}_${j} from ${JSON.stringify(doc)};`),
-        )
-        const meta = items.map(({ id, tier, group, name, description, props, tags, path }) => ({
-          id,
-          tier,
-          group,
-          name,
-          description,
-          props,
-          tags,
-          path,
-        }))
-        // Named exports of the `examples` module, in scope in every example.
-        const scopeCode = scope
-          ? [
-              `import * as __scope from ${JSON.stringify(scope.bundlePath)};`,
-              `export const exampleScope = Object.fromEntries(Object.entries(__scope).filter(([k]) => k !== 'default'));`,
-            ]
-          : [`export const exampleScope = {};`]
-        return [
-          ...compImports,
-          ...docImports,
-          ...scopeCode,
-          `export const items = ${JSON.stringify(meta)};`,
-          `export const byId = Object.fromEntries(items.map(it => [it.tier + ':' + it.id, it]));`,
-          `export const byName = {${items.map((it, i) => `${JSON.stringify(it.name)}: __c${i}`).join(',')}};`,
-          `export const examples = {${items.map(it => `${key(it)}: ${JSON.stringify(it.examples)}`).join(',')}};`,
-          `export const exampleDocs = {${items.map((it, i) => `${key(it)}: [${it.exampleDocs.map((_, j) => `__x${i}_${j}`).join(',')}]`).join(',')}};`,
-        ].join('\n')
-      }
-      if (id === ITEMS_CSS_RESOLVED) {
-        const { items } = await bundler.get()
-        return cssModule(items.flatMap(it => it.cssFiles))
-      }
+      if (id === modules.id) return itemsModule(await bundler.get())
+      if (id === modules.css) return cssModule((await bundler.get()).items.flatMap(it => it.cssFiles))
       return null
     },
     generateBundle: {
@@ -126,12 +113,7 @@ export function itemsPlugin(options: Options): Plugin {
           // too: a scanning CSS tool (Tailwind's `@source`) rescans only when
           // its stylesheet is re-transformed, which a new file never triggers.
           bundler.invalidate()
-          for (const [id, mod] of s.moduleGraph.idToModuleMap) {
-            if (id.startsWith('\0virtual:modo-') || id.startsWith(outPrefix) || isCSSRequest(id)) {
-              s.moduleGraph.invalidateModule(mod)
-            }
-          }
-          s.ws.send({ type: 'full-reload' })
+          reload(s, id => id.startsWith('\0virtual:modo-') || id.startsWith(outPrefix) || isCSSRequest(id))
         }, 100)
       })
     },
