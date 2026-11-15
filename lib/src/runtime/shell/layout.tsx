@@ -51,7 +51,8 @@ export function Shell({ children }: { children: ReactNode }) {
 function useDrawerFocus(open: boolean, setOpen: (open: boolean) => void) {
   useEffect(() => {
     if (!open) return
-    document.querySelector<HTMLElement>('[data-modo="sidebar-nav"] a')?.focus()
+    // A host Root may not carry sidebar-nav: go by the drawer's place, as layout.css does.
+    document.querySelector<HTMLElement>('[data-modo="sidebar"] > :not([data-modo="header"]) a[href]')?.focus()
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       setOpen(false)

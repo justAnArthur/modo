@@ -43,7 +43,7 @@ export function Header({ menuOpen, onMenu }: { menuOpen: boolean; onMenu: () => 
         {config.theme ? <ThemeToggle /> : null}
         <span data-modo="menu-toggle">
           <Button variant="ghost" size="icon-sm" aria-label="Menu" aria-pressed={menuOpen} onClick={onMenu}>
-            <Icon name={menuOpen ? 'close' : 'menu'} label="Menu" />
+            <Icon name={menuOpen ? 'close' : 'menu'} label={menuOpen ? 'Close' : 'Menu'} />
           </Button>
         </span>
       </div>
