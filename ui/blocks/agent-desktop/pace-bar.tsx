@@ -12,7 +12,7 @@ import { spring } from '../../lib/springs'
 import { cn } from '../../lib/utils'
 import { type LimitPace, percent, VERDICT_FILL } from './pace'
 
-export function Fill({ share, className }: { share: number; className: string }) {
+function Fill({ share, className }: { share: number; className: string }) {
   const reduceMotion = useReduceMotion()
   return (
     <motion.span
@@ -24,20 +24,11 @@ export function Fill({ share, className }: { share: number; className: string })
   )
 }
 
-/** The used share, colored by verdict, with a tick at the even-pace share; `project` adds where this pace lands at the reset. */
-export function PaceBar({
-  pace,
-  project = false,
-  className,
-}: {
-  pace: LimitPace
-  project?: boolean
-  className?: string
-}) {
+/** The used share, colored by verdict, with a tick at the even-pace share. */
+export function PaceBar({ pace, className }: { pace: LimitPace; className?: string }) {
   return (
     <span aria-hidden="true" className={cn('relative block h-1', className)}>
       <span className="absolute inset-0 overflow-hidden rounded-full bg-active">
-        {project && <Fill share={pace.projected} className="bg-selected" />}
         <Fill share={pace.limit.value} className={VERDICT_FILL[pace.verdict]} />
       </span>
       <span

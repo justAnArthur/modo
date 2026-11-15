@@ -1,5 +1,5 @@
 /*!
- * Local addition: the usage concepts' one model of a limit over time. A
+ * Local addition: the profile usage's model of a limit over time. A
  * limit's share alone says little (78% used is fine when it resets in a few
  * hours), so each limit is read against its window: the burn rate so far,
  * where that rate lands at the reset, and whether it runs out first.
@@ -28,8 +28,6 @@ export interface ProfilePace {
   limits: LimitPace[]
   /** The limit that runs out first, or lands highest at its reset. */
   binding: LimitPace
-  /** What the binding limit leaves unspent at its reset at this pace, 0–1: room for more. */
-  spare: number
 }
 
 /** Projected share from which a limit counts as only just lasting. */
@@ -53,12 +51,7 @@ export function paceOf(profile: Profile): ProfilePace {
   const limits = profile.limits.map(limit => paceOfLimit(profile.id, limit))
   const binding =
     [...limits].sort((a, b) => b.projected - a.projected)[0] ?? paceOfLimit(profile.id, profile.limits[0]!)
-  return { profile, limits, binding, spare: Math.max(1 - binding.projected, 0) }
-}
-
-/** Profiles with the most room until their resets first. */
-export function byHeadroom(profiles: Profile[]): ProfilePace[] {
-  return profiles.map(paceOf).sort((a, b) => b.spare - a.spare)
+  return { profile, limits, binding }
 }
 
 /** A short duration: `17m`, `2h 20m`, `20h`, `4d`. */
@@ -75,14 +68,6 @@ export function duration(hours: number) {
 
 export function percent(share: number) {
   return `${Math.round(share * 100)}%`
-}
-
-/** The verdict in a few words, the reset included. */
-export function verdictLine(pace: LimitPace) {
-  const resets = `resets in ${duration(pace.window.resetsInHours)}`
-  if (pace.verdict === 'tight') return `Out in ${duration(pace.runsOutInHours)}, ${resets}`
-  if (pace.verdict === 'watch') return `Only just lasts, ${resets}`
-  return `Fine till reset, ${resets}`
 }
 
 // Literal tables: UnoCSS only generates the classes it can read whole.
