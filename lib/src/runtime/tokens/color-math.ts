@@ -20,23 +20,25 @@ export function pageColors(): PageColors {
 
 export type Rgba = [number, number, number, number]
 
-const pen = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!
-const probe = document.createElement('i')
-probe.hidden = true
+let pen: CanvasRenderingContext2D | undefined
+let probe: HTMLElement | undefined
 
-/** `color` as the page computes it. The canvas can't parse light-dark() or
-    system colors and silently keeps its previous fill; computed styles resolve
-    them against the page's color-scheme. */
+/**
+ * `color` as the page computes it. The canvas can't parse light-dark() or
+ * system colors and silently keeps its previous fill; computed styles resolve
+ * them against the page's color-scheme.
+ */
 function computed(color: string): string {
+  probe ??= Object.assign(document.createElement('i'), { hidden: true })
   if (!probe.isConnected) document.body.append(probe)
   probe.style.color = ''
   probe.style.color = color
   return getComputedStyle(probe).color
 }
 
-/** Paint `color` (over `under`) and read the pixel back — resolves any CSS
-    color syntax the browser knows (oklch, color-mix, …) to sRGB. */
+/** Paints `color` (over `under`) and reads the pixel back: any CSS color the browser knows, as sRGB. */
 export function paint(color: string, under?: string): Rgba {
+  pen ??= document.createElement('canvas').getContext('2d', { willReadFrequently: true })!
   pen.clearRect(0, 0, 1, 1)
   if (under) {
     pen.fillStyle = computed(under)

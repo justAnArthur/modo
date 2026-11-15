@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { OtherTokens, TokenLabel, TokenSection, type Var } from './parts'
 
-// The CSS keywords as the curves they stand for.
 const KEYWORDS: Record<string, string> = {
   ease: '0.25, 0.1, 0.25, 1',
   'ease-in': '0.42, 0, 1, 1',
@@ -28,13 +27,11 @@ function kinds(vars: Var[]) {
   }
 }
 
-const still = matchMedia('(prefers-reduced-motion: reduce)')
-
 /** Flips between the track's two ends, unless the reader asked for reduced motion. */
 function useCrossing(period: number): boolean {
   const [end, setEnd] = useState(false)
   useEffect(() => {
-    if (still.matches) return
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
     const timer = setInterval(() => setEnd(e => !e), period)
     return () => clearInterval(timer)
   }, [period])
@@ -70,8 +67,10 @@ export function MotionView({ vars }: { vars: Var[] }) {
   )
 }
 
-/** The dot crosses its track over `duration` along `easing`, back and forth.
-    A duration's track is as long as its share of the longest one. */
+/**
+ * The dot crosses its track over `duration` along `easing`, back and forth.
+ * A duration's track is as long as its share of the longest one.
+ */
 function MotionRow({ v, duration, easing, extent }: { v: Var; duration?: Var; easing?: Var; extent?: number }) {
   return (
     <div data-modo="motion-row">
