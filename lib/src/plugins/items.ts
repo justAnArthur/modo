@@ -80,7 +80,7 @@ export function itemsPlugin(options: Options): Plugin {
         if (errorCount > 0) this.error('the bundle has errors (reported above), so the site was not written')
         if (!config) return
         emitRoutes(this, bundle, config, [
-          ...STATIC_PAGES,
+          ...STATIC_PAGES.map(({ path, title }) => ({ path: path.slice(1), title })),
           ...[...new Set(items.map(it => it.tier))].map(tier => ({ path: tierPath(tier).slice(1), title: cap(tier) })),
           ...items.map(it => ({
             path: itemPath(it.tier, it.id).slice(1),

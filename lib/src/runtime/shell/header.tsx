@@ -1,8 +1,9 @@
 import { config, logoUrl } from 'virtual:modo-config'
 import { Logo, shell } from 'virtual:modo-shell'
 import { useSyncExternalStore } from 'react'
+import { HOME_PATH } from '../../lib/paths'
 import { cap } from '../../lib/text'
-import { HOME_PATH, withBase } from '../location'
+import { withBase } from '../location'
 
 /** Labels for well-known `socials` keys; any other key is capitalized. */
 const NETWORKS: Record<string, string> = {

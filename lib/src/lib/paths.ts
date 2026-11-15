@@ -20,8 +20,14 @@ export function tokenPath(group?: string): string {
   return group ? `/docs/tokens/${group}` : '/docs/tokens'
 }
 
-/** The pages that exist whatever the design system holds, as static routes: path without the leading `/`. */
-export const STATIC_PAGES = [
-  { path: 'canvas', title: 'Canvas' },
-  { path: '404', title: 'Not found' },
-]
+/** The overview, as an app path. */
+export const HOME_PATH = '/'
+
+/** The canvas: every foundation and item on one pan-and-zoom surface. */
+export const CANVAS_PAGE = { path: '/canvas', title: 'Canvas' }
+
+/** The page any unknown path shows. */
+export const NOT_FOUND_PAGE = { path: '/404', title: 'Not found' }
+
+/** The pages that exist whatever the design system holds. */
+export const STATIC_PAGES = [CANVAS_PAGE, NOT_FOUND_PAGE]
