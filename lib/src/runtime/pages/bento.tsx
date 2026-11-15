@@ -48,27 +48,36 @@ export function BentoCard({
   )
 }
 
+/**
+ * Runs `fn` once resizing has paused. An animated layout change (a sidebar
+ * springing open) resizes every frame; measuring each one would force layout
+ * per card per frame. Deferring also keeps a refit, which resizes what it
+ * observes, out of the observer's own callback.
+ */
+function whenSettled(fn: () => void, ms = 120) {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  return {
+    run: () => {
+      clearTimeout(timer)
+      timer = setTimeout(fn, ms)
+    },
+    cancel: () => clearTimeout(timer),
+  }
+}
+
 /** Scales the preview down until it fits the stage, refitting whenever either resizes. */
 function useFit(stage: RefObject<HTMLDivElement | null>, fit: RefObject<HTMLDivElement | null>, base: number) {
   useLayoutEffect(() => {
     const outer = stage.current!
     const inner = fit.current!
-    let frame = 0
-    const run = () => {
-      frame = 0
-      fitInto(outer, inner, base)
-    }
-    run()
-    // Deferred to the next frame: refitting inside the callback would resize
-    // what it observes and trip the observer's loop guard.
-    const observer = new ResizeObserver(() => {
-      frame ||= requestAnimationFrame(run)
-    })
+    fitInto(outer, inner, base)
+    const later = whenSettled(() => fitInto(outer, inner, base))
+    const observer = new ResizeObserver(later.run)
     observer.observe(outer)
     observer.observe(inner)
     return () => {
       observer.disconnect()
-      cancelAnimationFrame(frame)
+      later.cancel()
     }
   }, [stage, fit, base])
 }
@@ -97,9 +106,13 @@ export function Bento({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     const el = grid.current!
     pack(el)
-    const observer = new ResizeObserver(() => pack(el))
+    const later = whenSettled(() => pack(el))
+    const observer = new ResizeObserver(later.run)
     observer.observe(el)
-    return () => observer.disconnect()
+    return () => {
+      observer.disconnect()
+      later.cancel()
+    }
   }, [])
   return (
     <div ref={grid} data-modo="bento">
