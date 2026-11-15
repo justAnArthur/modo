@@ -1,221 +1,122 @@
+import { SIDEBAR_MEMBERS, SLOTS, type SlotName } from '../lib/contract'
 import type { SiteConfig } from '../lib/schema'
 import type { Tier } from '../lib/tiers'
 
-export interface ParsedItemLite {
+/** An item as slot matching sees it. */
+export interface MatchableItem {
   name: string
   id: string
   tier: Tier
-  props: Array<{ name: string; optional: boolean }>
-  /** Absolute path of the item's entry in the shared build (.modo-tmp/build/items/<tier>/<id>.mjs). */
-  bundleUrl: string
+  props: Array<{ name: string }>
+  /** The item's entry in the shared build (.modo-tmp/build/items/<tier>/<id>.mjs). */
+  bundlePath: string
 }
 
-export interface SlotMember {
-  requiredProps: string[]
-  userTier: Tier
-  name: string
+type PlainName =
+  | 'PlainButton'
+  | 'PlainLink'
+  | 'PlainCode'
+  | 'PlainSelect'
+  | 'PlainIcon'
+  | 'PlainSidebarRoot'
+  | 'PlainSidebarItem'
+  | 'PlainSidebarSection'
+
+// Components are never loaded node-side (the shared build is browser-only): a
+// slot resolves to a bundle path or a plain fallback, which the shell's virtual
+// module imports in the browser.
+export interface BuiltSlot {
+  source: 'config' | 'interface-match'
+  bundlePath: string
+  exportName: string
+  cssFiles: string[]
 }
 
-export interface ShellSlot {
-  name: 'Button' | 'Link' | 'Sidebar' | 'Code' | 'Select' | 'Icon'
-  userTier: Tier
-  requiredProps: string[]
-  members?: Record<string, SlotMember>
+export type SlotResolution = BuiltSlot | { source: 'fallback'; fallbackName: PlainName }
+
+export interface ShellResolution {
+  Button: SlotResolution
+  Link: SlotResolution
+  Code: SlotResolution
+  Select: SlotResolution
+  Icon: SlotResolution
+  Sidebar: { Root: SlotResolution; Item: SlotResolution; Section: SlotResolution }
 }
 
-export const SLOTS: ShellSlot[] = [
-  {
-    name: 'Button',
-    userTier: 'primitives',
-    requiredProps: ['children'],
-  },
-  {
-    name: 'Link',
-    userTier: 'primitives',
-    requiredProps: ['href', 'children'],
-  },
-  {
-    name: 'Code',
-    userTier: 'primitives',
-    requiredProps: ['children'],
-  },
-  {
-    name: 'Icon',
-    userTier: 'primitives',
-    requiredProps: ['name'],
-  },
-  {
-    name: 'Select',
-    userTier: 'components',
-    requiredProps: ['value', 'onChange', 'options'],
-  },
-  {
-    name: 'Sidebar',
-    userTier: 'components',
-    requiredProps: ['children'],
-    members: {
-      Item: {
-        name: 'Item',
-        userTier: 'components',
-        requiredProps: ['href', 'children'],
-      },
-      Section: {
-        name: 'Section',
-        userTier: 'components',
-        requiredProps: ['title', 'children'],
-      },
-    },
-  },
-]
+/** A pinned module's build: null when it didn't build or lacks the export it names. */
+export type LoadPinned = (ref: string) => BuiltSlot | null
 
-// Components are never loaded node-side (the shared build is browser-only):
-// a slot resolves to a bundle path or a plain fallback's name, which the
-// shell's virtual module imports in the browser.
-export interface LoadedComponent {
-  cssPaths: string[]
-  source: 'config' | 'interface-match' | 'fallback'
-  resolvedPath: string
-  /** Path to the bundled .mjs file (when the loader created one). */
-  bundlePath?: string
-  /** The module export holding the component; `default` when unset. */
-  exportName?: string
-  /** When source is 'fallback', the name of the plain-HTML component to import. */
-  fallbackName?:
-    | 'PlainButton'
-    | 'PlainLink'
-    | 'PlainCode'
-    | 'PlainSelect'
-    | 'PlainIcon'
-    | 'PlainSidebarItem'
-    | 'PlainSidebarSection'
-    | 'PlainSidebarRoot'
-}
+type Member = keyof typeof SIDEBAR_MEMBERS
 
-export interface ResolvedSidebar {
-  Root: LoadedComponent
-  Item: LoadedComponent
-  Section: LoadedComponent
-}
-
-export interface ResolvedShell {
-  Button: LoadedComponent
-  Link: LoadedComponent
-  Code: LoadedComponent
-  Select: LoadedComponent
-  Icon: LoadedComponent
-  Sidebar: ResolvedSidebar
-}
-
-export type LoadUserPath = (path: string) => Promise<LoadedComponent | null>
-
-export interface ResolveOptions {
-  warnings?: string[]
-}
-
-function omitted(slotName: 'Button' | 'Link' | 'Code' | 'Select' | 'Icon' | 'Sidebar'): LoadedComponent {
-  const fallbackName = slotName === 'Sidebar' ? 'SidebarRoot' : slotName
+function plain(slot: SlotName, member?: Member): SlotResolution {
   return {
-    cssPaths: [],
     source: 'fallback',
-    resolvedPath: `fallback:${slotName}`,
-    fallbackName: `Plain${fallbackName}`,
+    fallbackName: `Plain${slot}${member ?? (slot === 'Sidebar' ? 'Root' : '')}` as PlainName,
   }
 }
 
-export async function resolveShellSlots(
+export function resolveShellSlots(
   config: Pick<SiteConfig, 'shell'>,
-  userItems: ParsedItemLite[],
-  loadUserPath: LoadUserPath,
-  opts: ResolveOptions = {},
-): Promise<ResolvedShell> {
-  const warnings = opts.warnings ?? []
-  // Genuinely-empty projects (no items, no shell mapping) shouldn't spam 7
-  // warnings on every boot — the absence is the user's intent, not a bug.
-  const silence = userItems.length === 0 && Object.keys(config.shell ?? {}).length === 0
-  // A plain fallback is a supported outcome, so it's one summary line, not one warning per slot.
+  items: MatchableItem[],
+  loadPinned: LoadPinned,
+): { shell: ShellResolution; warnings: string[] } {
+  const warnings: string[] = []
+  // An empty project (no items, no pins) means it; a warning on every boot would be noise.
+  const silent = items.length === 0 && Object.keys(config.shell ?? {}).length === 0
+  // A plain fallback is a supported outcome: one summary line, not one warning per slot.
   const unresolved: string[] = []
 
-  async function pick(
-    slotName: ShellSlot['name'],
-    member?: SlotMember,
-    fallback = omitted(slotName),
-  ): Promise<LoadedComponent> {
-    const base = member ?? SLOTS.find(s => s.name === slotName)!
-    const { requiredProps: required, userTier: tier } = base
-
-    const explicit = config.shell?.[slotName]
-    if (explicit) {
-      const loaded = await loadUserPath(explicit)
-      if (loaded) return { ...loaded, source: 'config', resolvedPath: explicit }
-      // A pin that doesn't load (missing file, failed build, no such export)
-      // must not fall back to interface matching in silence.
-      if (!member) warnings.push(`Shell slot "${slotName}" is pinned to "${explicit}", which didn't load`)
-    }
-
-    const expectedName = (member?.name ?? slotName).toLowerCase()
-    const candidates = userItems
-      .filter(it => it.tier === tier && it.name.toLowerCase() === expectedName)
-      .filter(it => required.every(rp => it.props.some(p => p.name === rp)))
-      .sort((a, b) => a.id.localeCompare(b.id))
-    if (candidates.length > 0) {
-      const c = candidates[0]!
-      return { cssPaths: [], source: 'interface-match', resolvedPath: `${c.tier}/${c.id}`, bundlePath: c.bundleUrl }
-    }
-
-    unresolved.push(`${slotName}${member ? `.${member.name}` : ''}`)
-    return fallback
+  function pinned(slot: SlotName): BuiltSlot | null {
+    const ref = config.shell?.[slot]
+    if (!ref) return null
+    const loaded = loadPinned(ref)
+    // A pin that doesn't load must not fall through to matching in silence.
+    if (!loaded) warnings.push(`Shell slot "${slot}" is pinned to "${ref}", which didn't load`)
+    return loaded
   }
 
-  const rootPicks = {
-    Button: await pick('Button'),
-    Link: await pick('Link'),
-    Code: await pick('Code'),
-    Select: await pick('Select'),
-    Icon: await pick('Icon'),
-    Sidebar: await pick('Sidebar'),
+  function matched(slot: SlotName, member?: Member): BuiltSlot | null {
+    const { tier, requiredProps } = member ? SIDEBAR_MEMBERS[member] : SLOTS[slot]
+    const name = (member ?? slot).toLowerCase()
+    const hit = items
+      .filter(it => it.tier === tier && it.name.toLowerCase() === name)
+      .filter(it => requiredProps.every(rp => it.props.some(p => p.name === rp)))
+      .sort((a, b) => a.id.localeCompare(b.id))[0]
+    return hit ? { source: 'interface-match', bundlePath: hit.bundlePath, exportName: 'default', cssFiles: [] } : null
   }
 
-  const sidebarMembers = SLOTS.find(s => s.name === 'Sidebar')!.members!
-
-  // The root's Item/Section statics can't be inspected node-side: a host root
-  // owns its members, and the shell resolves `Root.Item ?? Item` in the browser.
-  const sidebarFromRoot = rootPicks.Sidebar.source !== 'fallback'
-  const fallbackItem: LoadedComponent = {
-    cssPaths: [],
-    source: 'fallback',
-    resolvedPath: 'fallback:Sidebar.Item',
-    fallbackName: 'PlainSidebarItem',
-  }
-  const fallbackSection: LoadedComponent = {
-    cssPaths: [],
-    source: 'fallback',
-    resolvedPath: 'fallback:Sidebar.Section',
-    fallbackName: 'PlainSidebarSection',
+  function pick(slot: SlotName): SlotResolution {
+    const found = pinned(slot) ?? matched(slot)
+    if (found) return found
+    unresolved.push(slot)
+    return plain(slot)
   }
 
-  const sidebarItem = sidebarFromRoot ? fallbackItem : await pick('Sidebar', sidebarMembers.Item, fallbackItem)
-  const sidebarSection = sidebarFromRoot
-    ? fallbackSection
-    : await pick('Sidebar', sidebarMembers.Section, fallbackSection)
+  // Members are never pinned: a pinned or matched root owns its parts, which
+  // the shell reads as `Root.Item ?? Item` in the browser.
+  function member(name: Member, root: SlotResolution): SlotResolution {
+    if (root.source !== 'fallback') return plain('Sidebar', name)
+    return matched('Sidebar', name) ?? plain('Sidebar', name)
+  }
 
-  if (!silence && unresolved.length > 0) {
-    // With the Sidebar root on its fallback, its parts are too: name the slot once.
-    const named = unresolved.includes('Sidebar') ? unresolved.filter(n => !n.startsWith('Sidebar.')) : unresolved
+  const roots = {
+    Button: pick('Button'),
+    Link: pick('Link'),
+    Code: pick('Code'),
+    Select: pick('Select'),
+    Icon: pick('Icon'),
+    Sidebar: pick('Sidebar'),
+  }
+  const Root = roots.Sidebar
+  const shell: ShellResolution = {
+    ...roots,
+    Sidebar: { Root, Item: member('Item', Root), Section: member('Section', Root) },
+  }
+
+  if (!silent && unresolved.length > 0) {
     warnings.push(
-      `Plain fallbacks for ${named.join(', ')}: no item matches by name and required props, and modo.config.ts \`shell\` pins none`,
+      `Plain fallbacks for ${unresolved.join(', ')}: no item matches by name and required props, and modo.config.ts \`shell\` pins none`,
     )
   }
-
-  return {
-    Button: rootPicks.Button,
-    Link: rootPicks.Link,
-    Code: rootPicks.Code,
-    Select: rootPicks.Select,
-    Icon: rootPicks.Icon,
-    Sidebar: {
-      Root: rootPicks.Sidebar,
-      Item: sidebarItem,
-      Section: sidebarSection,
-    },
-  }
+  return { shell, warnings }
 }

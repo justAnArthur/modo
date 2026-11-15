@@ -1,47 +1,28 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmdirSync, rmSync, statSync } from 'node:fs'
-import { join, relative, resolve, sep } from 'node:path'
+import { existsSync, mkdirSync, readdirSync, rmdirSync, rmSync, statSync } from 'node:fs'
+import { join, relative, resolve } from 'node:path'
 import mdx from '@mdx-js/esbuild'
 import esbuild, { type BuildOptions, type Message, type Metafile } from 'esbuild'
 import remarkGfm from 'remark-gfm'
 import { isComponentRef, splitRef } from '../lib/refs'
 import type { SiteConfig } from '../lib/schema'
-import { TIERS, type Tier } from '../lib/tiers'
-import { type ParsedExample, type ParsedItem, parseItemSource } from '../lib/tsdoc'
 import { loadModoConfig } from '../node/config-loader'
-import { discoverCssForFile, discoverItems } from '../node/discover'
+import { discoverCssForFile, parseItems, resolveUserFile, type SourceItem } from '../node/discover'
 import { remarkModoExamples } from './mdx-examples'
+import { createReporter } from './report'
 
-// One esbuild build for the whole design system: every item, every shell /
-// panel module and the `examples` scope module are entry points of the same
-// `splitting: true` build, so a module imported by several entries (a React
-// context, a theme provider) lands in one shared chunk and exists once at
-// runtime. Output: <userRoot>/.modo-tmp/build/{items,usr,scope,chunks}/…
+// One `splitting: true` esbuild build for every item, shell / panel module and
+// the `examples` scope module: a module several entries import (a React
+// context, a theme provider) lands in one shared chunk and exists once.
 
-export interface BundledItem {
-  id: string
-  tier: Tier
-  /** The group folders as a path: `<tier>/<group>/[<group>/…]<id>/index.tsx` → `<group>[/<group>…]`. */
-  group?: string
-  name: string
-  description: string
-  props: ParsedItem['props']
-  examples: ParsedExample[]
-  /** Built `@example {@include ./x.mdx}` files (.modo-tmp/build/examples/<tier>/<id>.mjs). */
-  exampleDocs: string[]
-  /** Block tags other than `@example`, in source order. */
-  tags: ParsedItem['tags']
-  cssFiles: string[]
-  /** Source `index.tsx`. */
-  file: string
-  /** `file` relative to the project root, with `/` separators. */
-  path: string
-  /** Absolute path of the entry's output (.modo-tmp/build/items/<tier>/<id>.mjs). */
+export interface BundledItem extends SourceItem {
+  /** The built `.mdx` examples (.modo-tmp/build/examples/<tier>/<id>.mjs). */
+  mdxExamples: string[]
+  /** The entry's output (.modo-tmp/build/items/<tier>/<id>.mjs). */
   bundlePath: string
 }
 
-/** A `config.shell.*` / `panel.items[].component` module. */
-export interface BundledExtra {
-  file: string
+/** A `config.shell.*` / `panel.items[].component` / component `logo` module. */
+interface BundledExtra {
   bundlePath: string
   cssFiles: string[]
   /** The export a reference names: `./file.tsx#Name`, else `default`. */
@@ -53,7 +34,7 @@ export interface BundledExtra {
 export interface BundleResult {
   config: SiteConfig | null
   items: BundledItem[]
-  /** Keyed by the path string exactly as written in modo.config.ts. */
+  /** Keyed by the reference exactly as written in modo.config.ts. */
   extras: Map<string, BundledExtra>
   /** The `examples` module; `exports` excludes `default`. */
   scope: { bundlePath: string; exports: string[] } | null
@@ -81,66 +62,20 @@ interface EntryFailure {
 export function createBundler(opts: { userRoot: string; configPath: string }): Bundler {
   const { userRoot, configPath } = opts
   const outdir = resolve(userRoot, '.modo-tmp', 'build')
+  const report = createReporter('bundle')
 
   let current: Promise<BundleResult> | null = null
   let last: Promise<unknown> = Promise.resolve()
-  let lastReport = ''
 
   async function run(): Promise<BundleResult> {
-    const errors: string[] = []
-    const warnings: string[] = []
     const failures: EntryFailure[] = []
-
+    const { items: sources, errors, warnings } = parseItems(userRoot)
     const config = await loadModoConfig(configPath).catch((err: Error) => {
       // configPlugin reports the full error; items still build without it.
       errors.push(`modo.config: ${err.message}`)
       return null
     })
-
-    const parsed: Array<Omit<BundledItem, 'bundlePath'> & { key: string }> = []
-    for (const tier of TIERS) {
-      const tierDir = resolve(userRoot, tier)
-      if (!existsSync(tierDir)) continue
-      const seen = new Set<string>()
-      for (const { id, group, dir: itemDir } of discoverItems(tierDir)) {
-        // Ids key urls and bundle entries per tier, so a group can't repeat one.
-        if (seen.has(id)) {
-          errors.push(`${relative(userRoot, itemDir)}: another ${tier} item is already named "${id}"; skipped`)
-          continue
-        }
-        seen.add(id)
-        const file = resolve(itemDir, 'index.tsx')
-        const p = parseItemSource(readFileSync(file, 'utf8'), {
-          readFile: path => {
-            try {
-              return readFileSync(resolve(itemDir, path), 'utf8')
-            } catch {
-              return null
-            }
-          },
-        })
-        if (p.errors.length > 0) warnings.push(`${tier}/${id}: ${p.errors.join('; ')}`)
-        const exampleDocs = p.exampleDocs.map(path => resolve(itemDir, path))
-        for (const doc of exampleDocs.filter(d => !existsSync(d))) {
-          warnings.push(`${tier}/${id}: @example include not found: ${relative(itemDir, doc)}`)
-        }
-        parsed.push({
-          key: `items/${tier}/${id}`,
-          id,
-          tier,
-          group,
-          name: p.name || id,
-          description: p.description,
-          props: p.props,
-          examples: p.examples,
-          exampleDocs: exampleDocs.filter(d => existsSync(d)),
-          tags: p.tags,
-          cssFiles: discoverCssForFile(file),
-          file,
-          path: relative(userRoot, file).split(sep).join('/'),
-        })
-      }
-    }
+    const parsed = sources.map(it => ({ ...it, key: `items/${it.tier}/${it.id}` }))
 
     const keyByFile = new Map<string, string>()
     for (const it of parsed) keyByFile.set(it.file, it.key)
@@ -155,20 +90,20 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
       return key
     }
 
-    for (const it of parsed) for (const doc of it.exampleDocs) keyFor(doc, `examples/${it.tier}/${it.id}`)
+    for (const it of parsed) for (const doc of it.mdxExamples) keyFor(doc, `examples/${it.tier}/${it.id}`)
 
     const extraPaths = [
       ...Object.values(config?.shell ?? {}),
       ...(config?.panel?.items ?? []).map(it => it.component),
       config?.logo && isComponentRef(config.logo) ? config.logo : undefined,
     ].filter((p): p is string => typeof p === 'string')
-    // `./modo.components.tsx#Select` names an export; several refs into one
-    // file share its entry.
+    // Several refs into one file (`./modo.components.tsx#Select`) share its entry.
     const extraKeys = new Map<string, { file: string; key: string; exportName: string }>()
     for (const p of new Set(extraPaths)) {
       const { path, exportName } = splitRef(p)
       const file = resolveUserFile(userRoot, path)
-      if (!file) continue // reported by the shell plugin as an unresolved slot/panel item
+      // The shell plugin reports it as an unresolved slot or panel item.
+      if (!file) continue
       extraKeys.set(p, { file, exportName, key: keyFor(file, `usr/${sanitize(path)}`) })
     }
 
@@ -182,28 +117,27 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     const entries: Entry[] = [...keyByFile].map(([file, key]) => ({ key, file }))
 
     const built = await buildWithIsolation(entries, userRoot, outdir, failures, warnings)
-    sweep(outdir, built.outputs)
+    sweep(outdir, built.outputs, warnings)
 
     const out = (key: string) => resolve(outdir, `${key}.mjs`)
     const ok = (key: string) => built.exports.has(out(key))
     const exportsOf = (key: string) => built.exports.get(out(key)) ?? []
 
     const items: BundledItem[] = []
-    for (const { key, exampleDocs, ...it } of parsed) {
+    for (const { key, mdxExamples, ...it } of parsed) {
       if (!ok(key)) continue
       if (!exportsOf(key).includes('default')) {
         errors.push(`${it.tier}/${it.id}: index.tsx has no default export`)
         continue
       }
-      const docKeys = exampleDocs.map(doc => keyByFile.get(doc)!).filter(ok)
-      items.push({ ...it, exampleDocs: docKeys.map(out), bundlePath: out(key) })
+      const docKeys = mdxExamples.map(doc => keyByFile.get(doc)!).filter(ok)
+      items.push({ ...it, mdxExamples: docKeys.map(out), bundlePath: out(key) })
     }
 
     const extras = new Map<string, BundledExtra>()
     for (const [p, { file, key, exportName }] of extraKeys) {
       if (!ok(key)) continue
       extras.set(p, {
-        file,
         bundlePath: out(key),
         cssFiles: discoverCssForFile(file),
         exportName,
@@ -227,7 +161,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
       }
     }
 
-    lastReport = await report(failures, errors, warnings, lastReport)
+    report({ lines: await failureLines(failures), errors, warnings })
     return { config, items, extras, scope, errorCount: failures.length + errors.length }
   }
 
@@ -387,59 +321,28 @@ async function buildWithIsolation(
   return built
 }
 
-async function report(
-  failures: EntryFailure[],
-  errors: string[],
-  warnings: string[],
-  previous: string,
-): Promise<string> {
-  const lines: string[] = []
-
-  // The same message (a broken shared module) surfaces once per entry that
-  // imports it — print it once, listing the affected entries.
+// The same message (a broken shared module) surfaces once per entry that
+// imports it: print it once, listing the affected entries.
+async function failureLines(failures: EntryFailure[]): Promise<string[]> {
   const groups = new Map<string, { message: Message; keys: string[] }>()
   for (const f of failures) {
     for (const m of f.messages) {
       const loc = m.location ? `${m.location.file}:${m.location.line}:${m.location.column}` : ''
       const id = `${m.text}\0${loc}`
       const g = groups.get(id)
-      if (g) {
-        if (!g.keys.includes(f.key)) g.keys.push(f.key)
-      } else groups.set(id, { message: m, keys: [f.key] })
+      if (!g) groups.set(id, { message: m, keys: [f.key] })
+      else if (!g.keys.includes(f.key)) g.keys.push(f.key)
     }
   }
-  if (groups.size > 0) {
-    const skipped = [...new Set(failures.map(f => f.key))].filter(k => !k.startsWith('('))
-    lines.push(`[modo:bundle] ${groups.size} error(s)${skipped.length ? ` — skipped: ${skipped.join(', ')}` : ''}`)
-    const color = Boolean(process.stderr.isTTY)
-    for (const { message, keys } of groups.values()) {
-      const [formatted] = await esbuild.formatMessages([message], { kind: 'error', color })
-      lines.push((formatted ?? message.text).trimEnd(), `    in: ${keys.join(', ')}`, '')
-    }
+  if (groups.size === 0) return []
+  const skipped = [...new Set(failures.map(f => f.key))].filter(k => !k.startsWith('('))
+  const lines = [`[modo:bundle] ${groups.size} error(s)${skipped.length ? ` — skipped: ${skipped.join(', ')}` : ''}`]
+  const color = Boolean(process.stderr.isTTY)
+  for (const { message, keys } of groups.values()) {
+    const [formatted] = await esbuild.formatMessages([message], { kind: 'error', color })
+    lines.push((formatted ?? message.text).trimEnd(), `    in: ${keys.join(', ')}`, '')
   }
-  for (const e of errors) lines.push(`[modo:bundle] error: ${e}`)
-  for (const w of warnings) lines.push(`[modo:bundle] warning: ${w}`)
-
-  const text = lines.length > 0 ? `${lines.join('\n')}\n` : ''
-  // Rebuilds on every source change — don't repeat an unchanged report.
-  if (text && text !== previous) process.stderr.write(text)
-  return text
-}
-
-/** `./x` → x (file), x/index.{tsx,ts,jsx,js} (dir) or x.{tsx,ts,jsx,js}. */
-function resolveUserFile(userRoot: string, p: string): string | null {
-  const abs = resolve(userRoot, p)
-  const exts = ['.tsx', '.ts', '.jsx', '.js']
-  if (existsSync(abs)) {
-    if (statSync(abs).isFile()) return abs
-    for (const ext of exts) {
-      const f = resolve(abs, `index${ext}`)
-      if (existsSync(f)) return f
-    }
-    return null
-  }
-  for (const ext of exts) if (existsSync(abs + ext)) return abs + ext
-  return null
+  return lines
 }
 
 function sanitize(p: string): string {
@@ -452,7 +355,7 @@ function sanitize(p: string): string {
 }
 
 /** Delete everything in outdir the last build didn't write (old hashed chunks, removed items). */
-function sweep(outdir: string, keep: Set<string>): void {
+function sweep(outdir: string, keep: Set<string>, warnings: string[]): void {
   if (!existsSync(outdir)) return
   const walk = (dir: string): boolean => {
     let empty = true
@@ -472,8 +375,6 @@ function sweep(outdir: string, keep: Set<string>): void {
   try {
     walk(outdir)
   } catch (err) {
-    process.stderr.write(
-      `[modo:bundle] warning: could not clean ${relative(process.cwd(), outdir)}: ${(err as Error).message}\n`,
-    )
+    warnings.push(`could not clean ${relative(process.cwd(), outdir)}: ${(err as Error).message}`)
   }
 }

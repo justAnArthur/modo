@@ -3,23 +3,24 @@ import { z } from 'zod'
 /**
  * Pins docs-chrome slots to components. A value is a path relative to the
  * project root, optionally naming an export (`./modo.components.tsx#Select`).
- * An unpinned slot uses the item whose name and props match, else a plain
- * HTML fallback.
+ * An unpinned slot uses the item in its tier whose name and props match, else
+ * a plain HTML fallback. The props each slot gets are in the `*SlotProps` types.
  */
 export interface ShellConfig {
-  /** The chrome's icon buttons. Gets `variant="ghost"`, `size="icon-sm"`, `aria-label`, `aria-pressed`. */
+  /** The chrome's icon buttons. Matched in `primitives/` by `children`. Gets `variant="ghost"`, `size="icon-sm"`, `aria-label`, `aria-pressed`. */
   Button?: string
-  /** Every chrome and Markdown link. Gets `href`, and `aria-label` or `title` where there is one. */
+  /** Every chrome and Markdown link. Matched in `primitives/` by `href`, `children`. Gets `aria-label` or `title` where there is one. */
   Link?: string
-  /** A design-system switcher or similar. Gets `value`, `onChange(value)` and `options`. */
+  /** Handed to panel items as `shell.Select`; the chrome renders none. Matched in `components/` by `value`, `onChange`, `options`. */
   Select?: string
-  /** Both side navs. Its `Item` (`href`, `active`) and `Section` (`title`) render the entries. */
+  /** Both side navs. Matched in `components/` by `children`; its `Item` (`href`, `active`) and `Section` (`title`) render the entries. */
   Sidebar?: string
-  /** Code blocks. Gets `language` and the code as a string child. */
+  /** Code blocks. Matched in `primitives/` by `children`. Gets `language` and the code as a string child. */
   Code?: string
   /**
-   * The chrome's icons. Gets `name` and `label`: one of `code`, `copy`, `check`, `link`, `external`, `menu`,
-   * `sun`, `moon`, or a `socials` key (`github`, `npm`, …). Draw the label for a name you have no glyph for.
+   * The chrome's icons. Matched in `primitives/` by `name`. Gets `name` and `label`: one of `code`, `copy`,
+   * `check`, `link`, `menu`, `sun`, `moon`, or a `socials` key (`github`, `npm`, …). Draw the label for a name
+   * you have no glyph for.
    */
   Icon?: string
 }
@@ -30,7 +31,7 @@ export interface ThemeConfig {
   attribute?: string
   /** The dark theme's value. @default 'dark' */
   dark?: string
-  /** The light theme's value; none means the attribute or class is removed. */
+  /** The light theme's value. Unset, the light theme removes the class or attribute. */
   light?: string
 }
 
@@ -38,10 +39,23 @@ export interface ThemeConfig {
 export interface RepoConfig {
   /** The repository's web URL (`https://github.com/me/my-ds`). */
   url: string
-  /** @default 'main' */
+  /** The branch Source links point at. @default 'main' */
   branch?: string
   /** The project root's folder inside the repository (`packages/ui`), when it isn't the repository root. */
   dir?: string
+}
+
+/** One entry of the side panel. */
+export interface PanelItem {
+  /** The section title it renders under. */
+  label: string
+  /** A module path (`./modo.components.tsx#ThemeSwitch`) whose component gets `shell` (`PanelItemProps`). */
+  component: string
+}
+
+/** The side panel, under the table of contents. */
+export interface PanelConfig {
+  items: PanelItem[]
 }
 
 /** A design system's modo.config.ts. */
@@ -69,7 +83,7 @@ export interface SiteConfig {
   /** Components the docs chrome renders with, by slot. */
   shell?: ShellConfig
   /** The side panel: each entry is a labelled component, such as a theme switcher. */
-  panel?: { items: Array<{ label: string; component: string }> }
+  panel?: PanelConfig
   /** A stylesheet loaded right after the chrome's structural CSS and before tokens: global styles and chrome restyling. */
   css?: string
   /** A module default-exporting `(config: UserConfig) => UserConfig | Promise<UserConfig>`, applied to modo's Vite config (e.g. to add @tailwindcss/vite). */
@@ -80,15 +94,15 @@ export interface SiteConfig {
 
 const ref = z.string().optional()
 
-export const shellSchema = z
+const shellSchema = z
   .object({ Button: ref, Link: ref, Select: ref, Sidebar: ref, Code: ref, Icon: ref })
   .strict() satisfies z.ZodType<ShellConfig>
 
-export const themeSchema = z
+const themeSchema = z
   .object({ attribute: z.string().optional(), dark: z.string().optional(), light: z.string().optional() })
   .strict() satisfies z.ZodType<ThemeConfig>
 
-export const repoSchema = z
+const repoSchema = z
   .object({ url: z.string().url(), branch: z.string().optional(), dir: z.string().optional() })
   .strict() satisfies z.ZodType<RepoConfig>
 

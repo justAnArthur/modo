@@ -22,3 +22,7 @@ button[data-variant="ghost"] {
   background: transparent;
   color: var(--foreground);
 }
+
+button[data-size="icon-sm"] {
+  padding: var(--space-1);
+}

@@ -82,6 +82,18 @@ export function parseCss(src: string): ParsedVar[] {
   return out
 }
 
+/**
+ * The vars of one `tokens/<file>.css`. A file named for a group owns its
+ * unprefixed vars (ui's `--sm` in `spacing.css`); a var whose prefix claims
+ * another group goes there (`--radius-sm` in `colors.css`). Any other file
+ * groups by prefix alone.
+ */
+export function parseTokenFile(src: string, fileName: string): ParsedVar[] {
+  const base = fileName.replace(/\.css$/i, '').toLowerCase()
+  const owner = GROUPS.find(g => g === base)
+  return parseCss(src).map(v => (owner ? { ...v, group: prefixGroup(v.name) ?? owner } : v))
+}
+
 /** The [open, close] offsets of every block that only applies in dark mode. */
 function darkBlocks(src: string): Array<[number, number]> {
   const out: Array<[number, number]> = []
@@ -110,8 +122,10 @@ function isDarkPrelude(prelude: string): boolean {
   return p.split(',').every(sel => /dark/i.test(sel))
 }
 
-/** A token's light and dark values, when the host declares both: a dark
-    block's redeclaration, or one `light-dark(a, b)` value. */
+/**
+ * A token's light and dark values, when the host declares both: a dark
+ * block's redeclaration, or one `light-dark(a, b)` value.
+ */
 export function schemePair(vars: ParsedVar[], name: string): { light: string; dark: string } | null {
   const own = vars.filter(v => v.name === name)
   const light = own.find(v => v.scheme !== 'dark')

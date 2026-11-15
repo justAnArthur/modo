@@ -2,13 +2,14 @@
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type { InlineConfig } from 'vite'
+import { TIERS } from '../lib/tiers'
 import { loadModoConfig } from '../node/config-loader'
+import { createViteConfig } from '../node/vite-config'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const libRoot = resolve(__dirname, '..')
-const runtimeRoot = resolve(libRoot, 'src', 'runtime')
 const templatesRoot = resolve(libRoot, 'templates')
-const viteConfigFile = resolve(libRoot, 'src', 'node', 'vite-config.ts')
 const libPackage = JSON.parse(readFileSync(resolve(libRoot, 'package.json'), 'utf8')) as {
   name: string
   version: string
@@ -36,7 +37,6 @@ Options (--flag value or --flag=value):
   --version, -v            Print version
 `
 
-// The flags each command takes.
 const FLAGS = new Map<string, string[]>([
   ['init', []],
   ['dev', ['--config', '--port', '--host']],
@@ -164,7 +164,7 @@ function configOf(args: Args): string {
   return resolve(process.cwd(), stringFlag(args, '--config') ?? 'modo.config.ts')
 }
 
-async function runInit(args: Args) {
+function runInit(args: Args) {
   const [first, second, extra] = args.positionals
   if (!first) throw new UsageError('init requires a project name (e.g. `modo init my-ds`)')
   if (extra) throw new UsageError(`init takes <name> or <dir> <name>, got an extra argument: ${extra}`)
@@ -200,36 +200,31 @@ async function runInit(args: Args) {
   )
 }
 
-// node/vite-config.ts reads the project from these; Vite runs from the runtime dir.
-async function prepareRuntime(args: Args): Promise<string> {
-  const cwd = process.cwd()
+// The project is the cwd; a broken config fails here, before Vite starts.
+async function viteConfig(args: Args, overrides: InlineConfig): Promise<InlineConfig> {
   const configPath = configOf(args)
   await loadModoConfig(configPath)
-  process.env.MODO_USER_ROOT = cwd
-  process.env.MODO_CONFIG_PATH = configPath
-  // Vite 8 warns that this config won't load under `configLoader: 'native'`.
-  // It can't (the plugins import .tsx; Node strips types only from 22.18), and
-  // the user can't act on a config modo owns.
-  process.env.VITE_CONFIG_NATIVE_IGNORE_WARNING ??= 'true'
-  process.chdir(runtimeRoot)
-  return cwd
+  const vite = await import('vite')
+  const config = await createViteConfig({ libDir: libRoot, userRoot: process.cwd(), configPath })
+  return { ...vite.mergeConfig(config, overrides), configFile: false }
 }
 
 async function runDev(args: Args) {
-  const server = { port: portFlag(args), host: args.flags.get('--host') }
-  await prepareRuntime(args)
+  const config = await viteConfig(args, { server: { port: portFlag(args), host: args.flags.get('--host') } })
   const vite = await import('vite')
-  const dev = await vite.createServer({ configFile: viteConfigFile, server })
+  const dev = await vite.createServer(config)
   await dev.listen()
   dev.printUrls()
 }
 
 async function runBuild(args: Args) {
-  const base = stringFlag(args, '--base')
   const out = stringFlag(args, '--out')
-  const cwd = await prepareRuntime(args)
+  const config = await viteConfig(args, {
+    base: stringFlag(args, '--base'),
+    build: { outDir: out && resolve(process.cwd(), out) },
+  })
   const vite = await import('vite')
-  await vite.build({ configFile: viteConfigFile, base, build: { outDir: out && resolve(cwd, out) } })
+  await vite.build(config)
 }
 
 // Serves the built files as they are: no modo plugins, nothing rebuilds.
@@ -250,18 +245,12 @@ async function runPreview(args: Args) {
   server.printUrls()
 }
 
-// An item is <tier>/[<group>/…]<id>/index.tsx with its examples beside it; a
-// token group is a flat tokens/<id>.css.
-const TIERS: Record<string, string> = {
-  primitive: 'primitives',
-  component: 'components',
-  block: 'blocks',
-  page: 'pages',
-}
+// `modo add primitive x` → primitives/x.
+const KIND_DIRS = new Map(TIERS.map(tier => [tier.slice(0, -1), tier]))
 
-async function runAdd(args: Args) {
+function runAdd(args: Args) {
   const [kind, name] = args.positionals
-  if (!kind || !name || !(kind in TIERS || kind === 'token')) {
+  if (!kind || !name || !(KIND_DIRS.has(kind) || kind === 'token')) {
     throw new UsageError('add requires `<kind> <name>`, kind one of primitive, component, block, page, token')
   }
   // `overlays/dialog` puts the item in a group folder, `inputs/date-time/calendar` in a nested one.
@@ -276,8 +265,8 @@ async function runAdd(args: Args) {
     kind === 'token'
       ? { [`tokens/${id}.css`]: fill('token.css') }
       : {
-          [`${TIERS[kind]}/${dir}/index.tsx`]: fill('item.tsx'),
-          [`${TIERS[kind]}/${dir}/examples.mdx`]: fill('examples.mdx'),
+          [`${KIND_DIRS.get(kind)}/${dir}/index.tsx`]: fill('item.tsx'),
+          [`${KIND_DIRS.get(kind)}/${dir}/examples.mdx`]: fill('examples.mdx'),
         }
 
   for (const [rel, text] of Object.entries(files)) {

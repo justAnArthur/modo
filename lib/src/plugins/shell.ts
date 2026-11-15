@@ -3,197 +3,129 @@ import type { Plugin } from 'vite'
 import { isComponentRef } from '../lib/refs'
 import type { SiteConfig } from '../lib/schema'
 import type { BundleResult, Bundler } from './bundle'
-import { type LoadedComponent, type ParsedItemLite, type ResolvedShell, resolveShellSlots } from './slots'
-import { cssModule } from './virtual'
+import { createReporter } from './report'
+import { type BuiltSlot, resolveShellSlots, type ShellResolution, type SlotResolution } from './slots'
+import { cssModule, virtualModules } from './virtual'
 
 interface Options {
   libDir: string
   bundler: Bundler
 }
 
-const SHELL_VIRTUAL = 'virtual:modo-shell'
-const SHELL_RESOLVED = '\0virtual:modo-shell'
-const SHELL_CSS_VIRTUAL = 'virtual:modo-shell-css'
-const SHELL_CSS_RESOLVED = '\0virtual:modo-shell-css'
-
-type PanelItemExport = {
+interface PanelResolution extends BuiltSlot {
   label: string
-  bundlePath: string
-  exportName?: string
-  cssPaths: string[]
 }
 
-type ResolvedShellExport = ResolvedShell & {
+interface ShellBuild {
+  shell: ShellResolution
+  panelItems: PanelResolution[]
+  logo: BuiltSlot | null
   cssFiles: string[]
-  panelItems: PanelItemExport[]
-  logo: LoadedComponent | null
 }
 
-type ShellResult = { shell: ResolvedShellExport; warnings: string[] }
-
-// Everything comes from the shared build (./bundle): items for interface
-// matching, config.shell / panel modules from its `extras`. Components are
-// only ever imported in the browser, never in node.
-async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
-  const warnings: string[] = []
-  const config: Pick<SiteConfig, 'shell' | 'panel' | 'logo'> = result.config ?? {}
-  const userItems: ParsedItemLite[] = result.items.map(it => ({
-    name: it.name,
-    id: it.id,
-    tier: it.tier,
-    props: it.props.map(p => ({ name: p.name, optional: p.optional })),
-    bundleUrl: it.bundlePath,
-  }))
-
-  async function loadUserPath(p: string): Promise<LoadedComponent | null> {
-    const extra = result.extras.get(p)
+// Everything comes from the shared build: items for matching, pinned and panel
+// modules from its `extras`.
+function resolveShell(result: BundleResult): { build: ShellBuild; warnings: string[] } {
+  const config: Partial<SiteConfig> = result.config ?? {}
+  const loadPinned = (ref: string): BuiltSlot | null => {
+    const extra = result.extras.get(ref)
     if (!extra?.exported) return null
-    return {
-      cssPaths: extra.cssFiles,
-      source: 'config',
-      resolvedPath: p,
-      bundlePath: extra.bundlePath,
-      exportName: extra.exportName,
-    }
+    const { bundlePath, exportName, cssFiles } = extra
+    return { source: 'config', bundlePath, exportName, cssFiles }
   }
 
-  const resolved = await resolveShellSlots(config, userItems, loadUserPath, { warnings })
-  const panelItems: PanelItemExport[] = []
-  for (const item of config.panel?.items ?? []) {
-    const lc = await loadUserPath(item.component)
-    if (!lc?.bundlePath) {
-      warnings.push(`panel item "${item.label}" component "${item.component}" could not be resolved`)
-      continue
-    }
-    panelItems.push({
-      label: item.label,
-      bundlePath: lc.bundlePath,
-      exportName: lc.exportName,
-      cssPaths: lc.cssPaths,
-    })
+  const { shell, warnings } = resolveShellSlots(config, result.items, loadPinned)
+
+  const panelItems: PanelResolution[] = []
+  for (const { label, component } of config.panel?.items ?? []) {
+    const built = loadPinned(component)
+    if (built) panelItems.push({ ...built, label })
+    else warnings.push(`panel item "${label}" component "${component}" could not be resolved`)
   }
-  const logo = config.logo && isComponentRef(config.logo) ? await loadUserPath(config.logo) : null
-  if (config.logo && isComponentRef(config.logo) && !logo) warnings.push(`logo "${config.logo}" could not be resolved`)
-  const cssFiles = [
-    ...(logo ? [logo] : []),
-    resolved.Button,
-    resolved.Link,
-    resolved.Code,
-    resolved.Select,
-    resolved.Icon,
-    resolved.Sidebar.Root,
-    resolved.Sidebar.Item,
-    resolved.Sidebar.Section,
-    ...panelItems,
-  ].flatMap(it => it.cssPaths)
-  return {
-    shell: {
-      Button: resolved.Button,
-      Link: resolved.Link,
-      Code: resolved.Code,
-      Select: resolved.Select,
-      Icon: resolved.Icon,
-      Sidebar: {
-        Root: resolved.Sidebar.Root,
-        Item: resolved.Sidebar.Item,
-        Section: resolved.Sidebar.Section,
-      },
-      cssFiles,
-      panelItems,
-      logo,
-    },
-    warnings,
-  }
+
+  const logoRef = config.logo && isComponentRef(config.logo) ? config.logo : null
+  const logo = logoRef ? loadPinned(logoRef) : null
+  if (logoRef && !logo) warnings.push(`logo "${logoRef}" could not be resolved`)
+
+  const slots: SlotResolution[] = [
+    shell.Button,
+    shell.Link,
+    shell.Code,
+    shell.Select,
+    shell.Icon,
+    shell.Sidebar.Root,
+    shell.Sidebar.Item,
+    shell.Sidebar.Section,
+  ]
+  const cssFiles = [...(logo ? [logo] : []), ...slots, ...panelItems].flatMap(s =>
+    s.source === 'fallback' ? [] : s.cssFiles,
+  )
+  return { build: { shell, panelItems, logo, cssFiles }, warnings }
+}
+
+function shellModule(build: ShellBuild, plainModule: string): string {
+  const { shell, panelItems, logo } = build
+  const slots = Object.entries({
+    __Button: shell.Button,
+    __Link: shell.Link,
+    __Code: shell.Code,
+    __Select: shell.Select,
+    __Icon: shell.Icon,
+    __SidebarRoot: shell.Sidebar.Root,
+    __SidebarItem: shell.Sidebar.Item,
+    __SidebarSection: shell.Sidebar.Section,
+  })
+  const built: Array<[string, BuiltSlot]> = [
+    ...slots.filter((s): s is [string, BuiltSlot] => s[1].source !== 'fallback'),
+    ...panelItems.map((it, i): [string, BuiltSlot] => [`__PanelItem${i}`, it]),
+    ...(logo ? [['__Logo', logo] as [string, BuiltSlot]] : []),
+  ]
+  return [
+    ...slots.flatMap(([name, s]) =>
+      s.source === 'fallback' ? [`import { ${s.fallbackName} as ${name} } from ${plainModule};`] : [],
+    ),
+    ...built.flatMap(([name, s]) => [
+      `import * as ${name}_mod from ${JSON.stringify(s.bundlePath)};`,
+      `const ${name} = ${name}_mod[${JSON.stringify(s.exportName)}];`,
+    ]),
+    `export const shell = {`,
+    `  Button: __Button,`,
+    `  Link: __Link,`,
+    `  Code: __Code,`,
+    `  Select: __Select,`,
+    `  Icon: __Icon,`,
+    `  Sidebar: { Root: __SidebarRoot, Item: __SidebarRoot.Item ?? __SidebarItem, Section: __SidebarRoot.Section ?? __SidebarSection },`,
+    `};`,
+    `export const panelItems = [${panelItems.map((it, i) => `{ label: ${JSON.stringify(it.label)}, Component: __PanelItem${i} }`).join(', ')}];`,
+    `export const Logo = ${logo ? '__Logo' : 'null'};`,
+  ].join('\n')
 }
 
 export function shellPlugin(options: Options): Plugin {
-  // Cached per build result: a rebuild (bundler.invalidate) yields a new one.
-  let cache: { result: BundleResult; value: Promise<ShellResult> } | null = null
-  let lastReport = ''
+  const modules = virtualModules('shell')
+  const report = createReporter('shell')
   // An absolute path: a virtual module's relative import would resolve from the process cwd.
   const plainModule = JSON.stringify(resolve(options.libDir, 'src/runtime/shell/plain.tsx'))
+  // Per build result: a rebuild (bundler.invalidate) yields a new one.
+  let cache: { result: BundleResult; build: ShellBuild } | null = null
 
-  async function getCache(): Promise<ShellResult> {
+  async function current(): Promise<ShellBuild> {
     const result = await options.bundler.get()
-    if (cache?.result !== result) cache = { result, value: resolveShellForUser(result).then(report) }
-    return cache.value
-  }
-
-  // Printed once per changed set, in the bundler's format, not on every load.
-  function report(shell: ShellResult): ShellResult {
-    const text = shell.warnings.map(w => `[modo:shell] warning: ${w}`).join('\n')
-    if (text && text !== lastReport) process.stderr.write(`${text}\n`)
-    lastReport = text
-    return shell
+    if (cache?.result !== result) {
+      const { build, warnings } = resolveShell(result)
+      report({ warnings })
+      cache = { result, build }
+    }
+    return cache.build
   }
 
   return {
     name: 'modo:shell',
     enforce: 'pre',
-    resolveId(id) {
-      if (id === SHELL_VIRTUAL) return SHELL_RESOLVED
-      if (id === SHELL_CSS_VIRTUAL) return SHELL_CSS_RESOLVED
-      return null
-    },
+    resolveId: modules.resolveId,
     async load(id) {
-      if (id === SHELL_RESOLVED) {
-        const { shell } = await getCache()
-        const slotBindings = Object.entries({
-          __Button: shell.Button,
-          __Link: shell.Link,
-          __Code: shell.Code,
-          __Select: shell.Select,
-          __Icon: shell.Icon,
-          __SidebarRoot: shell.Sidebar.Root,
-          __SidebarItem: shell.Sidebar.Item,
-          __SidebarSection: shell.Sidebar.Section,
-        }).map(([name, s]) => ({ name, ...s }))
-        const panelItemBindings = [
-          ...shell.panelItems.map((it, idx) => ({ name: `__PanelItem${idx}`, ...it })),
-          ...(shell.logo?.bundlePath ? [{ name: '__Logo', ...shell.logo }] : []),
-        ]
-        const exportOf = (s: { name: string; exportName?: string }) =>
-          `__mod_${s.name}[${JSON.stringify(s.exportName ?? 'default')}]`
-        const fallbackImports = slotBindings
-          .filter(s => s.fallbackName && !s.bundlePath)
-          .map(s => `import { ${s.fallbackName} as __fb_${s.name} } from ${plainModule};`)
-          .join('\n')
-        const imports = [
-          fallbackImports,
-          ...[...slotBindings.filter(s => s.bundlePath), ...panelItemBindings].map(
-            s => `import * as __mod_${s.name} from ${JSON.stringify(s.bundlePath)};`,
-          ),
-        ].join('\n')
-        const bindings = [
-          // Every slot has a bundle or a plain fallback.
-          ...slotBindings.map(s => `const ${s.name} = ${s.bundlePath ? exportOf(s) : `__fb_${s.name}`};`),
-          ...panelItemBindings.map(s => `const ${s.name}_Comp = ${exportOf(s)};`),
-        ].join('\n')
-        const panelItemsJson = shell.panelItems
-          .map(
-            (it, idx) =>
-              `{ label: ${JSON.stringify(it.label)}, bundlePath: ${JSON.stringify(it.bundlePath)}, Component: __PanelItem${idx}_Comp, cssPaths: ${JSON.stringify(it.cssPaths)} }`,
-          )
-          .join(',')
-        return [
-          imports,
-          bindings,
-          `export const shell = {`,
-          `  Button: __Button,`,
-          `  Link: __Link,`,
-          `  Code: __Code,`,
-          `  Select: __Select,`,
-          `  Icon: __Icon,`,
-          `  Sidebar: { Root: __SidebarRoot, Item: __SidebarRoot.Item ?? __SidebarItem, Section: __SidebarRoot.Section ?? __SidebarSection },`,
-          `};`,
-          `export const panelItems = [${panelItemsJson}];`,
-          `export const Logo = ${shell.logo?.bundlePath ? '__Logo_Comp' : 'null'};`,
-        ].join('\n')
-      }
-      if (id === SHELL_CSS_RESOLVED) {
-        const { shell } = await getCache()
-        return cssModule(shell.cssFiles)
-      }
+      if (id === modules.id) return shellModule(await current(), plainModule)
+      if (id === modules.css) return cssModule((await current()).cssFiles)
       return null
     },
   }
