@@ -139,13 +139,16 @@ function DocsSidebar({ side, children }: { side: SidebarSide; children?: ReactNo
     )
   }
   return (
+    // The chrome's column holds the header above the nav, so the sidebar fills
+    // what is left of it rather than the whole viewport.
     <Sidebar.Provider
       defaultOpen={side === 'left' || window.matchMedia('(min-width: 1280px)').matches}
       openOnHover
       persist={false}
       shortcut={null}
+      className="h-full min-h-0"
     >
-      <Sidebar variant="inset" side={side}>
+      <Sidebar variant="inset" side={side} className="h-full">
         {nav}
       </Sidebar>
       <DocsNavTrigger side={side} />
