@@ -267,7 +267,7 @@ const PickerInput = forwardRef<HTMLInputElement, PickerInputProps>(
         className={cn('hover:ring-transparent focus-within:ring-transparent data-[active]:ring-transparent', className)}
         value={draft ?? formatted}
         invalid={invalid}
-        onChange={text => {
+        onValueChange={text => {
           setDraft(text)
           setInvalid(!onText(text))
         }}

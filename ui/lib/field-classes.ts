@@ -50,7 +50,12 @@ export const fieldVariants = cva(
 export const fieldIconClasses =
   'shrink-0 text-muted-foreground transition-[color,stroke-width] duration-fast group-hover/field:text-foreground group-hover/field:stroke-[2] group-data-[active]/field:text-foreground group-data-[active]/field:stroke-[2] group-focus-within/field:text-foreground group-focus-within/field:stroke-[2]'
 
-/** Framed at rest (`bordered`), or invisible until hovered or focused (`borderless`). */
+/**
+ * Framed at rest (`bordered`), or invisible until hovered or focused
+ * (`borderless`). Free text (Input, Textarea) defaults to `borderless`; a
+ * field that opens a panel (the pickers, Combobox, Select) defaults to
+ * `bordered`, so it reads as a control before it is touched.
+ */
 export type FieldVariant = 'bordered' | 'borderless'
 
 /**
@@ -83,6 +88,12 @@ export const FieldStateContext = createContext<{ active: boolean; invalid: boole
 const FIELD_PX: Record<SizeVariant, string> = {
   default: 'px-2.5',
   compact: 'px-2',
+}
+
+/** The field's text inset as a left padding, for a label or message that lines up with the text inside the box. */
+export const fieldTextInset: Record<SizeVariant, string> = {
+  default: 'pl-2.5',
+  compact: 'pl-2',
 }
 
 /**
