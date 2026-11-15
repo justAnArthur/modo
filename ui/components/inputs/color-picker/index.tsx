@@ -717,7 +717,7 @@ function HueSlider({ h, onChange }: { h: number; onChange: (h: number) => void }
   return (
     <Slider
       value={h}
-      onChange={v => onChange(typeof v === 'number' ? v : (v[0] ?? 0))}
+      onValueChange={v => onChange(typeof v === 'number' ? v : (v[0] ?? 0))}
       min={0}
       max={360}
       step={1}
@@ -760,7 +760,7 @@ function AlphaSlider({
   return (
     <Slider
       value={Math.round(a * 100)}
-      onChange={v => onChange((typeof v === 'number' ? v : (v[0] ?? 0)) / 100)}
+      onValueChange={v => onChange((typeof v === 'number' ? v : (v[0] ?? 0)) / 100)}
       min={0}
       max={100}
       step={1}
