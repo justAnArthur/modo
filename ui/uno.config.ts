@@ -22,7 +22,7 @@ import presetModoUi from './preset'
  */
 
 const root = dirname(fileURLToPath(import.meta.url))
-const sources = resolve(root, '{lib,primitives,components,blocks}/**/*.{ts,tsx,mdx}')
+const sources = resolve(root, '{lib,primitives,components,blocks,pages}/**/*.{ts,tsx,mdx}')
 const chrome = resolve(root, 'modo.components.tsx')
 
 export default defineConfig({

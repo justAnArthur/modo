@@ -1,0 +1,56 @@
+import Settings from './index'
+import { ScreenFrame } from '../../../blocks/agent-desktop/screen-frame'
+
+# MCP servers
+
+Each server's state with its fix in the row; the scope picker switches whose config dir you are editing. Pick another section on the left.
+
+<ScreenFrame>
+  <Settings />
+</ScreenFrame>
+
+# Hooks
+
+<ScreenFrame>
+  <Settings section="hooks" />
+</ScreenFrame>
+
+# Skills and plugins
+
+Optional panes such as the browser and the iOS simulator come in as plugins.
+
+<ScreenFrame>
+  <Settings section="plugins" />
+</ScreenFrame>
+
+# Memory
+
+<ScreenFrame>
+  <Settings section="memory" />
+</ScreenFrame>
+
+# Worktrees
+
+<ScreenFrame>
+  <Settings section="worktrees" />
+</ScreenFrame>
+
+# Notifications
+
+<ScreenFrame>
+  <Settings section="notifications" />
+</ScreenFrame>
+
+# Extensions
+
+Your own features, built as MCP servers, plugins, skills and hooks.
+
+<ScreenFrame>
+  <Settings section="extensions" />
+</ScreenFrame>
+
+# Narrow window
+
+<ScreenFrame width={420} height={780}>
+  <Settings sidebar={false} />
+</ScreenFrame>

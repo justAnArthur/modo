@@ -42,6 +42,8 @@ controlled + uncontrolled.
 | Grouped content, clickable tiles | `Card` / `Card.Group` (`columns` grid with xy hover) |
 | Tabular data | `Table` |
 | "Working…" | `ThinkingIndicator` (`shimmer` or `goo`) |
+| A share of a budget (usage, a limit, context) | `Meter` (bar or ring; warning / error hues past `warnAt` / `errorAt`) |
+| A file's change | `Diff` (a unified patch string, `path` header with counts) |
 | A scroll region | `ScrollArea` (+ `scroll-fade`) |
 | A raised container | `Elevated` (`offset`) |
 | A dense region | `SizeProvider size="compact"` |
@@ -71,6 +73,8 @@ controlled + uncontrolled.
 | `Card` | `components/card` | `.Group .Header .Title .Description .Action .Content .Footer .Media .Image .Eyebrow .Feature .Button` | L H W | Transparent and borderless; only clickable cards join the group's hover; stretched link. |
 | `Table` | `components/table` | `.Header .Body .Row .Head .Cell` | L H | Row hover, semantic markup. |
 | `ThinkingIndicator` | `components/thinking-indicator` | — | — | `variant` `shimmer` (default) \| `goo` (three dots melting). |
+| `Meter` | `components/meter` | — | L | `variant` `bar` \| `ring`; the fill springs to its value; `warnAt` / `errorAt` turn it to the status hues. |
+| `Diff` | `components/AI/diff` | — | S | Reads a unified patch; added / removed lines as status text on a 16% wash; one surface step up, like Code. |
 
 ## components/inputs
 
@@ -121,6 +125,7 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 | Item | Path | Notes |
 |---|---|---|
 | `SidebarApp` | `blocks/sidebar-app` | A full app shell (FF preset `sa1FQfCxH6`): workspace header, search, nav, user footer, inset topbar. `variant`, `side`, `openOnHover`, `contained`. |
+| `ProfileSwitcher`, `SessionSidebar`, `Transcript`, `AgentPrompt`, `Composer`, `SidePane` | `blocks/agent-desktop/<id>` | The agent desktop's pieces (pages in `pages/agent-desktop`). `pick-list.tsx` beside them is a single-choice list of rich rows (fluid hover + GooIndicator pick). |
 
 ## Shared system files (`lib/`)
 

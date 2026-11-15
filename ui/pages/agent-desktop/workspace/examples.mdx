@@ -1,0 +1,42 @@
+import Workspace from './index'
+import { ScreenFrame } from '../../../blocks/agent-desktop/screen-frame'
+
+# Main window
+
+A 1280 × 800 window, scaled to the column. A session mid-turn: the task list pinned under it, the composer streaming, the changes beside it. Pick another session, switch panes, open the chapter list.
+
+<ScreenFrame>
+  <Workspace />
+</ScreenFrame>
+
+# Split view
+
+A second session beside the first, opened from a row's menu or the split button; the side pane stays open on a wide window.
+
+<ScreenFrame width={1680} height={900}>
+  <Workspace split pane="pr" />
+</ScreenFrame>
+
+# Wrap-up
+
+The turn is done: the next-step box under the task list asks the one decision left.
+
+<ScreenFrame>
+  <Workspace wrapUp pane="tasks" />
+</ScreenFrame>
+
+# Extensions slot
+
+The side pane's last tab is a pane from your own MCP server or plugin: here, usage across every profile.
+
+<ScreenFrame>
+  <Workspace pane="extension" />
+</ScreenFrame>
+
+# Narrow window
+
+At 420px the side pane and split drop out and the sidebar folds behind its trigger; the transcript and composer keep the room.
+
+<ScreenFrame width={420} height={780}>
+  <Workspace sidebar={false} />
+</ScreenFrame>
