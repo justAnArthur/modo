@@ -84,9 +84,25 @@
     overflow: visible;
   }
 
-  /* A collapsed Sidebar takes the brand with it, so the card gets the width back. */
-  [data-modo="sidebar"]:has([data-slot="sidebar"][data-state="collapsed"]) > [data-modo="header"] {
-    display: none;
+  /* The brand rides along with the Sidebar: it never sets the column's width
+     (inline-size containment), so the column follows the Sidebar's own slide
+     and clips the brand as it closes. It keeps its height, so the Sidebar and
+     its trigger never jump. */
+  [data-modo="sidebar"] > [data-modo="header"] {
+    contain: inline-size;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    white-space: nowrap;
+    /* Its own padding would still widen the column; the children carry it. */
+    padding-inline: 0;
+  }
+
+  [data-modo="sidebar"] > [data-modo="header"] > :first-child {
+    padding-left: var(--space-4);
+  }
+
+  [data-modo="sidebar"] > [data-modo="header"] > :last-child {
+    padding-right: var(--space-4);
   }
 
   [data-modo="content"] {
