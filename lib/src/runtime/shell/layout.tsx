@@ -1,9 +1,9 @@
 import { config } from 'virtual:modo-config'
 import { panelItems, shell } from 'virtual:modo-shell'
 import { type ReactNode, useEffect, useState } from 'react'
+import { usePath } from '../location'
 import { Markdown } from '../markdown'
 import { SidebarNav } from '../nav'
-import { usePath } from '../router'
 import { Header } from './header'
 import { Toc } from './toc'
 

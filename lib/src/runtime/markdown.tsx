@@ -3,7 +3,7 @@ import { Lexer, type MarkedToken, type Token, type Tokens } from 'marked'
 import { Fragment, type ReactNode } from 'react'
 import { Heading } from './anchor'
 import { CodeBlock } from './code-block'
-import { contentHref } from './router'
+import { contentHref } from './location'
 
 // Sources are static build output, so lexing once per string is enough.
 const lexed = new Map<string, Token[]>()

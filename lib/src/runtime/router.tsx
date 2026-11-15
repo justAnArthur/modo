@@ -1,41 +1,34 @@
 import { config } from 'virtual:modo-config'
-import { type ReactNode, useEffect, useSyncExternalStore } from 'react'
+import { type ReactNode, useEffect } from 'react'
+import { TIERS, type Tier } from '../lib/tiers'
 import { PageIdScope } from './anchor'
-import { NotFoundPage } from './pages/NotFoundPage'
-import { routes } from './routes'
+import { ItemPage } from './items/item-page'
+import { appPath, BASE, NAVIGATE, usePath } from './location'
+import { CanvasPage } from './pages/canvas'
+import { HomePage } from './pages/home'
+import { NotFoundPage } from './pages/not-found'
+import { TierPage } from './pages/tier'
+import { TokensPage } from './pages/tokens'
+import { TokenGroupView } from './tokens/group-page'
 
-const NAVIGATE = 'modo:navigate'
-// '' or the `--base` the site was built with, minus its trailing slash.
-const BASE = import.meta.env.BASE_URL.slice(0, -1)
+const TIER = TIERS.join('|')
 
-/** An app path (`/docs/...`) as a URL under the site's base. */
-export function withBase(path: string): string {
-  return BASE + path
+interface Route {
+  pattern: RegExp
+  render: (match: RegExpMatchArray) => ReactNode
 }
 
-/** A content link's href: root-relative ones are app paths, so they get the base. */
-export function contentHref(href: string): string {
-  return href.startsWith('/') && !href.startsWith('//') ? withBase(href) : href
-}
-
-// Static hosts redirect a route dir to its trailing-slash form.
-function appPath(pathname: string): string {
-  return pathname.slice(BASE.length).replace(/(.)\/$/, '$1') || '/'
-}
-
-function subscribe(onChange: () => void) {
-  window.addEventListener('popstate', onChange)
-  window.addEventListener(NAVIGATE, onChange)
-  return () => {
-    window.removeEventListener('popstate', onChange)
-    window.removeEventListener(NAVIGATE, onChange)
-  }
-}
-
-/** The current app path; re-renders on client navigation and history moves. */
-export function usePath(): string {
-  return useSyncExternalStore(subscribe, () => appPath(window.location.pathname))
-}
+const routes: Route[] = [
+  { pattern: /^\/$/, render: () => <HomePage /> },
+  { pattern: /^\/canvas$/, render: () => <CanvasPage /> },
+  { pattern: /^\/docs\/tokens$/, render: () => <TokensPage /> },
+  { pattern: /^\/docs\/tokens\/([^/]+)$/, render: m => <TokenGroupView group={m[1]!} /> },
+  { pattern: new RegExp(`^/docs/(${TIER})$`), render: m => <TierPage tier={m[1] as Tier} /> },
+  {
+    pattern: new RegExp(`^/docs/(${TIER})/([^/]+)$`),
+    render: m => <ItemPage tier={m[1] as Tier} id={m[2]!} />,
+  },
+]
 
 function scrollToHash(hash: string) {
   if (hash) document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView()

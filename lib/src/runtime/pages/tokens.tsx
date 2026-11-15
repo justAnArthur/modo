@@ -1,7 +1,7 @@
 import { tokens } from 'virtual:modo-tokens'
-import { cap, count } from '../text'
-import { about, GroupPreview, summary } from '../tokens/token-page'
-import { declared } from '../tokens/token-row'
+import { cap, count } from '../../lib/text'
+import { about, GroupPreview, summary } from '../tokens/group-page'
+import { declared } from '../tokens/parts'
 import { Bento, BentoCard } from './bento'
 
 export function TokensPage() {

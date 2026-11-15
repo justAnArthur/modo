@@ -3,7 +3,7 @@ import { isValidElement, type ReactNode } from 'react'
 import { Heading, slug } from './anchor'
 import { CodeBlock } from './code-block'
 import { bindings, ExampleFrame } from './items/examples'
-import { contentHref } from './router'
+import { contentHref } from './location'
 
 function textOf(node: ReactNode): string {
   if (typeof node === 'string' || typeof node === 'number') return String(node)

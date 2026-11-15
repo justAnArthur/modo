@@ -8,7 +8,7 @@ import 'virtual:modo-shell-css'
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { App } from './App'
+import { App } from './app'
 import { installHostColors } from './tokens/host-colors'
 
 // Host tokens may hold bare channels (`--border: 286 0.4% 92%`); resolve the

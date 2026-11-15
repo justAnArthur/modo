@@ -187,8 +187,9 @@ flowchart LR
 modo/
 ├── lib/                          — the npm package `@justanarthur/modo` (bin `modo`)
 │   ├── src/runtime/              — internal renderer (plain Vite SPA) + structural CSS
-│   ├── src/plugins/              — Vite plugins: the shared item build, tokens, shell
-│   ├── src/lib/                  — schemas, TSDoc parser, token/css parsing, slot matching
+│   ├── src/plugins/              — Vite plugins: the shared item build, tokens, shell slot matching
+│   ├── src/node/                 — node-only code: config loader, item discovery, the Vite config
+│   ├── src/lib/                  — pure code: schemas, TSDoc parser, token/css parsing
 │   ├── templates/                — `modo init` scaffold and `modo add` stubs
 │   ├── docs/                     — the user guide, shipped in the package
 │   └── test/                     — parser tests

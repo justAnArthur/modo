@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { OtherTokens, TokenLabel, TokenSection, type Var } from './token-row'
+import { OtherTokens, TokenLabel, TokenSection, type Var } from './parts'
 
 // The CSS keywords as the curves they stand for.
 const KEYWORDS: Record<string, string> = {

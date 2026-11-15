@@ -1,5 +1,5 @@
 import { shell } from 'virtual:modo-shell'
-import { withBase } from '../router'
+import { withBase } from '../location'
 
 export function NotFoundPage() {
   const { Link } = shell

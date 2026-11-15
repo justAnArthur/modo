@@ -1,10 +1,10 @@
 import { type ItemEntry, items } from 'virtual:modo-items'
+import { cap, count } from '../../lib/text'
 import { isScreenSized, type Tier } from '../../lib/tiers'
 import { Heading } from '../anchor'
 import { groupTree } from '../groups'
 import { ExamplePreview } from '../items/preview'
 import { Inlines, splitLead } from '../markdown'
-import { cap, count } from '../text'
 import { Bento, BentoCard } from './bento'
 
 const LEAD: Record<Tier, string> = {

@@ -2,10 +2,10 @@ import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import type { ReactNode } from 'react'
+import { cap } from '../lib/text'
 import { TIERS } from '../lib/tiers'
 import { groupTree } from './groups'
-import { usePath, withBase } from './router'
-import { cap } from './text'
+import { usePath, withBase } from './location'
 
 export function SidebarNav() {
   const path = usePath()

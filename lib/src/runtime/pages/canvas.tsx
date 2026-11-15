@@ -2,13 +2,13 @@ import { type ItemEntry, items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import { type CSSProperties, type ReactNode, useRef } from 'react'
+import { cap } from '../../lib/text'
 import { isScreenSized, TIERS, type Tier } from '../../lib/tiers'
 import { useLive, Viewport } from '../canvas/viewport'
 import { groupTree } from '../groups'
 import { ExamplePreview } from '../items/preview'
-import { withBase } from '../router'
-import { cap } from '../text'
-import { GroupPreview } from '../tokens/token-page'
+import { withBase } from '../location'
+import { GroupPreview } from '../tokens/group-page'
 
 /** Every foundation and item, live, on one pan-and-zoom surface: a column per
     tier in sidebar order, a frame per page. */

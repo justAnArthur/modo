@@ -1,7 +1,7 @@
 /*
  * modo shell adapter — not a documented item.
  *
- * modo's chrome asks for icons by name (lib/src/lib/slots.tsx Icon slot);
+ * modo's chrome asks for icons by name (lib/src/plugins/slots.ts Icon slot);
  * this maps them onto the lucide set the design system already uses.
  */
 

@@ -1,3 +1,5 @@
+import { resolved } from './measure'
+
 /* Host color tokens come in two shapes: a complete color (`oklch(0.2 0 0)`,
    `#fff`) or the bare channels a design system wraps itself (`--border:
    286 0.4% 92%`, used as `hsl(var(--border))`). Chrome CSS that writes
@@ -19,15 +21,6 @@ function colorWrapper(value: string): string | null {
     for both themes, since the wrapper is fixed at startup. */
 function wrappersFor(channels: string): string[] {
   return channels.includes('%') ? ['hsl', 'rgb', 'oklch'] : ['rgb', 'hsl', 'oklch']
-}
-
-function root(): CSSStyleDeclaration {
-  return getComputedStyle(document.documentElement)
-}
-
-/** The token's declared value with its var() references already substituted. */
-export function resolved(name: string, fallback = ''): string {
-  return root().getPropertyValue(name).trim() || fallback
 }
 
 /** A live CSS expression for a host color token — `var(--x)`, or

@@ -1,10 +1,10 @@
 import { resolve, sep } from 'node:path'
 import { isCSSRequest, normalizePath, type Plugin } from 'vite'
-import { cap } from '../runtime/text'
+import { cap } from '../lib/text'
 import type { Bundler } from './bundle'
-import { cssModule } from './css-module'
 import { emitRoutes } from './static-routes'
 import { unoExtractor } from './uno'
+import { cssModule } from './virtual'
 
 interface Options {
   userRoot: string

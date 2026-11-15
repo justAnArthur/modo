@@ -4,6 +4,6 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["**/*.ts", "**/*.tsx", "../lib/src/runtime/types.d.ts"],
+  "include": ["**/*.ts", "**/*.tsx", "../lib/src/runtime/virtual/*.d.ts"],
   "exclude": ["node_modules", "dist", ".modo-tmp"]
 }

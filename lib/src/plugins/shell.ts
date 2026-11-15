@@ -1,9 +1,9 @@
 import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
 import { isComponentRef, type SiteConfig } from '../lib/schema'
-import { type LoadedComponent, type ParsedItemLite, type ResolvedShell, resolveShellSlots } from '../lib/slots'
 import type { BundleResult, Bundler } from './bundle'
-import { cssModule } from './css-module'
+import { type LoadedComponent, type ParsedItemLite, type ResolvedShell, resolveShellSlots } from './slots'
+import { cssModule } from './virtual'
 
 interface Options {
   libDir: string
@@ -110,7 +110,7 @@ export function shellPlugin(options: Options): Plugin {
   let cache: { result: BundleResult; value: Promise<ShellResult> } | null = null
   let lastReport = ''
   // An absolute path: a virtual module's relative import would resolve from the process cwd.
-  const slotsModule = JSON.stringify(resolve(options.libDir, 'src/lib/slots.tsx'))
+  const slotsModule = JSON.stringify(resolve(options.libDir, 'src/runtime/shell/plain.tsx'))
 
   async function getCache(): Promise<ShellResult> {
     const result = await options.bundler.get()

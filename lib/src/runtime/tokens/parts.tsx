@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactElement, ReactNode } from 'react'
 import type { Group, Swatch } from '../../lib/css'
 import { Heading } from '../anchor'
-import { resolved } from './host-colors'
+import { lengthOf } from './measure'
 
 export type Var = Group['vars'][number]
 
@@ -45,19 +45,6 @@ function TokenList({ vars }: { vars: Var[] }) {
       ))}
     </div>
   )
-}
-
-const ruler = document.createElement('i')
-ruler.style.cssText = 'display:block;position:absolute;visibility:hidden;block-size:0'
-
-/** The token's length in px: the parser's when it could size it, else the
-    browser's (calc(), var() chains). Null when the value isn't a length. */
-export function lengthOf(v: Var): number | null {
-  if (v.swatch?.kind === 'length' || v.swatch?.kind === 'font-size') return v.swatch.px
-  if (!CSS.supports('width', resolved(v.name, v.value))) return null
-  if (!ruler.isConnected) document.body.append(ruler)
-  ruler.style.inlineSize = `var(${v.name})`
-  return parseFloat(getComputedStyle(ruler).width)
 }
 
 /** A token's name over its value (or `meta`), beside or under its specimen. */

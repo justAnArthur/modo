@@ -1,11 +1,11 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { resolve, sep } from 'node:path'
 import type { Plugin } from 'vite'
-import { loadModoConfig } from '../lib/config.loader'
 import { buildGroup, GROUPS, type Group, type GroupName, parseCss, prefixGroup } from '../lib/css'
-import { cap } from '../runtime/text'
-import { cssModule } from './css-module'
+import { cap } from '../lib/text'
+import { loadModoConfig } from '../node/config-loader'
 import { emitRoutes } from './static-routes'
+import { cssModule } from './virtual'
 
 interface Options {
   userRoot: string

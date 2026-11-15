@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 import { primaryFamily, px, rem, spread } from './format'
-import { resolved } from './host-colors'
-import { byLength, lengthOf, OtherTokens, TokenLabel, TokenSection, type Var } from './token-row'
+import { lengthOf, resolved } from './measure'
+import { byLength, OtherTokens, TokenLabel, TokenSection, type Var } from './parts'
 
 const SAMPLE = 'The quick brown fox jumps over the lazy dog'
 const SHORT_SAMPLE = 'Quick brown fox'

@@ -32,3 +32,13 @@ function subdirs(dir: string): string[] {
 function isItem(dir: string): boolean {
   return existsSync(resolve(dir, 'index.tsx'))
 }
+
+export function discoverCssForFile(filePath: string): string[] {
+  const dir = resolve(filePath, '..')
+  if (!existsSync(dir)) return []
+  // Sorted: injection order is cascade order.
+  return readdirSync(dir)
+    .sort()
+    .filter(f => f.endsWith('.css'))
+    .map(f => resolve(dir, f))
+}
