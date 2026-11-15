@@ -183,3 +183,4 @@ export default function SidePane({
 }
 
 export type { PaneId, SidePaneData, SidePaneProps }
+export { PANES }

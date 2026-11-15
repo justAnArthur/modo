@@ -237,6 +237,9 @@ becomes the one block.
 | components | alert-dialog, command, context-menu, popover, preview-card, search, sheet, toast | — (local, see [Credits](./README.md#credits)) | — |
 | components | calendar, date-picker, date-range-picker, time-picker, duration-picker, month-picker (group `inputs/date-time`) | — (local, on react-day-picker) | — |
 | components | sidebar | `base/sidebar.tsx` + `default/sidebar-core.tsx` + `default/sidebar-menu.tsx` | sidebar |
+| components | `log-view` (LogView), AI group `markdown` (Markdown) | — (local) | — |
+| primitives | `resizable` (Resizable) | — (local) | — |
+| blocks | `desktop-shell` (DesktopShell) | — (local) | — |
 | components | AI group: `prose`, `message`, `reasoning`, `tool-call`, `agent-run`, `work-summary`, `todo-list`, `recap`, `chapter-nav`, `prompt-card`, `permission-request`, `question-prompt`, `plan-approval` | — (local) | — |
 | components | `avatar`, `kbd`, `list` (List), `spinner`, `status-dot` (StatusDot), `inputs/choice-list` (ChoiceList), `meter` (Meter), `shell-card` (ShellCard), `diff` (Diff) | — (local) | — |
 | blocks | `sidebar-app` (SidebarApp) | the preset generator's output + `blocks/sidebar-*` | sidebar, preset `sa1FQfCxH6` |

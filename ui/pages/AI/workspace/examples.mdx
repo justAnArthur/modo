@@ -3,7 +3,7 @@ import { ScreenFrame } from '../screen-frame'
 
 # Main window
 
-A 1280 × 800 window, scaled to the column. A session mid-turn: the task list pinned under it, the composer streaming, the changes beside it. Pick another session, switch panes, open the chapter list.
+A 1280 × 800 window, scaled to the column, its title bar on DesktopShell. Press ⌘K or Search to switch sessions, run a command or open a pane. A session mid-turn: the task list pinned under it, the composer streaming, the changes beside it. Pick another session, switch panes, open the chapter list.
 
 <ScreenFrame>
   <Workspace />
@@ -11,7 +11,7 @@ A 1280 × 800 window, scaled to the column. A session mid-turn: the task list pi
 
 # Split view
 
-A second session beside the first, opened from a row's menu or the split button. All three headers share one line; the side pane's toggle moves to the split's header, beside the pane.
+A second session beside the first, opened from a row's menu or the split button in the title bar; it keeps a header of its own.
 
 <ScreenFrame width={1680} height={900}>
   <Workspace split pane="pr" />

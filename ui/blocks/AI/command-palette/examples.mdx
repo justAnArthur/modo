@@ -1,0 +1,33 @@
+import CommandPalette from './index'
+import { ARCHIVED, COMMANDS, GROUPS, PINNED, PROFILES, PROJECTS } from '../../../pages/AI/mock'
+import { SETTINGS_SECTIONS } from '../../../pages/AI/mock-settings'
+
+# Palette
+
+Press the trigger or ⌘K: the panel grows out of it. Try "canvas" for a session, "work" for a new session under that profile, "review" for a command or "hooks" for a settings section.
+
+<div className="flex h-[520px] w-full items-start justify-center pt-6">
+  <CommandPalette
+    sessions={[...PINNED, ...GROUPS.flatMap(g => g.sessions), ...ARCHIVED]}
+    projects={PROJECTS}
+    profiles={PROFILES}
+    commands={COMMANDS}
+    settings={SETTINGS_SECTIONS}
+  />
+</div>
+
+# Another profile
+
+With `work` active, new sessions start under it and its own row is disabled. Without `settings`, one row opens the settings window. ⌘K stays with the first palette here.
+
+<div className="flex h-[520px] w-full items-start justify-center pt-6">
+  <CommandPalette
+    hotkey={false}
+    profile="work"
+    label="Search work"
+    sessions={PINNED}
+    projects={PROJECTS}
+    profiles={PROFILES}
+    commands={COMMANDS}
+  />
+</div>

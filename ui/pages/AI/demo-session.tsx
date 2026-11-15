@@ -4,6 +4,7 @@
  */
 
 import Transcript, { type TaskItem, type TocChapter } from '../../blocks/AI/transcript'
+import Markdown from '../../components/AI/markdown'
 import Diff from '../../components/diff'
 import Code from '../../primitives/code'
 import { CHANGES, TERMINAL_LINES } from './mock'
@@ -66,18 +67,13 @@ export function DemoReading() {
             </p>
           </Transcript.Agent>
         </Transcript.Work>
-        <p className="m-0">Here is the split I will build:</p>
-        <ul className="m-0">
-          <li>
-            <strong>Blocks</strong> — profile switcher, sessions sidebar, transcript, prompts, composer and side pane.
-          </li>
-          <li>
-            <strong>Pages</strong> — the workspace, a new session, the prompt states, profiles and settings.
-          </li>
-          <li>
-            Two missing pieces become components: <code>Meter</code> and <code>Diff</code>.
-          </li>
-        </ul>
+        <Markdown>
+          {`Here is the split I will build:
+
+- **Blocks** — profile switcher, sessions sidebar, transcript, prompts, composer and side pane.
+- **Pages** — the workspace, a new session, the prompt states, profiles and settings.
+- Two missing pieces become components: \`Meter\` and \`Diff\`.`}
+        </Markdown>
       </Transcript.Assistant>
     </>
   )

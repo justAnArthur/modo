@@ -51,7 +51,10 @@ controlled + uncontrolled.
 | A shortcut | `Kbd` |
 | An AI chat transcript | `Message` (user bubble / assistant Prose, `.Mention`, `.Attachment`, `.Working`), `Reasoning`, `ToolCall` (`.Group`), `AgentRun`, `WorkSummary` (`.Provider`), `TodoList`, `Recap`, `ChapterNav` (`.Break`) in `components/AI` |
 | An agent asking the user | `PromptCard`, `PermissionRequest`, `QuestionPrompt`, `PlanApproval` in `components/AI` |
-| Rendered markdown | `Prose` |
+| Rendered markdown | `Markdown` (a string, streaming-safe) over `Prose` (type and rhythm) |
+| Terminal or log output | `LogView` (ANSI colors, follow, long logs) |
+| A split you can drag | `Resizable` (`.Panel`, `.Handle`) |
+| A desktop app window | `DesktopShell` block (title bar, two sidebars, main card) |
 | A file's change | `Diff` (a unified patch string, `path` header with counts) |
 | A scroll region | `ScrollArea` (+ `scroll-fade`) |
 | A raised container | `Elevated` (`offset`) |

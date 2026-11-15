@@ -5,6 +5,7 @@
  */
 
 import type { IconName } from '../../lib/icon-context'
+import type { PaneId } from './side-pane'
 import type { ToolName } from './transcript'
 
 export interface UsageLimit {
@@ -185,3 +186,13 @@ export interface Worktree {
   size: string
   state: 'active' | 'merged' | 'stale'
 }
+
+/** What a command palette row stands for, handed back by its `onSelect`. */
+export type PaletteItem =
+  | { kind: 'session'; id: string }
+  | { kind: 'new-session'; project: string; profile: string }
+  | { kind: 'command'; name: string }
+  | { kind: 'pane'; pane: PaneId }
+  | { kind: 'settings'; section?: string }
+  | { kind: 'profile'; id: string }
+  | { kind: 'profiles' }

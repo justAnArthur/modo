@@ -6,6 +6,7 @@
 'use client'
 
 import { type ReactNode, useRef, useState } from 'react'
+import LogView from '../../../components/log-view'
 import { useIcon } from '../../../lib/icon-context'
 import { SURFACE_BG } from '../../../lib/surface-classes'
 import { useSurface } from '../../../lib/surface-context'
@@ -32,7 +33,8 @@ interface TerminalPaneProps {
 /**
  * The session's shell in its folder: its history, then a prompt you type at.
  *
- * A press anywhere in the frame puts the caret on the prompt, as a terminal
+ * The history is a LogView (ANSI colors, follows the latest line, smooth on
+ * long output). A press anywhere in the frame puts the caret on the prompt, as a terminal
  * does; Enter runs the line and adds it to the history. A failed command
  * ends on its exit code. Clear empties the history.
  *
@@ -59,19 +61,17 @@ export default function TerminalPane({ shell, onRun }: TerminalPaneProps) {
           SURFACE_BG[level],
         )}
       >
-        {history.map((entry, i) => (
-          <div key={`${i}-${entry.command}`} className="flex flex-col">
-            <PromptLine prompt={shell.prompt}>
-              <span className="min-w-0 break-all">{entry.command}</span>
-            </PromptLine>
-            {entry.output.map((line, j) => (
-              <span key={`${j}-${line}`} className="whitespace-pre-wrap break-all">
-                {line}
-              </span>
-            ))}
-            {entry.exit ? <span className="text-status-error">exit {entry.exit}</span> : null}
-          </div>
-        ))}
+        <LogView
+          label={`${shell.name} output`}
+          prompt="$ "
+          lines={history.flatMap(entry => [
+            `$ ${entry.command}`,
+            ...entry.output,
+            // Red, as a shell prints a failure.
+            ...(entry.exit ? [`\u001b[31mexit ${entry.exit}\u001b[0m`] : []),
+          ])}
+          className="-m-3 mb-0 rounded-b-none bg-transparent"
+        />
         <PromptLine prompt={shell.prompt}>
           <input
             ref={inputRef}

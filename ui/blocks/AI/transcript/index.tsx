@@ -11,6 +11,7 @@
 import { type ReactNode, useLayoutEffect, useRef, useState } from 'react'
 import AgentRun from '../../../components/AI/agent-run'
 import ChapterNav, { type ChapterNavItem } from '../../../components/AI/chapter-nav'
+import Markdown from '../../../components/AI/markdown'
 import Message, { type MessageProps } from '../../../components/AI/message'
 import Reasoning from '../../../components/AI/reasoning'
 import Recap from '../../../components/AI/recap'
@@ -32,9 +33,15 @@ function User(props: TurnProps) {
   return <Message role="user" {...props} />
 }
 
-function Assistant(props: TurnProps) {
-  // biome-ignore lint/a11y/useValidAriaRole: Message's `role` is who speaks, not an ARIA role
-  return <Message role="assistant" {...props} />
+/** The agent's turn. A string is markdown, rendered as it streams in; JSX (work, tool runs, prose) renders as is. */
+function Assistant({ children, streaming, ...props }: TurnProps) {
+  if (typeof children === 'string') return <Markdown streaming={streaming}>{children}</Markdown>
+  return (
+    // biome-ignore lint/a11y/useValidAriaRole: Message's `role` is who speaks, not an ARIA role
+    <Message role="assistant" streaming={streaming} {...props}>
+      {children}
+    </Message>
+  )
 }
 
 interface TranscriptProps {
