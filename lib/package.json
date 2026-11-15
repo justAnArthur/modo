@@ -39,6 +39,7 @@
     "dist",
     "src/runtime",
     "src/lib",
+    "src/node",
     "src/plugins",
     "src/exports",
     "templates",

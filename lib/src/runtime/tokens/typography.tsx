@@ -1,7 +1,8 @@
 import type { CSSProperties } from 'react'
+import { TYPE_ROLES, type TypeRole } from '../../lib/roles'
 import { primaryFamily, px, rem, spread } from './format'
-import { resolved } from './host-colors'
-import { byLength, lengthOf, OtherTokens, TokenLabel, TokenSection, type Var } from './token-row'
+import { lengthOf, resolved } from './measure'
+import { byLength, OtherTokens, TokenLabel, TokenSection, type Var } from './parts'
 
 const SAMPLE = 'The quick brown fox jumps over the lazy dog'
 const SHORT_SAMPLE = 'Quick brown fox'
@@ -9,21 +10,7 @@ const GLYPHS = ['ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz', '012
 
 type Role = 'family' | 'size' | 'weight' | 'other'
 
-/** The contract's type roles (shell.css), each with the tag it renders as. */
-const ELEMENTS = {
-  h1: 'h1',
-  h2: 'h2',
-  h3: 'h3',
-  h4: 'h4',
-  p: 'p',
-  lead: 'p',
-  eyebrow: 'p',
-  sm: 'p',
-  xs: 'p',
-} as const
-type ElementRole = keyof typeof ELEMENTS
-
-const ROLE_TOKEN = new RegExp(`^--(font-size|line-height|font-weight|color)-(${Object.keys(ELEMENTS).join('|')})$`)
+const ROLE_TOKEN = new RegExp(`^--(font-size|line-height|font-weight|color)-(${Object.keys(TYPE_ROLES).join('|')})$`)
 const SIZE_PREFIX = /^--(text|font-size)-/
 
 // The parser classifies by name (lib/css.ts); leading and tracking have no swatch.
@@ -41,7 +28,7 @@ function role(v: Var): Role {
 }
 
 function roles(all: Var[]) {
-  const elements = (Object.keys(ELEMENTS) as ElementRole[]).filter(e => all.some(v => v.name === `--font-size-${e}`))
+  const elements = (Object.keys(TYPE_ROLES) as TypeRole[]).filter(e => all.some(v => v.name === `--font-size-${e}`))
   const vars = all.filter(v => !ROLE_TOKEN.test(v.name))
   const of = (r: Role) => vars.filter(v => role(v) === r)
   const weights = of('weight')
@@ -169,8 +156,8 @@ function weightLabel(v: Var): string {
 }
 
 // The role as the chrome renders it: its --modo-* vars, defaults included.
-function ElementStep({ element }: { element: ElementRole }) {
-  const Tag = ELEMENTS[element]
+function ElementStep({ element }: { element: TypeRole }) {
+  const Tag = TYPE_ROLES[element]
   const metrics = ['font-size', 'line-height', 'font-weight']
     .map(p => resolved(`--modo-${p}-${element}`))
     .filter(Boolean)

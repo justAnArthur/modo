@@ -1,6 +1,6 @@
 import { shell } from 'virtual:modo-shell'
 import { type ReactNode, type RefObject, useLayoutEffect, useRef } from 'react'
-import { withBase } from '../router'
+import { withBase } from '../location'
 
 /** Below this a preview stops shrinking and is clipped (with a fade) instead. */
 const MIN_ZOOM = 0.4

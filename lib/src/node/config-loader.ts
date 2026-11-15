@@ -3,9 +3,9 @@ import { existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import esbuild from 'esbuild'
-import { type SiteConfig, siteConfigSchema } from './schema'
+import { type SiteConfig, siteConfigSchema } from '../lib/schema'
 
-// vite.config.ts, configPlugin and the bundler all ask for the same config
+// vite-config.ts, configPlugin and the bundler all ask for the same config
 // during startup; cache it until any bundled input changes (not just the entry:
 // the demo runner's entry is a wrapper re-exporting the real modo.config.ts).
 const cache = new Map<string, { inputs: string[]; stamp: string; config: SiteConfig }>()

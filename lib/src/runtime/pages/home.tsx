@@ -1,11 +1,12 @@
 import { config } from 'virtual:modo-config'
 import { items } from 'virtual:modo-items'
 import { tokens } from 'virtual:modo-tokens'
+import { itemKey, tierPath, tokenPath } from '../../lib/paths'
+import { cap, count } from '../../lib/text'
 import { isScreenSized, TIERS } from '../../lib/tiers'
 import { ExamplePreview, hasPreview } from '../items/preview'
-import { cap, count } from '../text'
-import { GroupPreview } from '../tokens/token-page'
-import { declared } from '../tokens/token-row'
+import { GroupPreview } from '../tokens/group-page'
+import { declared } from '../tokens/parts'
 import { Bento, BentoCard } from './bento'
 import { Credits } from './credits'
 
@@ -25,25 +26,25 @@ export function HomePage() {
       </header>
       <Bento>
         {tokens.length > 0 && (
-          <BentoCard href="/docs/tokens" title="Foundations" meta={count(tokens.length, 'group')} span="wide">
+          <BentoCard href={tokenPath()} title="Foundations" meta={count(tokens.length, 'group')} span="wide">
             <GroupPreview group={tokens[0]!.name} />
           </BentoCard>
         )}
         {TIERS.map(tier => {
           const list = items.filter(it => it.tier === tier)
           if (list.length === 0) return null
-          const shown = list.find(it => hasPreview(`${tier}:${it.id}`)) ?? list[0]!
+          const shown = list.find(it => hasPreview(itemKey(tier, it.id))) ?? list[0]!
           return (
             <BentoCard
               key={tier}
-              href={`/docs/${tier}`}
+              href={tierPath(tier)}
               title={cap(tier)}
               meta={count(list.length, 'item')}
               description={list.map(it => it.name).join(', ')}
               span={isScreenSized(tier) ? 'full' : undefined}
               zoom={isScreenSized(tier) ? 0.7 : undefined}
             >
-              <ExamplePreview itemId={`${tier}:${shown.id}`} />
+              <ExamplePreview itemId={itemKey(tier, shown.id)} />
             </BentoCard>
           )
         })}

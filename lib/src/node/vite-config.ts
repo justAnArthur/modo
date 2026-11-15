@@ -2,17 +2,17 @@ import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { defineConfig, searchForWorkspaceRoot, type UserConfig } from 'vite'
-import { loadModoConfig } from '../lib/config.loader'
 import { createBundler } from '../plugins/bundle'
 import { configPlugin } from '../plugins/config'
 import { itemsPlugin } from '../plugins/items'
 import { shellPlugin } from '../plugins/shell'
 import { tokensPlugin } from '../plugins/tokens'
+import { loadModoConfig } from './config-loader'
 
-// The CLI sets MODO_USER_ROOT and MODO_CONFIG_PATH, chdirs into this runtime
+// The CLI sets MODO_USER_ROOT and MODO_CONFIG_PATH, chdirs into the runtime
 // dir and runs Vite in-process. LIB_DIR is the package root.
-const RUNTIME_DIR = resolve(import.meta.dirname)
-const LIB_DIR = resolve(RUNTIME_DIR, '..', '..')
+const LIB_DIR = resolve(import.meta.dirname, '..', '..')
+const RUNTIME_DIR = resolve(LIB_DIR, 'src', 'runtime')
 const USER_ROOT = process.env.MODO_USER_ROOT ?? process.cwd()
 const CONFIG_PATH = process.env.MODO_CONFIG_PATH ?? resolve(USER_ROOT, 'modo.config.ts')
 const PORT = Number(process.env.MODO_PORT ?? 5173)

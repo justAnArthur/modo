@@ -1,15 +1,9 @@
-import { tokens as groups } from 'virtual:modo-tokens'
-import { type ReactNode, useSyncExternalStore } from 'react'
-import { type GroupName, lightDark, schemePair } from '../../lib/css'
-import { cap, count } from '../text'
-import { range } from './format'
-import { colorExpr, colorValue, resolved } from './host-colors'
-import { RadiusPreview, RadiusView, SpacingPreview, SpacingView } from './lengths'
-import { MotionPreview, MotionView } from './motion'
-import { declared, lengthOf, OtherTokens, TokenSection, type Var } from './token-row'
-import { TypographyPreview, TypographyView } from './typography'
-
-type View = (props: { vars: Var[]; all: Var[] }) => ReactNode
+import { useSyncExternalStore } from 'react'
+import { lightDark, schemePair } from '../../lib/css'
+import { contrast, luminance, type PageColors, pageColors, paint, toHex } from './color-math'
+import { colorExpr, colorValue } from './host-colors'
+import { resolved } from './measure'
+import { OtherTokens, TokenSection, type Var } from './parts'
 
 /* The shadcn/ui theme schema, one column per family. Tokens a design system
    defines under these names render first; everything else follows as custom. */
@@ -25,64 +19,8 @@ const THEME_NAMES = new Set(THEME.flat())
 const MAX_STACK = 5
 const STRIP = 16
 
-/** What each group holds, in the chrome's words: never the host's. */
-const ABOUT: Record<GroupName, string> = {
-  colors: 'Fills, text and borders, each beside its foreground where the system pairs one.',
-  typography: 'Families, the type scale and the text roles built from them.',
-  spacing: 'The steps for gaps, padding and insets, smallest first.',
-  radius: 'Corner rounding, from the subtlest to the roundest.',
-  motion: 'Durations and easing curves for transitions.',
-}
-
-export function about(group: GroupName): string {
-  return ABOUT[group]
-}
-
-/** `7 variables, 4px to 32px`: the count, plus the range for length scales. */
-export function summary(group: GroupName, vars: Var[]): string {
-  const n = count(vars.length, 'variable')
-  const span = group === 'spacing' || group === 'radius' ? range(vars.map(lengthOf)) : null
-  return span ? `${n}, ${span}` : n
-}
-
-export function TokenGroupView({ group }: { group: string }) {
-  const g = groups.find(gg => gg.name === group)
-  const vars = g ? declared(g.vars) : []
-  return (
-    <article>
-      <header>
-        <p data-modo="page-eyebrow">Foundations</p>
-        <h1 data-modo="page-title">{cap(group)}</h1>
-        <p data-modo="page-lead">{g ? `${ABOUT[g.name]} ${summary(g.name, vars)}.` : null}</p>
-      </header>
-      {g && vars.length > 0 ? <GroupBody group={g.name} vars={vars} all={g.vars} /> : <Empty />}
-    </article>
-  )
-}
-
-function GroupBody({ group, vars, all }: { group: GroupName; vars: Var[]; all: Var[] }) {
-  const View = VIEWS[group]
-  return <View vars={vars} all={all} />
-}
-
-function Empty() {
-  return (
-    <p data-modo="token-empty">
-      No variables in this group. Add them to <code>tokens/*.css</code>.
-    </p>
-  )
-}
-
-/** A group at a glance, for the Foundations overview. */
-export function GroupPreview({ group }: { group: string }) {
-  const g = groups.find(gg => gg.name === group)
-  if (!g) return null
-  const Preview = PREVIEWS[g.name]
-  return <Preview vars={declared(g.vars)} all={g.vars} />
-}
-
 /** The palette as a strip: theme tokens first, foregrounds left out. */
-function ColorPreview({ vars }: { vars: Var[] }) {
+export function ColorPreview({ vars }: { vars: Var[] }) {
   const { theme, custom } = colorTiles(vars)
   return (
     <div data-modo="color-strip">
@@ -135,7 +73,7 @@ function colorTiles(vars: Var[]) {
   }
 }
 
-function ColorGroups({ vars, all }: { vars: Var[]; all: Var[] }) {
+export function ColorGroups({ vars, all }: { vars: Var[]; all: Var[] }) {
   useSyncExternalStore(subscribeTheme, themeSnapshot)
   const { theme, custom, other } = colorTiles(vars)
   const page = pageColors()
@@ -243,84 +181,4 @@ function schemeValue(value: string, page: PageColors): string {
   const both = lightDark(value)
   if (!both) return value
   return luminance(paint(page.bg)) < 0.5 ? both[1] : both[0]
-}
-
-interface PageColors {
-  fg: string
-  bg: string
-}
-
-/** The host's page text and canvas colors, as the docs content inherits them. */
-function pageColors(): PageColors {
-  const at = document.querySelector('[data-modo="content"]') ?? document.body
-  // The root paints the system canvas when nothing sets a background.
-  let bg = 'Canvas'
-  for (let el: Element | null = at; el; el = el.parentElement) {
-    const c = getComputedStyle(el).backgroundColor
-    if (paint(c)[3] > 0) {
-      bg = c
-      break
-    }
-  }
-  return { fg: getComputedStyle(at).color, bg }
-}
-
-type Rgba = [number, number, number, number]
-
-const pen = document.createElement('canvas').getContext('2d', { willReadFrequently: true })!
-const probe = document.createElement('i')
-probe.hidden = true
-
-/** `color` as the page computes it. The canvas can't parse light-dark() or
-    system colors and silently keeps its previous fill; computed styles resolve
-    them against the page's color-scheme. */
-function computed(color: string): string {
-  if (!probe.isConnected) document.body.append(probe)
-  probe.style.color = ''
-  probe.style.color = color
-  return getComputedStyle(probe).color
-}
-
-/** Paint `color` (over `under`) and read the pixel back — resolves any CSS
-    color syntax the browser knows (oklch, color-mix, …) to sRGB. */
-function paint(color: string, under?: string): Rgba {
-  pen.clearRect(0, 0, 1, 1)
-  if (under) {
-    pen.fillStyle = computed(under)
-    pen.fillRect(0, 0, 1, 1)
-  }
-  pen.fillStyle = computed(color)
-  pen.fillRect(0, 0, 1, 1)
-  const [r, g, b, a] = pen.getImageData(0, 0, 1, 1).data
-  return [r!, g!, b!, a!]
-}
-
-function toHex([r, g, b]: Rgba): string {
-  return `#${[r, g, b].map(n => n.toString(16).padStart(2, '0')).join('')}`
-}
-
-function contrast(a: Rgba, b: Rgba): number {
-  const [la, lb] = [luminance(a), luminance(b)]
-  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
-}
-
-function luminance([r, g, b]: Rgba): number {
-  const lin = (c: number) => (c / 255 <= 0.04045 ? c / 255 / 12.92 : ((c / 255 + 0.055) / 1.055) ** 2.4)
-  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
-}
-
-const VIEWS: Record<GroupName, View> = {
-  colors: ColorGroups,
-  typography: TypographyView,
-  spacing: SpacingView,
-  radius: RadiusView,
-  motion: MotionView,
-}
-
-const PREVIEWS: Record<GroupName, View> = {
-  colors: ColorPreview,
-  typography: TypographyPreview,
-  spacing: SpacingPreview,
-  radius: RadiusPreview,
-  motion: MotionPreview,
 }

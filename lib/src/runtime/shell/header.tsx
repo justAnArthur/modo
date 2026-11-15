@@ -1,7 +1,7 @@
 import { config, logoUrl } from 'virtual:modo-config'
 import { Logo, shell } from 'virtual:modo-shell'
 import { useSyncExternalStore } from 'react'
-import { withBase } from '../router'
+import { withBase } from '../location'
 
 /** Labels for well-known `socials` keys; any other key is capitalized. */
 const NETWORKS: Record<string, string> = {

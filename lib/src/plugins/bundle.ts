@@ -3,12 +3,12 @@ import { join, relative, resolve, sep } from 'node:path'
 import mdx from '@mdx-js/esbuild'
 import esbuild, { type BuildOptions, type Message, type Metafile } from 'esbuild'
 import remarkGfm from 'remark-gfm'
-import { loadModoConfig } from '../lib/config.loader'
-import { discoverCssForFile } from '../lib/discover-css'
-import { discoverItems } from '../lib/discover-items'
-import { isComponentRef, type SiteConfig } from '../lib/schema'
+import { isComponentRef, splitRef } from '../lib/refs'
+import type { SiteConfig } from '../lib/schema'
 import { TIERS, type Tier } from '../lib/tiers'
 import { type ParsedExample, type ParsedItem, parseItemSource } from '../lib/tsdoc'
+import { loadModoConfig } from '../node/config-loader'
+import { discoverCssForFile, discoverItems } from '../node/discover'
 import { remarkModoExamples } from './mdx-examples'
 
 // One esbuild build for the whole design system: every item, every shell /
@@ -166,7 +166,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     // file share its entry.
     const extraKeys = new Map<string, { file: string; key: string; exportName: string }>()
     for (const p of new Set(extraPaths)) {
-      const [path = p, exportName = 'default'] = p.split('#')
+      const { path, exportName } = splitRef(p)
       const file = resolveUserFile(userRoot, path)
       if (!file) continue // reported by the shell plugin as an unresolved slot/panel item
       extraKeys.set(p, { file, exportName, key: keyFor(file, `usr/${sanitize(path)}`) })

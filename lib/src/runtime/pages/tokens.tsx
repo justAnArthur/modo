@@ -1,7 +1,8 @@
 import { tokens } from 'virtual:modo-tokens'
-import { cap, count } from '../text'
-import { about, GroupPreview, summary } from '../tokens/token-page'
-import { declared } from '../tokens/token-row'
+import { tokenPath } from '../../lib/paths'
+import { cap, count } from '../../lib/text'
+import { about, GroupPreview, summary } from '../tokens/group-page'
+import { declared } from '../tokens/parts'
 import { Bento, BentoCard } from './bento'
 
 export function TokensPage() {
@@ -24,7 +25,7 @@ export function TokensPage() {
           {tokens.map((g, i) => (
             <BentoCard
               key={g.name}
-              href={`/docs/tokens/${g.name}`}
+              href={tokenPath(g.name)}
               title={cap(g.name)}
               meta={summary(g.name, declared(g.vars))}
               description={about(g.name)}

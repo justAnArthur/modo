@@ -1,8 +1,8 @@
 import { exampleDocs, examples as examplesMap } from 'virtual:modo-items'
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react'
-import { compileExampleBody, isCompiledExample } from '../../lib/example'
 import type { ParsedExample } from '../../lib/tsdoc'
 import { mdxComponents } from '../mdx'
+import { compileExampleBody, isCompiledExample } from './compile'
 import { bindings, ExampleBoundary, useBabel } from './examples'
 
 /** The item's first example — its first `@example`, else the first live block

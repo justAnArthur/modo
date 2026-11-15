@@ -4,7 +4,7 @@ modo turns a design system (DS) into its own docs site. The lib brings no conten
 
 ## layout
 
-- `lib/` — the npm package `@justanarthur/modo` (bin `modo`): public API and schemas (`src/lib`), Vite plugins (`src/plugins`), the renderer, a plain Vite SPA with its structural CSS (`src/runtime`), scaffold templates, the CLI.
+- `lib/` — the npm package `@justanarthur/modo` (bin `modo`): public entry points and the CLI (`src/exports`), pure code shared by node and the browser: schemas, parsers, helpers (`src/lib`), node-only code: config loader, discovery, the Vite config (`src/node`), Vite plugins (`src/plugins`), the renderer, a plain Vite SPA with its structural CSS (`src/runtime`), scaffold templates.
 - `ui/` — the npm package `@justanarthur/modo-ui`: Fluid Functionalism (Base UI) on UnoCSS (springs, fluid hover, size ladder, surface elevation), a DS that is also published. `bun run build` writes the components, types and stylesheets to `dist/` (`index.ts` barrel, `bunup.config.ts`, `scripts/build-css.ts`); its docs build with `--out`, so they never touch `dist/`. `preset.ts` is the single source of the theme and token utilities: `uno.config.ts`, the shipped UnoCSS preset and the generated `tailwind.css` all read it. `base.css` holds the theme and base styles shipped to consumers; `global.css` imports it and adds the docs chrome. Its own guide is `ui/AGENTS.md`, its design language `ui/DESIGN.md`, its rules shown as bad / good pairs on the `primitives/craft` page; building in it follows the `modo-ui` skill (`.claude/skills/modo-ui`).
 - `demo/` — the harness. `scripts/run-design-systems.ts` runs the lib's CLI once per DS (one dev server per port, or one static build each) and splices in the demo-switcher. `components/demo-switcher/` renders `shell.Select` to navigate between peers.
 - `demo/design-systems/<name>/` — one workspace package per DS, each with its own deps (the runner also picks up `ui/`):
@@ -78,7 +78,7 @@ Rules:
   - Borders, muted text and the focus ring read `--modo-border` / `--modo-muted` / `--modo-ring`. `tokens/host-colors.ts` sets them at startup from the host's `--border` / `--muted-foreground` / `--ring` (wrapped when the token holds bare channels, e.g. `hsl(var(--border))`), else from `currentColor`. It sets `--modo-color-<role>` from `--color-<role>` the same way (lead and eyebrow fall back to `--modo-muted`).
   - Defaults live in one place each. `shell.css` opens with the contract block: every generic type and radius token resolves once to a `--modo-*` var, falling back to a literal size or, for weights, the keyword `bold`. `tokens/host-colors.ts` does the same for colors. Rules read `--modo-*`, never a generic token with an inline fallback. Those two are the only literal visuals in the lib.
   - Spacing fallbacks stay inline (`var(--space-2, 8px)`): spacing is structure. Motion has no default; no token means no transition.
-  - Inherit before you set: line-height, font family and link decoration come from the host. Capitalize in content (`cap()` in `runtime/text.ts`), never with `text-transform`.
+  - Inherit before you set: line-height, font family and link decoration come from the host. Capitalize in content (`cap()` in `lib/text.ts`), never with `text-transform`.
 - **DS code** (items, examples, `modo.components.tsx`):
   - Use theme tokens through the DS's utilities.
   - No arbitrary values for color, type, radius, shadow or motion (`text-[15px]`, `bg-[#…]`, `rounded-[10px]`, `duration-[…]`).

@@ -1,10 +1,11 @@
 import { type ItemEntry, items } from 'virtual:modo-items'
+import { itemKey, itemPath } from '../../lib/paths'
+import { cap, count } from '../../lib/text'
 import { isScreenSized, type Tier } from '../../lib/tiers'
 import { Heading } from '../anchor'
 import { groupTree } from '../groups'
 import { ExamplePreview } from '../items/preview'
 import { Inlines, splitLead } from '../markdown'
-import { cap, count } from '../text'
 import { Bento, BentoCard } from './bento'
 
 const LEAD: Record<Tier, string> = {
@@ -73,7 +74,7 @@ function Cards({ tier, list }: { tier: Tier; list: ItemEntry[] }) {
       {list.map((it, i) => (
         <BentoCard
           key={it.id}
-          href={`/docs/${tier}/${it.id}`}
+          href={itemPath(tier, it.id)}
           title={it.name}
           description={<Lead source={it.description} />}
           // Blocks and pages take the whole row; elsewhere every fifth cell
@@ -81,7 +82,7 @@ function Cards({ tier, list }: { tier: Tier; list: ItemEntry[] }) {
           span={isScreenSized(tier) ? 'full' : i % 5 === 0 ? 'wide' : undefined}
           zoom={isScreenSized(tier) ? 0.7 : undefined}
         >
-          <ExamplePreview itemId={`${tier}:${it.id}`} />
+          <ExamplePreview itemId={itemKey(tier, it.id)} />
         </BentoCard>
       ))}
     </Bento>

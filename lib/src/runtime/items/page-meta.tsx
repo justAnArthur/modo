@@ -2,8 +2,8 @@ import { config } from 'virtual:modo-config'
 import type { ItemEntry } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { itemMeta, repoBlobUrl } from '../../lib/item-meta'
+import { cap } from '../../lib/text'
 import { Markdown } from '../markdown'
-import { cap } from '../text'
 
 /** Lifecycle from the item's block tags, plus its Source link when `repo` is set. Upstreams and
     licenses (`@source`, `@license`) are credited once, on the overview (pages/credits.tsx). */

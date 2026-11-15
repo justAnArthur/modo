@@ -117,8 +117,3 @@ export const siteConfigSchema = z
     examples: z.string().optional(),
   })
   .strict() satisfies z.ZodType<SiteConfig>
-
-/** Whether a `logo` names a component module (`./x.tsx`, `./x.tsx#Logo`) rather than an image file. */
-export function isComponentRef(ref: string): boolean {
-  return /\.[cm]?[jt]sx?(?:#.*)?$/.test(ref)
-}

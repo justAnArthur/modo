@@ -1,10 +1,12 @@
 import { resolve, sep } from 'node:path'
 import { isCSSRequest, normalizePath, type Plugin } from 'vite'
-import { cap } from '../runtime/text'
+import { itemKey, itemPath, STATIC_PAGES, tierPath } from '../lib/paths'
+import { cap } from '../lib/text'
+import type { Tier } from '../lib/tiers'
 import type { Bundler } from './bundle'
-import { cssModule } from './css-module'
 import { emitRoutes } from './static-routes'
 import { unoExtractor } from './uno'
+import { cssModule } from './virtual'
 
 interface Options {
   userRoot: string
@@ -42,7 +44,7 @@ export function itemsPlugin(options: Options): Plugin {
 
       if (id === ITEMS_RESOLVED) {
         const { items, scope } = await bundler.get()
-        const key = (it: { tier: string; id: string }) => JSON.stringify(`${it.tier}:${it.id}`)
+        const key = (it: { tier: Tier; id: string }) => JSON.stringify(itemKey(it.tier, it.id))
         // Bound by index: two ids that differ only in `-`/`_` stay distinct.
         const compImports = items.map((it, i) => `import __c${i} from ${JSON.stringify(it.bundlePath)};`)
         const docImports = items.flatMap((it, i) =>
@@ -91,10 +93,13 @@ export function itemsPlugin(options: Options): Plugin {
         if (errorCount > 0) this.error('the bundle has errors (reported above), so the site was not written')
         if (!config) return
         emitRoutes(this, bundle, config, [
-          { path: 'canvas', title: 'Canvas' },
-          { path: '404', title: 'Not found' },
-          ...[...new Set(items.map(it => it.tier))].map(tier => ({ path: `docs/${tier}`, title: cap(tier) })),
-          ...items.map(it => ({ path: `docs/${it.tier}/${it.id}`, title: it.name, description: it.description })),
+          ...STATIC_PAGES,
+          ...[...new Set(items.map(it => it.tier))].map(tier => ({ path: tierPath(tier).slice(1), title: cap(tier) })),
+          ...items.map(it => ({
+            path: itemPath(it.tier, it.id).slice(1),
+            title: it.name,
+            description: it.description,
+          })),
         ])
       },
     },

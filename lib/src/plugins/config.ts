@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
 import { extname, resolve } from 'node:path'
 import type { Plugin } from 'vite'
-import { loadModoConfig } from '../lib/config.loader'
 import { headTags, themeScript, withHead } from '../lib/head'
-import { isComponentRef } from '../lib/schema'
-import { cssModule } from './css-module'
+import { isComponentRef } from '../lib/refs'
+import { loadModoConfig } from '../node/config-loader'
+import { cssModule } from './virtual'
 
 interface Options {
   userRoot: string

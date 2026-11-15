@@ -2,13 +2,13 @@
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { loadModoConfig } from '../lib/config.loader'
+import { loadModoConfig } from '../node/config-loader'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const libRoot = resolve(__dirname, '..')
 const runtimeRoot = resolve(libRoot, 'src', 'runtime')
 const templatesRoot = resolve(libRoot, 'templates')
-const viteConfigFile = join(runtimeRoot, 'vite.config.ts')
+const viteConfigFile = resolve(libRoot, 'src', 'node', 'vite-config.ts')
 const libPackage = JSON.parse(readFileSync(resolve(libRoot, 'package.json'), 'utf8')) as {
   name: string
   version: string
@@ -200,7 +200,7 @@ async function runInit(args: Args) {
   )
 }
 
-// The runtime's vite.config.ts reads the project from these, then runs from its own dir.
+// node/vite-config.ts reads the project from these; Vite runs from the runtime dir.
 async function prepareRuntime(args: Args): Promise<string> {
   const cwd = process.cwd()
   const configPath = configOf(args)

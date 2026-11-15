@@ -2,10 +2,11 @@ import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import type { ReactNode } from 'react'
+import { tierPath, tokenPath } from '../lib/paths'
+import { cap } from '../lib/text'
 import { TIERS } from '../lib/tiers'
 import { groupTree } from './groups'
-import { usePath, withBase } from './router'
-import { cap } from './text'
+import { usePath, withBase } from './location'
 
 export function SidebarNav() {
   const path = usePath()
@@ -23,8 +24,8 @@ export function SidebarNav() {
       />
       <NavSection
         title="Foundations"
-        overview="/docs/tokens"
-        basePath="/docs/tokens"
+        overview={tokenPath()}
+        basePath={tokenPath()}
         items={tokens.map(g => ({ id: g.name, name: cap(g.name) }))}
         isActive={isActive}
       />
@@ -35,8 +36,8 @@ export function SidebarNav() {
           <NavSection
             key={tier}
             title={cap(tier)}
-            overview={`/docs/${tier}`}
-            basePath={`/docs/${tier}`}
+            overview={tierPath(tier)}
+            basePath={tierPath(tier)}
             items={list}
             isActive={isActive}
           />

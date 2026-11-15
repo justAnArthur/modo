@@ -182,7 +182,7 @@ only what is specific to it:
 
 `Select` in `modo.components.tsx` is not an item: modo's docs chrome renders its Select slot
 with a flat `value` / `onChange` / `options` contract
-(`lib/src/lib/slots.tsx`), and this adapter maps it onto
+(`lib/src/plugins/slots.ts`), and this adapter maps it onto
 `Select.Trigger` / `Select.Content` / `Select.Item` so the chrome runs on the
 design system's own Select. The
 `components/inputs/select` item keeps the upstream API untouched.
@@ -432,7 +432,7 @@ declared packages.
 ## Docs and examples
 
 What modo's parser (`lib/src/lib/tsdoc.ts`) and example compiler
-(`lib/src/lib/example.ts`) need, and how this package answers it:
+(`lib/src/runtime/items/compile.ts`) need, and how this package answers it:
 
 - **The item is the file's `export default`** — either `function X(…)` or a
   `const X = forwardRef<HTMLXElement, XProps>(…)`. The forwardRef form's first

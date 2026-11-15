@@ -1,6 +1,6 @@
 import { shell } from 'virtual:modo-shell'
 import { useEffect, useState } from 'react'
-import { usePath } from '../router'
+import { usePath } from '../location'
 
 interface Heading {
   id: string
