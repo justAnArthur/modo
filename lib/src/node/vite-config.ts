@@ -1,58 +1,43 @@
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import react from '@vitejs/plugin-react'
-import { defineConfig, searchForWorkspaceRoot, type UserConfig } from 'vite'
+import { searchForWorkspaceRoot, type UserConfig } from 'vite'
 import { createBundler } from '../plugins/bundle'
 import { configPlugin } from '../plugins/config'
 import { itemsPlugin } from '../plugins/items'
 import { shellPlugin } from '../plugins/shell'
 import { tokensPlugin } from '../plugins/tokens'
 import { loadModoConfig } from './config-loader'
+import { resolveUserFile } from './discover'
 
-// The CLI sets MODO_USER_ROOT and MODO_CONFIG_PATH, chdirs into the runtime
-// dir and runs Vite in-process. LIB_DIR is the package root.
-const LIB_DIR = resolve(import.meta.dirname, '..', '..')
-const RUNTIME_DIR = resolve(LIB_DIR, 'src', 'runtime')
-const USER_ROOT = process.env.MODO_USER_ROOT ?? process.cwd()
-const CONFIG_PATH = process.env.MODO_CONFIG_PATH ?? resolve(USER_ROOT, 'modo.config.ts')
-const PORT = Number(process.env.MODO_PORT ?? 5173)
+export interface ViteConfigOptions {
+  /** The package root of the lib: the runtime and the plain fallbacks live under it. */
+  libDir: string
+  /** The design system's root. */
+  userRoot: string
+  configPath: string
+}
 
 type ViteExtension = (config: UserConfig) => UserConfig | Promise<UserConfig>
 
-// Applies the user's `vite: './vite.ts'` extension from modo.config.ts, if any.
-// The extension module is imported natively (never esbuild-bundled) so plugins
-// with native binaries like @tailwindcss/vite work unchanged.
-async function applyUserViteExtension(base: UserConfig): Promise<UserConfig> {
+/** modo's whole Vite config for a design system, with its `vite` extension applied. Pass it with `configFile: false`. */
+export async function createViteConfig({ libDir, userRoot, configPath }: ViteConfigOptions): Promise<UserConfig> {
   // configPlugin reports config errors with full detail once Vite starts.
-  const cfg = await loadModoConfig(CONFIG_PATH).catch(() => null)
-  // `modo build --base` passes its own, which wins over this.
-  if (cfg?.base) base.base = cfg.base
-  if (!cfg?.vite) return base
-
-  const extPath = resolve(USER_ROOT, cfg.vite)
-  const mod = (await import(pathToFileURL(extPath).href)) as { default?: unknown }
-  if (typeof mod.default !== 'function') {
-    throw new Error(`modo: vite extension at ${cfg.vite} must default-export a function`)
-  }
-  const extended = await (mod.default as ViteExtension)(base)
-  return extended ?? base
-}
-
-export default defineConfig(async () => {
-  // One esbuild build shared by the items and shell plugins (see plugins/bundle.ts).
-  const bundler = createBundler({ userRoot: USER_ROOT, configPath: CONFIG_PATH })
-  const base: UserConfig = {
-    root: RUNTIME_DIR,
+  const site = await loadModoConfig(configPath).catch(() => null)
+  const bundler = createBundler({ userRoot, configPath })
+  const config: UserConfig = {
+    root: resolve(libDir, 'src', 'runtime'),
+    base: site?.base,
     plugins: [
-      configPlugin({ userRoot: USER_ROOT, configPath: CONFIG_PATH }),
-      tokensPlugin({ userRoot: USER_ROOT, configPath: CONFIG_PATH }),
-      itemsPlugin({ userRoot: USER_ROOT, bundler }),
-      shellPlugin({ libDir: LIB_DIR, bundler }),
+      configPlugin({ userRoot, configPath }),
+      tokensPlugin({ userRoot, configPath }),
+      itemsPlugin({ userRoot, bundler }),
+      shellPlugin({ libDir, bundler }),
       react(),
     ],
     server: {
       host: 'localhost',
-      port: PORT,
+      port: 5173,
       strictPort: true,
       // Build output is rewritten on every rebuild; the items plugin reloads
       // on *source* changes and invalidates the outputs itself.
@@ -60,7 +45,7 @@ export default defineConfig(async () => {
       fs: {
         // The workspace root: Bun hoists deps into the monorepo's node_modules
         // store, and Vite 403s font URLs resolved there without it.
-        allow: [searchForWorkspaceRoot(USER_ROOT), LIB_DIR],
+        allow: [searchForWorkspaceRoot(userRoot), libDir],
       },
     },
     // Item bundles import React from the design system, the runtime from the
@@ -70,11 +55,21 @@ export default defineConfig(async () => {
       include: ['react', 'react-dom', 'react-dom/client', 'marked'],
     },
     build: {
-      outDir: resolve(USER_ROOT, 'dist'),
+      outDir: resolve(userRoot, 'dist'),
       emptyOutDir: true,
       // Babel standalone (inline `@example` compiling) is one lazy ~3 MB chunk by design.
       chunkSizeWarningLimit: 3200,
     },
   }
-  return applyUserViteExtension(base)
-})
+  return site?.vite ? extend(config, userRoot, site.vite) : config
+}
+
+// Imported natively, never bundled: plugins with native binaries (@tailwindcss/vite) break when bundled.
+async function extend(config: UserConfig, userRoot: string, ref: string): Promise<UserConfig> {
+  const file = resolveUserFile(userRoot, ref)
+  if (!file) throw new Error(`modo: vite extension "${ref}" not found (resolved from ${userRoot})`)
+  const mod = (await import(pathToFileURL(file).href)) as { default?: unknown }
+  if (typeof mod.default !== 'function')
+    throw new Error(`modo: vite extension at ${ref} must default-export a function`)
+  return (await (mod.default as ViteExtension)(config)) ?? config
+}

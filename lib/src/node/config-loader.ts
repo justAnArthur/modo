@@ -5,9 +5,9 @@ import { pathToFileURL } from 'node:url'
 import esbuild from 'esbuild'
 import { type SiteConfig, siteConfigSchema } from '../lib/schema'
 
-// vite-config.ts, configPlugin and the bundler all ask for the same config
-// during startup; cache it until any bundled input changes (not just the entry:
-// the demo runner's entry is a wrapper re-exporting the real modo.config.ts).
+// The CLI, vite-config.ts, configPlugin and the bundler all ask for the same
+// config during startup; cache it until any bundled input changes (not just the
+// entry: the demo runner's entry is a wrapper re-exporting the real modo.config.ts).
 const cache = new Map<string, { inputs: string[]; stamp: string; config: SiteConfig }>()
 
 function stampOf(files: string[]): string {
@@ -20,8 +20,8 @@ export async function loadModoConfig(configPath: string): Promise<SiteConfig> {
   }
   const hit = cache.get(configPath)
   if (hit && hit.stamp === stampOf(hit.inputs)) return hit.config
-  // Next to the config, never the process cwd: the CLI chdirs into the lib's
-  // runtime before Vite loads this module again.
+  // Next to the config, not the cwd: the output's external imports
+  // (`@justanarthur/modo`) resolve from the project's node_modules.
   const workDir = dirname(configPath)
   const tmpDir = join(workDir, '.modo-tmp')
   mkdirSync(tmpDir, { recursive: true })
