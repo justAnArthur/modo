@@ -3,33 +3,7 @@
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/checkbox-group.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications: `@/lib/*` and `@/hooks/*` imports
- * rewritten to `../../../lib/*` (`SizeProvider` to `../../../primitives/sizes`),
- * `@/components/ui/fluid-hover-highlight` to `../../../lib/fluid-hover-highlight`,
- * `framer-motion` to `motion/react`;
- * uncontrolled mode added — `checkedIndices` is optional, with
- * `defaultCheckedIndices` (Set or array) and a group-level
- * `onCheckedIndicesChange` backed by `useControllableState`, and the group
- * context carries the checked set plus a setter; `CheckboxItem` `checked` and
- * `onToggle` are optional and fall back to that context (a toggle always
- * reports to the group as well); arrow-key focus guarded for
- * `noUncheckedIndexedAccess`; modo docs — TSDoc with FF's docs/API text,
- * statics typed via a cast on the root, default export.
- * Styling reads DS tokens (AGENTS.md styling): inline `fontVariationSettings`
- * → `weight-*`; the hex focus-ring fallback → `ring-focus-ring` /
- * `border-focus-ring`; `rounded-[Npx]` → radius tokens; `duration-80|120|160`
- * and tier-length JS durations → `duration-<tier>` / `spring.*`; the unchecked
- * `border-neutral-400` / `dark:border-neutral-500` → `border-control`.
- * The inline run grouping is the shared `useSelectionRuns`; the merged
- * backgrounds melt and split through the goo (`lib/use-merge-split.tsx`).
- * Renamed for modo (item `checkbox`): `CheckboxItem` → `Checkbox`, the
- * default export, which also stands alone (its own state from
- * `defaultChecked`, `onCheckedChange` on every toggle, a pointer hover and
- * a focus ring of its own, a `size`); `CheckboxGroup` → its `Checkbox.Group`
- * static. A row's `index` is optional: the group numbers its rows in order
- * (`lib/row-index.tsx`). The group's focus and keys, the focus ring, the
- * row's press focus and the label come from the shared `lib/row-group.tsx`,
- * `lib/focus-ring.tsx` and `lib/weight-label.tsx`.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
@@ -67,10 +41,9 @@ import { SizeScope } from '../../../primitives/sizes'
 interface CheckboxGroupContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void
   activeIndex: number | null
-  /** Local: the group's checked set (controlled or internal). */
   checkedIndices: Set<number>
-  /** Local: sets one row's checked state, through `onCheckedIndicesChange`. */
   setItemChecked: (index: number, checked: boolean) => void
+  disabled: boolean
 }
 
 const CheckboxGroupContext = createContext<CheckboxGroupContextValue | null>(null)
@@ -84,6 +57,8 @@ interface CheckboxGroupProps extends HTMLAttributes<HTMLDivElement> {
   defaultCheckedIndices?: Set<number> | number[]
   /** Called with the next checked set whenever an item is toggled. */
   onCheckedIndicesChange?: (checkedIndices: Set<number>) => void
+  /** Disables every row. Defaults to `false`. */
+  disabled?: boolean
   /** Pins the group's rows to one step of the size ladder (default 36px, compact 28px). Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
 }
@@ -96,6 +71,7 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
       checkedIndices: checkedIndicesProp,
       defaultCheckedIndices,
       onCheckedIndicesChange,
+      disabled = false,
       size,
       className,
       ...props
@@ -132,32 +108,32 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
 
     const blocks = useMergeSplitBlocks(checkedGroups, itemRects, shape.mergedRadius)
 
-    const group = (
-      <CheckboxGroupContext.Provider value={{ registerItem, activeIndex, checkedIndices, setItemChecked }}>
-        <div
-          ref={mergeRefs(containerRef, ref)}
-          onMouseEnter={handlers.onMouseEnter}
-          onMouseMove={handlers.onMouseMove}
-          onMouseLeave={handlers.onMouseLeave}
-          onClick={handlers.onClick}
-          {...rowGroup.handlers}
-          role="group"
-          className={cn('relative flex flex-col w-72 max-w-full select-none', className)}
-          {...props}
-        >
-          <SelectionBackgrounds blocks={blocks} />
+    return (
+      <SizeScope size={size}>
+        <CheckboxGroupContext.Provider value={{ registerItem, activeIndex, checkedIndices, setItemChecked, disabled }}>
+          <div
+            ref={mergeRefs(containerRef, ref)}
+            onMouseEnter={handlers.onMouseEnter}
+            onMouseMove={handlers.onMouseMove}
+            onMouseLeave={handlers.onMouseLeave}
+            onClick={handlers.onClick}
+            {...rowGroup.handlers}
+            role="group"
+            aria-disabled={disabled || undefined}
+            className={cn('relative flex flex-col w-72 max-w-full select-none', className)}
+            {...props}
+          >
+            <SelectionBackgrounds blocks={blocks} />
 
-          {/* Hover background */}
-          <FluidHoverHighlight hover={hover} className={shape.bg} />
+            <FluidHoverHighlight hover={hover} className={shape.bg} />
 
-          <FocusRing rect={rowGroup.focusRect} />
+            <FocusRing rect={rowGroup.focusRect} />
 
-          <IndexedRows>{children}</IndexedRows>
-        </div>
-      </CheckboxGroupContext.Provider>
+            <IndexedRows>{children}</IndexedRows>
+          </div>
+        </CheckboxGroupContext.Provider>
+      </SizeScope>
     )
-
-    return <SizeScope size={size}>{group}</SizeScope>
   },
 )
 
@@ -176,6 +152,12 @@ interface CheckboxProps extends HTMLAttributes<HTMLDivElement> {
   onToggle?: () => void
   /** Position within a `Checkbox.Group`: the row's key in `checkedIndices`. Defaults to its order among the group's rows. */
   index?: number
+  /** Disables the checkbox. Defaults to the group's `disabled`, else `false`. */
+  disabled?: boolean
+  /** Submits the checkbox under this name in a form, while checked. */
+  name?: string
+  /** The value submitted while checked. Defaults to `"on"`. */
+  value?: string
   /** Pins the checkbox to one step of the size ladder (see Sizes). Defaults to the surrounding SizeProvider (a group's `size`). */
   size?: SizeVariant
 }
@@ -205,8 +187,8 @@ type CheckboxComponent = ForwardRefExoticComponent<CheckboxProps & RefAttributes
  * - `Checkbox.Group` — the list: uncontrolled with `defaultCheckedIndices`
  *   (a Set or an array of row indices), or controlled with `checkedIndices`
  *   plus `onCheckedIndicesChange`; `size` pins every row to one step of the
- *   size ladder. A row's own `checked` / `onToggle` still override the group
- *   for that row.
+ *   size ladder; `disabled` turns every row off. A row's own `checked` /
+ *   `onToggle` still override the group for that row.
  *
  * @example {@include ./examples.mdx}
  * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/checkbox-group.tsx Fluid Functionalism
@@ -221,6 +203,9 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
       onCheckedChange,
       onToggle: onToggleProp,
       index: indexProp,
+      disabled: disabledProp,
+      name,
+      value,
       size,
       className,
       ...props
@@ -233,11 +218,12 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
     const index = useRowIndex(indexProp)
     const [ownChecked, setOwnChecked] = useControllableState(checkedProp, defaultChecked, onCheckedChange)
     const [hovered, setHovered] = useState(false)
+    const disabled = disabledProp ?? group?.disabled ?? false
 
-    // Local: an explicit `checked` wins; otherwise the group's set (or, alone,
-    // the row's own state) decides. A toggle reports to the group as well.
+    // An explicit `checked` wins, then the group's set, then the row's own state.
     const checked = checkedProp ?? (group ? group.checkedIndices.has(index) : ownChecked)
     const onToggle = () => {
+      if (disabled) return
       onToggleProp?.()
       group?.setItemChecked(index, !checked)
       setOwnChecked(!checked)
@@ -249,7 +235,7 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
       hasMounted.current = true
     }, [])
 
-    const isActive = group ? group.activeIndex === index : hovered
+    const isActive = !disabled && (group ? group.activeIndex === index : hovered)
     const skipAnimation = !hasMounted.current
     const shape = useShape()
     const sizeClasses = useSize(size)
@@ -258,10 +244,12 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
     return (
       <div
         ref={mergeRefs(internalRef, ref)}
-        data-fluid-hover-index={index}
-        tabIndex={0}
+        // A disabled row drops out of the group's arrow-key rows.
+        data-fluid-hover-index={disabled ? undefined : index}
+        tabIndex={disabled ? -1 : 0}
         role="checkbox"
         aria-checked={checked}
+        aria-disabled={disabled || undefined}
         aria-label={label}
         onClick={onToggle}
         onPointerEnter={e => {
@@ -276,18 +264,20 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
           }
         }}
         className={cn(
-          // Fixed height (was py-1.5 around a 19.5px line box ≈ 31.5px) so the
-          // text-box trim on the label doesn't shrink the row.
           `relative z-10 flex ${sizeClasses.control} items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.px} cursor-pointer outline-none`,
           // The group draws one travelling focus ring; alone, the row rings itself.
           !group && 'focus-visible:ring-1 focus-visible:ring-focus-ring',
+          disabled && 'opacity-50 pointer-events-none',
           className,
         )}
         {...props}
       >
-        {/* Checkbox — Base UI primitive for accessibility */}
+        {/* The row is the control; the primitive draws the box and carries the form input. */}
         <CheckboxPrimitive.Root
           checked={checked}
+          disabled={disabled}
+          name={name}
+          value={value}
           onCheckedChange={() => onToggle()}
           tabIndex={-1}
           aria-hidden
@@ -297,7 +287,6 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
           )}
           onClick={e => e.stopPropagation()}
         >
-          {/* Border */}
           <div
             className={cn(
               'absolute inset-0 border-solid transition-all duration-fast',
@@ -309,7 +298,6 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
                   : 'border-[1.5px] border-border',
             )}
           />
-          {/* Check mark */}
           <AnimatePresence>
             {checked && (
               <CheckboxPrimitive.Indicator
