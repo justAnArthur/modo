@@ -1,10 +1,10 @@
 /*!
  * Local addition: the agent desktop's composer. InputMessage for the draft
- * (attachments, queue, send and stop), with the session's controls around
- * it: attach, @-file and the slash palette (commands, skills, plugins) in its
- * left slot, the model in its right, and a compact row under it with the
- * permission mode, output style, effort, fast mode and the context meter.
- * Every menu is a Dropdown that grows out of its button.
+ * (attachments, queue, send and stop) with three controls around it: one +
+ * palette in its left slot (attach, @-files, commands, skills, plugins, one
+ * searchable list), one run-settings popover in its right slot (model,
+ * effort, fast mode, output style), and under it the permission mode and the
+ * context meter. Every menu grows out of its button.
  */
 
 'use client'
@@ -12,11 +12,15 @@
 import { useState } from 'react'
 import InputMessage from '../../../components/AI/input-message'
 import Button from '../../../components/button'
+import Radio from '../../../components/inputs/radio'
+import Select from '../../../components/inputs/select'
+import Slider from '../../../components/inputs/slider'
+import Switch from '../../../components/inputs/switch'
 import Meter from '../../../components/meter'
 import Dropdown from '../../../components/overlays/dropdown'
+import Popover from '../../../components/overlays/popover'
 import Tooltip from '../../../components/overlays/tooltip'
 import { type IconName, useIcon } from '../../../lib/icon-context'
-import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
 import { CHANGES, COMMANDS, EFFORTS, MODELS, OUTPUT_STYLES, PERMISSION_MODES } from '../mock'
@@ -29,109 +33,157 @@ const MODE_ICON: Record<string, IconName> = {
   'Bypass permissions': 'triangle-alert',
 }
 
-interface PickerProps {
-  label: string
-  icon?: IconName
-  options: string[]
-  value: string
-  onChange: (value: string) => void
-  /** Show only the icon in the trigger. */
-  iconOnly?: boolean
-  side?: 'top' | 'bottom'
-}
+const FILES = [...CHANGES.map(c => c.path), 'ui/DESIGN.md', 'ui/AGENTS.md', 'lib/src/runtime/routes.tsx']
 
-/** A ghost button whose Dropdown picks one of `options`. */
-function Picker({ label, icon, options, value, onChange, iconOnly = false, side = 'top' }: PickerProps) {
-  const Icon = useIcon(icon ?? 'chevron-down')
-  const Chevron = useIcon('chevron-down')
-  return (
-    <Dropdown.Menu>
-      <Dropdown.Trigger
-        render={
-          iconOnly ? (
-            <Button variant="ghost" size="icon-compact" aria-label={`${label}: ${value}`}>
-              <Icon />
-            </Button>
-          ) : (
-            <Button
-              variant="ghost"
-              size="compact"
-              leadingIcon={icon ? Icon : undefined}
-              trailingIcon={Chevron}
-              aria-label={`${label}: ${value}`}
-            >
-              {value}
-            </Button>
-          )
-        }
-      />
-      <Dropdown.Content
-        side={side}
-        align="start"
-        checkedIndex={options.indexOf(value)}
-        onCheckedIndexChange={i => i !== undefined && onChange(options[i] ?? value)}
-      >
-        <Dropdown.Label>{label}</Dropdown.Label>
-        {options.map((option, i) => (
-          <Dropdown.Item key={option} index={i} label={option} />
-        ))}
-      </Dropdown.Content>
-    </Dropdown.Menu>
-  )
-}
-
-function SlashPalette() {
+/** One + button: attach, mention a file, run a command, skill or plugin — one searchable list. */
+function AddPalette({ onAttach }: { onAttach: () => void }) {
+  const Plus = useIcon('plus')
+  const Paperclip = useIcon('paperclip')
+  const File = useIcon('file-text')
   const Command = useIcon('command')
   const groups = [
     { label: 'Commands', kind: 'command' },
     { label: 'Skills', kind: 'skill' },
     { label: 'Plugins', kind: 'plugin' },
   ] as const
-  let index = 0
+  let index = 1
   return (
     <Dropdown.Menu>
       <Dropdown.Trigger
         render={
-          <Button variant="ghost" size="icon-compact" aria-label="Commands and skills">
-            <Command />
+          <Button variant="ghost" size="icon-compact" aria-label="Add files, mentions and commands">
+            <Plus />
           </Button>
         }
       />
-      <Dropdown.Content side="top" align="start" className="w-64">
-        <Dropdown.Search filter placeholder="Search commands and skills" />
+      <Dropdown.Content side="top" align="start" className="w-72">
+        <Dropdown.Search filter placeholder="Files, commands, skills" />
+        <Dropdown.Item index={0} icon={Paperclip} label="Attach files…" onSelect={onAttach} />
+        <Dropdown.Label>Mention a file</Dropdown.Label>
+        {FILES.map(path => (
+          <Dropdown.Item key={path} index={index++} icon={File} label={path} />
+        ))}
         {groups.map(group => (
           <div key={group.kind} className="contents">
             <Dropdown.Label>{group.label}</Dropdown.Label>
             {COMMANDS.filter(c => c.kind === group.kind).map(c => (
-              <Dropdown.Item key={c.name} index={index++} label={c.name} />
+              <Dropdown.Item key={c.name} index={index++} icon={Command} label={c.name} />
             ))}
           </div>
         ))}
-        <Dropdown.Empty>No commands found</Dropdown.Empty>
+        <Dropdown.Empty>Nothing found</Dropdown.Empty>
       </Dropdown.Content>
     </Dropdown.Menu>
   )
 }
 
-function FilePalette() {
-  const At = useIcon('at-sign')
-  const File = useIcon('file-text')
-  const files = [...CHANGES.map(c => c.path), 'ui/DESIGN.md', 'ui/AGENTS.md', 'lib/src/runtime/routes.tsx']
+interface RunSettingsProps {
+  models: string[]
+  model: string
+  onModel: (model: string) => void
+  effort: string
+  onEffort: (effort: string) => void
+  fast: boolean
+  onFast: (fast: boolean) => void
+  style: string
+  onStyle: (style: string) => void
+}
+
+/** How the agent runs, behind one trigger that reads "Opus 5.5 · High". */
+function RunSettings({ models, model, onModel, effort, onEffort, fast, onFast, style, onStyle }: RunSettingsProps) {
+  const Chevron = useIcon('chevron-down')
+  const Zap = useIcon('zap')
+  return (
+    <Popover>
+      <Popover.Trigger
+        render={
+          <Button
+            variant="ghost"
+            size="compact"
+            leadingIcon={fast ? Zap : undefined}
+            trailingIcon={Chevron}
+            aria-label={`Run settings: ${model}, ${effort} effort${fast ? ', fast' : ''}`}
+          >
+            {model} · {effort}
+          </Button>
+        }
+      />
+      <Popover.Content side="top" align="end" sideOffset={8} className="w-72 gap-4">
+        <SizeProvider size="compact">
+          <div className="flex flex-col gap-1">
+            <Popover.Title>Model</Popover.Title>
+            <Radio.Group value={model} onValueChange={onModel} className="-mx-2 w-auto">
+              {models.map(m => (
+                <Radio key={m} value={m} label={m} />
+              ))}
+            </Radio.Group>
+          </div>
+          <Slider
+            label="Effort"
+            min={0}
+            max={EFFORTS.length - 1}
+            step={1}
+            showSteps
+            showValue
+            value={Math.max(EFFORTS.indexOf(effort), 0)}
+            onChange={v => onEffort(EFFORTS[typeof v === 'number' ? v : v[0]] ?? effort)}
+            formatValue={v => EFFORTS[v] ?? ''}
+          />
+          <Switch.Group aria-label="Run options" className="-mx-2 w-auto">
+            <Switch
+              label="Fast mode"
+              description="Quicker output on this model"
+              checked={fast}
+              onCheckedChange={onFast}
+            />
+          </Switch.Group>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-body text-foreground">Output style</span>
+            <Select value={style} onValueChange={onStyle}>
+              <Select.Trigger variant="borderless" />
+              <Select.Content>
+                {OUTPUT_STYLES.map((s, i) => (
+                  <Select.Item key={s} index={i} value={s}>
+                    {s}
+                  </Select.Item>
+                ))}
+              </Select.Content>
+            </Select>
+          </div>
+        </SizeProvider>
+      </Popover.Content>
+    </Popover>
+  )
+}
+
+function PermissionMode({ value, onChange }: { value: string; onChange: (mode: string) => void }) {
+  const Icon = useIcon(MODE_ICON[value] ?? 'shield-check')
+  const Chevron = useIcon('chevron-down')
   return (
     <Dropdown.Menu>
       <Dropdown.Trigger
         render={
-          <Button variant="ghost" size="icon-compact" aria-label="Mention a file">
-            <At />
+          <Button
+            variant="ghost"
+            size="compact"
+            leadingIcon={Icon}
+            trailingIcon={Chevron}
+            aria-label={`Permission mode: ${value}`}
+          >
+            {value}
           </Button>
         }
       />
-      <Dropdown.Content side="top" align="start" className="w-80">
-        <Dropdown.Search filter placeholder="Search files" />
-        {files.map((path, i) => (
-          <Dropdown.Item key={path} index={i} icon={File} label={path} />
+      <Dropdown.Content
+        side="top"
+        align="start"
+        checkedIndex={PERMISSION_MODES.indexOf(value)}
+        onCheckedIndexChange={i => i !== undefined && onChange(PERMISSION_MODES[i] ?? value)}
+      >
+        <Dropdown.Label>Permission mode</Dropdown.Label>
+        {PERMISSION_MODES.map((mode, i) => (
+          <Dropdown.Item key={mode} index={i} label={mode} />
         ))}
-        <Dropdown.Empty>No files found</Dropdown.Empty>
       </Dropdown.Content>
     </Dropdown.Menu>
   )
@@ -163,17 +215,18 @@ interface ComposerProps {
 }
 
 /**
- * Where you write to the session, with every per-session control in reach.
+ * Where you write to the session, with every per-session control behind
+ * three buttons.
  *
  * The draft grows as you type, takes dropped files and pasted text, and
- * queues messages while a reply streams (see InputMessage). Its left slot
- * attaches files, mentions one with @ and opens the slash palette, where
- * commands, skills and plugins are one searchable list. The model sits in
- * its right slot. The row under it sets how the agent works: the permission
- * mode (ask before edits, accept edits, plan, auto, bypass), the output
- * style, the effort and fast mode; on the right, a ring shows how full the
- * context is and turns amber as it nears auto-compaction, which it reports
- * while it runs. Each menu grows out of its button.
+ * queues messages while a reply streams (see InputMessage). The + on its
+ * left is one searchable palette: attach files, mention a file, or run a
+ * command, skill or plugin. On its right, one trigger names the model and
+ * effort and opens the run settings: the model, an effort slider, fast mode
+ * and the output style. Under the draft sits what you change most, the
+ * permission mode (ask before edits, accept edits, plan, auto, bypass), and
+ * on the right a ring showing how full the context is; it turns amber as it
+ * nears auto-compaction and says so while it compacts.
  *
  * @example {@include ./examples.mdx}
  */
@@ -194,9 +247,8 @@ export default function Composer({
   const [mode, setMode] = useState(defaultPermissionMode)
   const [style, setStyle] = useState('Default')
   const [effort, setEffort] = useState(defaultEffort)
-  const [fast, setFast] = useControllableState<boolean>(undefined, defaultFast)
-  const Paperclip = useIcon('paperclip')
-  const Zap = useIcon('zap')
+  const [fast, setFast] = useState(defaultFast)
+  const percent = Math.round(context * 100)
 
   return (
     <div className={cn('flex w-full flex-col gap-1', className)}>
@@ -205,55 +257,30 @@ export default function Composer({
         defaultStatus={streaming ? 'streaming' : 'idle'}
         defaultFiles={[]}
         onSend={text => onSend?.(text)}
-        leftSlot={({ openFilePicker }) => (
-          <div className="flex items-center gap-0.5">
-            <Button variant="ghost" size="icon-compact" aria-label="Attach files" onClick={() => openFilePicker()}>
-              <Paperclip />
-            </Button>
-            <FilePalette />
-            <SlashPalette />
-          </div>
-        )}
-        rightSlot={<Picker label="Model" options={models} value={model} onChange={setModel} />}
+        leftSlot={({ openFilePicker }) => <AddPalette onAttach={() => openFilePicker()} />}
+        rightSlot={
+          <RunSettings
+            models={models}
+            model={model}
+            onModel={setModel}
+            effort={effort}
+            onEffort={setEffort}
+            fast={fast}
+            onFast={setFast}
+            style={style}
+            onStyle={setStyle}
+          />
+        }
       />
       <SizeProvider size="compact">
-        <div className="flex min-w-0 flex-wrap items-center gap-0.5 px-1">
-          <Picker
-            label="Permission mode"
-            icon={MODE_ICON[mode] ?? 'shield-check'}
-            options={PERMISSION_MODES}
-            value={mode}
-            onChange={setMode}
-          />
-          <Picker
-            label="Output style"
-            icon="pen-line"
-            options={OUTPUT_STYLES}
-            value={style}
-            onChange={setStyle}
-            iconOnly
-          />
-          <Picker label="Effort" icon="gauge" options={EFFORTS} value={effort} onChange={setEffort} />
-          <Tooltip content={fast ? 'Fast mode on' : 'Fast mode off'} side="top">
-            <Button
-              variant="ghost"
-              size="icon-compact"
-              aria-label="Fast mode"
-              aria-pressed={fast}
-              active={fast}
-              onClick={() => setFast(!fast)}
-            >
-              <Zap />
-            </Button>
-          </Tooltip>
+        <div className="flex min-w-0 items-center gap-1 px-1">
+          <PermissionMode value={mode} onChange={setMode} />
           <Tooltip
-            content={
-              compacting ? 'Compacting the conversation…' : `Context ${Math.round(context * 100)}% · compacts at 95%`
-            }
+            content={compacting ? 'Compacting the conversation…' : `Context ${percent}% · compacts at 95%`}
             side="top"
           >
             <span className="ml-auto flex h-7 items-center gap-1.5 px-1.5 text-caption tabular-nums text-muted-foreground">
-              {compacting ? 'Compacting…' : `${Math.round(context * 100)}%`}
+              {compacting ? 'Compacting…' : `${percent}%`}
               <Meter
                 variant="ring"
                 label="Context used"

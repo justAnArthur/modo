@@ -180,7 +180,7 @@ only what is specific to it:
 | — | `registry/blocks/sidebar-app/search-field.tsx` | `blocks/sidebar-app/search-field.tsx` | `text-[11px]` → `text-micro` |
 | — | `registry/blocks/sidebar-app/inset-topbar.tsx` | `blocks/sidebar-app/inset-topbar.tsx` | the trigger's peek-time fade dropped (the sidebar opens on hover in flow, so the trigger stays) |
 | — | `registry/default/lib/sidebar-menu-grid.ts` | `blocks/sidebar-app/menu-grid.ts` | the width reads `--anchor-width` only; the `-ml-1` shift dropped (it would move the morph surface's content off its background) |
-| `ProfileSwitcher`, `SessionSidebar`, `Transcript`, `AgentPrompt`, `Composer`, `SidePane` | — (local) | `blocks/agent-desktop/<id>/index.tsx` | the agent desktop's blocks over Sidebar, Popover, Accordion, InputMessage, Dropdown, TabsSubtle, Meter and Diff; rich single-choice rows share `pick-list.tsx` (fluid hover, a GooIndicator pick, a springing keyboard ring) |
+| `ProfileSwitcher`, `SessionSidebar`, `SessionBoard`, `Transcript`, `AgentPrompt`, `Composer`, `SidePane` | — (local) | `blocks/agent-desktop/<id>/index.tsx` | the agent desktop's blocks over Sidebar, Popover, Accordion, InputMessage, Dropdown, TabsSubtle, Meter and Diff; rich single-choice rows share `pick-list.tsx` (fluid hover, a GooIndicator pick, a springing keyboard ring) |
 
 `Select` in `modo.components.tsx` is not an item: modo's docs chrome renders its Select slot
 with a flat `value` / `onChange` / `options` contract
@@ -239,8 +239,8 @@ becomes the one block.
 | components | sidebar | `base/sidebar.tsx` + `default/sidebar-core.tsx` + `default/sidebar-menu.tsx` | sidebar |
 | components | `meter` (Meter), `diff` (Diff, group `AI`) | — (local) | — |
 | blocks | `sidebar-app` (SidebarApp) | the preset generator's output + `blocks/sidebar-*` | sidebar, preset `sa1FQfCxH6` |
-| blocks | profile-switcher, session-sidebar, transcript, agent-prompt, composer, side-pane (group `agent-desktop`) | — (local) | — |
-| pages | workspace, new-session, interaction-prompts, profiles, settings (group `agent-desktop`) | — (local) | — |
+| blocks | profile-switcher, session-sidebar, session-board, transcript, agent-prompt, composer, side-pane (group `agent-desktop`) | — (local) | — |
+| pages | overview, workspace, new-session, interaction-prompts, profiles, settings (group `agent-desktop`) | — (local) | — |
 
 Button lives in `components/` to mirror the FF docs, and `modo.config.ts`
 points `shell.Button` at it explicitly (an explicit path skips modo's tier

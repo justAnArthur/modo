@@ -120,8 +120,9 @@ interface SessionSidebarProps {
  * The agent desktop's sessions rail: every session of every profile,
  * grouped by project, with what each one is doing right now.
  *
- * The header switches the profile (see the profile switcher), starts a new
- * session and searches. Below it come the pinned sessions, then one group
+ * The header switches the profile (see the profile switcher), opens the
+ * overview of every session (see the session board), starts a new session
+ * and searches. Below it come the pinned sessions, then one group
  * per project folder and per section you made, then the archive, folded.
  * A row's leading glyph is its state: an arc turning while it runs, an
  * amber dot while it waits for you, a filled dot for an unread reply and a
@@ -149,6 +150,7 @@ export default function SessionSidebar({
   className,
 }: SessionSidebarProps) {
   const Plus = useIcon('plus')
+  const Board = useIcon('layout-dashboard')
   const Settings = useIcon('settings')
   const Puzzle = useIcon('puzzle')
   const Folder = useIcon('folder')
@@ -166,6 +168,12 @@ export default function SessionSidebar({
         <ProfileSwitcher variant="sidebar" defaultOpen={defaultProfileOpen} />
         <div className="flex flex-col gap-0.5">
           <Sidebar.Menu>
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton icon={Board} value="overview">
+                Overview
+                <span className="ml-auto text-micro tabular-nums text-muted-foreground">2 need you</span>
+              </Sidebar.MenuButton>
+            </Sidebar.MenuItem>
             <Sidebar.MenuItem>
               <Sidebar.MenuButton icon={Plus} value="new">
                 New session

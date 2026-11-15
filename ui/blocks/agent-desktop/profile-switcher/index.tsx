@@ -10,11 +10,13 @@
 
 import Badge from '../../../components/badge'
 import Button from '../../../components/button'
+import { triggerVariants } from '../../../components/inputs/select'
 import Meter from '../../../components/meter'
 import Sidebar from '../../../components/navigation/sidebar'
 import Popover from '../../../components/overlays/popover'
 import { useIcon } from '../../../lib/icon-context'
 import { useShape } from '../../../lib/shape-context'
+import { useSize } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
@@ -88,7 +90,7 @@ interface ProfileSwitcherProps {
   onValueChange?: (value: string) => void
   /** Start with the panel open, as the profiles screen shows it. Defaults to `false`. */
   defaultOpen?: boolean
-  /** The trigger: a tertiary button with the profile's name, or a Sidebar header row with its tile (inside a Sidebar). Defaults to `'button'`. */
+  /** The trigger: a borderless Select-style trigger with the tile and name (it lines up with Selects in a row), or a Sidebar header row (inside a Sidebar). Defaults to `'button'`. */
   variant?: 'button' | 'sidebar'
   /** Which side of the trigger the panel opens on. Defaults to `'bottom'`. */
   side?: 'top' | 'right' | 'bottom' | 'left'
@@ -124,6 +126,9 @@ export default function ProfileSwitcher({
   const [current, setCurrent] = useControllableState(value, defaultValue ?? profiles[0]?.id ?? '', onValueChange)
   const active = profiles.find(p => p.id === current) ?? profiles[0]
   const ChevronsUpDown = useIcon('chevrons-up-down')
+  const ChevronDown = useIcon('chevron-down')
+  const size = useSize()
+  const shape = useShape()
   const Plus = useIcon('plus')
   const Settings = useIcon('settings')
   if (!active) return null
@@ -139,15 +144,28 @@ export default function ProfileSwitcher({
         <ChevronsUpDown size={14} strokeWidth={1.5} className="ml-auto shrink-0 text-muted-foreground" />
       </Sidebar.MenuButton>
     ) : (
-      <Button
-        variant="tertiary"
-        size="compact"
-        trailingIcon={ChevronsUpDown}
+      // Drawn as a borderless Select trigger, so it sits in a row of Selects (project, branch) as one of them.
+      <button
+        type="button"
         aria-label={`Profile: ${active.name}`}
-        className={className}
+        className={cn(
+          triggerVariants({ variant: 'borderless' }),
+          size.control,
+          size.text,
+          size.px,
+          size.gap,
+          shape.input,
+          className,
+        )}
       >
-        {active.name}
-      </Button>
+        <ProfileTile profile={active} />
+        <span className="min-w-0 truncate">{active.name}</span>
+        <ChevronDown
+          size={size.icon}
+          strokeWidth={1.5}
+          className="shrink-0 text-muted-foreground transition-[color] duration-fast group-hover:text-foreground"
+        />
+      </button>
     )
 
   const popover = (

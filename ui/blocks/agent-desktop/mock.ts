@@ -99,6 +99,14 @@ export interface Session {
   pinned?: boolean
   /** Linked child sessions started from this one. */
   children?: Session[]
+  /** What a waiting session waits on. */
+  waitingOn?: string
+  /** Its task list's progress. */
+  tasks?: { done: number; total: number }
+  /** The latest line of its transcript. */
+  lastLine?: string
+  /** Its project, when it is listed outside the project's group (pinned). */
+  project?: string
 }
 
 export interface SessionGroup {
@@ -118,8 +126,20 @@ export const PINNED: Session[] = [
     updated: 'now',
     branch: 'claude/agent-desktop',
     pinned: true,
+    project: 'modo',
+    tasks: { done: 3, total: 6 },
+    lastLine: 'Running bun run check',
   },
-  { id: 'release-notes', title: 'Weekly release notes', status: 'idle', profile: 'work', updated: '2d', pinned: true },
+  {
+    id: 'release-notes',
+    title: 'Weekly release notes',
+    status: 'idle',
+    profile: 'work',
+    updated: '2d',
+    pinned: true,
+    project: 'jobiflow-api',
+    lastLine: 'Posted to #releases',
+  },
 ]
 
 export const GROUPS: SessionGroup[] = [
@@ -135,6 +155,8 @@ export const GROUPS: SessionGroup[] = [
         profile: 'jobiflow',
         updated: '3m',
         branch: 'feat/lib-canvas',
+        waitingOn: 'Permission · Bash: git worktree prune',
+        tasks: { done: 4, total: 5 },
         children: [
           {
             id: 'canvas-zoom',
@@ -142,6 +164,8 @@ export const GROUPS: SessionGroup[] = [
             status: 'running',
             profile: 'jobiflow',
             updated: '1m',
+            tasks: { done: 1, total: 4 },
+            lastLine: 'Editing CanvasPage.tsx',
           },
           {
             id: 'canvas-docs',
@@ -149,11 +173,26 @@ export const GROUPS: SessionGroup[] = [
             status: 'unread',
             profile: 'jobiflow',
             updated: '6m',
+            lastLine: 'Added the canvas hooks to AGENTS.md',
           },
         ],
       },
-      { id: 'meter', title: 'Add a Meter component', status: 'unread', profile: 'jobiflow', updated: '12m' },
-      { id: 'parser', title: 'TSDoc parser drops @values', status: 'idle', profile: 'work-personal', updated: '1h' },
+      {
+        id: 'meter',
+        title: 'Add a Meter component',
+        status: 'unread',
+        profile: 'jobiflow',
+        updated: '12m',
+        lastLine: 'Meter is in, with bar and ring variants',
+      },
+      {
+        id: 'parser',
+        title: 'TSDoc parser drops @values',
+        status: 'idle',
+        profile: 'work-personal',
+        updated: '1h',
+        lastLine: 'Waiting for a repro',
+      },
     ],
   },
   {
@@ -168,16 +207,39 @@ export const GROUPS: SessionGroup[] = [
         profile: 'work',
         updated: 'now',
         branch: 'fix/webhook-retries',
+        tasks: { done: 2, total: 3 },
+        lastLine: 'Running the webhook tests',
       },
-      { id: 'pg', title: 'Migrate to Postgres 17', status: 'idle', profile: 'work', updated: '3h' },
+      {
+        id: 'pg',
+        title: 'Migrate to Postgres 17',
+        status: 'waiting',
+        profile: 'work',
+        updated: '3h',
+        waitingOn: 'Question · Run the migration on staging first?',
+      },
     ],
   },
   {
     label: 'Review queue',
     kind: 'section',
     sessions: [
-      { id: 'glm', title: 'Try GLM on the lint pass', status: 'idle', profile: 'zcode', updated: '1d' },
-      { id: 'a11y', title: 'Keyboard audit of the sidebar', status: 'unread', profile: 'work-personal', updated: '1d' },
+      {
+        id: 'glm',
+        title: 'Try GLM on the lint pass',
+        status: 'idle',
+        profile: 'zcode',
+        updated: '1d',
+        lastLine: 'Lint pass done, 3 fixes',
+      },
+      {
+        id: 'a11y',
+        title: 'Keyboard audit of the sidebar',
+        status: 'unread',
+        profile: 'work-personal',
+        updated: '1d',
+        lastLine: 'Found 2 focus traps',
+      },
     ],
   },
 ]

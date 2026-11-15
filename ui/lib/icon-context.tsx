@@ -73,6 +73,7 @@ import {
   Inbox,
   Key,
   Layers,
+  LayoutDashboard,
   Lightbulb,
   Link,
   ListChecks,
@@ -116,6 +117,7 @@ import {
   SlidersHorizontal,
   Split,
   Square,
+  SquareKanban,
   SquareLibrary,
   Star,
   Sun,
@@ -250,6 +252,8 @@ export type IconName =
   | 'package'
   | 'folder-open'
   | 'history'
+  | 'layout-dashboard'
+  | 'square-kanban'
 
 export const defaultIcons: Record<IconName, IconComponent> = {
   'chevron-right': ChevronRight,
@@ -362,6 +366,8 @@ export const defaultIcons: Record<IconName, IconComponent> = {
   package: Package,
   'folder-open': FolderOpen,
   history: History,
+  'layout-dashboard': LayoutDashboard,
+  'square-kanban': SquareKanban,
 }
 
 const IconContext = createContext<Record<IconName, IconComponent> | null>(null)

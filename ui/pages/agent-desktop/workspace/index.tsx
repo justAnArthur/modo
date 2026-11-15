@@ -212,7 +212,7 @@ export default function Workspace({
   const More = useIcon('more-horizontal')
 
   return (
-    <div className="flex h-full min-h-[640px] w-full bg-background">
+    <div className="@container flex h-full min-h-[640px] w-full bg-background">
       <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0} defaultOpen={sidebar}>
         <SessionSidebar className="h-full" value={selected} onValueChange={setSelected} onOpenSplit={setSplitId} />
         <Sidebar.Inset className="@container min-h-0 min-w-0">
@@ -251,7 +251,7 @@ export default function Workspace({
                   aria-label="Side pane"
                   aria-pressed={openPane !== 'none'}
                   active={openPane !== 'none'}
-                  className="hidden @4xl:inline-flex"
+                  className="hidden @3xl:inline-flex"
                   onClick={() => setOpenPane(openPane === 'none' ? 'changes' : 'none')}
                 >
                   <PanelRight />
@@ -289,16 +289,17 @@ export default function Workspace({
               </div>
             </main>
             {splitId && <SplitSession id={splitId} onClose={() => setSplitId(null)} />}
-            {openPane !== 'none' && (
-              <SidePane
-                pane={openPane}
-                onPaneChange={setOpenPane}
-                onClose={() => setOpenPane('none')}
-                className={cn('hidden w-[380px] shrink-0 border-l border-border', splitId ? '@6xl:flex' : '@4xl:flex')}
-              />
-            )}
           </div>
         </Sidebar.Inset>
+        {/* Outside the session card, on the window like the sessions sidebar. */}
+        {openPane !== 'none' && (
+          <SidePane
+            pane={openPane}
+            onPaneChange={setOpenPane}
+            onClose={() => setOpenPane('none')}
+            className={cn('hidden w-[380px] shrink-0', splitId ? '@7xl:flex' : '@5xl:flex')}
+          />
+        )}
       </Sidebar.Provider>
     </div>
   )

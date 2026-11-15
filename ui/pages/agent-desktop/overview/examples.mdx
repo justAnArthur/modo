@@ -1,0 +1,26 @@
+import Overview from './index'
+import { ScreenFrame } from '../../../blocks/agent-desktop/screen-frame'
+
+# By state
+
+Every session on one board: what needs you first, then what runs, what waits for review and what is idle. The strip on top is each profile's tightest limit.
+
+<ScreenFrame>
+  <Overview />
+</ScreenFrame>
+
+# By project
+
+Each project as a panel, a count per state, its sessions as rows.
+
+<ScreenFrame>
+  <Overview view="project" />
+</ScreenFrame>
+
+# Narrow window
+
+The columns stack.
+
+<ScreenFrame width={420} height={900}>
+  <Overview sidebar={false} />
+</ScreenFrame>
