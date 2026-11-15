@@ -74,8 +74,15 @@ function ReplyPopover({ session }: { session: BoardSession }) {
           </Button>
         }
       />
-      <Popover.Content side="bottom" align="end" sideOffset={8} className="w-96 gap-2 p-2">
-        {session.lastLine && <p className="m-0 px-1.5 pt-1 text-caption text-muted-foreground">{session.lastLine}</p>}
+      <Popover.Content
+        side="bottom"
+        align="end"
+        sideOffset={8}
+        className="w-96 gap-[var(--space-2)] p-[var(--space-2)] pt-[var(--space-3)]"
+      >
+        {session.lastLine && (
+          <p className="m-0 px-[var(--space-2)] text-caption text-muted-foreground">{session.lastLine}</p>
+        )}
         <SizeProvider size="compact">
           <InputMessage minRows={1} maxRows={4} placeholder={`Reply to ${session.title}`} />
         </SizeProvider>
@@ -204,11 +211,11 @@ function ByState({ sessions, onOpen }: { sessions: BoardSession[]; onOpen?: (id:
         if (rows.length === 0) return null
         return (
           <section key={column.status} aria-label={column.label} className="flex min-w-0 flex-col gap-1">
-            <div className="flex h-7 items-center gap-2 px-1">
+            <div className="flex h-7 items-center gap-2">
               <span className="text-caption weight-medium text-foreground">{column.label}</span>
               <span className="text-caption tabular-nums text-muted-foreground">{rows.length}</span>
             </div>
-            <div className="-mx-2 overflow-x-auto px-2 [&_table]:min-w-[640px] [&_table]:table-fixed">
+            <div className="-mx-2.5 overflow-x-auto [&_table]:min-w-[640px] [&_table]:table-fixed">
               <Table size="compact">
                 <Table.Body>
                   {rows.map((session, i) => (
@@ -241,7 +248,10 @@ function ProjectPanel({
     c => c.n > 0,
   )
   return (
-    <section aria-label={label} className={cn('flex min-w-0 flex-col gap-2 border border-border p-3', shape.container)}>
+    <section
+      aria-label={label}
+      className={cn('flex min-w-0 flex-col gap-2 border border-border p-[var(--space-3)]', shape.container)}
+    >
       <div className="flex min-w-0 items-center gap-2">
         <Folder size={16} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
         <span className="min-w-0 truncate text-subtitle weight-semibold text-foreground">{label}</span>
@@ -259,7 +269,7 @@ function ProjectPanel({
         </div>
       </div>
       {path && <span className="truncate font-mono text-caption text-muted-foreground">{path}</span>}
-      <FluidHover className="-mx-2">
+      <FluidHover className="-mx-3">
         {sessions.map(session => (
           <FluidHover.Item key={session.id} onClick={() => onOpen?.(session.id)} className="gap-2">
             <StatusDot status={session.status} />

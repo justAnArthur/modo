@@ -12,7 +12,7 @@ import { cn } from '../../lib/utils'
 export function PopoverSection({ title, aside, children }: { title: string; aside?: ReactNode; children: ReactNode }) {
   return (
     <section aria-label={title} className="flex flex-col gap-[var(--space-1)]">
-      <div className="flex items-baseline justify-between gap-[var(--space-2)] px-[var(--space-2)] text-caption text-muted-foreground">
+      <div className="flex items-baseline justify-between gap-[var(--space-2)] pl-[var(--space-2)] pr-[var(--space-3)] text-caption text-muted-foreground">
         <span>{title}</span>
         {aside && <span className="text-foreground">{aside}</span>}
       </div>

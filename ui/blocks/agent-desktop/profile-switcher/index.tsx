@@ -182,7 +182,9 @@ export default function ProfileSwitcher({
             {active.limits.map(limit => (
               <PopoverRow key={limit.label} label={limit.label}>
                 <Meter variant="line" className="w-16" label={limit.label} value={limit.value} />
-                <span className="w-28 text-right text-caption tabular-nums text-muted-foreground">{limit.detail}</span>
+                <span className="w-28 pr-[var(--space-3)] text-right text-caption tabular-nums text-muted-foreground">
+                  {limit.detail}
+                </span>
               </PopoverRow>
             ))}
           </PopoverSection>

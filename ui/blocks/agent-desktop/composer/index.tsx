@@ -91,8 +91,10 @@ const MODEL_NOTE: Record<string, string> = {
   'GLM-4.5-Air': 'Z.ai, lighter',
 }
 
-// A switch is a row of its own (label left, track right), lined up with PopoverRow.
-const SWITCH_ROW = 'w-full'
+// Inside a PopoverRow the row draws the label (foreground, like every row's), so the
+// switch keeps its label for screen readers only, drops its own padding, and its
+// track ends where a Select's chevron does (the trigger's --space-3 inset).
+const SWITCH_IN_ROW = 'py-0 pl-0 pr-[var(--space-3)] [&>span:not([role=switch])]:sr-only'
 
 const MODE_NOTE: Record<string, string> = {
   'Ask before edits': 'Asks before every edit and command',
@@ -173,15 +175,18 @@ function ProjectPicker({ locked = false }: { locked?: boolean }) {
             />
           </PopoverSection>
           <PopoverSection title="Checkout">
-            <Switch
-              label="New worktree"
-              trackSide="end"
-              checked={worktree}
-              onCheckedChange={setWorktree}
-              disabled={locked}
-              className={SWITCH_ROW}
-            />
-            <Switch label="Run setup script" trackSide="end" defaultChecked disabled={locked} className={SWITCH_ROW} />
+            <PopoverRow label="New worktree">
+              <Switch
+                label="New worktree"
+                checked={worktree}
+                onCheckedChange={setWorktree}
+                disabled={locked}
+                className={SWITCH_IN_ROW}
+              />
+            </PopoverRow>
+            <PopoverRow label="Run setup script">
+              <Switch label="Run setup script" defaultChecked disabled={locked} className={SWITCH_IN_ROW} />
+            </PopoverRow>
             <PopoverRow label="Base branch">
               <Select defaultValue="main" disabled={locked}>
                 <Select.Trigger variant="borderless" className="min-w-0" />
@@ -288,7 +293,9 @@ function RunSettings({
                 </Select.Content>
               </Select>
             </PopoverRow>
-            <Switch label="Fast mode" trackSide="end" checked={fast} onCheckedChange={setFast} className={SWITCH_ROW} />
+            <PopoverRow label="Fast mode">
+              <Switch label="Fast mode" checked={fast} onCheckedChange={setFast} className={SWITCH_IN_ROW} />
+            </PopoverRow>
             <PopoverRow label="Output style">
               <Select value={style} onValueChange={setStyle}>
                 <Select.Trigger variant="borderless" className="min-w-0" />

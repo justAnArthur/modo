@@ -143,7 +143,7 @@ function SplitSession({ id, onClose }: { id: string; onClose: () => void }) {
       aria-label={`Split: ${session?.title}`}
       className="hidden min-w-0 flex-1 flex-col border-l border-border @3xl:flex"
     >
-      <div className="flex h-12 shrink-0 items-center gap-2 px-4">
+      <div className="flex h-12 shrink-0 items-center gap-2 px-1.5">
         <span className="min-w-0 truncate text-body weight-medium text-foreground">{session?.title}</span>
         <Badge size="compact" color="gray" className="shrink-0">
           {session?.profile}
@@ -155,7 +155,7 @@ function SplitSession({ id, onClose }: { id: string; onClose: () => void }) {
       <Transcript>
         <DemoReading />
       </Transcript>
-      <div className="px-4 pb-4">
+      <div className="px-6 pb-4">
         <Composer />
       </div>
     </section>
@@ -265,7 +265,7 @@ export default function Workspace({
                   {profile.name} · {profile.defaultModel}
                 </span>
               )}
-              <div className="ml-auto flex shrink-0 items-center gap-0.5 pr-1">
+              <div className="ml-auto flex shrink-0 items-center gap-0.5">
                 <Tooltip content="Split view" side="bottom">
                   <Button
                     variant="ghost"

@@ -96,7 +96,7 @@ export function Tool({ tool, summary, value, index, status = 'done', meta, child
       </Accordion.Trigger>
       {children && (
         <Accordion.Content>
-          <div className="px-2.5 pb-2">{children}</div>
+          <div className="pb-2">{children}</div>
         </Accordion.Content>
       )}
     </Accordion.Item>
@@ -123,7 +123,7 @@ export function AgentRun({ agent, description, status = 'done', background = fal
   const shape = useShape()
   const Bot = useIcon('bot')
   return (
-    <div className={cn('flex flex-col gap-2 border border-border p-3', shape.container)}>
+    <div className={cn('flex flex-col gap-2 border border-border p-[var(--space-3)]', shape.container)}>
       <div className="flex min-w-0 items-center gap-2">
         <Bot size={16} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
         <span className="shrink-0 text-body weight-medium text-foreground">{agent}</span>

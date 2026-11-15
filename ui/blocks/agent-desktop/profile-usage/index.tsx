@@ -7,7 +7,6 @@
 
 'use client'
 
-import Badge from '../../../components/badge'
 import Button from '../../../components/button'
 import Meter from '../../../components/meter'
 import Sidebar from '../../../components/navigation/sidebar'
@@ -15,6 +14,7 @@ import Popover from '../../../components/overlays/popover'
 import { useIcon } from '../../../lib/icon-context'
 import { SizeProvider } from '../../../primitives/sizes'
 import { PROFILES, type Profile } from '../mock'
+import { POPOVER_FRAME, PopoverRow, PopoverSection } from '../popover-rows'
 import { ProfileTile } from '../profile-switcher'
 
 function tightest(profile: Profile) {
@@ -49,32 +49,34 @@ function UsageRow({ profile, onManage }: { profile: Profile; onManage?: () => vo
             </Sidebar.MenuButton>
           }
         />
-        <Popover.Content side="right" align="end" sideOffset={12} className="w-72 gap-3">
-          <div className="flex items-center gap-2">
-            <ProfileTile profile={profile} />
-            <Popover.Title>{profile.name}</Popover.Title>
-            <Badge size="compact" color={profile.provider === 'compatible' ? 'teal' : 'gray'}>
-              {profile.plan}
-            </Badge>
-          </div>
-          <Popover.Description className="font-mono">
-            {profile.provider === 'compatible' ? profile.baseUrl : profile.configDir}
-          </Popover.Description>
-          <SizeProvider size="compact">
-            <div className="flex flex-col gap-2.5">
+        <Popover.Content side="right" align="end" sideOffset={12} className={POPOVER_FRAME}>
+          <SizeProvider size="default">
+            <PopoverSection title={`${profile.name} · ${profile.plan}`} aside={`${profile.running} running`}>
+              <PopoverRow label="Config">
+                <span className="max-w-40 truncate pr-[var(--space-3)] font-mono text-caption text-muted-foreground">
+                  {profile.provider === 'compatible' ? profile.baseUrl : profile.configDir}
+                </span>
+              </PopoverRow>
+              <PopoverRow label="Model">
+                <span className="pr-[var(--space-3)] text-caption text-muted-foreground">{profile.defaultModel}</span>
+              </PopoverRow>
+            </PopoverSection>
+            <PopoverSection title="Limits">
               {profile.limits.map(limit => (
-                <Meter key={limit.label} label={limit.label} value={limit.value} detail={limit.detail} />
+                <PopoverRow key={limit.label} label={limit.label}>
+                  <Meter variant="line" className="w-16" label={limit.label} value={limit.value} />
+                  <span className="w-28 pr-[var(--space-3)] text-right text-caption tabular-nums text-muted-foreground">
+                    {limit.detail}
+                  </span>
+                </PopoverRow>
               ))}
+            </PopoverSection>
+            <div className="flex justify-end">
+              <Button variant="ghost" size="compact" leadingIcon={Settings} onClick={onManage}>
+                Profiles
+              </Button>
             </div>
           </SizeProvider>
-          <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
-            <span className="text-caption text-muted-foreground">
-              {profile.running} running · {profile.defaultModel}
-            </span>
-            <Button variant="ghost" size="compact" leadingIcon={Settings} onClick={onManage}>
-              Profiles
-            </Button>
-          </div>
         </Popover.Content>
       </Popover>
     </Sidebar.MenuItem>

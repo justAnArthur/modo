@@ -64,7 +64,7 @@ export default function NewSession({ profile = 'jobiflow', sidebar = true }: New
             />
             <section aria-label="Starters" className="flex flex-col gap-2">
               <span className="text-caption text-muted-foreground">Start with</span>
-              <Card.Group columns={3} className="-mx-2">
+              <Card.Group columns={3} className="-mx-3">
                 {STARTERS.map((starter, i) => (
                   <Card key={starter.title} index={i} onClick={() => {}} size="compact">
                     <Card.Header>
@@ -77,7 +77,7 @@ export default function NewSession({ profile = 'jobiflow', sidebar = true }: New
             </section>
             <section aria-label="Recent in modo" className="flex flex-col gap-2">
               <span className="text-caption text-muted-foreground">Recent in modo</span>
-              <FluidHover className="-mx-2">
+              <FluidHover className="-mx-3">
                 {recent.map(session => {
                   const Glyph = STATUS_GLYPH[session.status]
                   return (

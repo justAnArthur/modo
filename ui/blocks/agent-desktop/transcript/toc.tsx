@@ -11,6 +11,7 @@ import Popover from '../../../components/overlays/popover'
 import { useIcon } from '../../../lib/icon-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { PickList } from '../pick-list'
+import { POPOVER_FRAME, PopoverSection } from '../popover-rows'
 
 export interface TocChapter {
   id: string
@@ -51,28 +52,31 @@ export function Toc({ chapters, defaultValue, onValueChange }: TocProps) {
           </Button>
         }
       />
-      <Popover.Content side="bottom" align="end" sideOffset={8} className="w-64 gap-2 p-2">
-        <Popover.Title className="px-2 pt-1">Chapters</Popover.Title>
-        <PickList
-          label="Chapters"
-          value={current}
-          onValueChange={pick}
-          options={chapters.map((chapter, i) => ({
-            value: chapter.id,
-            label: chapter.title,
-            content: (
-              <span className="flex min-w-0 flex-1 gap-2">
-                <span className="w-4 shrink-0 text-right text-caption tabular-nums text-muted-foreground">{i + 1}</span>
-                <span className="flex min-w-0 flex-col">
-                  <span className="truncate text-body text-foreground">{chapter.title}</span>
-                  {chapter.detail && (
-                    <span className="truncate text-caption text-muted-foreground">{chapter.detail}</span>
-                  )}
+      <Popover.Content side="bottom" align="end" sideOffset={8} className={POPOVER_FRAME}>
+        <PopoverSection title="Chapters">
+          <PickList
+            label="Chapters"
+            value={current}
+            onValueChange={pick}
+            options={chapters.map((chapter, i) => ({
+              value: chapter.id,
+              label: chapter.title,
+              content: (
+                <span className="flex min-w-0 flex-1 gap-2">
+                  <span className="w-4 shrink-0 text-right text-caption tabular-nums text-muted-foreground">
+                    {i + 1}
+                  </span>
+                  <span className="flex min-w-0 flex-col">
+                    <span className="truncate text-body text-foreground">{chapter.title}</span>
+                    {chapter.detail && (
+                      <span className="truncate text-caption text-muted-foreground">{chapter.detail}</span>
+                    )}
+                  </span>
                 </span>
-              </span>
-            ),
-          }))}
-        />
+              ),
+            }))}
+          />
+        </PopoverSection>
       </Popover.Content>
     </Popover>
   )

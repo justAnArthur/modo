@@ -35,7 +35,10 @@ export function TaskList({ items, defaultOpen = true }: TaskListProps) {
   const current = items.find(i => i.status === 'in_progress')
 
   return (
-    <section aria-label="Tasks" className={cn('flex flex-col gap-1 border border-border px-3 py-2', shape.container)}>
+    <section
+      aria-label="Tasks"
+      className={cn('flex flex-col gap-1 border border-border p-[var(--space-3)]', shape.container)}
+    >
       <div className="flex min-w-0 items-center gap-2 text-caption">
         <span className="shrink-0 weight-medium text-foreground">Tasks</span>
         {!open && current && <span className="min-w-0 truncate text-muted-foreground">{current.content}</span>}
@@ -97,7 +100,7 @@ export function NextStep({ recap, ask, actions = [], onAction }: NextStepProps) 
   const shape = useShape()
   const Flag = useIcon('corner-down-right')
   return (
-    <section aria-label="Next step" className={cn('flex flex-col gap-3 bg-muted p-3.5', shape.container)}>
+    <section aria-label="Next step" className={cn('flex flex-col gap-3 bg-muted p-[var(--space-3)]', shape.container)}>
       <p className="m-0 text-body text-muted-foreground">{recap}</p>
       {ask && (
         <div className="flex flex-wrap items-center gap-2">

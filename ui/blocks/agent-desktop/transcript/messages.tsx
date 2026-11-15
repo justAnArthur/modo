@@ -71,7 +71,14 @@ export function UserMessage({ children, attachments }: UserMessageProps) {
   return (
     <div className="flex flex-col items-end gap-2 pl-[12%]">
       {attachments && <div className="flex flex-wrap justify-end gap-2">{attachments}</div>}
-      <div className={cn('min-w-0 bg-muted px-3.5 py-2.5 text-body text-foreground', shape.container)}>{children}</div>
+      <div
+        className={cn(
+          'min-w-0 bg-muted px-[var(--space-3)] py-[var(--space-2)] text-body text-foreground',
+          shape.container,
+        )}
+      >
+        {children}
+      </div>
     </div>
   )
 }
@@ -114,7 +121,7 @@ export function Thinking({ duration, children, defaultOpen = false }: ThinkingPr
       <Accordion.Item value="thinking">
         <Accordion.Trigger>Thought for {duration}</Accordion.Trigger>
         <Accordion.Content>
-          <div className="flex flex-col gap-2 border-l border-border pl-3 text-body text-muted-foreground">
+          <div className="flex flex-col gap-2 border-l border-border pl-[var(--space-3)] text-body text-muted-foreground">
             {children}
           </div>
         </Accordion.Content>

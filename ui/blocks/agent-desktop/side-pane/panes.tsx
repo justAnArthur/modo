@@ -192,7 +192,7 @@ export function ArtifactsPane({ artifacts = ARTIFACTS }: { artifacts?: Artifact[
   return (
     <div className="flex flex-col gap-3">
       <PaneHeader title="Artifacts" detail="Private until you share them" />
-      <Card.Group className="-mx-2">
+      <Card.Group className="-mx-3">
         {artifacts.map((artifact, i) => (
           <Card key={artifact.title} index={i} onClick={() => {}} size="compact">
             <Card.Header>

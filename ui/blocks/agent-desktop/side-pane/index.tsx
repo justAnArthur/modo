@@ -85,7 +85,7 @@ export default function SidePane({ pane, defaultPane = 'changes', onPaneChange, 
   return (
     <section aria-label="Side pane" className={cn('flex min-h-0 min-w-0 flex-col', className)}>
       <SizeProvider size="compact">
-        <div className="flex h-12 shrink-0 items-center gap-1 px-2">
+        <div className="flex h-12 shrink-0 items-center gap-1 px-1.5">
           <TabsSubtle
             activeLabel
             idPrefix="side-pane"

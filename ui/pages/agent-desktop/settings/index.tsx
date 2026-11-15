@@ -107,7 +107,7 @@ export default function Settings({ section = 'mcp', sidebar = true }: SettingsPr
             <Sidebar.Trigger />
             <span className="text-body weight-medium text-foreground">Settings</span>
             {scoped && (
-              <div className="ml-auto flex items-center gap-2 pr-2">
+              <div className="ml-auto flex items-center gap-2">
                 <span className="hidden text-caption text-muted-foreground @md:inline">Scope</span>
                 <Select defaultValue="jobiflow" size="compact">
                   <Select.Trigger variant="borderless" />

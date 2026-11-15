@@ -50,7 +50,7 @@ function Section({
 
 /** Tables scroll sideways on a narrow window instead of squeezing their columns. */
 function Wide({ children }: { children: ReactNode }) {
-  return <div className="-mx-2 overflow-x-auto px-2 [&_table]:min-w-[560px]">{children}</div>
+  return <div className="-mx-2.5 overflow-x-auto [&_table]:min-w-[560px]">{children}</div>
 }
 
 const MCP_BADGE: Record<McpServer['status'], { color: 'green' | 'amber' | 'red' | 'gray'; label: string }> = {

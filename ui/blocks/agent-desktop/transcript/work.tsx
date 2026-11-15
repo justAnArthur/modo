@@ -45,7 +45,7 @@ export function Work({ summary, detail, running = false, children }: WorkProps) 
           </span>
         </Accordion.Trigger>
         <Accordion.Content>
-          <div className="flex flex-col gap-2 border-l border-border pb-1 pl-3 ml-2.5">{children}</div>
+          <div className="flex flex-col gap-2 border-l border-border pb-1 pl-[var(--space-3)]">{children}</div>
         </Accordion.Content>
       </Accordion.Item>
     </Accordion>

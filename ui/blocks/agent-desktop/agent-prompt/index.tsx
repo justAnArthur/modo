@@ -63,7 +63,11 @@ function AgentPrompt({ title, icon = 'circle-alert', tag, children, actions, hin
   const shape = useShape()
   const Icon = useIcon(icon)
   return (
-    <Elevated offset={2} shadowLevel={3} className={cn('flex flex-col gap-3 p-3.5', shape.container, className)}>
+    <Elevated
+      offset={2}
+      shadowLevel={3}
+      className={cn('flex flex-col gap-3 p-[var(--space-3)]', shape.container, className)}
+    >
       <div className="flex min-w-0 items-center gap-2">
         <Icon size={16} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
         <span className="min-w-0 text-body weight-medium text-foreground">{title}</span>
@@ -196,7 +200,7 @@ function Question({ question, tag, options, multiSelect = false, onSubmit }: Que
     >
       <div className={cn('grid gap-3', hasPreviews && '@container')}>
         <div className={cn('grid gap-3', hasPreviews && '@lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]')}>
-          <div className="-mx-1.5 flex min-w-0 flex-col gap-1">{list}</div>
+          <div className={cn('flex min-w-0 flex-col gap-1', multiSelect ? '-mx-3' : '-mx-2')}>{list}</div>
           {hasPreviews && (
             <div className="flex min-w-0 flex-col gap-1.5">
               <span className="text-caption text-muted-foreground">Preview</span>
@@ -239,7 +243,7 @@ function Plan({ children, onDecide }: PlanProps) {
       }
     >
       <ScrollArea className="max-h-72 rounded-xl border border-border" viewportClassName="scroll-fade">
-        <div className={cn(PROSE, 'p-3.5')}>{children}</div>
+        <div className={cn(PROSE, 'p-[var(--space-3)]')}>{children}</div>
       </ScrollArea>
       <Textarea
         minRows={1}
