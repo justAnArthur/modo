@@ -54,3 +54,19 @@ Right-click anywhere in the area (long-press on touch): the menu swells out of t
     <ContextMenu.Item index={2} icon={Printer} label="Print…" shortcut="⌘P" />
   </ContextMenu.Content>
 </ContextMenu>
+
+# Selection
+
+Dropdown's selection props work here too. `defaultCheckedIndex` makes the rows radio options (`menuitemradio`): the menu moves the check itself.
+
+<ContextMenu>
+  <ContextMenu.Trigger className="flex flex-wrap h-40 w-full max-w-lg items-center justify-center rounded-xl border border-dashed border-border text-caption text-muted-foreground">
+    Right-click to sort
+  </ContextMenu.Trigger>
+  <ContextMenu.Content defaultCheckedIndex={0}>
+    <ContextMenu.Label>Sort by</ContextMenu.Label>
+    <ContextMenu.Item index={0} label="Name" />
+    <ContextMenu.Item index={1} label="Date modified" />
+    <ContextMenu.Item index={2} label="Size" />
+  </ContextMenu.Content>
+</ContextMenu>
