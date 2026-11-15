@@ -84,6 +84,7 @@
     "cn": "^0.3.0",
     "date-fns": "^4.4.0",
     "lucide-react": "^1.47.0",
+    "marked": "^18.0.14",
     "motion": "^13.4.0",
     "react-day-picker": "^10.0.2",
     "sugar-high": "^2.5.1"
