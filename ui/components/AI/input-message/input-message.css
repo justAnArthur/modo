@@ -5,13 +5,7 @@
  */
 
 /* The edge is surface-2's 1px ring, recolored in place (drag > focus > hover,
-   by specificity), so it gains contrast without thickening. The drop keeps
-   the composer's lift. */
-[data-input-message] {
-  --composer-edge-drop: 0 1px 1px -0.5px var(--shadow-color);
-  --composer-edge-focus: color-mix(in oklab, var(--foreground) 20%, transparent);
-}
-
+   by specificity), so it gains contrast without thickening. */
 :where([data-input-message][data-click-to-focus]):hover {
   box-shadow:
     0 0 0 1px var(--border),

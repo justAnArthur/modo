@@ -7,9 +7,9 @@
 
 'use client'
 
-import { addYears, endOfYear, format, type Locale, startOfMonth, startOfYear } from 'date-fns'
+import { format, type Locale, startOfMonth } from 'date-fns'
 import { type RefObject, useMemo, useRef } from 'react'
-import { defaultLocale, fieldLabel, parseMonthText } from '../../../../lib/date-locale'
+import { defaultLocale, fieldLabel, monthRange, parseMonthText } from '../../../../lib/date-locale'
 import type { FieldVariant } from '../../../../lib/field-classes'
 import { ScrollColumn } from '../../../../lib/scroll-column'
 import type { SizeVariant } from '../../../../lib/size-context'
@@ -87,8 +87,7 @@ function MonthPicker({
   const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
   const input = useRef<HTMLInputElement>(null)
   const today = useMemo(() => new Date(), [])
-  const start = startOfMonth(startMonth ?? startOfYear(addYears(today, -100)))
-  const end = startOfMonth(endMonth ?? endOfYear(addYears(today, 50)))
+  const { start, end } = monthRange(today, startMonth, endMonth)
   const year = value?.getFullYear() ?? today.getFullYear()
   const formatted = value ? format(value, 'LLLL y', { locale }) : ''
 

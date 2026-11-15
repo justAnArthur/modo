@@ -11,6 +11,7 @@ import type { UseFluidHoverReturn } from './use-fluid-hover'
 
 const INDEX_ATTR = 'data-fluid-hover-index'
 const ROW = `[${INDEX_ATTR}]`
+const ENABLED_ROW = `${ROW}:not([aria-disabled="true"])`
 
 /** The fluid-hover index of the row holding `target`, or `null` outside any row. */
 export function rowIndexOf(target: EventTarget | null): number | null {
@@ -66,7 +67,7 @@ const PREV = { y: ['ArrowUp'], xy: ['ArrowUp', 'ArrowLeft'] }
  * A group of focusable rows that the group itself navigates: `useRowFocus`
  * plus arrow keys (wrapping), Home and End over the rows. Rows are the
  * `data-fluid-hover-index` wrappers, never a hidden primitive inside one
- * that carries the same role.
+ * that carries the same role; `aria-disabled` rows are skipped.
  */
 export function useRowGroup(
   hover: Pick<UseFluidHoverReturn, 'itemRects' | 'setActiveIndex'>,
@@ -75,7 +76,7 @@ export function useRowGroup(
   const focus = useRowFocus(hover)
 
   const onKeyDown = (e: KeyboardEvent<HTMLElement>) => {
-    const rows = Array.from(e.currentTarget.querySelectorAll<HTMLElement>(ROW))
+    const rows = Array.from(e.currentTarget.querySelectorAll<HTMLElement>(ENABLED_ROW))
     const at = rows.indexOf(e.target as HTMLElement)
     if (at === -1) return
 

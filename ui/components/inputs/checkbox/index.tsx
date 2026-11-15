@@ -244,8 +244,7 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
     return (
       <div
         ref={mergeRefs(internalRef, ref)}
-        // A disabled row drops out of the group's arrow-key rows.
-        data-fluid-hover-index={disabled ? undefined : index}
+        data-fluid-hover-index={index}
         tabIndex={disabled ? -1 : 0}
         role="checkbox"
         aria-checked={checked}

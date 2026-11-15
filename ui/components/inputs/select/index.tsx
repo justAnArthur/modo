@@ -36,11 +36,10 @@ import {
   useOverlayRoot,
   usePortalContainer,
 } from '../../../lib/overlay'
-import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
+import { isDisabledRow, POPUP_SHAPE, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
 import { CheckMark, PopupLabel, PopupSeparator, RowIcon, rowClasses, rowLabelClass } from '../../../lib/popup-rows'
 import { PopupSurface } from '../../../lib/popup-surface'
 import { useRowFocus } from '../../../lib/row-group'
-import { shapeMap } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
@@ -53,10 +52,6 @@ import { SizeScope } from '../../../primitives/sizes'
 // A pick holds the popup open this long, so the check drawing in and the
 // selected background springing to the row are seen before the close.
 const selectionAckMs = 300
-
-// Lists keep the rounded radii whatever the global shape: pill corners on a
-// popover distort its padding and break the rows' concentric fit.
-const popupShape = shapeMap.rounded
 
 interface SelectContextValue {
   value: string
@@ -342,10 +337,10 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
             >
               <PopupSurface
                 morph={morph}
-                radius={popupShape.container}
+                radius={POPUP_SHAPE.container}
                 className={cn(
                   'flex min-w-[var(--anchor-width)] max-h-[min(300px,var(--available-height))] flex-col overflow-hidden',
-                  popupShape.container,
+                  POPUP_SHAPE.container,
                   className,
                 )}
               >
@@ -355,11 +350,11 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
                       <GooIndicator
                         rect={checkedRect}
                         opacity={open ? 1 : 0}
-                        className={cn('bg-active', popupShape.bg)}
+                        className={cn('bg-active', POPUP_SHAPE.bg)}
                       />
                     )}
-                    <FluidHoverHighlight hover={hover} hidden={!open} className={popupShape.bg} />
-                    <FocusRing rect={focusRect} className={popupShape.focusRing} />
+                    <FluidHoverHighlight hover={hover} hidden={!open} className={POPUP_SHAPE.bg} />
+                    <FocusRing rect={focusRect} className={POPUP_SHAPE.focusRing} />
                     {children}
                   </div>
                 </ScrollArea>
@@ -416,7 +411,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
           <div
             ref={mergedRef}
             data-fluid-hover-index={index}
-            className={cn(rowClasses({ size: sizeClasses, shape: popupShape, lit, disabled }), className)}
+            className={cn(rowClasses({ size: sizeClasses, shape: POPUP_SHAPE, lit, disabled }), className)}
             {...props}
           />
         }

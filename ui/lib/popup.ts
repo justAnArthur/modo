@@ -8,9 +8,14 @@
 
 // ---------------------------------------------------------------------------
 // Shared popup chrome for the dropdown, select, and combobox popups: the
-// ScrollArea sizing the list scrolls inside. One definition, so the three
-// popups never drift apart.
+// shape and the ScrollArea sizing the list scrolls inside. One definition,
+// so the popups never drift apart.
 // ---------------------------------------------------------------------------
+
+import { shapeMap } from './shape-context'
+
+/** Popups keep the rounded radii whatever the global shape: pill corners distort their padding and break the rows' concentric fit. */
+export const POPUP_SHAPE = shapeMap.rounded
 
 /**
  * Popup lists scroll inside ScrollArea: the hover-revealed thumb instead of

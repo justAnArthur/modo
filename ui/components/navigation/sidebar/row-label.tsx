@@ -52,7 +52,7 @@ export function MenuRowLabel({
 
   return (
     <>
-      <WeightLabel emphasized={emphasized} lit={lit} trim truncate className={cn('text-left', textClass)}>
+      <WeightLabel emphasized={emphasized} lit={lit} trim truncate="line" className={cn('text-left', textClass)}>
         {label}
       </WeightLabel>
       {rest}

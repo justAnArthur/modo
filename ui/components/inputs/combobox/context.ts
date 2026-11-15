@@ -7,7 +7,6 @@
 'use client'
 
 import { createContext, type ReactNode, type RefObject, useContext } from 'react'
-import { shapeMap } from '../../../lib/shape-context'
 
 /** An object item: `value` and `label`, plus whatever the rows need. */
 export interface ComboboxItemObject {
@@ -35,10 +34,6 @@ export const CREATE_VALUE = '\0create'
 export function isCreateItem(item: ComboboxItemData): boolean {
   return itemValue(item) === CREATE_VALUE
 }
-
-// Lists keep the rounded radii whatever the global shape: pill corners on a
-// popover distort its padding and break the rows' concentric fit.
-export const popupShape = shapeMap.rounded
 
 interface ComboboxContextValue {
   /** One entry in single mode, any number in multiple. */

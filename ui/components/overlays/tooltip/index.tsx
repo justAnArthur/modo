@@ -91,8 +91,6 @@ interface TooltipProps {
   open?: boolean
   /** Initial open state, for an uncontrolled tooltip. Defaults to `false`. */
   defaultOpen?: boolean
-  /** @deprecated Use `open`. */
-  forceOpen?: boolean
   /** Called when hover or focus opens or closes the tooltip, also while `open` holds it. */
   onOpenChange?: (open: boolean) => void
   /** Follow the cursor along one axis while hovering the trigger, for tall or wide triggers (the Sidebar rail) where a centered tooltip sits far from the pointer. The other axis stays anchored by `side`. */
@@ -137,16 +135,14 @@ function Tooltip({
   delayDuration,
   className,
   contentClassName,
-  open: openProp,
+  open: held,
   defaultOpen,
-  forceOpen,
   onOpenChange,
   followCursor,
   from,
   effect = 'goo',
   tier = 'moderate',
 }: TooltipProps) {
-  const held = openProp ?? forceOpen
   // The root tracks hover and focus even while `open` holds it, so letting go
   // shows what the pointer is actually doing.
   const root = useOverlayRoot({ defaultOpen, onOpenChange })

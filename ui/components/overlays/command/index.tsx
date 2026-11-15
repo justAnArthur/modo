@@ -28,9 +28,8 @@ import {
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
-import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
+import { isDisabledRow, POPUP_SHAPE, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
 import { PopupLabel, RowIcon, rowClasses, rowLabelClass } from '../../../lib/popup-rows'
-import { shapeMap } from '../../../lib/shape-context'
 import { useSize } from '../../../lib/size-context'
 import type { SlotProps } from '../../../lib/slot'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
@@ -57,9 +56,6 @@ interface CommandGroup {
 }
 
 type CommandItems = CommandItem[] | CommandGroup[]
-
-// Lists keep the rounded radii whatever the global shape, so the highlight sits concentric.
-const listShape = shapeMap.rounded
 
 const CommandContext = createContext<{ trigger: RefObject<HTMLButtonElement>; close: () => void; session: number }>({
   trigger: { current: null },
@@ -123,7 +119,7 @@ function CommandRow({
       disabled={item.disabled}
       onClick={() => onPick(item)}
       className={cn(
-        rowClasses({ size, shape: listShape, lit: active }),
+        rowClasses({ size, shape: POPUP_SHAPE, lit: active }),
         'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
       )}
     >
@@ -161,7 +157,7 @@ function CommandList({ onPick, emptyMessage, className }: CommandListProps) {
           {emptyMessage}
         </Autocomplete.Empty>
         <Autocomplete.List ref={containerRef} className="relative flex flex-col p-1 outline-none data-[empty]:p-0">
-          <FluidHoverHighlight rect={rect} session={0} className={listShape.bg} />
+          <FluidHoverHighlight rect={rect} session={0} className={POPUP_SHAPE.bg} />
           {isGrouped(filtered)
             ? filtered.map(group => {
                 const first = start
@@ -267,7 +263,7 @@ const CommandContent = forwardRef<HTMLDivElement, CommandContentProps>(
       <DialogContent
         ref={ref}
         position="top"
-        size="lg"
+        width="lg"
         showCloseButton={false}
         aria-label={label}
         className="p-0"
