@@ -1,43 +1,27 @@
 /*!
  * Local addition (not part of Fluid Functionalism): a hover card that oozes
- * out of its link. The card grows out of the trigger through
- * `lib/use-morph.ts`, with the goo neck by default, like Popover — after
- * beUI's gooey popover (github.com/starc007/ui-components
- * `components/motion/popover.tsx` @ de52f337e520e7ee37749b36eb1c32df86137bcb —
- * MIT © 2026 Saurabh Chauhan, notice: LICENSE.beui). Behavior is Base UI's
- * PreviewCard: hover and focus delays, the safe path into the card, dismissal
- * and positioning.
+ * out of its link, like Popover, after beUI's gooey popover
+ * (github.com/starc007/ui-components `components/motion/popover.tsx` @
+ * de52f337e520e7ee37749b36eb1c32df86137bcb — MIT © 2026 Saurabh Chauhan,
+ * notice: LICENSE.beui). Behavior is Base UI's PreviewCard.
  */
 
 'use client'
 
 import { PreviewCard as PreviewCardPrimitive } from '@base-ui/react/preview-card'
+import { type AnchorHTMLAttributes, forwardRef, type HTMLAttributes, type ReactElement, type ReactNode } from 'react'
+import { useMergeRefs } from '../../../lib/merge-refs'
 import {
-  type AnchorHTMLAttributes,
-  createContext,
-  forwardRef,
-  type HTMLAttributes,
-  type ReactElement,
-  type ReactNode,
-  type RefObject,
-  useContext,
-  useImperativeHandle,
-  useMemo,
-} from 'react'
-import { MorphSurface } from '../../../lib/morph-layers'
-import { useShape } from '../../../lib/shape-context'
-import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
-import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
-import { useControllableState } from '../../../lib/use-controllable-state'
-import { inPlaceOffset, type MorphOrigin, opensInPlace, useMorph, useMorphOrigin } from '../../../lib/use-morph'
+  type AnchorProps,
+  OverlayContext,
+  positionerProps,
+  useOverlay,
+  useOverlayRoot,
+  usePortalContainer,
+} from '../../../lib/overlay'
+import { PopupSurface } from '../../../lib/popup-surface'
+import { type MorphFrom, type MorphProps, useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-
-interface PreviewCardContextValue {
-  open: boolean
-  origin: RefObject<MorphOrigin>
-}
-
-const PreviewCardContext = createContext<PreviewCardContextValue>({ open: false, origin: { current: {} } })
 
 interface PreviewCardTriggerProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   /** Hover delay before the card opens, in ms. Defaults to `600`. */
@@ -68,23 +52,9 @@ const PreviewCardTrigger = forwardRef<HTMLAnchorElement, PreviewCardTriggerProps
 )
 PreviewCardTrigger.displayName = 'PreviewCardTrigger'
 
-interface PreviewCardContentProps extends HTMLAttributes<HTMLDivElement> {
-  /** Side of the link the card opens on; it flips when there is no room. Defaults to `'bottom'`. */
-  side?: 'top' | 'right' | 'bottom' | 'left'
-  /** Alignment along that side. Defaults to `'center'`, or `'start'` when the card opens in place (`effect="morph"` with `hideSource`). */
-  align?: 'start' | 'center' | 'end'
-  /** Gap between link and card in px — the length of the goo neck. Ignored when the card opens in place over its link (`effect="morph"` with `hideSource`). Defaults to `12`. */
-  sideOffset?: number
-  /** Where the card grows from (see Morph): the hovered link, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
-  from?: 'trigger' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
-  /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
-  effect?: 'goo' | 'morph' | 'slide' | 'fade'
-  /** Hide the link while open, so it reads as turning into the card. Defaults to `false`. */
-  hideSource?: boolean
-  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'slow'`. */
-  tier?: 'moderate' | 'slow'
-  /** Portal target. Defaults to the document body. */
-  container?: HTMLElement | null
+interface PreviewCardContentProps extends AnchorProps, Omit<MorphProps, 'from'>, HTMLAttributes<HTMLDivElement> {
+  /** Where the card grows from (see Morph): the hovered link, its own center, a viewport edge, or a ref to any element. A hover has no press point. */
+  from?: Exclude<MorphFrom, 'pointer'>
   /** Classes for the card's content box: padding, width, layout. */
   className?: string
   /** The card's content. Everything inside reads the card's surface level as its substrate. */
@@ -92,50 +62,26 @@ interface PreviewCardContentProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const PreviewCardContent = forwardRef<HTMLDivElement, PreviewCardContentProps>(
-  (
-    {
-      side = 'bottom',
-      align,
-      sideOffset = 12,
-      from,
-      effect,
-      hideSource,
-      tier,
-      container,
-      className,
-      children,
-      ...props
-    },
-    ref,
-  ) => {
-    const { open, origin } = useContext(PreviewCardContext)
+  ({ side, align, sideOffset, from, effect, hideSource, tier, container, className, children, ...props }, ref) => {
+    const { open, origin } = useOverlay('PreviewCard.Content')
     const morph = useMorph(open, origin, { from, effect, hideSource, tier })
-    const inPlace = opensInPlace({ effect, hideSource })
-    useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
-    const shape = useShape()
-    // Fixed shadow, like Popover (see Elevated).
-    const level = Math.min(useSurface() + 2, 8)
+    const popupRef = useMergeRefs(ref, morph.popupRef)
 
     return (
-      <PreviewCardPrimitive.Portal container={container ?? undefined}>
+      <PreviewCardPrimitive.Portal container={usePortalContainer(container)}>
         <PreviewCardPrimitive.Positioner
-          side={side}
-          align={align ?? (inPlace ? 'start' : 'center')}
-          sideOffset={inPlace ? inPlaceOffset : sideOffset}
-          className="z-50 outline-none"
+          {...positionerProps(
+            { side, align, sideOffset, effect, hideSource },
+            { side: 'bottom', align: 'center', sideOffset: 12 },
+          )}
         >
-          <PreviewCardPrimitive.Popup ref={morph.popupRef} className="relative outline-none" {...props}>
-            <SurfaceProvider value={level}>
-              <MorphSurface
-                morph={morph}
-                bg={SURFACE_BG[level]}
-                shadow={SURFACE_SHADOW[3]}
-                radius={shape.container}
-                className={cn('flex w-max max-w-[min(92vw,20rem)] flex-col gap-3 p-4', className)}
-              >
-                {children}
-              </MorphSurface>
-            </SurfaceProvider>
+          <PreviewCardPrimitive.Popup ref={popupRef} className="relative outline-none" {...props}>
+            <PopupSurface
+              morph={morph}
+              className={cn('flex w-max max-w-[min(92vw,20rem)] flex-col gap-3 p-4', className)}
+            >
+              {children}
+            </PopupSurface>
           </PreviewCardPrimitive.Popup>
         </PreviewCardPrimitive.Positioner>
       </PreviewCardPrimitive.Portal>
@@ -172,30 +118,25 @@ interface PreviewCardProps {
  * Statics:
  * - `PreviewCard.Trigger` — the link: `href`, `delay`, `closeDelay`, or
  *   `render` for another element.
- * - `PreviewCard.Content` — the card: `side`, `align`, `sideOffset` and the
- *   morph options `from`, `effect`, `hideSource`, `tier`.
+ * - `PreviewCard.Content` — the card: `side` (default `'bottom'`), `align`
+ *   (default `'center'`, or `'start'` when it opens in place), `sideOffset`
+ *   (default `12`), `container`, and the morph options `from` (default
+ *   `'trigger'`), `effect` (default `'goo'`), `hideSource`, `tier` (default
+ *   `'slow'`).
  *
  * @example {@include ./examples.mdx}
  * @source https://github.com/starc007/ui-components/blob/de52f337e520e7ee37749b36eb1c32df86137bcb/components/motion/popover.tsx beUI
  * @license MIT © 2026 Saurabh Chauhan
  */
-function PreviewCard({ open, defaultOpen = false, onOpenChange, children }: PreviewCardProps) {
-  const [current, setCurrent] = useControllableState(open, defaultOpen, onOpenChange)
-  const { origin, capture } = useMorphOrigin()
-  const ctx = useMemo(() => ({ open: current, origin }), [current, origin])
+function PreviewCard({ open, defaultOpen, onOpenChange, children }: PreviewCardProps) {
+  const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
 
   return (
-    <PreviewCardContext.Provider value={ctx}>
-      <PreviewCardPrimitive.Root
-        open={current}
-        onOpenChange={(next, details) => {
-          if (next) capture(details)
-          setCurrent(next)
-        }}
-      >
+    <OverlayContext.Provider value={root.state}>
+      <PreviewCardPrimitive.Root open={root.open} onOpenChange={root.onOpenChange}>
         {children}
       </PreviewCardPrimitive.Root>
-    </PreviewCardContext.Provider>
+    </OverlayContext.Provider>
   )
 }
 

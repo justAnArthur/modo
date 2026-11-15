@@ -1,8 +1,6 @@
-/*
- * Local addition (not part of Fluid Functionalism): a confirm dialog that must
- * be answered. Base UI's AlertDialog root (`role="alertdialog"`, always modal,
- * no outside-press dismissal) under Dialog's own parts, which Base UI shares
- * between the two, so the panel morphs exactly like Dialog's.
+/*!
+ * Local addition (not part of Fluid Functionalism): Base UI's AlertDialog root
+ * under Dialog's parts, which Base UI shares between the two.
  */
 
 'use client'
@@ -30,7 +28,7 @@ const AlertDialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
 AlertDialogContent.displayName = 'AlertDialogContent'
 
 interface AlertDialogProps {
-  /** Controlled open state. */
+  /** Controlled open state. Pair with `onOpenChange`. */
   open?: boolean
   /** Initial open state, for an uncontrolled alert dialog. Defaults to `false`. */
   defaultOpen?: boolean
@@ -47,9 +45,9 @@ interface AlertDialogProps {
  * actions (and Escape) do, so a destructive step is never confirmed or
  * skipped by accident. Screen readers announce it as an alert. Everything
  * else is Dialog's: the panel grows out of its trigger with the goo neck by
- * default (see Morph), takes the same `size`, `position` and morph options,
- * and lifts 4 surface levels. Unlike Dialog it has no ✕ unless
- * `showCloseButton` asks for one.
+ * default (see Morph), takes the same `width`, `position`, `container` and
+ * morph options, and lifts 4 surface levels. Unlike Dialog it has no ✕
+ * unless `showCloseButton` asks for one.
  *
  * Statics: the same parts as Dialog — `AlertDialog.Trigger`,
  * `AlertDialog.Content`, `AlertDialog.Header`, `AlertDialog.Footer`,
