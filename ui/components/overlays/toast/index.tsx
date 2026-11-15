@@ -1,28 +1,21 @@
 /*!
  * Local addition (not part of Fluid Functionalism): gooey toasts after Sileo
  * (github.com/hiaaryan/sileo `src/sileo.tsx` + `src/styles.css` @
- * 9793f844349983e140cf33cebbb8f51626d41407 — MIT, notice: LICENSE.sileo). A
- * pill with the state's icon and title melts into a body with the description
- * and an action, through the shared goo filter; the body opens a beat after
- * the toast lands and folds back before it leaves (Sileo's autopilot), or
- * whenever it is hovered. Base UI's Toast owns the queue, timers, swipe to
- * dismiss and announcements; Sileo's own store, timers and swipe are not
- * ported. The toast is drawn like every other morph surface: the Elevated
- * level's background shapes melted by the shared goo filter, their shadows
- * beneath, the content on top. Colors are the status tokens, the sizes the
- * control ladder's, and the motion the spring tiers; reduced motion keeps the
- * fades and snaps the shapes.
+ * 9793f844349983e140cf33cebbb8f51626d41407 — MIT, notice: LICENSE.sileo).
+ * Base UI's Toast owns the queue, timers, swipe and announcements; Sileo's
+ * store, timers and swipe are not ported.
  */
 
 'use client'
 
 import { Toast as ToastPrimitive } from '@base-ui/react/toast'
-import { ArrowRight, Check, CircleAlert, Info, LoaderCircle, type LucideIcon, X } from 'lucide-react'
+import { CircleAlert, Info } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   cloneElement,
   createContext,
   forwardRef,
+  type MouseEvent,
   type ReactNode,
   type Ref,
   useContext,
@@ -33,6 +26,7 @@ import {
   useRef,
   useState,
 } from 'react'
+import { type IconComponent, useIcons } from '../../../lib/icon-context'
 import { GooFilter } from '../../../lib/morph-layers'
 import { useReduceMotion } from '../../../lib/reduced-motion'
 import { useShape } from '../../../lib/shape-context'
@@ -40,7 +34,7 @@ import { sizeMap } from '../../../lib/size-context'
 import { type SlotProps, slotRender } from '../../../lib/slot'
 import { spring } from '../../../lib/springs'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
-import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
+import { SurfaceProvider, useLift } from '../../../lib/surface-context'
 import { GOO_BLUR_RATIO, holdExit } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import Button from '../../button'
@@ -57,13 +51,18 @@ interface ToastOptions {
   action?: { label: string; onClick?: () => void }
 }
 
-const ICONS: Record<ToastType, LucideIcon> = {
-  success: Check,
-  loading: LoaderCircle,
-  error: X,
-  warning: CircleAlert,
-  info: Info,
-  action: ArrowRight,
+/** The state's glyph from the icon context; `warning` and `info` have no name there yet. */
+function useToastIcon(type: ToastType): IconComponent {
+  const icons = useIcons()
+  const glyphs: Record<ToastType, IconComponent> = {
+    success: icons.check,
+    loading: icons.loader,
+    error: icons.x,
+    warning: CircleAlert,
+    info: Info,
+    action: icons['arrow-right'],
+  }
+  return glyphs[type]
 }
 
 // Literal per state so the class extractor sees each one.
@@ -150,11 +149,11 @@ function Shape({ box, className, shapeRef }: { box: Box; className: string; shap
 function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
   const { position, timeout } = useContext(ToastSettings)
   const shape = useShape()
-  // Lifts 2 levels off its substrate with a fixed shadow, like a popover.
-  const level = Math.min(useSurface() + 2, 8)
+  // Lifts like a popup: 2 levels, fixed shadow.
+  const level = useLift(2)
   const gooId = `toast-goo-${useId().replace(/:/g, '')}`
   const type = (toast.type ?? 'info') as ToastType
-  const Icon = ICONS[type]
+  const Icon = useToastIcon(type)
   const top = position.startsWith('top')
   const ending = toast.transitionStatus === 'ending'
   const hasBody = Boolean(toast.description || toast.actionProps)
@@ -220,7 +219,6 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
   const pill = { x: pillX, y: top ? 0 : height - pillHeight, width: size.pill, height: pillHeight }
   const bodyBox = { x: 0, y: top ? PILL : 0, width: size.width, height: bodyHeight }
   const reduced = useReduceMotion()
-  // Reduced motion keeps the fades and drops the travel.
   const away = reduced ? { opacity: 0 } : { opacity: 0, y: top ? -6 : 6, scale: 0.95 }
   const move = reduced ? SNAP : spring.slow
 
@@ -243,7 +241,6 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
       <GooFilter id={gooId} blur={BLUR} />
       <Shape box={pill} className={cn('rounded-full', SURFACE_SHADOW[3])} />
       {hasBody && <Shape box={bodyBox} className={cn(shape.container, SURFACE_SHADOW[3])} />}
-      {/* The filter is the effect itself: it melts the two token-filled shapes into one. */}
       <div aria-hidden className="pointer-events-none absolute inset-0" style={{ filter: `url(#${gooId})` }}>
         <Shape box={pill} className={cn('rounded-full', SURFACE_BG[level])} />
         {hasBody && <Shape box={bodyBox} shapeRef={bodyShape} className={cn(shape.container, SURFACE_BG[level])} />}
@@ -304,7 +301,7 @@ interface ToastTriggerProps extends Omit<SlotProps, 'type'> {
   /** Text for the body the pill melts into. */
   description?: string
   /** State: sets the icon and its color. Defaults to `'info'`. */
-  type?: 'success' | 'loading' | 'error' | 'warning' | 'info' | 'action'
+  type?: ToastType
   /** Ms before it leaves; 0 keeps it until dismissed. Defaults to the `Toast`'s `timeout`. */
   timeout?: number
   /** A button in the body. */
@@ -338,7 +335,7 @@ const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
   ) => {
     const toast = useToast()
     const el = slotRender(render, asChild, children)
-    const press = (event: React.MouseEvent<HTMLButtonElement>) => {
+    const press = (event: MouseEvent<HTMLButtonElement>) => {
       onClick?.(event)
       if (promise) {
         // The error toast is the report; the rejection Base UI hands back would only surface unhandled.
