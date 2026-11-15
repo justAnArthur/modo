@@ -45,7 +45,7 @@ export function withHead(html: string, tags: string): string {
 }
 
 /** The first paragraph of Markdown as one plain line, cut near 160 characters. */
-export function plainText(md: string): string {
+function plainText(md: string): string {
   const text = (md.trim().split(/\n\s*\n/)[0] ?? '')
     .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
     .replace(/[`*_~]/g, '')
