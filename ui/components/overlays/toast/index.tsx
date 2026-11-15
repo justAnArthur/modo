@@ -9,7 +9,6 @@
 'use client'
 
 import { Toast as ToastPrimitive } from '@base-ui/react/toast'
-import { CircleAlert, Info } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   cloneElement,
@@ -26,7 +25,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { type IconComponent, useIcons } from '../../../lib/icon-context'
+import { type IconName, useIcon } from '../../../lib/icon-context'
 import { GooFilter } from '../../../lib/morph-layers'
 import { useReduceMotion } from '../../../lib/reduced-motion'
 import { useShape } from '../../../lib/shape-context'
@@ -51,18 +50,13 @@ interface ToastOptions {
   action?: { label: string; onClick?: () => void }
 }
 
-/** The state's glyph from the icon context; `warning` and `info` have no name there yet. */
-function useToastIcon(type: ToastType): IconComponent {
-  const icons = useIcons()
-  const glyphs: Record<ToastType, IconComponent> = {
-    success: icons.check,
-    loading: icons.loader,
-    error: icons.x,
-    warning: CircleAlert,
-    info: Info,
-    action: icons['arrow-right'],
-  }
-  return glyphs[type]
+const GLYPH: Record<ToastType, IconName> = {
+  success: 'check',
+  loading: 'loader',
+  error: 'x',
+  warning: 'circle-alert',
+  info: 'info',
+  action: 'arrow-right',
 }
 
 // Literal per state so the class extractor sees each one.
@@ -153,7 +147,7 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
   const level = useLift(2)
   const gooId = `toast-goo-${useId().replace(/:/g, '')}`
   const type = (toast.type ?? 'info') as ToastType
-  const Icon = useToastIcon(type)
+  const Icon = useIcon(GLYPH[type])
   const top = position.startsWith('top')
   const ending = toast.transitionStatus === 'ending'
   const hasBody = Boolean(toast.description || toast.actionProps)

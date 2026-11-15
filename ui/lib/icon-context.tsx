@@ -21,6 +21,7 @@ import {
   ChevronRight,
   ChevronsUpDown,
   Circle,
+  CircleAlert,
   Clock,
   Copy,
   CornerDownLeft,
@@ -34,6 +35,7 @@ import {
   Home,
   ImageIcon,
   Inbox,
+  Info,
   Lightbulb,
   Link,
   Loader,
@@ -81,6 +83,8 @@ export interface IconComponentProps {
 export type IconComponent = ComponentType<IconComponentProps>
 
 export type IconName =
+  | 'circle-alert'
+  | 'info'
   | 'chevron-right'
   | 'chevron-down'
   | 'x'
@@ -203,6 +207,8 @@ const defaultIcons: Record<IconName, IconComponent> = {
   calendar: Calendar,
   folder: Folder,
   'sliders-horizontal': SlidersHorizontal,
+  'circle-alert': CircleAlert,
+  info: Info,
 }
 
 const IconContext = createContext<Record<IconName, IconComponent> | null>(null)
