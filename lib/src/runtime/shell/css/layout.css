@@ -10,8 +10,11 @@
    the rest and scrolls on its own, so the brand never scrolls away. */
 [data-modo="sidebar"],
 [data-modo="panel"] {
+  position: sticky;
+  top: 0;
   display: flex;
   flex-direction: column;
+  height: 100vh;
 }
 
 [data-modo="sidebar"] > :not([data-modo="header"]),
@@ -23,9 +26,10 @@
 
 [data-modo="sidebar"] {
   grid-area: sidebar;
-  position: sticky;
-  top: 0;
-  height: 100vh;
+}
+
+[data-modo="panel"] {
+  grid-area: panel;
 }
 
 [data-modo="content"] {
@@ -35,13 +39,6 @@
   padding: var(--space-5, 24px) var(--space-6, 32px);
   max-width: 100%;
   min-width: 0;
-}
-
-[data-modo="panel"] {
-  grid-area: panel;
-  position: sticky;
-  top: 0;
-  height: 100vh;
 }
 
 /* Below xl the panel becomes a strip above the content (its controls stay
@@ -137,16 +134,13 @@
   border-top: 1px solid;
   border-top-color: var(--modo-border);
   color: var(--modo-muted);
-  font-size: var(--modo-font-size-sm);
-  line-height: var(--modo-line-height-sm);
 }
 
 [data-modo="footer"] p {
   margin: 0;
 }
 
-/* Interior spacing of both asides belongs to the Sidebar Root component
-   (Plain fallback below, or the user's). The asides are pure grid cells. */
+/* The Plain Sidebar (shell/plain.tsx); a host's Sidebar brings its own spacing. */
 
 [data-modo="sidebar-nav"] {
   display: flex;
@@ -169,8 +163,6 @@
   display: block;
   padding: var(--space-1, 4px) var(--space-2, 8px);
 }
-
-/* ── TOC ── */
 
 [data-modo="toc-label"][data-level="3"] {
   padding-inline-start: var(--space-3, 12px);

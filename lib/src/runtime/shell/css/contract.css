@@ -1,12 +1,12 @@
 /* Structural CSS only: layout, sizing, overflow, spacing. Every visual reads
-   a host token, through the contract below or tokens/host-colors.ts (borders,
-   muted text, focus ring). The host restyles the rest via data-modo attrs. */
+   a host token, through this contract or tokens/host-colors.ts (borders,
+   muted text, focus ring). The host restyles the rest via data-modo attrs.
 
-/* The generic contract, resolved once. Each reads the host's token, else the
+   The generic contract, resolved once. Each reads the host's token, else the
    lib's default: a size for type and radius, a CSS keyword for weight. A token
    without a default (motion, line-heights, p/h4 sizes) inherits when unset.
    Role colors come from tokens/host-colors.ts. These are the only literal
-   visuals in this file. */
+   visuals in the lib's css. */
 :root {
   --modo-font-weight-medium: var(--font-weight-medium, normal);
   --modo-font-weight-semibold: var(--font-weight-semibold, bold);
@@ -46,4 +46,36 @@
   --modo-measure: 72ch;
   /* No default: without a host family the chrome inherits the page's. */
   --modo-font-sans: var(--font-sans);
+
+  /* Specimen fills, mixed from the text color where each is used. */
+  --modo-tint-8: color-mix(in oklab, currentColor 8%, transparent);
+  --modo-tint-10: color-mix(in oklab, currentColor 10%, transparent);
+  --modo-tint-12: color-mix(in oklab, currentColor 12%, transparent);
+  --modo-tint-30: color-mix(in oklab, currentColor 30%, transparent);
+  --modo-tint-35: color-mix(in oklab, currentColor 35%, transparent);
+  --modo-tint-45: color-mix(in oklab, currentColor 45%, transparent);
+  --modo-tint-55: color-mix(in oklab, currentColor 55%, transparent);
+}
+
+/* The chrome's small print, in the sm and xs roles. */
+[data-modo="footer"],
+[data-modo="page-meta"],
+[data-modo="credit"] > span,
+[data-modo="hero-stats"],
+[data-modo="bento-empty"],
+[data-modo="bento-count"],
+[data-modo="bento-desc"],
+[data-modo="canvas-frame-title"],
+[data-modo="token-name"],
+[data-modo="color-tile"] {
+  font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
+}
+
+[data-modo="token-meta"],
+[data-modo="color-tile-pair"],
+[data-modo="color-tile-foot"],
+[data-modo="type-metrics"] {
+  font-size: var(--modo-font-size-xs);
+  line-height: var(--modo-line-height-xs);
 }

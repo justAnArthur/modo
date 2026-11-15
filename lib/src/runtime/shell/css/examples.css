@@ -1,5 +1,3 @@
-/* ── Example card ── */
-
 [data-modo="example-card"] {
   margin: 0 0 var(--space-6, 32px);
 }
@@ -72,8 +70,7 @@
   overflow-x: auto;
 }
 
-/* ── Hover reveal: example actions, code actions, anchors ──
-   Shown on hover or keyboard focus inside the owner; always on touch. */
+/* Shown on hover or keyboard focus inside the owner; always on touch. */
 
 :is([data-modo="example-actions"], [data-modo="code-actions"], [data-modo="anchor"]) {
   opacity: 0;

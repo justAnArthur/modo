@@ -1,6 +1,3 @@
-/* Bento: overview grids of live previews. Two columns from a medium content
-   column, three when it is wide; `wide` cells span two. */
-
 [data-modo="bento"] {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
@@ -46,11 +43,10 @@
   zoom: var(--modo-stage-zoom, 1);
 }
 
-/* Examples are written for a full-width stage; a cell scales them down (bento.tsx).
-   Wrapping is the example's own call: a forced flex-wrap would stop a column's
-   children stretching. Block containers fill the track; inline content (a badge, a button) keeps
-   its own width, centered. Layered, so an example's own styles win even from
-   a host's layers (an unlayered rule would beat Tailwind's at any specificity). */
+/* Block containers fill the track; inline content (a badge, a button) keeps
+   its own width, centered. No forced flex-wrap: it would stop a column's
+   children stretching. Layered, so an example's own styles win even from a
+   host's layers (an unlayered rule would beat Tailwind's at any specificity). */
 @layer modo-preview {
   :is([data-modo="bento-fit"], [data-modo="canvas-stage"]) > * {
     max-width: 100%;
@@ -84,22 +80,17 @@
   -webkit-line-clamp: 2;
   overflow: hidden;
   margin: 0;
+  color: var(--modo-muted);
 }
 
 [data-modo="bento-empty"] {
   text-align: center;
-}
-
-[data-modo="bento-empty"],
-[data-modo="bento-count"],
-[data-modo="bento-desc"] {
   color: var(--modo-muted);
-  font-size: var(--modo-font-size-sm);
-  line-height: var(--modo-line-height-sm);
 }
 
 [data-modo="bento-count"] {
   margin-left: auto;
+  color: var(--modo-muted);
 }
 
 [data-modo="bento-card"][data-span="full"] {
@@ -112,7 +103,6 @@
   }
 }
 
-/* The palette preview: a strip of chips, eight to a row. */
 [data-modo="color-strip"] {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));
