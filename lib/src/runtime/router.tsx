@@ -37,12 +37,25 @@ export function usePath(): string {
   return useSyncExternalStore(subscribe, () => appPath(window.location.pathname))
 }
 
+/** The `?example=` key: an item page showing that one example full screen. */
+export function useExampleParam(): string | null {
+  return useSyncExternalStore(subscribe, () => new URLSearchParams(window.location.search).get('example'))
+}
+
+/** Client navigation to `url`; a new page starts at its top (Back/Forward keep the browser's restore). */
+export function navigate(url: URL | string, state: unknown = {}) {
+  window.history.pushState(state, '', url)
+  window.scrollTo({ top: 0, behavior: 'instant' })
+  window.dispatchEvent(new Event(NAVIGATE))
+}
+
 function scrollToHash(hash: string) {
   if (hash) document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView()
 }
 
 export function Router(): ReactNode {
   const path = usePath()
+  const example = useExampleParam()
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -52,27 +65,32 @@ export function Router(): ReactNode {
       const url = new URL(a.href)
       if (url.origin !== window.location.origin || !url.pathname.startsWith(`${BASE}/`)) return
       e.preventDefault()
-      const samePage = appPath(url.pathname) === appPath(window.location.pathname)
+      const samePage =
+        appPath(url.pathname) === appPath(window.location.pathname) && url.search === window.location.search
+      if (!samePage) return navigate(url)
       window.history.pushState({}, '', url)
-      if (samePage) return scrollToHash(url.hash)
-      // A new page starts at its top; Back/Forward keep the browser's restore.
-      window.scrollTo({ top: 0, behavior: 'instant' })
-      window.dispatchEvent(new Event(NAVIGATE))
+      scrollToHash(url.hash)
     }
     document.addEventListener('click', onClick)
     return () => document.removeEventListener('click', onClick)
   }, [])
 
   // The page renders after load or navigation, so the browser's own jump to
-  // `#hash` misses it. The tab names the page and the design system.
+  // `#hash` misses it. The tab names the page (or the full-screen example) and the design system.
   useEffect(() => {
     scrollToHash(window.location.hash)
-    const title = document.querySelector('[data-modo="page-title"]')?.textContent
+    const title =
+      document.querySelector('[data-modo="page-title"]')?.textContent ??
+      document.querySelector('[data-modo="example-solo"]')?.getAttribute('aria-label')
     document.title = title && title !== config.name ? `${title} · ${config.name}` : config.name
-  }, [path])
+  }, [path, example])
 
   const route = routes.find(r => r.pattern.test(path))
   const match = route && path.match(route.pattern)
   // Keyed by path so page state (an open code panel, heading ids) doesn't carry over.
-  return <PageIdScope key={path}>{route && match ? route.render(match) : <NotFoundPage />}</PageIdScope>
+  return (
+    <PageIdScope key={`${path}?${example}`}>
+      {route && match ? route.render(match, example) : <NotFoundPage />}
+    </PageIdScope>
+  )
 }

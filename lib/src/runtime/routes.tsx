@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { TIERS, type Tier } from '../lib/tiers'
+import { ExampleSolo } from './items/example-solo'
 import { ItemPage } from './items/item-page'
 import { CanvasPage } from './pages/CanvasPage'
 import { HomePage } from './pages/HomePage'
@@ -11,7 +12,8 @@ const TIER = TIERS.join('|')
 
 interface Route {
   pattern: RegExp
-  render: (match: RegExpMatchArray) => ReactNode
+  /** `example` is the `?example=` key, for the routes that show one example full screen. */
+  render: (match: RegExpMatchArray, example: string | null) => ReactNode
 }
 
 export const routes: Route[] = [
@@ -22,6 +24,11 @@ export const routes: Route[] = [
   { pattern: new RegExp(`^/docs/(${TIER})$`), render: m => <TierPage tier={m[1] as Tier} /> },
   {
     pattern: new RegExp(`^/docs/(${TIER})/([^/]+)$`),
-    render: m => <ItemPage tier={m[1] as Tier} id={m[2]!} />,
+    render: (m, example) =>
+      example === null ? (
+        <ItemPage tier={m[1] as Tier} id={m[2]!} />
+      ) : (
+        <ExampleSolo tier={m[1] as Tier} id={m[2]!} example={example} />
+      ),
   },
 ]

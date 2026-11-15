@@ -19,7 +19,7 @@ export interface ShellConfig {
   Code?: string
   /**
    * The chrome's icons. Gets `name` and `label`: one of `code`, `copy`, `check`, `link`, `external`, `menu`,
-   * `sun`, `moon`, or a `socials` key (`github`, `npm`, …). Draw the label for a name you have no glyph for.
+   * `sun`, `moon`, `maximize`, `close`, or a `socials` key (`github`, `npm`, …). Draw the label for a name you have no glyph for.
    */
   Icon?: string
 }

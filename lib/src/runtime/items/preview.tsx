@@ -30,22 +30,35 @@ export function hasPreview(itemId: string): boolean {
 
 function firstLiveBlock(itemId: string): ReactNode {
   const Doc = exampleDocs[itemId]?.[0]
-  if (!Doc) return undefined
-  // Compiled without a provider, MDX content is hook-free: calling it yields
-  // the document's top-level blocks, and every live one is a ModoExample.
-  // Called during render, outside any boundary: a broken doc means no preview.
+  return Doc && liveBlocks(Doc)[0]
+}
+
+interface LiveProps {
+  /** The block's position in its file, and the `#`/`##` heading above it (lib/src/plugins/mdx-examples.ts). */
+  index: string
+  title?: string
+  children: ReactNode
+}
+
+/**
+ * An .mdx file's live blocks, bare. Compiled without a provider, MDX content is
+ * hook-free: calling it yields the document's top-level blocks, and every live
+ * one is a ModoExample. Called during render, outside any boundary: a broken
+ * doc has no blocks.
+ */
+export function liveBlocks(Doc: (typeof exampleDocs)[string][number]): ReactElement<LiveProps>[] {
   try {
     const content = (Doc as (props: { components: Record<string, unknown> }) => ReactElement<{ children?: ReactNode }>)(
-      {
-        components: { ...mdxComponents, ModoExample: Live },
-      },
+      { components: { ...mdxComponents, ModoExample: Live } },
     )
-    return Children.toArray(content.props.children).find(c => isValidElement(c) && c.type === Live)
+    return Children.toArray(content.props.children).filter(
+      (c): c is ReactElement<LiveProps> => isValidElement(c) && c.type === Live,
+    )
   } catch {
-    return undefined
+    return []
   }
 }
 
-function Live({ children }: { children: ReactNode }) {
+function Live({ children }: LiveProps) {
   return <>{children}</>
 }
