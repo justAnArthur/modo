@@ -20,8 +20,9 @@
 
 'use client'
 
-import { type ReactNode, useCallback, useMemo, useState } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { SizeContext, type SizeVariant, sizeMap } from '../../lib/size-context'
+import { useControllableState } from '../../lib/use-controllable-state'
 
 /**
  * Two component sizes: a 36px default and a 28px compact. An interface reads
@@ -63,20 +64,7 @@ export default function SizeProvider({
   /** Uncontrolled initial variant, switchable via `useSizeContext().setSize`. Defaults to `'default'`. */
   defaultSize?: 'default' | 'compact'
 }) {
-  const [internalSize, setInternalSize] = useState<SizeVariant>(defaultSize)
-  const isControlled = size !== undefined
-  const resolved = size ?? internalSize
-
-  // Controlled providers ignore setSize entirely — a background write to the
-  // shadowed internal state would pop back out if the size prop were later
-  // removed.
-  const setSize = useCallback(
-    (next: SizeVariant) => {
-      if (isControlled) return
-      setInternalSize(next)
-    },
-    [isControlled],
-  )
+  const [resolved, setSize] = useControllableState<SizeVariant>(size, defaultSize)
 
   const value = useMemo(() => ({ size: resolved, setSize, classes: sizeMap[resolved] }), [resolved, setSize])
 

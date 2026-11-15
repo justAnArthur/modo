@@ -1,15 +1,9 @@
 /*!
- * Vendored from Fluid Functionalism — `registry/default/lib/springs.ts` at
+ * Ported from Fluid Functionalism — `registry/default/lib/springs.ts` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
- *
- * Local modifications:
- * - `goo`: the morph engine's own tier (lib/use-morph.ts) for the goo effect,
- *   slower than `slow` so the liquid neck stays on screen long enough to read.
- *   It lands in about 200ms with a little bounce and closes on a spring, not
- *   a tween, so the neck reforms on the way back.
- * - `exitFallbackMs` also reads a spring exit's `visualDuration`.
+ * Local changes: see PORTING.md.
  */
 
 // Motion tokens. Each tier's value is the ENTER transition — a critically
@@ -52,6 +46,11 @@ export const spring = {
     exit: { type: 'spring' as const, visualDuration: 0.2, bounce: 0 },
   },
 } as const
+
+/** A tier's enter transition without its `exit`, for a `transition` that must not carry one. */
+export function springEnter<T extends { exit: unknown }>({ exit: _exit, ...enter }: T): Omit<T, 'exit'> {
+  return enter
+}
 
 // Fallback delay (ms) for deferred-unmount timers that guard an exit tween:
 // popups keep their portal mounted until onAnimationComplete fires, but a

@@ -13,7 +13,7 @@
 import { motion } from 'motion/react'
 import { createContext, type ReactNode, useContext } from 'react'
 import { useReduceMotion } from './reduced-motion'
-import { spring } from './springs'
+import { spring, springEnter } from './springs'
 
 /** Set by an overlay root: the id its parts are scoped to and whether it is open. */
 const MorphPartScope = createContext<{ id: string; open: boolean } | null>(null)
@@ -21,7 +21,7 @@ const MorphPartScope = createContext<{ id: string; open: boolean } | null>(null)
 /** True inside an overlay's surface (`MorphSurface` provides it). */
 const MorphPartInOverlay = createContext(false)
 
-const { exit: _exit, ...enter } = spring.slow
+const enter = springEnter(spring.slow)
 
 interface MorphPartProps {
   /** Pairs the part in the trigger with its twin in the overlay; unique within one overlay. */
