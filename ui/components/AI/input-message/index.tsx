@@ -532,7 +532,7 @@ const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
                 <Button
                   type="button"
                   variant="primary"
-                  size="icon-sm"
+                  size="icon-compact"
                   onClick={buttonMode === 'stop' ? messages.stop : handleSend}
                   disabled={buttonMode === 'stop' ? disabled : !canSend}
                   aria-label={buttonLabel}
@@ -549,7 +549,7 @@ const InputMessage = forwardRef<HTMLDivElement, InputMessageProps>(
                       {buttonMode === 'stop' ? (
                         <span className="h-3 w-3 rounded-glyph bg-current" />
                       ) : (
-                        // A touch larger than icon-sm's 14px svg.
+                        // A touch larger than icon-compact's 14px svg.
                         <ArrowUpIcon
                           size={compactStep ? 15 : 19}
                           className={cn('block', compactStep ? '!h-[15px] !w-[15px]' : '!h-[19px] !w-[19px]')}

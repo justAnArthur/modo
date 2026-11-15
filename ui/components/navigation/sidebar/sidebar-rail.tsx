@@ -160,7 +160,7 @@ const SidebarRail = forwardRef<HTMLButtonElement, SidebarRailProps>(({ className
       side={side === 'left' ? 'right' : 'left'}
       sideOffset={8}
       followCursor="y"
-      forceOpen={dragging ? false : tooltipOpen}
+      open={dragging ? false : tooltipOpen}
       content={
         // The column escapes the surface's trim: both lines re-apply it, so the gap alone sets the rhythm.
         <span className="flex flex-col items-start gap-2">

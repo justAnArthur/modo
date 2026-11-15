@@ -13,9 +13,10 @@ import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { FocusRing } from '../../../lib/focus-ring'
 import { useIcon } from '../../../lib/icon-context'
 import { OverlayContext, useOverlay, useOverlayRoot, usePortalContainer } from '../../../lib/overlay'
+import { POPUP_SHAPE } from '../../../lib/popup'
 import { PopupSurface } from '../../../lib/popup-surface'
 import { useRowFocus } from '../../../lib/row-group'
-import { shapeMap, useShape } from '../../../lib/shape-context'
+import { useShape } from '../../../lib/shape-context'
 import { useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
@@ -32,9 +33,6 @@ const FORMAT_LABELS: Record<ColorFormat, string> = {
 }
 
 const FORMATS = ['hex', 'rgb', 'hsl', 'oklch'] as const
-
-// Popups keep the rounded shape whatever the global one: pill radii distort the padding at this scale.
-const menuShape = shapeMap.rounded
 
 interface FormatMenuContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void
@@ -167,12 +165,12 @@ function FormatPopup({ value, onValueChange }: Pick<FormatMenuProps, 'value' | '
             {...rowFocus.handlers}
             className="relative select-none outline-none"
           >
-            <PopupSurface morph={morph} radius={menuShape.container} className="min-w-[var(--anchor-width)]">
+            <PopupSurface morph={morph} radius={POPUP_SHAPE.container} className="min-w-[var(--anchor-width)]">
               <div ref={containerRef} className="relative flex flex-col p-1">
                 <AnimatePresence>
                   {checkedRect && (
                     <motion.div
-                      className={`absolute ${menuShape.bg} bg-active pointer-events-none`}
+                      className={`absolute ${POPUP_SHAPE.bg} bg-active pointer-events-none`}
                       initial={false}
                       animate={{
                         top: checkedRect.top,
@@ -190,9 +188,9 @@ function FormatPopup({ value, onValueChange }: Pick<FormatMenuProps, 'value' | '
                   )}
                 </AnimatePresence>
 
-                <FluidHoverHighlight hover={hover} from={checkedRect} className={menuShape.bg} />
+                <FluidHoverHighlight hover={hover} from={checkedRect} className={POPUP_SHAPE.bg} />
 
-                <FocusRing rect={rowFocus.focusRect} className={menuShape.focusRing} />
+                <FocusRing rect={rowFocus.focusRect} className={POPUP_SHAPE.focusRing} />
 
                 {/* `contents`: the rows stay direct children of the measured container. */}
                 <Menu.RadioGroup

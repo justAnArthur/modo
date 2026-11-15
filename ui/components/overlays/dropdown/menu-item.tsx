@@ -19,16 +19,12 @@ import {
 } from 'react'
 import type { IconComponent } from '../../../lib/icon-context'
 import { useMergeRefs } from '../../../lib/merge-refs'
+import { POPUP_SHAPE } from '../../../lib/popup'
 import { CheckMark, RowIcon, rowClasses } from '../../../lib/popup-rows'
-import { shapeMap } from '../../../lib/shape-context'
 import { useSize } from '../../../lib/size-context'
 import { useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
 import { WeightLabel } from '../../../lib/weight-label'
-
-// Menus keep the rounded radii whatever the global shape: pill corners on a
-// popover distort its padding and break the rows' concentric fit.
-export const menuShape = shapeMap.rounded
 
 /**
  * What a row hands to the popup's primitive wrapper: `element` is the styled
@@ -74,11 +70,6 @@ export function useDropdown() {
   const ctx = useContext(DropdownContext)
   if (!ctx) throw new Error('useDropdown must be used within a Dropdown')
   return ctx
-}
-
-/** `useDropdown`, `null` outside a panel. */
-export function useDropdownMaybe() {
-  return useContext(DropdownContext)
 }
 
 interface MenuItemProps extends HTMLAttributes<HTMLDivElement> {
@@ -166,7 +157,7 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
           activate()
         }
 
-    const itemClassName = cn(rowClasses({ size, shape: menuShape, lit, disabled }), className)
+    const itemClassName = cn(rowClasses({ size, shape: POPUP_SHAPE, lit, disabled }), className)
 
     const content = (
       <>

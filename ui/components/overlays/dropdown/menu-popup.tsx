@@ -12,7 +12,7 @@ import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { GooIndicator } from '../../../lib/goo-indicator'
 import { useMergeRefs } from '../../../lib/merge-refs'
 import { useOverlay, usePortalContainer } from '../../../lib/overlay'
-import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
+import { isDisabledRow, POPUP_SHAPE, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
 import { PopupSurface } from '../../../lib/popup-surface'
 import { rowIndexOf } from '../../../lib/row-group'
 import { type ItemRect, useFluidHover } from '../../../lib/use-fluid-hover'
@@ -21,7 +21,7 @@ import { type MorphProps, useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import { ScrollArea } from '../../../primitives/scroll-area'
 import { DropdownFilterContext, DropdownSearchHostContext, useDropdownSearchHost } from './dropdown-search'
-import { DropdownContext, type MenuItemRenderOptions, menuShape } from './menu-item'
+import { DropdownContext, type MenuItemRenderOptions } from './menu-item'
 import { NO_INDICES, type PanelSelectionProps, usePanelRows, usePanelSelection } from './panel-state'
 
 const NO_RECTS: ItemRect[] = []
@@ -152,7 +152,7 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
     const checkedRect =
       isMeasured && !multiple && selection.checkedIndex != null ? (itemRects[selection.checkedIndex] ?? null) : null
     const runs = useSelectionRuns(selection.checkedIndices ?? NO_INDICES)
-    const blocks = useMergeSplitBlocks(runs, open ? itemRects : NO_RECTS, menuShape.bgRadius)
+    const blocks = useMergeSplitBlocks(runs, open ? itemRects : NO_RECTS, POPUP_SHAPE.bgRadius)
 
     const panel = useMemo(
       () => ({
@@ -209,10 +209,10 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
                 >
                   <PopupSurface
                     morph={morph}
-                    radius={menuShape.container}
+                    radius={POPUP_SHAPE.container}
                     className={cn(
                       'flex max-h-[min(480px,var(--available-height))] flex-col overflow-hidden',
-                      menuShape.container,
+                      POPUP_SHAPE.container,
                       className,
                     )}
                   >
@@ -226,10 +226,15 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
                           <GooIndicator
                             rect={checkedRect}
                             opacity={open ? 1 : 0}
-                            className={cn('bg-active', menuShape.bg)}
+                            className={cn('bg-active', POPUP_SHAPE.bg)}
                           />
                         )}
-                        <FluidHoverHighlight hover={hover} hidden={!open} from={checkedRect} className={menuShape.bg} />
+                        <FluidHoverHighlight
+                          hover={hover}
+                          hidden={!open}
+                          from={checkedRect}
+                          className={POPUP_SHAPE.bg}
+                        />
                         {/* display: contents keeps the rows direct flex children for the fluid hover. */}
                         <Menu.RadioGroup value={selection.checkedIndex ?? null} className="contents">
                           {rows.content}

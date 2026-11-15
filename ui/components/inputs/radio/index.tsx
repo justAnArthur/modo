@@ -273,8 +273,7 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
     return (
       <div
         ref={mergeRefs(internalRef, ref)}
-        // A disabled row drops out of the group's arrow-key rows.
-        data-fluid-hover-index={disabled ? undefined : index}
+        data-fluid-hover-index={index}
         tabIndex={disabled ? -1 : isSelected ? 0 : !hasSelection && index === 0 ? 0 : -1}
         role="radio"
         aria-checked={isSelected}

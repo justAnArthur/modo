@@ -14,12 +14,9 @@ import type { MorphProps, MorphSide } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import { SizeScope } from '../../../primitives/sizes'
 import { DropdownLabel, DropdownSeparator } from '../dropdown'
-import { MenuItem, type MenuItemProps } from '../dropdown/menu-item'
+import { MenuItem } from '../dropdown/menu-item'
 import { MenuPopup } from '../dropdown/menu-popup'
 import type { PanelSelectionProps } from '../dropdown/panel-state'
-
-const ContextMenuItem = MenuItem
-type ContextMenuItemProps = MenuItemProps
 
 interface ContextMenuContentProps
   extends PanelSelectionProps,
@@ -113,11 +110,11 @@ function ContextMenu({ open, defaultOpen, onOpenChange, disabled = false, size, 
 
 ContextMenu.Trigger = ContextMenuPrimitive.Trigger
 ContextMenu.Content = ContextMenuContent
-ContextMenu.Item = ContextMenuItem
+ContextMenu.Item = MenuItem
 ContextMenu.Label = DropdownLabel
 ContextMenu.Separator = DropdownSeparator
 
-export type { ContextMenuContentProps, ContextMenuItemProps, ContextMenuProps }
-export { ContextMenu, ContextMenuContent, ContextMenuItem }
+export type { ContextMenuContentProps, ContextMenuProps }
+export { ContextMenu, ContextMenuContent }
 
 export default ContextMenu

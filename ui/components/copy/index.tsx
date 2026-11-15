@@ -415,7 +415,7 @@ const Copy = forwardRef<HTMLDivElement, CopyProps>(
             content={tooltipState === 'idle' ? 'Copy to clipboard' : status === 'error' ? 'Copy failed' : 'Copied'}
             delayDuration={500}
             sideOffset={2}
-            forceOpen={tooltipState === 'copied' ? true : tooltipState === 'suppressed' ? false : undefined}
+            open={tooltipState === 'copied' ? true : tooltipState === 'suppressed' ? false : undefined}
             onOpenChange={handleTooltipOpenChange}
           >
             {button}

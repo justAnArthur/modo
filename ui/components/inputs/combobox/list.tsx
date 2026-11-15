@@ -23,7 +23,7 @@ import { GooIndicator } from '../../../lib/goo-indicator'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { useMergeRefs } from '../../../lib/merge-refs'
 import { type AnchorProps, positionerProps, useOverlay, usePortalContainer } from '../../../lib/overlay'
-import { isDisabledRow, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
+import { isDisabledRow, POPUP_SHAPE, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
 import { CheckMark, RowIcon, rowClasses, rowLabelClass } from '../../../lib/popup-rows'
 import { PopupSurface } from '../../../lib/popup-surface'
 import { useSize } from '../../../lib/size-context'
@@ -40,7 +40,6 @@ import {
   CREATE_VALUE,
   isCreateItem,
   itemValue,
-  popupShape,
   useComboboxContext,
 } from './context'
 
@@ -73,10 +72,10 @@ export const ComboboxContent = forwardRef<HTMLDivElement, ComboboxContentProps>(
           <ComboboxPrimitive.Popup ref={popupRef} className="relative select-none outline-none" {...props}>
             <PopupSurface
               morph={morph}
-              radius={popupShape.container}
+              radius={POPUP_SHAPE.container}
               className={cn(
                 'flex min-w-[var(--anchor-width)] max-h-[min(300px,var(--available-height))] flex-col overflow-hidden',
-                popupShape.container,
+                POPUP_SHAPE.container,
                 className,
               )}
             >
@@ -147,7 +146,7 @@ export const ComboboxList = forwardRef<HTMLDivElement, ComboboxListProps>(({ cla
   const firstChecked = checkedIndices[0]
   const checkedRect = isMeasured && !multiple && firstChecked !== undefined ? (itemRects[firstChecked] ?? null) : null
   const runs = useSelectionRuns(multiple ? checkedIndices : [])
-  const blocks = useMergeSplitBlocks(runs, isMeasured && open ? itemRects : [], popupShape.bgRadius)
+  const blocks = useMergeSplitBlocks(runs, isMeasured && open ? itemRects : [], POPUP_SHAPE.bgRadius)
   const listCtx = useMemo(() => ({ registerItem, activeIndex, setChecked }), [registerItem, activeIndex, setChecked])
 
   return (
@@ -170,13 +169,13 @@ export const ComboboxList = forwardRef<HTMLDivElement, ComboboxListProps>(({ cla
               rect={checkedRect}
               opacity={open ? 1 : 0}
               transition={reflowSnap ? false : undefined}
-              className={cn('bg-active', popupShape.bg)}
+              className={cn('bg-active', POPUP_SHAPE.bg)}
             />
           )}
           <FluidHoverHighlight
             hover={hover}
             hidden={!open}
-            className={popupShape.bg}
+            className={POPUP_SHAPE.bg}
             transition={reflowSnap ? false : undefined}
           />
           {/* An explicit Collection: a function child on List would have to be its only child. */}
@@ -244,7 +243,7 @@ export const ComboboxItem = forwardRef<HTMLDivElement, ComboboxItemProps>(
           <div
             ref={mergedRef}
             data-fluid-hover-index={index}
-            className={cn(rowClasses({ size, shape: popupShape, lit, disabled }), className)}
+            className={cn(rowClasses({ size, shape: POPUP_SHAPE, lit, disabled }), className)}
             {...props}
           />
         }

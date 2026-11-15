@@ -10,6 +10,7 @@
 import { forwardRef, type HTMLAttributes, useContext } from 'react'
 import { useSize } from '../../lib/size-context'
 import { cn } from '../../lib/utils'
+import { WeightLabel } from '../../lib/weight-label'
 import { CardContext } from './card-group'
 
 const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => {
@@ -41,38 +42,21 @@ const CardTitle = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>(
   ({ className, children, ...props }, ref) => {
     const { emphasized, orientation } = useContext(CardContext)
     const compact = useSize().variant === 'compact'
-    const cell = cn(
-      'col-start-1 row-start-1 min-w-0 overflow-hidden text-ellipsis',
-      orientation === 'inline' && 'text-trim',
-    )
-    // The invisible semibold copy holds the width while the weight animates.
-    // A consumer's `truncate` lands on this grid, which can't ellipsize (only a
-    // block's own line boxes can); its nowrap inherits into the cells, which
-    // ellipsize instead. Inert while the title wraps.
+    // A consumer's `truncate` lands on the label's grid, which can't ellipsize
+    // (only a block's own line boxes can); its nowrap inherits into the cells.
     return (
-      <span
+      <WeightLabel
         ref={ref}
         data-slot="card-title"
-        className={cn(
-          'inline-grid grid-cols-[minmax(0,1fr)] leading-snug',
-          compact ? 'text-subtitle-compact' : 'text-subtitle',
-          className,
-        )}
+        emphasized={emphasized}
+        lit
+        trim={orientation === 'inline'}
+        truncate="inherit"
+        className={cn('leading-snug', compact ? 'text-subtitle-compact' : 'text-subtitle', className)}
         {...props}
       >
-        <span aria-hidden className={cn(cell, 'invisible weight-semibold')}>
-          {children}
-        </span>
-        <span
-          className={cn(
-            cell,
-            'text-foreground transition-[font-variation-settings] duration-fast',
-            emphasized ? 'weight-semibold' : 'weight-normal',
-          )}
-        >
-          {children}
-        </span>
-      </span>
+        {children}
+      </WeightLabel>
     )
   },
 )

@@ -22,7 +22,7 @@ import { FocusRing } from '../../../lib/focus-ring'
 import { GooIndicator } from '../../../lib/goo-indicator'
 import { useMergeRefs } from '../../../lib/merge-refs'
 import { type AnchorProps, OverlayContext, positionerProps, useOverlayRoot } from '../../../lib/overlay'
-import { isDisabledRow } from '../../../lib/popup'
+import { isDisabledRow, POPUP_SHAPE } from '../../../lib/popup'
 import { PopupLabel, PopupSeparator } from '../../../lib/popup-rows'
 import { useRowGroup } from '../../../lib/row-group'
 import type { SizeVariant } from '../../../lib/size-context'
@@ -39,9 +39,7 @@ import {
   type DropdownContextValue,
   MenuItem,
   type MenuItemRenderOptions,
-  menuShape,
   useDropdown,
-  useDropdownMaybe,
 } from './menu-item'
 import { MenuPopup } from './menu-popup'
 import { NO_INDICES, type PanelSelectionProps, usePanelRows, usePanelSelection } from './panel-state'
@@ -148,7 +146,7 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
     const { multiple } = selection
     const checkedRect = !multiple && selection.checkedIndex != null ? (itemRects[selection.checkedIndex] ?? null) : null
     const runs = useSelectionRuns(selection.checkedIndices ?? NO_INDICES)
-    const blocks = useMergeSplitBlocks(runs, itemRects, menuShape.bgRadius)
+    const blocks = useMergeSplitBlocks(runs, itemRects, POPUP_SHAPE.bgRadius)
     const panel = useMemo(
       () => ({
         registerItem,
@@ -188,9 +186,9 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
               {...props}
             >
               {multiple && <SelectionBackgrounds blocks={blocks} />}
-              {checkedRect && <GooIndicator rect={checkedRect} className={cn('bg-active', menuShape.bg)} />}
-              <FluidHoverHighlight hover={hover} from={checkedRect} className={menuShape.bg} />
-              <FocusRing rect={focus.focusRect} className={menuShape.focusRing} />
+              {checkedRect && <GooIndicator rect={checkedRect} className={cn('bg-active', POPUP_SHAPE.bg)} />}
+              <FluidHoverHighlight hover={hover} from={checkedRect} className={POPUP_SHAPE.bg} />
+              <FocusRing rect={focus.focusRect} className={POPUP_SHAPE.focusRing} />
               {rows.content}
             </Elevated>
           </DropdownFilterContext.Provider>
@@ -310,6 +308,5 @@ export {
   DropdownTrigger,
   MenuItem,
   useDropdown,
-  useDropdownMaybe,
 }
 export default Dropdown

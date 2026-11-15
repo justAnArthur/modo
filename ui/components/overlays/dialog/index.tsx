@@ -47,8 +47,6 @@ const WIDTH: Record<DialogWidth, Record<SizeVariant, string>> = {
 interface DialogContentProps extends MorphProps, HTMLAttributes<HTMLDivElement> {
   /** Width: 400, 540 or 880px, each one notch narrower in a compact region (360, 480, 800). `xl` is the canvas for a composed layout, usually with `className="p-0"` and a fixed height. Defaults to `'sm'`. */
   width?: DialogWidth
-  /** @deprecated Use `width`: `size` names the size ladder everywhere else. */
-  size?: DialogWidth
   /** Portal target. Inside it the backdrop and panel are `absolute` instead of covering the viewport; pair it with a `relative overflow-hidden` box and usually `<Dialog modal={false}>`. Defaults to the nearest `PortalContainer`, else the document body. */
   container?: HTMLElement | null
   /** The ✕ in the top-right corner. Drop it when the content has its own way out. Defaults to `true`. */
@@ -64,8 +62,7 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
     {
       className,
       children,
-      width,
-      size,
+      width = 'sm',
       container,
       showCloseButton = true,
       position = 'center',
@@ -98,7 +95,7 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
             inset,
             'left-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 focus:outline-none',
             position === 'top' ? 'top-[12dvh]' : 'top-1/2 -translate-y-1/2',
-            WIDTH[width ?? size ?? 'sm'][variant],
+            WIDTH[width][variant],
           )}
         >
           <PopupSurface morph={morph} lift="panel" className={cn('p-6', className)}>
@@ -106,7 +103,7 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
             {showCloseButton && (
               <DialogPrimitive.Close
                 render={
-                  <Button variant="ghost" size="icon-sm" className="absolute right-3 top-3">
+                  <Button variant="ghost" size="icon-compact" className="absolute right-3 top-3">
                     <XIcon />
                     <span className="sr-only">Close</span>
                   </Button>

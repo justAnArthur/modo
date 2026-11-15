@@ -19,9 +19,10 @@ import { type KeyboardEvent, useEffect, useLayoutEffect, useMemo, useRef, useSta
 import { flushSync } from 'react-dom'
 import { useIcon } from '../../../lib/icon-context'
 import { positionerProps, usePortalContainer } from '../../../lib/overlay'
+import { POPUP_SHAPE } from '../../../lib/popup'
 import { PopupSurface } from '../../../lib/popup-surface'
 import { useReduceMotion } from '../../../lib/reduced-motion'
-import { shapeMap, useShape } from '../../../lib/shape-context'
+import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
@@ -320,7 +321,7 @@ function Search({
             <Autocomplete.Popup ref={morph.popupRef} className="relative outline-none">
               <PopupSurface
                 morph={morph}
-                radius={shapeMap.rounded.container}
+                radius={POPUP_SHAPE.container}
                 className="flex max-h-[min(300px,var(--available-height))] w-[var(--anchor-width)] flex-col overflow-hidden"
               >
                 <CommandList emptyMessage={emptyMessage} onPick={item => onSubmit?.(item.label)} />

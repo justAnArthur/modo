@@ -134,7 +134,7 @@ function PanelHeader({
   return (
     <div className="flex items-center gap-1 border-b border-border pb-1">
       <div className="flex min-w-0 flex-1 items-center">{header}</div>
-      <Button variant="ghost" size="icon-sm" aria-label={closeLabel} onClick={close}>
+      <Button variant="ghost" size="icon-compact" aria-label={closeLabel} onClick={close}>
         <X size={sizeClasses.icon} strokeWidth={1.5} />
       </Button>
     </div>
