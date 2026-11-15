@@ -8,7 +8,6 @@
 
 'use client'
 
-import Badge from '../../../components/badge'
 import Button from '../../../components/button'
 import { triggerVariants } from '../../../components/inputs/select'
 import Meter from '../../../components/meter'
@@ -22,6 +21,7 @@ import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
 import { PROFILES, type Profile } from '../mock'
 import { PickList } from '../pick-list'
+import { POPOVER_FRAME, PopoverRow, PopoverSection } from '../popover-rows'
 
 interface ProfileTileProps {
   /** The profile it stands for: an Anthropic profile is an ink tile, a compatible provider an accent one. */
@@ -49,31 +49,19 @@ export function ProfileTile({ profile, className }: ProfileTileProps) {
 }
 
 function ProfileRow({ profile }: { profile: Profile }) {
+  const top = Math.max(...profile.limits.map(l => l.value))
   return (
-    <span className="flex min-w-0 flex-1 gap-2">
-      <ProfileTile profile={profile} className="mt-px" />
-      <span className="flex min-w-0 flex-1 flex-col gap-2">
-        <span className="flex min-w-0 flex-col">
-          <span className="flex min-w-0 items-center gap-1.5">
-            <span className="truncate text-body weight-medium text-foreground">{profile.name}</span>
-            <Badge size="compact" color={profile.provider === 'compatible' ? 'teal' : 'gray'}>
-              {profile.plan}
-            </Badge>
-            {profile.running > 0 && (
-              <span className="ml-auto shrink-0 text-caption text-muted-foreground">{profile.running} running</span>
-            )}
-          </span>
-          <span className="truncate font-mono text-caption text-muted-foreground">
-            {profile.provider === 'compatible' ? profile.baseUrl : profile.configDir}
-          </span>
-        </span>
-        <SizeProvider size="compact">
-          <span className="flex flex-col gap-1.5">
-            {profile.limits.slice(0, 2).map(limit => (
-              <Meter key={limit.label} label={limit.label} value={limit.value} detail={limit.detail} />
-            ))}
-          </span>
-        </SizeProvider>
+    <span className="flex min-w-0 flex-1 items-center gap-2">
+      <ProfileTile profile={profile} />
+      <span className="min-w-0 flex-1 truncate text-body text-foreground">{profile.name}</span>
+      <span className="shrink-0 text-caption text-muted-foreground">{profile.plan}</span>
+      <span aria-hidden="true" className="flex w-8 shrink-0 flex-col gap-0.5">
+        {profile.limits.slice(0, 2).map(limit => (
+          <Meter key={limit.label} variant="line" label={limit.label} value={limit.value} />
+        ))}
+      </span>
+      <span className="w-8 shrink-0 text-right text-caption tabular-nums text-muted-foreground">
+        {Math.round(top * 100)}%
       </span>
     </span>
   )
@@ -177,25 +165,36 @@ export default function ProfileSwitcher({
   const popover = (
     <Popover defaultOpen={defaultOpen}>
       <Popover.Trigger render={trigger} />
-      <Popover.Content side={side} align="start" sideOffset={8} className="w-80 gap-3 p-2">
-        <div className="flex flex-col gap-0.5 px-2 pt-2">
-          <Popover.Title>Profiles</Popover.Title>
-          <Popover.Description>Each runs its own claude with its own config dir and limits.</Popover.Description>
-        </div>
-        <PickList
-          label="Profiles"
-          value={active.id}
-          onValueChange={setCurrent}
-          options={profiles.map(p => ({ value: p.id, label: p.name, content: <ProfileRow profile={p} /> }))}
-        />
-        <div className="flex items-center gap-1 border-t border-border pt-2">
-          <Button variant="ghost" size="compact" leadingIcon={Plus}>
-            Add profile
-          </Button>
-          <Button variant="ghost" size="compact" leadingIcon={Settings} className="ml-auto">
-            Manage
-          </Button>
-        </div>
+      <Popover.Content side={side} align="start" sideOffset={8} className={POPOVER_FRAME}>
+        <SizeProvider size="default">
+          <PopoverSection title="Profile">
+            <PickList
+              label="Profiles"
+              value={active.id}
+              onValueChange={setCurrent}
+              options={profiles.map(p => ({ value: p.id, label: p.name, content: <ProfileRow profile={p} /> }))}
+            />
+          </PopoverSection>
+          <PopoverSection
+            title={`Limits · ${active.name}`}
+            aside={active.provider === 'compatible' ? active.baseUrl : active.configDir}
+          >
+            {active.limits.map(limit => (
+              <PopoverRow key={limit.label} label={limit.label}>
+                <Meter variant="line" className="w-16" label={limit.label} value={limit.value} />
+                <span className="w-28 text-right text-caption tabular-nums text-muted-foreground">{limit.detail}</span>
+              </PopoverRow>
+            ))}
+          </PopoverSection>
+          <div className="flex items-center gap-[var(--space-1)]">
+            <Button variant="ghost" size="compact" leadingIcon={Plus}>
+              Add profile
+            </Button>
+            <Button variant="ghost" size="compact" leadingIcon={Settings} className="ml-auto">
+              Manage
+            </Button>
+          </div>
+        </SizeProvider>
       </Popover.Content>
     </Popover>
   )

@@ -27,7 +27,7 @@ const RING_FILL: Record<MeterTone, string> = {
   warning: 'text-status-warning',
   error: 'text-status-error',
 }
-const RING_SIZE: Record<SizeVariant, number> = { default: 20, compact: 16 }
+const RING_SIZE: Record<SizeVariant, number> = { default: 16, compact: 14 }
 
 function toneOf(share: number, warnAt: number, errorAt: number): MeterTone {
   if (share >= errorAt) return 'error'

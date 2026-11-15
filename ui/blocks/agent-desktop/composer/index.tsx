@@ -27,6 +27,7 @@ import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
 import { CHANGES, COMMANDS, EFFORTS, GROUPS, MODELS, OUTPUT_STYLES, PERMISSION_MODES } from '../mock'
 import { PickList } from '../pick-list'
+import { POPOVER_FRAME, PopoverRow, PopoverSection } from '../popover-rows'
 import ProfileSwitcher from '../profile-switcher'
 
 const MODE_ICON: Record<string, IconName> = {
@@ -90,6 +91,9 @@ const MODEL_NOTE: Record<string, string> = {
   'GLM-4.5-Air': 'Z.ai, lighter',
 }
 
+// A switch is a row of its own (label left, track right), lined up with PopoverRow.
+const SWITCH_ROW = 'w-full'
+
 const MODE_NOTE: Record<string, string> = {
   'Ask before edits': 'Asks before every edit and command',
   'Accept edits': 'Edits freely, asks before commands',
@@ -130,16 +134,7 @@ const RowTrigger = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButton
   },
 )
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-[var(--space-1)]">
-      <span className="px-[var(--space-2)] text-caption text-muted-foreground">{title}</span>
-      {children}
-    </div>
-  )
-}
-
-/** Where a new session runs: the project, a worktree of its own and how it is set up. */
+/** Where a session runs: the project, a worktree of its own and how it is set up. */
 function ProjectPicker({ locked = false }: { locked?: boolean }) {
   const [project, setProject] = useState('modo')
   const [worktree, setWorktree] = useState(true)
@@ -157,9 +152,9 @@ function ProjectPicker({ locked = false }: { locked?: boolean }) {
           </RowTrigger>
         }
       />
-      <Popover.Content side="top" align="start" sideOffset={8} className="w-80 gap-[var(--space-3)] p-[var(--space-2)]">
-        <SizeProvider size="compact">
-          <Section title={locked ? 'This session runs in' : 'Project'}>
+      <Popover.Content side="top" align="start" sideOffset={8} className={POPOVER_FRAME}>
+        <SizeProvider size="default">
+          <PopoverSection title={locked ? 'This session runs in' : 'Project'}>
             <PickList
               label="Project"
               value={project}
@@ -169,34 +164,27 @@ function ProjectPicker({ locked = false }: { locked?: boolean }) {
                 label: g.label,
                 disabled: locked && g.label !== project,
                 content: (
-                  <span className="flex min-w-0 flex-col">
+                  <span className="flex min-w-0 flex-1 items-baseline justify-between gap-2">
                     <span className="text-body text-foreground">{g.label}</span>
                     <span className="truncate font-mono text-caption text-muted-foreground">{g.path}</span>
                   </span>
                 ),
               }))}
             />
-          </Section>
-          <Section title="Checkout">
-            <Switch.Group aria-label="Checkout" className="w-full">
-              <Switch
-                label="New worktree"
-                description="A branch and folder of its own, under .claude/worktrees"
-                checked={worktree}
-                onCheckedChange={setWorktree}
-                disabled={locked}
-              />
-              <Switch
-                label="Run setup script"
-                description=".claude/setup.sh: bun install, build the lib"
-                defaultChecked
-                disabled={locked}
-              />
-            </Switch.Group>
-            <div className="flex items-center justify-between gap-2 px-[var(--space-2)]">
-              <span className="text-body text-foreground">Base branch</span>
+          </PopoverSection>
+          <PopoverSection title="Checkout">
+            <Switch
+              label="New worktree"
+              trackSide="end"
+              checked={worktree}
+              onCheckedChange={setWorktree}
+              disabled={locked}
+              className={SWITCH_ROW}
+            />
+            <Switch label="Run setup script" trackSide="end" defaultChecked disabled={locked} className={SWITCH_ROW} />
+            <PopoverRow label="Base branch">
               <Select defaultValue="main" disabled={locked}>
-                <Select.Trigger variant="borderless" icon={Branch} />
+                <Select.Trigger variant="borderless" className="min-w-0" />
                 <Select.Content>
                   {['main', 'feat/v1-lib-fixes', 'refactor/clean-ds'].map((b, i) => (
                     <Select.Item key={b} index={i} value={b}>
@@ -205,8 +193,8 @@ function ProjectPicker({ locked = false }: { locked?: boolean }) {
                   ))}
                 </Select.Content>
               </Select>
-            </div>
-          </Section>
+            </PopoverRow>
+          </PopoverSection>
         </SizeProvider>
       </Popover.Content>
     </Popover>
@@ -223,7 +211,7 @@ interface RunSettingsProps {
   defaultFast: boolean
 }
 
-/** How the agent runs, behind one trigger: "◔ Opus 5.5 · High". */
+/** How the agent runs, behind one trigger: "Opus 5.5 · High ◔". */
 function RunSettings({
   models,
   context,
@@ -240,44 +228,29 @@ function RunSettings({
   const [style, setStyle] = useState('Default')
   const ModeIcon = useIcon(MODE_ICON[mode] ?? 'shield-check')
   const Zap = useIcon('zap')
-  const Chevron = useIcon('chevron-down')
   const percent = Math.round(context * 100)
 
   return (
     <Popover>
       <Popover.Trigger
         render={
-          <Button
-            variant="ghost"
-            size="compact"
-            aria-label={`Run settings: ${model}, ${effort} effort, ${mode}, context ${percent}%`}
-          >
-            <span className="flex items-center gap-1.5">
-              <ModeIcon size={14} strokeWidth={1.5} className="shrink-0" />
-              {fast && <Zap size={14} strokeWidth={1.5} className="shrink-0" />}
-              <span>
-                {model} · {effort}
-              </span>
-              <Meter
-                variant="ring"
-                label="Context used"
-                value={compacting ? 0.3 : context}
-                warnAt={0.8}
-                errorAt={0.95}
-              />
-              <Chevron size={14} strokeWidth={1.5} className="shrink-0" />
+          <RowTrigger aria-label={`Run settings: ${model}, ${effort} effort, ${mode}, context ${percent}%`}>
+            <ModeIcon size={14} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
+            {fast && <Zap size={14} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />}
+            <span className="min-w-0 truncate">
+              {model} · {effort}
             </span>
-          </Button>
+            <Meter variant="ring" label="Context used" value={compacting ? 0.3 : context} warnAt={0.8} errorAt={0.95} />
+          </RowTrigger>
         }
       />
-      <Popover.Content side="top" align="end" sideOffset={8} className="w-80 gap-[var(--space-3)] p-[var(--space-2)]">
-        <SizeProvider size="compact">
-          <Section title="Model">
+      <Popover.Content side="top" align="end" sideOffset={8} className={POPOVER_FRAME}>
+        <SizeProvider size="default">
+          <PopoverSection title="Model">
             <PickList
               label="Model"
               value={model}
               onValueChange={setModel}
-              rowClassName="py-1.5"
               options={models.map(m => ({
                 value: m,
                 label: m,
@@ -289,67 +262,61 @@ function RunSettings({
                 ),
               }))}
             />
-          </Section>
+          </PopoverSection>
           <div className="px-[var(--space-2)]">
             <Slider
+              size="default"
               label="Effort"
               min={0}
               max={EFFORTS.length - 1}
               step={1}
-              showSteps
-              showValue
               value={Math.max(EFFORTS.indexOf(effort), 0)}
               onChange={v => setEffort(EFFORTS[typeof v === 'number' ? v : v[0]] ?? effort)}
               formatValue={v => EFFORTS[v] ?? ''}
             />
           </div>
-          <Section title="Permissions">
-            <Select value={mode} onValueChange={setMode}>
-              <Select.Trigger variant="borderless" icon={ModeIcon} className="w-full" />
-              <Select.Content>
-                {PERMISSION_MODES.map((m, i) => (
-                  <Select.Item key={m} index={i} value={m}>
-                    {m}
-                  </Select.Item>
-                ))}
-              </Select.Content>
-            </Select>
-            <span className="px-[var(--space-2)] text-caption text-muted-foreground">{MODE_NOTE[mode]}</span>
-          </Section>
-          <Switch.Group aria-label="Run options" className="w-full">
-            <Switch
-              label="Fast mode"
-              description="Quicker output on this model"
-              checked={fast}
-              onCheckedChange={setFast}
-            />
-          </Switch.Group>
-          <div className="flex items-center justify-between gap-2 px-[var(--space-2)]">
-            <span className="text-body text-foreground">Output style</span>
-            <Select value={style} onValueChange={setStyle}>
-              <Select.Trigger variant="borderless" />
-              <Select.Content>
-                {OUTPUT_STYLES.map((o, i) => (
-                  <Select.Item key={o} index={i} value={o}>
-                    {o}
-                  </Select.Item>
-                ))}
-              </Select.Content>
-            </Select>
-          </div>
-          <div className="flex items-end gap-2 border-t border-border px-[var(--space-2)] pt-[var(--space-2)]">
-            <Meter
-              className="min-w-0 flex-1"
-              label={compacting ? 'Compacting…' : 'Context'}
-              value={compacting ? 0.3 : context}
-              detail={`${percent}% · compacts at 95%`}
-              warnAt={0.8}
-              errorAt={0.95}
-            />
-            <Button variant="ghost" size="compact" disabled={compacting || context < 0.2}>
-              Compact
-            </Button>
-          </div>
+          <PopoverSection title="Behaviour">
+            <PopoverRow label="Permissions">
+              <Select value={mode} onValueChange={setMode}>
+                <Select.Trigger variant="borderless" icon={ModeIcon} className="min-w-0" title={MODE_NOTE[mode]} />
+                <Select.Content>
+                  {PERMISSION_MODES.map((m, i) => (
+                    <Select.Item key={m} index={i} value={m}>
+                      {m}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select>
+            </PopoverRow>
+            <Switch label="Fast mode" trackSide="end" checked={fast} onCheckedChange={setFast} className={SWITCH_ROW} />
+            <PopoverRow label="Output style">
+              <Select value={style} onValueChange={setStyle}>
+                <Select.Trigger variant="borderless" className="min-w-0" />
+                <Select.Content>
+                  {OUTPUT_STYLES.map((o, i) => (
+                    <Select.Item key={o} index={i} value={o}>
+                      {o}
+                    </Select.Item>
+                  ))}
+                </Select.Content>
+              </Select>
+            </PopoverRow>
+          </PopoverSection>
+          <PopoverSection title="Context" aside={compacting ? 'Compacting…' : `${percent}% of the window`}>
+            <PopoverRow label="Compacts at 95%">
+              <Meter
+                variant="line"
+                className="w-20"
+                label="Context used"
+                value={compacting ? 0.3 : context}
+                warnAt={0.8}
+                errorAt={0.95}
+              />
+              <Button variant="ghost" size="compact" disabled={compacting || context < 0.2}>
+                Compact
+              </Button>
+            </PopoverRow>
+          </PopoverSection>
         </SizeProvider>
       </Popover.Content>
     </Popover>
@@ -392,17 +359,18 @@ interface ComposerProps {
  * four triggers, held in a ShellCard.
  *
  * The draft grows as you type, takes dropped files and pasted text, and
- * queues messages while a reply streams (see InputMessage). In the draft,
- * the + opens one searchable palette (attach, mention a file, run a command,
- * skill or plugin), and the run trigger, which shows the permission mode,
- * the model, the effort and a ring for the context, opens the run settings:
- * the model with a note on each, an effort slider, the permission mode with
- * what it allows, fast mode, the output style, and the context with a
- * compact button. Under the draft, on the shell, sit where the session
- * runs: the project, whose popover also holds the worktree, the setup script
- * and the base branch, and the profile, with two thin lines for its session
- * and weekly limits (see the profile switcher). For a running session they
- * show where it runs; with `target` they can still be picked.
+ * queues messages while a reply streams (see InputMessage); its + opens one
+ * searchable palette (attach, mention a file, run a command, skill or
+ * plugin). The row under it, on the shell, holds the rest. On the left,
+ * where the session runs: the project, whose popover also holds the
+ * worktree, the setup script and the base branch, and the profile, with two
+ * thin lines for its session and weekly limits (see the profile switcher).
+ * On the right, how it runs: one trigger showing the permission mode, the
+ * model, the effort and a small context ring opens the model (with a note
+ * on each), a tall effort slider, the permission mode, fast mode, the output
+ * style and the context with a compact button. All three popovers share one
+ * layout: a caption per section, then rows with the label on the left and
+ * the control on the right.
  *
  * @example {@include ./examples.mdx}
  */
@@ -430,6 +398,17 @@ export default function Composer({
           <ShellCard.Footer className="justify-start gap-[var(--space-1)] pt-[var(--space-1)]">
             <ProjectPicker locked={!target} />
             <ProfileSwitcher defaultValue={defaultProfile} onValueChange={onProfileChange} side="top" />
+            <div className="ml-auto">
+              <RunSettings
+                models={models}
+                context={context}
+                compacting={compacting}
+                defaultModel={defaultModel ?? models[0] ?? ''}
+                defaultEffort={defaultEffort}
+                defaultMode={defaultPermissionMode}
+                defaultFast={defaultFast}
+              />
+            </div>
           </ShellCard.Footer>
         </SizeProvider>
       }
@@ -440,17 +419,6 @@ export default function Composer({
         defaultFiles={[]}
         onSend={text => onSend?.(text)}
         leftSlot={({ openFilePicker }) => <AddPalette onAttach={() => openFilePicker()} />}
-        rightSlot={
-          <RunSettings
-            models={models}
-            context={context}
-            compacting={compacting}
-            defaultModel={defaultModel ?? models[0] ?? ''}
-            defaultEffort={defaultEffort}
-            defaultMode={defaultPermissionMode}
-            defaultFast={defaultFast}
-          />
-        }
       />
     </ShellCard>
   )
