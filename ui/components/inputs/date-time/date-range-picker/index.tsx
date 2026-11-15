@@ -7,14 +7,15 @@
 
 'use client'
 
-import { endOfMonth, format, type Locale } from 'date-fns'
+import { format, type Locale } from 'date-fns'
 import { type RefObject, useRef, useState } from 'react'
-import { type DateRange, dateMatchModifiers, type Matcher } from 'react-day-picker'
+import type { DateRange, Matcher } from 'react-day-picker'
 import { defaultLocale, parseDateText } from '../../../../lib/date-locale'
 import type { FieldVariant } from '../../../../lib/field-classes'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
 import Calendar from '../calendar'
+import { isDayAllowed } from '../day-rules'
 import { PickerInput, PickerShell } from '../picker-shell'
 
 interface DateRangePickerProps {
@@ -28,8 +29,10 @@ interface DateRangePickerProps {
   locale?: Locale
   /** Shown while empty. */
   placeholder?: string
-  /** `true` disables the field; any other react-day-picker matcher disables the days it matches. */
-  disabled?: Matcher | Matcher[]
+  /** Disables the field. Defaults to `false`. */
+  disabled?: boolean
+  /** Days that can't be picked or typed: any react-day-picker matcher. */
+  disabledDays?: Matcher | Matcher[]
   /** The first month the calendar reaches. Defaults to 100 years back. */
   startMonth?: Date
   /** The last month the calendar reaches. Defaults to 50 years ahead. */
@@ -52,6 +55,8 @@ interface DateRangePickerProps {
   columnsSide?: 'start' | 'end'
   /** Id of the field, for a `Label`'s `htmlFor`. */
   id?: string
+  /** Submits the value under this name in a form (both ends as `"yyyy-MM-dd"`, start first). */
+  name?: string
   /** Where the panel grows from (see Morph): the field, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'` (the field). */
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
   /** How the panel grows (see Morph), as Combobox's list does: with the liquid goo neck, a plain morph, a slide or a fade. `'morph'` with `hideSource` opens it in place over the field. Defaults to `'goo'`. */
@@ -81,34 +86,21 @@ function DateRangePicker({
   defaultValue = null,
   onValueChange,
   locale = defaultLocale,
-  placeholder,
-  disabled,
+  disabledDays,
   startMonth,
   endMonth,
-  variant,
-  invalid,
-  size,
   open: openProp,
   defaultOpen = false,
   onOpenChange,
   dir,
   columnsSide,
-  id,
-  // `from` is also the range's start, below.
-  from: growFrom,
-  effect,
-  hideSource,
-  tier,
-  className,
+  ...shell
 }: DateRangePickerProps) {
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
   const [open, setOpenState] = useControllableState(openProp, defaultOpen, onOpenChange)
   // After the first click, the next one ends the range.
   const [picking, setPicking] = useState(false)
   const fromInput = useRef<HTMLInputElement>(null)
-  // `true` turns the field off; any other matcher picks out days.
-  const off = typeof disabled === 'boolean' && disabled
-  const days = off ? undefined : disabled
   const from = value?.from
   const to = value?.to
 
@@ -116,11 +108,6 @@ function DateRangePicker({
     setPicking(false)
     setOpenState(next)
   }
-
-  const allowed = (date: Date) =>
-    (!startMonth || date >= startMonth) &&
-    (!endMonth || date <= endOfMonth(endMonth)) &&
-    !(days && dateMatchModifiers(date, days))
 
   const pick = (day: Date) => {
     if (!picking || !from) {
@@ -133,12 +120,8 @@ function DateRangePicker({
   }
 
   const readEnd = (end: 'from' | 'to') => (text: string) => {
-    if (!text.trim()) {
-      setValue(end === 'from' ? null : from ? { from, to: undefined } : null)
-      return true
-    }
     const date = parseDateText(text, locale, (end === 'from' ? from : to) ?? undefined)
-    if (!date || !allowed(date)) return false
+    if (!date || !isDayAllowed(date, { startMonth, endMonth, disabledDays })) return false
     if (end === 'from') setValue({ from: date, to: to && to >= date ? to : undefined })
     else if (!from || date < from) return false
     else setValue({ from, to: date })
@@ -156,9 +139,10 @@ function DateRangePicker({
       <PickerInput
         ref={fromInput}
         aria-label="Start date"
-        placeholder={placeholder}
+        placeholder={shell.placeholder}
         formatted={from ? format(from, 'PP', { locale }) : ''}
         onText={readEnd('from')}
+        onClear={() => setValue(null)}
         onEnter={() => setOpen(false)}
         className="min-w-0 flex-1"
       />
@@ -169,6 +153,7 @@ function DateRangePicker({
         aria-label="End date"
         formatted={to ? format(to, 'PP', { locale }) : ''}
         onText={readEnd('to')}
+        onClear={() => setValue(from ? { from, to: undefined } : null)}
         onEnter={() => setOpen(false)}
         className="min-w-0 flex-1"
       />
@@ -177,24 +162,15 @@ function DateRangePicker({
 
   return (
     <PickerShell
+      {...shell}
       open={open}
       onOpenChange={setOpen}
-      size={size}
-      variant={variant}
-      invalid={invalid}
-      disabled={off}
       icon="calendar"
       display={display}
-      placeholder={placeholder}
+      formValue={from && to ? [format(from, 'yyyy-MM-dd'), format(to, 'yyyy-MM-dd')] : undefined}
       header={header}
       initialFocus={fromInput}
-      id={id}
       dir={dir}
-      from={growFrom}
-      effect={effect}
-      hideSource={hideSource}
-      tier={tier}
-      className={className}
     >
       <Calendar
         mode="range"
@@ -203,7 +179,7 @@ function DateRangePicker({
         // The range is ours to build (two clicks, then close); DayPicker's own
         // range logic would keep extending it.
         onSelect={(_, day) => pick(day)}
-        disabled={days}
+        disabled={disabledDays}
         startMonth={startMonth}
         endMonth={endMonth}
         dir={dir}

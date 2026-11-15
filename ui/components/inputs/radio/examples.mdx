@@ -30,3 +30,13 @@ for form integration.
   <Radio value="weekly" label="Weekly summary" />
   <Radio value="never" label="Never" />
 </Radio.Group>
+
+# By value, reported only
+
+With `onValueChange` and no `defaultValue`, the group starts empty and reports each pick; `name` submits the pick in a form.
+
+<Radio.Group name="plan" onValueChange={value => console.log(value)}>
+  <Radio value="free" label="Free" />
+  <Radio value="pro" label="Pro" />
+  <Radio value="team" label="Team" disabled />
+</Radio.Group>

@@ -11,11 +11,10 @@ import { addYears, endOfYear, format, type Locale, startOfMonth, startOfYear } f
 import { type RefObject, useMemo, useRef } from 'react'
 import { defaultLocale, fieldLabel, parseMonthText } from '../../../../lib/date-locale'
 import type { FieldVariant } from '../../../../lib/field-classes'
-import { dividedColumns, ScrollColumn } from '../../../../lib/scroll-column'
+import { ScrollColumn } from '../../../../lib/scroll-column'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
-import { cn } from '../../../../lib/utils'
-import { PickerInput, PickerShell } from '../picker-shell'
+import { ColumnsPanel, columnsPopupClass, PickerInput, PickerShell } from '../picker-shell'
 
 interface MonthPickerProps {
   /** The picked month as its first day; `null` when empty. */
@@ -48,6 +47,8 @@ interface MonthPickerProps {
   onOpenChange?: (open: boolean) => void
   /** Id of the field, for a `Label`'s `htmlFor`. */
   id?: string
+  /** Submits the value under this name in a form (`"yyyy-MM"`). */
+  name?: string
   /** Where the panel grows from (see Morph): the field, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'` (the field). */
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
   /** How the panel grows (see Morph), as Combobox's list does: with the liquid goo neck, a plain morph, a slide or a fade. `'morph'` with `hideSource` opens it in place over the field. Defaults to `'goo'`. */
@@ -75,22 +76,12 @@ function MonthPicker({
   defaultValue = null,
   onValueChange,
   locale = defaultLocale,
-  placeholder,
   startMonth,
   endMonth,
-  disabled,
-  variant,
-  invalid,
-  size,
   open: openProp,
   defaultOpen = false,
   onOpenChange,
-  id,
-  from,
-  effect,
-  hideSource,
-  tier,
-  className,
+  ...shell
 }: MonthPickerProps) {
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
   const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
@@ -105,10 +96,6 @@ function MonthPicker({
   const pick = (date: Date) => setValue(startOfMonth(date < start ? start : date > end ? end : date))
 
   const readMonth = (text: string) => {
-    if (!text.trim()) {
-      setValue(null)
-      return true
-    }
     const read = parseMonthText(text, locale)
     if (!read || read < start || read > end) return false
     setValue(startOfMonth(read))
@@ -135,36 +122,28 @@ function MonthPicker({
 
   return (
     <PickerShell
+      {...shell}
       open={open}
       onOpenChange={setOpen}
-      size={size}
-      variant={variant}
-      invalid={invalid}
-      disabled={disabled}
       icon="calendar"
       display={formatted}
-      placeholder={placeholder}
+      formValue={value ? format(value, 'yyyy-MM') : undefined}
       header={
         <PickerInput
           ref={input}
-          aria-label={placeholder ?? 'Month'}
-          placeholder={placeholder}
+          aria-label={shell.placeholder ?? 'Month'}
+          placeholder={shell.placeholder}
           formatted={formatted}
           onText={readMonth}
+          onClear={() => setValue(null)}
           onEnter={() => setOpen(false)}
           className="flex-1"
         />
       }
       initialFocus={input}
-      popupClassName="w-[max(var(--anchor-width,0px),14rem)]"
-      id={id}
-      from={from}
-      effect={effect}
-      hideSource={hideSource}
-      tier={tier}
-      className={className}
+      popupClassName={columnsPopupClass}
     >
-      <div className={cn(dividedColumns, 'h-56')}>
+      <ColumnsPanel>
         <ScrollColumn
           label={fieldLabel(locale, 'month')}
           options={months}
@@ -181,7 +160,7 @@ function MonthPicker({
           onValueChange={y => pick(new Date(y, value?.getMonth() ?? today.getMonth(), 1))}
           className="min-w-0 flex-1"
         />
-      </div>
+      </ColumnsPanel>
     </PickerShell>
   )
 }

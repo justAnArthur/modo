@@ -10,11 +10,9 @@ import { format, type Locale, set } from 'date-fns'
 import { type RefObject, useRef } from 'react'
 import { defaultLocale, type HourCycle, hourCycleOf, parseTimeText } from '../../../../lib/date-locale'
 import type { FieldVariant } from '../../../../lib/field-classes'
-import { dividedColumns } from '../../../../lib/scroll-column'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
-import { cn } from '../../../../lib/utils'
-import { PickerInput, PickerShell } from '../picker-shell'
+import { ColumnsPanel, columnsPopupClass, PickerInput, PickerShell } from '../picker-shell'
 import { pad, type Time, TimeColumns } from '../time-columns'
 
 interface TimePickerProps {
@@ -48,6 +46,8 @@ interface TimePickerProps {
   onOpenChange?: (open: boolean) => void
   /** Id of the field, for a `Label`'s `htmlFor`. */
   id?: string
+  /** Submits the value under this name in a form (`"HH:mm"`). */
+  name?: string
   /** Where the panel grows from (see Morph): the field, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'` (the field). */
   from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
   /** How the panel grows (see Morph), as Combobox's list does: with the liquid goo neck, a plain morph, a slide or a fade. `'morph'` with `hideSource` opens it in place over the field. Defaults to `'goo'`. */
@@ -84,20 +84,10 @@ function TimePicker({
   hourCycle,
   minuteStep = 1,
   locale = defaultLocale,
-  placeholder,
-  disabled,
-  variant,
-  invalid,
-  size,
   open: openProp,
   defaultOpen = false,
   onOpenChange,
-  id,
-  from,
-  effect,
-  hideSource,
-  tier,
-  className,
+  ...shell
 }: TimePickerProps) {
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
   const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
@@ -106,10 +96,6 @@ function TimePicker({
   const formatted = time ? format(set(new Date(), time), 'p', { locale }) : ''
 
   const readTime = (text: string) => {
-    if (!text.trim()) {
-      setValue(null)
-      return true
-    }
     const read = parseTimeText(text, locale)
     if (!read) return false
     setValue(toValue({ hours: read.getHours(), minutes: read.getMinutes() }))
@@ -118,36 +104,28 @@ function TimePicker({
 
   return (
     <PickerShell
+      {...shell}
       open={open}
       onOpenChange={setOpen}
-      size={size}
-      variant={variant}
-      invalid={invalid}
-      disabled={disabled}
       icon="clock"
       display={formatted}
-      placeholder={placeholder}
+      formValue={value ?? undefined}
       header={
         <PickerInput
           ref={input}
-          aria-label={placeholder ?? 'Time'}
-          placeholder={placeholder}
+          aria-label={shell.placeholder ?? 'Time'}
+          placeholder={shell.placeholder}
           formatted={formatted}
           onText={readTime}
+          onClear={() => setValue(null)}
           onEnter={() => setOpen(false)}
           className="flex-1"
         />
       }
       initialFocus={input}
-      popupClassName="w-[max(var(--anchor-width,0px),14rem)]"
-      id={id}
-      from={from}
-      effect={effect}
-      hideSource={hideSource}
-      tier={tier}
-      className={className}
+      popupClassName={columnsPopupClass}
     >
-      <div className={cn(dividedColumns, 'h-56')}>
+      <ColumnsPanel>
         <TimeColumns
           value={time}
           onValueChange={next => setValue(toValue(next))}
@@ -157,7 +135,7 @@ function TimePicker({
           orientation="vertical"
           fill
         />
-      </div>
+      </ColumnsPanel>
     </PickerShell>
   )
 }

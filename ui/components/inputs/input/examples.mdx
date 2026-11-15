@@ -44,8 +44,8 @@ A single input with a leading icon.
 `InputGroup` stacks labelled fields; the hover highlight follows the pointer from field to field.
 
 <InputGroup>
-  <InputGroup.Field index={0} label="Name" placeholder="Your name" />
-  <InputGroup.Field index={1} label="Email" placeholder="you@example.com" icon={Mail} />
+  <InputGroup.Field label="Name" placeholder="Your name" />
+  <InputGroup.Field label="Email" placeholder="you@example.com" icon={Mail} />
 </InputGroup>
 
 # Group with a Textarea
@@ -53,8 +53,8 @@ A single input with a leading icon.
 A field's children replace its Input: a `Textarea` joins the group's hover and takes the field's error.
 
 <InputGroup>
-  <InputGroup.Field index={0} label="Subject" placeholder="What's it about?" />
-  <InputGroup.Field index={1} label="Message">
+  <InputGroup.Field label="Subject" placeholder="What's it about?" />
+  <InputGroup.Field label="Message">
     <Textarea placeholder="Write your message" />
   </InputGroup.Field>
 </InputGroup>
@@ -65,7 +65,6 @@ An `error` message renders below the field and marks it invalid.
 
 <InputGroup>
   <InputGroup.Field
-    index={0}
     label="Email"
     placeholder="you@example.com"
     icon={Mail}

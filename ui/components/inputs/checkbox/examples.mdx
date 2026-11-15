@@ -28,3 +28,13 @@ A standalone checkbox keeps its own state; pass `checked` and `onCheckedChange` 
     <Checkbox key={label} label={label} />
   ))}
 </Checkbox.Group>
+
+# Disabled
+
+`disabled` dims a row and takes it out of the arrow keys; on the group it turns every row off.
+
+<Checkbox.Group defaultCheckedIndices={[0]}>
+  <Checkbox label="Email" />
+  <Checkbox label="SMS" disabled />
+  <Checkbox label="Push" />
+</Checkbox.Group>
