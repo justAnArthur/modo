@@ -1,0 +1,84 @@
+import { ChevronsUpDown } from 'lucide-react'
+import Avatar from './index'
+import Sidebar from '../navigation/sidebar'
+
+# Avatar
+
+The first letter on an ink tile. Switch the shape in the Theme panel: the corners follow it.
+
+<div className="flex items-center gap-3">
+  <Avatar name="jobiflow" />
+  <Avatar name="Work" />
+  <Avatar name="zcode" tone="accent" />
+</div>
+
+# Tones
+
+Ink and accent tell two kinds apart, such as your own accounts and a connected provider.
+
+<div className="flex items-center gap-3">
+  <Avatar name="Anthropic" tone="ink" />
+  <Avatar name="OpenRouter" tone="accent" />
+</div>
+
+# Sizes
+
+20px (`md`) for rows and triggers, 16px (`sm`) for dense lists.
+
+<div className="flex items-center gap-3">
+  <Avatar name="Ada" size="md" />
+  <Avatar name="Ada" size="sm" />
+  <Avatar name="Ada" size="md" tone="accent" />
+  <Avatar name="Ada" size="sm" tone="accent" />
+</div>
+
+# Picture
+
+With a `src` the picture fills the tile; `name` stays its accessible name.
+
+<div className="flex items-center gap-3">
+  <Avatar name="Grace" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
+  <Avatar name="Grace" size="sm" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1' preserveAspectRatio='none'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF' stop-opacity='.9'/><stop offset='1' stop-color='%236B97FF' stop-opacity='.15'/></radialGradient><rect width='1' height='1' fill='white'/><rect width='1' height='1' fill='url(%23a)'/></svg>" />
+</div>
+
+# Group
+
+`Avatar.Group` overlaps a stack, each avatar cut out of the one beneath by a ring in the page color.
+
+<Avatar.Group>
+  <Avatar name="Ada" />
+  <Avatar name="Grace" tone="accent" />
+  <Avatar name="Linus" />
+  <Avatar name="Margaret" tone="accent" />
+</Avatar.Group>
+
+# In a Sidebar header
+
+<div className="flex h-[120px] w-64 overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <Sidebar className="h-full" collapsible="none">
+      <Sidebar.Header>
+        <Sidebar.Menu>
+          <Sidebar.MenuItem>
+            <Sidebar.MenuButton>
+              <Avatar name="jobiflow" />
+              <span className="min-w-0 flex-1 truncate">jobiflow</span>
+              <ChevronsUpDown size={14} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
+            </Sidebar.MenuButton>
+          </Sidebar.MenuItem>
+        </Sidebar.Menu>
+      </Sidebar.Header>
+    </Sidebar>
+  </Sidebar.Provider>
+</div>
+
+# Light and dark
+
+<div className="flex gap-3">
+  <div className="light flex items-center gap-3 rounded-xl border border-border bg-background p-4 text-foreground">
+    <Avatar name="Ada" /><Avatar name="Grace" tone="accent" /><Avatar name="Linus" size="sm" />
+  </div>
+  <div className="dark flex items-center gap-3 rounded-xl border border-border bg-background p-4 text-foreground">
+    <Avatar name="Ada" /><Avatar name="Grace" tone="accent" /><Avatar name="Linus" size="sm" />
+  </div>
+</div>

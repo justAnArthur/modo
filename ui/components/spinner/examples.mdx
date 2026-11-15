@@ -1,0 +1,67 @@
+import { Bot, MessageCircle } from 'lucide-react'
+import Spinner from './index'
+import Button from '../button'
+import Sidebar from '../navigation/sidebar'
+import { SizeProvider } from '../../primitives/sizes'
+
+# Spinner
+
+The arc turns once every four slow-tier lengths. With reduced motion it holds still.
+
+<div className="flex items-center gap-4">
+  <Spinner />
+  <Spinner label="Loading" />
+  <Spinner className="text-muted-foreground" />
+</div>
+
+# Sizes
+
+It follows the size ladder's icon size (16px, 14px compact), or takes any `size` in px.
+
+<div className="flex items-center gap-4">
+  <Spinner />
+  <SizeProvider size="compact"><Spinner /></SizeProvider>
+  <Spinner size={24} />
+  <Spinner size={32} strokeWidth={1} />
+</div>
+
+# In a button
+
+It fills a Button's `leadingIcon` slot, or stands in as an icon button's glyph.
+
+<div className="flex items-center gap-2">
+  <Button variant="secondary" leadingIcon={Spinner}>Saving</Button>
+  <Button variant="ghost" size="icon" aria-label="Working"><Spinner /></Button>
+</div>
+
+# In a Sidebar row
+
+As an icon component it fills a row's `icon` slot and takes the row's color and stroke.
+
+<div className="flex h-[200px] w-64 overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <Sidebar className="h-full" collapsible="none" defaultValue="refactor">
+      <Sidebar.Content>
+        <Sidebar.Group>
+          <Sidebar.Menu>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Spinner} value="refactor">Refactor the parser</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Spinner} value="tests">Run the tests</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={MessageCircle} value="chat">Chat</Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Bot} value="agents">Agents</Sidebar.MenuButton></Sidebar.MenuItem>
+          </Sidebar.Menu>
+        </Sidebar.Group>
+      </Sidebar.Content>
+    </Sidebar>
+  </Sidebar.Provider>
+</div>
+
+# Light and dark
+
+<div className="flex gap-3">
+  <div className="light flex items-center gap-4 rounded-xl border border-border bg-background p-4 text-foreground">
+    <Spinner /><Spinner size={24} />
+  </div>
+  <div className="dark flex items-center gap-4 rounded-xl border border-border bg-background p-4 text-foreground">
+    <Spinner /><Spinner size={24} />
+  </div>
+</div>

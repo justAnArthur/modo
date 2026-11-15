@@ -8,11 +8,11 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { useIcon } from '../../../lib/icon-context'
-import { SURFACE_BG } from '../../../lib/surface-classes'
-import { useSurface } from '../../../lib/surface-context'
-import { cn } from '../../../lib/utils'
-import ScrollArea from '../../../primitives/scroll-area'
+import { useIcon } from '../../lib/icon-context'
+import { SURFACE_BG } from '../../lib/surface-classes'
+import { useSurface } from '../../lib/surface-context'
+import { cn } from '../../lib/utils'
+import ScrollArea from '../../primitives/scroll-area'
 
 type DiffLineKind = 'add' | 'remove' | 'context' | 'hunk'
 

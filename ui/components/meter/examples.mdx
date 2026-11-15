@@ -20,6 +20,16 @@ From `warnAt` (0.75) the fill turns to the warning hue, from `errorAt` (0.9) to 
   <Meter label="Out of tokens" value={180000} max={200000} detail="180k / 200k" />
 </div>
 
+# Pace
+
+A `marker` ticks where an even spend would be by now; a caller that judges the pace itself passes `tone`.
+
+<div className="flex w-72 flex-col gap-4">
+  <Meter label="Weekly" value={0.62} marker={0.4} tone="warning" detail="Runs out Thu" />
+  <Meter label="Session (5h)" value={0.3} marker={0.55} detail="Lasts until reset" />
+  <Meter variant="line" label="Opus weekly" value={0.7} marker={0.35} tone="error" />
+</div>
+
 # Ring
 
 A glyph for toolbars: the label is its accessible name only.

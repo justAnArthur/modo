@@ -1,0 +1,101 @@
+import ChoiceList from './index'
+import Button from '../../button'
+import Meter from '../../meter'
+import { Pencil, Trash2 } from 'lucide-react'
+
+# Models with notes
+
+Each row is a name and a note. The pick melts from row to row; by keyboard, the arrow keys move it.
+
+<ChoiceList
+  className="w-80 max-w-full"
+  label="Model"
+  defaultValue="Balanced"
+  options={[
+    { value: 'Fast', note: 'Quick answers, light tasks' },
+    { value: 'Balanced', note: 'Everyday coding' },
+    { value: 'Thorough', note: 'Long, careful work' },
+  ].map(m => ({
+    value: m.value,
+    label: m.value,
+    content: (
+      <span className="flex min-w-0 flex-1 items-baseline justify-between gap-2">
+        <span>{m.value}</span>
+        <span className="truncate text-caption text-muted-foreground">{m.note}</span>
+      </span>
+    ),
+  }))}
+/>
+
+# Profiles with meters
+
+Rows hold anything, here a name over two usage meters.
+
+<ChoiceList
+  className="w-72 max-w-full"
+  label="Profile"
+  options={[
+    { value: 'Work', session: 0.42, weekly: 0.81 },
+    { value: 'Personal', session: 0.08, weekly: 0.23 },
+  ].map(p => ({
+    value: p.value,
+    label: p.value,
+    content: (
+      <span className="flex min-w-0 flex-1 flex-col gap-2">
+        <span>{p.value}</span>
+        <Meter label="Session" value={p.session} />
+        <Meter label="Weekly" value={p.weekly} />
+      </span>
+    ),
+  }))}
+/>
+
+# Disabled row
+
+A disabled row dims, and the pointer and the arrow keys pass over it.
+
+<ChoiceList
+  className="w-72 max-w-full"
+  label="Project"
+  defaultValue="modo"
+  options={[
+    { value: 'modo', content: 'modo' },
+    { value: 'archive', content: 'archive (read-only)', disabled: true },
+    { value: 'playground', content: 'playground' },
+  ]}
+/>
+
+# Row actions
+
+`actions` sit at a row's right end and show on hover or focus. A press on them never picks the row.
+
+<ChoiceList
+  className="w-72 max-w-full"
+  label="Saved prompts"
+  options={['Review this diff', 'Write the tests', 'Explain the error'].map(title => ({
+    value: title,
+    content: title,
+    actions: (
+      <>
+        <Button variant="ghost" size="icon-compact" aria-label={`Rename ${title}`}><Pencil /></Button>
+        <Button variant="ghost" size="icon-compact" aria-label={`Delete ${title}`}><Trash2 /></Button>
+      </>
+    ),
+  }))}
+/>
+
+# Compact
+
+`size="compact"` steps the rows down the size ladder.
+
+<ChoiceList
+  className="w-56 max-w-full"
+  label="Chapter"
+  size="compact"
+  defaultValue="setup"
+  options={[
+    { value: 'setup', content: 'Setting up' },
+    { value: 'fix', content: 'The fix' },
+    { value: 'verify', content: 'Verification' },
+  ]}
+/>

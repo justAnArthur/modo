@@ -50,6 +50,10 @@ interface MeterProps {
   warnAt?: number
   /** The share from which the fill turns to the error hue. Defaults to `0.9`. */
   errorAt?: number
+  /** Overrides the tone `warnAt` and `errorAt` derive, for a caller that judges the budget itself (whether it lasts until its reset). */
+  tone?: MeterTone
+  /** A share between 0 and 1 where a thin tick crosses the bar or the line: where an even spend would be by now, a soft limit. The ring ignores it. */
+  marker?: number
   /** Pins the meter to one step of the size ladder (36px default, 28px compact). Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
   /** Classes for the root. */
@@ -64,19 +68,35 @@ interface MeterProps {
  * right; the line is the bare bar for tight rows, and the ring a small
  * glyph for toolbars, both with their label as the accessible name. Either fill springs to a new value instead of jumping, and
  * turns to the warning hue from `warnAt` and to the error hue from `errorAt`,
- * so a budget running out reads at a glance without a third grey.
+ * so a budget running out reads at a glance without a third grey. A caller
+ * that judges the budget itself passes `tone` instead.
+ *
+ * A `marker` draws a tick across the bar or the line at a share, such as
+ * where an even spend would be by now, so the fill reads against time.
  *
  * @example {@include ./examples.mdx}
  */
 const Meter = forwardRef<HTMLDivElement, MeterProps>(
   (
-    { value, max = 1, label, detail, variant = 'bar', warnAt = 0.75, errorAt = 0.9, size: sizeProp, className },
+    {
+      value,
+      max = 1,
+      label,
+      detail,
+      variant = 'bar',
+      warnAt = 0.75,
+      errorAt = 0.9,
+      tone: toneProp,
+      marker,
+      size: sizeProp,
+      className,
+    },
     ref,
   ) => {
     const size = useSize(sizeProp)
     const reduceMotion = useReduceMotion()
     const share = Math.min(Math.max(value / max, 0), 1)
-    const tone = toneOf(share, warnAt, errorAt)
+    const tone = toneProp ?? toneOf(share, warnAt, errorAt)
     const transition = reduceMotion ? { duration: 0 } : spring.moderate
     const aria = {
       role: 'meter',
@@ -110,13 +130,27 @@ const Meter = forwardRef<HTMLDivElement, MeterProps>(
     }
 
     const track = (
-      <div className="h-1 overflow-hidden rounded-full bg-active">
-        <motion.div
-          className={cn('h-full origin-left rounded-full transition-[background-color] duration-fast', BAR_FILL[tone])}
-          initial={false}
-          animate={{ scaleX: share }}
-          transition={transition}
-        />
+      <div className="relative h-1">
+        <div className="h-full overflow-hidden rounded-full bg-active">
+          <motion.div
+            className={cn(
+              'h-full origin-left rounded-full transition-[background-color] duration-fast',
+              BAR_FILL[tone],
+            )}
+            initial={false}
+            animate={{ scaleX: share }}
+            transition={transition}
+          />
+        </div>
+        {marker !== undefined && (
+          <motion.div
+            aria-hidden="true"
+            className="absolute -inset-y-0.5 w-0.5 -translate-x-1/2 rounded-full bg-foreground"
+            initial={false}
+            animate={{ left: `${Math.min(Math.max(marker, 0), 1) * 100}%` }}
+            transition={transition}
+          />
+        )}
       </div>
     )
 

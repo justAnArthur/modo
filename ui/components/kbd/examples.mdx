@@ -1,0 +1,55 @@
+import { Plus, Settings } from 'lucide-react'
+import Kbd from './index'
+import Sidebar from '../navigation/sidebar'
+
+# Keycap
+
+A chip with a hairline, in the micro type step.
+
+<div className="flex items-center gap-2">
+  <Kbd>⌘K</Kbd>
+  <Kbd>⇧⌘O</Kbd>
+  <Kbd>Esc</Kbd>
+  <Kbd>↵</Kbd>
+</div>
+
+# Plain
+
+No chip: the muted keys alone, for a row's trailing shortcut.
+
+<div className="flex items-center gap-4">
+  <Kbd variant="plain">⌘K</Kbd>
+  <Kbd variant="plain">⇧⌘O</Kbd>
+</div>
+
+# In text
+
+<p className="text-body text-foreground">Press <Kbd>⌘K</Kbd> to search, then <Kbd>↵</Kbd> to open.</p>
+
+# In a Sidebar row
+
+<div className="flex h-[120px] w-64 overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <Sidebar className="h-full" collapsible="none">
+      <Sidebar.Content>
+        <Sidebar.Group>
+          <Sidebar.Menu>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Plus}>New session<Kbd variant="plain" className="ml-auto">⌘N</Kbd></Sidebar.MenuButton></Sidebar.MenuItem>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Settings}>Settings<Kbd variant="plain" className="ml-auto">⌘,</Kbd></Sidebar.MenuButton></Sidebar.MenuItem>
+          </Sidebar.Menu>
+        </Sidebar.Group>
+      </Sidebar.Content>
+    </Sidebar>
+  </Sidebar.Provider>
+</div>
+
+# Light and dark
+
+<div className="flex gap-3">
+  <div className="light flex items-center gap-2 rounded-xl border border-border bg-background p-4 text-foreground">
+    <Kbd>⌘K</Kbd><Kbd>⇧⌘O</Kbd><Kbd variant="plain">⌘N</Kbd>
+  </div>
+  <div className="dark flex items-center gap-2 rounded-xl border border-border bg-background p-4 text-foreground">
+    <Kbd>⌘K</Kbd><Kbd>⇧⌘O</Kbd><Kbd variant="plain">⌘N</Kbd>
+  </div>
+</div>

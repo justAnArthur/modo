@@ -1,0 +1,157 @@
+import List, { LIST_POPOVER, LIST_SWITCH } from './index'
+import Button from '../button'
+import Popover from '../overlays/popover'
+import Select from '../inputs/select'
+import Switch from '../inputs/switch'
+import Elevated from '../../primitives/surface'
+import { SizeProvider } from '../../primitives/sizes'
+import { Copy, RotateCcw } from 'lucide-react'
+
+# Settings in a card
+
+Sections under a caption, a label on the left and its control on the right. The controls end on the captions' edge.
+
+<Elevated offset={1} className="w-80 max-w-full rounded-2xl p-2 pt-3">
+  <List>
+    <List.Section title="Checkout">
+      <List.Row label="New worktree">
+        <Switch label="New worktree" defaultChecked className={LIST_SWITCH} />
+      </List.Row>
+      <List.Row label="Run setup script">
+        <Switch label="Run setup script" className={LIST_SWITCH} />
+      </List.Row>
+      <List.Row label="Base branch">
+        <Select defaultValue="main">
+          <Select.Trigger variant="borderless" className="min-w-0" />
+          <Select.Content>
+            <Select.Item index={0} value="main">main</Select.Item>
+            <Select.Item index={1} value="develop">develop</Select.Item>
+            <Select.Item index={2} value="release/2.0">release/2.0</Select.Item>
+          </Select.Content>
+        </Select>
+      </List.Row>
+    </List.Section>
+    <List.Section title="Notifications" aside="2 on">
+      <List.Row label="When a run finishes">
+        <Switch label="When a run finishes" defaultChecked className={LIST_SWITCH} />
+      </List.Row>
+      <List.Row label="When input is needed">
+        <Switch label="When input is needed" defaultChecked className={LIST_SWITCH} />
+      </List.Row>
+    </List.Section>
+  </List>
+</Elevated>
+
+# In a popover
+
+`LIST_POPOVER` gives `Popover.Content` the list's width and inset.
+
+<Popover>
+  <Popover.Trigger render={<Button variant="secondary">Run settings</Button>} />
+  <Popover.Content className={LIST_POPOVER}>
+    <List>
+      <List.Section title="Behaviour">
+        <List.Row label="Permissions">
+          <Select defaultValue="Ask first">
+            <Select.Trigger variant="borderless" className="min-w-0" />
+            <Select.Content>
+              <Select.Item index={0} value="Ask first">Ask first</Select.Item>
+              <Select.Item index={1} value="Accept edits">Accept edits</Select.Item>
+              <Select.Item index={2} value="Plan only">Plan only</Select.Item>
+            </Select.Content>
+          </Select>
+        </List.Row>
+        <List.Row label="Fast mode">
+          <Switch label="Fast mode" className={LIST_SWITCH} />
+        </List.Row>
+      </List.Section>
+      <List.Section title="Context" aside="42% of the window">
+        <List.Row label="Compact now">
+          <Button variant="ghost" size="compact">Compact</Button>
+        </List.Row>
+      </List.Section>
+    </List>
+  </Popover.Content>
+</Popover>
+
+# With descriptions
+
+`description` adds a muted line under the row, across its full width.
+
+<div className="w-80 max-w-full">
+  <List>
+    <List.Section title="Updates">
+      <List.Row label="Auto-update" description="Install updates in the background and restart when idle.">
+        <Switch label="Auto-update" defaultChecked className={LIST_SWITCH} />
+      </List.Row>
+      <List.Row label="Channel" description="Beta builds arrive a week earlier.">
+        <Select defaultValue="Stable">
+          <Select.Trigger variant="borderless" className="min-w-0" />
+          <Select.Content>
+            <Select.Item index={0} value="Stable">Stable</Select.Item>
+            <Select.Item index={1} value="Beta">Beta</Select.Item>
+          </Select.Content>
+        </Select>
+      </List.Row>
+    </List.Section>
+  </List>
+</div>
+
+# Controls
+
+A Switch, a borderless Select, ghost Buttons, or several controls in one row: all stand on one height.
+
+<div className="w-80 max-w-full">
+  <List>
+    <List.Section title="Profile">
+      <List.Row label="Show usage">
+        <Switch label="Show usage" defaultChecked className={LIST_SWITCH} />
+      </List.Row>
+      <List.Row label="Model">
+        <Select defaultValue="Balanced">
+          <Select.Trigger variant="borderless" className="min-w-0" />
+          <Select.Content>
+            <Select.Item index={0} value="Fast">Fast</Select.Item>
+            <Select.Item index={1} value="Balanced">Balanced</Select.Item>
+            <Select.Item index={2} value="Thorough">Thorough</Select.Item>
+          </Select.Content>
+        </Select>
+      </List.Row>
+      <List.Row label="API key">
+        <Button variant="ghost" size="icon" aria-label="Copy API key"><Copy /></Button>
+        <Button variant="ghost" size="icon" aria-label="Rotate API key"><RotateCcw /></Button>
+      </List.Row>
+      <List.Row label="Sign out of every device">
+        <Button variant="ghost">Sign out</Button>
+      </List.Row>
+    </List.Section>
+  </List>
+</div>
+
+# Compact
+
+In a compact region the rows step down to 28px, the captions and controls with them.
+
+<SizeProvider size="compact">
+  <div className="w-64 max-w-full">
+    <List>
+      <List.Section title="View">
+        <List.Row label="Line numbers">
+          <Switch label="Line numbers" defaultChecked className={LIST_SWITCH} />
+        </List.Row>
+        <List.Row label="Wrap">
+          <Select defaultValue="Off">
+            <Select.Trigger variant="borderless" className="min-w-0" />
+            <Select.Content>
+              <Select.Item index={0} value="Off">Off</Select.Item>
+              <Select.Item index={1} value="At width">At width</Select.Item>
+            </Select.Content>
+          </Select>
+        </List.Row>
+        <List.Row label="Reset view">
+          <Button variant="ghost" size="icon-compact" aria-label="Reset view"><RotateCcw /></Button>
+        </List.Row>
+      </List.Section>
+    </List>
+  </div>
+</SizeProvider>
