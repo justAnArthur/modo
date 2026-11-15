@@ -116,7 +116,7 @@ export default Popover
 
 For a `forwardRef` root, type the parts on a cast (`as ForwardRefExoticComponent<…> & { Item: typeof
 Item }`) and `Object.assign(Root, { Item })`. Keep upstream's named exports as well. A part that wraps a
-control takes `SlotProps` from `lib/slot.ts` (`render={<Button/>}` or `asChild`).
+control takes `SlotProps` from `lib/slot.tsx` (`render={<Button/>}` or `asChild`).
 
 ## examples.mdx
 

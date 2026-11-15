@@ -11,7 +11,8 @@
  *   font-size class-group extension is kept 1:1.
  * - The local token utilities from preset.ts join their groups: the
  *   compact and `micro` type roles (font-size), `weight-*` (a group of its
- *   own), the motion tiers (duration, delay) and `rounded-box|glyph`.
+ *   own), the motion tiers (duration, delay), `rounded-box|glyph` and
+ *   `text-trim` (a group of its own, so it never reads as a text color).
  */
 
 import type { CnFunction } from 'cn'
@@ -32,6 +33,7 @@ export const cn: CnFunction = createCn({
       duration: [{ duration: TIERS }],
       delay: [{ delay: TIERS }],
       rounded: [{ rounded: ['box', 'glyph'] }],
+      'text-box': ['text-trim'],
     },
   },
 })

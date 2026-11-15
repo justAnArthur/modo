@@ -15,6 +15,7 @@
  *   mirror `sizeMap` / `typeScale`) instead of being rendered from them.
  * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
  *   `text-<role>[-compact]`; inline `fontVariationSettings` → `weight-*`.
+ * - `SizeScope` added: pins a subtree only when a `size` is given.
  */
 
 'use client'
@@ -40,7 +41,8 @@ import { SizeContext, type SizeVariant, sizeMap } from '../../lib/size-context'
  * take that per-component `size`. Type follows the ladder too: compact drops
  * each type role one notch.
  *
- * Also exported from this item: `useSize(override?)`, `useSizeVariant(override?)`,
+ * Also exported from this item: `SizeScope` (pins a subtree to a component's
+ * own `size` prop, and inherits when there is none), `useSize(override?)`, `useSizeVariant(override?)`,
  * `useSizeContext()` (`{ size, setSize }` inside a provider), `useTypeScale(override?)`,
  * the `sizeMap` and `typeScale` tables, and the `SizeVariant`, `SizeClasses`,
  * `TypeScaleRole`, `TypeScaleStep` types.
@@ -81,6 +83,16 @@ export default function SizeProvider({
   return <SizeContext.Provider value={value}>{children}</SizeContext.Provider>
 }
 
+/**
+ * Pins its subtree to `size` when one is given, and changes nothing when it
+ * isn't: the wrapper for a component's own `size` prop. A bare
+ * `SizeProvider` would reset the subtree to its `defaultSize` instead of
+ * inheriting.
+ */
+function SizeScope({ size, children }: { size?: SizeVariant; children: ReactNode }) {
+  return size ? <SizeProvider size={size}>{children}</SizeProvider> : children
+}
+
 export type { SizeClasses, SizeVariant, TypeScaleRole, TypeScaleStep } from '../../lib/size-context'
 export {
   sizeMap,
@@ -90,4 +102,4 @@ export {
   useSizeVariant,
   useTypeScale,
 } from '../../lib/size-context'
-export { SizeProvider }
+export { SizeProvider, SizeScope }
