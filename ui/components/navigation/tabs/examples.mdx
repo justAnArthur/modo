@@ -43,7 +43,7 @@ A leading `icon` thickens its stroke while its tab is hovered or active.
 
 FF's Controlled section, without the state: `defaultValue` picks the first
 active tab and the tabs keep their own state. To control them, pass `value`
-+ `onValueChange` instead.
+and `onValueChange` instead.
 
 <div className="flex flex-col gap-4 w-full">
   <Tabs defaultValue="recents">
@@ -71,10 +71,10 @@ selected tab. Arrows move focus; Enter or Space selects.
       <Tabs.Item value="favorites" label="Favorites" />
       <Tabs.Item value="shared" label="Shared" />
     </Tabs.List>
-    <Tabs.Panel value="teamspaces"><p className="text-body text-muted-foreground px-3">Teamspaces content goes here.</p></Tabs.Panel>
-    <Tabs.Panel value="recents"><p className="text-body text-muted-foreground px-3">Recents content goes here.</p></Tabs.Panel>
-    <Tabs.Panel value="favorites"><p className="text-body text-muted-foreground px-3">Favorites content goes here.</p></Tabs.Panel>
-    <Tabs.Panel value="shared"><p className="text-body text-muted-foreground px-3">Shared content goes here.</p></Tabs.Panel>
+    <Tabs.Panel value="teamspaces"><p className="text-body text-muted-foreground px-3 pt-3">Teamspaces content goes here.</p></Tabs.Panel>
+    <Tabs.Panel value="recents"><p className="text-body text-muted-foreground px-3 pt-3">Recents content goes here.</p></Tabs.Panel>
+    <Tabs.Panel value="favorites"><p className="text-body text-muted-foreground px-3 pt-3">Favorites content goes here.</p></Tabs.Panel>
+    <Tabs.Panel value="shared"><p className="text-body text-muted-foreground px-3 pt-3">Shared content goes here.</p></Tabs.Panel>
   </Tabs>
 </div>
 
