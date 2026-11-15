@@ -151,7 +151,7 @@ shell: {
 
 ## panel
 
-The right-hand panel. Each entry renders as a `Sidebar.Section` titled `label`, holding `component`. `component` takes the same paths as `shell`. The component receives the resolved chrome as a `shell` prop (`shell.Select`, `shell.Button`, …).
+The right-hand panel. Each entry renders as a `Sidebar.Section` titled `label`, holding `component`. `component` takes the same paths as `shell`. The component receives the resolved chrome as a `shell` prop (`shell.Select`, `shell.Button`, …); type it with `PanelItemProps` from `@justanarthur/modo`.
 
 ```ts
 panel: { items: [{ label: 'Theme', component: './modo.components.tsx#ThemeSwitcher' }] },
@@ -159,10 +159,10 @@ panel: { items: [{ label: 'Theme', component: './modo.components.tsx#ThemeSwitch
 
 ```tsx
 // demo/components/demo-switcher/index.tsx, trimmed
-import type { ResolvedShellExport } from 'virtual:modo-shell'
+import type { PanelItemProps } from '@justanarthur/modo'
 
-export default function DemoSwitcher({ shell }: { shell: ResolvedShellExport }) {
-  return <shell.Select value={current} onChange={go} options={options} />
+export default function DemoSwitcher({ shell }: PanelItemProps) {
+  return <shell.Select value={current} onValueChange={go} options={options} />
 }
 ```
 
@@ -178,7 +178,7 @@ css: './global.css',
 
 ## vite
 
-A module that default-exports a function receiving modo's Vite config and returning it (or a promise of it). Use it to add Vite plugins such as Tailwind or UnoCSS. You write no Vite config of your own.
+A module that default-exports a function receiving modo's Vite config and returning it (or a promise of it). Use it to add Vite plugins such as Tailwind or UnoCSS. You write no Vite config of your own. The path resolves like every other module path here: the extension is optional (`./vite` finds `vite.ts`), and a folder resolves to its `index`. CLI flags (`--port`, `--host`, `--base`, `--out`) apply over what it returns.
 
 ```ts
 vite: './vite.ts',
