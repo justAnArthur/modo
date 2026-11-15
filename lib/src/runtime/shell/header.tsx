@@ -1,7 +1,8 @@
 import { config, logoUrl } from 'virtual:modo-config'
 import { Logo, shell } from 'virtual:modo-shell'
 import { useSyncExternalStore } from 'react'
-import { withBase } from '../location'
+import { cap } from '../../lib/text'
+import { HOME_PATH, withBase } from '../location'
 
 /** Labels for well-known `socials` keys; any other key is capitalized. */
 const NETWORKS: Record<string, string> = {
@@ -19,14 +20,14 @@ const NETWORKS: Record<string, string> = {
   storybook: 'Storybook',
 }
 
-const networkLabel = (key: string) => NETWORKS[key.toLowerCase()] ?? key[0]!.toUpperCase() + key.slice(1)
+const networkLabel = (key: string) => NETWORKS[key.toLowerCase()] ?? cap(key)
 
 /** The brand row: logo and name linking home, socials, the theme toggle and, below md, the menu toggle. */
 export function Header({ menuOpen, onMenu }: { menuOpen: boolean; onMenu: () => void }) {
   const { Button, Icon, Link } = shell
   return (
     <header data-modo="header">
-      <Link href={withBase('/')}>
+      <Link href={withBase(HOME_PATH)}>
         <span data-modo="brand">
           {Logo ? <Logo /> : logoUrl ? <img data-modo="brand-logo" src={logoUrl} alt="" /> : null}
           <span data-modo="brand-name">{config.name}</span>

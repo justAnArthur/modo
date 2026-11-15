@@ -61,11 +61,8 @@ export function Heading({
   )
 }
 
-/**
- * Hover-revealed `#` link to a heading; sits inside the heading it targets.
- * The hook is on a wrapper: a host Link needn't forward data attributes.
- */
-export function Anchor({ id, label }: { id: string; label: string }) {
+/** The hook is on a wrapper: a host Link needn't forward data attributes. */
+function Anchor({ id, label }: { id: string; label: string }) {
   const { Link, Icon } = shell
   return (
     <span data-modo="anchor">

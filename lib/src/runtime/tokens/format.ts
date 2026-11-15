@@ -1,4 +1,4 @@
-/* Pure formatting for the foundation pages: no DOM, so the tests can import it. */
+// Pure, so the tests can import it.
 
 const ROOT_PX = 16
 const PILL = 1000
@@ -8,13 +8,20 @@ export function px(n: number): string {
   return `${round(n, 2)}px`
 }
 
+/** `150` → `150ms`, `0.5` → `0.5ms`: at most two decimals, trailing zeros dropped. */
+export function ms(n: number): string {
+  return `${round(n, 2)}ms`
+}
+
 /** `12` → `0.75rem`: at most four decimals, trailing zeros dropped. */
 export function rem(n: number): string {
   return `${round(n / ROOT_PX, 4)}rem`
 }
 
-/** The declared value, then whichever of px and rem it isn't already:
-    `0.25rem` → `0.25rem · 4px`, `calc(…)` → `calc(…) · 6px · 0.375rem`. */
+/**
+ * The declared value, then whichever of px and rem it isn't already:
+ * `0.25rem` → `0.25rem · 4px`, `calc(…)` → `calc(…) · 6px · 0.375rem`.
+ */
 export function lengthMeta(value: string, size: number | null): string {
   if (size === null) return value
   // A pill sentinel (`9999px`) reads as nothing in rem.

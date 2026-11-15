@@ -1,10 +1,11 @@
 import { config } from 'virtual:modo-config'
 import { type ReactNode, useEffect } from 'react'
 import { pageTitle } from '../lib/head'
-import { TIERS, type Tier } from '../lib/tiers'
+import { tierPath, tokenPath } from '../lib/paths'
+import { TIERS } from '../lib/tiers'
 import { PageIdScope } from './anchor'
 import { ItemPage } from './items/item-page'
-import { appPath, BASE, NAVIGATE, usePath } from './location'
+import { appPath, BASE, HOME_PATH, NAVIGATE, staticPage, usePath } from './location'
 import { CanvasPage } from './pages/canvas'
 import { HomePage } from './pages/home'
 import { NotFoundPage } from './pages/not-found'
@@ -12,24 +13,25 @@ import { TierPage } from './pages/tier'
 import { TokensPage } from './pages/tokens'
 import { TokenGroupView } from './tokens/group-page'
 
-const TIER = TIERS.join('|')
-
-interface Route {
-  pattern: RegExp
-  render: (match: RegExpMatchArray) => ReactNode
+/** The one segment under `parent` (`/docs/tokens/colors` → `colors`). */
+function child(path: string, parent: string): string | undefined {
+  const rest = path.startsWith(`${parent}/`) ? path.slice(parent.length + 1) : ''
+  return rest && !rest.includes('/') ? rest : undefined
 }
 
-const routes: Route[] = [
-  { pattern: /^\/$/, render: () => <HomePage /> },
-  { pattern: /^\/canvas$/, render: () => <CanvasPage /> },
-  { pattern: /^\/docs\/tokens$/, render: () => <TokensPage /> },
-  { pattern: /^\/docs\/tokens\/([^/]+)$/, render: m => <TokenGroupView group={m[1]!} /> },
-  { pattern: new RegExp(`^/docs/(${TIER})$`), render: m => <TierPage tier={m[1] as Tier} /> },
-  {
-    pattern: new RegExp(`^/docs/(${TIER})/([^/]+)$`),
-    render: m => <ItemPage tier={m[1] as Tier} id={m[2]!} />,
-  },
-]
+function page(path: string): ReactNode {
+  if (path === HOME_PATH) return <HomePage />
+  if (path === staticPage('canvas').href) return <CanvasPage />
+  if (path === tokenPath()) return <TokensPage />
+  const group = child(path, tokenPath())
+  if (group) return <TokenGroupView group={group} />
+  for (const tier of TIERS) {
+    if (path === tierPath(tier)) return <TierPage tier={tier} />
+    const id = child(path, tierPath(tier))
+    if (id) return <ItemPage tier={tier} id={id} />
+  }
+  return <NotFoundPage />
+}
 
 function scrollToHash(hash: string) {
   if (hash) document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView()
@@ -67,8 +69,6 @@ export function Router(): ReactNode {
     )
   }, [path])
 
-  const route = routes.find(r => r.pattern.test(path))
-  const match = route && path.match(route.pattern)
   // Keyed by path so page state (an open code panel, heading ids) doesn't carry over.
-  return <PageIdScope key={path}>{route && match ? route.render(match) : <NotFoundPage />}</PageIdScope>
+  return <PageIdScope key={path}>{page(path)}</PageIdScope>
 }

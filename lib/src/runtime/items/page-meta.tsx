@@ -5,8 +5,7 @@ import { itemMeta, repoBlobUrl } from '../../lib/item-meta'
 import { cap } from '../../lib/text'
 import { Markdown } from '../markdown'
 
-/** Lifecycle from the item's block tags, plus its Source link when `repo` is set. Upstreams and
-    licenses (`@source`, `@license`) are credited once, on the overview (pages/credits.tsx). */
+/** Lifecycle from the item's block tags, plus its Source link when `repo` is set. */
 export function PageMeta({ entry }: { entry: ItemEntry }) {
   const { status, since, deprecated } = itemMeta(entry.tags)
   const { repo } = config

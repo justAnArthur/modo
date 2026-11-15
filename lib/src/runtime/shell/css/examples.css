@@ -1,0 +1,96 @@
+[data-modo="example-card"] {
+  margin: 0 0 var(--space-6, 32px);
+}
+
+[data-modo="prose"] > [data-modo="example-card"] {
+  margin-top: var(--space-3, 12px);
+}
+
+[data-modo="example-card-title"] {
+  font-size: var(--modo-font-size-h3);
+  line-height: var(--modo-line-height-h3);
+  font-weight: var(--modo-font-weight-h3);
+  color: var(--modo-color-h3);
+  margin: 0 0 var(--space-2, 8px);
+}
+
+[data-modo="example-card"] [data-modo="prose"] {
+  margin: 0 0 var(--space-3, 12px);
+}
+
+[data-modo="example-card-frame"] {
+  position: relative;
+  border: 1px solid var(--modo-border);
+  border-radius: var(--modo-radius-lg);
+}
+
+/* A demo wider than the stage starts at its left edge and is clipped on the
+   right, on this axis only: inline popovers still drop below the stage. */
+[data-modo="example-card-stage"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: safe center;
+  overflow-x: clip;
+  gap: var(--space-3, 12px);
+  min-height: 10rem;
+  padding: var(--space-6, 32px);
+}
+
+[data-modo="example-actions"],
+[data-modo="code-actions"] {
+  position: absolute;
+  top: var(--space-2, 8px);
+  right: var(--space-2, 8px);
+  display: flex;
+  gap: var(--space-1, 4px);
+}
+
+/* No overflow clip on the frame (it would cut off inline popovers); the code
+   panel rounds its own bottom corners instead. */
+[data-modo="example-code"] {
+  border-top: 1px solid var(--modo-border);
+  border-bottom-left-radius: inherit;
+  border-bottom-right-radius: inherit;
+  max-height: 28rem;
+  overflow: auto;
+}
+
+[data-modo="example-code"] > *,
+[data-modo="code-block"] > :first-child {
+  margin: 0;
+}
+
+[data-modo="code-block"] {
+  position: relative;
+}
+
+[data-modo="code-block"] pre,
+[data-modo="example-code"] pre {
+  overflow-x: auto;
+}
+
+/* Shown on hover or keyboard focus inside the owner; always on touch. */
+
+:is([data-modo="example-actions"], [data-modo="code-actions"], [data-modo="anchor"]) {
+  opacity: 0;
+  transition: opacity var(--duration-fast);
+}
+
+[data-modo="example-card-frame"]:is(:hover, :focus-within) > [data-modo="example-actions"],
+[data-modo="code-block"]:is(:hover, :focus-within) > [data-modo="code-actions"],
+:is(h2, h3, h4, h5, h6):is(:hover, :focus-within) > [data-modo="anchor"] {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  :is([data-modo="example-actions"], [data-modo="code-actions"], [data-modo="anchor"]) {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is([data-modo="example-actions"], [data-modo="code-actions"], [data-modo="anchor"]) {
+    transition: none;
+  }
+}

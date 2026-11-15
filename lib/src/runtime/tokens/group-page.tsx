@@ -2,6 +2,7 @@ import { tokens as groups } from 'virtual:modo-tokens'
 import type { ReactNode } from 'react'
 import type { GroupName } from '../../lib/css'
 import { cap, count } from '../../lib/text'
+import { NotFoundPage } from '../pages/not-found'
 import { ColorGroups, ColorPreview } from './colors'
 import { range } from './format'
 import { RadiusPreview, RadiusView, SpacingPreview, SpacingView } from './lengths'
@@ -34,15 +35,16 @@ export function summary(group: GroupName, vars: Var[]): string {
 
 export function TokenGroupView({ group }: { group: string }) {
   const g = groups.find(gg => gg.name === group)
-  const vars = g ? declared(g.vars) : []
+  if (!g) return <NotFoundPage />
+  const vars = declared(g.vars)
   return (
     <article>
       <header>
         <p data-modo="page-eyebrow">Foundations</p>
         <h1 data-modo="page-title">{cap(group)}</h1>
-        <p data-modo="page-lead">{g ? `${ABOUT[g.name]} ${summary(g.name, vars)}.` : null}</p>
+        <p data-modo="page-lead">{`${ABOUT[g.name]} ${summary(g.name, vars)}.`}</p>
       </header>
-      {g && vars.length > 0 ? <GroupBody group={g.name} vars={vars} all={g.vars} /> : <Empty />}
+      {vars.length > 0 ? <GroupBody group={g.name} vars={vars} all={g.vars} /> : <Empty />}
     </article>
   )
 }

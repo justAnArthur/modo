@@ -11,8 +11,7 @@ import { ExamplePreview } from '../items/preview'
 import { withBase } from '../location'
 import { GroupPreview } from '../tokens/group-page'
 
-/** Every foundation and item, live, on one pan-and-zoom surface: a column per
-    tier in sidebar order, a frame per page. */
+/** Every foundation and item, live, on one pan-and-zoom surface: a column per tier, a frame per page. */
 export function CanvasPage() {
   return (
     <Viewport>

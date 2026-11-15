@@ -2,7 +2,7 @@ import { shell } from 'virtual:modo-shell'
 import { useEffect, useState } from 'react'
 import { usePath } from '../location'
 
-interface Heading {
+interface TocEntry {
   id: string
   label: string
   level: number
@@ -22,7 +22,7 @@ function label(heading: Element): string {
 /** "On this page": the content's h2–h4 headings with ids, current one active. */
 export function Toc() {
   const path = usePath()
-  const [headings, setHeadings] = useState<Heading[]>([])
+  const [headings, setHeadings] = useState<TocEntry[]>([])
   const [active, setActive] = useState<string | null>(null)
 
   useEffect(() => {

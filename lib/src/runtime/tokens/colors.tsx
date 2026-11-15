@@ -5,8 +5,7 @@ import { colorExpr, colorValue } from './host-colors'
 import { resolved } from './measure'
 import { OtherTokens, TokenSection, type Var } from './parts'
 
-/* The shadcn/ui theme schema, one column per family. Tokens a design system
-   defines under these names render first; everything else follows as custom. */
+// The shadcn/ui theme schema, one column per family; tokens outside it render as custom.
 const THEME = [
   ['background', 'card', 'popover'],
   ['primary', 'secondary', 'accent', 'muted'],
@@ -39,27 +38,30 @@ interface Tile {
 
 // A host switches theme through <html> (a class, an attribute, an inline
 // style) or follows the OS; either way the tiles are measured again.
-const dark = matchMedia('(prefers-color-scheme: dark)')
+let dark: MediaQueryList | undefined
+const prefersDark = () => (dark ??= matchMedia('(prefers-color-scheme: dark)'))
 
 function subscribeTheme(onChange: () => void) {
   const observer = new MutationObserver(onChange)
   observer.observe(document.documentElement, { attributes: true })
-  dark.addEventListener('change', onChange)
+  prefersDark().addEventListener('change', onChange)
   return () => {
     observer.disconnect()
-    dark.removeEventListener('change', onChange)
+    prefersDark().removeEventListener('change', onChange)
   }
 }
 
 function themeSnapshot(): string {
   const attrs = [...document.documentElement.attributes].map(a => `${a.name}=${a.value}`)
-  return `${attrs.join(' ')} ${dark.matches}`
+  return `${attrs.join(' ')} ${prefersDark().matches}`
 }
 
-/** The color tokens as tiles, each fill with its foreground partner: the
-    theme schema's columns, then the custom families, then the non-colors.
-    A token counts as a color when its resolved value is one, either on its
-    own or wrapped the way the host wraps it (`hsl(var(--border))`). */
+/**
+ * The color tokens as tiles, each fill with its foreground partner: the theme
+ * schema's columns, then the custom families, then the non-colors. A token
+ * counts as a color when its resolved value is one, on its own or wrapped the
+ * way the host wraps it (`hsl(var(--border))`).
+ */
 function colorTiles(vars: Var[]) {
   const colors = vars.filter(v => colorValue(v.name, resolved(v.name, v.value)) !== null)
   const byName = new Map(colors.map(v => [v.name, v]))
@@ -86,8 +88,10 @@ export function ColorGroups({ vars, all }: { vars: Var[]; all: Var[] }) {
   )
 }
 
-/** Columns of related tokens: `--chart-1…5`, `--sidebar-*`, … Tokens without
-    siblings share loose columns. Long families wrap every MAX_STACK tiles. */
+/**
+ * Columns of related tokens (`--chart-1…5`, `--sidebar-*`); tokens without
+ * siblings share loose columns. Long families wrap every MAX_STACK tiles.
+ */
 function families(tiles: Tile[]): Tile[][] {
   const names = tiles.map(t => t.v.name)
   const key = (n: string) => (names.some(o => o.startsWith(`${n}-`)) ? n : n.slice(0, n.lastIndexOf('-')))
@@ -158,9 +162,11 @@ function ColorTile({ tile: { v, fg }, page, all }: { tile: Tile; page: PageColor
   )
 }
 
-/** The token's light and dark values side by side, when the host declares
-    both as plain colors (a value that references other tokens would resolve
-    in the current scheme only, so it gets no chip). */
+/**
+ * The token's light and dark values side by side, when the host declares both
+ * as plain colors (a value that references other tokens would resolve in the
+ * current scheme only, so it gets no chip).
+ */
 function SchemeChips({ v, all }: { v: Var; all: Var[] }) {
   const pair = schemePair(all, v.name)
   if (!pair) return null

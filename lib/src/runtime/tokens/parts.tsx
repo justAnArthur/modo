@@ -1,23 +1,25 @@
 import type { CSSProperties, ReactElement, ReactNode } from 'react'
 import type { Group, Swatch } from '../../lib/css'
 import { Heading } from '../anchor'
+import { ms, px } from './format'
 import { lengthOf } from './measure'
 
 export type Var = Group['vars'][number]
 
-/** Token files declare light and dark blocks; the first declaration (`:root`)
-    names the token, the live cascade decides what it renders as. */
+/**
+ * Token files declare light and dark blocks; the first declaration (`:root`)
+ * names the token, the live cascade decides what it renders as.
+ */
 export function declared(vars: Var[]): Var[] {
   return vars.filter((v, i) => vars.findIndex(w => w.name === v.name) === i)
 }
 
 /** Smallest first, as the browser sizes them; values that aren't lengths go last. */
 export function byLength(vars: Var[]): Var[] {
-  const px = (v: Var) => lengthOf(v) ?? Infinity
-  return [...vars].sort((a, b) => px(a) - px(b))
+  const size = (v: Var) => lengthOf(v) ?? Infinity
+  return [...vars].sort((a, b) => size(a) - size(b))
 }
 
-/** A titled part of a token page, anchored so the TOC lists it. */
 export function TokenSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section data-modo="section">
@@ -102,13 +104,12 @@ function TokenSwatch({ sw }: { sw?: Swatch }): ReactElement | null {
 function meta(sw: Swatch): string {
   switch (sw.kind) {
     case 'length':
-      return `${sw.px}px`
+    case 'font-size':
+      return px(sw.px)
     case 'duration':
-      return `${sw.ms}ms`
+      return ms(sw.ms)
     case 'font-family':
       return sw.family
-    case 'font-size':
-      return `${sw.px}px`
     case 'font-weight':
       return sw.value
   }
