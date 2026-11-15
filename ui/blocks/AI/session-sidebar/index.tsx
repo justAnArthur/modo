@@ -17,6 +17,7 @@ import Sidebar from '../../../components/navigation/sidebar'
 import { DropdownContent, DropdownMenu, DropdownTrigger, MenuItem } from '../../../components/overlays/dropdown'
 import Tooltip from '../../../components/overlays/tooltip'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
+import Sortable, { useSortableHandle } from '../../../primitives/sortable'
 import { SidebarSearchField } from '../../sidebar-app/search-field'
 import { ProfileTile } from '../profile-switcher'
 import ProfileUsage from '../profile-usage'
@@ -41,12 +42,25 @@ function everySession(pinned: Session[], groups: SessionGroup[]) {
   ]
 }
 
+/** A pinned row's grip: drag it, or focus it and press Space, to move the row among the pinned. */
+function ReorderAction() {
+  const Grip = useIcon('grip-vertical')
+  const handle = useSortableHandle()
+  return (
+    <Sidebar.MenuAction {...handle} className="cursor-grab touch-none active:cursor-grabbing">
+      <Grip />
+    </Sidebar.MenuAction>
+  )
+}
+
 interface SessionRowProps {
   session: Session
+  /** Inside the pinned Sortable: the actions lead with a grip. */
+  reorder?: boolean
   onOpenSplit?: (id: string) => void
 }
 
-function SessionRow({ session, onOpenSplit }: SessionRowProps) {
+function SessionRow({ session, reorder, onOpenSplit }: SessionRowProps) {
   const Pin = useIcon('pin')
   const Archive = useIcon('archive')
   const More = useIcon('more-vertical')
@@ -72,6 +86,8 @@ function SessionRow({ session, onOpenSplit }: SessionRowProps) {
       </Sidebar.MenuButton>
       <Sidebar.MenuBadge>{session.updated}</Sidebar.MenuBadge>
       <Sidebar.MenuActions showOnHover>
+        {/* An array, not `&&`: the cluster counts its children to size the row's gutter, `false` included. */}
+        {reorder ? [<ReorderAction key="reorder" />] : []}
         <Tooltip content={session.pinned ? 'Unpin' : 'Pin'} side="top">
           <Sidebar.MenuAction aria-label={session.pinned ? 'Unpin' : 'Pin'}>
             <Pin />
@@ -189,8 +205,10 @@ function SessionFilters({
 }
 
 interface SessionSidebarProps {
-  /** Pinned sessions, above every group. */
+  /** Pinned sessions, above every group, in the order you dragged them into. */
   pinned: Session[]
+  /** Called with the pinned sessions' ids after one is dragged to a new place. */
+  onPinnedOrderChange?: (ids: string[]) => void
   /** Project folders and the user's own sections, in order. */
   groups: SessionGroup[]
   /** Archived sessions, folded at the bottom. */
@@ -222,7 +240,9 @@ interface SessionSidebarProps {
  * Sessions of every profile sit side by side, so there is no profile to
  * switch: the header opens the overview of every session (see the session
  * board), starts a new session and searches, and the footer shows how much
- * each profile has left (see the profile usage). Below it come the pinned sessions, then one group
+ * each profile has left (see the profile usage). Below it come the pinned sessions, which you
+ * reorder by a row's grip (drag it, or focus it, press Space and use the
+ * arrows), then one group
  * per project folder and per section you made, then the archive, folded.
  * A row's leading glyph is its state: an arc turning while it runs, an
  * amber dot while it waits for you, a filled dot for an unread reply and a
@@ -246,6 +266,7 @@ export default function SessionSidebar({
   groups,
   archived,
   profiles,
+  onPinnedOrderChange,
   list = 'sessions',
   value,
   defaultValue,
@@ -298,9 +319,16 @@ export default function SessionSidebar({
             <Sidebar.Group collapsible>
               <Sidebar.GroupLabel>Pinned</Sidebar.GroupLabel>
               <Sidebar.Menu>
-                {pinned.map(session => (
-                  <SessionRow key={session.id} session={session} onOpenSplit={onOpenSplit} />
-                ))}
+                <Sortable
+                  as="none"
+                  handle
+                  items={pinned.map(session => ({
+                    id: session.id,
+                    label: session.title,
+                    content: <SessionRow session={session} reorder onOpenSplit={onOpenSplit} />,
+                  }))}
+                  onOrderChange={onPinnedOrderChange}
+                />
               </Sidebar.Menu>
             </Sidebar.Group>
 

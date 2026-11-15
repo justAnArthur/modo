@@ -12,6 +12,7 @@ import {
   createContext,
   type FocusEvent,
   type KeyboardEvent,
+  type PointerEvent,
   type ReactNode,
   useContext,
   useId,
@@ -37,6 +38,9 @@ interface SortableItem {
 }
 
 type SortableOrientation = 'vertical' | 'horizontal'
+
+/** The list's element: a list of its own, or `'none'` for rows that are already a host list's items. */
+type SortableAs = 'ul' | 'ol' | 'none'
 
 interface ItemState {
   controls: DragControls
@@ -65,19 +69,27 @@ interface SortableHandleProps {
   className?: string
 }
 
+/** The props that make any button its item's drag handle: keyboard focus, the pointer grab and an accessible name. */
+function useSortableHandle(label?: string) {
+  const item = useContext(ItemContext)
+  if (!item) throw new Error('A Sortable handle must sit inside a Sortable item.')
+  return {
+    ...item.focusProps,
+    'aria-label': label ?? `Reorder ${item.label}`,
+    onPointerDown: (e: PointerEvent) => item.controls.start(e),
+  }
+}
+
 /** The grip that drags its item, when the list has `handle`. It also takes the item's keyboard focus. */
 function SortableHandle({ label, className }: SortableHandleProps) {
-  const item = useContext(ItemContext)
+  const handleProps = useSortableHandle(label)
   const size = useSize()
   const Grip = useIcon('grip-vertical')
-  if (!item) throw new Error('Sortable.Handle must sit inside a Sortable item.')
 
   return (
     <button
       type="button"
-      aria-label={label ?? `Reorder ${item.label}`}
-      {...item.focusProps}
-      onPointerDown={e => item.controls.start(e)}
+      {...handleProps}
       className={cn(
         'flex shrink-0 cursor-grab touch-none items-center justify-center rounded-glyph text-muted-foreground transition-[color] duration-fast hover:text-foreground active:cursor-grabbing',
         FOCUS_RING,
@@ -100,9 +112,11 @@ interface SortableProps {
   onOrderChange?: (order: string[]) => void
   /** Which way the list runs, and which arrows move an item. Defaults to `'vertical'`. */
   orientation?: SortableOrientation
+  /** The list's element. `'none'` renders plain boxes with no role, for rows that are a host list's own items (a `Sidebar.Menu`'s rows). Defaults to `'ul'`. */
+  as?: SortableAs
   /** Drag only by each item's `Sortable.Handle` (which also takes keyboard focus) instead of the whole item. Defaults to `false`. */
   handle?: boolean
-  /** Accessible name of the list. */
+  /** Accessible name of the list (ignored with `as="none"`: name the host list). */
   label?: string
   /** Classes for the list. */
   className?: string
@@ -125,6 +139,11 @@ interface SortableProps {
  * - `Sortable.Handle` — the grip inside an item's `content`, for a list with
  *   `handle`: `label`, `className`.
  *
+ * `useSortableHandle(label?)` returns the same wiring as props, to spread on
+ * a button of your own (a sidebar row's action). With `as="none"` the list
+ * and its items are plain boxes with no role, so a host list's rows (a
+ * `Sidebar.Menu`'s items) can be the ones that move.
+ *
  * @example {@include ./examples.mdx}
  */
 function Sortable({
@@ -133,6 +152,7 @@ function Sortable({
   defaultOrder,
   onOrderChange,
   orientation = 'vertical',
+  as = 'ul',
   handle = false,
   label,
   className,
@@ -203,7 +223,10 @@ function Sortable({
         axis={horizontal ? 'x' : 'y'}
         values={ids}
         onReorder={setIds}
-        aria-label={label}
+        as={as === 'none' ? 'div' : as}
+        role={as === 'none' ? 'none' : undefined}
+        // A name would override `role="none"` and turn the box back into a group.
+        aria-label={as === 'none' ? undefined : label}
         className={cn('relative flex', horizontal ? 'flex-row' : 'flex-col', className)}
       >
         {ids.map(id => (
@@ -212,6 +235,7 @@ function Sortable({
             id={id}
             item={byId.get(id)}
             handle={handle}
+            bare={as === 'none'}
             raised={lifted?.id === id || dragging === id}
             transition={reduced ? STILL : MOVE}
             hintId={hintId}
@@ -241,6 +265,7 @@ interface RowProps {
   id: string
   item?: SortableItem
   handle: boolean
+  bare: boolean
   raised: boolean
   transition: typeof MOVE | typeof STILL
   hintId: string
@@ -256,6 +281,7 @@ function Row({
   id,
   item,
   handle,
+  bare,
   raised,
   transition,
   hintId,
@@ -283,6 +309,8 @@ function Row({
   return (
     <Reorder.Item
       value={id}
+      as={bare ? 'div' : 'li'}
+      role={bare ? 'none' : undefined}
       dragListener={!handle}
       dragControls={controls}
       transition={transition}
@@ -306,7 +334,7 @@ function Row({
 
 Sortable.Handle = SortableHandle
 
-export type { SortableHandleProps, SortableItem, SortableOrientation, SortableProps }
-export { Sortable, SortableHandle }
+export type { SortableAs, SortableHandleProps, SortableItem, SortableOrientation, SortableProps }
+export { Sortable, SortableHandle, useSortableHandle }
 
 export default Sortable

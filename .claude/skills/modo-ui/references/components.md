@@ -59,7 +59,7 @@ controlled + uncontrolled.
 | A title you rename in place | `EditableText` |
 | Pairs to edit (env vars, headers) | `KeyValue` (secret masking, duplicate keys invalid) |
 | Nothing here yet | `EmptyState` (`size="compact"` for panes) |
-| Reorder by drag or keyboard | `Sortable` (`.Handle`) |
+| Reorder by drag or keyboard | `Sortable` (`.Handle`, `useSortableHandle` for your own grip, `as="none"` inside a host list such as `Sidebar.Menu`) |
 | Thousands of rows | `VirtualList` (`scrollToIndex`) |
 | Images full-window | `Lightbox` (`.Trigger` per thumbnail) |
 | A desktop app window | `DesktopShell` block (title bar, two sidebars, main card) |
