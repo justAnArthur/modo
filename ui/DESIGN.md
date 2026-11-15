@@ -329,6 +329,8 @@ Two text colors, a greyscale ground, one blue.
 - **Surfaces (`bg-surface-1` … `bg-surface-8`)** — the elevation ladder (see Elevation & Depth). Prefer a
   surface level over `card`/`background` for anything that floats or nests.
 - **Muted (`bg-muted`)** — a recessed track: the segmented tabs' well, a sunken field at rest.
+- **Sunken (`bg-sunken`)** — a tray set into the page, below surface 1 in both schemes (greyer in light,
+  darker in dark), so a card resting in it lifts out: ShellCard's shell.
 - **Accent (`bg-accent`)** — the secondary button and the switch's off track. `selected` is a firmer
   grey for persistent selection fills.
 - **Hover / Active (`bg-hover`, `bg-active`)** — translucent overlays (black 4% / 7% in light, white 6% /

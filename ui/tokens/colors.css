@@ -45,6 +45,10 @@
      semantic presence. Dark keeps the ladder value (= surface-2). */
   --muted: light-dark(oklch(0.967 0.001 286.375), oklch(0.235 0 0));
   --muted-foreground: light-dark(oklch(0.556 0 0), oklch(0.7155 0 0));
+  /* A tray that sits below the page, for a card resting in a holder
+     (ShellCard): greyer than the page in light, darker than the page in dark,
+     so whatever lifts out of it reads in both schemes. */
+  --sunken: light-dark(oklch(0.955 0 0), oklch(0.17 0 0));
 
   /* ── Interactive states ── */
   --accent: light-dark(oklch(0.922 0 0), oklch(0.439 0 0));

@@ -7,4 +7,9 @@
      keycaps, and the composer's stop glyph. */
   --radius-box: 5px;
   --radius-glyph: 3px;
+
+  /* A shell around a container, concentric with it: the container's corner
+     (12px rounded, 24px pill) plus the shell's inset (--space-2). */
+  --radius-shell: calc(12px + var(--space-2));
+  --radius-shell-pill: calc(24px + var(--space-2));
 }

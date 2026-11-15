@@ -90,7 +90,7 @@ interface ProfileSwitcherProps {
   onValueChange?: (value: string) => void
   /** Start with the panel open, as the profiles screen shows it. Defaults to `false`. */
   defaultOpen?: boolean
-  /** The trigger: a borderless Select-style trigger with the tile and name (it lines up with Selects in a row), or a Sidebar header row (inside a Sidebar). Defaults to `'button'`. */
+  /** The trigger: a borderless Select-style trigger with the tile, the name and two thin usage lines (it lines up with Selects in a row), or a Sidebar header row (inside a Sidebar). Defaults to `'button'`. */
   variant?: 'button' | 'sidebar'
   /** Which side of the trigger the panel opens on. Defaults to `'bottom'`. */
   side?: 'top' | 'right' | 'bottom' | 'left'
@@ -160,6 +160,12 @@ export default function ProfileSwitcher({
       >
         <ProfileTile profile={active} />
         <span className="min-w-0 truncate">{active.name}</span>
+        {/* Its two windows at a glance: the 5-hour session above the week. */}
+        <span aria-hidden="true" className="flex w-8 shrink-0 flex-col gap-0.5">
+          {active.limits.slice(0, 2).map(limit => (
+            <Meter key={limit.label} variant="line" label={limit.label} value={limit.value} />
+          ))}
+        </span>
         <ChevronDown
           size={size.icon}
           strokeWidth={1.5}

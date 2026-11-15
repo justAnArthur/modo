@@ -75,7 +75,7 @@ controlled + uncontrolled.
 | `Table` | `components/table` | `.Header .Body .Row .Head .Cell` | L H | Row hover, semantic markup. |
 | `ThinkingIndicator` | `components/thinking-indicator` | — | — | `variant` `shimmer` (default) \| `goo` (three dots melting). |
 | `Meter` | `components/meter` | — | L | `variant` `bar` \| `ring`; the fill springs to its value; `warnAt` / `errorAt` turn it to the status hues. |
-| `ShellCard` | `components/shell-card` | `.Inner .Footer` | S | Muted shell with an inner card one level up; concentric 16 → 12px corners. |
+| `ShellCard` | `components/shell-card` | `.Inner .Footer` | S | `bg-sunken` shell, `--space-2` inset, an inner card two levels up; corners concentric through `--radius-shell`. |
 | `Diff` | `components/AI/diff` | — | S | Reads a unified patch; added / removed lines as status text on a 16% wash; one surface step up, like Code. |
 
 ## components/inputs

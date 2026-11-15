@@ -3,7 +3,7 @@ import { ZCODE_MODELS } from '../mock'
 
 # Composer
 
-Three controls. The + is one searchable palette (attach, @-files, commands, skills, plugins); the model trigger opens the run settings (model, effort, fast mode, output style); under the draft, the permission mode and the context ring.
+In the draft, the + palette and the run trigger (permission mode, model, effort, context ring) that opens the run settings. On the shell, where the session runs: the project and the profile with its usage lines.
 
 <div className="flex h-[440px] w-full max-w-2xl items-end">
   <Composer />
@@ -11,7 +11,7 @@ Three controls. The + is one searchable palette (attach, @-files, commands, skil
 
 # New session
 
-`target` adds where a new session runs to the row: the project, the profile and a worktree, all the same height.
+`target`: the project (its popover holds the worktree, setup script and base branch) and the profile can still be picked.
 
 <div className="flex h-[200px] w-full max-w-2xl items-end">
   <Composer target context={0} placeholder="Describe the task, or type / for commands" />
@@ -19,7 +19,7 @@ Three controls. The + is one searchable palette (attach, @-files, commands, skil
 
 # Near compaction
 
-Past 80% the context ring turns amber; at 95% it compacts.
+Past 80% the context ring in the run trigger turns amber; at 95% it compacts.
 
 <div className="flex h-[200px] w-full max-w-2xl items-end">
   <Composer context={0.91} defaultPermissionMode="Plan mode" defaultEffort="Max" />
@@ -27,7 +27,7 @@ Past 80% the context ring turns amber; at 95% it compacts.
 
 # Compacting
 
-While the conversation is summarized, the meter's place says so.
+While the conversation is summarized, the run settings' context meter says so.
 
 <div className="flex h-[200px] w-full max-w-2xl items-end">
   <Composer compacting />

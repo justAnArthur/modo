@@ -56,6 +56,7 @@ export const theme = {
     // rgb(var(--overlay) / 0.08) ramp.
     overlay: 'rgb(var(--overlay))',
     selected: 'var(--selected)',
+    sunken: 'var(--sunken)',
     thumb: 'var(--thumb)',
     picker: { edge: 'var(--picker-edge)', ring: 'var(--picker-ring)' },
     control: 'var(--control-border)',
