@@ -1,10 +1,12 @@
-/*
+/*!
  * Local addition: the agent desktop's interaction prompts — everything the
  * agent asks of the user mid-turn. One lifted frame (two surface levels up,
  * a popup's fixed shadow) with the prompts built on it: a permission request,
  * an AskUserQuestion (single, multiple, with previews), plan approval, and
  * the session cards (an offer to split work off, an own-initiative task).
  */
+
+'use client'
 
 import { type ReactNode, useState } from 'react'
 import Badge from '../../../components/badge'

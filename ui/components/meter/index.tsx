@@ -1,9 +1,11 @@
-/*
+/*!
  * Local addition (not part of Fluid Functionalism): a read-only gauge for a
  * share of a budget (usage, a rate limit, a context window), as a bar or a
  * ring. The fill springs to its value on the moderate tier and turns to the
  * warning and error status hues as the budget runs out.
  */
+
+'use client'
 
 import { motion } from 'motion/react'
 import { forwardRef, type ReactNode } from 'react'

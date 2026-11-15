@@ -1,9 +1,11 @@
-/*
+/*!
  * Local addition: the agent desktop's transcript. A scrolling reading column
  * for one session, with the chapter list floating in its corner; the parts
  * (messages, thinking, tool calls, agent runs, chapters, the task list and
  * the wrap-up box) hang off it as statics and live in the files beside it.
  */
+
+'use client'
 
 import { type ReactNode, useLayoutEffect, useRef } from 'react'
 import { cn } from '../../../lib/utils'

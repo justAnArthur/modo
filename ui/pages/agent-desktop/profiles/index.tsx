@@ -1,8 +1,10 @@
-/*
+/*!
  * Local addition: the agent desktop's profiles screen — every Claude config
  * dir and compatible provider the app drives, with plan, limits and running
  * sessions, and the form that adds one.
  */
+
+'use client'
 
 import { PROFILES, type Profile } from '../../../blocks/agent-desktop/mock'
 import { ProfileTile } from '../../../blocks/agent-desktop/profile-switcher'

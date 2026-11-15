@@ -1,10 +1,12 @@
-/*
+/*!
  * Local addition: the agent desktop's profile switcher. A profile is one
  * Claude config dir (its own `claude` process, sign-in and limits) or an
  * Anthropic-compatible provider behind a base URL. The panel is a Popover
  * that grows out of the trigger; the profiles are a PickList (fluid hover, a
  * melting selected background) with each profile's limits as Meters.
  */
+
+'use client'
 
 import Badge from '../../../components/badge'
 import Button from '../../../components/button'

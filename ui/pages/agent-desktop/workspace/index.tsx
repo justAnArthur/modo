@@ -1,9 +1,11 @@
-/*
+/*!
  * Local addition: the agent desktop's main window — the sessions sidebar, the
  * session (transcript, pinned task list, any pending prompt, composer), an
  * optional second session in split view, and the side pane. Built only from
  * the agent-desktop blocks and ui components, on mock data.
  */
+
+'use client'
 
 import { useState } from 'react'
 import AgentPrompt from '../../../blocks/agent-desktop/agent-prompt'

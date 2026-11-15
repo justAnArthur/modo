@@ -1,8 +1,10 @@
-/*
+/*!
  * Local addition: the transcript's floating chapter list. A ghost icon button
  * in the transcript's corner opens a Popover with the chapters as a PickList;
  * picking one scrolls its break into view.
  */
+
+'use client'
 
 import Button from '../../../components/button'
 import Popover from '../../../components/overlays/popover'

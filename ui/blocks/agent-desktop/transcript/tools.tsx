@@ -1,9 +1,11 @@
-/*
+/*!
  * Local addition: the transcript's tool calls and agent runs. A run of tool
  * calls is one Accordion group, so one fluid hover highlight runs down it and
  * each call's output morphs out of its row. An agent run (a subagent or a
  * background agent) is a framed card with its own calls inside.
  */
+
+'use client'
 
 import type { ReactNode } from 'react'
 import Accordion from '../../../components/accordion'

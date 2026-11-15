@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition: the agent desktop's mock data, shared by its blocks (as
  * their defaults) and the pages under pages/agent-desktop. Everything here is
  * made up; nothing talks to a backend.

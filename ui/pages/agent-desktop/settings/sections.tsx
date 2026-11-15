@@ -1,8 +1,10 @@
-/*
+/*!
  * Local addition: the settings screen's sections — MCP servers, hooks,
  * skills and plugins, memory, worktrees, notifications and extensions — on
  * the agent desktop's mock data.
  */
+
+'use client'
 
 import type { ReactNode } from 'react'
 import {

@@ -1,9 +1,11 @@
-/*
+/*!
  * Local addition: the agent desktop's side pane, beside the transcript. A
  * strip of pill tabs (TabsSubtle, only the picked one spelled out) switches
  * between the panes in panes.tsx; a Dropdown adds optional panes from
  * plugins; the close button hands the room back to the transcript.
  */
+
+'use client'
 
 import Button from '../../../components/button'
 import TabsSubtle from '../../../components/navigation/tabs-subtle'

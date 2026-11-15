@@ -1,9 +1,11 @@
-/*
+/*!
  * Local addition (not part of Fluid Functionalism): a unified diff of one
  * file, read from a patch string. Added and removed lines take the success
  * and error status hues as text on a 16% wash, the system's way of showing a
  * status; the frame sits one surface step up, like Code.
  */
+
+'use client'
 
 import type { ReactNode } from 'react'
 import { useIcon } from '../../../lib/icon-context'

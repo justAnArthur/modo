@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition: the agent desktop's main window while the agent waits on
  * the user — one state per prompt kind, on the Workspace page.
  */

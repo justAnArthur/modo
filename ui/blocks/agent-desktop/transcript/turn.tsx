@@ -1,8 +1,10 @@
-/*
+/*!
  * Local addition: what closes a turn in the transcript — the pinned task list
  * under the latest message, and the wrap-up "next step" box with a recap, one
  * question and one or two answers.
  */
+
+'use client'
 
 import { useState } from 'react'
 import Button from '../../../components/button'

@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition: the agent desktop's sessions sidebar, composed on Sidebar
  * the way the SidebarApp block is: the profile switcher, a "New session" row
  * and search in the header; pinned sessions, project groups and the user's
@@ -7,6 +7,8 @@
  * and, on hover, pin, archive and a row menu with "Open in split view".
  * Linked child sessions fold under their parent.
  */
+
+'use client'
 
 import Sidebar from '../../../components/navigation/sidebar'
 import { DropdownContent, DropdownMenu, DropdownTrigger, MenuItem } from '../../../components/overlays/dropdown'

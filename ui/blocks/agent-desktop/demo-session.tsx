@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition: one mock session for the agent desktop, as transcript
  * turns. The transcript's examples and the workspace pages render it.
  */

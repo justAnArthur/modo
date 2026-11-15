@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition: the agent desktop's composer. InputMessage for the draft
  * (attachments, queue, send and stop), with the session's controls around
  * it: attach, @-file and the slash palette (commands, skills, plugins) in its
@@ -6,6 +6,8 @@
  * permission mode, output style, effort, fast mode and the context meter.
  * Every menu is a Dropdown that grows out of its button.
  */
+
+'use client'
 
 import { useState } from 'react'
 import InputMessage from '../../../components/AI/input-message'

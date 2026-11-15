@@ -1,8 +1,10 @@
-/*
+/*!
  * Local addition: the transcript's message parts — the user's turn with its
  * attachments, pasted text and @-mentions, the assistant's markdown, thinking,
  * the streaming state and chapter breaks.
  */
+
+'use client'
 
 import type { ReactNode } from 'react'
 import ThinkingIndicator from '../../../components/AI/thinking-indicator'

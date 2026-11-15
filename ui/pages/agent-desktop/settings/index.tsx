@@ -1,8 +1,10 @@
-/*
+/*!
  * Local addition: the agent desktop's settings window — a Sidebar of
  * sections beside the picked section, scoped to one profile's config dir or
  * to every profile.
  */
+
+'use client'
 
 import { useState } from 'react'
 import { PROFILES } from '../../../blocks/agent-desktop/mock'

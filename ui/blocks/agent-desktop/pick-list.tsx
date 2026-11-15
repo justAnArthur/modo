@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition: a single-choice list whose rows hold any content (a title,
  * a description, meters), for the agent desktop's profile switcher, question
  * options and chapter list. Radio's systems on rich rows: one fluid hover
@@ -6,6 +6,8 @@
  * a focus ring that springs between rows for keyboard focus only, and arrow
  * keys that move the pick.
  */
+
+'use client'
 
 import { AnimatePresence, motion } from 'motion/react'
 import { type KeyboardEvent, type ReactNode, useRef, useState } from 'react'

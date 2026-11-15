@@ -1,10 +1,12 @@
-/*
+/*!
  * Local addition: the agent desktop's run-state glyphs, shaped as icon
  * components (size, strokeWidth, className) so they drop into any icon slot:
  * a Sidebar row's leading icon, a task row, a tab. Running is an arc turning
  * on a loop of four slow-tier lengths (held still under reduced motion);
  * waiting is a filled dot in the warning hue.
  */
+
+'use client'
 
 import { motion } from 'motion/react'
 import type { IconComponent, IconComponentProps } from '../../lib/icon-context'

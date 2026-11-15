@@ -1,10 +1,12 @@
-/*
+/*!
  * Local addition: a window-sized stage for the agent desktop's screens. It
  * lays the screen out at a fixed window size and scales the whole thing down
  * to the width it gets (CSS zoom, as the docs' bento previews do), so a
  * 1280px desktop window reads whole inside a docs column. Below that size it
  * stays at 1:1.
  */
+
+'use client'
 
 import { type ReactNode, useLayoutEffect, useRef, useState } from 'react'
 import { useShape } from '../../lib/shape-context'

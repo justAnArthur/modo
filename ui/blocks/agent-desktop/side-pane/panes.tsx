@@ -1,8 +1,10 @@
-/*
+/*!
  * Local addition: the side pane's panes — changes, file, terminal, pull
  * request, artifacts, background tasks and the extensions slot. Each takes
  * its data as props, defaulting to the agent desktop's mock data.
  */
+
+'use client'
 
 import { useState } from 'react'
 import Diff from '../../../components/AI/diff'

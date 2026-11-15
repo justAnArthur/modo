@@ -1,8 +1,10 @@
-/*
+/*!
  * Local addition: the agent desktop's empty state — a new session before its
  * first message: where it runs (project, profile, worktree), the composer,
  * starters and the project's recent sessions.
  */
+
+'use client'
 
 import Composer from '../../../blocks/agent-desktop/composer'
 import { GROUPS, PROFILES, ZCODE_MODELS } from '../../../blocks/agent-desktop/mock'
