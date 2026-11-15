@@ -10,7 +10,7 @@ import type {
   SidebarSectionProps,
   SidebarSlotProps,
 } from '@justanarthur/modo'
-import { Check, CodeXml, Copy, Link2, type LucideIcon, Menu, Monitor, Moon, Package, Sun } from 'lucide-react'
+import { Check, CodeXml, Copy, Link2, type LucideIcon, Menu, Monitor, Moon, Package, Sun, X } from 'lucide-react'
 import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useState } from 'react'
 import FluidSelect from './components/inputs/select'
 import Sidebar, { type SidebarSide, useSidebar } from './components/navigation/sidebar'
@@ -23,6 +23,7 @@ const icons: Record<string, LucideIcon> = {
   check: Check,
   link: Link2,
   menu: Menu,
+  close: X,
   sun: Sun,
   moon: Moon,
   npm: Package,

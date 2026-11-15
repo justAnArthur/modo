@@ -1,4 +1,26 @@
+import { useSyncExternalStore } from 'react'
 import type { Var } from './parts'
+
+// A host switches theme on <html> (a class, an attribute, an inline style) or follows the OS.
+const darkScheme = matchMedia('(prefers-color-scheme: dark)')
+
+function subscribeTheme(onChange: () => void) {
+  const observer = new MutationObserver(onChange)
+  observer.observe(document.documentElement, { attributes: true })
+  darkScheme.addEventListener('change', onChange)
+  return () => {
+    observer.disconnect()
+    darkScheme.removeEventListener('change', onChange)
+  }
+}
+
+const themeSnapshot = () =>
+  `${[...document.documentElement.attributes].map(a => `${a.name}=${a.value}`).join(' ')} ${darkScheme.matches}`
+
+/** Renders the caller again when the host switches theme, so live values are read anew. */
+export function useThemeChange(): void {
+  useSyncExternalStore(subscribeTheme, themeSnapshot)
+}
 
 function root(): CSSStyleDeclaration {
   return getComputedStyle(document.documentElement)

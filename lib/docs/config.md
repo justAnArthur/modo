@@ -33,6 +33,7 @@ The schema is strict: an unknown key is an error. Paths are relative to the proj
 | [`css`](#css) | `string` (stylesheet path) | none |
 | [`vite`](#vite) | `string` (module path) | none |
 | [`examples`](#examples) | `string` (module path) | none |
+| [`groups`](#groups) | `Record<string, string>` (titles) | from folder names |
 
 ## name
 
@@ -218,3 +219,11 @@ export { Plus, Search } from 'lucide-react'
 ```
 
 If an export has the same name as an item, the item wins and the build warns. Alias the export (`export { Search as SearchIcon }`). A path that doesn't resolve is a build error.
+
+## groups
+
+Titles for group folders whose name doesn't capitalize well, by folder name. They apply to the sidebar and the tier overviews. Other folders read as their name, capitalized: `form-controls` becomes "Form controls".
+
+```ts
+groups: { ui: 'UI', 'date-time': 'Dates and times' },
+```

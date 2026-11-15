@@ -1,3 +1,4 @@
+import { config } from 'virtual:modo-config'
 import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
@@ -75,7 +76,7 @@ function NavSection({
           All {title.toLowerCase()}
         </Item>
       ) : null}
-      {groups(groupTree(items))}
+      {groups(groupTree(items, config.groups))}
     </Section>
   )
 
