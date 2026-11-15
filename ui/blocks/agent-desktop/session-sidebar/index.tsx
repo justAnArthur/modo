@@ -5,7 +5,8 @@
  * own sections, an archive; and a settings row in the footer. A session row
  * shows its run state (running, needs input, unread, idle), its last activity
  * and, on hover, pin, archive and a row menu with "Open in split view".
- * Linked child sessions fold under their parent.
+ * Linked child sessions fold under their parent. On the overview the list
+ * gives way to filters for its board (state, project, profile).
  */
 
 'use client'
@@ -13,11 +14,35 @@
 import Sidebar from '../../../components/navigation/sidebar'
 import { DropdownContent, DropdownMenu, DropdownTrigger, MenuItem } from '../../../components/overlays/dropdown'
 import Tooltip from '../../../components/overlays/tooltip'
-import { useIcon } from '../../../lib/icon-context'
+import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { SidebarSearchField } from '../../sidebar-app/search-field'
-import { ARCHIVED, GROUPS, PINNED, type Session, type SessionGroup } from '../mock'
+import { ARCHIVED, GROUPS, PINNED, PROFILES, type Session, type SessionGroup, type SessionStatus } from '../mock'
+import { ProfileTile } from '../profile-switcher'
 import ProfileUsage from '../profile-usage'
+import type { SessionFilter } from '../session-board'
 import { STATUS_GLYPH, STATUS_LABEL } from '../status-glyph'
+
+const STATES: { status: SessionStatus; label: string }[] = [
+  { status: 'waiting', label: 'Needs you' },
+  { status: 'running', label: 'Running' },
+  { status: 'unread', label: 'To review' },
+  { status: 'idle', label: 'Idle' },
+]
+
+// Built once: a component made during render would remount its row's icon every time.
+const PROFILE_ICON: Record<string, IconComponent> = Object.fromEntries(
+  PROFILES.map(profile => [profile.id, () => <ProfileTile profile={profile} className="size-4" />]),
+)
+
+/** Every live session, children included, with the project it belongs to. */
+function everySession(pinned: Session[], groups: SessionGroup[]) {
+  const withChildren = (s: Session, project?: string) =>
+    [s, ...(s.children ?? [])].map(c => ({ ...c, project: s.project ?? project }))
+  return [
+    ...pinned.flatMap(s => withChildren(s)),
+    ...groups.flatMap(g => g.sessions.flatMap(s => withChildren(s, g.label))),
+  ]
+}
 
 interface SessionRowProps {
   session: Session
@@ -91,6 +116,68 @@ function SessionRow({ session, onOpenSplit }: SessionRowProps) {
   )
 }
 
+/** The overview's job for the list: narrow the board to one state, project or profile, with counts. */
+function SessionFilters({ pinned, groups }: { pinned: Session[]; groups: SessionGroup[] }) {
+  const Folder = useIcon('folder')
+  const all = everySession(pinned, groups)
+  const count = (match: (s: Session) => boolean) => all.filter(match).length
+  const projects = groups.filter(g => g.kind === 'project')
+  const profiles = PROFILES.filter(p => all.some(s => s.profile === p.id))
+
+  return (
+    <>
+      <Sidebar.Group>
+        <Sidebar.GroupLabel>State</Sidebar.GroupLabel>
+        <Sidebar.Menu>
+          {STATES.map(({ status, label }) => (
+            <Sidebar.MenuItem key={status}>
+              <Sidebar.MenuButton
+                value={`state:${status}` satisfies SessionFilter}
+                icon={STATUS_GLYPH[status]}
+                status={STATUS_GLYPH[status] ? undefined : status === 'unread' ? 'unread' : 'idle'}
+              >
+                {label}
+              </Sidebar.MenuButton>
+              <Sidebar.MenuBadge>{count(s => s.status === status)}</Sidebar.MenuBadge>
+            </Sidebar.MenuItem>
+          ))}
+        </Sidebar.Menu>
+      </Sidebar.Group>
+
+      <Sidebar.Group>
+        <Sidebar.GroupLabel>Projects</Sidebar.GroupLabel>
+        <Sidebar.Menu>
+          {projects.map(({ label }) => (
+            <Sidebar.MenuItem key={label}>
+              <Sidebar.MenuButton value={`project:${label}` satisfies SessionFilter} icon={Folder}>
+                {label}
+              </Sidebar.MenuButton>
+              <Sidebar.MenuBadge>{count(s => s.project === label)}</Sidebar.MenuBadge>
+            </Sidebar.MenuItem>
+          ))}
+        </Sidebar.Menu>
+      </Sidebar.Group>
+
+      <Sidebar.Group>
+        <Sidebar.GroupLabel>Profiles</Sidebar.GroupLabel>
+        <Sidebar.Menu>
+          {profiles.map(profile => (
+            <Sidebar.MenuItem key={profile.id}>
+              <Sidebar.MenuButton
+                value={`profile:${profile.id}` satisfies SessionFilter}
+                icon={PROFILE_ICON[profile.id]}
+              >
+                {profile.name}
+              </Sidebar.MenuButton>
+              <Sidebar.MenuBadge>{count(s => s.profile === profile.id)}</Sidebar.MenuBadge>
+            </Sidebar.MenuItem>
+          ))}
+        </Sidebar.Menu>
+      </Sidebar.Group>
+    </>
+  )
+}
+
 interface SessionSidebarProps {
   /** Pinned sessions, above every group. Defaults to the mock pins. */
   pinned?: Session[]
@@ -98,8 +185,8 @@ interface SessionSidebarProps {
   groups?: SessionGroup[]
   /** Archived sessions, folded at the bottom. Defaults to the mock archive. */
   archived?: Session[]
-  /** List the sessions. Off on the overview, whose session board is this list widened. Defaults to `true`. */
-  sessions?: boolean
+  /** What the content lists: the sessions, or (on the overview, whose board is that list widened) filters for the board by state, project and profile, with counts. Defaults to `'sessions'`. */
+  list?: 'sessions' | 'filters'
   /** Controlled selected session id. Pair with `onValueChange`. */
   value?: string
   /** Initial selected session id, for an uncontrolled sidebar. Defaults to `'agent-desktop'`. */
@@ -132,6 +219,11 @@ interface SessionSidebarProps {
  * forks it. Sessions started from another one fold under it as linked
  * children. Pick a row and the active background melts over to it.
  *
+ * On the overview, whose board is the session list widened, `list="filters"`
+ * trades the list for filters: by state, project and profile, each with its
+ * count; a row's `value` (`'state:waiting'`, `'project:modo'`,
+ * `'profile:work'`) is the board's `filter`.
+ *
  * Put it inside a `Sidebar.Provider`, next to the `Sidebar.Inset` that holds
  * the session.
  *
@@ -141,7 +233,7 @@ export default function SessionSidebar({
   pinned = PINNED,
   groups = GROUPS,
   archived = ARCHIVED,
-  sessions = true,
+  list = 'sessions',
   value,
   defaultValue = 'agent-desktop',
   onValueChange,
@@ -154,6 +246,7 @@ export default function SessionSidebar({
   const Board = useIcon('layout-dashboard')
   const Settings = useIcon('settings')
   const Filter = useIcon('sliders-horizontal')
+  const waiting = everySession(pinned, groups).filter(s => s.status === 'waiting').length
 
   return (
     <Sidebar
@@ -169,7 +262,7 @@ export default function SessionSidebar({
             <Sidebar.MenuItem>
               <Sidebar.MenuButton icon={Board} value="overview">
                 Overview
-                <span className="ml-auto text-micro tabular-nums text-muted-foreground">2 need you</span>
+                <span className="ml-auto text-micro tabular-nums text-muted-foreground">{waiting} need you</span>
               </Sidebar.MenuButton>
             </Sidebar.MenuItem>
             <Sidebar.MenuItem>
@@ -184,7 +277,8 @@ export default function SessionSidebar({
       </Sidebar.Header>
 
       <Sidebar.Content>
-        {sessions && (
+        {list === 'filters' && <SessionFilters pinned={pinned} groups={groups} />}
+        {list === 'sessions' && (
           <>
             <Sidebar.Group collapsible>
               <Sidebar.GroupLabel>Pinned</Sidebar.GroupLabel>
@@ -228,7 +322,7 @@ export default function SessionSidebar({
       </Sidebar.Content>
 
       <Sidebar.Footer>
-        <Sidebar.Group>
+        <Sidebar.Group collapsible>
           <Sidebar.GroupLabel>Usage</Sidebar.GroupLabel>
           <ProfileUsage onManage={onOpenSettings} />
         </Sidebar.Group>

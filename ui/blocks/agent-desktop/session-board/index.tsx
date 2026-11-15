@@ -4,7 +4,9 @@
  * user's sections, the archive folded) or the same sessions by what they
  * need from you, as one Accordion.Group: a row says what its session is
  * doing and answers or stops it in place; open it and it is a small live
- * session (the latest work and reply, the pending prompt, a reply box).
+ * session (the latest work and reply, the pending prompt, a reply box),
+ * lifted into a card of its own. A filter narrows it to one state, project
+ * or profile (the overview's sidebar picks it).
  */
 
 'use client'
@@ -18,8 +20,11 @@ import Meter from '../../../components/meter'
 import TabsSubtle from '../../../components/navigation/tabs-subtle'
 import Tooltip from '../../../components/overlays/tooltip'
 import { useIcon } from '../../../lib/icon-context'
+import { useShape } from '../../../lib/shape-context'
 import { useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
+import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
+import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
@@ -52,6 +57,9 @@ interface BoardSection {
 }
 
 type Patch = Partial<Session>
+
+/** Which sessions the board shows: all, or one state, project or profile. */
+type SessionFilter = 'all' | `state:${SessionStatus}` | `project:${string}` | `profile:${string}`
 
 const STATES: { status: SessionStatus; label: string }[] = [
   { status: 'waiting', label: 'Needs you' },
@@ -90,6 +98,20 @@ function byState(pinned: Session[], groups: SessionGroup[]): BoardSection[] {
     .flatMap(section => section.sessions)
     .map(s => ({ ...s, child: false }))
   return STATES.map(({ status, label }) => ({ label, sessions: all.filter(s => s.status === status) }))
+}
+
+function matches(session: BoardSession, filter: SessionFilter) {
+  const [kind, value] = filter.split(':')
+  if (kind === 'state') return session.status === value
+  if (kind === 'project') return session.projectLabel === value
+  if (kind === 'profile') return session.profile === value
+  return true
+}
+
+function filterLabel(filter: SessionFilter) {
+  const [kind, value] = filter.split(':')
+  if (kind === 'state') return STATES.find(s => s.status === value)?.label ?? value
+  return value
 }
 
 function StatusDot({ status }: { status: SessionStatus }) {
@@ -284,45 +306,63 @@ function SessionPeek({
 function SessionItem({
   session,
   index,
+  open,
   onPatch,
   onOpen,
 }: {
   session: BoardSession
   index: number
+  open: boolean
   onPatch: (id: string, patch: Patch) => void
   onOpen?: (id: string) => void
 }) {
   const size = useSize()
+  const shape = useShape()
+  const substrate = useSurface()
+  const level = Math.min(substrate + 2, 8)
   const profile = PROFILES.find(p => p.id === session.profile)
   const patch = (p: Patch) => onPatch(session.id, p)
 
   return (
-    <Accordion.Item value={session.id} index={index}>
-      <Accordion.Trigger className={cn('[&>span:first-child]:min-w-0', ACTION_ROOM)}>
-        <span className={ROW_GRID}>
-          <span className={cn('flex min-w-0 items-center gap-2', session.child && 'pl-5.5')}>
-            <StatusDot status={session.status} />
-            <span className="min-w-0 truncate">{session.title}</span>
-          </span>
-          <span className="hidden min-w-0 items-center gap-1.5 weight-normal text-muted-foreground @xl:flex">
-            {profile && <ProfileTile profile={profile} className="size-4" />}
-            <span className="min-w-0 truncate">{session.projectLabel}</span>
-          </span>
-          <span className="hidden min-w-0 weight-normal text-muted-foreground @3xl:flex">
-            <RowDetail session={session} />
-          </span>
-          <span className="w-8 text-right text-caption weight-normal tabular-nums text-muted-foreground">
-            {session.updated}
-          </span>
-        </span>
-      </Accordion.Trigger>
-      {/* Beside the trigger, not in it: a press here never toggles the row. */}
-      <div className={cn('absolute right-1 top-0 z-20 flex items-center justify-end', size.control, ACTION_SLOT)}>
-        <RowActions session={session} onPatch={patch} />
-      </div>
-      <Accordion.Content>
-        <SessionPeek session={session} onPatch={patch} onOpen={onOpen} />
-      </Accordion.Content>
+    <Accordion.Item
+      value={session.id}
+      index={index}
+      className={cn(
+        // Open, the row lifts into a card: its header the row, its body the
+        // session. Margin and padding cancel out sideways, so the row holds still.
+        'transition-[margin,padding,background-color,box-shadow] duration-moderate',
+        open && ['-mx-1 my-3 p-1', SURFACE_BG[level], SURFACE_SHADOW[3], shape.container],
+      )}
+    >
+      <SurfaceProvider value={open ? level : substrate}>
+        <div className="relative">
+          <Accordion.Trigger className={cn('[&>span:first-child]:min-w-0', ACTION_ROOM)}>
+            <span className={ROW_GRID}>
+              <span className={cn('flex min-w-0 items-center gap-2', session.child && 'pl-5.5')}>
+                <StatusDot status={session.status} />
+                <span className="min-w-0 truncate">{session.title}</span>
+              </span>
+              <span className="hidden min-w-0 items-center gap-1.5 weight-normal text-muted-foreground @xl:flex">
+                {profile && <ProfileTile profile={profile} className="size-4" />}
+                <span className="min-w-0 truncate">{session.projectLabel}</span>
+              </span>
+              <span className="hidden min-w-0 weight-normal text-muted-foreground @3xl:flex">
+                <RowDetail session={session} />
+              </span>
+              <span className="w-8 text-right text-caption weight-normal tabular-nums text-muted-foreground">
+                {session.updated}
+              </span>
+            </span>
+          </Accordion.Trigger>
+          {/* Beside the trigger, not in it: a press here never toggles the row. */}
+          <div className={cn('absolute right-1 top-0 z-20 flex items-center justify-end', size.control, ACTION_SLOT)}>
+            <RowActions session={session} onPatch={patch} />
+          </div>
+        </div>
+        <Accordion.Content>
+          <SessionPeek session={session} onPatch={patch} onOpen={onOpen} />
+        </Accordion.Content>
+      </SurfaceProvider>
     </Accordion.Item>
   )
 }
@@ -371,6 +411,12 @@ interface SessionBoardProps {
   defaultView?: BoardView
   /** Called with the new view. */
   onViewChange?: (view: BoardView) => void
+  /** Controlled filter. Pair with `onFilterChange`. */
+  filter?: SessionFilter
+  /** Initial filter: every session, or one state, project or profile (`'state:waiting'`, `'project:modo'`, `'profile:work'`). Defaults to `'all'`. */
+  defaultFilter?: SessionFilter
+  /** Called with the new filter, `'all'` when "Show all" is pressed. */
+  onFilterChange?: (filter: SessionFilter) => void
   /** Controlled open rows, by session id. Pair with `onOpenChange`. */
   open?: string[]
   /** Rows open at first, by session id. Defaults to none. */
@@ -379,6 +425,8 @@ interface SessionBoardProps {
   onOpenChange?: (open: string[]) => void
   /** Called with a session id when its "Open session" is pressed. */
   onOpen?: (id: string) => void
+  /** Called when a row answers, stops or marks its session. The board applies the change itself; pass it on to keep other views (the sidebar's counts) in step. */
+  onPatch?: (id: string, patch: Partial<Session>) => void
   /** Classes for the root. */
   className?: string
 }
@@ -400,8 +448,17 @@ interface SessionBoardProps {
  * Press a row and it opens in place into a small live session: the latest
  * turn's work folded to one row, the latest reply, task progress while it
  * runs, the pending prompt to answer right there, a reply box and "Open
- * session". Several rows stay open at once, and one hover highlight runs
- * down the whole board. Answer a prompt and the row goes back to running.
+ * session". An open row lifts off the list into a card (one surface step up,
+ * with its shadow and a gap above and below), the row its header and the
+ * session its body, so several open at once stay separate units while the
+ * closed rows stay a dense list; one hover highlight runs down the whole
+ * board. Answer a prompt and the row goes back to running.
+ *
+ * `filter` narrows the board to one state (`'state:waiting'`), project
+ * (`'project:modo'`) or profile (`'profile:work'`); the summary line then
+ * names it, counts what it shows and offers "Show all". `onPatch` reports
+ * every answer, stop or mark-read, so a view beside the board (the overview's
+ * sidebar counts) can follow.
  *
  * Put it inside an `@container`: columns and labels fold away as it narrows.
  *
@@ -414,13 +471,19 @@ export default function SessionBoard({
   view,
   defaultView = 'project',
   onViewChange,
+  filter,
+  defaultFilter = 'all',
+  onFilterChange,
   open,
-  defaultOpen,
+  defaultOpen = [],
   onOpenChange,
   onOpen,
+  onPatch,
   className,
 }: SessionBoardProps) {
   const [current, setCurrent] = useControllableState(view, defaultView, onViewChange)
+  const [shown, setShown] = useControllableState(filter, defaultFilter, onFilterChange)
+  const [openRows, setOpenRows] = useControllableState(open, defaultOpen, onOpenChange)
   const [patches, setPatches] = useState<Record<string, Patch>>({})
   const [archiveOpen, setArchiveOpen] = useState(false)
   const Folder = useIcon('folder')
@@ -428,21 +491,44 @@ export default function SessionBoard({
 
   const live = (s: BoardSession): BoardSession => ({ ...s, ...patches[s.id] })
   const sections = (current === 'project' ? byProject(pinned, groups, archived) : byState(pinned, groups))
-    .map(section => ({ ...section, sessions: section.sessions.map(live) }))
+    .map(section => ({
+      ...section,
+      sessions: section.sessions
+        .map(live)
+        .filter(s => matches(s, shown))
+        // Filtered, a child may show without its parent: no indent to hang from.
+        .map(s => ({ ...s, child: s.child && shown === 'all' })),
+    }))
     .filter(section => section.sessions.length > 0)
   const all = byState(pinned, groups).flatMap(section => section.sessions.map(live))
   const waiting = all.filter(s => s.status === 'waiting').length
   const running = all.filter(s => s.status === 'running').length
-  const patch = (id: string, p: Patch) => setPatches(prev => ({ ...prev, [id]: { ...prev[id], ...p } }))
+  const count = sections.reduce((n, section) => n + section.sessions.length, 0)
+  const patch = (id: string, p: Patch) => {
+    setPatches(prev => ({ ...prev, [id]: { ...prev[id], ...p } }))
+    onPatch?.(id, p)
+  }
 
   let index = 0
 
   return (
     <div className={cn('@container flex min-w-0 flex-col gap-2', className)}>
       <div className="flex flex-wrap items-center gap-3 px-3">
-        <p className="m-0 min-w-0 flex-1 text-body text-muted-foreground">
-          {waiting} need you · {running} running · {all.length} sessions
-        </p>
+        {shown === 'all' ? (
+          <p className="m-0 min-w-0 flex-1 text-body text-muted-foreground">
+            {waiting} need you · {running} running · {all.length} sessions
+          </p>
+        ) : (
+          <p className="m-0 flex min-w-0 flex-1 items-center gap-2 text-body text-muted-foreground">
+            <span className="min-w-0 truncate">
+              <span className="weight-medium text-foreground">{filterLabel(shown)}</span> · {count} of {all.length}{' '}
+              sessions
+            </span>
+            <Button variant="ghost" size="compact" onClick={() => setShown('all')}>
+              Show all
+            </Button>
+          </p>
+        )}
         <SizeProvider size="compact">
           <TabsSubtle
             selectedIndex={current === 'project' ? 0 : 1}
@@ -455,19 +541,26 @@ export default function SessionBoard({
       </div>
       <Accordion.Group
         type="multiple"
-        value={open}
-        defaultValue={defaultOpen}
-        onValueChange={onOpenChange}
+        value={openRows}
+        onValueChange={setOpenRows}
+        highlight="trigger"
         className="w-full max-w-none"
       >
         {sections.map(section => {
-          const shown = !section.folded || archiveOpen
+          const unfolded = !section.folded || archiveOpen
           return (
             <section key={section.label} aria-label={section.label} className="flex flex-col">
-              <SectionHeading section={section} open={shown} onToggle={() => setArchiveOpen(!archiveOpen)} />
-              {shown &&
+              <SectionHeading section={section} open={unfolded} onToggle={() => setArchiveOpen(!archiveOpen)} />
+              {unfolded &&
                 section.sessions.map(session => (
-                  <SessionItem key={session.id} session={session} index={index++} onPatch={patch} onOpen={onOpen} />
+                  <SessionItem
+                    key={session.id}
+                    session={session}
+                    index={index++}
+                    open={openRows.includes(session.id)}
+                    onPatch={patch}
+                    onOpen={onOpen}
+                  />
                 ))}
             </section>
           )
@@ -477,4 +570,4 @@ export default function SessionBoard({
   )
 }
 
-export type { BoardView, SessionBoardProps }
+export type { BoardView, SessionBoardProps, SessionFilter }
