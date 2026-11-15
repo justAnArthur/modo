@@ -9,6 +9,14 @@ Three controls. The + is one searchable palette (attach, @-files, commands, skil
   <Composer />
 </div>
 
+# New session
+
+`target` adds where a new session runs to the row: the project, the profile and a worktree, all the same height.
+
+<div className="flex h-[200px] w-full max-w-2xl items-end">
+  <Composer target context={0} placeholder="Describe the task, or type / for commands" />
+</div>
+
 # Near compaction
 
 Past 80% the context ring turns amber; at 95% it compacts.

@@ -1,17 +1,20 @@
 /*!
  * Local addition: the agent desktop's sessions board — every session of
- * every project and profile at once, laid out by what it needs from you
- * (needs you, running, to review, idle) or by project. Cards are an outlined
- * Card.Group per column (one fluid hover each); the view switch is
- * TabsSubtle; running sessions show their task progress as a Meter.
+ * every project and profile at once, one compact row each, sorted by what it
+ * needs from you (needs you, running, to review, idle) or grouped by project.
+ * Each row answers, stops or replies in place (a reply is an InputMessage in
+ * a Popover), so a session rarely needs opening.
  */
 
 'use client'
 
+import InputMessage from '../../../components/AI/input-message'
 import Badge from '../../../components/badge'
-import Card from '../../../components/card'
+import Button from '../../../components/button'
 import Meter from '../../../components/meter'
 import TabsSubtle from '../../../components/navigation/tabs-subtle'
+import Popover from '../../../components/overlays/popover'
+import Table from '../../../components/table'
 import { useIcon } from '../../../lib/icon-context'
 import { useShape } from '../../../lib/shape-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
@@ -60,7 +63,97 @@ function StatusDot({ status }: { status: SessionStatus }) {
   )
 }
 
-function SessionCard({
+function ReplyPopover({ session }: { session: BoardSession }) {
+  const Reply = useIcon('corner-down-left')
+  return (
+    <Popover>
+      <Popover.Trigger
+        render={
+          <Button variant="ghost" size="icon-compact" aria-label={`Reply to ${session.title}`}>
+            <Reply />
+          </Button>
+        }
+      />
+      <Popover.Content side="bottom" align="end" sideOffset={8} className="w-96 gap-2 p-2">
+        {session.lastLine && <p className="m-0 px-1.5 pt-1 text-caption text-muted-foreground">{session.lastLine}</p>}
+        <SizeProvider size="compact">
+          <InputMessage minRows={1} maxRows={4} placeholder={`Reply to ${session.title}`} />
+        </SizeProvider>
+      </Popover.Content>
+    </Popover>
+  )
+}
+
+/** What a row can do without opening its session. */
+function RowActions({ session }: { session: BoardSession }) {
+  const Stop = useIcon('square')
+  const Check = useIcon('check')
+  if (session.status === 'waiting' && session.waitingOn?.startsWith('Permission')) {
+    return (
+      <>
+        <Button variant="ghost" size="compact">
+          Deny
+        </Button>
+        <Button size="compact">Allow</Button>
+      </>
+    )
+  }
+  if (session.status === 'waiting') {
+    return (
+      <>
+        <Button variant="tertiary" size="compact">
+          Answer
+        </Button>
+        <ReplyPopover session={session} />
+      </>
+    )
+  }
+  if (session.status === 'running') {
+    return (
+      <>
+        <Button variant="ghost" size="icon-compact" aria-label={`Stop ${session.title}`}>
+          <Stop />
+        </Button>
+        <ReplyPopover session={session} />
+      </>
+    )
+  }
+  return (
+    <>
+      {session.status === 'unread' && (
+        <Button variant="ghost" size="icon-compact" aria-label={`Mark ${session.title} done`}>
+          <Check />
+        </Button>
+      )}
+      <ReplyPopover session={session} />
+    </>
+  )
+}
+
+/** The one line that matters for the row's state. */
+function RowDetail({ session }: { session: BoardSession }) {
+  if (session.status === 'waiting') return <span className="min-w-0 truncate text-foreground">{session.waitingOn}</span>
+  if (session.status === 'running' && session.tasks) {
+    return (
+      <span className="flex min-w-0 items-center gap-2">
+        <Meter
+          variant="line"
+          className="w-16 shrink-0"
+          label="Tasks done"
+          value={session.tasks.done}
+          max={session.tasks.total}
+          // Progress, not a budget: it never turns amber.
+          warnAt={2}
+          errorAt={2}
+        />
+        <span className="min-w-0 truncate">{session.lastLine}</span>
+      </span>
+    )
+  }
+  return <span className="min-w-0 truncate">{session.lastLine}</span>
+}
+
+function SessionRow({
   session,
   index,
   onOpen,
@@ -70,78 +163,60 @@ function SessionCard({
   onOpen?: (id: string) => void
 }) {
   const profile = PROFILES.find(p => p.id === session.profile)
-  const Folder = useIcon('folder')
-  const linked = session.children?.length ?? 0
   return (
-    <Card index={index} onClick={() => onOpen?.(session.id)} label={session.title}>
-      <div className="flex min-w-0 flex-col gap-2 px-4 pt-3">
-        <div className="flex min-w-0 items-center gap-1.5 text-caption text-muted-foreground">
+    <Table.Row index={index}>
+      <Table.Cell className="w-[32%]">
+        <span className="flex min-w-0 items-center gap-2">
+          <StatusDot status={session.status} />
+          <button
+            type="button"
+            onClick={() => onOpen?.(session.id)}
+            className="min-w-0 cursor-pointer truncate text-left text-foreground outline-none focus-visible:ring-1 focus-visible:ring-focus-ring"
+          >
+            {session.title}
+          </button>
+        </span>
+      </Table.Cell>
+      <Table.Cell className="w-[16%]">
+        <span className="flex min-w-0 items-center gap-1.5">
           {profile && <ProfileTile profile={profile} className="size-4" />}
-          <Folder size={12} strokeWidth={1.5} className="shrink-0" />
           <span className="min-w-0 truncate">{session.projectLabel}</span>
-          <span className="ml-auto shrink-0 tabular-nums">{session.updated}</span>
-        </div>
-        <span className="text-body weight-medium text-foreground">{session.title}</span>
-        {session.status === 'waiting' && session.waitingOn && (
-          <span className="flex min-w-0 items-start gap-1.5 text-caption text-foreground">
-            <StatusDot status="waiting" />
-            <span className="min-w-0">{session.waitingOn}</span>
-          </span>
-        )}
-        {session.status === 'running' && session.tasks && (
-          <SizeProvider size="compact">
-            <Meter
-              label={session.lastLine ?? 'Working'}
-              value={session.tasks.done}
-              max={session.tasks.total}
-              detail={`${session.tasks.done} of ${session.tasks.total}`}
-              // Progress, not a budget: it never turns amber.
-              warnAt={2}
-              errorAt={2}
-            />
-          </SizeProvider>
-        )}
-        {session.status !== 'waiting' && session.status !== 'running' && session.lastLine && (
-          <span className="truncate text-caption text-muted-foreground">{session.lastLine}</span>
-        )}
-        {(session.branch || linked > 0) && (
-          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-            {session.branch && (
-              <span className="min-w-0 truncate font-mono text-caption text-muted-foreground">{session.branch}</span>
-            )}
-            {linked > 0 && (
-              <Badge size="compact" color="gray">
-                {linked} linked
-              </Badge>
-            )}
-          </div>
-        )}
-      </div>
-    </Card>
+        </span>
+      </Table.Cell>
+      <Table.Cell>
+        <RowDetail session={session} />
+      </Table.Cell>
+      <Table.Cell className="w-12 text-right tabular-nums">{session.updated}</Table.Cell>
+      <Table.Cell className="w-40">
+        <span className="flex items-center justify-end gap-1">
+          <RowActions session={session} />
+        </span>
+      </Table.Cell>
+    </Table.Row>
   )
 }
 
 function ByState({ sessions, onOpen }: { sessions: BoardSession[]; onOpen?: (id: string) => void }) {
   return (
-    <div className="grid items-start gap-4 @xl:grid-cols-2 @4xl:grid-cols-4">
+    <div className="flex flex-col gap-5">
       {COLUMNS.map(column => {
-        const cards = sessions.filter(s => s.status === column.status)
+        const rows = sessions.filter(s => s.status === column.status)
+        if (rows.length === 0) return null
         return (
-          <section key={column.status} aria-label={column.label} className="flex min-w-0 flex-col gap-2">
+          <section key={column.status} aria-label={column.label} className="flex min-w-0 flex-col gap-1">
             <div className="flex h-7 items-center gap-2 px-1">
-              <StatusDot status={column.status} />
-              <span className="text-body weight-medium text-foreground">{column.label}</span>
-              <span className="text-caption tabular-nums text-muted-foreground">{cards.length}</span>
+              <span className="text-caption weight-medium text-foreground">{column.label}</span>
+              <span className="text-caption tabular-nums text-muted-foreground">{rows.length}</span>
             </div>
-            {cards.length > 0 ? (
-              <Card.Group border="outlined" separated className="w-full">
-                {cards.map((session, i) => (
-                  <SessionCard key={session.id} session={session} index={i} onOpen={onOpen} />
-                ))}
-              </Card.Group>
-            ) : (
-              <p className="m-0 px-1 text-caption text-muted-foreground">Nothing here</p>
-            )}
+            <div className="-mx-2 overflow-x-auto px-2 [&_table]:min-w-[640px] [&_table]:table-fixed">
+              <Table size="compact">
+                <Table.Body>
+                  {rows.map((session, i) => (
+                    <SessionRow key={session.id} session={session} index={i} onOpen={onOpen} />
+                  ))}
+                </Table.Body>
+              </Table>
+            </div>
           </section>
         )
       })}
@@ -243,18 +318,19 @@ interface SessionBoardProps {
 }
 
 /**
- * Every session of every project and profile on one screen, sorted by what
- * it needs from you.
+ * Every session of every project and profile on one screen, one row each,
+ * and the controls to move them on without opening any.
  *
- * By state, the board has four columns: needs you (a permission, a
- * question or a plan waits, and the card says which), running (with its
- * task progress and the latest line), to review (an unread reply) and
- * idle. Each card names its project, profile, last activity, branch and
- * linked sessions; one hover highlight runs down each column. By project,
- * each project is a panel with its sessions as rows and a count per state,
- * so a busy project stands out. Open a card or row to go to the session.
+ * By state, the rows fall into what each session needs from you: needs you
+ * first (a permission to allow or deny right in the row, a question to
+ * answer), then running (task progress as a thin line and the latest
+ * output, with stop), to review (an unread reply, marked done in one press)
+ * and idle. Every row can take a reply: the arrow opens a small composer
+ * under the row with the session's latest line above it. Each row names its
+ * project and profile; its title opens the session. By project, each
+ * project is a panel with a count per state and its sessions as rows.
  *
- * Put it inside an `@container`: the columns reflow to the width it gets.
+ * Put it inside an `@container`: the panels reflow to the width it gets.
  *
  * @example {@include ./examples.mdx}
  */

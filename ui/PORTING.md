@@ -237,9 +237,9 @@ becomes the one block.
 | components | alert-dialog, command, context-menu, popover, preview-card, search, sheet, toast | — (local, see [Credits](./README.md#credits)) | — |
 | components | calendar, date-picker, date-range-picker, time-picker, duration-picker, month-picker (group `inputs/date-time`) | — (local, on react-day-picker) | — |
 | components | sidebar | `base/sidebar.tsx` + `default/sidebar-core.tsx` + `default/sidebar-menu.tsx` | sidebar |
-| components | `meter` (Meter), `diff` (Diff, group `AI`) | — (local) | — |
+| components | `meter` (Meter), `shell-card` (ShellCard), `diff` (Diff, group `AI`) | — (local) | — |
 | blocks | `sidebar-app` (SidebarApp) | the preset generator's output + `blocks/sidebar-*` | sidebar, preset `sa1FQfCxH6` |
-| blocks | profile-switcher, session-sidebar, session-board, transcript, agent-prompt, composer, side-pane (group `agent-desktop`) | — (local) | — |
+| blocks | profile-switcher, profile-usage, session-sidebar, session-board, transcript, agent-prompt, composer, side-pane (group `agent-desktop`) | — (local) | — |
 | pages | overview, workspace, new-session, interaction-prompts, profiles, settings (group `agent-desktop`) | — (local) | — |
 
 Button lives in `components/` to mirror the FF docs, and `modo.config.ts`

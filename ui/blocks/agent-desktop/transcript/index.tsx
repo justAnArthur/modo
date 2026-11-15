@@ -7,19 +7,24 @@
 
 'use client'
 
-import { type ReactNode, useLayoutEffect, useRef } from 'react'
+import { type ReactNode, useLayoutEffect, useRef, useState } from 'react'
+import Button from '../../../components/button'
+import { useIcon } from '../../../lib/icon-context'
 import { cn } from '../../../lib/utils'
 import ScrollArea from '../../../primitives/scroll-area'
 import { AssistantMessage, Attachment, Chapter, Mention, Thinking, UserMessage, Working } from './messages'
 import { Toc, type TocChapter } from './toc'
 import { AgentRun, Tool, Tools } from './tools'
 import { NextStep, TaskList } from './turn'
+import { ShowWorkContext, Work } from './work'
 
 interface TranscriptProps {
   /** The turns: `Transcript.User`, `Transcript.Assistant` and the parts below. */
   children: ReactNode
   /** The session's chapters, for the chapter list in the corner. Omit for no list. */
   chapters?: TocChapter[]
+  /** Start with every turn's work unfolded. Defaults to `false`. */
+  defaultShowWork?: boolean
   /** Pinned under the column, outside the scroll: the task list, a prompt, the next-step box. */
   footer?: ReactNode
   /** Classes for the root. */
@@ -32,7 +37,10 @@ interface TranscriptProps {
  *
  * The turns sit in one reading column. Your messages are bubbles on the
  * right, with attachments, pasted text and @-mentions; the agent's replies
- * are markdown on the page, with its thinking folded to one row. A run of
+ * are markdown on the page. What the agent did on the way (thinking, tool
+ * calls, agent runs) folds into one row per turn, "Worked for 52s · 4 tool
+ * calls", so the output reads clean; press the row to open it, or the eye
+ * in the corner to show every turn's work at once. Inside, a run of
  * tool calls shares one hover highlight, and each call (Bash, Read, Edit
  * with its diff, Write, Grep…) opens in place to show its output; a
  * subagent or background agent run is a framed card with its own calls.
@@ -43,6 +51,7 @@ interface TranscriptProps {
  * Statics:
  * - `Transcript.User` — your turn: `attachments`, children with `Transcript.Mention`s.
  * - `Transcript.Assistant` — the agent's markdown; `streaming` adds the working dots.
+ * - `Transcript.Work` — a turn's work folded to one row: `summary`, `detail`, `running`; thinking, tools and agent runs inside.
  * - `Transcript.Thinking` — folded reasoning: `duration`, `defaultOpen`.
  * - `Transcript.Tools` / `Transcript.Tool` — a run of calls: `tool`, `summary`, `value`, `index`, `status`, `meta`, the output as children.
  * - `Transcript.Agent` — an agent run: `agent`, `description`, `status`, `background`, `meta`.
@@ -54,7 +63,9 @@ interface TranscriptProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Transcript({ children, chapters, footer, className }: TranscriptProps) {
+function Transcript({ children, chapters, defaultShowWork = false, footer, className }: TranscriptProps) {
+  const [showWork, setShowWork] = useState(defaultShowWork)
+  const Eye = useIcon('eye')
   const column = useRef<HTMLDivElement | null>(null)
 
   // A session opens on its latest turn. Scrolls only the transcript's own
@@ -66,15 +77,25 @@ function Transcript({ children, chapters, footer, className }: TranscriptProps) 
 
   return (
     <div className={cn('relative flex min-h-0 flex-1 flex-col', className)}>
-      {chapters && chapters.length > 0 && (
-        <div className="absolute right-3 top-2 z-20">
-          <Toc chapters={chapters} />
-        </div>
-      )}
+      <div className="absolute right-3 top-2 z-20 flex items-center gap-0.5">
+        <Button
+          variant="ghost"
+          size="icon-compact"
+          aria-label={showWork ? 'Hide work' : 'Show work'}
+          aria-pressed={showWork}
+          active={showWork}
+          onClick={() => setShowWork(!showWork)}
+        >
+          <Eye />
+        </Button>
+        {chapters && chapters.length > 0 && <Toc chapters={chapters} />}
+      </div>
       <ScrollArea className="min-h-0 flex-1" viewportClassName="scroll-fade">
-        <div ref={column} className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 py-6 [contain:inline-size]">
-          {children}
-        </div>
+        <ShowWorkContext.Provider value={showWork}>
+          <div ref={column} className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 py-6 [contain:inline-size]">
+            {children}
+          </div>
+        </ShowWorkContext.Provider>
       </ScrollArea>
       {footer && <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-6 pb-3">{footer}</div>}
     </div>
@@ -83,6 +104,7 @@ function Transcript({ children, chapters, footer, className }: TranscriptProps) 
 
 Transcript.User = UserMessage
 Transcript.Assistant = AssistantMessage
+Transcript.Work = Work
 Transcript.Thinking = Thinking
 Transcript.Tools = Tools
 Transcript.Tool = Tool

@@ -16,7 +16,7 @@ import Tooltip from '../../../components/overlays/tooltip'
 import { useIcon } from '../../../lib/icon-context'
 import { SidebarSearchField } from '../../sidebar-app/search-field'
 import { ARCHIVED, GROUPS, PINNED, type Session, type SessionGroup } from '../mock'
-import ProfileSwitcher from '../profile-switcher'
+import ProfileUsage from '../profile-usage'
 import { STATUS_GLYPH, STATUS_LABEL } from '../status-glyph'
 
 interface SessionRowProps {
@@ -44,7 +44,7 @@ function SessionRow({ session, onOpenSplit }: SessionRowProps) {
         value={session.id}
         icon={glyph}
         status={glyph ? undefined : session.status === 'unread' ? 'unread' : 'idle'}
-        title={`${session.title} · ${STATUS_LABEL[session.status]}`}
+        title={`${session.title} · ${STATUS_LABEL[session.status]} · ${session.profile}`}
       >
         <span className="truncate">{session.title}</span>
       </Sidebar.MenuButton>
@@ -108,8 +108,6 @@ interface SessionSidebarProps {
   onOpenSplit?: (id: string) => void
   /** Called by the footer's settings row. */
   onOpenSettings?: () => void
-  /** Start with the profile switcher's panel open. Defaults to `false`. */
-  defaultProfileOpen?: boolean
   /** The sidebar's layout (see Sidebar). Defaults to `'inset'`. */
   variant?: 'sidebar' | 'floating' | 'inset'
   /** Classes for the sidebar. */
@@ -120,9 +118,10 @@ interface SessionSidebarProps {
  * The agent desktop's sessions rail: every session of every profile,
  * grouped by project, with what each one is doing right now.
  *
- * The header switches the profile (see the profile switcher), opens the
- * overview of every session (see the session board), starts a new session
- * and searches. Below it come the pinned sessions, then one group
+ * Sessions of every profile sit side by side, so there is no profile to
+ * switch: the header opens the overview of every session (see the session
+ * board), starts a new session and searches, and the footer shows how much
+ * each profile has left (see the profile usage). Below it come the pinned sessions, then one group
  * per project folder and per section you made, then the archive, folded.
  * A row's leading glyph is its state: an arc turning while it runs, an
  * amber dot while it waits for you, a filled dot for an unread reply and a
@@ -145,15 +144,12 @@ export default function SessionSidebar({
   onValueChange,
   onOpenSplit,
   onOpenSettings,
-  defaultProfileOpen = false,
   variant = 'inset',
   className,
 }: SessionSidebarProps) {
   const Plus = useIcon('plus')
   const Board = useIcon('layout-dashboard')
   const Settings = useIcon('settings')
-  const Puzzle = useIcon('puzzle')
-  const Folder = useIcon('folder')
   const Filter = useIcon('sliders-horizontal')
 
   return (
@@ -165,7 +161,6 @@ export default function SessionSidebar({
       onValueChange={onValueChange}
     >
       <Sidebar.Header>
-        <ProfileSwitcher variant="sidebar" defaultOpen={defaultProfileOpen} />
         <div className="flex flex-col gap-0.5">
           <Sidebar.Menu>
             <Sidebar.MenuItem>
@@ -224,13 +219,11 @@ export default function SessionSidebar({
       </Sidebar.Content>
 
       <Sidebar.Footer>
+        <Sidebar.Group>
+          <Sidebar.GroupLabel>Usage</Sidebar.GroupLabel>
+          <ProfileUsage onManage={onOpenSettings} />
+        </Sidebar.Group>
         <Sidebar.Menu>
-          <Sidebar.MenuItem>
-            <Sidebar.MenuButton icon={Folder}>Open folder…</Sidebar.MenuButton>
-          </Sidebar.MenuItem>
-          <Sidebar.MenuItem>
-            <Sidebar.MenuButton icon={Puzzle}>Extensions</Sidebar.MenuButton>
-          </Sidebar.MenuItem>
           <Sidebar.MenuItem>
             <Sidebar.MenuButton icon={Settings} onClick={onOpenSettings}>
               Settings

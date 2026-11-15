@@ -21,7 +21,6 @@ import Button from '../../../components/button'
 import Sidebar from '../../../components/navigation/sidebar'
 import Tooltip from '../../../components/overlays/tooltip'
 import { useIcon } from '../../../lib/icon-context'
-import { cn } from '../../../lib/utils'
 
 type PromptKind = 'none' | 'permission' | 'edit' | 'question' | 'multi' | 'preview' | 'plan' | 'offer' | 'task'
 
@@ -187,8 +186,10 @@ interface WorkspaceProps {
  * model, mode and context. A second session opens beside it in split view
  * from a row's menu or the split button. The side pane shows the changes,
  * a file, a terminal, the pull request with its checks, artifacts, tasks or
- * your own extension's pane. On a narrow window the side pane and the split
- * drop out and the sidebar folds away behind its trigger.
+ * your own extension's pane. The side pane is a sidebar of its own on the
+ * right: drag its rail to resize it, click the rail or press ] to fold it,
+ * as the sessions sidebar does with [. On a narrow window the split drops
+ * out and both sidebars start folded.
  *
  * @example {@include ./examples.mdx}
  */
@@ -200,7 +201,9 @@ export default function Workspace({
   sidebar = true,
 }: WorkspaceProps) {
   const [selected, setSelected] = useState('agent-desktop')
-  const [openPane, setOpenPane] = useState<PaneId | 'none'>(pane)
+  const [leftOpen, setLeftOpen] = useState(sidebar)
+  const [paneOpen, setPaneOpen] = useState(pane !== 'none')
+  const [openPane, setOpenPane] = useState<PaneId>(pane === 'none' ? 'changes' : pane)
   const [splitId, setSplitId] = useState<string | null>(split ? 'canvas' : null)
   const [pending, setPending] = useState(prompt)
   const [nextStep, setNextStep] = useState(wrapUp)
@@ -209,97 +212,120 @@ export default function Workspace({
   const Branch = useIcon('git-branch')
   const Columns = useIcon('columns-2')
   const PanelRight = useIcon('panel-right')
+  const PanelLeft = useIcon('panel-left')
   const More = useIcon('more-horizontal')
 
   return (
     <div className="@container flex h-full min-h-[640px] w-full bg-background">
-      <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0} defaultOpen={sidebar}>
+      <Sidebar.Provider
+        className="h-full min-h-0"
+        persist={false}
+        mobileBreakpoint={0}
+        open={leftOpen}
+        onOpenChange={setLeftOpen}
+      >
         <SessionSidebar className="h-full" value={selected} onValueChange={setSelected} onOpenSplit={setSplitId} />
-        <Sidebar.Inset className="@container min-h-0 min-w-0">
-          <header className="flex h-12 shrink-0 items-center gap-2 px-1.5">
-            <Sidebar.Trigger />
-            <span className="min-w-0 truncate text-body weight-medium text-foreground">{session?.title}</span>
-            {session?.branch && (
-              <span className="hidden min-w-0 items-center gap-1 text-caption text-muted-foreground @xl:flex">
-                <Branch size={12} strokeWidth={1.5} className="shrink-0" />
-                <span className="truncate font-mono">{session.branch}</span>
-              </span>
-            )}
-            {profile && (
-              <span className="hidden shrink-0 text-caption text-muted-foreground @2xl:inline">
-                {profile.name} · {profile.defaultModel}
-              </span>
-            )}
-            <div className="ml-auto flex shrink-0 items-center gap-0.5 pr-1">
-              <Tooltip content="Split view" side="bottom">
-                <Button
-                  variant="ghost"
-                  size="icon-compact"
-                  aria-label="Split view"
-                  aria-pressed={splitId !== null}
-                  active={splitId !== null}
-                  className="hidden @3xl:inline-flex"
-                  onClick={() => setSplitId(splitId ? null : 'canvas')}
-                >
-                  <Columns />
-                </Button>
-              </Tooltip>
-              <Tooltip content="Side pane" side="bottom">
-                <Button
-                  variant="ghost"
-                  size="icon-compact"
-                  aria-label="Side pane"
-                  aria-pressed={openPane !== 'none'}
-                  active={openPane !== 'none'}
-                  className="hidden @3xl:inline-flex"
-                  onClick={() => setOpenPane(openPane === 'none' ? 'changes' : 'none')}
-                >
-                  <PanelRight />
-                </Button>
-              </Tooltip>
-              <Button variant="ghost" size="icon-compact" aria-label="Session options">
-                <More />
-              </Button>
-            </div>
-          </header>
-
-          <div className="flex min-h-0 flex-1">
-            <main className="flex min-w-0 flex-1 flex-col">
-              <Transcript
-                chapters={DEMO_CHAPTERS}
-                footer={
-                  <>
-                    <Transcript.TaskList key={pending} items={DEMO_TASKS} defaultOpen={pending === 'none'} />
-                    {pending !== 'none' && <Prompt kind={pending} onDone={() => setPending('none')} />}
-                    {pending === 'none' && nextStep && (
-                      <Transcript.NextStep
-                        recap="The five pages and six blocks are in and pass lint and the typecheck. Nothing is committed yet."
-                        ask="Commit the agent desktop on its branch?"
-                        actions={['Commit', 'Not yet']}
-                        onAction={() => setNextStep(false)}
-                      />
-                    )}
-                  </>
-                }
+        {/* A second provider for the right side: the side pane is a Sidebar too, so it resizes from its rail, collapses and toggles with ] like the sessions sidebar. */}
+        <Sidebar.Provider
+          className="h-full min-h-0 min-w-0 flex-1"
+          persist={false}
+          mobileBreakpoint={0}
+          width="380px"
+          open={paneOpen}
+          onOpenChange={setPaneOpen}
+        >
+          <Sidebar side="right" variant="inset" className="h-full">
+            <SidePane
+              pane={openPane}
+              onPaneChange={setOpenPane}
+              onClose={() => setPaneOpen(false)}
+              className="h-full"
+            />
+          </Sidebar>
+          <Sidebar.Inset className="@container min-h-0 min-w-0">
+            <header className="flex h-12 shrink-0 items-center gap-2 px-1.5">
+              <Button
+                variant="ghost"
+                size="icon-compact"
+                aria-label="Sessions sidebar"
+                aria-pressed={leftOpen}
+                onClick={() => setLeftOpen(!leftOpen)}
               >
-                <DemoSession />
-              </Transcript>
-              <div className="mx-auto w-full max-w-3xl px-6 pb-4">
-                <Composer streaming={pending === 'none' && !nextStep} />
+                <PanelLeft />
+              </Button>
+              <span className="min-w-0 truncate text-body weight-medium text-foreground">{session?.title}</span>
+              {session?.branch && (
+                <span className="hidden min-w-0 items-center gap-1 text-caption text-muted-foreground @xl:flex">
+                  <Branch size={12} strokeWidth={1.5} className="shrink-0" />
+                  <span className="truncate font-mono">{session.branch}</span>
+                </span>
+              )}
+              {profile && (
+                <span className="hidden shrink-0 text-caption text-muted-foreground @2xl:inline">
+                  {profile.name} · {profile.defaultModel}
+                </span>
+              )}
+              <div className="ml-auto flex shrink-0 items-center gap-0.5 pr-1">
+                <Tooltip content="Split view" side="bottom">
+                  <Button
+                    variant="ghost"
+                    size="icon-compact"
+                    aria-label="Split view"
+                    aria-pressed={splitId !== null}
+                    active={splitId !== null}
+                    className="hidden @3xl:inline-flex"
+                    onClick={() => setSplitId(splitId ? null : 'canvas')}
+                  >
+                    <Columns />
+                  </Button>
+                </Tooltip>
+                <Tooltip content="Side pane" side="bottom">
+                  <Button
+                    variant="ghost"
+                    size="icon-compact"
+                    aria-label="Side pane"
+                    aria-pressed={paneOpen}
+                    active={paneOpen}
+                    onClick={() => setPaneOpen(!paneOpen)}
+                  >
+                    <PanelRight />
+                  </Button>
+                </Tooltip>
+                <Button variant="ghost" size="icon-compact" aria-label="Session options">
+                  <More />
+                </Button>
               </div>
-            </main>
-            {splitId && <SplitSession id={splitId} onClose={() => setSplitId(null)} />}
-          </div>
-        </Sidebar.Inset>
-        {/* Outside the session card, on the window like the sessions sidebar. */}
-        {openPane !== 'none' && (
-          <SidePane
-            pane={openPane}
-            onPaneChange={setOpenPane}
-            onClose={() => setOpenPane('none')}
-            className={cn('hidden w-[380px] shrink-0', splitId ? '@7xl:flex' : '@5xl:flex')}
-          />
-        )}
+            </header>
+
+            <div className="flex min-h-0 flex-1">
+              <main className="flex min-w-0 flex-1 flex-col">
+                <Transcript
+                  chapters={DEMO_CHAPTERS}
+                  footer={
+                    <>
+                      <Transcript.TaskList key={pending} items={DEMO_TASKS} defaultOpen={pending === 'none'} />
+                      {pending !== 'none' && <Prompt kind={pending} onDone={() => setPending('none')} />}
+                      {pending === 'none' && nextStep && (
+                        <Transcript.NextStep
+                          recap="The five pages and six blocks are in and pass lint and the typecheck. Nothing is committed yet."
+                          ask="Commit the agent desktop on its branch?"
+                          actions={['Commit', 'Not yet']}
+                          onAction={() => setNextStep(false)}
+                        />
+                      )}
+                    </>
+                  }
+                >
+                  <DemoSession />
+                </Transcript>
+                <div className="mx-auto w-full max-w-3xl px-6 pb-4">
+                  <Composer streaming={pending === 'none' && !nextStep} />
+                </div>
+              </main>
+              {splitId && <SplitSession id={splitId} onClose={() => setSplitId(null)} />}
+            </div>
+          </Sidebar.Inset>
+        </Sidebar.Provider>
       </Sidebar.Provider>
     </div>
   )

@@ -43,6 +43,7 @@ controlled + uncontrolled.
 | Tabular data | `Table` |
 | "Working…" | `ThinkingIndicator` (`shimmer` or `goo`) |
 | A share of a budget (usage, a limit, context) | `Meter` (bar or ring; warning / error hues past `warnAt` / `errorAt`) |
+| A card resting in a holder, with a meta or controls row under it | `ShellCard` (`.Inner`, `.Footer`; any card-like element can be the inner card) |
 | A file's change | `Diff` (a unified patch string, `path` header with counts) |
 | A scroll region | `ScrollArea` (+ `scroll-fade`) |
 | A raised container | `Elevated` (`offset`) |
@@ -74,6 +75,7 @@ controlled + uncontrolled.
 | `Table` | `components/table` | `.Header .Body .Row .Head .Cell` | L H | Row hover, semantic markup. |
 | `ThinkingIndicator` | `components/thinking-indicator` | — | — | `variant` `shimmer` (default) \| `goo` (three dots melting). |
 | `Meter` | `components/meter` | — | L | `variant` `bar` \| `ring`; the fill springs to its value; `warnAt` / `errorAt` turn it to the status hues. |
+| `ShellCard` | `components/shell-card` | `.Inner .Footer` | S | Muted shell with an inner card one level up; concentric 16 → 12px corners. |
 | `Diff` | `components/AI/diff` | — | S | Reads a unified patch; added / removed lines as status text on a 16% wash; one surface step up, like Code. |
 
 ## components/inputs
@@ -125,7 +127,7 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 | Item | Path | Notes |
 |---|---|---|
 | `SidebarApp` | `blocks/sidebar-app` | A full app shell (FF preset `sa1FQfCxH6`): workspace header, search, nav, user footer, inset topbar. `variant`, `side`, `openOnHover`, `contained`. |
-| `ProfileSwitcher`, `SessionSidebar`, `SessionBoard`, `Transcript`, `AgentPrompt`, `Composer`, `SidePane` | `blocks/agent-desktop/<id>` | The agent desktop's pieces (pages in `pages/agent-desktop`). `pick-list.tsx` beside them is a single-choice list of rich rows (fluid hover + GooIndicator pick). |
+| `ProfileSwitcher`, `SessionSidebar`, `SessionBoard`, `ProfileUsage`, `Transcript`, `AgentPrompt`, `Composer`, `SidePane` | `blocks/agent-desktop/<id>` | The agent desktop's pieces (pages in `pages/agent-desktop`). `pick-list.tsx` beside them is a single-choice list of rich rows (fluid hover + GooIndicator pick). |
 
 ## Shared system files (`lib/`)
 

@@ -100,8 +100,6 @@ function AddProfile() {
 }
 
 interface ProfilesProps {
-  /** Show the sidebar's profile switcher open, as it looks when switching. Defaults to `false`. */
-  switcherOpen?: boolean
   /** Start with the sessions sidebar open. Defaults to `true`. */
   sidebar?: boolean
 }
@@ -120,11 +118,11 @@ interface ProfilesProps {
  *
  * @example {@include ./examples.mdx}
  */
-export default function Profiles({ switcherOpen = false, sidebar = true }: ProfilesProps) {
+export default function Profiles({ sidebar = true }: ProfilesProps) {
   return (
     <div className="flex h-full min-h-[640px] w-full bg-background">
       <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0} defaultOpen={sidebar}>
-        <SessionSidebar className="h-full" defaultValue="" defaultProfileOpen={switcherOpen} />
+        <SessionSidebar className="h-full" defaultValue="" />
         <Sidebar.Inset className="@container min-h-0 min-w-0 overflow-auto">
           <header className="flex h-12 shrink-0 items-center gap-2 px-1.5">
             <Sidebar.Trigger />

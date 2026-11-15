@@ -20,10 +20,12 @@ import Meter from '../../../components/meter'
 import Dropdown from '../../../components/overlays/dropdown'
 import Popover from '../../../components/overlays/popover'
 import Tooltip from '../../../components/overlays/tooltip'
+import ShellCard from '../../../components/shell-card'
 import { type IconName, useIcon } from '../../../lib/icon-context'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
-import { CHANGES, COMMANDS, EFFORTS, MODELS, OUTPUT_STYLES, PERMISSION_MODES } from '../mock'
+import { CHANGES, COMMANDS, EFFORTS, GROUPS, MODELS, OUTPUT_STYLES, PERMISSION_MODES } from '../mock'
+import ProfileSwitcher from '../profile-switcher'
 
 const MODE_ICON: Record<string, IconName> = {
   'Ask before edits': 'shield-check',
@@ -206,6 +208,12 @@ interface ComposerProps {
   compacting?: boolean
   /** A reply is streaming: send queues and the button stops. Defaults to `false`. */
   streaming?: boolean
+  /** Show where a new session will run (project, profile, worktree) in the row under the draft. Defaults to `false`. */
+  target?: boolean
+  /** The profile a new session starts under, with `target`. Defaults to `'jobiflow'`. */
+  defaultProfile?: string
+  /** Called with the profile picked, with `target`. */
+  onProfileChange?: (profile: string) => void
   /** The draft's placeholder. Defaults to `'Ask, or type / for commands'`. */
   placeholder?: string
   /** Called with the text when a message is sent. */
@@ -216,7 +224,7 @@ interface ComposerProps {
 
 /**
  * Where you write to the session, with every per-session control behind
- * three buttons.
+ * three buttons, held in a ShellCard.
  *
  * The draft grows as you type, takes dropped files and pasted text, and
  * queues messages while a reply streams (see InputMessage). The + on its
@@ -226,7 +234,9 @@ interface ComposerProps {
  * and the output style. Under the draft sits what you change most, the
  * permission mode (ask before edits, accept edits, plan, auto, bypass), and
  * on the right a ring showing how full the context is; it turns amber as it
- * nears auto-compaction and says so while it compacts.
+ * nears auto-compaction and says so while it compacts. With `target` the row
+ * also says where a new session runs: the project, the profile (with its
+ * limits, see the profile switcher) and whether it gets its own worktree.
  *
  * @example {@include ./examples.mdx}
  */
@@ -239,6 +249,9 @@ export default function Composer({
   context = 0.62,
   compacting = false,
   streaming = false,
+  target = false,
+  defaultProfile = 'jobiflow',
+  onProfileChange,
   placeholder = 'Ask, or type / for commands',
   onSend,
   className,
@@ -249,9 +262,50 @@ export default function Composer({
   const [effort, setEffort] = useState(defaultEffort)
   const [fast, setFast] = useState(defaultFast)
   const percent = Math.round(context * 100)
+  const Folder = useIcon('folder')
 
   return (
-    <div className={cn('flex w-full flex-col gap-1', className)}>
+    <ShellCard
+      className={cn('w-full', className)}
+      footer={
+        <SizeProvider size="compact">
+          <ShellCard.Footer className="flex-wrap justify-start gap-1 px-1 pb-0.5 pt-1">
+            {target && (
+              <>
+                <Select defaultValue="modo">
+                  <Select.Trigger icon={Folder} variant="borderless" className="min-w-0" />
+                  <Select.Content>
+                    {GROUPS.filter(g => g.kind === 'project').map((group, i) => (
+                      <Select.Item key={group.label} index={i} value={group.label}>
+                        {group.label}
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select>
+                <ProfileSwitcher defaultValue={defaultProfile} onValueChange={onProfileChange} side="top" />
+                <Switch label="Worktree" defaultChecked className="w-auto" />
+              </>
+            )}
+            <PermissionMode value={mode} onChange={setMode} />
+            <Tooltip
+              content={compacting ? 'Compacting the conversation…' : `Context ${percent}% · compacts at 95%`}
+              side="top"
+            >
+              <span className="ml-auto flex h-7 items-center gap-1.5 px-1.5 text-caption tabular-nums text-muted-foreground">
+                {compacting ? 'Compacting…' : `${percent}%`}
+                <Meter
+                  variant="ring"
+                  label="Context used"
+                  value={compacting ? 0.3 : context}
+                  warnAt={0.8}
+                  errorAt={0.95}
+                />
+              </span>
+            </Tooltip>
+          </ShellCard.Footer>
+        </SizeProvider>
+      }
+    >
       <InputMessage
         placeholder={placeholder}
         defaultStatus={streaming ? 'streaming' : 'idle'}
@@ -272,27 +326,7 @@ export default function Composer({
           />
         }
       />
-      <SizeProvider size="compact">
-        <div className="flex min-w-0 items-center gap-1 px-1">
-          <PermissionMode value={mode} onChange={setMode} />
-          <Tooltip
-            content={compacting ? 'Compacting the conversation…' : `Context ${percent}% · compacts at 95%`}
-            side="top"
-          >
-            <span className="ml-auto flex h-7 items-center gap-1.5 px-1.5 text-caption tabular-nums text-muted-foreground">
-              {compacting ? 'Compacting…' : `${percent}%`}
-              <Meter
-                variant="ring"
-                label="Context used"
-                value={compacting ? 0.3 : context}
-                warnAt={0.8}
-                errorAt={0.95}
-              />
-            </span>
-          </Tooltip>
-        </div>
-      </SizeProvider>
-    </div>
+    </ShellCard>
   )
 }
 

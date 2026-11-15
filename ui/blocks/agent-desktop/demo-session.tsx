@@ -40,30 +40,32 @@ export function DemoReading() {
         <Transcript.Mention path="ui/DESIGN.md" /> and <Transcript.Mention path="ui/AGENTS.md" />.
       </Transcript.User>
       <Transcript.Assistant>
-        <Transcript.Thinking duration="8s">
-          <p className="m-0">
-            Pages render as example cards, so each screen is a page item with a framed example per state. Blocks carry
-            the reusable parts.
-          </p>
-        </Transcript.Thinking>
-        <Transcript.Tools>
-          <Transcript.Tool index={0} value="read-design" tool="Read" summary="ui/DESIGN.md" meta="543 lines" />
-          <Transcript.Tool index={1} value="read-agents" tool="Read" summary="ui/AGENTS.md" meta="81 lines" />
-          <Transcript.Tool index={2} value="grep-goo" tool="Grep" summary={'"GooIndicator" ui/'} meta="12 files">
-            <Code language="sh">
-              {
-                'ui/lib/goo-indicator.tsx\nui/components/inputs/radio/index.tsx\nui/components/navigation/tabs/index.tsx\n…9 more'
-              }
-            </Code>
-          </Transcript.Tool>
-          <Transcript.Tool index={3} value="glob-blocks" tool="Glob" summary="ui/blocks/**/index.tsx" meta="1 file" />
-        </Transcript.Tools>
-        <Transcript.Agent agent="Explore" description="How the pages tier renders" meta="14 tool uses · 38s">
-          <p className="m-0 text-body text-muted-foreground">
-            Pages are discovered like blocks: a sidebar section, an overview card and an item page whose examples render
-            at screen size.
-          </p>
-        </Transcript.Agent>
+        <Transcript.Work summary="Worked for 52s" detail="Thought 8s · 4 reads and searches · 1 agent">
+          <Transcript.Thinking duration="8s">
+            <p className="m-0">
+              Pages render as example cards, so each screen is a page item with a framed example per state. Blocks carry
+              the reusable parts.
+            </p>
+          </Transcript.Thinking>
+          <Transcript.Tools>
+            <Transcript.Tool index={0} value="read-design" tool="Read" summary="ui/DESIGN.md" meta="543 lines" />
+            <Transcript.Tool index={1} value="read-agents" tool="Read" summary="ui/AGENTS.md" meta="81 lines" />
+            <Transcript.Tool index={2} value="grep-goo" tool="Grep" summary={'"GooIndicator" ui/'} meta="12 files">
+              <Code language="sh">
+                {
+                  'ui/lib/goo-indicator.tsx\nui/components/inputs/radio/index.tsx\nui/components/navigation/tabs/index.tsx\n…9 more'
+                }
+              </Code>
+            </Transcript.Tool>
+            <Transcript.Tool index={3} value="glob-blocks" tool="Glob" summary="ui/blocks/**/index.tsx" meta="1 file" />
+          </Transcript.Tools>
+          <Transcript.Agent agent="Explore" description="How the pages tier renders" meta="14 tool uses · 38s">
+            <p className="m-0 text-body text-muted-foreground">
+              Pages are discovered like blocks: a sidebar section, an overview card and an item page whose examples
+              render at screen size.
+            </p>
+          </Transcript.Agent>
+        </Transcript.Work>
         <p className="m-0">Here is the split I will build:</p>
         <ul className="m-0">
           <li>
@@ -91,28 +93,30 @@ export function DemoBuilding() {
         Go ahead. Keep the status hues for real states only, and show the custom-features slot.
       </Transcript.User>
       <Transcript.Assistant>
-        <Transcript.Tools defaultValue={['edit-icons']}>
-          <Transcript.Tool
-            index={0}
-            value="write-meter"
-            tool="Write"
-            summary="ui/components/meter/index.tsx"
-            meta="118 lines"
+        <Transcript.Work summary="Worked for 2m 10s" detail="3 tool calls · 1 background agent" running>
+          <Transcript.Tools defaultValue={['edit-icons']}>
+            <Transcript.Tool
+              index={0}
+              value="write-meter"
+              tool="Write"
+              summary="ui/components/meter/index.tsx"
+              meta="118 lines"
+            />
+            <Transcript.Tool index={1} value="edit-icons" tool="Edit" summary={icons?.path ?? ''} meta="+3 −1">
+              <Diff lineNumbers={false} patch={icons?.patch ?? ''} />
+            </Transcript.Tool>
+            <Transcript.Tool index={2} value="lint" tool="Bash" summary="bun run lint" meta="exit 0">
+              <Code language="sh">{TERMINAL_LINES.slice(0, 2).join('\n')}</Code>
+            </Transcript.Tool>
+          </Transcript.Tools>
+          <Transcript.Agent
+            agent="general-purpose"
+            description="Audit every new file for custom values"
+            status="running"
+            background
+            meta="6 tool uses"
           />
-          <Transcript.Tool index={1} value="edit-icons" tool="Edit" summary={icons?.path ?? ''} meta="+3 −1">
-            <Diff lineNumbers={false} patch={icons?.patch ?? ''} />
-          </Transcript.Tool>
-          <Transcript.Tool index={2} value="lint" tool="Bash" summary="bun run lint" meta="exit 0">
-            <Code language="sh">{TERMINAL_LINES.slice(0, 2).join('\n')}</Code>
-          </Transcript.Tool>
-        </Transcript.Tools>
-        <Transcript.Agent
-          agent="general-purpose"
-          description="Audit every new file for custom values"
-          status="running"
-          background
-          meta="6 tool uses"
-        />
+        </Transcript.Work>
         <p className="m-0">
           The blocks are in. The background audit keeps running while I assemble the pages; I will fold its findings in
           when it reports.
@@ -128,9 +132,11 @@ export function DemoVerifying() {
     <>
       <Transcript.Chapter id="chapter-verify" title="Verification" />
       <Transcript.Assistant streaming>
-        <Transcript.Tools>
-          <Transcript.Tool index={0} value="check" tool="Bash" summary="bun run check" status="running" />
-        </Transcript.Tools>
+        <Transcript.Work summary="Working…" detail="bun run check" running>
+          <Transcript.Tools>
+            <Transcript.Tool index={0} value="check" tool="Bash" summary="bun run check" status="running" />
+          </Transcript.Tools>
+        </Transcript.Work>
       </Transcript.Assistant>
     </>
   )

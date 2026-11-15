@@ -8,14 +8,10 @@
 
 import Composer from '../../../blocks/agent-desktop/composer'
 import { GROUPS, PROFILES, ZCODE_MODELS } from '../../../blocks/agent-desktop/mock'
-import ProfileSwitcher from '../../../blocks/agent-desktop/profile-switcher'
 import SessionSidebar from '../../../blocks/agent-desktop/session-sidebar'
 import { STATUS_GLYPH } from '../../../blocks/agent-desktop/status-glyph'
 import Card from '../../../components/card'
-import Select from '../../../components/inputs/select'
-import Switch from '../../../components/inputs/switch'
 import Sidebar from '../../../components/navigation/sidebar'
-import { useIcon } from '../../../lib/icon-context'
 import FluidHover from '../../../primitives/fluid-hover'
 
 const STARTERS = [
@@ -35,17 +31,16 @@ interface NewSessionProps {
  * A new session before its first message: where it will run, and the
  * fastest ways to start.
  *
- * Above the composer sit the three choices that cannot change later: the
- * project folder, the profile (each its own Claude config dir or provider,
- * with its limits in the switcher) and whether to work in a new git
- * worktree. A compatible provider's profile offers its own models in the
+ * The composer's row holds the three choices that cannot change later:
+ * the project folder, the profile (each its own Claude config dir or
+ * provider, with its limits in the switcher) and whether to work in a new
+ * git worktree. A compatible provider's profile offers its own models in the
  * composer. Below come starters for common first asks and the project's
  * recent sessions, each with its state.
  *
  * @example {@include ./examples.mdx}
  */
 export default function NewSession({ profile = 'jobiflow', sidebar = true }: NewSessionProps) {
-  const Folder = useIcon('folder')
   const recent = GROUPS[0]?.sessions ?? []
   const models = PROFILES.find(p => p.id === profile)?.provider === 'compatible' ? ZCODE_MODELS : undefined
 
@@ -60,21 +55,13 @@ export default function NewSession({ profile = 'jobiflow', sidebar = true }: New
           </header>
           <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-6 pb-8 pt-[8vh]">
             <h1 className="m-0 text-display text-foreground">What should we work on?</h1>
-            <div className="flex flex-wrap items-center gap-2">
-              <Select defaultValue="modo" size="compact">
-                <Select.Trigger icon={Folder} variant="borderless" />
-                <Select.Content>
-                  {GROUPS.filter(g => g.kind === 'project').map((group, i) => (
-                    <Select.Item key={group.label} index={i} value={group.label}>
-                      {group.label}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select>
-              <ProfileSwitcher defaultValue={profile} />
-              <Switch size="compact" label="New worktree" defaultChecked className="ml-auto" />
-            </div>
-            <Composer placeholder="Describe the task, or type / for commands" context={0} models={models} />
+            <Composer
+              target
+              defaultProfile={profile}
+              placeholder="Describe the task, or type / for commands"
+              context={0}
+              models={models}
+            />
             <section aria-label="Starters" className="flex flex-col gap-2">
               <span className="text-caption text-muted-foreground">Start with</span>
               <Card.Group columns={3} className="-mx-2">
