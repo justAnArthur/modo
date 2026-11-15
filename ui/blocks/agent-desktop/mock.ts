@@ -471,14 +471,67 @@ export interface McpServer {
   status: 'connected' | 'needs-auth' | 'failed' | 'disabled'
   tools: number
   scope: 'user' | 'project' | 'plugin'
+  /** The command a stdio server runs, or the URL an http / sse server answers on. */
+  target: string
+  /** Env var names passed to the server; values stay in the config. */
+  env?: string[]
+  /** Tool names, once connected. */
+  toolNames?: string[]
+  /** Why a failed server stopped: the tail of its stderr. */
+  error?: string
+  /** Where a needs-auth server signs in. */
+  authHost?: string
 }
 
 export const MCP_SERVERS: McpServer[] = [
-  { name: 'agent-desktop', transport: 'stdio', status: 'connected', tools: 4, scope: 'user' },
-  { name: 'github', transport: 'http', status: 'connected', tools: 38, scope: 'user' },
-  { name: 'linear', transport: 'sse', status: 'needs-auth', tools: 0, scope: 'user' },
-  { name: 'postgres', transport: 'stdio', status: 'failed', tools: 0, scope: 'project' },
-  { name: 'vercel', transport: 'http', status: 'needs-auth', tools: 0, scope: 'plugin' },
+  {
+    name: 'agent-desktop',
+    transport: 'stdio',
+    status: 'connected',
+    tools: 4,
+    scope: 'user',
+    target: 'agent-desktop mcp',
+    toolNames: ['approve_permission', 'open_pane', 'notify', 'hand_off'],
+  },
+  {
+    name: 'github',
+    transport: 'http',
+    status: 'connected',
+    tools: 38,
+    scope: 'user',
+    target: 'https://api.githubcopilot.com/mcp/',
+    env: ['GITHUB_TOKEN'],
+    toolNames: ['create_pull_request', 'get_issue', 'list_commits', 'search_code', 'merge_pull_request'],
+  },
+  {
+    name: 'linear',
+    transport: 'sse',
+    status: 'needs-auth',
+    tools: 0,
+    scope: 'user',
+    target: 'https://mcp.linear.app/sse',
+    authHost: 'linear.app',
+  },
+  {
+    name: 'postgres',
+    transport: 'stdio',
+    status: 'failed',
+    tools: 0,
+    scope: 'project',
+    target: 'bunx @modelcontextprotocol/server-postgres $DATABASE_URL',
+    env: ['DATABASE_URL'],
+    error:
+      'Error: connect ECONNREFUSED 127.0.0.1:5432\n    at TCPConnectWrap.afterConnect [as oncomplete]\nserver exited with code 1',
+  },
+  {
+    name: 'vercel',
+    transport: 'http',
+    status: 'needs-auth',
+    tools: 0,
+    scope: 'plugin',
+    target: 'https://mcp.vercel.com',
+    authHost: 'vercel.com',
+  },
 ]
 
 export interface Hook {
@@ -486,13 +539,43 @@ export interface Hook {
   matcher: string
   command: string
   scope: 'user' | 'project'
+  /** Seconds before the harness gives up on it. */
+  timeout?: number
+  /** The latest run: when, and the exit code (non-zero blocks or warns, by event). */
+  lastRun?: { when: string; exit: number }
 }
 
 export const HOOKS: Hook[] = [
-  { event: 'PreToolUse', matcher: 'Bash', command: '~/.claude/hooks/guard-rm.sh', scope: 'user' },
-  { event: 'PostToolUse', matcher: 'Edit|Write', command: 'bunx biome format --write $FILE', scope: 'project' },
-  { event: 'Stop', matcher: '*', command: 'agent-desktop notify --sound', scope: 'user' },
-  { event: 'SessionStart', matcher: 'startup', command: 'cat .claude/brief.md', scope: 'project' },
+  {
+    event: 'PreToolUse',
+    matcher: 'Bash',
+    command: '~/.claude/hooks/guard-rm.sh',
+    scope: 'user',
+    timeout: 10,
+    lastRun: { when: '2 min ago', exit: 0 },
+  },
+  {
+    event: 'PostToolUse',
+    matcher: 'Edit|Write',
+    command: 'bunx biome format --write $FILE',
+    scope: 'project',
+    timeout: 30,
+    lastRun: { when: '4 min ago', exit: 0 },
+  },
+  {
+    event: 'Stop',
+    matcher: '*',
+    command: 'agent-desktop notify --sound',
+    scope: 'user',
+    lastRun: { when: '12 min ago', exit: 0 },
+  },
+  {
+    event: 'SessionStart',
+    matcher: 'startup',
+    command: 'cat .claude/brief.md',
+    scope: 'project',
+    lastRun: { when: 'today 09:12', exit: 1 },
+  },
 ]
 
 export interface Plugin {

@@ -3,13 +3,15 @@ import { ScreenFrame } from '../../../blocks/agent-desktop/screen-frame'
 
 # MCP servers
 
-Each server's state with its fix in the row; the scope picker switches whose config dir you are editing. Pick another section on the left.
+Each server's state with its fix at the row's end; press a row for its command or URL, env and tools. The picker on top says which config dir you are editing. Search or pick another section on the left.
 
 <ScreenFrame>
   <Settings />
 </ScreenFrame>
 
 # Hooks
+
+A row opens into its command, timeout and last run; one that failed says so in the row.
 
 <ScreenFrame>
   <Settings section="hooks" />
@@ -25,11 +27,15 @@ Optional panes such as the browser and the iOS simulator come in as plugins.
 
 # Memory
 
+MEMORY.md and each memory file open into their contents.
+
 <ScreenFrame>
   <Settings section="memory" />
 </ScreenFrame>
 
 # Worktrees
+
+Hover a merged or stale worktree to remove it, or open it for its path and what removing it costs.
 
 <ScreenFrame>
   <Settings section="worktrees" />
@@ -50,6 +56,8 @@ Your own features, built as MCP servers, plugins, skills and hooks.
 </ScreenFrame>
 
 # Narrow window
+
+Row fixes fold to their icons; open cards keep their config readable.
 
 <ScreenFrame width={420} height={780}>
   <Settings sidebar={false} />
