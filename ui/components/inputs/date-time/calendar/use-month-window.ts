@@ -90,6 +90,17 @@ function useMonthWindow(start: Date, end: Date, anchor: Date) {
     scroller.scrollTop += (d.top - s.top) / scale - (scroller.clientHeight - day.offsetHeight) / 2
   }, [])
 
+  /** On opening: the day's month from its caption down when the month fits, else the day centred. */
+  const showDay = useCallback(
+    (date: Date) => {
+      const scroller = scrollerRef.current
+      const month = scroller && findMonth(scroller, monthKey(date))
+      if (scroller && month && month.offsetHeight <= scroller.clientHeight) scroller.scrollTop = month.offsetTop
+      else centreDay(date)
+    },
+    [centreDay],
+  )
+
   const measure = useCallback(() => {
     const scroller = scrollerRef.current
     if (!scroller) return
@@ -123,7 +134,7 @@ function useMonthWindow(start: Date, end: Date, anchor: Date) {
     const kept = p.keep && findMonth(scroller, p.keep.key)
     if (target) scroller.scrollTop = target.offsetTop
     else if (kept && p.keep) scroller.scrollTop = kept.offsetTop - p.keep.delta
-    else if (p.day) centreDay(p.day)
+    else if (p.day) showDay(p.day)
     measure()
   }, [first])
 
@@ -159,7 +170,7 @@ function useMonthWindow(start: Date, end: Date, anchor: Date) {
     [moveWindow],
   )
 
-  return { first, count, visible, current, scrollerRef, measure, jumpTo, recentre, centreDay }
+  return { first, count, visible, current, scrollerRef, measure, jumpTo, recentre, showDay }
 }
 
 export { monthKey, useMonthWindow }

@@ -81,7 +81,7 @@ Rules:
 - **Lib (runtime TSX, `shell/css/*.css`):**
   - Structure only (layout, grid, spacing rhythm, measure). Every visual reads a generic token, or the host's own token when that token is what the page shows (a radius specimen applies `var(--radius-box)`).
   - No literal colors and no color fallbacks. Leave the fallback off so an undefined token inherits, or derive it from `currentColor`.
-  - Borders, muted text and the focus ring read `--modo-border` / `--modo-muted` / `--modo-ring`. `tokens/host-colors.ts` sets them at startup from the host's `--border` / `--muted-foreground` / `--ring` (wrapped when the token holds bare channels, e.g. `hsl(var(--border))`), else from `currentColor`. It sets `--modo-color-<role>` from `--color-<role>` the same way (lead and eyebrow fall back to `--modo-muted`).
+  - Borders, muted text and the focus ring read `--modo-border` / `--modo-muted` / `--modo-ring`. `tokens/host-colors.ts` sets them at startup from the host's `--border` / `--muted-foreground` / `--ring` (wrapped when the token holds bare channels, e.g. `hsl(var(--border))`), else from `currentColor`; the drawer's fill reads `--modo-background` (the host's `--background`, else `Canvas`). It sets `--modo-color-<role>` from `--color-<role>` the same way (lead and eyebrow fall back to `--modo-muted`).
   - Defaults live in one place each. `shell/css/contract.css` (imported first) holds the contract: every generic type and radius token resolves once to a `--modo-*` var, falling back to a literal size or, for weights, the keyword `bold`; the specimen tints are `--modo-tint-8|10|12|30|35|45|55`, `color-mix` of `currentColor` with transparent; it also applies the `sm` / `xs` roles to the chrome's small print. `tokens/host-colors.ts` does the same for colors. Rules read `--modo-*`, never a generic token with an inline fallback, and never write a `color-mix` of their own. Those two are the only literal visuals in the lib.
   - Spacing fallbacks stay inline (`var(--space-2, 8px)`): spacing is structure. Motion has no default; no token means no transition.
   - Inherit before you set: line-height, font family and link decoration come from the host. Capitalize in content (`cap()` in `lib/text.ts`), never with `text-transform`.
@@ -151,7 +151,7 @@ Rules:
     - Button gets `variant="ghost"`, `size="icon-sm"`, `aria-label`, `aria-pressed`.
     - Link gets `aria-label` on icon-only anchors and `title` from Markdown links; forward them.
     - Code gets `language` and a string child.
-    - Icon gets `name` (`code` | `copy` | `check` | `link` | `menu` | `sun` | `moon`, or a `socials` key) and `label`. The host draws its own glyph; `PlainIcon` shows the label as text.
+    - Icon gets `name` (`code` | `copy` | `check` | `link` | `menu` | `close` | `sun` | `moon`, or a `socials` key) and `label`. The host draws its own glyph; `PlainIcon` shows the label as text.
     - Select (handed only to panel items, as `shell.Select`) gets `value`, `onValueChange(value)` (the value, not an event) and `options: { value, label }[]`.
   - A host Link needn't forward data attributes: the chrome puts its hooks on wrappers.
   - One Sidebar drives both sides: each `panel.items` entry is a `Sidebar.Section`.

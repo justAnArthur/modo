@@ -72,23 +72,56 @@
     grid-template-areas: "sidebar" "content" "panel";
   }
 
-  /* The header stays; the nav folds behind the menu toggle. */
+  /* The header sticks to the top; the nav is a drawer under it, over a scrim
+     (layout.tsx). Closed, the drawer is out of focus and the accessibility tree. */
   [data-modo="sidebar"] {
-    position: static;
+    z-index: 30;
     height: auto;
+    border-bottom: 1px solid var(--modo-border);
+    background: var(--modo-background);
   }
 
-  [data-modo="sidebar"]:not([data-open]) > :not([data-modo="header"]) {
-    display: none;
+  [data-modo="header"] {
+    padding-bottom: var(--space-3, 12px);
   }
 
-  [data-modo="sidebar"] [data-modo="sidebar-nav"] {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  [data-modo="sidebar"] > :not([data-modo="header"]) {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: min(20rem, 85vw);
+    height: calc(100dvh - 100%);
+    overscroll-behavior: contain;
+    border-right: 1px solid var(--modo-border);
+    background: var(--modo-background);
+    translate: -100% 0;
+    visibility: hidden;
+    transition:
+      translate var(--duration-fast) ease-out,
+      visibility 0s linear var(--duration-fast);
+  }
+
+  [data-modo="sidebar"][data-open] > :not([data-modo="header"]) {
+    translate: 0 0;
+    visibility: visible;
+    transition: translate var(--duration-fast) ease-out;
+  }
+
+  [data-modo="sidebar-scrim"] {
+    position: fixed;
+    inset: 0;
+    z-index: 29;
+    background: var(--modo-tint-30);
   }
 
   [data-modo="content"] {
     padding: var(--space-4, 16px);
+  }
+}
+
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  [data-modo="sidebar"] > :not([data-modo="header"]) {
+    transition: none;
   }
 }
 

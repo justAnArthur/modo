@@ -44,6 +44,8 @@ interface DatePickerProps {
   startMonth?: Date
   /** The last month the calendar reaches. Defaults to 50 years ahead. */
   endMonth?: Date
+  /** Where the calendar opens while no date is picked (a date of birth's decade, say). Defaults to the current month. */
+  defaultMonth?: Date
   /** Framed at rest, or invisible until hovered or focused. Defaults to `"bordered"`. */
   variant?: FieldVariant
   /** Marks the field invalid. Defaults to `false`. */
@@ -114,6 +116,7 @@ function DatePicker({
   disabledDays,
   startMonth,
   endMonth,
+  defaultMonth,
   open: openProp,
   defaultOpen = false,
   onOpenChange,
@@ -145,7 +148,7 @@ function DatePicker({
       <PickerInput
         ref={dateInput}
         aria-label={shell.placeholder ?? 'Date'}
-        placeholder={shell.placeholder}
+        placeholder={shell.placeholder ?? 'Date'}
         formatted={value ? format(value, 'PP', { locale }) : ''}
         onText={readDate}
         onClear={() => setValue(null)}
@@ -188,6 +191,7 @@ function DatePicker({
         disabled={disabledDays}
         startMonth={startMonth}
         endMonth={endMonth}
+        defaultMonth={defaultMonth}
         dir={dir}
         columnsSide={columnsSide}
         extraColumnsSide={timeColumnsSide}

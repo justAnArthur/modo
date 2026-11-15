@@ -6,7 +6,7 @@ import { NotFoundPage } from '../pages/not-found'
 import { ColorGroups, ColorPreview } from './colors'
 import { range } from './format'
 import { RadiusPreview, RadiusView, SpacingPreview, SpacingView } from './lengths'
-import { lengthOf } from './measure'
+import { lengthOf, useThemeChange } from './measure'
 import { MotionPreview, MotionView } from './motion'
 import { declared, type Var } from './parts'
 import { TypographyPreview, TypographyView } from './typography'
@@ -34,6 +34,7 @@ export function summary(group: GroupName, vars: Var[]): string {
 }
 
 export function TokenGroupView({ group }: { group: string }) {
+  useThemeChange()
   const g = groups.find(gg => gg.name === group)
   if (!g) return <NotFoundPage />
   const vars = declared(g.vars)
@@ -64,6 +65,7 @@ function Empty() {
 
 /** A group at a glance, for the Foundations overview. */
 export function GroupPreview({ group }: { group: string }) {
+  useThemeChange()
   const g = groups.find(gg => gg.name === group)
   if (!g) return null
   const Preview = PREVIEWS[g.name]

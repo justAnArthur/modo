@@ -2,7 +2,7 @@ import type { ComponentType, ReactNode } from 'react'
 import type { Tier } from './tiers'
 
 /** The icons the chrome asks for, plus any `socials` key (`github`, `npm`, …). */
-export type IconName = 'code' | 'copy' | 'check' | 'link' | 'menu' | 'sun' | 'moon' | (string & {})
+export type IconName = 'code' | 'copy' | 'check' | 'link' | 'menu' | 'close' | 'sun' | 'moon' | (string & {})
 
 /** The chrome's icon buttons: copy code, show code, theme toggle, menu, canvas zoom. */
 export interface ButtonSlotProps {

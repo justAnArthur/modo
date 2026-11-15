@@ -10,9 +10,10 @@ import { Toc } from './toc'
 export function Shell({ children }: { children: ReactNode }) {
   const { Root, Section } = shell.Sidebar
   const path = usePath()
-  // Below md the nav folds under the header; a navigation folds it again.
+  // Below md the nav is a drawer under the header; a navigation closes it.
   const [menuOpen, setMenuOpen] = useState(false)
   useEffect(() => setMenuOpen(false), [path])
+  useDrawerFocus(menuOpen, setMenuOpen)
   return (
     <div data-modo="app">
       <aside data-modo="sidebar" data-open={menuOpen || undefined}>
@@ -21,6 +22,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <SidebarNav />
         </Root>
       </aside>
+      {menuOpen ? <div data-modo="sidebar-scrim" aria-hidden onClick={() => setMenuOpen(false)} /> : null}
 
       <main data-modo="content">
         {children}
@@ -43,4 +45,21 @@ export function Shell({ children }: { children: ReactNode }) {
       </aside>
     </div>
   )
+}
+
+/** An open drawer takes focus to its first link; Escape closes it and returns focus to the toggle. */
+function useDrawerFocus(open: boolean, setOpen: (open: boolean) => void) {
+  useEffect(() => {
+    if (!open) return
+    // A host Root may not carry sidebar-nav: go by the drawer's place, as layout.css does.
+    document.querySelector<HTMLElement>('[data-modo="sidebar"] > :not([data-modo="header"]) a[href]')?.focus()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setOpen(false)
+      // The host Button may not forward a ref; its wrapper finds it.
+      document.querySelector<HTMLElement>('[data-modo="menu-toggle"] button')?.focus()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, setOpen])
 }

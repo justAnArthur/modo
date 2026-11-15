@@ -111,6 +111,7 @@ The chrome asks for icons by name and draws them inside your Button or Link.
 | `copy`, `check` | Copy code, and its done state. |
 | `link` | Heading anchors. |
 | `menu` | The nav toggle on small screens. |
+| `close` | The same toggle while the nav drawer is open. |
 | `sun`, `moon` | The theme toggle (with [`theme`](./config.md#theme)). |
 | a [`socials`](./config.md#socials) key | `github`, `npm`, or whatever key you used. |
 

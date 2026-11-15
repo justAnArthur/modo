@@ -15,4 +15,15 @@ describe('groupTree', () => {
     expect(tree.groups[0]?.items.map(it => it.id)).toEqual(['select'])
     expect(tree.groups[0]?.groups.map(g => [g.title, g.items.map(it => it.id)])).toEqual([['Date time', ['calendar']]])
   })
+
+  test('titles name folders that do not capitalize well', () => {
+    const tree = groupTree(
+      [
+        { id: 'a', group: 'ui' },
+        { id: 'b', group: 'form-controls' },
+      ],
+      { ui: 'UI' },
+    )
+    expect(tree.groups.map(g => g.title)).toEqual(['Form controls', 'UI'])
+  })
 })

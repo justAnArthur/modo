@@ -44,6 +44,7 @@ const CHROME: Array<[string, string, string]> = [
   ['--modo-border', '--border', 'color-mix(in oklab, currentColor 15%, transparent)'],
   ['--modo-muted', '--muted-foreground', 'color-mix(in oklab, currentColor 60%, transparent)'],
   ['--modo-ring', '--ring', 'currentColor'],
+  ['--modo-background', '--background', 'Canvas'],
 ]
 
 export function installHostColors(): void {

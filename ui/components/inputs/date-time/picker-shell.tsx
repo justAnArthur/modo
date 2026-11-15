@@ -133,7 +133,7 @@ function PanelHeader({
   const sizeClasses = useSize()
   return (
     <div className="flex items-center gap-1 border-b border-border pb-1">
-      <div className="flex min-w-0 flex-1 items-center">{header}</div>
+      <div className="flex min-w-0 flex-1 items-center gap-1">{header}</div>
       <Button variant="ghost" size="icon-compact" aria-label={closeLabel} onClick={close}>
         <X size={sizeClasses.icon} strokeWidth={1.5} />
       </Button>
