@@ -8,6 +8,11 @@ Reach for these before writing the pattern by hand. One line each: what it is, w
 - `use-iso-layout-effect.ts` — `useIsoLayoutEffect`: a layout effect that server-renders. Never define it locally.
 - `rect.ts` — `Rect` (`x y w h r`), `lerpRect`, `clampRect`, `placeRect`, `lerp`: a shape growing from one box into another (the morph engine, the accordion panel, Copy's disc). Rows and highlights keep `ItemRect` from `use-fluid-hover.ts`.
 
+## State and motion
+
+- `use-controllable-state.ts` — `useControllableState(value, defaultValue, onChange)`: every two-way prop. With an optional default the state may be `undefined`, but `onChange` and the setter take `NonNullable<T>`.
+- `springs.ts` `springEnter(tier)` — a tier without its `exit`, for a `transition` that must not carry one. Replaces `const { exit: _exit, ...enter } = spring.x`.
+
 ## Size and surface
 
 - `primitives/sizes` `SizeScope` — `<SizeScope size={size}>`: wraps a component's subtree for its own `size` prop. Replaces `size ? <SizeProvider size={size}>{x}</SizeProvider> : x`.
