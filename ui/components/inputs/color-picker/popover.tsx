@@ -43,6 +43,7 @@ export const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverP
       value: valueProp,
       defaultValue = '#6B97FF',
       onValueChange,
+      name,
       ...pickerProps
     },
     ref,
@@ -109,6 +110,8 @@ export const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverP
                   <XIcon size={14} strokeWidth={1.5} />
                 </button>
               )}
+              {/* Here, not in the panel: the panel unmounts while closed. */}
+              {name && <input type="hidden" name={name} value={value} />}
             </div>
             <ColorPickerPanel
               anchor={frameRef}

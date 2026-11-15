@@ -78,6 +78,8 @@ interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
   onFormatOpenChange?: (open: boolean) => void
   /** Pins trigger and popover to one step of the size ladder (default 36px, compact 28px — see Sizes). Omitted, they follow the surrounding SizeProvider. */
   size?: SizeVariant
+  /** Submits the color, in the current format, under this name in a form. */
+  name?: string
   /** Merged after the panel's surface, radius and padding classes. */
   className?: string
 }
@@ -157,6 +159,7 @@ const ColorPicker = forwardRef<HTMLDivElement, ColorPickerProps>(
       defaultFormatOpen,
       onFormatOpenChange,
       size,
+      name,
       className,
       ...props
     },
@@ -374,6 +377,7 @@ const ColorPicker = forwardRef<HTMLDivElement, ColorPickerProps>(
             {swatches && swatches.length > 0 && (
               <SwatchStrip swatches={swatches} current={parsed.hex} onPick={handleHexCommit} />
             )}
+            {name && <input type="hidden" name={name} value={currentRawValue} />}
           </div>
         </SurfaceProvider>
       </SizeScope>
