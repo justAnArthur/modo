@@ -1,112 +1,70 @@
-// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
 /*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/menu-item.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - `framer-motion` → `motion/react`; `@/lib/*` and
- *   `@/hooks/*` imports rewritten to `../../../lib/*`.
- * - Uncontrolled selection: when the surrounding panel owns the selection
- *   (`defaultCheckedIndex` / `defaultCheckedIndices` on Dropdown or
- *   Dropdown.Content, `selfManaged` in context), a row with no `checked` prop
- *   derives it from the panel and toggles the panel's state on activation —
- *   so a docs example can be interactive with no state of its own. An
- *   explicit `checked` still wins, and the controlled API is unchanged.
- * - `sourceIndex`: the row's authored index, stamped by a filtering panel
- *   (`Dropdown.Search filter`) that re-indexed the visible rows. Selection is
- *   keyed on it, fluid hover on the re-indexed `index`.
- * - Styling reads DS tokens (AGENTS.md styling): inline
- *   `fontVariationSettings` → `weight-*`; `duration-80|120|160` and
- *   tier-length JS durations → `duration-<tier>` / `spring.*`.
- * - Inside a popup the row's activation travels as `onClick` in the render
- *   options, for the primitive, instead of sitting on the render element:
- *   Base UI's Enter/Space activation calls only the primitive's own `onClick`
- *   prop, so a keyboard pick used to close the menu without selecting.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
 
-import { AnimatePresence, motion } from 'motion/react'
 import {
   createContext,
   forwardRef,
   type HTMLAttributes,
+  type MouseEvent,
   type ReactElement,
   type ReactNode,
   useContext,
-  useEffect,
   useRef,
 } from 'react'
 import type { IconComponent } from '../../../lib/icon-context'
+import { useMergeRefs } from '../../../lib/merge-refs'
+import { CheckMark, RowIcon, rowClasses } from '../../../lib/popup-rows'
 import { shapeMap } from '../../../lib/shape-context'
 import { useSize } from '../../../lib/size-context'
-import { spring } from '../../../lib/springs'
 import { useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
+import { WeightLabel } from '../../../lib/weight-label'
 
-// MenuItem is only used inside Dropdown, which opts out of the global pill
-// shape — see index.tsx for the rationale.
-const shape = shapeMap.rounded
+// Menus keep the rounded radii whatever the global shape: pill corners on a
+// popover distort its padding and break the rows' concentric fit.
+export const menuShape = shapeMap.rounded
 
-// ---------------------------------------------------------------------------
-// Dropdown context — the single shared context for every Dropdown build.
-//
-// It lives here rather than in the dropdown module so that (a) MenuItem stays
-// primitive-free and self-contained, and (b) dropdowns built on different
-// primitives (Radix, Base UI) can render side by side — each provides this
-// same context object, so MenuItem resolves whichever provider actually
-// wraps it. The dropdown module re-exports useDropdown from here, keeping
-// its public API unchanged.
-// ---------------------------------------------------------------------------
-
-/** What MenuItem hands to the popup's primitive wrapper. `element` is the
- *  styled row div (visuals + fluid hover registration, no children); `children`
- *  is the row content (icon, label, check). The dropdown wraps them in its
- *  own Item / RadioItem primitive, so MenuItem itself stays primitive-free. */
+/**
+ * What a row hands to the popup's primitive wrapper: `element` is the styled
+ * row (visuals and fluid-hover registration), `children` its content.
+ */
 export interface MenuItemRenderOptions {
-  /** Radio-style option (boolean `checked` on MenuItem) vs plain action item. */
+  /** A boolean `checked` in single selection: a radio item. */
   radio: boolean
-  /** Checkbox-style option: a boolean `checked` inside a multiple-selection
-   *  dropdown (`checkedIndices`). Takes precedence over `radio`. */
+  /** A boolean `checked` in multiple selection: a checkbox item. Wins over `radio`. */
   checkbox: boolean
-  /** The item's checked state (radio and checkbox items). */
   checked?: boolean
-  /** The item's index — doubles as the radio value. */
+  /** The row's index, which is also its radio value. */
   value: number
   disabled?: boolean
   label: string
   closeOnClick: boolean
-  /** The row's activation. It goes on the primitive, not on `element`: Base
-   *  UI's Enter/Space activation calls the primitive's own `onClick` prop and
-   *  never sees a handler on the render element. */
-  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void
+  /** The row's activation. It goes on the primitive: Base UI's Enter / Space call only the primitive's own `onClick`. */
+  onClick?: (e: MouseEvent<HTMLDivElement>) => void
   element: ReactElement
   children: ReactNode
 }
 
+/** What a row reads from its panel (the inline Dropdown, or a menu popup). */
 export interface DropdownContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void
   activeIndex: number | null
   checkedIndex?: number
-  /** Multiple selection (`checkedIndices` on the dropdown): rows are
-   *  checkbox items and activating one keeps the menu open by default. */
   multiple?: boolean
   checkedIndices?: number[]
-  /** True when items render inside a Menu popup (DropdownContent), where the
-   *  primitive's Item / RadioItem own roles, roving highlight, typeahead,
-   *  and activation. MenuItem switches its rendering accordingly. */
+  /** The rows render inside a Base UI menu, which owns roles, roving highlight, typeahead and activation. */
   inMenu?: boolean
-  /** Popup-only: wraps a MenuItem's styled div in the dropdown's menu-item
-   *  primitive. Absent in the inline Dropdown panel, where MenuItem renders
-   *  its own ARIA menuitem div. */
+  /** Popup only: wraps a row in the menu's item primitive. */
   renderMenuItem?: (opts: MenuItemRenderOptions) => ReactElement
-  /** Local addition. The panel owns its selection (`defaultCheckedIndex` /
-   *  `defaultCheckedIndices`), so a row with no `checked` prop takes its
-   *  checked state from `checkedIndex` / `checkedIndices` and toggles the
-   *  panel on activation. */
+  /** The panel owns its selection: a row with no `checked` reads it from the panel and toggles it on activation. */
   selfManaged?: boolean
-  /** Local addition. Toggles the row at an AUTHORED index (see
-   *  `sourceIndex`). Present with `selfManaged`. */
+  /** Toggles the row at an authored index. Present with `selfManaged`. */
   toggleIndex?: (sourceIndex: number) => void
 }
 
@@ -118,39 +76,64 @@ export function useDropdown() {
   return ctx
 }
 
-/** Null-safe context read for callers that render outside a provider. */
+/** `useDropdown`, `null` outside a panel. */
 export function useDropdownMaybe() {
   return useContext(DropdownContext)
 }
 
 interface MenuItemProps extends HTMLAttributes<HTMLDivElement> {
-  /** Optional leading icon. When omitted, the row renders text-only with no
-   *  reserved icon column. */
+  /** Leading icon. Without one the row is text only, with no reserved icon column. */
   icon?: IconComponent
+  /** The row's label; also what a `Dropdown.Search filter` matches. */
   label: string
+  /** Position in the panel, what the fluid hover measures rows by. */
   index: number
-  /** When a boolean, the item is a radio-style option (role="menuitemradio"
-   *  with aria-checked). When undefined, it is a plain action item
-   *  (role="menuitem"), unless the panel owns the selection — then the row
-   *  reads its checked state off the panel and toggles it on activation. */
+  /** A boolean makes the row a radio option (a checkbox one in multiple selection); leave it out for a plain action, unless the panel owns the selection. */
   checked?: boolean
+  /** Called when the row is activated. */
   onSelect?: () => void
+  /** Dims the row and takes it out of the hover and keyboard order. */
   disabled?: boolean
-  /** Popup-only (inside DropdownContent): whether activating the item closes
-   *  the menu. Ignored in the inline Dropdown panel. @default true */
+  /** Popup only: whether activating the row closes the menu. Defaults to `true`, `false` in multiple selection. */
   closeOnClick?: boolean
-  /** Internal: the row's authored index, stamped by a filtering panel that
-   *  re-indexed the visible rows. Selection is keyed on it. */
+  /** Keyboard shortcut shown at the row's end, e.g. `⌘C`. Display only. */
+  shortcut?: string
+  /** Internal: the authored index, stamped by a filtering panel that re-indexed the rows. */
   sourceIndex?: number
+}
+
+function Shortcut({ children }: { children: string }) {
+  const compact = useSize().variant === 'compact'
+  return (
+    <kbd
+      className={cn('shrink-0 pl-4 font-sans text-muted-foreground', compact ? 'text-caption-compact' : 'text-caption')}
+    >
+      {children}
+    </kbd>
+  )
 }
 
 const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
   (
-    { icon: Icon, label, index, checked, onSelect, disabled, closeOnClick, sourceIndex, className, onClick, ...props },
+    {
+      icon: Icon,
+      label,
+      index,
+      checked,
+      onSelect,
+      disabled,
+      closeOnClick,
+      shortcut,
+      sourceIndex,
+      className,
+      onClick,
+      ...props
+    },
     ref,
   ) => {
     const internalRef = useRef<HTMLDivElement>(null)
-    const hasMounted = useRef(false)
+    const mergedRef = useMergeRefs(internalRef, ref)
+    const size = useSize()
     const {
       registerItem,
       activeIndex,
@@ -162,30 +145,15 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
       toggleIndex,
     } = useDropdown()
 
-    // Uncontrolled panels answer for rows that brought no `checked` of their
-    // own; a row that did keeps it.
     const panelChecked = multiple ? (checkedIndices?.includes(index) ?? false) : checkedIndex === index
     const isChecked = checked ?? (selfManaged ? panelChecked : undefined)
     const isCheckbox = !!multiple && typeof isChecked === 'boolean'
+    const isRadio = !isCheckbox && typeof isChecked === 'boolean'
+    const lit = activeIndex === index || !!isChecked
 
     useRegisterFluidHoverItem(registerItem, index, internalRef)
 
-    useEffect(() => {
-      hasMounted.current = true
-    }, [])
-
-    const isActive = activeIndex === index
-    const skipAnimation = !hasMounted.current
-    const sizeClasses = useSize()
-
-    const mergeRef = (node: HTMLDivElement | null) => {
-      ;(internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node
-      if (typeof ref === 'function') ref(node)
-      else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node
-    }
-
-    // Selection is keyed on the authored index, which survives a filtering
-    // panel's re-indexing of the visible rows.
+    // Selection is keyed on the authored index, which survives a filter's re-indexing.
     const activate = () => {
       onSelect?.()
       if (selfManaged) toggleIndex?.(sourceIndex ?? index)
@@ -193,134 +161,59 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
 
     const handleActivate = disabled
       ? undefined
-      : (e: React.MouseEvent<HTMLDivElement>) => {
+      : (e: MouseEvent<HTMLDivElement>) => {
           onClick?.(e)
           activate()
         }
 
-    const itemClassName = cn(
-      // Fixed height (was py-2 around a 19.5px line box ≈ 35.5px) so the
-      // text-box trim on the label doesn't shrink the row. shrink-0 because
-      // menu popups are max-height flex columns — without it a long list
-      // compresses rows to fit instead of scrolling.
-      `relative z-10 flex ${sizeClasses.control} shrink-0 items-center ${sizeClasses.gap} ${shape.item} ${sizeClasses.itemPx} cursor-pointer outline-none`,
-      disabled && 'opacity-50 pointer-events-none',
-      className,
-    )
+    const itemClassName = cn(rowClasses({ size, shape: menuShape, lit, disabled }), className)
 
     const content = (
       <>
-        {Icon && (
-          <span className="inline-grid">
-            <span className="col-start-1 row-start-1 invisible">
-              <Icon size={sizeClasses.icon} strokeWidth={2} />
-            </span>
-            <Icon
-              size={sizeClasses.icon}
-              strokeWidth={isActive || isChecked ? 2 : 1.5}
-              className={cn(
-                'col-start-1 row-start-1 transition-[color,stroke-width] duration-fast',
-                isActive || isChecked ? 'text-foreground' : 'text-muted-foreground',
-              )}
-            />
-          </span>
-        )}
-        {/* Both stacked spans carry the text-box trim so the invisible bold
-            sizer and the visible label keep identical boxes. */}
-        <span className={cn('inline-grid flex-1', sizeClasses.text)}>
-          <span
-            className="col-start-1 row-start-1 invisible [text-box:trim-both_cap_alphabetic] weight-semibold"
-            aria-hidden="true"
-          >
-            {label}
-          </span>
-          <span
-            className={cn(
-              'col-start-1 row-start-1 transition-[color,font-variation-settings] duration-fast [text-box:trim-both_cap_alphabetic]',
-              isActive || isChecked ? 'text-foreground' : 'text-muted-foreground',
-              isChecked ? 'weight-semibold' : 'weight-normal',
-            )}
-          >
-            {label}
-          </span>
-        </span>
-        <AnimatePresence>
-          {isChecked && (
-            <motion.svg
-              key="check"
-              width={sizeClasses.icon}
-              height={sizeClasses.icon}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="text-foreground shrink-0"
-              initial={{ opacity: 1 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 1 }}
-            >
-              <motion.path
-                d="M4 12L9 17L20 6"
-                initial={{ pathLength: skipAnimation ? 1 : 0 }}
-                animate={{
-                  pathLength: 1,
-                  transition: { duration: spring.fast.duration, ease: 'easeOut' },
-                }}
-                exit={{
-                  pathLength: 0,
-                  transition: { duration: 0.04, ease: 'easeIn' },
-                }}
-              />
-            </motion.svg>
-          )}
-        </AnimatePresence>
+        {Icon && <RowIcon icon={Icon} lit={lit} />}
+        <WeightLabel emphasized={!!isChecked} trim className="flex-1">
+          {label}
+        </WeightLabel>
+        {shortcut && <Shortcut>{shortcut}</Shortcut>}
+        <CheckMark checked={!!isChecked} />
       </>
     )
 
     if (renderMenuItem) {
-      // Inside DropdownContent, the menu-item primitive (supplied by the
-      // surrounding DropdownContent through context) owns the role,
-      // aria-checked, tabIndex, roving highlight, typeahead, and Enter/Space/
-      // click activation (handleActivate rides on the primitive, whose
-      // keyboard activation calls it too). The styled div carries the Fluid
-      // Functionalism visuals and the fluid-hover registration; MenuItem
-      // itself imports no primitive.
       return renderMenuItem({
-        radio: !isCheckbox && typeof isChecked === 'boolean',
+        radio: isRadio,
         checkbox: isCheckbox,
         checked: isChecked,
         value: index,
         disabled,
         label,
-        // Toggling one of several stays open; picking one of one closes.
         closeOnClick: closeOnClick ?? !multiple,
         onClick: handleActivate,
         element: (
-          <div ref={mergeRef} data-fluid-hover-index={index} aria-label={label} className={itemClassName} {...props} />
+          // biome-ignore lint/a11y/useAriaPropsSupportedByRole: the menu primitive this renders into sets the role.
+          <div ref={mergedRef} data-fluid-hover-index={index} aria-label={label} className={itemClassName} {...props} />
         ),
         children: content,
       })
     }
 
     return (
+      // biome-ignore lint/a11y/noStaticElementInteractions: the role is picked per row below.
+      // biome-ignore lint/a11y/useAriaPropsSupportedByRole: the role is picked per row below.
       <div
-        ref={mergeRef}
+        ref={mergedRef}
         data-fluid-hover-index={index}
-        // Disabled items are never the roving tab stop.
+        // Disabled rows are never the roving tab stop.
         tabIndex={!disabled && index === (checkedIndex ?? checkedIndices?.[0] ?? 0) ? 0 : -1}
-        role={isCheckbox ? 'menuitemcheckbox' : typeof isChecked === 'boolean' ? 'menuitemradio' : 'menuitem'}
+        role={isCheckbox ? 'menuitemcheckbox' : isRadio ? 'menuitemradio' : 'menuitem'}
         aria-checked={typeof isChecked === 'boolean' ? isChecked : undefined}
         aria-disabled={disabled || undefined}
         aria-label={label}
         onClick={handleActivate}
         onKeyDown={e => {
-          if (disabled) return
-          if (e.key === ' ' || e.key === 'Enter') {
-            e.preventDefault()
-            activate()
-          }
+          if (disabled || (e.key !== ' ' && e.key !== 'Enter')) return
+          e.preventDefault()
+          activate()
         }}
         className={itemClassName}
         {...props}
