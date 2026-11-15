@@ -7,7 +7,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import AgentPrompt from '../../../blocks/agent-desktop/agent-prompt'
 import Composer from '../../../blocks/agent-desktop/composer'
 import { DEMO_CHAPTERS, DEMO_TASKS, DemoReading, DemoSession } from '../../../blocks/agent-desktop/demo-session'
@@ -217,6 +217,18 @@ export default function Workspace({
   const [splitId, setSplitId] = useState<string | null>(split ? 'canvas' : null)
   const [pending, setPending] = useState(prompt)
   const [nextStep, setNextStep] = useState(wrapUp)
+  // The window's own width, not the viewport's: below it the pane takes the
+  // session's place instead of squeezing it (the Sidebar's own mobile switch
+  // reads the viewport, which a framed or resized window doesn't follow).
+  const root = useRef<HTMLDivElement | null>(null)
+  const [narrow, setNarrow] = useState(false)
+  useLayoutEffect(() => {
+    const el = root.current
+    if (!el) return
+    const observer = new ResizeObserver(([entry]) => setNarrow((entry?.contentRect.width ?? 0) < 768))
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
   const session = findSession(selected)
   const profile = PROFILES.find(p => p.id === session?.profile)
   const Branch = useIcon('git-branch')
@@ -241,7 +253,7 @@ export default function Workspace({
   )
 
   return (
-    <div className="@container flex h-full min-h-[640px] w-full bg-background">
+    <div ref={root} className="@container flex h-full min-h-[640px] w-full bg-background">
       <Sidebar.Provider
         className="h-full min-h-0"
         persist={false}
@@ -256,7 +268,7 @@ export default function Workspace({
           persist={false}
           mobileBreakpoint={0}
           width="380px"
-          open={paneOpen}
+          open={paneOpen && !narrow}
           onOpenChange={setPaneOpen}
         >
           <Sidebar side="right" variant="inset" className="h-full">
@@ -269,76 +281,85 @@ export default function Workspace({
           </Sidebar>
           {/* The inset's margins come from its peer, the side pane; the sessions sidebar is in the outer provider, so its side is set here: flush while it is open (its rows bring their own gutter), 8px once it folds. */}
           <Sidebar.Inset className={cn('@container min-h-0 min-w-0', leftOpen && '!ml-0')}>
-            <div className="flex min-h-0 flex-1">
-              <div className="flex min-w-0 flex-1 flex-col">
-                <header className="flex h-12 shrink-0 items-center gap-2 px-1.5">
-                  <Button
-                    variant="ghost"
-                    size="icon-compact"
-                    aria-label="Sessions sidebar"
-                    aria-pressed={leftOpen}
-                    onClick={() => setLeftOpen(!leftOpen)}
-                  >
-                    <PanelLeft />
-                  </Button>
-                  <span className="min-w-0 truncate text-body weight-medium text-foreground">{session?.title}</span>
-                  {session?.branch && (
-                    <span className="hidden min-w-0 items-center gap-1 text-caption text-muted-foreground @xl:flex">
-                      <Branch size={12} strokeWidth={1.5} className="shrink-0" />
-                      <span className="truncate font-mono">{session.branch}</span>
-                    </span>
-                  )}
-                  {profile && (
-                    <span className="hidden shrink-0 text-caption text-muted-foreground @2xl:inline">
-                      {profile.name} · {profile.defaultModel}
-                    </span>
-                  )}
-                  <div className="ml-auto flex shrink-0 items-center gap-0.5">
-                    <Tooltip content="Split view" side="bottom">
-                      <Button
-                        variant="ghost"
-                        size="icon-compact"
-                        aria-label="Split view"
-                        aria-pressed={splitId !== null}
-                        active={splitId !== null}
-                        className="hidden @3xl:inline-flex"
-                        onClick={() => setSplitId(splitId ? null : 'canvas')}
-                      >
-                        <Columns />
-                      </Button>
-                    </Tooltip>
-                    <Button variant="ghost" size="icon-compact" aria-label="Session options">
-                      <More />
+            {narrow && paneOpen ? (
+              <SidePane
+                pane={openPane}
+                onPaneChange={setOpenPane}
+                onClose={() => setPaneOpen(false)}
+                className="min-h-0 flex-1"
+              />
+            ) : (
+              <div className="flex min-h-0 flex-1">
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <header className="flex h-12 shrink-0 items-center gap-2 px-1.5">
+                    <Button
+                      variant="ghost"
+                      size="icon-compact"
+                      aria-label="Sessions sidebar"
+                      aria-pressed={leftOpen}
+                      onClick={() => setLeftOpen(!leftOpen)}
+                    >
+                      <PanelLeft />
                     </Button>
-                    {/* With a split open the toggle moves to the split's header: it stays at the window's right edge, beside the pane it opens. */}
-                    <span className={cn('inline-flex', splitId && '@3xl:hidden')}>{paneToggle}</span>
+                    <span className="min-w-0 truncate text-body weight-medium text-foreground">{session?.title}</span>
+                    {session?.branch && (
+                      <span className="hidden min-w-0 items-center gap-1 text-caption text-muted-foreground @xl:flex">
+                        <Branch size={12} strokeWidth={1.5} className="shrink-0" />
+                        <span className="truncate font-mono">{session.branch}</span>
+                      </span>
+                    )}
+                    {profile && (
+                      <span className="hidden shrink-0 text-caption text-muted-foreground @2xl:inline">
+                        {profile.name} · {profile.defaultModel}
+                      </span>
+                    )}
+                    <div className="ml-auto flex shrink-0 items-center gap-0.5">
+                      <Tooltip content="Split view" side="bottom">
+                        <Button
+                          variant="ghost"
+                          size="icon-compact"
+                          aria-label="Split view"
+                          aria-pressed={splitId !== null}
+                          active={splitId !== null}
+                          className="hidden @3xl:inline-flex"
+                          onClick={() => setSplitId(splitId ? null : 'canvas')}
+                        >
+                          <Columns />
+                        </Button>
+                      </Tooltip>
+                      <Button variant="ghost" size="icon-compact" aria-label="Session options">
+                        <More />
+                      </Button>
+                      {/* With a split open the toggle moves to the split's header: it stays at the window's right edge, beside the pane it opens. */}
+                      <span className={cn('inline-flex', splitId && '@3xl:hidden')}>{paneToggle}</span>
+                    </div>
+                  </header>
+                  <Transcript
+                    chapters={DEMO_CHAPTERS}
+                    footer={
+                      <>
+                        <Transcript.TaskList key={pending} items={DEMO_TASKS} defaultOpen={pending === 'none'} />
+                        {pending !== 'none' && <Prompt kind={pending} onDone={() => setPending('none')} />}
+                        {pending === 'none' && nextStep && (
+                          <Transcript.NextStep
+                            recap="The five pages and six blocks are in and pass lint and the typecheck. Nothing is committed yet."
+                            ask="Commit the agent desktop on its branch?"
+                            actions={['Commit', 'Not yet']}
+                            onAction={() => setNextStep(false)}
+                          />
+                        )}
+                      </>
+                    }
+                  >
+                    <DemoSession />
+                  </Transcript>
+                  <div className="mx-auto w-full max-w-3xl px-6 pb-4">
+                    <Composer streaming={pending === 'none' && !nextStep} />
                   </div>
-                </header>
-                <Transcript
-                  chapters={DEMO_CHAPTERS}
-                  footer={
-                    <>
-                      <Transcript.TaskList key={pending} items={DEMO_TASKS} defaultOpen={pending === 'none'} />
-                      {pending !== 'none' && <Prompt kind={pending} onDone={() => setPending('none')} />}
-                      {pending === 'none' && nextStep && (
-                        <Transcript.NextStep
-                          recap="The five pages and six blocks are in and pass lint and the typecheck. Nothing is committed yet."
-                          ask="Commit the agent desktop on its branch?"
-                          actions={['Commit', 'Not yet']}
-                          onAction={() => setNextStep(false)}
-                        />
-                      )}
-                    </>
-                  }
-                >
-                  <DemoSession />
-                </Transcript>
-                <div className="mx-auto w-full max-w-3xl px-6 pb-4">
-                  <Composer streaming={pending === 'none' && !nextStep} />
                 </div>
+                {splitId && <SplitSession id={splitId} onClose={() => setSplitId(null)} trailing={paneToggle} />}
               </div>
-              {splitId && <SplitSession id={splitId} onClose={() => setSplitId(null)} trailing={paneToggle} />}
-            </div>
+            )}
           </Sidebar.Inset>
         </Sidebar.Provider>
       </Sidebar.Provider>

@@ -76,8 +76,9 @@ function Transcript({ children, chapters, defaultShowWork = false, footer, class
   }, [])
 
   return (
-    <div className={cn('relative flex min-h-0 flex-1 flex-col', className)}>
-      <div className="absolute right-3 top-2 z-20 flex items-center gap-0.5">
+    <div className={cn('@container relative flex min-h-0 flex-1 flex-col', className)}>
+      {/* A narrow column has no margin to float them in: there they take a row of their own above it. */}
+      <div className="flex shrink-0 items-center justify-end gap-0.5 px-3 pt-1 @3xl:absolute @3xl:right-3 @3xl:top-2 @3xl:z-20 @3xl:p-0">
         <Button
           variant="ghost"
           size="icon-compact"
