@@ -30,6 +30,15 @@ A glyph for toolbars: the label is its accessible name only.
   <Meter variant="ring" label="Context" value={0.94} />
 </div>
 
+# Line
+
+The bare bar for tight rows, such as a sidebar: stack two for a short and a long window.
+
+<div className="flex w-40 flex-col gap-1">
+  <Meter variant="line" label="Session (5h)" value={0.42} />
+  <Meter variant="line" label="Weekly" value={0.81} />
+</div>
+
 # Compact
 
 In a compact region the label steps down and the ring shrinks.

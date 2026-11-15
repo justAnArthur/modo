@@ -44,8 +44,8 @@ interface MeterProps {
   label: string
   /** A line on the right of the label: the value, a reset time. Defaults to the share in percent. */
   detail?: ReactNode
-  /** A bar under its label, or a ring glyph that sits inline (its label becomes the accessible name only). Defaults to `'bar'`. */
-  variant?: 'bar' | 'ring'
+  /** A bar under its label; a bare line for tight rows; or a ring glyph that sits inline. The line and the ring keep the label as the accessible name only. Defaults to `'bar'`. */
+  variant?: 'bar' | 'line' | 'ring'
   /** The share from which the fill turns to the warning hue. Defaults to `0.75`. */
   warnAt?: number
   /** The share from which the fill turns to the error hue. Defaults to `0.9`. */
@@ -61,8 +61,8 @@ interface MeterProps {
  * rate limit, a context window.
  *
  * The bar sits under its label with the share (or any `detail`) on the
- * right; the ring is a small glyph for toolbars, with its label as the
- * accessible name. Either fill springs to a new value instead of jumping, and
+ * right; the line is the bare bar for tight rows, and the ring a small
+ * glyph for toolbars, both with their label as the accessible name. Either fill springs to a new value instead of jumping, and
  * turns to the warning hue from `warnAt` and to the error hue from `errorAt`,
  * so a budget running out reads at a glance without a third grey.
  *
@@ -109,6 +109,25 @@ const Meter = forwardRef<HTMLDivElement, MeterProps>(
       )
     }
 
+    const track = (
+      <div className="h-1 overflow-hidden rounded-full bg-active">
+        <motion.div
+          className={cn('h-full origin-left rounded-full transition-[background-color] duration-fast', BAR_FILL[tone])}
+          initial={false}
+          animate={{ scaleX: share }}
+          transition={transition}
+        />
+      </div>
+    )
+
+    if (variant === 'line') {
+      return (
+        <div ref={ref} {...aria} className={cn('min-w-0', className)}>
+          {track}
+        </div>
+      )
+    }
+
     return (
       <div ref={ref} {...aria} className={cn('flex min-w-0 flex-col gap-1.5', className)}>
         <div
@@ -120,17 +139,7 @@ const Meter = forwardRef<HTMLDivElement, MeterProps>(
           <span className="truncate text-foreground">{label}</span>
           <span className="shrink-0 tabular-nums text-muted-foreground">{detail ?? `${Math.round(share * 100)}%`}</span>
         </div>
-        <div className="h-1 overflow-hidden rounded-full bg-active">
-          <motion.div
-            className={cn(
-              'h-full origin-left rounded-full transition-[background-color] duration-fast',
-              BAR_FILL[tone],
-            )}
-            initial={false}
-            animate={{ scaleX: share }}
-            transition={transition}
-          />
-        </div>
+        {track}
       </div>
     )
   },
