@@ -1,31 +1,22 @@
-// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
 /*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/blocks/sidebar-app/search-field.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - `@/components/ui/{sidebar,dropdown}` → `../../components/*`,
- *   `@/lib/sidebar-menu-grid` → `./menu-grid`, `@/lib/*` → `../../lib/*`.
- * - Styling reads DS tokens (AGENTS.md styling): `text-[11px]` → `text-micro`;
- *   `duration-80` → `duration-fast`.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
 
-import { type ComponentProps } from 'react'
+import type { ComponentProps } from 'react'
 import { SidebarInput } from '../../components/navigation/sidebar'
 import { useIcon } from '../../lib/icon-context'
 import { useSize } from '../../lib/size-context'
 
-// ---------------------------------------------------------------------------
-// The header's search field, on the menu rows' own rhythm. The leading icon
-// sits on the rows' 16px leading axis; pl-8 starts the text on the rows'
-// 32px text axis; and the shortcut chip waits at the trailing edge, revealed
-// on hover/focus — the placeholder owns the field at rest.
-// ---------------------------------------------------------------------------
+// On the menu rows' axes: the icon on their 16px leading axis, the text
+// (pl-8) on their 32px text axis. The shortcut chip shows on hover and focus.
 
 export interface SidebarSearchFieldProps extends Omit<ComponentProps<typeof SidebarInput>, 'className'> {
-  /** Keystroke shown in the trailing chip. Pass null to drop the chip. */
+  /** Keystroke shown in the trailing chip; `null` drops it. Defaults to `'⌘K'`. */
   shortcut?: string | null
 }
 
