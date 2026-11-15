@@ -1,0 +1,37 @@
+import PermissionRules from './index'
+import { PERMISSIONS } from '../../../pages/AI/mock-config'
+
+# Rules
+
+Add a rule on the line at the top; hover one to move it to another group or remove it.
+
+<div className="w-full max-w-3xl">
+  <PermissionRules defaultValue={PERMISSIONS} />
+</div>
+
+# Validation
+
+A malformed rule is caught as you type; one already listed names its group.
+
+<div className="w-full max-w-3xl">
+  <PermissionRules defaultValue={{ mode: 'default', rules: [{ rule: 'Bash(bun run *)', behavior: 'allow', scope: 'project' }], directories: [] }} />
+</div>
+
+# Empty
+
+Nothing set yet: the default mode, and every group empty.
+
+<div className="w-full max-w-3xl">
+  <PermissionRules />
+</div>
+
+# Light and dark
+
+<div className="grid w-full gap-3 @5xl:grid-cols-2">
+  <div className="light rounded-xl border border-border bg-background p-6 text-foreground">
+    <PermissionRules defaultValue={PERMISSIONS} />
+  </div>
+  <div className="dark rounded-xl border border-border bg-background p-6 text-foreground">
+    <PermissionRules defaultValue={PERMISSIONS} />
+  </div>
+</div>

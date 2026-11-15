@@ -11,6 +11,13 @@ import type { SettingsWindowSection } from '../../blocks/AI/settings/settings-wi
 export const SETTINGS_SECTIONS: SettingsWindowSection[] = [
   { id: 'mcp', label: 'MCP servers', icon: 'plug', scoped: true, keywords: 'tools auth authenticate env url' },
   { id: 'hooks', label: 'Hooks', icon: 'webhook', scoped: true, keywords: 'events commands pretooluse stop' },
+  {
+    id: 'permissions',
+    label: 'Permissions',
+    icon: 'shield',
+    scoped: true,
+    keywords: 'allow ask deny rules mode directories',
+  },
   { id: 'plugins', label: 'Skills and plugins', icon: 'package', scoped: true, keywords: 'catalog browser simulator' },
   { id: 'memory', label: 'Memory', icon: 'book-open', scoped: true, keywords: 'auto memory.md remember' },
   { id: 'worktrees', label: 'Worktrees', icon: 'git-fork', scoped: false, keywords: 'disk clean up branches' },

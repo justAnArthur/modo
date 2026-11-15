@@ -10,6 +10,7 @@
 
 import { type ReactNode, useId } from 'react'
 import Button from '../../components/button'
+import EmptyState from '../../components/empty-state'
 import Tooltip from '../../components/overlays/tooltip'
 import { type IconComponent, type IconName, useIcon } from '../../lib/icon-context'
 
@@ -71,12 +72,5 @@ export function IconAction({
 
 /** What a pane shows with nothing in it: a glyph, a line and what to do next. */
 export function PaneEmpty({ icon, title, detail }: { icon: IconName; title: string; detail: string }) {
-  const Icon = useIcon(icon)
-  return (
-    <div className="flex flex-col items-center gap-1 px-4 py-12 text-center">
-      <Icon size={20} strokeWidth={1.5} className="mb-1 text-muted-foreground" />
-      <span className="text-body text-foreground">{title}</span>
-      <span className="text-caption text-muted-foreground">{detail}</span>
-    </div>
-  )
+  return <EmptyState size="compact" icon={useIcon(icon)} title={title} description={detail} />
 }

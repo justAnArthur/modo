@@ -141,6 +141,18 @@ export default function CommandPalette({
         })),
     },
     {
+      label: 'Find',
+      items: [
+        {
+          label: 'Search transcripts',
+          icon: icons.search,
+          keywords: ['find', 'history', 'messages'],
+          onSelect: pick({ kind: 'search' }),
+        },
+        { label: 'Keyboard shortcuts', icon: icons.command, shortcut: '⌘/', onSelect: pick({ kind: 'shortcuts' }) },
+      ],
+    },
+    {
       label: 'Panes',
       items: PANES.map(p => ({
         label: `Open ${p.label.toLowerCase()}`,

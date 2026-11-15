@@ -3,6 +3,13 @@
  * every section, on the app's mock data.
  */
 
+'use client'
+
+import { useState } from 'react'
+import HookDialog from '../../../blocks/AI/hook-dialog'
+import McpServerDialog from '../../../blocks/AI/mcp-server-dialog'
+import PermissionRules from '../../../blocks/AI/permission-rules'
+import PluginCatalog from '../../../blocks/AI/plugin-catalog'
 import Extensions from '../../../blocks/AI/settings/extensions'
 import Hooks from '../../../blocks/AI/settings/hooks'
 import McpServers from '../../../blocks/AI/settings/mcp-servers'
@@ -12,14 +19,26 @@ import Plugins from '../../../blocks/AI/settings/plugins'
 import SettingsWindow from '../../../blocks/AI/settings/settings-window'
 import Worktrees from '../../../blocks/AI/settings/worktrees'
 import { HOOKS, MCP_SERVERS, MEMORY, PLUGINS, PROFILES, WORKTREES } from '../mock'
+import { CATALOG, MCP_TAKEN, PERMISSIONS } from '../mock-config'
 import { EXTENSIONS, NOTIFICATIONS, SETTINGS_SECTIONS, WORKTREES_ON_DISK } from '../mock-settings'
 
-type SettingsSection = 'mcp' | 'hooks' | 'plugins' | 'memory' | 'worktrees' | 'notifications' | 'extensions'
+type SettingsSection =
+  | 'mcp'
+  | 'hooks'
+  | 'permissions'
+  | 'plugins'
+  | 'memory'
+  | 'worktrees'
+  | 'notifications'
+  | 'extensions'
 
-function content(section: string, configDir: string) {
-  if (section === 'mcp') return <McpServers servers={MCP_SERVERS} configDir={configDir} />
-  if (section === 'hooks') return <Hooks hooks={HOOKS} configDir={configDir} />
-  if (section === 'plugins') return <Plugins plugins={PLUGINS} />
+type DialogId = 'none' | 'mcp' | 'hook' | 'catalog'
+
+function content(section: string, configDir: string, open: (dialog: DialogId) => void) {
+  if (section === 'mcp') return <McpServers servers={MCP_SERVERS} configDir={configDir} onAdd={() => open('mcp')} />
+  if (section === 'hooks') return <Hooks hooks={HOOKS} configDir={configDir} onAdd={() => open('hook')} />
+  if (section === 'permissions') return <PermissionRules defaultValue={PERMISSIONS} />
+  if (section === 'plugins') return <Plugins plugins={PLUGINS} onBrowse={() => open('catalog')} />
   if (section === 'memory') return <Memory files={MEMORY} configDir={configDir} />
   if (section === 'worktrees') return <Worktrees worktrees={WORKTREES} onDisk={WORKTREES_ON_DISK} />
   if (section === 'notifications') return <Notifications groups={NOTIFICATIONS} />
@@ -59,8 +78,13 @@ interface SettingsProps {
  * worktree's path and what removing it costs. Removing a merged or stale
  * worktree sits at the end of its row on hover (always shown on touch).
  *
+ * Adding a server or a hook opens its dialog (McpServerDialog, HookDialog),
+ * and Browse catalog opens the PluginCatalog. Permissions holds the allow,
+ * ask and deny rules (PermissionRules).
+ *
  * The page puts the settings blocks together: the Settings window around MCP
- * servers, Hooks, Plugins, Memory, Worktrees, Notifications and Extensions.
+ * servers, Hooks, Permissions, Plugins, Memory, Worktrees, Notifications and
+ * Extensions.
  *
  * @example {@include ./examples.mdx}
  */
@@ -70,17 +94,30 @@ export default function Settings({
   scope = 'jobiflow',
   onOpenProfiles,
 }: SettingsProps) {
+  const [dialog, setDialog] = useState<DialogId>('none')
+  const onOpenChange = (open: boolean) => !open && setDialog('none')
   return (
-    <SettingsWindow
-      sections={SETTINGS_SECTIONS}
-      profiles={PROFILES}
-      defaultSection={section}
-      defaultScope={scope}
-      sidebar={sidebar}
-      onOpenProfiles={onOpenProfiles}
-    >
-      {content}
-    </SettingsWindow>
+    <>
+      <SettingsWindow
+        sections={SETTINGS_SECTIONS}
+        profiles={PROFILES}
+        defaultSection={section}
+        defaultScope={scope}
+        sidebar={sidebar}
+        onOpenProfiles={onOpenProfiles}
+      >
+        {(section, configDir) => content(section, configDir, setDialog)}
+      </SettingsWindow>
+      <McpServerDialog
+        open={dialog === 'mcp'}
+        onOpenChange={onOpenChange}
+        profiles={PROFILES}
+        taken={MCP_TAKEN}
+        onSave={() => setDialog('none')}
+      />
+      <HookDialog open={dialog === 'hook'} onOpenChange={onOpenChange} onSave={() => setDialog('none')} />
+      <PluginCatalog open={dialog === 'catalog'} onOpenChange={onOpenChange} plugins={CATALOG} />
+    </>
   )
 }
 

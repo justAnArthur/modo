@@ -6,20 +6,20 @@
 
 'use client'
 
+import ProfileOnboarding from '../../../blocks/AI/profile-onboarding'
 import { ProfileTile } from '../../../blocks/AI/profile-switcher'
 import SessionSidebar from '../../../blocks/AI/session-sidebar'
 import type { Profile } from '../../../blocks/AI/types'
 import Badge from '../../../components/badge'
 import Button from '../../../components/button'
 import Copy from '../../../components/copy'
-import { InputGroup } from '../../../components/inputs/input'
-import Radio from '../../../components/inputs/radio'
 import Meter from '../../../components/meter'
 import Sidebar from '../../../components/navigation/sidebar'
 import { useIcon } from '../../../lib/icon-context'
 import { useShape } from '../../../lib/shape-context'
 import { cn } from '../../../lib/utils'
 import { PROFILES, SESSIONS } from '../mock'
+import { SIGN_IN_WAITING } from '../mock-extras'
 
 function ProfileCard({ profile, isDefault }: { profile: Profile; isDefault: boolean }) {
   const shape = useShape()
@@ -81,20 +81,16 @@ function AddProfile() {
           URL.
         </p>
       </div>
-      <Radio.Group defaultValue="claude" className="w-full">
-        <Radio value="claude" label="Claude account (new config dir)" />
-        <Radio value="compatible" label="Anthropic-compatible provider" />
-      </Radio.Group>
-      <InputGroup>
-        <InputGroup.Field index={0} label="Name" placeholder="work-personal" />
-        <InputGroup.Field index={1} label="Config dir" placeholder="~/.claude-work-personal" />
-        <InputGroup.Field index={2} label="Base URL (compatible only)" placeholder="https://api.z.ai/api/anthropic" />
-        <InputGroup.Field index={3} label="API key from env var" placeholder="ZAI_API_KEY" />
-      </InputGroup>
       <div className="flex justify-end">
-        <Button size="compact" leadingIcon={Plus}>
-          Add profile
-        </Button>
+        <ProfileOnboarding
+          taken={PROFILES.map(p => p.id)}
+          signIn={SIGN_IN_WAITING}
+          trigger={
+            <Button size="compact" leadingIcon={Plus}>
+              Add profile
+            </Button>
+          }
+        />
       </div>
     </section>
   )

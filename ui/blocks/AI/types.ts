@@ -196,3 +196,5 @@ export type PaletteItem =
   | { kind: 'settings'; section?: string }
   | { kind: 'profile'; id: string }
   | { kind: 'profiles' }
+  | { kind: 'search' }
+  | { kind: 'shortcuts' }

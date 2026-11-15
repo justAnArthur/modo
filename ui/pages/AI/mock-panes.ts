@@ -183,6 +183,12 @@ export const PANE_TASKS: PaneTask[] = [
 export const SIDE_PANE_DATA: SidePaneData = {
   changes: PANE_CHANGES,
   file: PANE_FILE,
+  files: [
+    ...PANE_CHANGES.map(c => c.path),
+    'ui/blocks/AI/side-pane/index.tsx',
+    'ui/pages/AI/workspace/index.tsx',
+    'ui/index.ts',
+  ],
   shell: SHELL,
   pr: PULL_REQUEST,
   artifacts: PANE_ARTIFACTS,

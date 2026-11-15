@@ -11,19 +11,25 @@ import { useState } from 'react'
 import AgentPrompt from '../../../blocks/AI/agent-prompt'
 import CommandPalette from '../../../blocks/AI/command-palette'
 import Composer from '../../../blocks/AI/composer'
+import FailureState, { type FailureKind } from '../../../blocks/AI/failure-states'
+import Inbox from '../../../blocks/AI/inbox'
 import SessionSidebar from '../../../blocks/AI/session-sidebar'
+import ShortcutsSheet from '../../../blocks/AI/shortcuts-sheet'
 import SidePane, { type PaneId } from '../../../blocks/AI/side-pane'
 import Transcript from '../../../blocks/AI/transcript'
+import TranscriptSearch from '../../../blocks/AI/transcript-search'
 import type { PaletteItem, Session } from '../../../blocks/AI/types'
 import DesktopShell from '../../../blocks/desktop-shell'
 import Badge from '../../../components/badge'
 import Button from '../../../components/button'
 import Diff from '../../../components/diff'
+import EditableText from '../../../components/inputs/editable-text'
 import Tooltip from '../../../components/overlays/tooltip'
 import { useIcon } from '../../../lib/icon-context'
 import Resizable from '../../../primitives/resizable'
 import { DEMO_CHAPTERS, DEMO_TASKS, DemoReading, DemoSession } from '../demo-session'
 import { ARCHIVED, COMMANDS, COMPOSER, GROUPS, PINNED, PROFILES, PROJECTS, SESSIONS } from '../mock'
+import { CRASH_STDERR, INBOX, SHORTCUTS, TRANSCRIPTS } from '../mock-extras'
 import { SIDE_PANE_DATA } from '../mock-panes'
 import { SETTINGS_SECTIONS } from '../mock-settings'
 
@@ -177,6 +183,8 @@ interface WorkspaceProps {
   wrapUp?: boolean
   /** Start with the sessions sidebar open. Defaults to `true`. */
   sidebar?: boolean
+  /** A failure shown as a banner over the transcript, or `'none'`. Defaults to `'none'`. */
+  failure?: FailureKind | 'none'
 }
 
 /**
@@ -208,6 +216,7 @@ export default function Workspace({
   prompt = 'none',
   wrapUp = false,
   sidebar = true,
+  failure = 'none',
 }: WorkspaceProps) {
   const [selected, setSelected] = useState('ai-app')
   const [leftOpen, setLeftOpen] = useState(sidebar)
@@ -216,14 +225,21 @@ export default function Workspace({
   const [splitId, setSplitId] = useState<string | null>(split ? 'canvas' : null)
   const [pending, setPending] = useState(prompt)
   const [nextStep, setNextStep] = useState(wrapUp)
+  const [failed, setFailed] = useState(failure)
+  const [titles, setTitles] = useState<Record<string, string>>({})
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const session = findSession(selected)
   const profile = PROFILES.find(p => p.id === session?.profile)
   const Branch = useIcon('git-branch')
   const Columns = useIcon('columns-2')
+  const Search = useIcon('search')
   const More = useIcon('more-horizontal')
 
   const onPick = (item: PaletteItem) => {
     if (item.kind === 'session') setSelected(item.id)
+    if (item.kind === 'search') setSearchOpen(true)
+    if (item.kind === 'shortcuts') setShortcutsOpen(true)
     if (item.kind === 'pane') {
       setOpenPane(item.pane)
       setPaneOpen(true)
@@ -232,6 +248,26 @@ export default function Workspace({
 
   const sessionColumn = (
     <div className="flex min-w-0 flex-1 flex-col">
+      {failed !== 'none' && (
+        <div className="mx-auto w-full max-w-3xl px-6 pt-3">
+          <FailureState
+            kind={failed}
+            profile={profile}
+            stderr={CRASH_STDERR}
+            exitCode={1}
+            attempt={2}
+            maxAttempts={5}
+            retryIn="4s"
+            resetsIn="2h 10m"
+            alternatives={PROFILES.filter(p => p.id !== profile?.id)}
+            onRestart={() => setFailed('none')}
+            onRetry={() => setFailed('none')}
+            onLogin={() => setFailed('none')}
+            onSwitchProfile={() => setFailed('none')}
+            onDismiss={() => setFailed('none')}
+          />
+        </div>
+      )}
       <Transcript
         chapters={DEMO_CHAPTERS}
         footer={
@@ -268,7 +304,12 @@ export default function Workspace({
       onRightOpenChange={setPaneOpen}
       title={
         <>
-          <span className="min-w-0 truncate text-body weight-medium text-foreground">{session?.title}</span>
+          <EditableText
+            label="Session title"
+            value={titles[selected] ?? session?.title}
+            onValueChange={title => setTitles({ ...titles, [selected]: title })}
+            className="min-w-0 weight-medium"
+          />
           {session?.branch && (
             <span className="hidden min-w-0 items-center gap-1 text-caption text-muted-foreground @xl:flex">
               <Branch size={12} strokeWidth={1.5} className="shrink-0" />
@@ -284,6 +325,24 @@ export default function Workspace({
       }
       trailing={
         <>
+          <Inbox items={INBOX} align="end" />
+          <TranscriptSearch
+            sessions={TRANSCRIPTS}
+            projects={PROJECTS}
+            profiles={PROFILES}
+            open={searchOpen}
+            onOpenChange={setSearchOpen}
+            onOpen={id => {
+              setSelected(id)
+              setSearchOpen(false)
+            }}
+            trigger={
+              <Button variant="ghost" size="icon-compact" aria-label="Search transcripts">
+                <Search />
+              </Button>
+            }
+          />
+          <ShortcutsSheet groups={SHORTCUTS} open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
           <CommandPalette
             sessions={ALL_SESSIONS}
             projects={PROJECTS}

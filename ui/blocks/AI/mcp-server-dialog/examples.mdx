@@ -1,0 +1,57 @@
+import McpServerDialog from './index'
+import Button from '../../../components/button'
+import { PROFILES } from '../../../pages/AI/mock'
+import { MCP_LINEAR, MCP_POSTGRES, MCP_TAKEN, MCP_TEST_FAILED, MCP_TEST_OK, MCP_TEST_TESTING } from '../../../pages/AI/mock-config'
+
+# Add a server
+
+Press the button: the dialog grows out of it. Pick a transport and the form follows it.
+
+<McpServerDialog
+  trigger={<Button variant="secondary">Add server</Button>}
+  profiles={PROFILES}
+  taken={MCP_TAKEN}
+/>
+
+# A stdio server
+
+A command, its arguments and env vars; values stay masked until the eye shows one.
+
+<div className="@container w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <McpServerDialog.Panel profiles={PROFILES} taken={MCP_TAKEN} defaultServer={MCP_POSTGRES} test={MCP_TEST_OK} onDelete={() => {}} />
+</div>
+
+# An http server
+
+A URL and headers. Type a URL without its scheme to see it caught.
+
+<div className="@container w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <McpServerDialog.Panel profiles={PROFILES} taken={MCP_TAKEN} defaultServer={MCP_LINEAR} />
+</div>
+
+# Testing
+
+The test button spins while the app connects.
+
+<div className="@container w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <McpServerDialog.Panel defaultServer={MCP_POSTGRES} test={MCP_TEST_TESTING} />
+</div>
+
+# Connection failed
+
+The server's last words, so you can fix the command or env and test again.
+
+<div className="@container w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <McpServerDialog.Panel defaultServer={MCP_POSTGRES} test={MCP_TEST_FAILED} />
+</div>
+
+# Light and dark
+
+<div className="grid w-full gap-3 @3xl:grid-cols-2">
+  <div className="light @container rounded-xl border border-border bg-background p-6 text-foreground">
+    <McpServerDialog.Panel defaultServer={MCP_LINEAR} test={MCP_TEST_OK} />
+  </div>
+  <div className="dark @container rounded-xl border border-border bg-background p-6 text-foreground">
+    <McpServerDialog.Panel defaultServer={MCP_LINEAR} test={MCP_TEST_FAILED} />
+  </div>
+</div>

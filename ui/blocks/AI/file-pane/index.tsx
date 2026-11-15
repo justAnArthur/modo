@@ -1,39 +1,44 @@
 /*!
  * Local addition: the side pane's File — the open file under its path
- * crumb, with copy and open in editor.
+ * crumb, with copy and open in editor, and the session's files as a tree
+ * to switch between.
  */
 
 'use client'
 
+import { useState } from 'react'
+import Breadcrumb from '../../../components/navigation/breadcrumb'
+import Tree, { type TreeItem } from '../../../components/navigation/tree'
 import { useIcon } from '../../../lib/icon-context'
-import { cn } from '../../../lib/utils'
 import Code from '../../../primitives/code'
 import { IconAction, PaneSection } from '../pane-parts'
 import type { PaneFile } from '../side-pane-types'
 
-function Breadcrumb({ path }: { path: string }) {
-  const parts = path.split('/')
-  const Chevron = useIcon('chevron-right')
-  return (
-    <span className="flex min-w-0 items-center gap-0.5">
-      {parts.map((part, i) => {
-        const last = i === parts.length - 1
-        return (
-          <span key={`${i}-${part}`} className={cn('flex items-center gap-0.5', last ? 'min-w-0' : 'shrink-0')}>
-            <span className={cn(last ? 'truncate text-foreground' : 'weight-normal text-muted-foreground')}>
-              {part}
-            </span>
-            {!last && <Chevron size={12} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />}
-          </span>
-        )
-      })}
-    </span>
-  )
+/** Paths to a tree whose ids are the paths: folders by their prefix, files by their full path. */
+function toTree(paths: string[]) {
+  const root: TreeItem[] = []
+  for (const path of paths) {
+    let level = root
+    path.split('/').forEach((label, i, parts) => {
+      const id = parts.slice(0, i + 1).join('/')
+      let node = level.find(n => n.id === id)
+      if (!node) {
+        node = { id, label, ...(i < parts.length - 1 && { children: [] }) }
+        level.push(node)
+      }
+      level = node.children ?? []
+    })
+  }
+  return root
 }
 
 interface FilePaneProps {
   /** The open file: its path, language and source. */
   file: PaneFile
+  /** The session's file paths, browsed as a tree. Omit for no tree toggle. */
+  files?: string[]
+  /** Called with the path picked in the tree (a folder's path when a folder is picked). */
+  onPick?: (id: string) => void
   /** Called by open in editor with the file's path. */
   onOpen?: (path: string) => void
 }
@@ -41,28 +46,49 @@ interface FilePaneProps {
 /**
  * The file the session has open, highlighted, under its path crumb.
  *
- * The crumb keeps the last three parts of the path, so the file name is what
- * stays when the pane is narrow; copy puts the whole path on the clipboard,
- * and open hands the file to your editor. A line under it says the language
- * and how long the file is.
+ * The crumb folds its middle folders into a menu when the pane is narrow,
+ * so the file name is what stays; copy puts the whole path on the
+ * clipboard, and open hands the file to your editor. With `files`, the
+ * folder button shows the session's files above the source to switch
+ * between. A line under it says the language and how long the file is.
  *
  * @example {@include ./examples.mdx}
  */
-export default function FilePane({ file, onOpen }: FilePaneProps) {
+export default function FilePane({ file, files, onPick, onOpen }: FilePaneProps) {
+  const [browsing, setBrowsing] = useState(false)
   const Copy = useIcon('copy')
   const Open = useIcon('external-link')
-  // The folders give way first: the file name is what tells two tabs apart.
-  const crumbs = file.path.split('/').slice(-3).join('/')
+  const Folder = useIcon('folder')
+  const parts = file.path.split('/')
   return (
     <PaneSection
-      title={<Breadcrumb path={crumbs} />}
+      title={<Breadcrumb size="compact" items={parts.map(label => ({ label }))} />}
       actions={
         <>
+          {files && (
+            <IconAction
+              icon={Folder}
+              label={browsing ? 'Hide files' : 'Browse files'}
+              pressed={browsing}
+              onClick={() => setBrowsing(!browsing)}
+            />
+          )}
           <IconAction icon={Copy} label="Copy path" onClick={() => navigator.clipboard?.writeText(file.path)} />
           <IconAction icon={Open} label="Open in editor" onClick={() => onOpen?.(file.path)} />
         </>
       }
     >
+      {files && browsing && (
+        <Tree
+          label="Session files"
+          size="compact"
+          items={toTree(files)}
+          defaultValue={file.path}
+          defaultExpanded={parts.slice(0, -1).map((_, i) => parts.slice(0, i + 1).join('/'))}
+          onValueChange={onPick}
+          className="mb-2"
+        />
+      )}
       <p className="m-0 px-2 pb-2 text-caption text-muted-foreground">
         {file.language} · {file.source.split('\n').length} lines · modified in this session
       </p>

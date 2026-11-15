@@ -43,6 +43,8 @@ const PANES: { id: PaneId; label: string; icon: IconName }[] = [
 interface SidePaneData {
   changes: PaneChange[]
   file: PaneFile
+  /** The session's file paths, for the File pane's tree. */
+  files?: string[]
   shell: PaneShell
   pr: PanePullRequest
   artifacts: PaneArtifact[]
@@ -53,7 +55,7 @@ interface SidePaneData {
 
 const CONTENT: Record<PaneId, (data: SidePaneData) => React.ReactNode> = {
   changes: data => <ChangesPane changes={data.changes} />,
-  file: data => <FilePane file={data.file} />,
+  file: data => <FilePane file={data.file} files={data.files} />,
   terminal: data => <TerminalPane shell={data.shell} />,
   pr: data => <PullRequestPane pr={data.pr} />,
   artifacts: data => <ArtifactsPane artifacts={data.artifacts} />,

@@ -9,6 +9,14 @@ A 1280 × 800 window, scaled to the column, its title bar on DesktopShell. Press
   <Workspace />
 </ScreenFrame>
 
+# The claude process crashed
+
+When a profile's claude exits mid-turn, a banner over the transcript shows its last stderr with a restart; the failure-states block has the other kinds (reconnecting, rate-limited, offline, auth expired). The bell in the title bar is the inbox; the search beside it looks through every session's transcript; ⌘/ shows the shortcuts. Double-click the title to rename the session.
+
+<ScreenFrame>
+  <Workspace failure="cli-crashed" pane="file" />
+</ScreenFrame>
+
 # Split view
 
 A second session beside the first, opened from a row's menu or the split button in the title bar; it keeps a header of its own.
