@@ -1,18 +1,9 @@
 /*!
- * Vendored from Fluid Functionalism — `registry/default/lib/utils.ts` at
+ * Ported from Fluid Functionalism — `registry/default/lib/utils.ts` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
- *
- * Local modifications:
- * - clsx + tailwind-merge's `extendTailwindMerge` replaced by `createCn` from
- *   `cn/config` (github.com/shadcn-ui/cn — a compiled drop-in with the same
- *   `{ extend: { classGroups } }` extension shape and the same output). The
- *   font-size class-group extension is kept 1:1.
- * - The local token utilities from preset.ts join their groups: the
- *   compact and `micro` type roles (font-size), `weight-*` (a group of its
- *   own), the motion tiers (duration, delay), `rounded-box|glyph` and
- *   `text-trim` (a group of its own, so it never reads as a text color).
+ * Local changes: see PORTING.md.
  */
 
 import type { CnFunction } from 'cn'

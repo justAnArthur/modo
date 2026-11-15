@@ -1,20 +1,9 @@
 /*!
- * Vendored from Fluid Functionalism — `registry/default/hooks/use-merge-split.tsx` at
+ * Ported from Fluid Functionalism — `registry/default/hooks/use-merge-split.tsx` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
- *
- * Local modifications:
- * - `framer-motion` → `motion/react` (the package's current name).
- * - `@/lib/*` and `@/hooks/*` imports rewritten to sibling `./*` paths.
- * - The merge/split choreography (boundaries, converge/commit/split phases,
- *   resolve timers, the split safety net and its `bridgePair`) is replaced by
- *   the morph style's goo (`GooLayer` in `./goo-indicator`, local): every
- *   checked row draws its own block, squared where it meets a checked
- *   neighbour, and a block grows out of its row's center or shrinks back into
- *   it while the goo melts it into, or pinches it off, its neighbours. The
- *   exports keep their names and shapes; `SelBlock` keeps `key`, the rect,
- *   `radii` and `instant`.
+ * Local changes: see PORTING.md.
  */
 
 'use client'

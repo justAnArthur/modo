@@ -1,24 +1,8 @@
-// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
 /*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/table.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - `@/lib/*`, `@/hooks/*` and `@/components/ui/fluid-hover-highlight`
- *   imports rewritten to relative `../../lib/*` paths, except `SizeProvider`
- *   → `../../primitives/sizes`.
- * - Compound API: the parts hang off the root as statics (`Table.Header`,
- *   `Table.Body`, `Table.Row`, `Table.Head`, `Table.Cell`) via
- *   `Object.assign`; the root is cast to `TableComponent` so TS consumers see
- *   the statics. The upstream named exports are kept.
- * - `TableProps` members carry the FF docs API-table descriptions, so modo's
- *   parser lists them.
- * - `TableProps` / `TableRowProps` type exports added.
- * - TSDoc with the FF docs page's examples added above the root;
- *   `export default Table` added.
- * - Styling reads DS tokens (AGENTS.md styling): inline
- *   `fontVariationSettings` → `weight-*`; `duration-80|120|160` and
- *   tier-length JS durations → `duration-<tier>` / `spring.*`.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
@@ -37,12 +21,12 @@ import {
   useRef,
 } from 'react'
 import { FluidHoverHighlight } from '../../lib/fluid-hover-highlight'
+import { mergeRefs } from '../../lib/merge-refs'
+import { IndexedRows, useRowPosition } from '../../lib/row-index'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { cn } from '../../lib/utils'
-import { SizeProvider } from '../../primitives/sizes'
-
-// ── Context ──────────────────────────────────────────────
+import { SizeScope } from '../../primitives/sizes'
 
 interface TableContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void
@@ -51,8 +35,6 @@ interface TableContextValue {
 
 const TableContext = createContext<TableContextValue | null>(null)
 
-// ── Table ────────────────────────────────────────────────
-
 interface TableProps extends HTMLAttributes<HTMLTableElement> {
   /** `Table.Header` and `Table.Body` children. */
   children: ReactNode
@@ -60,7 +42,6 @@ interface TableProps extends HTMLAttributes<HTMLTableElement> {
   size?: SizeVariant
 }
 
-/** The root plus its compound parts, typed so `<Table.Row>` type-checks. */
 type TableComponent = ForwardRefExoticComponent<TableProps & RefAttributes<HTMLTableElement>> & {
   Header: typeof TableHeader
   Body: typeof TableBody
@@ -74,16 +55,20 @@ type TableComponent = ForwardRefExoticComponent<TableProps & RefAttributes<HTMLT
  *
  * A plain `<table>` whose body rows share one fluid hover highlight: the
  * background glides from row to row under the pointer, the row borders next
- * to the lit row fade out so it reads as one pill, and the lit row's cells
- * brighten from muted to foreground. Header cells render semibold, body
- * cells regular, with the weight change width-compensated. `size` pins every
- * row to one step of the size ladder; otherwise the table follows the
- * surrounding SizeProvider.
+ * to the lit row fade out so it reads as one band, and the lit row's cells
+ * brighten from muted to foreground. The highlight is square on purpose: rows
+ * run edge to edge. Header cells render semibold, body cells regular. `size`
+ * pins every row to one step of the size ladder; otherwise the table follows
+ * the surrounding SizeProvider.
  *
- * Parts: `Table.Header` (`<thead>`), `Table.Body` (`<tbody>`), `Table.Row`
- * (`<tr>` — give body rows an `index`, starting at 0, so they join the hover
- * highlight; omit it on header rows), `Table.Head` (`<th>`) and `Table.Cell`
- * (`<td>`). Each forwards its ref and native attributes.
+ * Statics:
+ * - `Table.Header` — `<thead>`.
+ * - `Table.Body` — `<tbody>`; numbers its rows for the hover highlight.
+ * - `Table.Row` — `<tr>`; a row outside `Table.Body` is a header row.
+ * - `Table.Head` — `<th>`.
+ * - `Table.Cell` — `<td>`.
+ *
+ * Each part forwards its ref and native attributes.
  *
  * @example {@include ./examples.mdx}
  * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/default/table.tsx Fluid Functionalism
@@ -92,63 +77,52 @@ type TableComponent = ForwardRefExoticComponent<TableProps & RefAttributes<HTMLT
 const Table = forwardRef<HTMLTableElement, TableProps>(({ children, size, className, ...props }, ref) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const sizeClasses = useSize(size)
-
   const hover = useFluidHover(containerRef)
   const { activeIndex, handlers, registerItem } = hover
-
   const contextValue = useMemo(() => ({ registerItem, activeIndex }), [registerItem, activeIndex])
 
-  const table = (
-    <TableContext.Provider value={contextValue}>
-      <div
-        ref={containerRef}
-        className="relative"
-        onMouseEnter={handlers.onMouseEnter}
-        onMouseMove={handlers.onMouseMove}
-        onMouseLeave={handlers.onMouseLeave}
-        onClick={handlers.onClick}
-      >
-        {/* Hover background */}
-        <FluidHoverHighlight hover={hover} />
-
-        <table ref={ref} className={cn('w-full border-collapse', sizeClasses.text, className)} {...props}>
-          {children}
-        </table>
-      </div>
-    </TableContext.Provider>
+  return (
+    <SizeScope size={size}>
+      <TableContext.Provider value={contextValue}>
+        <div ref={containerRef} className="relative" {...handlers}>
+          <FluidHoverHighlight hover={hover} />
+          <table ref={ref} className={cn('w-full border-collapse', sizeClasses.text, className)} {...props}>
+            {children}
+          </table>
+        </div>
+      </TableContext.Provider>
+    </SizeScope>
   )
-
-  // A size prop pins every cell to one ladder step (cells read the context).
-  return size ? <SizeProvider size={size}>{table}</SizeProvider> : table
 }) as TableComponent
 
 Table.displayName = 'Table'
 
-// ── TableHeader ──────────────────────────────────────────
-
-const TableHeader = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
-  ({ className, ...props }, ref) => <thead ref={ref} className={cn('', className)} {...props} />,
-)
+const TableHeader = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>((props, ref) => (
+  <thead ref={ref} {...props} />
+))
 
 TableHeader.displayName = 'TableHeader'
 
-// ── TableBody ────────────────────────────────────────────
-
 const TableBody = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
-  ({ className, ...props }, ref) => <tbody ref={ref} className={cn('', className)} {...props} />,
+  ({ children, ...props }, ref) => (
+    <tbody ref={ref} {...props}>
+      <IndexedRows>{children}</IndexedRows>
+    </tbody>
+  ),
 )
 
 TableBody.displayName = 'TableBody'
 
-// ── TableRow ─────────────────────────────────────────────
-
 interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
+  /** The row's place in the hover order. Defaults to its position in `Table.Body`; a header row has none. */
   index?: number
 }
 
-const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(({ index, className, style, ...props }, ref) => {
+const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(({ index: indexProp, className, ...props }, ref) => {
   const internalRef = useRef<HTMLTableRowElement>(null)
   const ctx = useContext(TableContext)
+  const position = useRowPosition()
+  const index = indexProp ?? position
 
   useRegisterFluidHoverItem(ctx?.registerItem, index, internalRef)
 
@@ -160,11 +134,7 @@ const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(({ index, classN
 
   return (
     <tr
-      ref={node => {
-        ;(internalRef as React.MutableRefObject<HTMLTableRowElement | null>).current = node
-        if (typeof ref === 'function') ref(node)
-        else if (ref) (ref as React.MutableRefObject<HTMLTableRowElement | null>).current = node
-      }}
+      ref={mergeRefs(internalRef, ref)}
       data-fluid-hover-index={index}
       className={cn(
         'group/row relative z-10 border-b transition-[border-color] duration-fast',
@@ -173,7 +143,6 @@ const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(({ index, classN
         isBodyRow ? 'weight-normal' : 'weight-semibold',
         className,
       )}
-      style={style}
       {...props}
     />
   )
@@ -181,50 +150,34 @@ const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(({ index, classN
 
 TableRow.displayName = 'TableRow'
 
-// ── TableHead ────────────────────────────────────────────
+/** py + the line box land a row on the ladder (36px / 28px). */
+function useCellPadding() {
+  return useSize().variant === 'compact' ? 'px-2.5 py-[5px]' : 'px-3 py-2'
+}
 
 const TableHead = forwardRef<HTMLTableCellElement, ThHTMLAttributes<HTMLTableCellElement>>(
-  ({ className, ...props }, ref) => {
-    const sizeClasses = useSize()
-    return (
-      <th
-        ref={ref}
-        className={cn(
-          'text-left text-foreground',
-          // py + line box lands the row on the ladder (36px / 28px).
-          sizeClasses.variant === 'compact' ? 'px-2.5 py-[5px]' : 'px-3 py-2',
-          className,
-        )}
-        {...props}
-      />
-    )
-  },
+  ({ className, ...props }, ref) => (
+    <th ref={ref} className={cn('text-left text-foreground', useCellPadding(), className)} {...props} />
+  ),
 )
 
 TableHead.displayName = 'TableHead'
 
-// ── TableCell ────────────────────────────────────────────
-
 const TableCell = forwardRef<HTMLTableCellElement, TdHTMLAttributes<HTMLTableCellElement>>(
-  ({ className, ...props }, ref) => {
-    const sizeClasses = useSize()
-    return (
-      <td
-        ref={ref}
-        className={cn(
-          'text-muted-foreground transition-colors duration-fast group-[.is-active]/row:text-foreground',
-          sizeClasses.variant === 'compact' ? 'px-2.5 py-[5px]' : 'px-3 py-2',
-          className,
-        )}
-        {...props}
-      />
-    )
-  },
+  ({ className, ...props }, ref) => (
+    <td
+      ref={ref}
+      className={cn(
+        'text-muted-foreground transition-colors duration-fast group-[.is-active]/row:text-foreground',
+        useCellPadding(),
+        className,
+      )}
+      {...props}
+    />
+  ),
 )
 
 TableCell.displayName = 'TableCell'
-
-// ── Compound parts ───────────────────────────────────────
 
 Object.assign(Table, {
   Header: TableHeader,
@@ -233,8 +186,6 @@ Object.assign(Table, {
   Head: TableHead,
   Cell: TableCell,
 })
-
-// ── Exports ──────────────────────────────────────────────
 
 export type { TableProps, TableRowProps }
 export { Table, TableBody, TableCell, TableHead, TableHeader, TableRow }

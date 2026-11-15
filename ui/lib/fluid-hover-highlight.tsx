@@ -1,41 +1,20 @@
 /*!
- * Vendored from Fluid Functionalism — `registry/default/fluid-hover-highlight.tsx` at
+ * Ported from Fluid Functionalism — `registry/default/fluid-hover-highlight.tsx` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
- *
- * Local modifications:
- * - `framer-motion` → `motion/react` (the package's current name).
- * - `@/lib/*` and `@/hooks/*` imports rewritten to sibling `./*` paths.
- * - The fill is a `GooIndicator` (`./goo-indicator`, local): it melts from row
- *   to row with a liquid neck instead of sliding as one box. The keyed fade,
- *   `from`, `hidden` and `transition` behave as before; a square highlight
- *   (no radius) has nothing to melt and slides as before.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
 
-import { AnimatePresence, motion, type Transition, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, type Transition } from 'motion/react'
 import { GooIndicator } from './goo-indicator'
 import { spring } from './springs'
 import type { ItemRect, UseFluidHoverReturn } from './use-fluid-hover'
 import { cn } from './utils'
 
-// ---------------------------------------------------------------------------
-// The one hover highlight every fluid hover list renders: an absolutely
-// positioned fill that springs between the rects `useFluidHover` measures.
-// Consumers used to hand-roll this motion.div; this is that block, once.
-//
-//   const hover = useFluidHover(ref);
-//   <FluidHoverHighlight hover={hover} className={shape.bg} />
-//
-// It owns no layout opinion beyond `absolute`: radius, z-index, and the
-// offsetParent (the container must be `relative`) are the consumer's.
-// ---------------------------------------------------------------------------
-
-/** What the highlight reads off the hook: the highlighted index, the
- *  measured rects, whether they are current, and the pointer session. */
-export type FluidHoverSource = Pick<UseFluidHoverReturn, 'activeIndex' | 'itemRects' | 'isMeasured' | 'sessionRef'>
+type FluidHoverSource = Pick<UseFluidHoverReturn, 'activeIndex' | 'itemRects' | 'isMeasured' | 'sessionRef'>
 
 interface HighlightFromHook {
   /** The hook's return value. The highlight sits on
@@ -68,36 +47,14 @@ export type FluidHoverHighlightProps = (HighlightFromHook | HighlightFromRect) &
   /** Radius, z-index, anything else. Merged onto
    *  `absolute bg-hover pointer-events-none`. */
   className?: string
-  /** The positional spring. Defaults to `spring.fast`. Pass `false` to snap
-   *  to the new rect with no travel (a layout reflow that moved the rows
-   *  underneath, not a hover change). The opacity fade is always 0.08s. */
+  /** The positional spring. Defaults to `spring.fast`. `false` snaps with no
+   *  travel (a reflow moved the rows, not the hover). Reduced motion snaps too. */
   transition?: Transition | false
 }
 
 const fade: Transition = { duration: 0.08 }
-const snap: Transition = { duration: 0 }
 
-/** A measured rect as animation targets: position as a transform, size as
- *  layout. Exported for the unit test. */
-export function toTarget(rect: ItemRect) {
-  return { x: rect.left, y: rect.top, width: rect.width, height: rect.height }
-}
-
-/**
- * Resolves the positional transition. Reduced motion keeps the opacity fade
- * and drops the travel, per the motion guidelines: fewer and gentler, not
- * none. Exported for the unit test.
- */
-export function resolveHighlightTransition(
-  transition: Transition | false | undefined,
-  reduceMotion: boolean,
-): Transition {
-  const positional = transition === false || reduceMotion ? snap : (transition ?? spring.fast)
-  return { ...positional, opacity: fade }
-}
-
-/** The rect and session a set of props resolves to. Exported for the test. */
-export function resolveHighlightSource(props: FluidHoverHighlightProps): {
+function highlightSource(props: FluidHoverHighlightProps): {
   rect: ItemRect | null
   session: number
 } {
@@ -111,10 +68,7 @@ export function resolveHighlightSource(props: FluidHoverHighlightProps): {
 
 export function FluidHoverHighlight(props: FluidHoverHighlightProps) {
   const { from, className, transition } = props
-  const { rect, session } = resolveHighlightSource(props)
-  // Reads the OS media query directly, so an installed copy honours reduced
-  // motion without the app wrapping its tree in MotionConfig.
-  const reduceMotion = useReducedMotion() ?? false
+  const { rect, session } = highlightSource(props)
   return (
     <AnimatePresence>
       {rect && (
@@ -131,7 +85,7 @@ export function FluidHoverHighlight(props: FluidHoverHighlightProps) {
             rect={rect}
             from={from}
             className={cn('bg-hover', className)}
-            transition={transition === false || reduceMotion ? false : (transition ?? spring.fast)}
+            transition={transition ?? spring.fast}
           />
         </motion.div>
       )}

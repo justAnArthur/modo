@@ -10,11 +10,7 @@
  * sidebar-workspace-header and sidebar-user-footer blocks ported beside it —
  * MIT License © 2026 Micka Touillaud (notice: LICENSE.fluid-functionalism).
  *
- * Local changes: the selected thread rides the Sidebar's `value` (the rows
- * carry `value`s) and the topbar shows it; the switcher keeps its own pick
- * (`defaultCheckedIndex`); the footer's icon buttons are the DS's ghost
- * `Button`; `variant`, `side`, `openOnHover` and `contained` are props; the
- * main area renders `children`, else a placeholder page for the thread.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
@@ -232,3 +228,4 @@ export default function SidebarApp({
 }
 
 export type { SidebarAppProps }
+export { SidebarApp }

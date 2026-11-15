@@ -9,11 +9,12 @@
 import { type FocusEvent, type KeyboardEvent, type MouseEvent, type RefObject, useState } from 'react'
 import type { UseFluidHoverReturn } from './use-fluid-hover'
 
-const ROW = '[data-fluid-hover-index]'
+const INDEX_ATTR = 'data-fluid-hover-index'
+const ROW = `[${INDEX_ATTR}]`
 
 /** The fluid-hover index of the row holding `target`, or `null` outside any row. */
 export function rowIndexOf(target: EventTarget | null): number | null {
-  const index = (target as Element | null)?.closest?.(ROW)?.getAttribute('data-fluid-hover-index')
+  const index = (target as Element | null)?.closest?.(ROW)?.getAttribute(INDEX_ATTR)
   return index == null ? null : Number(index)
 }
 

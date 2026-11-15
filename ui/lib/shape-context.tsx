@@ -1,11 +1,9 @@
-// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
 /*!
- * Vendored from Fluid Functionalism — `registry/default/lib/shape-context.tsx` at
+ * Ported from Fluid Functionalism — `registry/default/lib/shape-context.tsx` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
- *
- * Local modifications: none.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
@@ -79,12 +77,6 @@ function useShape(): ShapeClasses {
   return ctx.classes
 }
 
-function useShapeContext() {
-  const ctx = useContext(ShapeContext)
-  if (!ctx) throw new Error('useShapeContext must be used within a ShapeProvider')
-  return ctx
-}
-
 function ShapeProvider({ children, defaultShape = 'rounded' }: { children: ReactNode; defaultShape?: ShapeVariant }) {
   const [shape, setShapeState] = useState<ShapeVariant>(defaultShape)
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -122,4 +114,4 @@ function ShapeProvider({ children, defaultShape = 'rounded' }: { children: React
 }
 
 export type { ShapeClasses, ShapeVariant }
-export { ShapeProvider, shapeMap, useShape, useShapeContext }
+export { ShapeProvider, shapeMap, useShape }

@@ -2,27 +2,7 @@
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/lib/springs.ts` + docs `app/docs/motion/page.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - The spring tokens stay in `lib/springs.ts` (vendored, shared by every
- *   animated component) and are re-exported here as `spring` / `exitFallbackMs`.
- * - `Motion` is new, local code: a small docs demo component (FF has none) that
- *   plays one tier's enter spring and exit tween on its children, so the docs
- *   page's demos (spring tracks, modal exit comparison, token reference) can be
- *   written as static examples (examples.mdx). It adds `sameExit` (the comparison's
- *   "same exit" side) and `reducedMotion` (a preview of the reduced-motion rule).
- * - The ball-on-track and fake-modal visuals are replaced by the demo's
- *   show/hide of arbitrary children, toggled by the DS Button; the
- *   component-chip links are plain text.
- * - framer-motion → motion/react.
- * - The page names the morph engine's own `goo` tier (a local addition to
- *   `lib/springs.ts`).
- * - The "All tokens" lists name this port's components on each tier,
- *   including the morphing overlays and liquid indicators (see Morph).
- * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
- *   `text-<role>[-compact]`; the hex focus-ring fallback →
- *   `ring-focus-ring` / `border-focus-ring`; literal colors → color tokens;
- *   `duration-80|120|160` and tier-length JS durations → `duration-<tier>` /
- *   `spring.*`.
+ * Local changes: see PORTING.md.
  */
 
 'use client'

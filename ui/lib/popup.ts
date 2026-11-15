@@ -1,13 +1,9 @@
 /*!
- * Vendored from Fluid Functionalism — `registry/default/lib/popup.ts` at
+ * Ported from Fluid Functionalism — `registry/default/lib/popup.ts` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
- *
- * Local modifications:
- * - `popupMotionClass` (the side-aware transform origin and slide offset of
- *   the old `scaleY` enter/exit) dropped: the dropdown, select and combobox
- *   popups now morph out of their trigger through `lib/use-morph.ts`.
+ * Local changes: see PORTING.md.
  */
 
 // ---------------------------------------------------------------------------

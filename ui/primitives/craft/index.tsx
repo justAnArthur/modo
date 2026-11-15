@@ -76,3 +76,4 @@ export default function Craft({ bad, good, badNote, goodNote, className }: Craft
 }
 
 export type { CraftProps }
+export { Craft }
