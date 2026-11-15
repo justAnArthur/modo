@@ -1,0 +1,49 @@
+/* Structural CSS only: layout, sizing, overflow, spacing. Every visual reads
+   a host token, through the contract below or tokens/host-colors.ts (borders,
+   muted text, focus ring). The host restyles the rest via data-modo attrs. */
+
+/* The generic contract, resolved once. Each reads the host's token, else the
+   lib's default: a size for type and radius, a CSS keyword for weight. A token
+   without a default (motion, line-heights, p/h4 sizes) inherits when unset.
+   Role colors come from tokens/host-colors.ts. These are the only literal
+   visuals in this file. */
+:root {
+  --modo-font-weight-medium: var(--font-weight-medium, normal);
+  --modo-font-weight-semibold: var(--font-weight-semibold, bold);
+  --modo-font-weight-bold: var(--font-weight-bold, bold);
+
+  /* Type roles: size, line-height and weight per element the chrome renders. */
+  --modo-font-size-h1: var(--font-size-h1, 2rem);
+  --modo-font-size-h2: var(--font-size-h2, 1.25rem);
+  --modo-font-size-h3: var(--font-size-h3, 1rem);
+  --modo-font-size-h4: var(--font-size-h4);
+  --modo-font-size-p: var(--font-size-p);
+  --modo-font-size-lead: var(--font-size-lead, 1.125rem);
+  --modo-font-size-eyebrow: var(--font-size-eyebrow, 0.8125rem);
+  --modo-font-size-sm: var(--font-size-sm, 0.8125rem);
+  --modo-font-size-xs: var(--font-size-xs, 0.6875rem);
+  --modo-line-height-h1: var(--line-height-h1);
+  --modo-line-height-h2: var(--line-height-h2);
+  --modo-line-height-h3: var(--line-height-h3);
+  --modo-line-height-h4: var(--line-height-h4);
+  --modo-line-height-p: var(--line-height-p);
+  --modo-line-height-lead: var(--line-height-lead);
+  --modo-line-height-eyebrow: var(--line-height-eyebrow);
+  --modo-line-height-sm: var(--line-height-sm);
+  --modo-line-height-xs: var(--line-height-xs);
+  --modo-font-weight-h1: var(--font-weight-h1, var(--modo-font-weight-bold));
+  --modo-font-weight-h2: var(--font-weight-h2, var(--modo-font-weight-semibold));
+  --modo-font-weight-h3: var(--font-weight-h3, var(--modo-font-weight-semibold));
+  --modo-font-weight-h4: var(--font-weight-h4, var(--modo-font-weight-semibold));
+  --modo-font-weight-p: var(--font-weight-p);
+  --modo-font-weight-lead: var(--font-weight-lead);
+  --modo-font-weight-eyebrow: var(--font-weight-eyebrow, var(--modo-font-weight-medium));
+
+  --modo-radius-sm: var(--radius-sm, 4px);
+  --modo-radius-md: var(--radius-md, var(--radius, 8px));
+  --modo-radius-lg: var(--radius-lg, var(--radius, 12px));
+  /* The host sets --modo-measure itself; its stylesheets load after this one. */
+  --modo-measure: 72ch;
+  /* No default: without a host family the chrome inherits the page's. */
+  --modo-font-sans: var(--font-sans);
+}

@@ -1,0 +1,128 @@
+/* Bento: overview grids of live previews. Two columns from a medium content
+   column, three when it is wide; `wide` cells span two. */
+
+[data-modo="bento"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: var(--space-3, 12px);
+}
+
+[data-modo="bento-card"] {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid;
+  border-color: var(--modo-border);
+  border-radius: var(--modo-radius-lg);
+  overflow: hidden;
+}
+
+/* The window a preview shows through. One that would overflow it scales down
+   (bento.tsx sets --modo-stage-zoom on the fit layer); one too big even then
+   is clipped under a fade. */
+[data-modo="bento-stage"] {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr);
+  /* Center short previews; fall back to the top when one overflows. */
+  align-content: safe center;
+  min-height: 132px;
+  max-height: 320px;
+  padding: var(--space-5, 24px);
+  overflow: hidden;
+}
+
+/* A mask, not a color: only the (opaque) text color's alpha is read. */
+[data-modo="bento-stage"][data-clipped] {
+  mask-image: linear-gradient(to bottom, currentColor calc(100% - var(--space-6, 32px)), transparent);
+}
+
+/* A single full-width track, so previews written against a full-width stage
+   (percentage widths, forms) keep a definite width instead of collapsing. */
+[data-modo="bento-fit"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3, 12px);
+  zoom: var(--modo-stage-zoom, 1);
+}
+
+/* Examples are written for a full-width stage; a cell scales them down (bento.tsx).
+   Wrapping is the example's own call: a forced flex-wrap would stop a column's
+   children stretching. Block containers fill the track; inline content (a badge, a button) keeps
+   its own width, centered. Layered, so an example's own styles win even from
+   a host's layers (an unlayered rule would beat Tailwind's at any specificity). */
+@layer modo-preview {
+  :is([data-modo="bento-fit"], [data-modo="canvas-stage"]) > * {
+    max-width: 100%;
+    justify-self: center;
+  }
+
+  :is([data-modo="bento-fit"], [data-modo="canvas-stage"])
+    > :where(div, form, section, article, aside, nav, header, footer, main, fieldset, table, ul, ol, dl, figure) {
+    justify-self: stretch;
+  }
+}
+
+[data-modo="bento-meta"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2, 8px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border-top: 1px solid;
+  border-top-color: var(--modo-border);
+}
+
+[data-modo="bento-title"] {
+  font-weight: var(--modo-font-weight-semibold);
+}
+
+[data-modo="bento-desc"] {
+  flex-basis: 100%;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  margin: 0;
+}
+
+[data-modo="bento-empty"] {
+  text-align: center;
+}
+
+[data-modo="bento-empty"],
+[data-modo="bento-count"],
+[data-modo="bento-desc"] {
+  color: var(--modo-muted);
+  font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
+}
+
+[data-modo="bento-count"] {
+  margin-left: auto;
+}
+
+[data-modo="bento-card"][data-span="full"] {
+  grid-column: 1 / -1;
+}
+
+@container (min-width: 560px) {
+  [data-modo="bento-card"][data-span="wide"] {
+    grid-column: span 2;
+  }
+}
+
+/* The palette preview: a strip of chips, eight to a row. */
+[data-modo="color-strip"] {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: var(--space-1, 4px);
+  width: 100%;
+}
+
+[data-modo="token-chip"] {
+  block-size: 48px;
+  border-radius: var(--modo-radius-sm);
+  outline: 1px solid var(--modo-border);
+  outline-offset: -1px;
+}

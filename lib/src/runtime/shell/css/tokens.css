@@ -1,0 +1,567 @@
+/* ── Token pages ── */
+
+[data-modo="token-list"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 8px);
+}
+
+[data-modo="token-row"] {
+  border: 1px solid var(--modo-border);
+  border-radius: var(--modo-radius-sm);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+}
+
+[data-modo="token-name"] {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
+}
+
+[data-modo="token-meta"] {
+  margin-top: var(--space-1, 4px);
+  font-size: var(--modo-font-size-xs);
+  line-height: var(--modo-line-height-xs);
+  color: var(--modo-muted);
+}
+
+[data-modo="swatch"] {
+  display: inline-block;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--modo-radius-sm);
+  border: 1px solid var(--modo-border);
+}
+
+[data-modo="swatch"]:is([data-kind="length"], [data-kind="duration"]) {
+  background: var(--modo-muted);
+}
+
+[data-modo="swatch"][data-kind="length"] {
+  height: 0.5rem;
+}
+
+[data-modo="swatch"]:is([data-kind="font-family"], [data-kind="font-size"]) {
+  width: auto;
+  height: auto;
+  padding: 0 var(--space-1, 4px);
+}
+
+/* Color tokens: columns of tiles, name top-left, values along the foot with
+   the light and dark chips beside them. Fill, text, border and radius all
+   come from the host (its tokens, its -foreground pairs, its page colors) —
+   never a literal color. */
+
+[data-modo="color-grid"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+  align-items: start;
+  gap: var(--space-3, 12px);
+}
+
+[data-modo="color-stack"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+}
+
+[data-modo="color-tile"] {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  min-block-size: 96px;
+  padding: var(--space-3, 12px);
+  border-radius: var(--modo-radius-lg);
+  font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
+}
+
+[data-modo="color-tile"][data-flush] {
+  outline: 1px solid var(--modo-border);
+  outline-offset: -1px;
+}
+
+[data-modo="color-tile-name"],
+[data-modo="color-tile-pair"] {
+  overflow-wrap: anywhere;
+}
+
+[data-modo="color-tile-name"] {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-weight: var(--modo-font-weight-medium);
+}
+
+[data-modo="color-tile-pair"],
+[data-modo="color-tile-foot"] {
+  font-size: var(--modo-font-size-xs);
+  line-height: var(--modo-line-height-xs);
+}
+
+[data-modo="color-tile-foot"] {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-2, 8px);
+  margin-top: auto;
+  padding-top: var(--space-2, 8px);
+}
+
+[data-modo="color-tile-value"] {
+  display: grid;
+  min-width: 0;
+}
+
+[data-modo="color-tile-value"] > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The declared light and dark values, split diagonally in one chip. */
+[data-modo="color-tile-schemes"] {
+  flex: none;
+  inline-size: var(--space-4, 16px);
+  block-size: var(--space-4, 16px);
+  border: 1px solid currentColor;
+  border-radius: var(--modo-radius-sm);
+}
+
+/* Foundation pages. Every specimen is the host's token applied live (its
+   font, size, weight, radius, length, duration, easing); around it the lib
+   adds structure only, plus the shared border, muted text and tints mixed
+   from the inherited text color. */
+
+[data-modo="token-empty"] {
+  margin: 0;
+  padding: var(--space-6, 32px);
+  border: 1px dashed var(--modo-border);
+  border-radius: var(--modo-radius-lg);
+  text-align: center;
+  color: var(--modo-muted);
+}
+
+[data-modo="token-label"] {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1, 4px);
+  min-width: 0;
+}
+
+[data-modo="token-label"] > * {
+  max-width: 100%;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+[data-modo="type-families"],
+[data-modo="type-weights"],
+[data-modo="radius-grid"] {
+  display: grid;
+  gap: var(--space-3, 12px);
+}
+
+[data-modo="type-families"] {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+}
+
+[data-modo="type-weights"] {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
+}
+
+[data-modo="type-family"],
+[data-modo="type-weight"] {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4, 16px);
+  min-width: 0;
+  padding: var(--space-5, 24px);
+  border: 1px solid var(--modo-border);
+  border-radius: var(--modo-radius-lg);
+}
+
+[data-modo="type-glyph"] {
+  font-size: var(--modo-font-size-h1);
+}
+
+[data-modo="type-family-head"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1, 4px) var(--space-3, 12px);
+}
+
+[data-modo="type-family-name"] {
+  color: var(--modo-color-h3);
+  font-size: var(--modo-font-size-h3);
+  font-weight: var(--modo-font-weight-semibold);
+}
+
+[data-modo="type-family-sample"] {
+  display: grid;
+  overflow-wrap: anywhere;
+}
+
+[data-modo="type-family-weights"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4, 16px);
+  padding-top: var(--space-4, 16px);
+  border-top: 1px solid var(--modo-border);
+  font-size: var(--modo-font-size-h3);
+}
+
+[data-modo="type-family-weight"] {
+  display: grid;
+  justify-items: start;
+}
+
+[data-modo="type-family-weight"] > [data-modo="token-meta"] {
+  margin: 0;
+}
+
+/* The overview card: the family's glyph beside the scale set in it. */
+[data-modo="type-preview"] {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-5, 24px);
+  width: 100%;
+}
+
+[data-modo="type-preview"] > [data-modo="type-glyph"] {
+  font-size: calc(var(--modo-font-size-h1) * 2);
+}
+
+[data-modo="type-preview-lines"] {
+  display: grid;
+  gap: var(--space-1, 4px);
+  min-width: 0;
+}
+
+[data-modo="type-preview-line"] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Scale rows: the token on the left, its specimen beside it. */
+[data-modo="type-element"],
+[data-modo="type-step"],
+[data-modo="space-step"],
+[data-modo="motion-row"] {
+  display: grid;
+  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4, 16px);
+  padding-block: var(--space-3, 12px);
+  border-bottom: 1px solid var(--modo-border);
+}
+
+[data-modo="type-element"],
+[data-modo="type-step"] {
+  align-items: baseline;
+}
+
+[data-modo="type-step"] {
+  grid-template-columns: minmax(0, 12rem) minmax(0, 1fr) auto;
+}
+
+[data-modo="type-step"] > code {
+  justify-self: start;
+}
+
+[data-modo="space-step"] {
+  grid-template-columns: minmax(0, 12rem) auto minmax(0, 1fr);
+  gap: var(--space-4, 16px) var(--space-6, 32px);
+}
+
+[data-modo="motion-row"]:has([data-modo="motion-curve"]) {
+  grid-template-columns: minmax(0, 12rem) auto minmax(0, 1fr);
+}
+
+[data-modo="type-sample"] {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* A scale step stays on one line, so the steps read as a ladder. */
+[data-modo="type-step"] > [data-modo="type-sample"] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-modo="type-metrics"] {
+  display: grid;
+  justify-items: end;
+  font-size: var(--modo-font-size-xs);
+  line-height: var(--modo-line-height-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--modo-muted);
+}
+
+@container (max-width: 640px) {
+  [data-modo="type-element"],
+  [data-modo="type-step"],
+  [data-modo="motion-row"],
+  [data-modo="motion-row"]:has([data-modo="motion-curve"]) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2, 8px);
+  }
+
+  /* Spacing keeps its bar and specimen side by side under the label. */
+  [data-modo="space-step"] {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--space-2, 8px) var(--space-4, 16px);
+  }
+
+  [data-modo="space-step"] > [data-modo="token-label"] {
+    grid-column: 1 / -1;
+  }
+
+  [data-modo="type-metrics"] {
+    grid-auto-flow: column;
+    justify-content: start;
+    gap: var(--space-3, 12px);
+  }
+
+  [data-modo="type-step"] > [data-modo="type-sample"] {
+    white-space: normal;
+  }
+}
+
+/* Radius: a large shape per step, outlined and filled so the corner reads,
+   beside the same radius on a control and a card. */
+[data-modo="radius-grid"] {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+}
+
+[data-modo="radius-tile"] {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--modo-border);
+  border-radius: var(--modo-radius-lg);
+  overflow: hidden;
+}
+
+[data-modo="radius-tile"] > [data-modo="token-label"] {
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border-top: 1px solid var(--modo-border);
+}
+
+[data-modo="radius-stage"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5, 24px);
+  padding: var(--space-5, 24px);
+}
+
+[data-modo="radius-shape"] {
+  flex: none;
+  inline-size: 112px;
+  aspect-ratio: 1;
+  border: 2px solid currentColor;
+  background: color-mix(in oklab, currentColor 12%, transparent);
+}
+
+[data-modo="radius-uses"] {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3, 12px);
+}
+
+[data-modo="radius-use"] {
+  display: block;
+  inline-size: 72px;
+}
+
+[data-modo="radius-use"][data-kind="control"] {
+  block-size: 28px;
+  background: currentColor;
+}
+
+[data-modo="radius-use"][data-kind="card"] {
+  block-size: 48px;
+  border: 1px solid var(--modo-border);
+  background: color-mix(in oklab, currentColor 8%, transparent);
+}
+
+/* The overview card: one corner per step. */
+[data-modo="radius-preview"] {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3, 12px);
+  width: 100%;
+}
+
+[data-modo="radius-corner"] {
+  flex: 0 1 64px;
+  aspect-ratio: 1;
+  border-block-start: 2px solid currentColor;
+  border-inline-start: 2px solid currentColor;
+  background: color-mix(in oklab, currentColor 10%, transparent);
+}
+
+/* Spacing: each step as a bar at its real size, on a ruler ticked every
+   --space-2, beside the step used as a gap. */
+[data-modo="space-ruler"] {
+  inline-size: max(var(--modo-space-max, 0px), 96px);
+  max-inline-size: 100%;
+  padding-block: var(--space-2, 8px);
+  border-inline-start: 1px solid currentColor;
+  background:
+    repeating-linear-gradient(to right, var(--modo-border) 0 1px, transparent 1px var(--space-2, 8px)) left bottom /
+    100% 6px no-repeat;
+}
+
+[data-modo="space-bar"] {
+  block-size: var(--space-4, 16px);
+  max-inline-size: 100%;
+  background: color-mix(in oklab, currentColor 35%, transparent);
+}
+
+[data-modo="space-specimen"] {
+  display: flex;
+}
+
+[data-modo="space-specimen"] > *,
+[data-modo="space-inset-box"] > * {
+  display: block;
+  inline-size: var(--space-3, 12px);
+  block-size: var(--space-5, 24px);
+  border-radius: var(--modo-radius-sm);
+  background: color-mix(in oklab, currentColor 55%, transparent);
+}
+
+[data-modo="space-insets"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-5, 24px);
+}
+
+[data-modo="space-inset"] {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2, 8px);
+  min-width: 0;
+  margin: 0;
+}
+
+/* The padding is the hatched band around the solid block. */
+[data-modo="space-inset-box"] {
+  display: grid;
+  border: 1px dashed var(--modo-border);
+  border-radius: var(--modo-radius-sm);
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in oklab, currentColor 30%, transparent) 0 1px,
+    transparent 1px 6px
+  );
+}
+
+[data-modo="space-inset-box"] > * {
+  inline-size: calc(var(--space-6, 32px) * 2);
+}
+
+/* The overview card: the scale as a staircase on a shared baseline. */
+[data-modo="space-preview"] {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-1, 4px);
+  width: 100%;
+  border-bottom: 1px solid var(--modo-border);
+}
+
+[data-modo="space-stair"] {
+  flex: 1 1 0;
+  max-inline-size: 40px;
+  border-radius: var(--modo-radius-sm) var(--modo-radius-sm) 0 0;
+  background: color-mix(in oklab, currentColor 45%, transparent);
+}
+
+[data-modo="motion-preview"] {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2, 8px);
+  width: 100%;
+}
+
+[data-modo="motion-curves"] {
+  display: flex;
+  gap: var(--space-3, 12px);
+  margin-bottom: var(--space-2, 8px);
+}
+
+[data-modo="motion-bar"] {
+  block-size: var(--space-2, 8px);
+  max-inline-size: 100%;
+  border-radius: var(--modo-radius-sm);
+  background: color-mix(in oklab, currentColor 45%, transparent);
+}
+
+[data-modo="motion-lane"] {
+  min-width: 0;
+}
+
+/* The dot crosses its track (a container, so 100cqi is the track's length)
+   with the row's own duration and easing set inline; motion.tsx flips
+   data-end on the list. */
+[data-modo="motion-track"] {
+  container-type: inline-size;
+  padding-block-end: var(--space-1, 4px);
+  border-bottom: 1px solid var(--modo-border);
+  border-inline: 1px solid var(--modo-border);
+}
+
+[data-modo="motion-dot"] {
+  display: block;
+  inline-size: var(--space-3, 12px);
+  block-size: var(--space-3, 12px);
+  border-radius: var(--modo-radius-sm);
+  background: currentColor;
+  transition-property: translate;
+}
+
+[data-modo="motion-list"][data-end] [data-modo="motion-dot"] {
+  translate: calc(100cqi - 100%) 0;
+}
+
+[data-modo="motion-curve"] {
+  flex: none;
+  inline-size: 48px;
+  block-size: 48px;
+  padding: var(--space-1, 4px);
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2px;
+  border: 1px solid var(--modo-border);
+  border-radius: var(--modo-radius-sm);
+}
+
+[data-modo="motion-curve"] path {
+  vector-effect: non-scaling-stroke;
+}
+
+[data-modo="motion-curve"] [data-modo="motion-curve-axis"] {
+  stroke: var(--modo-border);
+  stroke-width: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-modo="motion-dot"] {
+    transition: none;
+  }
+}

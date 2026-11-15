@@ -1,0 +1,188 @@
+[data-modo="app"] {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr) 280px;
+  grid-template-areas: "sidebar content panel";
+  min-height: 100vh;
+  font-family: var(--modo-font-sans);
+}
+
+/* Both asides are columns: the header stays put and the Root below it fills
+   the rest and scrolls on its own, so the brand never scrolls away. */
+[data-modo="sidebar"],
+[data-modo="panel"] {
+  display: flex;
+  flex-direction: column;
+}
+
+[data-modo="sidebar"] > :not([data-modo="header"]),
+[data-modo="panel"] > * {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+[data-modo="sidebar"] {
+  grid-area: sidebar;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+[data-modo="content"] {
+  /* Bento cells size themselves against this column, not the viewport. */
+  container-type: inline-size;
+  grid-area: content;
+  padding: var(--space-5, 24px) var(--space-6, 32px);
+  max-width: 100%;
+  min-width: 0;
+}
+
+[data-modo="panel"] {
+  grid-area: panel;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+/* Below xl the panel becomes a strip above the content (its controls stay
+   reachable; the TOC goes); below md everything stacks. */
+@media (max-width: 1279px) {
+  [data-modo="app"] {
+    grid-template-columns: 220px minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "sidebar panel" "sidebar content";
+  }
+
+  [data-modo="panel"] {
+    position: static;
+    height: auto;
+  }
+
+  [data-modo="panel"] [data-modo="sidebar-nav"] {
+    flex-flow: row wrap;
+    padding-bottom: 0;
+  }
+
+  [data-modo="toc"] {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  [data-modo="app"] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    grid-template-areas: "sidebar" "content" "panel";
+  }
+
+  /* The header stays; the nav folds behind the menu toggle. */
+  [data-modo="sidebar"] {
+    position: static;
+    height: auto;
+  }
+
+  [data-modo="sidebar"]:not([data-open]) > :not([data-modo="header"]) {
+    display: none;
+  }
+
+  [data-modo="sidebar"] [data-modo="sidebar-nav"] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  [data-modo="content"] {
+    padding: var(--space-4, 16px);
+  }
+}
+
+@media (min-width: 768px) {
+  [data-modo="menu-toggle"] {
+    display: none;
+  }
+}
+
+[data-modo="header"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2, 8px);
+  padding: var(--space-4, 16px) var(--space-4, 16px) 0;
+}
+
+/* A block flex box: inline, the link's line box would add descender space under it. */
+[data-modo="brand"] {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  font-weight: var(--modo-font-weight-semibold);
+}
+
+/* An image or component logo sits at the name's cap height. */
+[data-modo="brand"] > :not([data-modo="brand-name"]) {
+  display: block;
+  height: 1.5em;
+  width: auto;
+}
+
+[data-modo="header-actions"] {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+}
+
+[data-modo="footer"] {
+  margin-top: var(--space-6, 32px);
+  padding-top: var(--space-4, 16px);
+  border-top: 1px solid;
+  border-top-color: var(--modo-border);
+  color: var(--modo-muted);
+  font-size: var(--modo-font-size-sm);
+  line-height: var(--modo-line-height-sm);
+}
+
+[data-modo="footer"] p {
+  margin: 0;
+}
+
+/* Interior spacing of both asides belongs to the Sidebar Root component
+   (Plain fallback below, or the user's). The asides are pure grid cells. */
+
+[data-modo="sidebar-nav"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5, 24px);
+  padding: var(--space-4, 16px);
+}
+
+[data-modo="sidebar-section-title"] {
+  margin: 0 0 var(--space-2, 8px);
+}
+
+[data-modo="sidebar-section-items"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 4px);
+}
+
+[data-modo="sidebar-item"] {
+  display: block;
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+}
+
+/* ── TOC ── */
+
+[data-modo="toc-label"][data-level="3"] {
+  padding-inline-start: var(--space-3, 12px);
+}
+
+[data-modo="toc-label"][data-level="4"] {
+  padding-inline-start: var(--space-5, 24px);
+}
+
+/* The chrome's own focus ring. A live example keeps its design system's, and
+   so does whatever it portals out of the app (a popover, a dialog). */
+[data-modo="app"] :focus-visible:not([data-modo$="-stage"] *) {
+  outline: 2px solid var(--modo-ring);
+  outline-offset: 2px;
+}
