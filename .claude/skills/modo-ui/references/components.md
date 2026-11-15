@@ -44,6 +44,11 @@ controlled + uncontrolled.
 | "Working…" | `ThinkingIndicator` (`shimmer` or `goo`) |
 | A share of a budget (usage, a limit, context) | `Meter` (bar or ring; warning / error hues past `warnAt` / `errorAt`) |
 | A card resting in a holder, with a meta or controls row under it | `ShellCard` (`.Inner`, `.Footer`; any card-like element can be the inner card) |
+| Settings rows: caption sections, label left, control right | `List` (`.Section`, `.Row`; `LIST_POPOVER` for popovers) |
+| One choice among rich rows (notes, meters, actions) | `ChoiceList` |
+| A running / waiting / unread / idle state | `StatusDot` (`glyph(status)` for icon slots), `Spinner` |
+| A person, profile or workspace mark | `Avatar` (`.Group`) |
+| A shortcut | `Kbd` |
 | A file's change | `Diff` (a unified patch string, `path` header with counts) |
 | A scroll region | `ScrollArea` (+ `scroll-fade`) |
 | A raised container | `Elevated` (`offset`) |
@@ -76,7 +81,7 @@ controlled + uncontrolled.
 | `ThinkingIndicator` | `components/thinking-indicator` | — | — | `variant` `shimmer` (default) \| `goo` (three dots melting). |
 | `Meter` | `components/meter` | — | L | `variant` `bar` \| `ring`; the fill springs to its value; `warnAt` / `errorAt` turn it to the status hues. |
 | `ShellCard` | `components/shell-card` | `.Inner .Footer` | S | `bg-sunken` shell, `--space-2` inset, an inner card two levels up; corners concentric through `--radius-shell`. |
-| `Diff` | `components/AI/diff` | — | S | Reads a unified patch; added / removed lines as status text on a 16% wash; one surface step up, like Code. |
+| `Diff` | `components/diff` | — | S | Reads a unified patch; added / removed lines as status text on a 16% wash; one surface step up, like Code. |
 
 ## components/inputs
 
@@ -127,7 +132,7 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 | Item | Path | Notes |
 |---|---|---|
 | `SidebarApp` | `blocks/sidebar-app` | A full app shell (FF preset `sa1FQfCxH6`): workspace header, search, nav, user footer, inset topbar. `variant`, `side`, `openOnHover`, `contained`. |
-| `ProfileSwitcher`, `SessionSidebar`, `SessionBoard`, `ProfileUsage`, `Transcript`, `AgentPrompt`, `Composer`, `SidePane` | `blocks/AI/<id>` | The AI app's pieces (pages in `pages/AI`). `pick-list.tsx` beside them is a single-choice list of rich rows (fluid hover + GooIndicator pick). |
+| `ProfileSwitcher`, `SessionSidebar`, `SessionBoard`, `ProfileUsage`, `Transcript`, `AgentPrompt`, `Composer`, `SidePane` | `blocks/AI/<id>` | The AI app's pieces (pages in `pages/AI`). |
 
 ## Shared system files (`lib/`)
 

@@ -9,6 +9,7 @@
 'use client'
 
 import Button from '../../../components/button'
+import List, { LIST_POPOVER } from '../../../components/list'
 import Sidebar from '../../../components/navigation/sidebar'
 import Popover from '../../../components/overlays/popover'
 import { useIcon } from '../../../lib/icon-context'
@@ -17,7 +18,6 @@ import { SizeProvider } from '../../../primitives/sizes'
 import { PROFILES, type Profile } from '../mock'
 import { duration, type LimitPace, paceOf, percent, VERDICT_TEXT } from '../pace'
 import { PaceBar } from '../pace-bar'
-import { POPOVER_FRAME, PopoverRow, PopoverSection } from '../popover-rows'
 
 const VERDICT_WORD = { free: 'on pace', watch: 'only just', tight: 'too fast' } as const
 
@@ -88,26 +88,26 @@ export default function ProfileUsage({ profiles = PROFILES, onManage }: ProfileU
               </Sidebar.MenuButton>
             }
           />
-          <Popover.Content side="right" align="end" sideOffset={12} className={POPOVER_FRAME}>
+          <Popover.Content side="right" align="end" sideOffset={12} className={LIST_POPOVER}>
             <SizeProvider size="default">
               <p className="m-0 px-[var(--space-2)] text-caption text-muted-foreground">
                 The tick is where an even spend would be by now; a fill past it spends faster than the window refills.
               </p>
               {paces.map(({ profile, limits, binding }) => (
-                <PopoverSection
+                <List.Section
                   key={profile.id}
                   title={`${profile.name} · ${profile.plan}`}
                   aside={<span className={VERDICT_TEXT[binding.verdict]}>{VERDICT_WORD[binding.verdict]}</span>}
                 >
                   {limits.map(pace => (
-                    <PopoverRow key={pace.limit.label} label={pace.limit.label}>
+                    <List.Row key={pace.limit.label} label={pace.limit.label}>
                       <PaceBar pace={pace} className="w-16" />
                       <span className="w-24 pr-[var(--space-3)] text-right text-caption tabular-nums text-muted-foreground">
                         {percent(pace.limit.value)} · {duration(pace.window.resetsInHours)}
                       </span>
-                    </PopoverRow>
+                    </List.Row>
                   ))}
-                </PopoverSection>
+                </List.Section>
               ))}
               <div className="flex justify-end">
                 <Button variant="ghost" size="compact" leadingIcon={Settings} onClick={onManage}>

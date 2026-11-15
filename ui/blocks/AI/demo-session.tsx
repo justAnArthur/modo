@@ -3,7 +3,7 @@
  * turns. The transcript's examples and the workspace pages render it.
  */
 
-import Diff from '../../components/AI/diff'
+import Diff from '../../components/diff'
 import Code from '../../primitives/code'
 import { CHANGES, TERMINAL_LINES } from './mock'
 import Transcript, { type TaskItem, type TocChapter } from './transcript'

@@ -13,9 +13,11 @@
 import { type ButtonHTMLAttributes, type ComponentProps, forwardRef, useState } from 'react'
 import InputMessage from '../../../components/AI/input-message'
 import Button from '../../../components/button'
+import ChoiceList from '../../../components/inputs/choice-list'
 import Select, { triggerVariants } from '../../../components/inputs/select'
 import Slider from '../../../components/inputs/slider'
 import Switch from '../../../components/inputs/switch'
+import List, { LIST_POPOVER, LIST_SWITCH } from '../../../components/list'
 import Meter from '../../../components/meter'
 import Dropdown from '../../../components/overlays/dropdown'
 import Popover from '../../../components/overlays/popover'
@@ -28,8 +30,6 @@ import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
 import { CHANGES, COMMANDS, EFFORTS, GROUPS, MODELS, OUTPUT_STYLES, PERMISSION_MODES } from '../mock'
-import { PickList } from '../pick-list'
-import { POPOVER_FRAME, PopoverRow, PopoverSection } from '../popover-rows'
 import ProfileSwitcher from '../profile-switcher'
 
 const MODE_ICON: Record<string, IconName> = {
@@ -93,11 +93,6 @@ const MODEL_NOTE: Record<string, string> = {
   'GLM-4.5-Air': 'Z.ai, lighter',
 }
 
-// Inside a PopoverRow the row draws the label (foreground, like every row's), so the
-// switch keeps its label for screen readers only, drops its own padding, and its
-// track ends where a Select's chevron does (the trigger's --space-3 inset).
-const SWITCH_IN_ROW = 'py-0 pl-0 pr-[var(--space-3)] [&>span:not([role=switch])]:sr-only'
-
 const MODE_NOTE: Record<string, string> = {
   'Ask before edits': 'Asks before every edit and command',
   'Accept edits': 'Edits freely, asks before commands',
@@ -156,10 +151,10 @@ function ProjectPicker({ locked = false }: { locked?: boolean }) {
           </RowTrigger>
         }
       />
-      <Popover.Content side="top" align="start" sideOffset={8} className={POPOVER_FRAME}>
+      <Popover.Content side="top" align="start" sideOffset={8} className={LIST_POPOVER}>
         <SizeProvider size="default">
-          <PopoverSection title={locked ? 'This session runs in' : 'Project'}>
-            <PickList
+          <List.Section title={locked ? 'This session runs in' : 'Project'}>
+            <ChoiceList
               label="Project"
               value={project}
               onValueChange={setProject}
@@ -175,21 +170,21 @@ function ProjectPicker({ locked = false }: { locked?: boolean }) {
                 ),
               }))}
             />
-          </PopoverSection>
-          <PopoverSection title="Checkout">
-            <PopoverRow label="New worktree">
+          </List.Section>
+          <List.Section title="Checkout">
+            <List.Row label="New worktree">
               <Switch
                 label="New worktree"
                 checked={worktree}
                 onCheckedChange={setWorktree}
                 disabled={locked}
-                className={SWITCH_IN_ROW}
+                className={LIST_SWITCH}
               />
-            </PopoverRow>
-            <PopoverRow label="Run setup script">
-              <Switch label="Run setup script" defaultChecked disabled={locked} className={SWITCH_IN_ROW} />
-            </PopoverRow>
-            <PopoverRow label="Base branch">
+            </List.Row>
+            <List.Row label="Run setup script">
+              <Switch label="Run setup script" defaultChecked disabled={locked} className={LIST_SWITCH} />
+            </List.Row>
+            <List.Row label="Base branch">
               <Select defaultValue="main" disabled={locked}>
                 <Select.Trigger variant="borderless" className="min-w-0" />
                 <Select.Content>
@@ -200,8 +195,8 @@ function ProjectPicker({ locked = false }: { locked?: boolean }) {
                   ))}
                 </Select.Content>
               </Select>
-            </PopoverRow>
-          </PopoverSection>
+            </List.Row>
+          </List.Section>
         </SizeProvider>
       </Popover.Content>
     </Popover>
@@ -251,10 +246,10 @@ function RunSettings({
           </RowTrigger>
         }
       />
-      <Popover.Content side="top" align="end" sideOffset={8} className={POPOVER_FRAME}>
+      <Popover.Content side="top" align="end" sideOffset={8} className={LIST_POPOVER}>
         <SizeProvider size="default">
-          <PopoverSection title="Model">
-            <PickList
+          <List.Section title="Model">
+            <ChoiceList
               label="Model"
               value={model}
               onValueChange={setModel}
@@ -269,7 +264,7 @@ function RunSettings({
                 ),
               }))}
             />
-          </PopoverSection>
+          </List.Section>
           <div className="px-[var(--space-2)]">
             <Slider
               size="default"
@@ -282,8 +277,8 @@ function RunSettings({
               formatValue={v => EFFORTS[v] ?? ''}
             />
           </div>
-          <PopoverSection title="Behaviour">
-            <PopoverRow label="Permissions">
+          <List.Section title="Behaviour">
+            <List.Row label="Permissions">
               <Select value={mode} onValueChange={setMode}>
                 <Select.Trigger variant="borderless" icon={ModeIcon} className="min-w-0" title={MODE_NOTE[mode]} />
                 <Select.Content>
@@ -294,11 +289,11 @@ function RunSettings({
                   ))}
                 </Select.Content>
               </Select>
-            </PopoverRow>
-            <PopoverRow label="Fast mode">
-              <Switch label="Fast mode" checked={fast} onCheckedChange={setFast} className={SWITCH_IN_ROW} />
-            </PopoverRow>
-            <PopoverRow label="Output style">
+            </List.Row>
+            <List.Row label="Fast mode">
+              <Switch label="Fast mode" checked={fast} onCheckedChange={setFast} className={LIST_SWITCH} />
+            </List.Row>
+            <List.Row label="Output style">
               <Select value={style} onValueChange={setStyle}>
                 <Select.Trigger variant="borderless" className="min-w-0" />
                 <Select.Content>
@@ -309,10 +304,10 @@ function RunSettings({
                   ))}
                 </Select.Content>
               </Select>
-            </PopoverRow>
-          </PopoverSection>
-          <PopoverSection title="Context" aside={compacting ? 'Compacting…' : `${percent}% of the window`}>
-            <PopoverRow label="Compacts at 95%">
+            </List.Row>
+          </List.Section>
+          <List.Section title="Context" aside={compacting ? 'Compacting…' : `${percent}% of the window`}>
+            <List.Row label="Compacts at 95%">
               <Meter
                 variant="line"
                 className="w-20"
@@ -324,8 +319,8 @@ function RunSettings({
               <Button variant="ghost" size="compact" disabled={compacting || context < 0.2}>
                 Compact
               </Button>
-            </PopoverRow>
-          </PopoverSection>
+            </List.Row>
+          </List.Section>
         </SizeProvider>
       </Popover.Content>
     </Popover>

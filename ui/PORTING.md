@@ -53,7 +53,7 @@ and the local components marked "— (local)" below) use this repo's style: sing
 | `modo.components.tsx` | Components only the docs site uses: the `Icon`, `Select` and `DocsNav` shell-slot adapters and the `ThemeSwitcher` panel item, picked in `modo.config.ts` by export name (`./modo.components.tsx#Select`). |
 | `primitives/<id>/` | FF's "System" pages: `index.tsx` (component + TSDoc prose) and `examples.mdx`, pulled in by `@example {@include ./examples.mdx}`. |
 | `components/[<group>/]<id>/` | FF's "Components" pages, same shape. The `AI/`, `inputs/` (with `inputs/date-time/`), `navigation/` and `overlays/` group folders become sidebar sub-groups and overview sections; the core display items stay ungrouped. |
-| `blocks/<id>/` | Compositions of several items, same shape: `sidebar-app`, FF's sidebar preset `sa1FQfCxH6` as an app shell, with the header and footer blocks it is built from beside it; the `AI/` group holds the AI app's blocks, with their shared mock data and helpers (`mock.ts`, `pick-list.tsx`, `status-glyph.tsx`, `demo-session.tsx`, `screen-frame.tsx`) loose in the group folder. |
+| `blocks/<id>/` | Compositions of several items, same shape: `sidebar-app`, FF's sidebar preset `sa1FQfCxH6` as an app shell, with the header and footer blocks it is built from beside it; the `AI/` group holds the AI app's blocks, with their shared mock data and helpers (`mock.ts`, `pace.ts`, `pace-bar.tsx`, `status-glyph.tsx`, `demo-session.tsx`, `screen-frame.tsx`) loose in the group folder. |
 | `pages/<id>/` | Full screens assembled from blocks: the `AI/` group is a clickable prototype of a desktop app over the `claude` CLI, on mock data. modo renders them; the package build leaves them out. |
 
 ## Upstream → local file map
@@ -180,7 +180,7 @@ only what is specific to it:
 | — | `registry/blocks/sidebar-app/search-field.tsx` | `blocks/sidebar-app/search-field.tsx` | `text-[11px]` → `text-micro` |
 | — | `registry/blocks/sidebar-app/inset-topbar.tsx` | `blocks/sidebar-app/inset-topbar.tsx` | the trigger's peek-time fade dropped (the sidebar opens on hover in flow, so the trigger stays) |
 | — | `registry/default/lib/sidebar-menu-grid.ts` | `blocks/sidebar-app/menu-grid.ts` | the width reads `--anchor-width` only; the `-ml-1` shift dropped (it would move the morph surface's content off its background) |
-| `ProfileSwitcher`, `SessionSidebar`, `SessionBoard`, `Transcript`, `AgentPrompt`, `Composer`, `SidePane` | — (local) | `blocks/AI/<id>/index.tsx` | the AI app's blocks over Sidebar, Popover, Accordion, InputMessage, Dropdown, TabsSubtle, Meter and Diff; rich single-choice rows share `pick-list.tsx` (fluid hover, a GooIndicator pick, a springing keyboard ring) |
+| `ProfileSwitcher`, `SessionSidebar`, `SessionBoard`, `Transcript`, `AgentPrompt`, `Composer`, `SidePane` | — (local) | `blocks/AI/<id>/index.tsx` | the AI app's blocks over Sidebar, Popover, Accordion, InputMessage, Dropdown, TabsSubtle, Meter and Diff; built on the generic List, ChoiceList, Avatar, Kbd, Spinner and StatusDot components |
 
 `Select` in `modo.components.tsx` is not an item: modo's docs chrome renders its Select slot
 with a flat `value` / `onChange` / `options` contract
@@ -237,7 +237,7 @@ becomes the one block.
 | components | alert-dialog, command, context-menu, popover, preview-card, search, sheet, toast | — (local, see [Credits](./README.md#credits)) | — |
 | components | calendar, date-picker, date-range-picker, time-picker, duration-picker, month-picker (group `inputs/date-time`) | — (local, on react-day-picker) | — |
 | components | sidebar | `base/sidebar.tsx` + `default/sidebar-core.tsx` + `default/sidebar-menu.tsx` | sidebar |
-| components | `meter` (Meter), `shell-card` (ShellCard), `diff` (Diff, group `AI`) | — (local) | — |
+| components | `avatar`, `kbd`, `list` (List), `spinner`, `status-dot` (StatusDot), `inputs/choice-list` (ChoiceList), `meter` (Meter), `shell-card` (ShellCard), `diff` (Diff) | — (local) | — |
 | blocks | `sidebar-app` (SidebarApp) | the preset generator's output + `blocks/sidebar-*` | sidebar, preset `sa1FQfCxH6` |
 | blocks | profile-switcher, profile-usage, session-sidebar, session-board, transcript, agent-prompt, composer, side-pane (group `AI`) | — (local) | — |
 | pages | overview, workspace, new-session, interaction-prompts, profiles, settings (group `AI`) | — (local) | — |

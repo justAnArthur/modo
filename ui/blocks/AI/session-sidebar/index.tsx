@@ -11,6 +11,7 @@
 
 'use client'
 
+import Kbd from '../../../components/kbd'
 import Sidebar from '../../../components/navigation/sidebar'
 import { DropdownContent, DropdownMenu, DropdownTrigger, MenuItem } from '../../../components/overlays/dropdown'
 import Tooltip from '../../../components/overlays/tooltip'
@@ -31,7 +32,7 @@ const STATES: { status: SessionStatus; label: string }[] = [
 
 // Built once: a component made during render would remount its row's icon every time.
 const PROFILE_ICON: Record<string, IconComponent> = Object.fromEntries(
-  PROFILES.map(profile => [profile.id, () => <ProfileTile profile={profile} className="size-4" />]),
+  PROFILES.map(profile => [profile.id, () => <ProfileTile profile={profile} size="sm" />]),
 )
 
 /** Every live session, children included, with the project it belongs to. */
@@ -268,7 +269,9 @@ export default function SessionSidebar({
             <Sidebar.MenuItem>
               <Sidebar.MenuButton icon={Plus} value="new">
                 New session
-                <kbd className="ml-auto font-sans text-micro text-muted-foreground">⌘N</kbd>
+                <Kbd variant="plain" className="ml-auto">
+                  ⌘N
+                </Kbd>
               </Sidebar.MenuButton>
             </Sidebar.MenuItem>
           </Sidebar.Menu>
@@ -330,7 +333,9 @@ export default function SessionSidebar({
           <Sidebar.MenuItem>
             <Sidebar.MenuButton icon={Settings} onClick={onOpenSettings}>
               Settings
-              <kbd className="ml-auto font-sans text-micro text-muted-foreground">⌘,</kbd>
+              <Kbd variant="plain" className="ml-auto">
+                ⌘,
+              </Kbd>
             </Sidebar.MenuButton>
           </Sidebar.MenuItem>
         </Sidebar.Menu>

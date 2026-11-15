@@ -9,10 +9,11 @@
 'use client'
 
 import { type ReactNode, useId, useRef, useState } from 'react'
-import Diff, { parsePatch } from '../../../components/AI/diff'
 import Accordion from '../../../components/accordion'
 import Badge from '../../../components/badge'
 import Button from '../../../components/button'
+import Diff, { parsePatch } from '../../../components/diff'
+import ChoiceList from '../../../components/inputs/choice-list'
 import Input from '../../../components/inputs/input'
 import Switch from '../../../components/inputs/switch'
 import Tooltip from '../../../components/overlays/tooltip'
@@ -26,7 +27,6 @@ import FluidHover from '../../../primitives/fluid-hover'
 import { PROFILES, type Profile } from '../mock'
 import { duration, paceOf, percent, VERDICT_TEXT } from '../pace'
 import { PaceBar } from '../pace-bar'
-import { PickList } from '../pick-list'
 import { RunningGlyph } from '../status-glyph'
 import {
   type ArtifactKind,
@@ -163,7 +163,7 @@ function FileList({
 }) {
   const size = useSize()
   return (
-    <PickList
+    <ChoiceList
       label={label}
       value={value}
       onValueChange={onValueChange}

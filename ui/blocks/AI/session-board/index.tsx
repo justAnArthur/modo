@@ -343,7 +343,7 @@ function SessionItem({
                 <span className="min-w-0 truncate">{session.title}</span>
               </span>
               <span className="hidden min-w-0 items-center gap-1.5 weight-normal text-muted-foreground @xl:flex">
-                {profile && <ProfileTile profile={profile} className="size-4" />}
+                {profile && <ProfileTile profile={profile} size="sm" />}
                 <span className="min-w-0 truncate">{session.projectLabel}</span>
               </span>
               <span className="hidden min-w-0 weight-normal text-muted-foreground @3xl:flex">

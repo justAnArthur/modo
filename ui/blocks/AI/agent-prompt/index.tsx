@@ -12,6 +12,7 @@ import { type ReactNode, useState } from 'react'
 import Badge from '../../../components/badge'
 import Button from '../../../components/button'
 import Checkbox from '../../../components/inputs/checkbox'
+import ChoiceList from '../../../components/inputs/choice-list'
 import Input from '../../../components/inputs/input'
 import Textarea from '../../../components/inputs/textarea'
 import { type IconName, useIcon } from '../../../lib/icon-context'
@@ -20,7 +21,6 @@ import { cn } from '../../../lib/utils'
 import Code from '../../../primitives/code'
 import ScrollArea from '../../../primitives/scroll-area'
 import Elevated from '../../../primitives/surface'
-import { PickList } from '../pick-list'
 import { PROSE } from '../transcript/messages'
 
 interface AgentPromptProps {
@@ -171,7 +171,7 @@ function Question({ question, tag, options, multiSelect = false, onSubmit }: Que
       ))}
     </Checkbox.Group>
   ) : (
-    <PickList
+    <ChoiceList
       label={question}
       value={picked}
       onValueChange={setPicked}

@@ -76,8 +76,3 @@ export const VERDICT_TEXT: Record<Verdict, string> = {
   watch: 'text-status-warning',
   tight: 'text-status-error',
 }
-export const VERDICT_FILL: Record<Verdict, string> = {
-  free: 'bg-muted-foreground',
-  watch: 'bg-status-warning',
-  tight: 'bg-status-error',
-}

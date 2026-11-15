@@ -1,17 +1,17 @@
 /*!
  * Local addition: the transcript's floating chapter list. A ghost icon button
- * in the transcript's corner opens a Popover with the chapters as a PickList;
+ * in the transcript's corner opens a Popover with the chapters as a ChoiceList;
  * picking one scrolls its break into view.
  */
 
 'use client'
 
 import Button from '../../../components/button'
+import ChoiceList from '../../../components/inputs/choice-list'
+import List, { LIST_POPOVER } from '../../../components/list'
 import Popover from '../../../components/overlays/popover'
 import { useIcon } from '../../../lib/icon-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
-import { PickList } from '../pick-list'
-import { POPOVER_FRAME, PopoverSection } from '../popover-rows'
 
 export interface TocChapter {
   id: string
@@ -52,9 +52,9 @@ export function Toc({ chapters, defaultValue, onValueChange }: TocProps) {
           </Button>
         }
       />
-      <Popover.Content side="bottom" align="end" sideOffset={8} className={POPOVER_FRAME}>
-        <PopoverSection title="Chapters">
-          <PickList
+      <Popover.Content side="bottom" align="end" sideOffset={8} className={LIST_POPOVER}>
+        <List.Section title="Chapters">
+          <ChoiceList
             label="Chapters"
             value={current}
             onValueChange={pick}
@@ -76,7 +76,7 @@ export function Toc({ chapters, defaultValue, onValueChange }: TocProps) {
               ),
             }))}
           />
-        </PopoverSection>
+        </List.Section>
       </Popover.Content>
     </Popover>
   )
