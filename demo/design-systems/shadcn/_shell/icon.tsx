@@ -22,7 +22,7 @@ const icons: Record<string, LucideIcon> = {
 export default function Icon({ name, label }: IconSlotProps) {
   if (name === 'github') return <GithubMark />
   const Glyph = icons[name]
-  return Glyph ? <Glyph size={16} strokeWidth={1.5} aria-hidden /> : <>{label}</>
+  return Glyph ? <Glyph size={16} strokeWidth={1.5} aria-hidden /> : label
 }
 
 /** lucide ships no brand marks; this is GitHub's (Simple Icons, CC0). */
