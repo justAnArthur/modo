@@ -29,19 +29,10 @@ import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
 import AgentPrompt from '../agent-prompt'
-import {
-  ARCHIVED,
-  GROUPS,
-  PINNED,
-  PROFILES,
-  type Session,
-  type SessionGroup,
-  type SessionPrompt,
-  type SessionStatus,
-} from '../mock'
 import { ProfileTile } from '../profile-switcher'
 import { STATUS_GLYPH, STATUS_LABEL } from '../status-glyph'
 import Transcript from '../transcript'
+import type { Profile, Session, SessionGroup, SessionPrompt, SessionStatus } from '../types'
 
 interface BoardSession extends Session {
   projectLabel: string
@@ -305,12 +296,14 @@ function SessionPeek({
 
 function SessionItem({
   session,
+  profile,
   index,
   open,
   onPatch,
   onOpen,
 }: {
   session: BoardSession
+  profile?: Profile
   index: number
   open: boolean
   onPatch: (id: string, patch: Patch) => void
@@ -320,7 +313,6 @@ function SessionItem({
   const shape = useShape()
   const substrate = useSurface()
   const level = Math.min(substrate + 2, 8)
-  const profile = PROFILES.find(p => p.id === session.profile)
   const patch = (p: Patch) => onPatch(session.id, p)
 
   return (
@@ -399,12 +391,14 @@ function SectionHeading({ section, open, onToggle }: { section: BoardSection; op
 type BoardView = 'project' | 'state'
 
 interface SessionBoardProps {
-  /** Pinned sessions, first as in the sidebar. Defaults to the mock pins. */
-  pinned?: Session[]
-  /** Projects and sections with their sessions, in the sidebar's order. Defaults to the mock groups. */
-  groups?: SessionGroup[]
-  /** Archived sessions, folded at the bottom. Defaults to the mock archive. */
-  archived?: Session[]
+  /** Pinned sessions, first as in the sidebar. */
+  pinned: Session[]
+  /** Projects and sections with their sessions, in the sidebar's order. */
+  groups: SessionGroup[]
+  /** Archived sessions, folded at the bottom. */
+  archived: Session[]
+  /** The profiles the sessions run under, for each row's tile. */
+  profiles: Profile[]
   /** Controlled view. Pair with `onViewChange`. */
   view?: BoardView
   /** Initial view: the sidebar's groups, or by what each session needs. Defaults to `'project'`. */
@@ -465,9 +459,10 @@ interface SessionBoardProps {
  * @example {@include ./examples.mdx}
  */
 export default function SessionBoard({
-  pinned = PINNED,
-  groups = GROUPS,
-  archived = ARCHIVED,
+  pinned,
+  groups,
+  archived,
+  profiles,
   view,
   defaultView = 'project',
   onViewChange,
@@ -556,6 +551,7 @@ export default function SessionBoard({
                   <SessionItem
                     key={session.id}
                     session={session}
+                    profile={profiles.find(p => p.id === session.profile)}
                     index={index++}
                     open={openRows.includes(session.id)}
                     onPatch={patch}

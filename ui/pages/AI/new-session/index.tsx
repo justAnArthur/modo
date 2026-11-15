@@ -7,12 +7,12 @@
 'use client'
 
 import Composer from '../../../blocks/AI/composer'
-import { GROUPS, PROFILES, ZCODE_MODELS } from '../../../blocks/AI/mock'
 import SessionSidebar from '../../../blocks/AI/session-sidebar'
 import { STATUS_GLYPH } from '../../../blocks/AI/status-glyph'
 import Card from '../../../components/card'
 import Sidebar from '../../../components/navigation/sidebar'
 import FluidHover from '../../../primitives/fluid-hover'
+import { COMPOSER, GROUPS, MODELS, PROFILES, SESSIONS, ZCODE_MODELS } from '../mock'
 
 const STARTERS = [
   { title: 'Review the current diff', description: 'Runs /review on what changed since main' },
@@ -42,12 +42,12 @@ interface NewSessionProps {
  */
 export default function NewSession({ profile = 'jobiflow', sidebar = true }: NewSessionProps) {
   const recent = GROUPS[0]?.sessions ?? []
-  const models = PROFILES.find(p => p.id === profile)?.provider === 'compatible' ? ZCODE_MODELS : undefined
+  const models = PROFILES.find(p => p.id === profile)?.provider === 'compatible' ? ZCODE_MODELS : MODELS
 
   return (
     <div className="flex h-full min-h-[640px] w-full bg-background">
       <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0} defaultOpen={sidebar}>
-        <SessionSidebar className="h-full" defaultValue="new" />
+        <SessionSidebar {...SESSIONS} className="h-full" defaultValue="new" />
         <Sidebar.Inset className="@container min-h-0 min-w-0 overflow-auto">
           <header className="flex h-12 shrink-0 items-center gap-2 px-1.5">
             <Sidebar.Trigger />
@@ -56,6 +56,7 @@ export default function NewSession({ profile = 'jobiflow', sidebar = true }: New
           <main className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-6 pb-8 pt-[8vh]">
             <h1 className="m-0 text-display text-foreground">What should we work on?</h1>
             <Composer
+              {...COMPOSER}
               target
               defaultProfile={profile}
               placeholder="Describe the task, or type / for commands"

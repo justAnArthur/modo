@@ -8,10 +8,11 @@
 'use client'
 
 import { useState } from 'react'
-import { ARCHIVED, GROUPS, PINNED, type Session } from '../../../blocks/AI/mock'
 import SessionBoard, { type BoardView, type SessionFilter } from '../../../blocks/AI/session-board'
 import SessionSidebar from '../../../blocks/AI/session-sidebar'
+import type { Session } from '../../../blocks/AI/types'
 import Sidebar from '../../../components/navigation/sidebar'
+import { ARCHIVED, GROUPS, PINNED, PROFILES, SESSIONS } from '../mock'
 
 interface OverviewProps {
   /** The board's view. Defaults to `'project'`. */
@@ -62,6 +63,7 @@ export default function Overview({
           pinned={PINNED.map(live)}
           groups={GROUPS.map(g => ({ ...g, sessions: g.sessions.map(live) }))}
           archived={ARCHIVED}
+          profiles={PROFILES}
           value={shown === 'all' ? 'overview' : shown}
           onValueChange={v => {
             if (v === 'overview') setShown('all')
@@ -75,6 +77,7 @@ export default function Overview({
           </header>
           <main className="flex w-full flex-col px-3 pb-8">
             <SessionBoard
+              {...SESSIONS}
               defaultView={view}
               defaultOpen={open}
               filter={shown}

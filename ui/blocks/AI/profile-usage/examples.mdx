@@ -1,5 +1,6 @@
 import ProfileUsage from './index'
 import Sidebar from '../../../components/navigation/sidebar'
+import { PROFILES } from '../../../pages/AI/mock'
 
 # Usage
 
@@ -11,7 +12,7 @@ Every profile by name with its session and tightest weekly limit as pace bars: `
       <Sidebar.Content>
         <Sidebar.Group>
           <Sidebar.GroupLabel>Usage</Sidebar.GroupLabel>
-          <ProfileUsage />
+          <ProfileUsage profiles={PROFILES} />
         </Sidebar.Group>
       </Sidebar.Content>
     </Sidebar>

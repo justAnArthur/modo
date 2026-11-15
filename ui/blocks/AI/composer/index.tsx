@@ -22,28 +22,18 @@ import Meter from '../../../components/meter'
 import Dropdown from '../../../components/overlays/dropdown'
 import Popover from '../../../components/overlays/popover'
 import ShellCard from '../../../components/shell-card'
-import { type IconName, useIcon } from '../../../lib/icon-context'
+import { useIcon } from '../../../lib/icon-context'
 import { useShape } from '../../../lib/shape-context'
 import { useSize } from '../../../lib/size-context'
 import { SURFACE_BG } from '../../../lib/surface-classes'
 import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
-import { CHANGES, COMMANDS, EFFORTS, GROUPS, MODELS, OUTPUT_STYLES, PERMISSION_MODES } from '../mock'
 import ProfileSwitcher from '../profile-switcher'
-
-const MODE_ICON: Record<string, IconName> = {
-  'Ask before edits': 'shield-check',
-  'Accept edits': 'pen-line',
-  'Plan mode': 'list-checks',
-  Auto: 'zap',
-  'Bypass permissions': 'triangle-alert',
-}
-
-const FILES = [...CHANGES.map(c => c.path), 'ui/DESIGN.md', 'ui/AGENTS.md', 'lib/src/runtime/routes.tsx']
+import type { Command, Model, PermissionMode, Profile, Project } from '../types'
 
 /** One + button: attach, mention a file, run a command, skill or plugin — one searchable list. */
-function AddPalette({ onAttach }: { onAttach: () => void }) {
+function AddPalette({ files, commands, onAttach }: { files: string[]; commands: Command[]; onAttach: () => void }) {
   const Plus = useIcon('plus')
   const Paperclip = useIcon('paperclip')
   const File = useIcon('file-text')
@@ -67,38 +57,23 @@ function AddPalette({ onAttach }: { onAttach: () => void }) {
         <Dropdown.Search filter placeholder="Files, commands, skills" />
         <Dropdown.Item index={0} icon={Paperclip} label="Attach files…" onSelect={onAttach} />
         <Dropdown.Label>Mention a file</Dropdown.Label>
-        {FILES.map(path => (
+        {files.map(path => (
           <Dropdown.Item key={path} index={index++} icon={File} label={path} />
         ))}
         {groups.map(group => (
           <div key={group.kind} className="contents">
             <Dropdown.Label>{group.label}</Dropdown.Label>
-            {COMMANDS.filter(c => c.kind === group.kind).map(c => (
-              <Dropdown.Item key={c.name} index={index++} icon={Command} label={c.name} />
-            ))}
+            {commands
+              .filter(c => c.kind === group.kind)
+              .map(c => (
+                <Dropdown.Item key={c.name} index={index++} icon={Command} label={c.name} />
+              ))}
           </div>
         ))}
         <Dropdown.Empty>Nothing found</Dropdown.Empty>
       </Dropdown.Content>
     </Dropdown.Menu>
   )
-}
-
-const MODEL_NOTE: Record<string, string> = {
-  'Opus 5.5': 'Most capable',
-  'Sonnet 5.5': 'Fast and capable',
-  'Haiku 5.5': 'Fastest, lightest',
-  'Fable 5.2': 'Long context',
-  'GLM-4.6': 'Z.ai flagship',
-  'GLM-4.5-Air': 'Z.ai, lighter',
-}
-
-const MODE_NOTE: Record<string, string> = {
-  'Ask before edits': 'Asks before every edit and command',
-  'Accept edits': 'Edits freely, asks before commands',
-  'Plan mode': 'Reads and plans, changes nothing',
-  Auto: 'Runs safe actions, asks for risky ones',
-  'Bypass permissions': 'Never asks; for sandboxes only',
 }
 
 /** A borderless Select-style trigger, so the row's controls share one look and height. Forwards the popover trigger's props. */
@@ -134,12 +109,11 @@ const RowTrigger = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButton
 )
 
 /** Where a session runs: the project, a worktree of its own and how it is set up. */
-function ProjectPicker({ locked = false }: { locked?: boolean }) {
-  const [project, setProject] = useState('modo')
+function ProjectPicker({ projects, branches, locked }: { projects: Project[]; branches: string[]; locked: boolean }) {
+  const [project, setProject] = useState(projects[0]?.label ?? '')
   const [worktree, setWorktree] = useState(true)
   const Folder = useIcon('folder')
   const Branch = useIcon('git-branch')
-  const projects = GROUPS.filter(g => g.kind === 'project')
   return (
     <Popover>
       <Popover.Trigger
@@ -185,10 +159,10 @@ function ProjectPicker({ locked = false }: { locked?: boolean }) {
               <Switch label="Run setup script" defaultChecked disabled={locked} className={LIST_SWITCH} />
             </List.Row>
             <List.Row label="Base branch">
-              <Select defaultValue="main" disabled={locked}>
+              <Select defaultValue={branches[0]} disabled={locked}>
                 <Select.Trigger variant="borderless" className="min-w-0" />
                 <Select.Content>
-                  {['main', 'feat/v1-lib-fixes', 'refactor/clean-ds'].map((b, i) => (
+                  {branches.map((b, i) => (
                     <Select.Item key={b} index={i} value={b}>
                       {b}
                     </Select.Item>
@@ -204,7 +178,10 @@ function ProjectPicker({ locked = false }: { locked?: boolean }) {
 }
 
 interface RunSettingsProps {
-  models: string[]
+  models: Model[]
+  efforts: string[]
+  permissionModes: PermissionMode[]
+  outputStyles: string[]
   context: number
   compacting: boolean
   defaultModel: string
@@ -216,6 +193,9 @@ interface RunSettingsProps {
 /** How the agent runs, behind one trigger: "Opus 5.5 · High ◔". */
 function RunSettings({
   models,
+  efforts,
+  permissionModes,
+  outputStyles,
   context,
   compacting,
   defaultModel,
@@ -227,8 +207,9 @@ function RunSettings({
   const [effort, setEffort] = useState(defaultEffort)
   const [mode, setMode] = useState(defaultMode)
   const [fast, setFast] = useState(defaultFast)
-  const [style, setStyle] = useState('Default')
-  const ModeIcon = useIcon(MODE_ICON[mode] ?? 'shield-check')
+  const [style, setStyle] = useState(outputStyles[0] ?? '')
+  const activeMode = permissionModes.find(m => m.label === mode)
+  const ModeIcon = useIcon(activeMode?.icon ?? 'shield-check')
   const Zap = useIcon('zap')
   const percent = Math.round(context * 100)
 
@@ -254,12 +235,12 @@ function RunSettings({
               value={model}
               onValueChange={setModel}
               options={models.map(m => ({
-                value: m,
-                label: m,
+                value: m.name,
+                label: m.name,
                 content: (
                   <span className="flex min-w-0 flex-1 items-baseline justify-between gap-2">
-                    <span className="text-body text-foreground">{m}</span>
-                    <span className="truncate text-caption text-muted-foreground">{MODEL_NOTE[m]}</span>
+                    <span className="text-body text-foreground">{m.name}</span>
+                    <span className="truncate text-caption text-muted-foreground">{m.note}</span>
                   </span>
                 ),
               }))}
@@ -270,21 +251,21 @@ function RunSettings({
               size="default"
               label="Effort"
               min={0}
-              max={EFFORTS.length - 1}
+              max={efforts.length - 1}
               step={1}
-              value={Math.max(EFFORTS.indexOf(effort), 0)}
-              onChange={v => setEffort(EFFORTS[typeof v === 'number' ? v : v[0]] ?? effort)}
-              formatValue={v => EFFORTS[v] ?? ''}
+              value={Math.max(efforts.indexOf(effort), 0)}
+              onChange={v => setEffort(efforts[typeof v === 'number' ? v : v[0]] ?? effort)}
+              formatValue={v => efforts[v] ?? ''}
             />
           </div>
           <List.Section title="Behaviour">
             <List.Row label="Permissions">
               <Select value={mode} onValueChange={setMode}>
-                <Select.Trigger variant="borderless" icon={ModeIcon} className="min-w-0" title={MODE_NOTE[mode]} />
+                <Select.Trigger variant="borderless" icon={ModeIcon} className="min-w-0" title={activeMode?.note} />
                 <Select.Content>
-                  {PERMISSION_MODES.map((m, i) => (
-                    <Select.Item key={m} index={i} value={m}>
-                      {m}
+                  {permissionModes.map((m, i) => (
+                    <Select.Item key={m.label} index={i} value={m.label}>
+                      {m.label}
                     </Select.Item>
                   ))}
                 </Select.Content>
@@ -297,7 +278,7 @@ function RunSettings({
               <Select value={style} onValueChange={setStyle}>
                 <Select.Trigger variant="borderless" className="min-w-0" />
                 <Select.Content>
-                  {OUTPUT_STYLES.map((o, i) => (
+                  {outputStyles.map((o, i) => (
                     <Select.Item key={o} index={i} value={o}>
                       {o}
                     </Select.Item>
@@ -341,13 +322,29 @@ function LiftedInput(props: ComponentProps<typeof InputMessage>) {
 }
 
 interface ComposerProps {
-  /** The models the active profile offers. Defaults to the Claude models. */
-  models?: string[]
-  /** Initial model. Defaults to the first model. */
+  /** The models the active profile offers, each with a note. */
+  models: Model[]
+  /** The effort steps, lowest first. */
+  efforts: string[]
+  /** The permission modes, each with its icon and note. */
+  permissionModes: PermissionMode[]
+  /** The output styles. */
+  outputStyles: string[]
+  /** The commands, skills and plugins the + palette runs. */
+  commands: Command[]
+  /** Files the + palette can mention. */
+  files: string[]
+  /** The project folders a session can run in. */
+  projects: Project[]
+  /** Branches a new worktree can start from. */
+  branches: string[]
+  /** The profiles a session can run under. */
+  profiles: Profile[]
+  /** Initial model, by name. Defaults to the first model. */
   defaultModel?: string
-  /** Initial permission mode. Defaults to `'Ask before edits'`. */
+  /** Initial permission mode, by label. Defaults to the first mode. */
   defaultPermissionMode?: string
-  /** Initial effort. Defaults to `'High'`. */
+  /** Initial effort. Defaults to the middle step. */
   defaultEffort?: string
   /** Start with fast mode on. Defaults to `false`. */
   defaultFast?: boolean
@@ -359,7 +356,7 @@ interface ComposerProps {
   streaming?: boolean
   /** A new session: the project and profile can still be picked. Otherwise they show where this session runs. Defaults to `false`. */
   target?: boolean
-  /** The profile the session runs under. Defaults to `'jobiflow'`. */
+  /** The profile the session runs under, by id. Defaults to the first profile. */
   defaultProfile?: string
   /** Called with the profile picked. */
   onProfileChange?: (profile: string) => void
@@ -392,16 +389,24 @@ interface ComposerProps {
  * @example {@include ./examples.mdx}
  */
 export default function Composer({
-  models = MODELS,
+  models,
+  efforts,
+  permissionModes,
+  outputStyles,
+  commands,
+  files,
+  projects,
+  branches,
+  profiles,
   defaultModel,
-  defaultPermissionMode = 'Ask before edits',
-  defaultEffort = 'High',
+  defaultPermissionMode,
+  defaultEffort,
   defaultFast = false,
   context = 0.62,
   compacting = false,
   streaming = false,
   target = false,
-  defaultProfile = 'jobiflow',
+  defaultProfile,
   onProfileChange,
   placeholder = 'Ask, or type / for commands',
   onSend,
@@ -414,16 +419,24 @@ export default function Composer({
       footer={
         <SizeProvider size="compact">
           <ShellCard.Footer className="justify-start gap-[var(--space-1)] pt-[var(--space-1)]">
-            <ProjectPicker locked={!target} />
-            <ProfileSwitcher defaultValue={defaultProfile} onValueChange={onProfileChange} side="top" />
+            <ProjectPicker projects={projects} branches={branches} locked={!target} />
+            <ProfileSwitcher
+              profiles={profiles}
+              defaultValue={defaultProfile}
+              onValueChange={onProfileChange}
+              side="top"
+            />
             <div className="ml-auto">
               <RunSettings
                 models={models}
+                efforts={efforts}
+                permissionModes={permissionModes}
+                outputStyles={outputStyles}
                 context={context}
                 compacting={compacting}
-                defaultModel={defaultModel ?? models[0] ?? ''}
-                defaultEffort={defaultEffort}
-                defaultMode={defaultPermissionMode}
+                defaultModel={defaultModel ?? models[0]?.name ?? ''}
+                defaultEffort={defaultEffort ?? efforts[Math.floor(efforts.length / 2)] ?? ''}
+                defaultMode={defaultPermissionMode ?? permissionModes[0]?.label ?? ''}
                 defaultFast={defaultFast}
               />
             </div>
@@ -436,7 +449,9 @@ export default function Composer({
         defaultStatus={streaming ? 'streaming' : 'idle'}
         defaultFiles={[]}
         onSend={text => onSend?.(text)}
-        leftSlot={({ openFilePicker }) => <AddPalette onAttach={() => openFilePicker()} />}
+        leftSlot={({ openFilePicker }) => (
+          <AddPalette files={files} commands={commands} onAttach={() => openFilePicker()} />
+        )}
       />
     </ShellCard>
   )

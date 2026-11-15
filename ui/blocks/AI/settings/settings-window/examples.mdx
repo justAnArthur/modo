@@ -1,0 +1,40 @@
+import SettingsWindow from './index'
+import McpServers from '../mcp-servers'
+import Notifications from '../notifications'
+import { ScreenFrame } from '../../../../pages/AI/screen-frame'
+import { MCP_SERVERS, PROFILES } from '../../../../pages/AI/mock'
+import { NOTIFICATIONS, SETTINGS_SECTIONS } from '../../../../pages/AI/mock-settings'
+
+# Window
+
+The section list with its search on the left; `children` renders the open section for the config dir in scope. Pick a scoped section to see the picker on top.
+
+<ScreenFrame>
+  <SettingsWindow sections={SETTINGS_SECTIONS} profiles={PROFILES}>
+    {(section, configDir) =>
+      section === 'mcp' ? (
+        <McpServers servers={MCP_SERVERS} configDir={configDir} />
+      ) : (
+        <Notifications groups={NOTIFICATIONS} />
+      )
+    }
+  </SettingsWindow>
+</ScreenFrame>
+
+# An app section
+
+Notifications belong to the app, so the scope picker hides.
+
+<ScreenFrame>
+  <SettingsWindow sections={SETTINGS_SECTIONS} profiles={PROFILES} defaultSection="notifications">
+    {() => <Notifications groups={NOTIFICATIONS} />}
+  </SettingsWindow>
+</ScreenFrame>
+
+# Sidebar closed
+
+<ScreenFrame width={420} height={780}>
+  <SettingsWindow sections={SETTINGS_SECTIONS} profiles={PROFILES} sidebar={false}>
+    {(_section, configDir) => <McpServers servers={MCP_SERVERS} configDir={configDir} />}
+  </SettingsWindow>
+</ScreenFrame>

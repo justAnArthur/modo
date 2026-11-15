@@ -1,0 +1,22 @@
+import Memory from './index'
+import { MEMORY } from '../../../../pages/AI/mock'
+
+# Memory
+
+MEMORY.md and each memory file open into their contents.
+
+<div className="@container w-full max-w-3xl">
+  <Memory files={MEMORY} configDir="~/.claude-jobiflow" />
+</div>
+
+# The index, open
+
+<div className="@container w-full max-w-3xl">
+  <Memory files={MEMORY} configDir="~/.claude-jobiflow" defaultOpen={['MEMORY.md']} />
+</div>
+
+# Auto memory off
+
+<div className="@container w-full max-w-3xl">
+  <Memory files={MEMORY} configDir="~/.claude-work" autoMemory={false} />
+</div>

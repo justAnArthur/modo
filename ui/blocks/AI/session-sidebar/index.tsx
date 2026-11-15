@@ -11,17 +11,18 @@
 
 'use client'
 
+import { useMemo } from 'react'
 import Kbd from '../../../components/kbd'
 import Sidebar from '../../../components/navigation/sidebar'
 import { DropdownContent, DropdownMenu, DropdownTrigger, MenuItem } from '../../../components/overlays/dropdown'
 import Tooltip from '../../../components/overlays/tooltip'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { SidebarSearchField } from '../../sidebar-app/search-field'
-import { ARCHIVED, GROUPS, PINNED, PROFILES, type Session, type SessionGroup, type SessionStatus } from '../mock'
 import { ProfileTile } from '../profile-switcher'
 import ProfileUsage from '../profile-usage'
 import type { SessionFilter } from '../session-board'
 import { STATUS_GLYPH, STATUS_LABEL } from '../status-glyph'
+import type { Profile, Session, SessionGroup, SessionStatus } from '../types'
 
 const STATES: { status: SessionStatus; label: string }[] = [
   { status: 'waiting', label: 'Needs you' },
@@ -29,11 +30,6 @@ const STATES: { status: SessionStatus; label: string }[] = [
   { status: 'unread', label: 'To review' },
   { status: 'idle', label: 'Idle' },
 ]
-
-// Built once: a component made during render would remount its row's icon every time.
-const PROFILE_ICON: Record<string, IconComponent> = Object.fromEntries(
-  PROFILES.map(profile => [profile.id, () => <ProfileTile profile={profile} size="sm" />]),
-)
 
 /** Every live session, children included, with the project it belongs to. */
 function everySession(pinned: Session[], groups: SessionGroup[]) {
@@ -118,12 +114,28 @@ function SessionRow({ session, onOpenSplit }: SessionRowProps) {
 }
 
 /** The overview's job for the list: narrow the board to one state, project or profile, with counts. */
-function SessionFilters({ pinned, groups }: { pinned: Session[]; groups: SessionGroup[] }) {
+function SessionFilters({
+  pinned,
+  groups,
+  profiles,
+}: {
+  pinned: Session[]
+  groups: SessionGroup[]
+  profiles: Profile[]
+}) {
   const Folder = useIcon('folder')
   const all = everySession(pinned, groups)
   const count = (match: (s: Session) => boolean) => all.filter(match).length
   const projects = groups.filter(g => g.kind === 'project')
-  const profiles = PROFILES.filter(p => all.some(s => s.profile === p.id))
+  const used = profiles.filter(p => all.some(s => s.profile === p.id))
+  // Built once per profile list: a component made during render would remount its row's icon every time.
+  const icons = useMemo(
+    () =>
+      Object.fromEntries(
+        profiles.map(profile => [profile.id, (() => <ProfileTile profile={profile} size="sm" />) as IconComponent]),
+      ),
+    [profiles],
+  )
 
   return (
     <>
@@ -162,12 +174,9 @@ function SessionFilters({ pinned, groups }: { pinned: Session[]; groups: Session
       <Sidebar.Group>
         <Sidebar.GroupLabel>Profiles</Sidebar.GroupLabel>
         <Sidebar.Menu>
-          {profiles.map(profile => (
+          {used.map(profile => (
             <Sidebar.MenuItem key={profile.id}>
-              <Sidebar.MenuButton
-                value={`profile:${profile.id}` satisfies SessionFilter}
-                icon={PROFILE_ICON[profile.id]}
-              >
+              <Sidebar.MenuButton value={`profile:${profile.id}` satisfies SessionFilter} icon={icons[profile.id]}>
                 {profile.name}
               </Sidebar.MenuButton>
               <Sidebar.MenuBadge>{count(s => s.profile === profile.id)}</Sidebar.MenuBadge>
@@ -180,17 +189,19 @@ function SessionFilters({ pinned, groups }: { pinned: Session[]; groups: Session
 }
 
 interface SessionSidebarProps {
-  /** Pinned sessions, above every group. Defaults to the mock pins. */
-  pinned?: Session[]
-  /** Project folders and the user's own sections, in order. Defaults to the mock groups. */
-  groups?: SessionGroup[]
-  /** Archived sessions, folded at the bottom. Defaults to the mock archive. */
-  archived?: Session[]
+  /** Pinned sessions, above every group. */
+  pinned: Session[]
+  /** Project folders and the user's own sections, in order. */
+  groups: SessionGroup[]
+  /** Archived sessions, folded at the bottom. */
+  archived: Session[]
+  /** The profiles the sessions run under, for the footer's usage and the profile filters. */
+  profiles: Profile[]
   /** What the content lists: the sessions, or (on the overview, whose board is that list widened) filters for the board by state, project and profile, with counts. Defaults to `'sessions'`. */
   list?: 'sessions' | 'filters'
   /** Controlled selected session id. Pair with `onValueChange`. */
   value?: string
-  /** Initial selected session id, for an uncontrolled sidebar. Defaults to `'ai-app'`. */
+  /** Initial selected session id, for an uncontrolled sidebar. */
   defaultValue?: string
   /** Called with the session id when a row is picked. */
   onValueChange?: (value: string) => void
@@ -231,12 +242,13 @@ interface SessionSidebarProps {
  * @example {@include ./examples.mdx}
  */
 export default function SessionSidebar({
-  pinned = PINNED,
-  groups = GROUPS,
-  archived = ARCHIVED,
+  pinned,
+  groups,
+  archived,
+  profiles,
   list = 'sessions',
   value,
-  defaultValue = 'ai-app',
+  defaultValue,
   onValueChange,
   onOpenSplit,
   onOpenSettings,
@@ -280,7 +292,7 @@ export default function SessionSidebar({
       </Sidebar.Header>
 
       <Sidebar.Content>
-        {list === 'filters' && <SessionFilters pinned={pinned} groups={groups} />}
+        {list === 'filters' && <SessionFilters pinned={pinned} groups={groups} profiles={profiles} />}
         {list === 'sessions' && (
           <>
             <Sidebar.Group collapsible>
@@ -327,7 +339,7 @@ export default function SessionSidebar({
       <Sidebar.Footer>
         <Sidebar.Group collapsible>
           <Sidebar.GroupLabel>Usage</Sidebar.GroupLabel>
-          <ProfileUsage onManage={onOpenSettings} />
+          <ProfileUsage profiles={profiles} onManage={onOpenSettings} />
         </Sidebar.Group>
         <Sidebar.Menu>
           <Sidebar.MenuItem>

@@ -1,11 +1,12 @@
 import SessionBoard from './index'
+import { SESSIONS } from '../../../pages/AI/mock'
 
 # By project
 
 The sidebar's groups and order, widened: each row names its profile and project, what it waits on or where its tasks stand, and its last activity. The canvas session waits on a permission: allow or deny it from the row, or answer it in its open card. Open the Meter session too: each open row is its own card.
 
 <div className="w-full">
-  <SessionBoard defaultOpen={['canvas', 'meter']} />
+  <SessionBoard {...SESSIONS} defaultOpen={['canvas', 'meter']} />
 </div>
 
 # By state
@@ -13,7 +14,7 @@ The sidebar's groups and order, widened: each row names its profile and project,
 The same rows by what each session needs from you. The Postgres question opens with its options, answerable in place.
 
 <div className="w-full">
-  <SessionBoard defaultView="state" defaultOpen={['pg']} />
+  <SessionBoard {...SESSIONS} defaultView="state" defaultOpen={['pg']} />
 </div>
 
 # Filtered
@@ -21,7 +22,7 @@ The same rows by what each session needs from you. The Postgres question opens w
 `defaultFilter="profile:work"` shows only the work profile's sessions; "Show all" clears it.
 
 <div className="w-full">
-  <SessionBoard defaultFilter="profile:work" />
+  <SessionBoard {...SESSIONS} defaultFilter="profile:work" />
 </div>
 
 # Narrow
@@ -29,5 +30,5 @@ The same rows by what each session needs from you. The Postgres question opens w
 Below the wide breakpoints the project and status columns fold away and Allow / Deny shrink to icons.
 
 <div className="w-full max-w-[420px]">
-  <SessionBoard defaultOpen={['canvas']} />
+  <SessionBoard {...SESSIONS} defaultOpen={['canvas']} />
 </div>

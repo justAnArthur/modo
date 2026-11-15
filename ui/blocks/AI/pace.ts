@@ -5,15 +5,13 @@
  * where that rate lands at the reset, and whether it runs out first.
  */
 
-import type { Profile, UsageLimit } from './mock'
-import { type LimitWindow, WINDOWS } from './windows'
+import type { Profile, UsageLimit } from './types'
 
 /** `free`: lasts past the reset at this pace; `watch`: only just; `tight`: runs out before it. */
 export type Verdict = 'free' | 'watch' | 'tight'
 
 export interface LimitPace {
   limit: UsageLimit
-  window: LimitWindow
   /** Share of the window already gone, 0–1: where an even spend would be now. */
   elapsed: number
   /** Share used at the reset if spending goes on at the pace so far (may exceed 1). */
@@ -35,22 +33,20 @@ const WATCH_AT = 0.95
 // The first minutes of a window say nothing about its pace: read at least a tenth of it.
 const MIN_ELAPSED = 0.1
 
-function paceOfLimit(profileId: string, limit: UsageLimit): LimitPace {
-  const window = WINDOWS[`${profileId}:${limit.label}`] ?? { windowHours: 5, resetsInHours: 5 }
-  const elapsedHours = window.windowHours - window.resetsInHours
-  const rate = limit.value / Math.max(elapsedHours, window.windowHours * MIN_ELAPSED)
-  const projected = limit.value + rate * window.resetsInHours
+function paceOfLimit(limit: UsageLimit): LimitPace {
+  const elapsedHours = limit.windowHours - limit.resetsInHours
+  const rate = limit.value / Math.max(elapsedHours, limit.windowHours * MIN_ELAPSED)
+  const projected = limit.value + rate * limit.resetsInHours
   const runsOut = rate > 0 ? (1 - limit.value) / rate : Number.POSITIVE_INFINITY
-  const runsOutInHours = runsOut < window.resetsInHours ? runsOut : Number.POSITIVE_INFINITY
+  const runsOutInHours = runsOut < limit.resetsInHours ? runsOut : Number.POSITIVE_INFINITY
   const verdict: Verdict =
     runsOutInHours < Number.POSITIVE_INFINITY ? 'tight' : projected >= WATCH_AT ? 'watch' : 'free'
-  return { limit, window, elapsed: elapsedHours / window.windowHours, projected, runsOutInHours, verdict }
+  return { limit, elapsed: elapsedHours / limit.windowHours, projected, runsOutInHours, verdict }
 }
 
 export function paceOf(profile: Profile): ProfilePace {
-  const limits = profile.limits.map(limit => paceOfLimit(profile.id, limit))
-  const binding =
-    [...limits].sort((a, b) => b.projected - a.projected)[0] ?? paceOfLimit(profile.id, profile.limits[0]!)
+  const limits = profile.limits.map(paceOfLimit)
+  const binding = [...limits].sort((a, b) => b.projected - a.projected)[0] ?? paceOfLimit(profile.limits[0]!)
   return { profile, limits, binding }
 }
 

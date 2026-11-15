@@ -3,10 +3,10 @@
  * turns. The transcript's examples and the workspace pages render it.
  */
 
+import Transcript, { type TaskItem, type TocChapter } from '../../blocks/AI/transcript'
 import Diff from '../../components/diff'
 import Code from '../../primitives/code'
 import { CHANGES, TERMINAL_LINES } from './mock'
-import Transcript, { type TaskItem, type TocChapter } from './transcript'
 
 export const DEMO_CHAPTERS: TocChapter[] = [
   { id: 'chapter-read', title: 'Reading the design system', detail: '14:02 · 3 turns' },

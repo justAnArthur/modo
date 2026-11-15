@@ -1,34 +1,27 @@
 /*!
- * Local addition: the AI app's mock data, shared by its blocks (as
- * their defaults) and the pages under pages/AI. Everything here is
- * made up; nothing talks to a backend.
+ * Local addition: the AI app's mock data for the pages under pages/AI and
+ * the AI blocks' docs examples. Everything here is made up; nothing talks to
+ * a backend.
  */
 
-import type { ToolName } from './transcript'
-
-export interface UsageLimit {
-  label: string
-  /** Used share, 0–1. */
-  value: number
-  detail: string
-}
-
-export interface Profile {
-  id: string
-  name: string
-  /** The CLAUDE_CONFIG_DIR the profile's `claude` process runs with. */
-  configDir: string
-  plan: string
-  /** `anthropic` signs in to claude.ai; `compatible` points ANTHROPIC_BASE_URL at another provider. */
-  provider: 'anthropic' | 'compatible'
-  /** The base URL of a compatible provider. */
-  baseUrl?: string
-  account: string
-  defaultModel: string
-  limits: UsageLimit[]
-  /** Sessions running under the profile right now. */
-  running: number
-}
+import type {
+  Artifact,
+  BackgroundTask,
+  Change,
+  Check,
+  Command,
+  Hook,
+  McpServer,
+  MemoryFile,
+  Model,
+  PermissionMode,
+  Plugin,
+  Profile,
+  Project,
+  Session,
+  SessionGroup,
+  Worktree,
+} from '../../blocks/AI/types'
 
 export const PROFILES: Profile[] = [
   {
@@ -40,9 +33,9 @@ export const PROFILES: Profile[] = [
     account: 'Jobiflow',
     defaultModel: 'Opus 5.5',
     limits: [
-      { label: 'Session (5h)', value: 0.42, detail: '42% · resets 16:20' },
-      { label: 'Weekly, all models', value: 0.61, detail: '61% · resets Mon' },
-      { label: 'Weekly, Opus', value: 0.78, detail: '78% · resets Mon' },
+      { label: 'Session (5h)', value: 0.42, detail: '42% · resets 16:20', windowHours: 5, resetsInHours: 2.3 },
+      { label: 'Weekly, all models', value: 0.61, detail: '61% · resets Mon', windowHours: 168, resetsInHours: 20 },
+      { label: 'Weekly, Opus', value: 0.78, detail: '78% · resets Mon', windowHours: 168, resetsInHours: 20 },
     ],
     running: 2,
   },
@@ -55,8 +48,8 @@ export const PROFILES: Profile[] = [
     account: 'Acme Corp',
     defaultModel: 'Sonnet 5.5',
     limits: [
-      { label: 'Session (5h)', value: 0.93, detail: '93% · resets 14:05' },
-      { label: 'Weekly, all models', value: 0.4, detail: '40% · resets Thu' },
+      { label: 'Session (5h)', value: 0.93, detail: '93% · resets 14:05', windowHours: 5, resetsInHours: 1.2 },
+      { label: 'Weekly, all models', value: 0.4, detail: '40% · resets Thu', windowHours: 168, resetsInHours: 100 },
     ],
     running: 1,
   },
@@ -69,8 +62,8 @@ export const PROFILES: Profile[] = [
     account: 'Personal',
     defaultModel: 'Sonnet 5.5',
     limits: [
-      { label: 'Session (5h)', value: 0.08, detail: '8% · resets 18:40' },
-      { label: 'Weekly, all models', value: 0.22, detail: '22% · resets Sat' },
+      { label: 'Session (5h)', value: 0.08, detail: '8% · resets 18:40', windowHours: 5, resetsInHours: 4.4 },
+      { label: 'Weekly, all models', value: 0.22, detail: '22% · resets Sat', windowHours: 168, resetsInHours: 110 },
     ],
     running: 0,
   },
@@ -83,59 +76,12 @@ export const PROFILES: Profile[] = [
     baseUrl: 'https://api.z.ai/api/anthropic',
     account: 'Z.ai',
     defaultModel: 'GLM-4.6',
-    limits: [{ label: 'Prompts (5h)', value: 0.35, detail: '210 / 600 · resets 15:00' }],
+    limits: [
+      { label: 'Prompts (5h)', value: 0.35, detail: '210 / 600 · resets 15:00', windowHours: 5, resetsInHours: 3 },
+    ],
     running: 0,
   },
 ]
-
-export type SessionStatus = 'running' | 'waiting' | 'unread' | 'idle'
-
-/** What a waiting session asks, as the AgentPrompt that answers it. */
-export type SessionPrompt =
-  | { kind: 'permission'; tool: string; command: string; rule?: string }
-  | { kind: 'question'; question: string; tag?: string; options: { label: string; description?: string }[] }
-
-/** A turn's work, folded to one row (see Transcript.Work). */
-export interface SessionWork {
-  summary: string
-  detail?: string
-  tools: { tool: ToolName; summary: string; meta?: string }[]
-}
-
-export interface Session {
-  id: string
-  title: string
-  status: SessionStatus
-  profile: string
-  /** Relative time of the last activity. */
-  updated: string
-  branch?: string
-  pinned?: boolean
-  /** Linked child sessions started from this one. */
-  children?: Session[]
-  /** What a waiting session waits on. */
-  waitingOn?: string
-  /** Its task list's progress. */
-  tasks?: { done: number; total: number }
-  /** The latest line of its transcript. */
-  lastLine?: string
-  /** Its project, when it is listed outside the project's group (pinned). */
-  project?: string
-  /** The latest assistant text. */
-  reply?: string
-  /** The latest turn's work. */
-  work?: SessionWork
-  /** What it waits on, to answer in place. */
-  prompt?: SessionPrompt
-}
-
-export interface SessionGroup {
-  /** A project folder, or a section the user made. */
-  label: string
-  kind: 'project' | 'section'
-  path?: string
-  sessions: Session[]
-}
 
 export const PINNED: Session[] = [
   {
@@ -335,17 +281,31 @@ export const ARCHIVED: Session[] = [
   { id: 'old-2', title: 'Bump UnoCSS to 66', status: 'idle', profile: 'jobiflow', updated: '3w' },
 ]
 
-export const MODELS = ['Opus 5.5', 'Sonnet 5.5', 'Haiku 5.5', 'Fable 5.2']
-export const ZCODE_MODELS = ['GLM-4.6', 'GLM-4.5-Air']
-export const EFFORTS = ['Low', 'Medium', 'High', 'Extra high', 'Max']
-export const PERMISSION_MODES = ['Ask before edits', 'Accept edits', 'Plan mode', 'Auto', 'Bypass permissions']
-export const OUTPUT_STYLES = ['Default', 'Concise', 'Explanatory', 'Learning']
+export const PROJECTS: Project[] = GROUPS.flatMap(g =>
+  g.kind === 'project' && g.path ? [{ label: g.label, path: g.path }] : [],
+)
 
-export interface Command {
-  name: string
-  description: string
-  kind: 'command' | 'skill' | 'plugin'
-}
+export const BRANCHES = ['main', 'feat/v1-lib-fixes', 'refactor/clean-ds']
+
+export const MODELS: Model[] = [
+  { name: 'Opus 5.5', note: 'Most capable' },
+  { name: 'Sonnet 5.5', note: 'Fast and capable' },
+  { name: 'Haiku 5.5', note: 'Fastest, lightest' },
+  { name: 'Fable 5.2', note: 'Long context' },
+]
+export const ZCODE_MODELS: Model[] = [
+  { name: 'GLM-4.6', note: 'Z.ai flagship' },
+  { name: 'GLM-4.5-Air', note: 'Z.ai, lighter' },
+]
+export const EFFORTS = ['Low', 'Medium', 'High', 'Extra high', 'Max']
+export const PERMISSION_MODES: PermissionMode[] = [
+  { label: 'Ask before edits', note: 'Asks before every edit and command', icon: 'shield-check' },
+  { label: 'Accept edits', note: 'Edits freely, asks before commands', icon: 'pen-line' },
+  { label: 'Plan mode', note: 'Reads and plans, changes nothing', icon: 'list-checks' },
+  { label: 'Auto', note: 'Runs safe actions, asks for risky ones', icon: 'zap' },
+  { label: 'Bypass permissions', note: 'Never asks; for sandboxes only', icon: 'triangle-alert' },
+]
+export const OUTPUT_STYLES = ['Default', 'Concise', 'Explanatory', 'Learning']
 
 export const COMMANDS: Command[] = [
   { name: '/compact', description: 'Summarize the conversation to free context', kind: 'command' },
@@ -359,14 +319,6 @@ export const COMMANDS: Command[] = [
   { name: '/ship', description: 'Merge, test, bump and open a PR', kind: 'plugin' },
   { name: '/usage-report', description: 'Usage across all profiles', kind: 'plugin' },
 ]
-
-export interface Change {
-  path: string
-  status: 'added' | 'modified' | 'deleted'
-  added: number
-  removed: number
-  patch: string
-}
 
 export const CHANGES: Change[] = [
   {
@@ -419,12 +371,6 @@ export const TERMINAL_LINES = [
   'Ran 128 tests across 9 files. [1.84s]',
 ]
 
-export interface Check {
-  name: string
-  status: 'success' | 'running' | 'failed'
-  detail: string
-}
-
 export const PR = {
   number: 23,
   title: 'feat(ui): AI app screens',
@@ -439,24 +385,11 @@ export const PR = {
   comments: 2,
 }
 
-export interface Artifact {
-  title: string
-  kind: string
-  updated: string
-}
-
 export const ARTIFACTS: Artifact[] = [
   { title: 'AI app: screen map', kind: 'Page', updated: '10m' },
   { title: 'Profile usage this week', kind: 'Dashboard', updated: '1h' },
   { title: 'Settings IA', kind: 'Document', updated: 'Yesterday' },
 ]
-
-export interface BackgroundTask {
-  title: string
-  kind: 'agent' | 'shell' | 'session'
-  status: 'running' | 'done' | 'failed'
-  detail: string
-}
 
 export const TASKS: BackgroundTask[] = [
   { title: 'Explore: how pages render', kind: 'agent', status: 'done', detail: '14 tool uses · 38s' },
@@ -464,24 +397,6 @@ export const TASKS: BackgroundTask[] = [
   { title: 'Zoom controls follow the cursor', kind: 'session', status: 'running', detail: 'jobiflow · worktree' },
   { title: 'bun run test --watch', kind: 'shell', status: 'failed', detail: 'exit 1' },
 ]
-
-export interface McpServer {
-  name: string
-  transport: 'stdio' | 'http' | 'sse'
-  status: 'connected' | 'needs-auth' | 'failed' | 'disabled'
-  tools: number
-  scope: 'user' | 'project' | 'plugin'
-  /** The command a stdio server runs, or the URL an http / sse server answers on. */
-  target: string
-  /** Env var names passed to the server; values stay in the config. */
-  env?: string[]
-  /** Tool names, once connected. */
-  toolNames?: string[]
-  /** Why a failed server stopped: the tail of its stderr. */
-  error?: string
-  /** Where a needs-auth server signs in. */
-  authHost?: string
-}
 
 export const MCP_SERVERS: McpServer[] = [
   {
@@ -534,17 +449,6 @@ export const MCP_SERVERS: McpServer[] = [
   },
 ]
 
-export interface Hook {
-  event: string
-  matcher: string
-  command: string
-  scope: 'user' | 'project'
-  /** Seconds before the harness gives up on it. */
-  timeout?: number
-  /** The latest run: when, and the exit code (non-zero blocks or warns, by event). */
-  lastRun?: { when: string; exit: number }
-}
-
 export const HOOKS: Hook[] = [
   {
     event: 'PreToolUse',
@@ -578,13 +482,6 @@ export const HOOKS: Hook[] = [
   },
 ]
 
-export interface Plugin {
-  name: string
-  description: string
-  kind: 'plugin' | 'skill'
-  enabled: boolean
-}
-
 export const PLUGINS: Plugin[] = [
   { name: 'modo-ui', description: 'Craft UI in the ui design system', kind: 'skill', enabled: true },
   { name: 'sparse', description: 'Right-sized, readable code', kind: 'skill', enabled: true },
@@ -594,26 +491,12 @@ export const PLUGINS: Plugin[] = [
   { name: 'iOS simulator', description: 'Run and tap through iOS apps', kind: 'plugin', enabled: false },
 ]
 
-export interface MemoryFile {
-  name: string
-  description: string
-  type: 'user' | 'feedback' | 'project' | 'reference'
-}
-
 export const MEMORY: MemoryFile[] = [
   { name: 'no-ai-coauthor', description: 'Never add AI attribution to commits or PRs', type: 'feedback' },
   { name: 'disk-hygiene', description: 'Work under ~/Projects, remove worktrees when done', type: 'feedback' },
   { name: 'modo-releases', description: 'Scoped commits publish lib and ui', type: 'project' },
   { name: 'arthur', description: 'Builds modo; prefers terse, token-only UI', type: 'user' },
 ]
-
-export interface Worktree {
-  path: string
-  branch: string
-  session: string
-  size: string
-  state: 'active' | 'merged' | 'stale'
-}
 
 export const WORKTREES: Worktree[] = [
   {
@@ -645,3 +528,21 @@ export const WORKTREES: Worktree[] = [
     state: 'stale',
   },
 ]
+
+export const FILES = [...CHANGES.map(c => c.path), 'ui/DESIGN.md', 'ui/AGENTS.md', 'lib/src/runtime/routes.tsx']
+
+/** The session lists every sessions block takes: spread it, `<SessionSidebar {...SESSIONS} />`. */
+export const SESSIONS = { pinned: PINNED, groups: GROUPS, archived: ARCHIVED, profiles: PROFILES }
+
+/** What the composer's menus offer: spread it, `<Composer {...COMPOSER} />`. */
+export const COMPOSER = {
+  models: MODELS,
+  efforts: EFFORTS,
+  permissionModes: PERMISSION_MODES,
+  outputStyles: OUTPUT_STYLES,
+  commands: COMMANDS,
+  files: FILES,
+  projects: PROJECTS,
+  branches: BRANCHES,
+  profiles: PROFILES,
+}

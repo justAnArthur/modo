@@ -1,11 +1,12 @@
 import ProfileSwitcher from './index'
+import { PROFILES } from '../../../pages/AI/mock'
 
 # Switcher
 
 Press the trigger: the panel grows out of it. Pick a profile and its background melts over; the arrow keys move the pick.
 
 <div className="flex h-[560px] w-full items-start justify-center pt-6">
-  <ProfileSwitcher />
+  <ProfileSwitcher profiles={PROFILES} />
 </div>
 
 # Near a limit
@@ -13,5 +14,5 @@ Press the trigger: the panel grows out of it. Pick a profile and its background 
 `work` starts active here: its session meter is past 90%, so it reads red before you start anything there.
 
 <div className="flex h-[560px] w-full items-start justify-center pt-6">
-  <ProfileSwitcher defaultValue="work" />
+  <ProfileSwitcher profiles={PROFILES} defaultValue="work" />
 </div>

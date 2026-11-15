@@ -1,12 +1,12 @@
 import Composer from './index'
-import { ZCODE_MODELS } from '../mock'
+import { COMPOSER, ZCODE_MODELS } from '../../../pages/AI/mock'
 
 # Composer
 
 In the draft, the + palette and the run trigger (permission mode, model, effort, context ring) that opens the run settings. On the shell, where the session runs: the project and the profile with its usage lines.
 
 <div className="flex h-[440px] w-full max-w-2xl items-end">
-  <Composer />
+  <Composer {...COMPOSER} />
 </div>
 
 # New session
@@ -14,7 +14,7 @@ In the draft, the + palette and the run trigger (permission mode, model, effort,
 `target`: the project (its popover holds the worktree, setup script and base branch) and the profile can still be picked.
 
 <div className="flex h-[200px] w-full max-w-2xl items-end">
-  <Composer target context={0} placeholder="Describe the task, or type / for commands" />
+  <Composer {...COMPOSER} target context={0} placeholder="Describe the task, or type / for commands" />
 </div>
 
 # Near compaction
@@ -22,7 +22,7 @@ In the draft, the + palette and the run trigger (permission mode, model, effort,
 Past 80% the context ring in the run trigger turns amber; at 95% it compacts.
 
 <div className="flex h-[200px] w-full max-w-2xl items-end">
-  <Composer context={0.91} defaultPermissionMode="Plan mode" defaultEffort="Max" />
+  <Composer {...COMPOSER} context={0.91} defaultPermissionMode="Plan mode" defaultEffort="Max" />
 </div>
 
 # Compacting
@@ -30,7 +30,7 @@ Past 80% the context ring in the run trigger turns amber; at 95% it compacts.
 While the conversation is summarized, the run settings' context meter says so.
 
 <div className="flex h-[200px] w-full max-w-2xl items-end">
-  <Composer compacting />
+  <Composer {...COMPOSER} compacting />
 </div>
 
 # Streaming
@@ -38,7 +38,7 @@ While the conversation is summarized, the run settings' context meter says so.
 A reply is in flight: Enter queues, the button stops it. Fast mode is on: the run trigger shows its bolt.
 
 <div className="flex h-[200px] w-full max-w-2xl items-end">
-  <Composer streaming defaultFast />
+  <Composer {...COMPOSER} streaming defaultFast />
 </div>
 
 # Another provider
@@ -46,5 +46,5 @@ A reply is in flight: Enter queues, the button stops it. Fast mode is on: the ru
 A compatible profile offers its own models.
 
 <div className="flex h-[200px] w-full max-w-2xl items-end">
-  <Composer models={ZCODE_MODELS} defaultPermissionMode="Auto" context={0.18} />
+  <Composer {...COMPOSER} models={ZCODE_MODELS} defaultPermissionMode="Auto" context={0.18} />
 </div>

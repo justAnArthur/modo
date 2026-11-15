@@ -1,7 +1,7 @@
 /*!
  * Local addition: the AI app's side pane, beside the transcript. A
  * strip of pill tabs (TabsSubtle, only the picked one spelled out) switches
- * between the panes in panes.tsx; a Dropdown beside the last tab adds
+ * between the pane blocks (changes-pane, file-pane, …); a Dropdown beside the last tab adds
  * optional panes from plugins; the close button hands the room back to the
  * transcript. The whole pane is a compact region.
  */
@@ -17,7 +17,15 @@ import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
 import ScrollArea from '../../../primitives/scroll-area'
 import { SizeProvider } from '../../../primitives/sizes'
-import { ArtifactsPane, ChangesPane, ExtensionPane, FilePane, PullRequestPane, TasksPane, TerminalPane } from './panes'
+import ArtifactsPane from '../artifacts-pane'
+import ChangesPane from '../changes-pane'
+import FilePane from '../file-pane'
+import PullRequestPane from '../pr-pane'
+import type { PaneArtifact, PaneChange, PaneFile, PanePullRequest, PaneShell, PaneTask } from '../side-pane-types'
+import TasksPane from '../tasks-pane'
+import TerminalPane from '../terminal-pane'
+import type { Profile } from '../types'
+import UsagePane from '../usage-pane'
 
 type PaneId = 'changes' | 'file' | 'terminal' | 'pr' | 'artifacts' | 'tasks' | 'extension'
 
@@ -31,17 +39,31 @@ const PANES: { id: PaneId; label: string; icon: IconName }[] = [
   { id: 'extension', label: 'Usage', icon: 'puzzle' },
 ]
 
-const CONTENT: Record<PaneId, () => React.ReactNode> = {
-  changes: () => <ChangesPane />,
-  file: () => <FilePane />,
-  terminal: () => <TerminalPane />,
-  pr: () => <PullRequestPane />,
-  artifacts: () => <ArtifactsPane />,
-  tasks: () => <TasksPane />,
-  extension: () => <ExtensionPane />,
+/** Every pane's data, handed to the pane blocks. */
+interface SidePaneData {
+  changes: PaneChange[]
+  file: PaneFile
+  shell: PaneShell
+  pr: PanePullRequest
+  artifacts: PaneArtifact[]
+  tasks: PaneTask[]
+  /** The profiles the extensions slot reads usage from. */
+  profiles: Profile[]
+}
+
+const CONTENT: Record<PaneId, (data: SidePaneData) => React.ReactNode> = {
+  changes: data => <ChangesPane changes={data.changes} />,
+  file: data => <FilePane file={data.file} />,
+  terminal: data => <TerminalPane shell={data.shell} />,
+  pr: data => <PullRequestPane pr={data.pr} />,
+  artifacts: data => <ArtifactsPane artifacts={data.artifacts} />,
+  tasks: data => <TasksPane tasks={data.tasks} />,
+  extension: data => <UsagePane profiles={data.profiles} />,
 }
 
 interface SidePaneProps {
+  /** Every pane's data: changes, the open file, the shell, the pull request, artifacts, tasks and the profiles for usage. */
+  data: SidePaneData
   /** Controlled open pane. Pair with `onPaneChange`. */
   pane?: PaneId
   /** Initial pane, for an uncontrolled side pane. Defaults to `'changes'`. */
@@ -82,7 +104,14 @@ interface SidePaneProps {
  *
  * @example {@include ./examples.mdx}
  */
-export default function SidePane({ pane, defaultPane = 'changes', onPaneChange, onClose, className }: SidePaneProps) {
+export default function SidePane({
+  data,
+  pane,
+  defaultPane = 'changes',
+  onPaneChange,
+  onClose,
+  className,
+}: SidePaneProps) {
   const [current, setCurrent] = useControllableState(pane, defaultPane, onPaneChange)
   const icons = useIcons()
   const Close = useIcon('x')
@@ -145,7 +174,7 @@ export default function SidePane({ pane, defaultPane = 'changes', onPaneChange, 
             idPrefix="side-pane"
             className="px-2 pb-4 [contain:inline-size]"
           >
-            {CONTENT[PANES[index]?.id ?? 'changes']()}
+            {CONTENT[PANES[index]?.id ?? 'changes'](data)}
           </TabsSubtle.Panel>
         </ScrollArea>
       </SizeProvider>
@@ -153,4 +182,4 @@ export default function SidePane({ pane, defaultPane = 'changes', onPaneChange, 
   )
 }
 
-export type { PaneId, SidePaneProps }
+export type { PaneId, SidePaneData, SidePaneProps }

@@ -10,11 +10,10 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import AgentPrompt from '../../../blocks/AI/agent-prompt'
 import Composer from '../../../blocks/AI/composer'
-import { DEMO_CHAPTERS, DEMO_TASKS, DemoReading, DemoSession } from '../../../blocks/AI/demo-session'
-import { ARCHIVED, GROUPS, PINNED, PROFILES, type Session } from '../../../blocks/AI/mock'
 import SessionSidebar from '../../../blocks/AI/session-sidebar'
 import SidePane, { type PaneId } from '../../../blocks/AI/side-pane'
 import Transcript from '../../../blocks/AI/transcript'
+import type { Session } from '../../../blocks/AI/types'
 import Badge from '../../../components/badge'
 import Button from '../../../components/button'
 import Diff from '../../../components/diff'
@@ -22,6 +21,9 @@ import Sidebar from '../../../components/navigation/sidebar'
 import Tooltip from '../../../components/overlays/tooltip'
 import { useIcon } from '../../../lib/icon-context'
 import { cn } from '../../../lib/utils'
+import { DEMO_CHAPTERS, DEMO_TASKS, DemoReading, DemoSession } from '../demo-session'
+import { ARCHIVED, COMPOSER, GROUPS, PINNED, PROFILES, SESSIONS } from '../mock'
+import { SIDE_PANE_DATA } from '../mock-panes'
 
 type PromptKind = 'none' | 'permission' | 'edit' | 'question' | 'multi' | 'preview' | 'plan' | 'offer' | 'task'
 
@@ -160,7 +162,7 @@ function SplitSession({ id, onClose, trailing }: { id: string; onClose: () => vo
         <DemoReading />
       </Transcript>
       <div className="px-6 pb-4">
-        <Composer />
+        <Composer {...COMPOSER} />
       </div>
     </section>
   )
@@ -261,7 +263,13 @@ export default function Workspace({
         open={leftOpen}
         onOpenChange={setLeftOpen}
       >
-        <SessionSidebar className="h-full" value={selected} onValueChange={setSelected} onOpenSplit={setSplitId} />
+        <SessionSidebar
+          {...SESSIONS}
+          className="h-full"
+          value={selected}
+          onValueChange={setSelected}
+          onOpenSplit={setSplitId}
+        />
         {/* A second provider for the right side: the side pane is a Sidebar too, so it resizes from its rail, collapses and toggles with ] like the sessions sidebar. */}
         <Sidebar.Provider
           className="h-full min-h-0 min-w-0 flex-1"
@@ -273,6 +281,7 @@ export default function Workspace({
         >
           <Sidebar side="right" variant="inset" className="h-full">
             <SidePane
+              data={SIDE_PANE_DATA}
               pane={openPane}
               onPaneChange={setOpenPane}
               onClose={() => setPaneOpen(false)}
@@ -283,6 +292,7 @@ export default function Workspace({
           <Sidebar.Inset className={cn('@container min-h-0 min-w-0', leftOpen && '!ml-0')}>
             {narrow && paneOpen ? (
               <SidePane
+                data={SIDE_PANE_DATA}
                 pane={openPane}
                 onPaneChange={setOpenPane}
                 onClose={() => setPaneOpen(false)}
@@ -354,7 +364,7 @@ export default function Workspace({
                     <DemoSession />
                   </Transcript>
                   <div className="mx-auto w-full max-w-3xl px-6 pb-4">
-                    <Composer streaming={pending === 'none' && !nextStep} />
+                    <Composer {...COMPOSER} streaming={pending === 'none' && !nextStep} />
                   </div>
                 </div>
                 {splitId && <SplitSession id={splitId} onClose={() => setSplitId(null)} trailing={paneToggle} />}

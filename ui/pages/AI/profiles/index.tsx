@@ -6,9 +6,9 @@
 
 'use client'
 
-import { PROFILES, type Profile } from '../../../blocks/AI/mock'
 import { ProfileTile } from '../../../blocks/AI/profile-switcher'
 import SessionSidebar from '../../../blocks/AI/session-sidebar'
+import type { Profile } from '../../../blocks/AI/types'
 import Badge from '../../../components/badge'
 import Button from '../../../components/button'
 import Copy from '../../../components/copy'
@@ -19,6 +19,7 @@ import Sidebar from '../../../components/navigation/sidebar'
 import { useIcon } from '../../../lib/icon-context'
 import { useShape } from '../../../lib/shape-context'
 import { cn } from '../../../lib/utils'
+import { PROFILES, SESSIONS } from '../mock'
 
 function ProfileCard({ profile, isDefault }: { profile: Profile; isDefault: boolean }) {
   const shape = useShape()
@@ -122,7 +123,7 @@ export default function Profiles({ sidebar = true }: ProfilesProps) {
   return (
     <div className="flex h-full min-h-[640px] w-full bg-background">
       <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0} defaultOpen={sidebar}>
-        <SessionSidebar className="h-full" defaultValue="" />
+        <SessionSidebar {...SESSIONS} className="h-full" defaultValue="" />
         <Sidebar.Inset className="@container min-h-0 min-w-0 overflow-auto">
           <header className="flex h-12 shrink-0 items-center gap-2 px-1.5">
             <Sidebar.Trigger />

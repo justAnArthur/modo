@@ -37,7 +37,8 @@ export default defineConfig([
   {
     ...shared,
     name: 'components',
-    entry: ['index.ts', '{primitives,components,blocks}/**/index.tsx'],
+    // blocks/AI is the AI app's own prototype (pages/AI shows it): docs only, not shipped.
+    entry: ['index.ts', '{primitives,components,blocks}/**/index.tsx', '!blocks/AI/**'],
     target: 'browser',
     plugins: [useClient],
   },

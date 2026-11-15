@@ -6,7 +6,7 @@
 
 import { glyph } from '../../components/status-dot'
 import type { IconComponent } from '../../lib/icon-context'
-import type { SessionStatus } from './mock'
+import type { SessionStatus } from './types'
 
 export const RunningGlyph = glyph('running')
 export const WaitingGlyph = glyph('waiting')

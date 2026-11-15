@@ -22,7 +22,7 @@ import { useSize } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
-import { PROFILES, type Profile } from '../mock'
+import type { Profile } from '../types'
 
 interface ProfileTileProps {
   /** The profile it stands for: an Anthropic profile is an ink tile, a compatible provider an accent one. */
@@ -65,8 +65,8 @@ function ProfileRow({ profile }: { profile: Profile }) {
 }
 
 interface ProfileSwitcherProps {
-  /** The profiles to switch between. Defaults to the mock jobiflow, work, work-personal and zcode profiles. */
-  profiles?: Profile[]
+  /** The profiles to switch between. */
+  profiles: Profile[]
   /** Controlled active profile id. Pair with `onValueChange`. */
   value?: string
   /** Initial active profile id, for an uncontrolled switcher. Defaults to the first profile. */
@@ -99,7 +99,7 @@ interface ProfileSwitcherProps {
  * @example {@include ./examples.mdx}
  */
 export default function ProfileSwitcher({
-  profiles = PROFILES,
+  profiles,
   value,
   defaultValue,
   onValueChange,

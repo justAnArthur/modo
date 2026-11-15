@@ -15,9 +15,9 @@ import Popover from '../../../components/overlays/popover'
 import { useIcon } from '../../../lib/icon-context'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
-import { PROFILES, type Profile } from '../mock'
 import { duration, type LimitPace, paceOf, percent, VERDICT_TEXT } from '../pace'
 import { PaceBar } from '../pace-bar'
+import type { Profile } from '../types'
 
 const VERDICT_WORD = { free: 'on pace', watch: 'only just', tight: 'too fast' } as const
 
@@ -29,8 +29,8 @@ function glanceLimits(limits: LimitPace[]) {
 }
 
 interface ProfileUsageProps {
-  /** The profiles to show. Defaults to the mock jobiflow, work, work-personal and zcode profiles. */
-  profiles?: Profile[]
+  /** The profiles to show. */
+  profiles: Profile[]
   /** Called by the popover's Profiles button. */
   onManage?: () => void
 }
@@ -52,7 +52,7 @@ interface ProfileUsageProps {
  *
  * @example {@include ./examples.mdx}
  */
-export default function ProfileUsage({ profiles = PROFILES, onManage }: ProfileUsageProps) {
+export default function ProfileUsage({ profiles, onManage }: ProfileUsageProps) {
   const Settings = useIcon('settings')
   const paces = profiles.map(paceOf)
 
@@ -103,7 +103,7 @@ export default function ProfileUsage({ profiles = PROFILES, onManage }: ProfileU
                     <List.Row key={pace.limit.label} label={pace.limit.label}>
                       <PaceBar pace={pace} className="w-16" />
                       <span className="w-24 pr-[var(--space-3)] text-right text-caption tabular-nums text-muted-foreground">
-                        {percent(pace.limit.value)} · {duration(pace.window.resetsInHours)}
+                        {percent(pace.limit.value)} · {duration(pace.limit.resetsInHours)}
                       </span>
                     </List.Row>
                   ))}

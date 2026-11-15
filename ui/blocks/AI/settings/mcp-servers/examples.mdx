@@ -1,0 +1,26 @@
+import McpServers from './index'
+import { MCP_SERVERS } from '../../../../pages/AI/mock'
+
+# Servers
+
+Each server's state with its fix at the row's end. Press a row for its command or URL, env and tools.
+
+<div className="@container w-full max-w-3xl">
+  <McpServers servers={MCP_SERVERS} configDir="~/.claude-jobiflow" />
+</div>
+
+# Failed and needing auth
+
+A failed server shows its error; one needing auth says where it signs in.
+
+<div className="@container w-full max-w-3xl">
+  <McpServers servers={MCP_SERVERS} configDir="~/.claude-jobiflow" defaultOpen={['postgres', 'linear']} />
+</div>
+
+# Narrow
+
+Below a medium width, the row fixes fold to their icons.
+
+<div className="@container w-[420px] max-w-full">
+  <McpServers servers={MCP_SERVERS} configDir="~/.claude-jobiflow" />
+</div>

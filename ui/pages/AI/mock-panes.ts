@@ -1,15 +1,19 @@
 /*!
  * Local addition: the side pane's mock data — the session's changed files,
  * an open file, a shell history, a pull request with its checks and
- * reviews, artifacts and background tasks.
+ * reviews, artifacts, background tasks and the profiles the usage pane reads.
  */
 
-export interface PaneChange {
-  path: string
-  status: 'added' | 'modified' | 'deleted'
-  staged: boolean
-  patch: string
-}
+import type { SidePaneData } from '../../blocks/AI/side-pane'
+import type {
+  PaneArtifact,
+  PaneChange,
+  PaneFile,
+  PanePullRequest,
+  PaneShell,
+  PaneTask,
+} from '../../blocks/AI/side-pane-types'
+import { PROFILES } from './mock'
 
 export const PANE_CHANGES: PaneChange[] = [
   {
@@ -76,7 +80,7 @@ export const PANE_CHANGES: PaneChange[] = [
   },
 ]
 
-export const PANE_FILE = {
+export const PANE_FILE: PaneFile = {
   path: 'ui/components/meter/index.tsx',
   language: 'tsx',
   source: `type MeterTone = 'default' | 'warning' | 'error'
@@ -95,14 +99,7 @@ function toneOf(share: number, warnAt = 0.8, errorAt = 0.95): MeterTone {
 }`,
 }
 
-export interface ShellEntry {
-  command: string
-  output: string[]
-  /** Non-zero when the command failed. Defaults to 0. */
-  exit?: number
-}
-
-export const SHELL = {
+export const SHELL: PaneShell = {
   name: 'zsh',
   cwd: '~/Projects/justanarthur/modo',
   prompt: 'modo',
@@ -117,25 +114,10 @@ export const SHELL = {
       output: [' 127 pass', ' 1 fail', 'parser › keeps @values', 'Ran 128 tests across 9 files. [1.84s]'],
       exit: 1,
     },
-  ] satisfies ShellEntry[],
+  ],
 }
 
-export interface PaneCheck {
-  name: string
-  status: 'success' | 'running' | 'failed'
-  /** The run time, or what it is doing while it runs. */
-  detail: string
-  /** The tail of the check's log. */
-  log: string
-}
-
-export interface Review {
-  author: string
-  where: string
-  body: string
-}
-
-export const PULL_REQUEST = {
+export const PULL_REQUEST: PanePullRequest = {
   number: 23,
   title: 'feat(ui): AI app screens',
   branch: 'claude/ai-app-design',
@@ -171,19 +153,11 @@ export const PULL_REQUEST = {
 @justanarthur/modo-ui check: tsc --noEmit
 Exited with code 0`,
     },
-  ] satisfies PaneCheck[],
+  ],
   reviews: [
     { author: 'mira', where: 'side-pane/panes.tsx:42', body: 'Can the commit field remember a draft?' },
     { author: 'jon', where: 'pace-bar.tsx:31', body: 'The tick reads well; keep it.' },
-  ] satisfies Review[],
-}
-
-export type ArtifactKind = 'page' | 'dashboard' | 'document' | 'diagram'
-
-export interface PaneArtifact {
-  title: string
-  kind: ArtifactKind
-  updated: string
+  ],
 }
 
 export const PANE_ARTIFACTS: PaneArtifact[] = [
@@ -192,14 +166,6 @@ export const PANE_ARTIFACTS: PaneArtifact[] = [
   { title: 'Settings IA', kind: 'document', updated: 'Yesterday' },
   { title: 'Side pane review', kind: 'page', updated: '2d' },
 ]
-
-export interface PaneTask {
-  id: string
-  title: string
-  kind: 'agent' | 'shell' | 'session'
-  status: 'running' | 'done' | 'failed' | 'stopped'
-  detail: string
-}
 
 export const PANE_TASKS: PaneTask[] = [
   { id: 'dev', title: 'bun dev ui', kind: 'shell', status: 'running', detail: 'port 5173 · 14m' },
@@ -213,3 +179,13 @@ export const PANE_TASKS: PaneTask[] = [
   { id: 'watch', title: 'bun run test --watch', kind: 'shell', status: 'failed', detail: 'Exited with code 1' },
   { id: 'explore', title: 'Explore: how pages render', kind: 'agent', status: 'done', detail: '14 tool uses · 38s' },
 ]
+
+export const SIDE_PANE_DATA: SidePaneData = {
+  changes: PANE_CHANGES,
+  file: PANE_FILE,
+  shell: SHELL,
+  pr: PULL_REQUEST,
+  artifacts: PANE_ARTIFACTS,
+  tasks: PANE_TASKS,
+  profiles: PROFILES,
+}
