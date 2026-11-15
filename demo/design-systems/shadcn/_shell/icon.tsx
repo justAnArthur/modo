@@ -1,33 +1,25 @@
 /*
  * modo shell adapter — not a documented item.
  *
- * modo's chrome asks for icons by name (lib/src/plugins/slots.ts Icon slot);
+ * modo's chrome asks for icons by name (the Icon slot, `IconSlotProps`);
  * this maps them onto the lucide set the design system already uses.
  */
 
-import { Check, CodeXml, Copy, ExternalLink, Link2, type LucideIcon, Menu, Moon, Package, Sun } from 'lucide-react'
+import type { IconSlotProps } from '@justanarthur/modo'
+import { Check, CodeXml, Copy, Link2, type LucideIcon, Menu, Moon, Package, Sun } from 'lucide-react'
 
 const icons: Record<string, LucideIcon> = {
   code: CodeXml,
   copy: Copy,
   check: Check,
   link: Link2,
-  external: ExternalLink,
   menu: Menu,
   sun: Sun,
   moon: Moon,
   npm: Package,
 }
 
-export default function Icon({
-  name,
-  label,
-}: {
-  /** Which icon to draw: a chrome name or a `socials` key. */
-  name: string
-  /** Accessible text; the button around the icon carries it. Drawn for a name with no glyph. */
-  label: string
-}) {
+export default function Icon({ name, label }: IconSlotProps) {
   if (name === 'github') return <GithubMark />
   const Glyph = icons[name]
   return Glyph ? <Glyph size={16} strokeWidth={1.5} aria-hidden /> : <>{label}</>

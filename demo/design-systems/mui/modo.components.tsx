@@ -1,8 +1,9 @@
+import type { IconSlotProps, SidebarItemProps, SidebarSectionProps, SidebarSlotProps } from '@justanarthur/modo'
 import Box from '@mui/material/Box'
 import ListItemButton from '@mui/material/ListItemButton'
 import SvgIcon from '@mui/material/SvgIcon'
 import Typography from '@mui/material/Typography'
-import { createContext, type ReactNode, useContext } from 'react'
+import { createContext, useContext } from 'react'
 import { MuiProvider } from './theme'
 
 /** How deep a Section sits: a tier is 0, a group folder inside it 1, and so on. */
@@ -13,7 +14,7 @@ const Depth = createContext(0)
  * over dense ListItemButtons, the current page selected.
  * Pinned as the Sidebar slot in modo.config.ts; docs-only, so not an item.
  */
-export function Sidebar({ children }: { children?: ReactNode }) {
+export function Sidebar({ children }: SidebarSlotProps) {
   return (
     <MuiProvider>
       <Box component="nav" data-modo="sidebar-nav">
@@ -23,7 +24,7 @@ export function Sidebar({ children }: { children?: ReactNode }) {
   )
 }
 
-function SidebarSection({ title, children }: { title: string; children?: ReactNode }) {
+function SidebarSection({ title, children }: SidebarSectionProps) {
   const depth = useContext(Depth)
   return (
     <Box component="section" sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
@@ -40,7 +41,7 @@ function SidebarSection({ title, children }: { title: string; children?: ReactNo
   )
 }
 
-function SidebarItem({ href, active, children }: { href: string; active?: boolean; children?: ReactNode }) {
+function SidebarItem({ href, active, children }: SidebarItemProps) {
   return (
     <ListItemButton
       component="a"
@@ -66,8 +67,6 @@ const ICONS: Record<string, string> = {
   copy: 'M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z',
   check: 'M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z',
   link: 'M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z',
-  external:
-    'M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z',
   menu: 'M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z',
   moon: 'M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z',
   sun: 'M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1z',
@@ -76,15 +75,7 @@ const ICONS: Record<string, string> = {
 }
 
 /** The chrome's icons as MUI SvgIcons; a name with no path draws its label. Docs-only, pinned in modo.config.ts. */
-export function Icon({
-  name,
-  label,
-}: {
-  /** Which icon to draw: a chrome name or a `socials` key. */
-  name: string
-  /** Accessible text, drawn for a name with no path. */
-  label: string
-}) {
+export function Icon({ name, label }: IconSlotProps) {
   const d = ICONS[name]
   if (!d) return <>{label}</>
   return (

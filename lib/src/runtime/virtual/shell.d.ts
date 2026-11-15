@@ -1,20 +1,10 @@
 declare module 'virtual:modo-shell' {
-  export type PanelItemExport = {
+  export const shell: import('../../lib/contract').ShellComponents
+  /** The `panel.items` of modo.config.ts, in order. */
+  export const panelItems: Array<{
     label: string
-    bundlePath: string
-    Component: ModoHostComponent
-    cssPaths: string[]
-  }
-  export type ResolvedShellExport = {
-    Button: ModoHostComponent
-    Link: ModoHostComponent
-    Code: ModoHostComponent
-    Select: ModoHostComponent
-    Icon: import('react').ComponentType<{ name: ModoIconName; label: string }>
-    Sidebar: { Root: ModoHostComponent; Item: ModoHostComponent; Section: ModoHostComponent }
-  }
-  export const shell: ResolvedShellExport
-  export const panelItems: PanelItemExport[]
+    Component: import('react').ComponentType<import('../../lib/contract').PanelItemProps>
+  }>
   /** A component `logo` from modo.config.ts; null when there is none or it is an image. */
-  export const Logo: ModoHostComponent | null
+  export const Logo: import('react').ComponentType | null
 }
