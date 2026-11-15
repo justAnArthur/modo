@@ -684,7 +684,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
   },
 )
 
-CompactSlider.displayName = 'SliderCompact'
+CompactSlider.displayName = 'CompactSlider'
 
 export type { SliderEngineProps }
 export { CompactSlider }

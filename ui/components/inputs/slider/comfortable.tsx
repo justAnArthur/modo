@@ -518,7 +518,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, ComfortableSliderProps>(
   },
 )
 
-ComfortableSlider.displayName = 'SliderComfortable'
+ComfortableSlider.displayName = 'ComfortableSlider'
 
 export type { ComfortableSliderProps }
 export { ComfortableSlider }
