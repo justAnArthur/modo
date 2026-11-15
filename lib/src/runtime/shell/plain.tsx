@@ -1,9 +1,6 @@
 import type { AnchorHTMLAttributes, ButtonHTMLAttributes, HTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react'
 
-/* Plain HTML fallbacks. Semantic tags only — structure comes from the lib's
-   structural CSS via data-modo attrs, all visuals from the user's project.
-   The user's primitives/components override these whenever they satisfy the
-   slot contract. */
+// Fallbacks for the slots a host doesn't fill: semantic tags and data-modo hooks, no visuals.
 
 export function PlainButton({ type = 'button', ...rest }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return <button type={type} {...rest} />

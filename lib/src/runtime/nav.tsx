@@ -2,11 +2,11 @@ import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import type { ReactNode } from 'react'
-import { tierPath, tokenPath } from '../lib/paths'
+import { itemPath, tierPath, tokenPath } from '../lib/paths'
 import { cap } from '../lib/text'
 import { TIERS } from '../lib/tiers'
 import { groupTree } from './groups'
-import { usePath, withBase } from './location'
+import { HOME_PATH, staticPage, usePath, withBase } from './location'
 
 export function SidebarNav() {
   const path = usePath()
@@ -17,15 +17,15 @@ export function SidebarNav() {
         // The header already names the system.
         title="Explore"
         items={[
-          { id: '/', name: 'Overview' },
-          { id: '/canvas', name: 'Canvas' },
+          { id: HOME_PATH, name: 'Overview' },
+          { id: staticPage('canvas').href, name: staticPage('canvas').title },
         ]}
         isActive={isActive}
       />
       <NavSection
         title="Foundations"
         overview={tokenPath()}
-        basePath={tokenPath()}
+        href={tokenPath}
         items={tokens.map(g => ({ id: g.name, name: cap(g.name) }))}
         isActive={isActive}
       />
@@ -37,7 +37,7 @@ export function SidebarNav() {
             key={tier}
             title={cap(tier)}
             overview={tierPath(tier)}
-            basePath={tierPath(tier)}
+            href={id => itemPath(tier, id)}
             items={list}
             isActive={isActive}
           />
@@ -49,20 +49,20 @@ export function SidebarNav() {
 
 function NavSection({
   title,
-  basePath,
+  href = id => id,
   overview,
   items,
   isActive,
 }: {
   title: string
-  basePath?: string
-  /** Section landing page, listed first — the per-item links follow. */
+  /** An item's app path; by default its id is one. */
+  href?: (id: string) => string
+  /** The section's landing page, listed before its items. */
   overview?: string
   items: ReadonlyArray<{ id: string; name: string; group?: string }>
   isActive: (href: string) => boolean
 }) {
   const { Item, Section } = shell.Sidebar
-  const href = (id: string) => (basePath ? `${basePath}/${id}` : id)
   const link = (it: { id: string; name: string }) => (
     <Item key={it.id} href={withBase(href(it.id))} active={isActive(href(it.id))}>
       {it.name}
