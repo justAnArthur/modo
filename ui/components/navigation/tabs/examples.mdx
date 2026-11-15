@@ -1,5 +1,5 @@
 import Tabs from './index'
-import { Clock, Settings, SquareLibrary, Star } from 'lucide-react'
+import { Clock, Settings, SquareLibrary, Star, Users } from 'lucide-react'
 
 # Basic
 
@@ -43,7 +43,7 @@ A leading `icon` thickens its stroke while its tab is hovered or active.
 
 FF's Controlled section, without the state: `defaultValue` picks the first
 active tab and the tabs keep their own state. To control them, pass `value`
-+ `onValueChange` (or `selectedIndex` + `onSelect`) instead.
++ `onValueChange` instead.
 
 <div className="flex flex-col gap-4 w-full">
   <Tabs defaultValue="recents">
@@ -57,3 +57,51 @@ active tab and the tabs keep their own state. To control them, pass `value`
     <Tabs.Panel value="favorites"><p className="text-body text-muted-foreground pt-3">Favorites content.</p></Tabs.Panel>
   </Tabs>
 </div>
+
+# Subtle
+
+`variant="subtle"`: a borderless strip whose `bg-active` pill follows the
+selected tab. Arrows move focus; Enter or Space selects.
+
+<div className="flex flex-col gap-4 w-full">
+  <Tabs variant="subtle" defaultValue="teamspaces">
+    <Tabs.List>
+      <Tabs.Item value="teamspaces" label="Teamspaces" />
+      <Tabs.Item value="recents" label="Recents" />
+      <Tabs.Item value="favorites" label="Favorites" />
+      <Tabs.Item value="shared" label="Shared" />
+    </Tabs.List>
+    <Tabs.Panel value="teamspaces"><p className="text-body text-muted-foreground px-3">Teamspaces content goes here.</p></Tabs.Panel>
+    <Tabs.Panel value="recents"><p className="text-body text-muted-foreground px-3">Recents content goes here.</p></Tabs.Panel>
+    <Tabs.Panel value="favorites"><p className="text-body text-muted-foreground px-3">Favorites content goes here.</p></Tabs.Panel>
+    <Tabs.Panel value="shared"><p className="text-body text-muted-foreground px-3">Shared content goes here.</p></Tabs.Panel>
+  </Tabs>
+</div>
+
+## Subtle with icons
+
+An `icon` sits ahead of the label and thickens its stroke while its tab is
+hovered or selected.
+
+<Tabs variant="subtle" defaultValue="teamspaces">
+  <Tabs.List>
+    <Tabs.Item value="teamspaces" icon={SquareLibrary} label="Teamspaces" />
+    <Tabs.Item value="recents" icon={Clock} label="Recents" />
+    <Tabs.Item value="favorites" icon={Star} label="Favorites" />
+    <Tabs.Item value="shared" icon={Users} label="Shared" />
+  </Tabs.List>
+</Tabs>
+
+## Active label
+
+With `activeLabel`, every tab shrinks to its icon and only the selected one
+spells itself out.
+
+<Tabs variant="subtle" activeLabel defaultValue="teamspaces">
+  <Tabs.List>
+    <Tabs.Item value="teamspaces" icon={SquareLibrary} label="Teamspaces" />
+    <Tabs.Item value="recents" icon={Clock} label="Recents" />
+    <Tabs.Item value="favorites" icon={Star} label="Favorites" />
+    <Tabs.Item value="shared" icon={Users} label="Shared" />
+  </Tabs.List>
+</Tabs>
