@@ -104,13 +104,22 @@ popover is currently open.
   <Button variant="ghost" active>Ghost</Button>
 </div>
 
-# As child
+# As a link
 
-`asChild` merges the button's styling onto its single child element —
-here a link — instead of rendering a `<button>`.
+`render` gives the button's styling to another element, here a link,
+instead of a `<button>`. `asChild` does the same with the single child.
 
-<Button asChild variant="tertiary" trailingIcon={ArrowRight}>
-  <a href="https://www.fluidfunctionalism.com" target="_blank" rel="noreferrer">
+<div className="flex flex-wrap items-center gap-2">
+  <Button
+    variant="tertiary"
+    trailingIcon={ArrowRight}
+    render={<a href="https://www.fluidfunctionalism.com" target="_blank" rel="noreferrer" />}
+  >
     Fluid Functionalism
-  </a>
-</Button>
+  </Button>
+  <Button asChild variant="ghost">
+    <a href="https://base-ui.com" target="_blank" rel="noreferrer">
+      Base UI
+    </a>
+  </Button>
+</div>

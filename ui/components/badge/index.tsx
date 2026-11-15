@@ -2,23 +2,7 @@
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/badge.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - `@/lib/*` imports rewritten to relative `../../lib/*` paths.
- * - `BadgeProps` re-declares `variant` (inherited from cva's VariantProps
- *   upstream) and carries the FF docs API-table descriptions on every prop,
- *   so modo's parser lists them; types are unchanged for callers.
- * - TSDoc with the FF docs page's examples added above the component;
- *   `export default Badge` added.
- * - Styling reads DS tokens (AGENTS.md styling): `text-[Npx]` →
- *   `text-<role>[-compact]`; `font-medium` → `weight-medium`; literal colors →
- *   color tokens.
- * - Changes animate (local, in the morph layer's language): a new label or
- *   variant springs the badge from its old width to its new one on
- *   `spring.moderate` (the content clipped on the way) while the label
- *   crossfades with Toast's blur; a color fades over `duration-moderate`, and
- *   the dot scales in and out with the label sliding to make room. The content
- *   sits in one inner span that carries the morph, so the root keeps the
- *   caller's `style`.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
@@ -28,8 +12,8 @@ import { AnimatePresence, animate, motion } from 'motion/react'
 import { forwardRef, type HTMLAttributes, type ReactNode, useLayoutEffect, useRef } from 'react'
 import { useReduceMotion } from '../../lib/reduced-motion'
 import { useShape } from '../../lib/shape-context'
-import { useSizeVariant } from '../../lib/size-context'
-import { spring } from '../../lib/springs'
+import { type SizeVariant, useSizeVariant } from '../../lib/size-context'
+import { spring, springEnter } from '../../lib/springs'
 import { cn } from '../../lib/utils'
 
 const badgeColors = {
@@ -60,7 +44,6 @@ const badgeVariants = cva('inline-flex items-center weight-medium whitespace-now
       solid: '',
       dot: 'border border-border text-foreground',
     },
-    // The two-step size ladder shared by every control — see /docs/sizes.
     size: {
       default: 'h-6 px-2.5 text-caption gap-1.5',
       compact: 'h-5 px-2 text-caption-compact gap-1',
@@ -72,20 +55,9 @@ const badgeVariants = cva('inline-flex items-center weight-medium whitespace-now
   },
 })
 
-type BadgeSizeCanonical = 'default' | 'compact'
+type BadgeSize = SizeVariant
 
-/** Public size values: the canonical two-size scale plus the pre-sizes-system
- *  aliases, kept so existing call sites keep compiling. Aliases resolve onto
- *  the canonical ladder (sm → compact; md/lg → default). */
-type BadgeSize = BadgeSizeCanonical | 'sm' | 'md' | 'lg'
-
-const legacySizeAliases: Partial<Record<BadgeSize, BadgeSizeCanonical>> = {
-  sm: 'compact',
-  md: 'default',
-  lg: 'default',
-}
-
-const { exit: _exit, ...enter } = spring.moderate
+const enter = springEnter(spring.moderate)
 
 /** The label as text, when it is text: the key its crossfade runs on. */
 function textOf(node: ReactNode) {
@@ -93,11 +65,9 @@ function textOf(node: ReactNode) {
   if (parts.every(part => typeof part === 'string' || typeof part === 'number')) return parts.join('')
 }
 
-/* Width morph (local): when the label or the variant changes, the content
-   span springs from its old width to its new one instead of jumping, and the
-   badge follows it. By the time the change commits the span already has its
-   new width, so a ResizeObserver keeps the resting one. At rest the inline
-   width is dropped. */
+/* The content springs from its old width to its new one. By the time a change
+   commits the span already has its new width, so a ResizeObserver keeps the
+   resting one. */
 function useWidthMorph(change: string) {
   const content = useRef<HTMLSpanElement>(null)
   const rest = useRef(0)
@@ -147,7 +117,7 @@ interface BadgeProps
     Omit<VariantProps<typeof badgeVariants>, 'size'> {
   /** Visual style. Solid uses a tinted background; dot shows a colored indicator. Defaults to `"solid"`. */
   variant?: 'solid' | 'dot'
-  /** Step on the size ladder (see Sizes). Legacy sm/md/lg values resolve as aliases (sm → compact; md/lg → default). Defaults to the surrounding SizeProvider, else `"default"`. */
+  /** Step on the size ladder (see Sizes). Defaults to the surrounding SizeProvider, else `"default"`. */
   size?: BadgeSize
   /** Color from the Tailwind palette: gray, red, orange, amber, yellow, lime, green, emerald, teal, cyan, blue, indigo, violet, purple, fuchsia, pink, rose. Defaults to `"gray"`. */
   color?: BadgeColor
@@ -173,14 +143,7 @@ interface BadgeProps
 const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
   ({ className, variant = 'solid', size: sizeProp, color = 'gray', children, style, ...props }, ref) => {
     const shape = useShape()
-    // Resolve the size: explicit prop (legacy aliases mapped onto the
-    // canonical ladder) > surrounding SizeProvider > default.
-    const contextSize = useSizeVariant()
-    const size: BadgeSizeCanonical = sizeProp
-      ? (legacySizeAliases[sizeProp] ?? (sizeProp as BadgeSizeCanonical))
-      : contextSize === 'compact'
-        ? 'compact'
-        : 'default'
+    const size = useSizeVariant(sizeProp)
     const colorValue = badgeColors[color]
     const isSolid = variant === 'solid'
     const dotSize = size === 'compact' ? 6 : 7
@@ -210,9 +173,8 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
         style={{ ...colorStyle, ...style }}
         {...props}
       >
-        {/* The morphing box: it may shrink below its content while the width
-            springs (min-w-0), clipping it sideways only, and it positions
-            whatever pops out of the flow on its way out. */}
+        {/* min-w-0: it may shrink below its content while the width springs,
+            clipping sideways only. */}
         <span ref={content} className="relative inline-flex min-w-0 items-center gap-[inherit] overflow-x-clip">
           <AnimatePresence mode="popLayout" initial={false}>
             {!isSolid && (
@@ -232,13 +194,10 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
             )}
           </AnimatePresence>
           <AnimatePresence mode="popLayout" initial={false}>
-            {/* text-box needs a block container — the badge root is a flex
-                container, so the label gets its own span. Height is fixed
-                (h-*), so trimming only recenters the letterforms. */}
             <motion.span
               key={label ?? 'label'}
               layout="position"
-              className="[text-box:trim-both_cap_alphabetic]"
+              className="text-trim"
               initial={{ opacity: 0, filter: 'blur(4px)' }}
               // At rest the label keeps no filter, which would make it its own stacking context.
               animate={{ opacity: 1, filter: 'blur(0px)', transitionEnd: { filter: 'none' } }}
