@@ -56,9 +56,23 @@
   font-family: var(--modo-font-sans);
 }
 
+/* Both asides are columns: the header stays put and the Root below it fills
+   the rest and scrolls on its own, so the brand never scrolls away. */
+[data-modo="sidebar"],
+[data-modo="panel"] {
+  display: flex;
+  flex-direction: column;
+}
+
+[data-modo="sidebar"] > :not([data-modo="header"]),
+[data-modo="panel"] > * {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 [data-modo="sidebar"] {
   grid-area: sidebar;
-  overflow-y: auto;
   position: sticky;
   top: 0;
   height: 100vh;
@@ -75,7 +89,6 @@
 
 [data-modo="panel"] {
   grid-area: panel;
-  overflow-y: auto;
   position: sticky;
   top: 0;
   height: 100vh;
