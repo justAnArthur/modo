@@ -14,31 +14,20 @@
 'use client'
 
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover'
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react'
+import { useMergeRefs } from '../../../lib/merge-refs'
 import {
-  createContext,
-  forwardRef,
-  type HTMLAttributes,
-  type ReactNode,
-  type RefObject,
-  useContext,
-  useImperativeHandle,
-  useMemo,
-} from 'react'
-import { MorphSurface } from '../../../lib/morph-layers'
-import { useShape } from '../../../lib/shape-context'
-import { type SlotProps, slotRender } from '../../../lib/slot'
-import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
-import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
-import { useControllableState } from '../../../lib/use-controllable-state'
-import { inPlaceOffset, type MorphOrigin, opensInPlace, useMorph, useMorphOrigin } from '../../../lib/use-morph'
+  type AnchorProps,
+  OverlayContext,
+  positionerProps,
+  useOverlay,
+  useOverlayRoot,
+  usePortalContainer,
+} from '../../../lib/overlay'
+import { PopupSurface } from '../../../lib/popup-surface'
+import { type SlotProps, slotPart } from '../../../lib/slot'
+import { type MorphProps, useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-
-interface PopoverContextValue {
-  open: boolean
-  origin: RefObject<MorphOrigin>
-}
-
-const PopoverContext = createContext<PopoverContextValue>({ open: false, origin: { current: {} } })
 
 interface PopoverTriggerProps extends SlotProps {
   /** Open on hover as well as on press (a tap still toggles it on touch). Defaults to `false`. */
@@ -49,49 +38,10 @@ interface PopoverTriggerProps extends SlotProps {
   closeDelay?: number
 }
 
-const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>(
-  ({ render, asChild, children, ...props }, ref) => {
-    const el = slotRender(render, asChild, children)
-    return el ? (
-      <PopoverPrimitive.Trigger ref={ref} render={el} {...props} />
-    ) : (
-      <PopoverPrimitive.Trigger ref={ref} {...props}>
-        {children}
-      </PopoverPrimitive.Trigger>
-    )
-  },
-)
-PopoverTrigger.displayName = 'PopoverTrigger'
+const PopoverTrigger = slotPart<PopoverTriggerProps>(PopoverPrimitive.Trigger, 'PopoverTrigger')
+const PopoverClose = slotPart(PopoverPrimitive.Close, 'PopoverClose')
 
-const PopoverClose = forwardRef<HTMLButtonElement, SlotProps>(({ render, asChild, children, ...props }, ref) => {
-  const el = slotRender(render, asChild, children)
-  return el ? (
-    <PopoverPrimitive.Close ref={ref} render={el} {...props} />
-  ) : (
-    <PopoverPrimitive.Close ref={ref} {...props}>
-      {children}
-    </PopoverPrimitive.Close>
-  )
-})
-PopoverClose.displayName = 'PopoverClose'
-
-interface PopoverContentProps extends HTMLAttributes<HTMLDivElement> {
-  /** Side of the trigger the panel opens on; it flips when there is no room. Defaults to `'bottom'`. */
-  side?: 'top' | 'right' | 'bottom' | 'left'
-  /** Alignment along that side. Defaults to `'center'`, or `'start'` when the panel opens in place (`effect="morph"` with `hideSource`). */
-  align?: 'start' | 'center' | 'end'
-  /** Gap between trigger and panel in px — the length of the goo neck. Ignored when the panel opens in place over its trigger (`effect="morph"` with `hideSource`). Defaults to `12`. */
-  sideOffset?: number
-  /** Where the panel grows from (see Morph): the pressed trigger, the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
-  from?: 'trigger' | 'pointer' | 'center' | 'top' | 'right' | 'bottom' | 'left' | RefObject<HTMLElement | null>
-  /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. Defaults to `'goo'`. */
-  effect?: 'goo' | 'morph' | 'slide' | 'fade'
-  /** Hide the trigger while open, so it reads as turning into the panel. Defaults to `false`. */
-  hideSource?: boolean
-  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'slow'`. */
-  tier?: 'moderate' | 'slow'
-  /** Portal target. Defaults to the document body. */
-  container?: HTMLElement | null
+interface PopoverContentProps extends AnchorProps, MorphProps, HTMLAttributes<HTMLDivElement> {
   /** Classes for the panel's content box: padding, width, layout. */
   className?: string
   /** The panel's content. Everything inside reads the popover's surface level as its substrate. */
@@ -99,50 +49,26 @@ interface PopoverContentProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const PopoverContent = forwardRef<HTMLDivElement, PopoverContentProps>(
-  (
-    {
-      side = 'bottom',
-      align,
-      sideOffset = 12,
-      from,
-      effect,
-      hideSource,
-      tier,
-      container,
-      className,
-      children,
-      ...props
-    },
-    ref,
-  ) => {
-    const { open, origin } = useContext(PopoverContext)
+  ({ side, align, sideOffset, from, effect, hideSource, tier, container, className, children, ...props }, ref) => {
+    const { open, origin } = useOverlay('Popover.Content')
     const morph = useMorph(open, origin, { from, effect, hideSource, tier })
-    const inPlace = opensInPlace({ effect, hideSource })
-    useImperativeHandle(ref, () => morph.popup as HTMLDivElement, [morph.popup])
-    const shape = useShape()
-    // Fixed shadow, like the dropdown and select menus (see Elevated).
-    const level = Math.min(useSurface() + 2, 8)
+    const popupRef = useMergeRefs(ref, morph.popupRef)
 
     return (
-      <PopoverPrimitive.Portal container={container ?? undefined}>
+      <PopoverPrimitive.Portal container={usePortalContainer(container)}>
         <PopoverPrimitive.Positioner
-          side={side}
-          align={align ?? (inPlace ? 'start' : 'center')}
-          sideOffset={inPlace ? inPlaceOffset : sideOffset}
-          className="z-50 outline-none"
+          {...positionerProps(
+            { side, align, sideOffset, effect, hideSource },
+            { side: 'bottom', align: 'center', sideOffset: 12 },
+          )}
         >
-          <PopoverPrimitive.Popup ref={morph.popupRef} className="relative outline-none" {...props}>
-            <SurfaceProvider value={level}>
-              <MorphSurface
-                morph={morph}
-                bg={SURFACE_BG[level]}
-                shadow={SURFACE_SHADOW[3]}
-                radius={shape.container}
-                className={cn('flex w-max max-w-[min(92vw,20rem)] flex-col gap-1 p-4', className)}
-              >
-                {children}
-              </MorphSurface>
-            </SurfaceProvider>
+          <PopoverPrimitive.Popup ref={popupRef} className="relative outline-none" {...props}>
+            <PopupSurface
+              morph={morph}
+              className={cn('flex w-max max-w-[min(92vw,20rem)] flex-col gap-1 p-4', className)}
+            >
+              {children}
+            </PopupSurface>
           </PopoverPrimitive.Popup>
         </PopoverPrimitive.Positioner>
       </PopoverPrimitive.Portal>
@@ -201,9 +127,11 @@ interface PopoverProps {
  * Statics:
  * - `Popover.Trigger` — the control that opens it: `render={<Button/>}` or
  *   `asChild`; `openOnHover`, `delay`, `closeDelay`.
- * - `Popover.Content` — the panel: `side`, `align` (the trigger's `start`,
- *   `center` or `end`), `sideOffset` and the morph options `from`,
- *   `effect`, `hideSource`, `tier`.
+ * - `Popover.Content` — the panel: `side` (default `'bottom'`), `align` (the
+ *   trigger's `start`, `center` or `end`; default `'center'`, or `'start'`
+ *   when it opens in place), `sideOffset` (default `12`), `container`, and
+ *   the morph options `from` (default `'trigger'`), `effect` (default
+ *   `'goo'`), `hideSource`, `tier` (default `'slow'`).
  * - `Popover.Title` / `Popover.Description` — its labelled heading and
  *   supporting line, wired for screen readers.
  * - `Popover.Close` — closes it; same `render` / `asChild` shape.
@@ -214,24 +142,15 @@ interface PopoverProps {
  * @license MIT © 2026 Saurabh Chauhan
  * @license MIT © 2024 ibelick
  */
-function Popover({ open, defaultOpen = false, onOpenChange, modal = false, children }: PopoverProps) {
-  const [current, setCurrent] = useControllableState(open, defaultOpen, onOpenChange)
-  const { origin, capture } = useMorphOrigin()
-  const ctx = useMemo(() => ({ open: current, origin }), [current, origin])
+function Popover({ open, defaultOpen, onOpenChange, modal = false, children }: PopoverProps) {
+  const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
 
   return (
-    <PopoverContext.Provider value={ctx}>
-      <PopoverPrimitive.Root
-        open={current}
-        modal={modal}
-        onOpenChange={(next, details) => {
-          if (next) capture(details)
-          setCurrent(next)
-        }}
-      >
+    <OverlayContext.Provider value={root.state}>
+      <PopoverPrimitive.Root open={root.open} modal={modal} onOpenChange={root.onOpenChange}>
         {children}
       </PopoverPrimitive.Root>
-    </PopoverContext.Provider>
+    </OverlayContext.Provider>
   )
 }
 

@@ -7,9 +7,10 @@
 'use client'
 
 import { Field } from '@base-ui/react/field'
-import { forwardRef, type TextareaHTMLAttributes, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { forwardRef, type TextareaHTMLAttributes, useRef } from 'react'
 import { type FieldVariant, focusControlOnPress, useFieldBox } from '../../../lib/field-classes'
 import type { SizeVariant } from '../../../lib/size-context'
+import { useAutosizeTextarea } from '../../../lib/use-autosize-textarea'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
 
@@ -84,35 +85,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     const textareaRef = useRef<HTMLTextAreaElement | null>(null)
     const box = useFieldBox({ variant, invalid, disabled, size })
 
-    const resize = useCallback(() => {
-      const el = textareaRef.current
-      if (!el) return
-      el.style.height = 'auto'
-      const lineHeight = Number.parseFloat(getComputedStyle(el).lineHeight)
-      const max = lineHeight * Math.max(maxRows, minRows)
-      el.style.height = `${Math.min(Math.max(el.scrollHeight, lineHeight * minRows), max)}px`
-      el.style.overflowY = el.scrollHeight > max ? 'auto' : 'hidden'
-    }, [minRows, maxRows])
-
-    // Layout effect: the new height lands before paint, so a wrapped line
-    // never flashes a scrollbar. `value` and the size step aren't read here,
-    // but they change the content height `resize` measures.
-    useLayoutEffect(resize, [resize, value, box.size.variant])
-
-    // The first measure can run while an ancestor is still at (near-)zero
-    // width. Width-gated, so the observer never loops on its own height writes.
-    useEffect(() => {
-      const el = textareaRef.current
-      if (!el) return
-      let lastWidth = el.offsetWidth
-      const observer = new ResizeObserver(() => {
-        if (el.offsetWidth === lastWidth) return
-        lastWidth = el.offsetWidth
-        resize()
-      })
-      observer.observe(el)
-      return () => observer.disconnect()
-    }, [resize])
+    useAutosizeTextarea(textareaRef, { minRows, maxRows }, [value, box.size.variant])
 
     return (
       // biome-ignore lint/a11y/noStaticElementInteractions: the textarea is the focusable control; the box only forwards pointer focus from its padding.
