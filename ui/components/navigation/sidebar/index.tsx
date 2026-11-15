@@ -1,26 +1,8 @@
-// biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
 /*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/sidebar.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
- * Local modifications:
- * - `framer-motion` → `motion/react`; `@/lib/*`
- *   imports rewritten to `../../../lib/*`, `@/components/ui/scroll-area` →
- *   `../../../primitives/scroll-area`, `@/components/ui/sidebar-{core,menu}` →
- *   the siblings `./sidebar-core` / `./sidebar-menu`.
- * - The mobile sheet is the DS's `Sheet` (Base UI Drawer through the morph
- *   layer): it grows out of its edge with the goo neck on `spring.goo`
- *   and swipes away, replacing upstream's Dialog with a framer slide, its
- *   held-open exit and its `bg-black` scrim.
- * - `SidebarProps` re-declared one member per line with the FF docs text;
- *   `value` / `defaultValue` / `onValueChange` added: the sidebar holds the
- *   selection its menu buttons' `value`s read (`SidebarSelection`), so rows
- *   select without state of their own.
- * - The parts hang off `Sidebar` as statics (`Sidebar.Provider`,
- *   `Sidebar.Menu`, …), typed through a `SidebarComponent` cast; upstream's
- *   named re-exports are kept.
- * - Upstream's `.scroll-divider` (app/globals.css) ships beside it as
- *   `sidebar.css`.
+ * Local changes: see PORTING.md.
  */
 
 'use client'
@@ -39,37 +21,23 @@ import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
 import { ScrollArea } from '../../../primitives/scroll-area'
 import { Sheet } from '../../overlays/sheet'
+import { SidebarSelection } from './menu-scope'
+import { type SidebarSide, useSidebar } from './sidebar-context'
 import {
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupAction,
   SidebarGroupActions,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInput,
-  SidebarInset,
-  SidebarProvider,
-  SidebarRail,
-  SidebarSeparator,
-  SidebarShell,
-  type SidebarSide,
-  SidebarTrigger,
-  useSidebar,
-} from './sidebar-core'
-import {
-  SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuActions,
-  SidebarMenuBadge,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSkeleton,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  SidebarSelection,
-} from './sidebar-menu'
+} from './sidebar-group'
+import { SidebarMenuAction, SidebarMenuActions, SidebarMenuBadge, SidebarMenuSkeleton } from './sidebar-menu-actions'
+import { SidebarMenuButton } from './sidebar-menu-button'
+import { SidebarMenu, SidebarMenuItem, SidebarMenuSubItem } from './sidebar-menu-item'
+import { SidebarMenuSub, SidebarMenuSubButton } from './sidebar-menu-sub'
+import { SidebarFooter, SidebarHeader, SidebarInput, SidebarInset, SidebarSeparator } from './sidebar-parts'
+import { SidebarProvider } from './sidebar-provider'
+import { SidebarRail, SidebarTrigger } from './sidebar-rail'
+import { SidebarShell } from './sidebar-shell'
 
 function SidebarSheet({ side, children }: { side: SidebarSide; children: ReactNode }) {
   const { openMobile, setOpenMobile, widthMobile } = useSidebar()
@@ -89,8 +57,6 @@ function SidebarSheet({ side, children }: { side: SidebarSide; children: ReactNo
     </Sheet>
   )
 }
-
-// ─── Sidebar ─────────────────────────────────────────────────────────────────
 
 interface SidebarProps
   extends Omit<
@@ -171,8 +137,10 @@ type SidebarComponent = ForwardRefExoticComponent<SidebarProps & RefAttributes<H
  * state (`open` / `defaultOpen` / `onOpenChange`, kept in the `sidebar_state`
  * cookie unless `persist={false}`), the `width` and `widthMobile`, the
  * `mobileBreakpoint` under which it becomes a drawer, `openOnHover` (below)
- * and the bare `shortcut` key (`[` for a left sidebar,
- * `]` for a right one; `null` turns it off). It fills the viewport; pass
+ * and the bare `shortcut` key (`[` for a left sidebar, `]` for a right one;
+ * `null` turns it off). With focus inside nested providers the innermost
+ * answers; with focus on the page, a `shortcutScope="page"` provider wins
+ * over others with the same key. It fills the viewport; pass
  * `className="h-full min-h-0"` to fill a bounded frame instead.
  *
  * Drag the rail on the inner edge to resize the sidebar (160–360px); throw
@@ -246,16 +214,11 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
     ref,
   ) => {
     const { isMobile, width, registerSide } = useSidebar()
-    const [value, setValue] = useControllableState<string | undefined>(
-      valueProp,
-      defaultValue,
-      onValueChange as ((value: string | undefined) => void) | undefined,
-    )
+    const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
     const selection = useMemo(() => ({ value, select: setValue }), [value, setValue])
     const children = <SidebarSelection.Provider value={selection}>{parts}</SidebarSelection.Provider>
 
-    // The provider mirrors the side into the default shortcut ("[" / "]")
-    // and the rail handle.
+    // The provider mirrors the side into the default shortcut and the rail.
     useEffect(() => registerSide(side), [side, registerSide])
 
     if (collapsible === 'none') {
@@ -284,11 +247,8 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
       )
     }
 
-    // The desktop shell stays MOUNTED across the drawer breakpoint — its
-    // breakpoint classes fade it out (opacity + display, allow-discrete)
-    // instead of this component unmounting it, which snapped the rail away
-    // the instant the window shrank. The sheet mounts alongside it below the
-    // breakpoint; the hidden shell costs nothing visible (display: none).
+    // The shell stays mounted across the drawer breakpoint, so its classes
+    // can fade it out; the sheet mounts beside it below the breakpoint.
     return (
       <>
         {isMobile && <SidebarSheet side={side}>{children}</SidebarSheet>}
@@ -311,8 +271,6 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
 ) as SidebarComponent
 Sidebar.displayName = 'Sidebar'
 
-// ─── SidebarContent ──────────────────────────────────────────────────────────
-
 export interface SidebarContentProps extends HTMLAttributes<HTMLDivElement> {
   viewportClassName?: string
 }
@@ -321,11 +279,9 @@ const SidebarContent = forwardRef<HTMLDivElement, SidebarContentProps>(
   ({ className, viewportClassName, children, ...props }, ref) => {
     const { isMobile } = useSidebar()
 
-    // Inside the mobile sheet, the sheet's flex column owns layout and this
-    // region scrolls natively — a nested ScrollArea would double-scroll. The
-    // boundary hairline still needs a frame to ride: scroll-divider can't sit
-    // on the scroller itself (its own fade mask would erase the line), so the
-    // region is wrapped the way ScrollArea wraps its viewport on desktop.
+    // In the sheet this region scrolls natively (a ScrollArea would
+    // double-scroll). The hairline can't sit on the scroller, whose fade mask
+    // would erase it, so the region is wrapped as ScrollArea wraps its viewport.
     if (isMobile) {
       return (
         <div className="scroll-divider [--scroll-divider-inset:8px] flex min-h-0 w-full flex-1 flex-col">
@@ -341,10 +297,8 @@ const SidebarContent = forwardRef<HTMLDivElement, SidebarContentProps>(
       )
     }
 
-    // The scroll primitive wraps children in an inline-styled sizer that
-    // sizes to content — rows would stop shrinking near the min width
-    // instead of truncating, so the viewport's direct child is forced back
-    // to a plain shrinkable block.
+    // ScrollArea's content sizer would stop rows shrinking near the min width
+    // instead of truncating: it is forced back to a plain block.
     return (
       <ScrollArea
         className={cn('scroll-divider min-h-0 w-full flex-1', className)}
@@ -386,21 +340,9 @@ Object.assign(Sidebar, {
   MenuSubButton: SidebarMenuSubButton,
 })
 
-export type {
-  SidebarCollapsible,
-  SidebarContextValue,
-  SidebarGroupActionProps,
-  SidebarGroupLabelProps,
-  SidebarInputProps,
-  SidebarInsetProps,
-  SidebarProviderProps,
-  SidebarRailProps,
-  SidebarSectionProps,
-  SidebarSide,
-  SidebarTriggerProps,
-  SidebarVariant,
-} from './sidebar-core'
-// Re-export the flavor-neutral parts so `sidebar` is a one-stop import.
+export type { SidebarSelectionValue } from './menu-scope'
+export { SidebarSelection } from './menu-scope'
+export type { SidebarCollapsible, SidebarContextValue, SidebarSide, SidebarVariant } from './sidebar-context'
 export {
   SIDEBAR_COOKIE_MAX_AGE,
   SIDEBAR_COOKIE_NAME,
@@ -410,47 +352,41 @@ export {
   SIDEBAR_MIN_WIDTH,
   SIDEBAR_WIDTH,
   SIDEBAR_WIDTH_MOBILE,
-  SidebarFooter,
+  useSidebar,
+} from './sidebar-context'
+export type {
+  SidebarGroupActionProps,
+  SidebarGroupActionsProps,
+  SidebarGroupLabelProps,
+  SidebarGroupProps,
+} from './sidebar-group'
+export {
   SidebarGroup,
   SidebarGroupAction,
   SidebarGroupActions,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
-  SidebarInput,
-  SidebarInset,
-  SidebarProvider,
-  SidebarRail,
-  SidebarSeparator,
-  SidebarTrigger,
-  useSidebar,
-} from './sidebar-core'
+} from './sidebar-group'
 export type {
   SidebarMenuActionProps,
+  SidebarMenuActionsProps,
   SidebarMenuBadgeProps,
-  SidebarMenuButtonProps,
-  SidebarMenuItemProps,
-  SidebarMenuProps,
   SidebarMenuSkeletonProps,
-  SidebarMenuSubButtonProps,
-  SidebarMenuSubItemProps,
-  SidebarMenuSubProps,
-  SidebarSelectionValue,
-} from './sidebar-menu'
-export {
-  SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuActions,
-  SidebarMenuBadge,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSkeleton,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
-  SidebarSelection,
-  sidebarMenuButtonVariants,
-} from './sidebar-menu'
+} from './sidebar-menu-actions'
+export { SidebarMenuAction, SidebarMenuActions, SidebarMenuBadge, SidebarMenuSkeleton } from './sidebar-menu-actions'
+export type { SidebarMenuButtonProps } from './sidebar-menu-button'
+export { SidebarMenuButton, sidebarMenuButtonVariants } from './sidebar-menu-button'
+export type { SidebarMenuItemProps, SidebarMenuProps, SidebarMenuSubItemProps } from './sidebar-menu-item'
+export { SidebarMenu, SidebarMenuItem, SidebarMenuSubItem } from './sidebar-menu-item'
+export type { SidebarMenuSubButtonProps, SidebarMenuSubProps } from './sidebar-menu-sub'
+export { SidebarMenuSub, SidebarMenuSubButton } from './sidebar-menu-sub'
+export type { SidebarInputProps, SidebarInsetProps, SidebarSectionProps } from './sidebar-parts'
+export { SidebarFooter, SidebarHeader, SidebarInput, SidebarInset, SidebarSeparator } from './sidebar-parts'
+export type { SidebarProviderProps } from './sidebar-provider'
+export { SidebarProvider } from './sidebar-provider'
+export type { SidebarRailProps, SidebarTriggerProps } from './sidebar-rail'
+export { SidebarRail, SidebarTrigger } from './sidebar-rail'
+export type { SidebarShortcutScope } from './sidebar-shortcut'
 export type { SidebarProps }
 export { Sidebar, SidebarContent }
 
