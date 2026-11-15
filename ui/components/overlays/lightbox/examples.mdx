@@ -1,0 +1,29 @@
+import Lightbox from './index'
+
+# Attachment strip
+
+Press a thumbnail: its image grows out of it. Step with the arrow keys, the side buttons or a swipe; Escape shrinks it back into the thumbnail of the image showing. Click the image to zoom.
+
+<Lightbox
+  items={[
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='1600' height='1000' viewBox='0 0 1600 1000'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF'/><stop offset='1' stop-color='%231E2A4A'/></radialGradient><rect width='1600' height='1000' fill='url(%23a)'/></svg>", alt: 'Dashboard screenshot', caption: 'The new dashboard' },
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='1400' viewBox='0 0 1000 1400'><radialGradient id='a' cx='.7' cy='.2' r='1'><stop stop-color='%23FFB36B'/><stop offset='1' stop-color='%234A2A1E'/></radialGradient><rect width='1000' height='1400' fill='url(%23a)'/></svg>", alt: 'Mobile settings screen', caption: 'Settings on a phone' },
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='1400' height='1400' viewBox='0 0 1400 1400'><radialGradient id='a' cx='.5' cy='.5' r='1'><stop stop-color='%237BE0A8'/><stop offset='1' stop-color='%231E4A35'/></radialGradient><rect width='1400' height='1400' fill='url(%23a)'/></svg>", alt: 'App icon draft', caption: 'Icon, third draft' },
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='1800' height='900' viewBox='0 0 1800 900'><radialGradient id='a' cx='.8' cy='.8' r='1'><stop stop-color='%23D18BFF'/><stop offset='1' stop-color='%232E1E4A'/></radialGradient><rect width='1800' height='900' fill='url(%23a)'/></svg>", alt: 'Onboarding banner', caption: 'Onboarding banner' },
+  ]}
+>
+  <div className="flex gap-2">
+    <Lightbox.Trigger index={0} />
+    <Lightbox.Trigger index={1} />
+    <Lightbox.Trigger index={2} />
+    <Lightbox.Trigger index={3} />
+  </div>
+</Lightbox>
+
+# One image, no zoom
+
+A single image has no stepping; `zoom={false}` keeps clicks on the image inert.
+
+<Lightbox zoom={false} items={[{ src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='1600' height='1000' viewBox='0 0 1600 1000'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF'/><stop offset='1' stop-color='%231E2A4A'/></radialGradient><rect width='1600' height='1000' fill='url(%23a)'/></svg>", alt: 'Dashboard screenshot' }]}>
+  <Lightbox.Trigger index={0} className="h-24 w-40" />
+</Lightbox>

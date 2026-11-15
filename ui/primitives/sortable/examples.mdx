@@ -1,0 +1,36 @@
+import Sortable from './index'
+
+# Pinned sessions
+
+Drag a session by its grip, or focus the grip and press Space, the arrow keys, then Space again. Escape puts it back.
+
+<div className="w-full max-w-xs">
+  <Sortable
+    label="Pinned sessions"
+    handle
+    className="gap-1"
+    items={[
+      { id: 'auth', label: 'Fix the auth redirect', content: <div className="flex h-9 items-center gap-2 px-2"><Sortable.Handle /><span className="min-w-0 flex-1 truncate text-body text-foreground">Fix the auth redirect</span><span className="text-caption text-muted-foreground">2h</span></div> },
+      { id: 'docs', label: 'Write the migration guide', content: <div className="flex h-9 items-center gap-2 px-2"><Sortable.Handle /><span className="min-w-0 flex-1 truncate text-body text-foreground">Write the migration guide</span><span className="text-caption text-muted-foreground">1d</span></div> },
+      { id: 'perf', label: 'Profile the cold start', content: <div className="flex h-9 items-center gap-2 px-2"><Sortable.Handle /><span className="min-w-0 flex-1 truncate text-body text-foreground">Profile the cold start</span><span className="text-caption text-muted-foreground">3d</span></div> },
+      { id: 'ci', label: 'Flaky CI on Windows', content: <div className="flex h-9 items-center gap-2 px-2"><Sortable.Handle /><span className="min-w-0 flex-1 truncate text-body text-foreground">Flaky CI on Windows</span><span className="text-caption text-muted-foreground">1w</span></div> },
+    ]}
+  />
+</div>
+
+# Tabs
+
+A horizontal list drags by the whole item; Left and Right move a lifted tab.
+
+<Sortable
+  label="Open files"
+  orientation="horizontal"
+  className="gap-1"
+  itemClassName="flex h-9 items-center px-3 text-body text-foreground"
+  items={[
+    { id: 'index', label: 'index.ts' },
+    { id: 'app', label: 'app.tsx' },
+    { id: 'styles', label: 'styles.css' },
+    { id: 'readme', label: 'README.md' },
+  ]}
+/>

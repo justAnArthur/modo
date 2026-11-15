@@ -54,6 +54,14 @@ controlled + uncontrolled.
 | Rendered markdown | `Markdown` (a string, streaming-safe) over `Prose` (type and rhythm) |
 | Terminal or log output | `LogView` (ANSI colors, follow, long logs) |
 | A split you can drag | `Resizable` (`.Panel`, `.Handle`) |
+| A file or outline hierarchy | `Tree` (expand, select, typeahead) |
+| Where you are in a path | `Breadcrumb` (middle crumbs fold into a menu) |
+| A title you rename in place | `EditableText` |
+| Pairs to edit (env vars, headers) | `KeyValue` (secret masking, duplicate keys invalid) |
+| Nothing here yet | `EmptyState` (`size="compact"` for panes) |
+| Reorder by drag or keyboard | `Sortable` (`.Handle`) |
+| Thousands of rows | `VirtualList` (`scrollToIndex`) |
+| Images full-window | `Lightbox` (`.Trigger` per thumbnail) |
 | A desktop app window | `DesktopShell` block (title bar, two sidebars, main card) |
 | A file's change | `Diff` (a unified patch string, `path` header with counts) |
 | A scroll region | `ScrollArea` (+ `scroll-fade`) |

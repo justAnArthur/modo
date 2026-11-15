@@ -238,12 +238,13 @@ becomes the one block.
 | components | calendar, date-picker, date-range-picker, time-picker, duration-picker, month-picker (group `inputs/date-time`) | — (local, on react-day-picker) | — |
 | components | sidebar | `base/sidebar.tsx` + `default/sidebar-core.tsx` + `default/sidebar-menu.tsx` | sidebar |
 | components | `log-view` (LogView), AI group `markdown` (Markdown) | — (local) | — |
-| primitives | `resizable` (Resizable) | — (local) | — |
+| primitives | `resizable` (Resizable), `sortable` (Sortable), `virtual-list` (VirtualList) | — (local) | — |
+| components | `navigation/tree` (Tree), `navigation/breadcrumb` (Breadcrumb), `inputs/editable-text` (EditableText), `inputs/key-value` (KeyValue), `empty-state` (EmptyState), `overlays/lightbox` (Lightbox) | — (local) | — |
 | blocks | `desktop-shell` (DesktopShell) | — (local) | — |
 | components | AI group: `prose`, `message`, `reasoning`, `tool-call`, `agent-run`, `work-summary`, `todo-list`, `recap`, `chapter-nav`, `prompt-card`, `permission-request`, `question-prompt`, `plan-approval` | — (local) | — |
 | components | `avatar`, `kbd`, `list` (List), `spinner`, `status-dot` (StatusDot), `inputs/choice-list` (ChoiceList), `meter` (Meter), `shell-card` (ShellCard), `diff` (Diff) | — (local) | — |
 | blocks | `sidebar-app` (SidebarApp) | the preset generator's output + `blocks/sidebar-*` | sidebar, preset `sa1FQfCxH6` |
-| blocks | profile-switcher, profile-usage, session-sidebar, session-board, transcript, agent-prompt, composer, side-pane, changes-pane, file-pane, terminal-pane, pr-pane, tasks-pane, artifacts-pane, usage-pane; settings group: mcp-servers, hooks, plugins, memory, worktrees, notifications, extensions, settings-window (group `AI`, docs only: the package build leaves `blocks/AI` out) | — (local) | — |
+| blocks | profile-switcher, profile-usage, session-sidebar, session-board, transcript, agent-prompt, composer, side-pane, changes-pane, file-pane, terminal-pane, pr-pane, tasks-pane, artifacts-pane, usage-pane; profile-onboarding, inbox, transcript-search, failure-states, shortcuts-sheet, command-palette, mcp-server-dialog, hook-dialog, permission-rules, plugin-catalog; settings group: mcp-servers, hooks, plugins, memory, worktrees, notifications, extensions, settings-window (group `AI`, docs only: the package build leaves `blocks/AI` out) | — (local) | — |
 | pages | overview, workspace, new-session, interaction-prompts, profiles, settings (group `AI`) | — (local) | — |
 
 Button lives in `components/` to mirror the FF docs, and `modo.config.ts`

@@ -13,6 +13,7 @@
  * - The AI app's glyphs (`terminal` … `history`): tools, panes,
  *   session states and settings sections for `blocks/AI` and
  *   `pages/AI`.
+ * - `eye-off` / `grip-vertical`: KeyValue's secret reveal and Sortable's handle.
  */
 
 'use client'
@@ -55,6 +56,7 @@ import {
   EllipsisVertical,
   ExternalLink,
   Eye,
+  EyeOff,
   File,
   FileDiff,
   FilePlus,
@@ -66,6 +68,7 @@ import {
   GitFork,
   GitPullRequest,
   Globe,
+  GripVertical,
   Heart,
   History,
   Home,
@@ -256,6 +259,8 @@ export type IconName =
   | 'layout-dashboard'
   | 'square-kanban'
   | 'text-wrap'
+  | 'eye-off'
+  | 'grip-vertical'
 
 export const defaultIcons: Record<IconName, IconComponent> = {
   'chevron-right': ChevronRight,
@@ -371,6 +376,8 @@ export const defaultIcons: Record<IconName, IconComponent> = {
   'layout-dashboard': LayoutDashboard,
   'square-kanban': SquareKanban,
   'text-wrap': TextWrap,
+  'eye-off': EyeOff,
+  'grip-vertical': GripVertical,
 }
 
 const IconContext = createContext<Record<IconName, IconComponent> | null>(null)
