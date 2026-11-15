@@ -4,7 +4,7 @@ import { Heading } from '../anchor'
 import { Blocks, Inlines, splitLead } from '../markdown'
 import { mdxComponents } from '../mdx'
 import { cap } from '../text'
-import { ExampleBoundary, ItemExamples } from './examples'
+import { ExampleBoundary, ExampleDocContext, ItemExamples } from './examples'
 import { PageMeta } from './page-meta'
 import { PropTable } from './prop-table'
 
@@ -46,7 +46,9 @@ export function ItemPage({ tier, id }: { tier: Tier; id: string }) {
             <div data-modo="prose" key={i}>
               {/* A broken .mdx (an unbound tag, a dropped item) stays in its box. */}
               <ExampleBoundary>
-                <Doc components={mdxComponents} />
+                <ExampleDocContext.Provider value={i}>
+                  <Doc components={mdxComponents} />
+                </ExampleDocContext.Provider>
               </ExampleBoundary>
             </div>
           ))}

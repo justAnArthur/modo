@@ -5,8 +5,9 @@
 type ModoHostComponent = import('react').ComponentType<any>
 
 /** The chrome's icon names, plus any `socials` key. */
+type ModoChromeIcon = 'code' | 'copy' | 'check' | 'link' | 'external' | 'menu' | 'sun' | 'moon' | 'maximize' | 'close'
 // biome-ignore lint/complexity/noBannedTypes: `string & {}` keeps the literal names in autocomplete
-type ModoIconName = 'code' | 'copy' | 'check' | 'link' | 'external' | 'menu' | 'sun' | 'moon' | (string & {})
+type ModoIconName = ModoChromeIcon | (string & {})
 
 declare module 'virtual:modo-config' {
   export const config: import('../lib/schema').SiteConfig

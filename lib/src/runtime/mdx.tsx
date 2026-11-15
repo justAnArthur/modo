@@ -1,8 +1,8 @@
 import { shell } from 'virtual:modo-shell'
-import { isValidElement, type ReactNode } from 'react'
+import { isValidElement, type ReactNode, useContext } from 'react'
 import { Heading, slug } from './anchor'
 import { CodeBlock } from './code-block'
-import { bindings, ExampleFrame } from './items/examples'
+import { bindings, ExampleDocContext, ExampleFrame, exampleKey } from './items/examples'
 import { contentHref } from './router'
 
 function textOf(node: ReactNode): string {
@@ -53,9 +53,26 @@ export const mdxComponents: Record<string, unknown> = {
   h1: ExampleTitle,
   h2: ExampleTitle,
   h3: SubHeading,
-  ModoExample: ({ code, children }: { code: string; children: ReactNode }) => (
+  ModoExample,
+}
+
+function ModoExample({
+  code,
+  index,
+  title,
+  children,
+}: {
+  code: string
+  index: string
+  title?: string
+  children: ReactNode
+}) {
+  const doc = useContext(ExampleDocContext)
+  return (
     <div data-modo="example-card">
-      <ExampleFrame code={code}>{children}</ExampleFrame>
+      <ExampleFrame code={code} fullScreen={exampleKey(title, Number(index), doc)}>
+        {children}
+      </ExampleFrame>
     </div>
-  ),
+  )
 }
