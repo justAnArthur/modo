@@ -1,4 +1,5 @@
 import DatePicker from './index'
+import { InputGroup } from '../../input'
 import { ar, de } from 'react-day-picker/locale'
 
 # Basic
@@ -59,12 +60,12 @@ The locale sets the names, the formats shown and read ("12.10.2026"), and the we
 
 # Disabled days and bounds
 
-`disabled` takes react-day-picker matchers; `startMonth` and `endMonth` bound the calendar and its year column.
+`disabledDays` takes react-day-picker matchers; `startMonth` and `endMonth` bound the calendar and its year column.
 
 <div className="w-72 max-w-full">
   <DatePicker
     placeholder="Weekdays in 2026"
-    disabled={{ dayOfWeek: [0, 6] }}
+    disabledDays={{ dayOfWeek: [0, 6] }}
     startMonth={new Date(2026, 0, 1)}
     endMonth={new Date(2026, 11, 1)}
   />
@@ -72,12 +73,25 @@ The locale sets the names, the formats shown and read ("12.10.2026"), and the we
 
 # Invalid and disabled
 
-`invalid` turns the field destructive; `disabled={true}` turns it off.
+`invalid` turns the field destructive; `disabled` turns it off.
 
 <div className="flex w-72 max-w-full flex-col gap-2">
   <DatePicker invalid defaultValue={new Date(2026, 9, 9)} />
   <DatePicker disabled defaultValue={new Date(2026, 9, 9)} />
 </div>
+
+# In a form field
+
+Inside an `InputGroup.Field`, the field's `error` marks the picker invalid and `disabled` turns it off; `name` submits the date as `yyyy-MM-dd`.
+
+<InputGroup>
+  <InputGroup.Field label="Due date" error="Pick a weekday.">
+    <DatePicker name="due" defaultValue={new Date(2026, 9, 10)} />
+  </InputGroup.Field>
+  <InputGroup.Field label="Start date" disabled>
+    <DatePicker name="start" />
+  </InputGroup.Field>
+</InputGroup>
 
 # Compact
 

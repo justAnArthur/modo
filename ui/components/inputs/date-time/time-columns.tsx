@@ -30,6 +30,10 @@ interface TimeColumnsProps {
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
+/** A minute column's options, `step` minutes apart. */
+const minuteOptions = (step: number) =>
+  Array.from({ length: Math.ceil(60 / step) }, (_, i) => ({ value: i * step, label: pad(i * step) }))
+
 /** Columns for the hour (with its AM/PM on a 12-hour clock) and the minute; a row of them divides itself. */
 function TimeColumns({
   value,
@@ -53,14 +57,7 @@ function TimeColumns({
       })),
     [twelve, hourCycle, locale],
   )
-  const minuteOptions = useMemo(
-    () =>
-      Array.from({ length: Math.ceil(60 / minuteStep) }, (_, i) => ({
-        value: i * minuteStep,
-        label: pad(i * minuteStep),
-      })),
-    [minuteStep],
-  )
+  const minutesList = useMemo(() => minuteOptions(minuteStep), [minuteStep])
 
   const vertical = orientation === 'vertical'
   // Beside a calendar: narrower than its month and year columns, an hour
@@ -79,7 +76,7 @@ function TimeColumns({
       />
       <ScrollColumn
         label={fieldLabel(locale, 'minute')}
-        options={minuteOptions}
+        options={minutesList}
         value={hours === null ? null : minutes}
         onValueChange={m => onValueChange({ hours: hours ?? 0, minutes: m })}
         orientation={orientation}
@@ -90,4 +87,4 @@ function TimeColumns({
 }
 
 export type { Time }
-export { pad, TimeColumns }
+export { minuteOptions, pad, TimeColumns }

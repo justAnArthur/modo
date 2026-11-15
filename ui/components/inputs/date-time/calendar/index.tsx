@@ -25,7 +25,7 @@ import { dividedColumns, ScrollColumn } from '../../../../lib/scroll-column'
 import { useShape } from '../../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../../lib/size-context'
 import { cn } from '../../../../lib/utils'
-import { SizeProvider } from '../../../../primitives/sizes'
+import { SizeScope } from '../../../../primitives/sizes'
 import { monthKey, useMonthWindow } from './use-month-window'
 
 const WEEKEND = { dayOfWeek: [0, 6] }
@@ -342,9 +342,10 @@ function Calendar({
     </div>
   )
 
-  return size ? <SizeProvider size={size}>{content}</SizeProvider> : content
+  return <SizeScope size={size}>{content}</SizeScope>
 }
 
+// A type, not an interface: DayPicker's props are a union an interface can't extend.
 type CalendarProps = Parameters<typeof Calendar>[0]
 
 export type { CalendarProps }
