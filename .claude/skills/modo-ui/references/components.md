@@ -127,7 +127,7 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 | Item | Path | Notes |
 |---|---|---|
 | `SidebarApp` | `blocks/sidebar-app` | A full app shell (FF preset `sa1FQfCxH6`): workspace header, search, nav, user footer, inset topbar. `variant`, `side`, `openOnHover`, `contained`. |
-| `ProfileSwitcher`, `SessionSidebar`, `SessionBoard`, `ProfileUsage`, `Transcript`, `AgentPrompt`, `Composer`, `SidePane` | `blocks/agent-desktop/<id>` | The agent desktop's pieces (pages in `pages/agent-desktop`). `pick-list.tsx` beside them is a single-choice list of rich rows (fluid hover + GooIndicator pick). |
+| `ProfileSwitcher`, `SessionSidebar`, `SessionBoard`, `ProfileUsage`, `Transcript`, `AgentPrompt`, `Composer`, `SidePane` | `blocks/AI/<id>` | The AI app's pieces (pages in `pages/AI`). `pick-list.tsx` beside them is a single-choice list of rich rows (fluid hover + GooIndicator pick). |
 
 ## Shared system files (`lib/`)
 

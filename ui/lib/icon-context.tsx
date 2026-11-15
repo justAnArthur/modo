@@ -10,9 +10,9 @@
  *   accept both, and @types/react 18 compares propTypes).
  * - `panel-left-dashed` / `panel-right-dashed`: the sidebar trigger's glyph
  *   while the sidebar opens on hover.
- * - The agent desktop's glyphs (`terminal` … `history`): tools, panes,
- *   session states and settings sections for `blocks/agent-desktop` and
- *   `pages/agent-desktop`.
+ * - The AI app's glyphs (`terminal` … `history`): tools, panes,
+ *   session states and settings sections for `blocks/AI` and
+ *   `pages/AI`.
  */
 
 'use client'
