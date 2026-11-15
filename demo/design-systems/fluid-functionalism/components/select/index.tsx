@@ -5,14 +5,14 @@ import { Select as FluidSelect, SelectContent, SelectItem, SelectTrigger } from 
  * popup on an Elevated surface, fluid hover highlight that glides between
  * options, and a selection-acknowledged close (the checkmark draws before
  * the menu exits). Pulled via `bunx shadcn@latest add @fluid/select`.
- * This adapter implements modo's Select shell contract (value / onChange /
+ * This adapter implements modo's Select shell contract (value / onValueChange /
  * options), so the docs chrome and demo switcher render with it.
  *
  * @example {@include ./examples.mdx}
  */
 export default function Select({
   value,
-  onChange,
+  onValueChange,
   options,
   placeholder = 'Select…',
   size = 'default',
@@ -20,7 +20,7 @@ export default function Select({
   /** Currently selected value. */
   value: string
   /** Called with the newly selected value. */
-  onChange: (value: string) => void
+  onValueChange: (value: string) => void
   /** Options to choose from. */
   options: { value: string; label: string }[]
   /** Placeholder shown while no value is selected. @default 'Select…' */
@@ -29,7 +29,7 @@ export default function Select({
   size?: 'default' | 'sm'
 }) {
   return (
-    <FluidSelect value={value} onValueChange={onChange} size={size === 'sm' ? 'compact' : 'default'}>
+    <FluidSelect value={value} onValueChange={onValueChange} size={size === 'sm' ? 'compact' : 'default'}>
       <SelectTrigger placeholder={placeholder} />
       <SelectContent>
         {options.map((option, index) => (

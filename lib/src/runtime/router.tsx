@@ -1,11 +1,11 @@
 import { config } from 'virtual:modo-config'
 import { type ReactNode, useEffect } from 'react'
 import { pageTitle } from '../lib/head'
-import { tierPath, tokenPath } from '../lib/paths'
+import { CANVAS_PAGE, HOME_PATH, tierPath, tokenPath } from '../lib/paths'
 import { TIERS } from '../lib/tiers'
 import { PageIdScope } from './anchor'
 import { ItemPage } from './items/item-page'
-import { appPath, BASE, HOME_PATH, NAVIGATE, staticPage, usePath } from './location'
+import { appPath, BASE, NAVIGATE, usePath } from './location'
 import { CanvasPage } from './pages/canvas'
 import { HomePage } from './pages/home'
 import { NotFoundPage } from './pages/not-found'
@@ -21,7 +21,7 @@ function child(path: string, parent: string): string | undefined {
 
 function page(path: string): ReactNode {
   if (path === HOME_PATH) return <HomePage />
-  if (path === staticPage('canvas').href) return <CanvasPage />
+  if (path === CANVAS_PAGE.path) return <CanvasPage />
   if (path === tokenPath()) return <TokensPage />
   const group = child(path, tokenPath())
   if (group) return <TokenGroupView group={group} />

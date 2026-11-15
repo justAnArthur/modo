@@ -4,8 +4,8 @@ import { MuiProvider } from '../../theme'
 
 /**
  * Single-option picker. Modo contract over MUI: a `TextField select` fed
- * from the `options` prop, with `onChange` adapted to modo's
- * `(value: string) => void`. The docs chrome and the demo switcher render
+ * from the `options` prop, with its `onChange` event adapted to modo's
+ * `onValueChange(value)`. The docs chrome and the demo switcher render
  * with this component, controlled; examples pass `defaultValue` instead,
  * since modo examples carry no hooks.
  *
@@ -14,7 +14,7 @@ import { MuiProvider } from '../../theme'
 export default function Select({
   value,
   defaultValue,
-  onChange,
+  onValueChange,
   options,
   label,
   size,
@@ -25,7 +25,7 @@ export default function Select({
   /** Initially selected value (uncontrolled). */
   defaultValue?: string
   /** Called with the newly selected option value. */
-  onChange?: (value: string) => void
+  onValueChange?: (value: string) => void
   /** Options to pick from. */
   options: { value: string; label: string }[]
   /** Floating label shown above the field. */
@@ -41,7 +41,7 @@ export default function Select({
         select
         value={value}
         defaultValue={defaultValue}
-        onChange={event => onChange?.(event.target.value)}
+        onChange={event => onValueChange?.(event.target.value)}
         label={label}
         size={size}
         disabled={disabled}

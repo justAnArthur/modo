@@ -1,4 +1,4 @@
-import { byId, exampleDocs, examples as examplesMap } from 'virtual:modo-items'
+import { byId } from 'virtual:modo-items'
 import { itemKey } from '../../lib/paths'
 import { cap } from '../../lib/text'
 import type { Tier } from '../../lib/tiers'
@@ -11,12 +11,10 @@ import { PageMeta } from './page-meta'
 import { PropTable } from './prop-table'
 
 export function ItemPage({ tier, id }: { tier: Tier; id: string }) {
-  const key = itemKey(tier, id)
-  const entry = byId[key]
+  const entry = byId[itemKey(tier, id)]
   if (!entry) return <NotFoundPage />
   const { lead, body } = splitLead(entry.description)
-  const examples = examplesMap[key] ?? []
-  const docs = exampleDocs[key] ?? []
+  const { examples, mdxExamples } = entry
   return (
     <article>
       <header>
@@ -34,9 +32,9 @@ export function ItemPage({ tier, id }: { tier: Tier; id: string }) {
           <Blocks tokens={body} />
         </div>
       ) : null}
-      {examples.length > 0 || docs.length > 0 ? (
+      {examples.length > 0 || mdxExamples.length > 0 ? (
         <ItemExamples examples={examples}>
-          {docs.map((Doc, i) => (
+          {mdxExamples.map((Doc, i) => (
             <div data-modo="prose" key={i}>
               {/* A broken .mdx (an unbound tag, a dropped item) stays in its box. */}
               <ExampleBoundary>
@@ -48,7 +46,7 @@ export function ItemPage({ tier, id }: { tier: Tier; id: string }) {
       ) : null}
       <section data-modo="section">
         <Heading level={2} label="Props" modo="section-title" />
-        <PropTable itemId={key} />
+        <PropTable props={entry.props} />
       </section>
     </article>
   )

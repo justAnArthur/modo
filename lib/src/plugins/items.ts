@@ -1,8 +1,8 @@
 import { resolve, sep } from 'node:path'
 import { isCSSRequest, normalizePath, type Plugin } from 'vite'
-import { itemKey, itemPath, STATIC_PAGES, tierPath } from '../lib/paths'
+import { itemPath, STATIC_PAGES, tierPath } from '../lib/paths'
 import { cap } from '../lib/text'
-import type { BundledItem, BundleResult, Bundler } from './bundle'
+import type { BundleResult, Bundler } from './bundle'
 import { emitRoutes } from './static-routes'
 import { unoExtractor } from './uno'
 import { cssModule, reload, virtualModules } from './virtual'
@@ -16,22 +16,15 @@ interface Options {
 const SOURCE_EXT = /\.(?:[cm]?[jt]sx?|mdx?|json|svg)$/
 
 function itemsModule({ items, scope }: BundleResult): string {
-  const key = (it: BundledItem) => JSON.stringify(itemKey(it.tier, it.id))
   // Bound by index: two ids that differ only in `-`/`_` stay distinct.
   const compImports = items.map((it, i) => `import __c${i} from ${JSON.stringify(it.bundlePath)};`)
   const mdxImports = items.flatMap((it, i) =>
     it.mdxExamples.map((doc, j) => `import __x${i}_${j} from ${JSON.stringify(doc)};`),
   )
-  const meta = items.map(({ id, tier, group, name, description, props, tags, path }) => ({
-    id,
-    tier,
-    group,
-    name,
-    description,
-    props,
-    tags,
-    path,
-  }))
+  const entries = items.map(({ id, tier, group, name, description, props, tags, path, examples, mdxExamples }, i) => {
+    const meta = JSON.stringify({ id, tier, group, name, description, props, tags, path, examples })
+    return `{...${meta}, mdxExamples: [${mdxExamples.map((_, j) => `__x${i}_${j}`).join(',')}]}`
+  })
   const scopeCode = scope
     ? [
         `import * as __scope from ${JSON.stringify(scope.bundlePath)};`,
@@ -42,11 +35,9 @@ function itemsModule({ items, scope }: BundleResult): string {
     ...compImports,
     ...mdxImports,
     ...scopeCode,
-    `export const items = ${JSON.stringify(meta)};`,
+    `export const items = [${entries.join(',')}];`,
     `export const byId = Object.fromEntries(items.map(it => [it.tier + ':' + it.id, it]));`,
     `export const byName = {${items.map((it, i) => `${JSON.stringify(it.name)}: __c${i}`).join(',')}};`,
-    `export const examples = {${items.map(it => `${key(it)}: ${JSON.stringify(it.examples)}`).join(',')}};`,
-    `export const exampleDocs = {${items.map((it, i) => `${key(it)}: [${it.mdxExamples.map((_, j) => `__x${i}_${j}`).join(',')}]`).join(',')}};`,
   ].join('\n')
 }
 
@@ -80,7 +71,7 @@ export function itemsPlugin(options: Options): Plugin {
         if (errorCount > 0) this.error('the bundle has errors (reported above), so the site was not written')
         if (!config) return
         emitRoutes(this, bundle, config, [
-          ...STATIC_PAGES,
+          ...STATIC_PAGES.map(({ path, title }) => ({ path: path.slice(1), title })),
           ...[...new Set(items.map(it => it.tier))].map(tier => ({ path: tierPath(tier).slice(1), title: cap(tier) })),
           ...items.map(it => ({
             path: itemPath(it.tier, it.id).slice(1),

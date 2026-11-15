@@ -1,4 +1,4 @@
-import { exampleDocs, examples as examplesMap } from 'virtual:modo-items'
+import type { ItemEntry } from 'virtual:modo-items'
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react'
 import type { ParsedExample } from '../../lib/tsdoc'
 import { mdxComponents } from '../mdx'
@@ -9,10 +9,10 @@ import { bindings, ExampleBoundary, useExample } from './examples'
  * its examples.mdx) rendered bare: the code the item page runs, so an overview
  * shows the real component.
  */
-export function ExamplePreview({ itemId }: { itemId: string }): ReactElement {
-  const inline = examplesMap[itemId]?.[0]
+export function ExamplePreview({ entry }: { entry: ItemEntry }): ReactElement {
+  const inline = entry.examples[0]
   if (inline) return <InlinePreview example={inline} />
-  const live = firstLiveBlock(itemId)
+  const live = firstLiveBlock(entry)
   if (!live) return <span data-modo="bento-empty">No example yet</span>
   return <ExampleBoundary>{live}</ExampleBoundary>
 }
@@ -25,12 +25,12 @@ function InlinePreview({ example }: { example: ParsedExample }): ReactElement | 
 }
 
 /** Whether the item has an example ExamplePreview can render. */
-export function hasPreview(itemId: string): boolean {
-  return (examplesMap[itemId]?.length ?? 0) > 0 || firstLiveBlock(itemId) !== undefined
+export function hasPreview(entry: ItemEntry): boolean {
+  return entry.examples.length > 0 || firstLiveBlock(entry) !== undefined
 }
 
-function firstLiveBlock(itemId: string): ReactNode {
-  const Doc = exampleDocs[itemId]?.[0]
+function firstLiveBlock(entry: ItemEntry): ReactNode {
+  const Doc = entry.mdxExamples[0]
   if (!Doc) return undefined
   // Compiled without a provider, MDX content is hook-free: calling it yields
   // the document's top-level blocks, and every live one is a ModoExample.

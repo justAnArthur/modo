@@ -1,9 +1,8 @@
-import { byId } from 'virtual:modo-items'
+import type { ParsedProp } from '../../lib/tsdoc'
 import { Markdown } from '../markdown'
 
-export function PropTable({ itemId }: { itemId: string }) {
-  const list = byId[itemId]?.props ?? []
-  if (!list.length) return <p>No documented props.</p>
+export function PropTable({ props }: { props: ParsedProp[] }) {
+  if (!props.length) return <p>No documented props.</p>
   return (
     <div data-modo="prop-table-scroll">
       <table data-modo="prop-table">
@@ -16,7 +15,7 @@ export function PropTable({ itemId }: { itemId: string }) {
           </tr>
         </thead>
         <tbody>
-          {list.map(p => (
+          {props.map(p => (
             <tr key={p.name}>
               <td>
                 <code>{p.name}</code>

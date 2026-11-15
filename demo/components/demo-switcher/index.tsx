@@ -16,7 +16,7 @@ export default function DemoSwitcher({ shell }: PanelItemProps) {
     <div data-modo="demo-switcher">
       <shell.Select
         value={current.url}
-        onChange={(url: string) => {
+        onValueChange={url => {
           window.location.href = url
         }}
         options={options}

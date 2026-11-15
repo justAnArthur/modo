@@ -3,19 +3,14 @@
  * modo.config.ts picks each one by export name: `./modo.components.tsx#Select`.
  */
 
-import {
-  Check,
-  CodeXml,
-  Copy,
-  ExternalLink,
-  Link2,
-  type LucideIcon,
-  Menu,
-  Monitor,
-  Moon,
-  Package,
-  Sun,
-} from 'lucide-react'
+import type {
+  IconSlotProps,
+  SelectSlotProps,
+  SidebarItemProps,
+  SidebarSectionProps,
+  SidebarSlotProps,
+} from '@justanarthur/modo'
+import { Check, CodeXml, Copy, Link2, type LucideIcon, Menu, Monitor, Moon, Package, Sun } from 'lucide-react'
 import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useState } from 'react'
 import FluidSelect from './components/inputs/select'
 import Sidebar, { type SidebarSide, useSidebar } from './components/navigation/sidebar'
@@ -27,7 +22,6 @@ const icons: Record<string, LucideIcon> = {
   copy: Copy,
   check: Check,
   link: Link2,
-  external: ExternalLink,
   menu: Menu,
   sun: Sun,
   moon: Moon,
@@ -35,15 +29,7 @@ const icons: Record<string, LucideIcon> = {
 }
 
 /** Icon slot: the chrome asks for icons by name; lucide draws them. */
-export function Icon({
-  name,
-  label,
-}: {
-  /** Which icon to draw: a chrome name or a `socials` key. */
-  name: string
-  /** Accessible text; the button around the icon carries it. Drawn for a name with no glyph. */
-  label: string
-}) {
+export function Icon({ name, label }: IconSlotProps) {
   if (name === 'github') return <GithubMark />
   const Glyph = icons[name]
   return Glyph ? <Glyph size={16} strokeWidth={1.5} aria-hidden /> : label
@@ -59,20 +45,12 @@ function GithubMark() {
 }
 
 /**
- * Select slot: the chrome passes a flat `value` / `onChange` / `options`
+ * Select slot: the chrome passes a flat `value` / `onValueChange` / `options`
  * contract; FF's Select is compositional, so this maps one onto the other.
  */
-export function Select({
-  value,
-  onChange,
-  options,
-}: {
-  value: string
-  onChange: (value: string) => void
-  options: { value: string; label: string }[]
-}) {
+export function Select({ value, onValueChange, options }: SelectSlotProps) {
   return (
-    <FluidSelect value={value} onValueChange={onChange}>
+    <FluidSelect value={value} onValueChange={onValueChange}>
       <FluidSelect.Trigger />
       <FluidSelect.Content>
         {options.map((option, index) => (
@@ -109,7 +87,7 @@ declare global {
  * in modo.config.ts, since by name alone modo would adopt the documented
  * `Sidebar`, an app shell that needs its provider.
  */
-export function DocsNav({ children }: { children?: ReactNode }) {
+export function DocsNav({ children }: SidebarSlotProps) {
   const [side, setSide] = useState<SidebarSide>()
   // The slot gets no side: which aside it landed in tells, before first paint.
   if (!side) return <div ref={node => node && setSide(node.closest('[data-modo="panel"]') ? 'right' : 'left')} />
@@ -175,7 +153,7 @@ function DocsNavTrigger({ side }: { side: SidebarSide }) {
 /** How deep a nav element sits: a tier is a section, a group folder a section inside it, a nested group deeper still. */
 const NavDepth = createContext(0)
 
-function DocsNavItem({ href, active, children }: { href: string; active?: boolean; children?: ReactNode }) {
+function DocsNavItem({ href, active, children }: SidebarItemProps) {
   const { setOpenMobile } = useSidebar()
   if (useContext(NavDepth) >= 2) {
     return (
@@ -195,7 +173,7 @@ function DocsNavItem({ href, active, children }: { href: string; active?: boolea
   )
 }
 
-function DocsNavSection({ title, children }: { title: string; children?: ReactNode }) {
+function DocsNavSection({ title, children }: SidebarSectionProps) {
   const depth = useContext(NavDepth)
   if (depth >= 1) return <DocsNavGroup title={title}>{children}</DocsNavGroup>
   const onlyLinks = Children.toArray(children).every(
@@ -228,7 +206,7 @@ const holdsActive = (children: ReactNode): boolean =>
   )
 
 /** A group folder inside a tier (or inside another group): a collapsible row, opened while it holds the current page. */
-function DocsNavGroup({ title, children }: { title: string; children?: ReactNode }) {
+function DocsNavGroup({ title, children }: SidebarSectionProps) {
   const depth = useContext(NavDepth)
   const current = holdsActive(children)
   const [open, setOpen] = useState(current)

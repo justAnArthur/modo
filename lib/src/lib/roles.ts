@@ -1,4 +1,4 @@
-/** The contract's type roles (shell.css), each with the tag it renders as. */
+/** The contract's type roles (shell/css/contract.css), each with the tag it renders as. */
 export const TYPE_ROLES = {
   h1: 'h1',
   h2: 'h2',

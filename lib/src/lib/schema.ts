@@ -11,7 +11,7 @@ export interface ShellConfig {
   Button?: string
   /** Every chrome and Markdown link. Matched in `primitives/` by `href`, `children`. Gets `aria-label` or `title` where there is one. */
   Link?: string
-  /** Handed to panel items as `shell.Select`; the chrome renders none. Matched in `components/` by `value`, `onChange`, `options`. */
+  /** Handed to panel items as `shell.Select`; the chrome renders none. Matched in `components/` by `value`, `onValueChange`, `options`. */
   Select?: string
   /** Both side navs. Matched in `components/` by `children`; its `Item` (`href`, `active`) and `Section` (`title`) render the entries. */
   Sidebar?: string
