@@ -7,54 +7,18 @@
 
 'use client'
 
-import { motion } from 'motion/react'
 import type { ReactNode } from 'react'
 import Sidebar from '../../../components/navigation/sidebar'
 import Popover from '../../../components/overlays/popover'
-import { useReduceMotion } from '../../../lib/reduced-motion'
 import { useShape } from '../../../lib/shape-context'
-import { spring } from '../../../lib/springs'
 import { cn } from '../../../lib/utils'
 import { SizeProvider } from '../../../primitives/sizes'
 import Elevated from '../../../primitives/surface'
+import { type LimitPace, VERDICT_FILL } from '../pace'
+import { Fill, PaceBar } from '../pace-bar'
 import { POPOVER_FRAME } from '../popover-rows'
-import { type LimitPace, percent, VERDICT_FILL } from './pace'
 
-function Fill({ share, className }: { share: number; className: string }) {
-  const reduceMotion = useReduceMotion()
-  return (
-    <motion.span
-      className={cn('absolute inset-0 origin-left rounded-full transition-[background-color] duration-fast', className)}
-      initial={false}
-      animate={{ scaleX: Math.min(Math.max(share, 0), 1) }}
-      transition={reduceMotion ? { duration: 0 } : spring.moderate}
-    />
-  )
-}
-
-/** The used share, colored by verdict, with a tick at the even-pace share; `project` adds where this pace lands at the reset. */
-export function PaceBar({
-  pace,
-  project = false,
-  className,
-}: {
-  pace: LimitPace
-  project?: boolean
-  className?: string
-}) {
-  return (
-    <span aria-hidden="true" className={cn('relative block h-1', className)}>
-      <span className="absolute inset-0 overflow-hidden rounded-full bg-active">
-        {project && <Fill share={pace.projected} className="bg-selected" />}
-        <Fill share={pace.limit.value} className={VERDICT_FILL[pace.verdict]} />
-      </span>
-      <span
-        className="absolute -inset-y-0.5 w-0.5 -translate-x-1/2 rounded-full bg-foreground"
-        style={{ left: percent(pace.elapsed) }}
-      />
-    </span>
-  )
-}
+export { PaceBar }
 
 /** How much of the time until the reset the budget covers at this pace: full when it lasts, amber when only just. */
 export function RunwayLine({ pace, className }: { pace: LimitPace; className?: string }) {

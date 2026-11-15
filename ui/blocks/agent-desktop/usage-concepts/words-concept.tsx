@@ -8,9 +8,9 @@
 
 import { cn } from '../../../lib/utils'
 import type { Profile } from '../mock'
+import { duration, type LimitPace, paceOf, percent, VERDICT_TEXT } from '../pace'
 import { PopoverSection } from '../popover-rows'
 import { ProfileTile } from '../profile-switcher'
-import { duration, type LimitPace, paceOf, percent, VERDICT_TEXT } from './pace'
 import { UsageFrame } from './parts'
 
 function sentence(pace: LimitPace) {

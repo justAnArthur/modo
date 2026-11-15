@@ -5,7 +5,7 @@
  * where that rate lands at the reset, and whether it runs out first.
  */
 
-import type { Profile, UsageLimit } from '../mock'
+import type { Profile, UsageLimit } from './mock'
 import { type LimitWindow, WINDOWS } from './windows'
 
 /** `free`: lasts past the reset at this pace; `watch`: only just; `tight`: runs out before it. */

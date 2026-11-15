@@ -7,9 +7,9 @@
 'use client'
 
 import type { Profile } from '../mock'
+import { duration, type LimitPace, paceOf, percent, VERDICT_TEXT } from '../pace'
 import { PopoverRow, PopoverSection } from '../popover-rows'
 import { ProfileTile } from '../profile-switcher'
-import { duration, type LimitPace, paceOf, percent, VERDICT_TEXT } from './pace'
 import { PaceBar, UsageFrame } from './parts'
 
 const VERDICT_WORD = { free: 'on pace', watch: 'only just', tight: 'too fast' } as const

@@ -3,7 +3,7 @@ import Sidebar from '../../../components/navigation/sidebar'
 
 # Usage
 
-Every profile in one row: its tile over two lines, the 5-hour session above the week; `work` is near its session limit. Press the row for every limit and its reset time.
+Every profile by name with its session and tightest weekly limit as pace bars: `work` is red because its session runs out before the reset, while jobiflow's 78% Opus week stays grey because it resets tomorrow. Press the row for every limit and its reset.
 
 <div className="flex h-[360px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>

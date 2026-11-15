@@ -8,9 +8,9 @@
 
 import { cn } from '../../../lib/utils'
 import type { Profile } from '../mock'
+import { byHeadroom, percent, VERDICT_FILL } from '../pace'
 import { PopoverRow, PopoverSection } from '../popover-rows'
 import { ProfileTile } from '../profile-switcher'
-import { byHeadroom, percent, VERDICT_FILL } from './pace'
 import { PaceBar, UsageFrame } from './parts'
 
 export default function NextConcept({ profiles, form }: { profiles: Profile[]; form: 'sidebar' | 'detail' }) {

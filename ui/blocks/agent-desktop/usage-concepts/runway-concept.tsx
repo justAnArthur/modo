@@ -8,9 +8,9 @@
 'use client'
 
 import type { Profile } from '../mock'
+import { duration, type LimitPace, paceOf } from '../pace'
 import { PopoverRow, PopoverSection } from '../popover-rows'
 import { ProfileTile } from '../profile-switcher'
-import { duration, type LimitPace, paceOf } from './pace'
 import { RunwayLine, UsageFrame } from './parts'
 
 function runway(pace: LimitPace) {
