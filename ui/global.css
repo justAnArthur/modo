@@ -77,6 +77,18 @@
     overflow: visible;
   }
 
+  /* modo's column scrolls what sits under the header; ui's Sidebar scrolls
+     its own rows and slides out by itself, so that layer stays open. */
+  [data-modo="sidebar"] > :not([data-modo="header"]),
+  [data-modo="panel"] > * {
+    overflow: visible;
+  }
+
+  /* A collapsed Sidebar takes the brand with it, so the card gets the width back. */
+  [data-modo="sidebar"]:has([data-slot="sidebar"][data-state="collapsed"]) > [data-modo="header"] {
+    display: none;
+  }
+
   [data-modo="content"] {
     /* The inset topbar's band, where the corner triggers sit. */
     padding-top: calc(3rem + var(--space-2));
