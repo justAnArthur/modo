@@ -308,9 +308,12 @@ html.transitioning *::after {
   }
 }
 
-.scroll-fade,
-.scroll-fade-x {
-  --scroll-fade-size: 48px;
+/* Registered, not declared on .scroll-fade: a declaration there beats the size utilities
+   (`[--scroll-fade-size:16px]`), and an unregistered var would leak into nested scrollers. */
+@property --scroll-fade-size {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 48px;
 }
 
 /* Static fallback: fade both edges. */

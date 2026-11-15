@@ -37,6 +37,8 @@ interface DateRangePickerProps {
   startMonth?: Date
   /** The last month the calendar reaches. Defaults to 50 years ahead. */
   endMonth?: Date
+  /** Where the calendar opens while no range is picked (a date of birth's decade, say). Defaults to the current month. */
+  defaultMonth?: Date
   /** Framed at rest, or invisible until hovered or focused. Defaults to `"bordered"`. */
   variant?: FieldVariant
   /** Marks the field invalid. Defaults to `false`. */
@@ -89,6 +91,7 @@ function DateRangePicker({
   disabledDays,
   startMonth,
   endMonth,
+  defaultMonth,
   open: openProp,
   defaultOpen = false,
   onOpenChange,
@@ -182,6 +185,7 @@ function DateRangePicker({
         disabled={disabledDays}
         startMonth={startMonth}
         endMonth={endMonth}
+        defaultMonth={defaultMonth}
         dir={dir}
         columnsSide={columnsSide}
       />

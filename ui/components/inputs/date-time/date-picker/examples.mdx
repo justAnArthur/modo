@@ -71,6 +71,19 @@ The locale sets the names, the formats shown and read ("12.10.2026"), and the we
   />
 </div>
 
+# A date of birth
+
+`defaultMonth` is where the calendar opens while nothing is picked, here thirty years back; `endMonth` and `disabledDays` stop it at today.
+
+<div className="w-72 max-w-full">
+  <DatePicker
+    placeholder="Date of birth"
+    defaultMonth={new Date(new Date().getFullYear() - 30, 0, 1)}
+    endMonth={new Date()}
+    disabledDays={{ after: new Date() }}
+  />
+</div>
+
 # Invalid and disabled
 
 `invalid` turns the field destructive; `disabled` turns it off.

@@ -175,12 +175,12 @@ function Calendar({
     return () => observer.disconnect()
   }, [wide])
 
-  // Turning changes the grid's height: put the picked day (or today) back in the middle.
+  // Turning changes the grid's height: bring the picked day (or the opening month) back into view.
   const turned = useRef(wide)
   useLayoutEffect(() => {
     if (turned.current === wide) return
     turned.current = wide
-    scroll.centreDay(picked ?? today)
+    scroll.showDay(anchor)
   })
 
   // Range picking previews the span under the pointer before the second click.
@@ -303,7 +303,7 @@ function Calendar({
             months: 'flex flex-col',
             month: 'pb-2',
             month_caption: cn(
-              'px-2 pt-2 pb-1 text-subtitle weight-semibold',
+              'px-2 pt-4 pb-1 text-subtitle weight-semibold',
               sizeClasses.variant === 'compact' && 'text-subtitle-compact',
             ),
             month_grid: 'border-collapse',
