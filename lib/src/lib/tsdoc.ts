@@ -19,7 +19,15 @@ export interface ParsedItem {
   examples: ParsedExample[]
   /** `@example {@include ./x.mdx}` paths, relative to the item source. */
   exampleDocs: string[]
+  /** Every block tag other than `@example` (`@since 1.2`, `@deprecated …`), in source order. */
+  tags: ParsedTag[]
   errors: string[]
+}
+
+export interface ParsedTag {
+  /** The tag name without `@`. */
+  tag: string
+  text: string
 }
 
 export interface ParseOptions {
@@ -65,20 +73,21 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
     }
   }
 
-  const jsdoc = extractJsdocAbove(cleaned, jsdocAnchor) ?? ''
-  // `@example` counts only at the start of a (`*`-stripped) line, so text like
-  // `you@example.com` in a description or example code is left alone.
-  const exampleIdx = jsdoc.search(/(?:^|\n)[ \t]*@example\b/)
+  const { lead, sections } = splitBlockTags(extractJsdocAbove(cleaned, jsdocAnchor) ?? '')
   const errors: string[] = []
   // Includes expand per section, after the tag split, so an included file
-  // can't start a new `@example`.
+  // can't start a new tag.
   const include = (text: string) => expandIncludes(text, opts.readFile, errors)
-  const description = include(exampleIdx === -1 ? jsdoc : jsdoc.slice(0, exampleIdx)).trim()
-  const examplesRoot = exampleIdx === -1 ? '' : jsdoc.slice(exampleIdx)
+  const description = include(lead).trim()
   const exampleDocs: string[] = []
-  const examples = examplesRoot ? extractExamples(examplesRoot, include, exampleDocs) : []
+  const examples = extractExamples(
+    sections.filter(s => s.tag === 'example').map(s => s.text),
+    include,
+    exampleDocs,
+  )
+  const tags = sections.filter(s => s.tag !== 'example').map(s => ({ tag: s.tag, text: s.text.trim() }))
 
-  const result: ParsedItem = { name, description, props: [], examples, exampleDocs, errors }
+  const result: ParsedItem = { name, description, props: [], examples, exampleDocs, tags, errors }
   if (fnStart === -1) {
     if (forwardRefPropsType) {
       const props = extractForwardRefProps(cleaned, forwardRefPropsType)
@@ -97,7 +106,58 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
 }
 
 function fail(msg: string): ParsedItem {
-  return { name: '', description: '', props: [], examples: [], exampleDocs: [], errors: [msg] }
+  return { name: '', description: '', props: [], examples: [], exampleDocs: [], tags: [], errors: [msg] }
+}
+
+interface TagSection {
+  tag: string
+  text: string
+}
+
+// TSDoc's block and modifier tags plus modo's own. Any other `@word` stays
+// prose: descriptions mention registries and scopes (`@fluid sidebar`).
+const BLOCK_TAGS = new Set([
+  'example',
+  'remarks',
+  'privateRemarks',
+  'deprecated',
+  'see',
+  'since',
+  'version',
+  'author',
+  'license',
+  'source',
+  'status',
+  'alpha',
+  'beta',
+  'experimental',
+  'internal',
+  'public',
+])
+
+const MODIFIER_TAGS = new Set(['alpha', 'beta', 'experimental', 'internal', 'public'])
+
+// A block tag opens at the start of a (`*`-stripped) line, outside a code
+// fence, so `you@example.com` or a CSS `@media` in an example is left alone.
+function splitBlockTags(jsdoc: string): { lead: string; sections: TagSection[] } {
+  const lead: string[] = []
+  const sections: TagSection[] = []
+  // A modifier tag carries no text, so the lines after it belong to whatever came before it.
+  let open: TagSection | null = null
+  let fence: string | null = null
+  for (const line of jsdoc.split('\n')) {
+    const tag = fence ? null : line.match(/^[ \t]*@([A-Za-z]\w*)\b(.*)$/)
+    if (tag && BLOCK_TAGS.has(tag[1]!)) {
+      const section = { tag: tag[1]!, text: tag[2]! }
+      sections.push(section)
+      open = MODIFIER_TAGS.has(section.tag) ? open : section
+    } else if (open) open.text += `\n${line}`
+    else lead.push(line)
+
+    const marker = line.match(/^[ \t]*(```|~~~)/)?.[1]
+    if (marker && (!fence || marker === fence)) fence = fence ? null : marker
+  }
+  return { lead: lead.join('\n'), sections }
 }
 
 // The block right above the declaration: only whitespace and modifiers may
@@ -132,6 +192,8 @@ function extractProps(src: string, fnStart: number): ExtractPropsResult {
   const closeIdx = matchClosing(src, openIdx, '(', ')')
   if (closeIdx === undefined) return { props, errors: ['Unbalanced parens in parameter list'] }
   const paramsText = src.slice(openIdx + 1, closeIdx)
+  // A component that takes no props has nothing to document.
+  if (!paramsText.trim()) return { props, errors }
 
   const destructured: Array<{ name: string; default?: string }> = []
   let typeLiteral = ''
@@ -290,10 +352,10 @@ function expandIncludes(text: string, readFile: ParseOptions['readFile'], errors
   })
 }
 
-function extractExamples(jsdoc: string, include: (text: string) => string, docs: string[]): ParsedExample[] {
+function extractExamples(sections: string[], include: (text: string) => string, docs: string[]): ParsedExample[] {
   const out: ParsedExample[] = []
-  for (const m of jsdoc.matchAll(/(?:^|\n)[ \t]*@example\b([\s\S]*?)(?=\n[ \t]*@example\b|$)/g)) {
-    const raw = (m[1] ?? '').trim()
+  for (const section of sections) {
+    const raw = section.trim()
     const doc = raw.match(MDX_INCLUDE)?.[1]
     if (doc) {
       docs.push(doc)

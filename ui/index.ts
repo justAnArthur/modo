@@ -37,11 +37,27 @@ export * from './components/overlays/sheet'
 export * from './components/overlays/toast'
 export * from './components/overlays/tooltip'
 export * from './components/table'
+export type { GooIndicatorProps } from './lib/goo-indicator'
+export { GooIndicator } from './lib/goo-indicator'
 export { IconProvider } from './lib/icon-context'
+export { MorphSurface } from './lib/morph-layers'
+export { useReduceMotion } from './lib/reduced-motion'
 export { ShapeProvider } from './lib/shape-context'
+export { useControllableState } from './lib/use-controllable-state'
+export type {
+  Morph as MorphState,
+  MorphEffect,
+  MorphFrom,
+  MorphOptions,
+  MorphOrigin,
+  MorphSide,
+  MorphTier,
+} from './lib/use-morph'
+export { useMorph } from './lib/use-morph'
 export { cn } from './lib/utils'
 export * from './primitives/code'
 export * from './primitives/craft'
+export { default as Craft } from './primitives/craft'
 export * from './primitives/fluid-hover'
 export * from './primitives/morph'
 export * from './primitives/motion'

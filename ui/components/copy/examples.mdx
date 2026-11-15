@@ -5,7 +5,7 @@ import Copy from './index'
 Icon-only: the value fills the row and the copy glyph sits at the
 trailing edge, with a tooltip on hover.
 
-<div className="w-72">
+<div className="w-full max-w-72">
   <Copy value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json" />
 </div>
 
@@ -16,7 +16,7 @@ tint behind a check that draws itself, and split back into the glyph after
 two seconds; a failed copy turns the disc red behind a ✕. The compact step
 keeps the same disc.
 
-<div className="flex w-72 flex-col gap-4">
+<div className="flex w-full max-w-72 flex-col gap-4">
   <Copy value="bun add @base-ui/react motion" />
   <Copy variant="button" size="compact" value="bun add @base-ui/react motion" />
 </div>
@@ -26,7 +26,7 @@ keeps the same disc.
 `label` renders a muted caption above the field and joins the button's
 accessible name, so a screen reader announces "Copy Install command".
 
-<div className="w-72">
+<div className="w-full max-w-72">
   <Copy
     label="Install command"
     value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json"
@@ -39,7 +39,7 @@ accessible name, so a screen reader announces "Copy Install command".
 slot is pre-sized to the widest state ("Copied"), so the row never
 reflows when the state flips.
 
-<div className="w-72">
+<div className="w-full max-w-72">
   <Copy
     variant="button"
     value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json"
@@ -51,7 +51,7 @@ reflows when the state flips.
 `align="left"` puts the action on the leading edge, before the value —
 in either variant.
 
-<div className="flex flex-col gap-4 w-72">
+<div className="flex w-full max-w-72 flex-col gap-4">
   <Copy
     align="left"
     value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json"
@@ -68,7 +68,7 @@ in either variant.
 Dims the row to 50% and drops pointer events, so the value stays readable
 but nothing can be copied.
 
-<div className="w-72">
+<div className="w-full max-w-72">
   <Copy label="Invite code" value="ABCD-1234-EFGH" disabled />
 </div>
 
@@ -78,7 +78,7 @@ but nothing can be copied.
 share. The handler below is an empty arrow (examples hold no state of
 their own); in an app it would be where you bump a counter.
 
-<div className="w-72">
+<div className="w-full max-w-72">
   <Copy
     label="Share link"
     value="https://fluidfunctionalism.com/r/input-copy"

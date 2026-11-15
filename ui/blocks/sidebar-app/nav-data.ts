@@ -1,4 +1,4 @@
-/*
+/*!
  * Ported from Fluid Functionalism — the seed navigation that
  * github.com/mickadesign/fluid-functionalism `lib/preset/sidebar-install.ts`
  * (@ c367a0d066bc10e663b3d269bc40539ea8417b25) generates for the sidebar

@@ -6,6 +6,8 @@
  * one `from` × `effect` pair, so the page's examples stay hook-free.
  */
 
+'use client'
+
 import { type ReactNode, useState } from 'react'
 import Button from '../../components/button'
 import { MorphSurface } from '../../lib/morph-layers'

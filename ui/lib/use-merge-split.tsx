@@ -1,11 +1,10 @@
-/*
+/*!
  * Vendored from Fluid Functionalism — `registry/default/hooks/use-merge-split.tsx` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
  *
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react` (the package's current name).
  * - `@/lib/*` and `@/hooks/*` imports rewritten to sibling `./*` paths.
  * - The merge/split choreography (boundaries, converge/commit/split phases,
@@ -17,6 +16,8 @@
  *   exports keep their names and shapes; `SelBlock` keeps `key`, the rect,
  *   `radii` and `instant`.
  */
+
+'use client'
 
 import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'

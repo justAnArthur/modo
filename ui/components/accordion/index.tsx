@@ -1,10 +1,10 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/accordion.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*`,
+ * - `framer-motion` → `motion/react`; `@/lib/*`,
  *   `@/hooks/*` and `@/components/ui/fluid-hover-highlight` → `../../lib/*`,
  *   except `SizeProvider` → `../../primitives/sizes`.
  * - Open state (Accordion and AccordionGroup) runs through
@@ -40,6 +40,8 @@
  *   after them over the content) until the pointer or focus moves. `effect`
  *   and `tier` on `AccordionContent`; reduced motion snaps, as before.
  */
+
+'use client'
 
 import { Accordion as AccordionPrimitive } from '@base-ui/react/accordion'
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'motion/react'
@@ -519,6 +521,8 @@ type AccordionComponent = ForwardRefExoticComponent<AccordionProps & RefAttribut
  * `'morph'` — and the spring `tier`, `'slow'` or `'moderate'`).
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/accordion.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Accordion = forwardRef<HTMLDivElement, AccordionProps>(
   (

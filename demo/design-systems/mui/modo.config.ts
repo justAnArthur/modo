@@ -4,4 +4,7 @@ export default defineConfig({
   name: 'MUI',
   description: 'Material UI v9 — components from @mui/material, default theme extracted into modo tokens.',
   css: './global.css',
+  socials: { github: 'https://github.com/justAnArthur/modo' },
+  theme: {},
+  shell: { Sidebar: './modo.components.tsx#Sidebar', Icon: './modo.components.tsx#Icon' },
 })

@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition (not part of Fluid Functionalism): a search that grows out
  * of its own button. The idea is beUI's morphing search
  * (github.com/starc007/ui-components `components/motion/morphing-search.tsx`
@@ -10,6 +10,8 @@
  * rows, oozing out of the field through the shared morph (`lib/use-morph.ts`,
  * goo by default).
  */
+
+'use client'
 
 import { Autocomplete } from '@base-ui/react/autocomplete'
 import { motion } from 'motion/react'

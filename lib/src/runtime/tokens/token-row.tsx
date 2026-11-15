@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactElement, ReactNode } from 'react'
 import type { Group, Swatch } from '../../lib/css'
 import { Heading } from '../anchor'
+import { resolved } from './host-colors'
 
 export type Var = Group['vars'][number]
 
@@ -10,9 +11,9 @@ export function declared(vars: Var[]): Var[] {
   return vars.filter((v, i) => vars.findIndex(w => w.name === v.name) === i)
 }
 
-/** Smallest first; values the parser couldn't size (calc(), var()) go last. */
+/** Smallest first, as the browser sizes them; values that aren't lengths go last. */
 export function byLength(vars: Var[]): Var[] {
-  const px = (v: Var) => (v.swatch?.kind === 'length' || v.swatch?.kind === 'font-size' ? v.swatch.px : Infinity)
+  const px = (v: Var) => lengthOf(v) ?? Infinity
   return [...vars].sort((a, b) => px(a) - px(b))
 }
 
@@ -46,13 +47,26 @@ function TokenList({ vars }: { vars: Var[] }) {
   )
 }
 
-/** A token's name over its value, beside or under its specimen. */
-export function TokenLabel({ v, children }: { v: Var; children?: ReactNode }) {
+const ruler = document.createElement('i')
+ruler.style.cssText = 'display:block;position:absolute;visibility:hidden;block-size:0'
+
+/** The token's length in px: the parser's when it could size it, else the
+    browser's (calc(), var() chains). Null when the value isn't a length. */
+export function lengthOf(v: Var): number | null {
+  if (v.swatch?.kind === 'length' || v.swatch?.kind === 'font-size') return v.swatch.px
+  if (!CSS.supports('width', resolved(v.name, v.value))) return null
+  if (!ruler.isConnected) document.body.append(ruler)
+  ruler.style.inlineSize = `var(${v.name})`
+  return parseFloat(getComputedStyle(ruler).width)
+}
+
+/** A token's name over its value (or `meta`), beside or under its specimen. */
+export function TokenLabel({ v, meta = v.value, children }: { v: Var; meta?: string; children?: ReactNode }) {
   return (
     <div data-modo="token-label">
       <code>{v.name}</code>
       <span data-modo="token-meta">
-        {v.value}
+        {meta}
         {children}
       </span>
     </div>

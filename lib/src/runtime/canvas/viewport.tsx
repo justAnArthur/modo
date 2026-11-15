@@ -25,8 +25,9 @@ interface View {
   k: number
 }
 
-// Module-level, so the view survives a trip to an item page and back.
-let saved: View = { x: 0, y: 0, k: 1 }
+// Module-level, so the view survives a trip to an item page and back. Unset
+// until the first visit, which opens fitted to the view.
+let saved: View | undefined
 
 type Camera = ReturnType<typeof createCamera>
 
@@ -39,7 +40,7 @@ function clamp(k: number): number {
 /** The pan/zoom state, written straight to the world's transform: a gesture
     never re-renders React, only the zoom label and frames going live. */
 function createCamera(root: RefObject<HTMLDivElement | null>, world: RefObject<HTMLDivElement | null>) {
-  const view = { ...saved }
+  const view = { ...(saved ?? { x: 0, y: 0, k: 1 }) }
   const listeners = new Set<() => void>()
   // Frames not yet live, and those of them now near the view.
   const waiting = new Map<Element, () => void>()
@@ -113,12 +114,16 @@ function createCamera(root: RefObject<HTMLDivElement | null>, world: RefObject<H
       view.y += dy
       move()
     },
-    fit() {
+    /** Fits the whole world in the view, but no smaller than `floor`; past
+        it the world starts at the top left. */
+    fit(floor = MIN_SCALE) {
       const r = root.current!
       const w = world.current!
-      view.k = clamp(Math.min(r.clientWidth / w.offsetWidth, r.clientHeight / w.offsetHeight))
-      view.x = (r.clientWidth - w.offsetWidth * view.k) / 2
-      view.y = Math.max(0, (r.clientHeight - w.offsetHeight * view.k) / 2)
+      const fits = clamp(Math.min(r.clientWidth / w.offsetWidth, r.clientHeight / w.offsetHeight))
+      view.k = Math.max(floor, fits)
+      const centered = view.k === fits
+      view.x = centered ? (r.clientWidth - w.offsetWidth * view.k) / 2 : 0
+      view.y = centered ? Math.max(0, (r.clientHeight - w.offsetHeight * view.k) / 2) : 0
       move()
     },
     subscribe(fn: () => void) {
@@ -188,6 +193,8 @@ export function Viewport({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const el = root.current!
+    // Fitted, but zoomed in enough for the frames in view to go live.
+    if (!saved) camera.fit(LIVE_SCALE)
     camera.paint()
     let drag: { id: number; x: number; y: number } | null = null
     let space = false
@@ -286,7 +293,7 @@ function Controls({ camera }: { camera: Camera }) {
       <Button variant="ghost" size="icon-sm" aria-label="Zoom in" onClick={() => camera.zoomBy(STEP)}>
         +
       </Button>
-      <Button variant="ghost" size="icon-sm" aria-label="Fit everything" onClick={camera.fit}>
+      <Button variant="ghost" size="icon-sm" aria-label="Fit everything" onClick={() => camera.fit()}>
         ⤢
       </Button>
     </div>

@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition (not part of Fluid Functionalism): a hover card that oozes
  * out of its link. The card grows out of the trigger through
  * `lib/use-morph.ts`, with the goo neck by default, like Popover — after
@@ -8,6 +8,8 @@
  * PreviewCard: hover and focus delays, the safe path into the card, dismissal
  * and positioning.
  */
+
+'use client'
 
 import { PreviewCard as PreviewCardPrimitive } from '@base-ui/react/preview-card'
 import {
@@ -174,6 +176,8 @@ interface PreviewCardProps {
  *   morph options `from`, `effect`, `hideSource`, `tier`.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/starc007/ui-components/blob/de52f337e520e7ee37749b36eb1c32df86137bcb/components/motion/popover.tsx beUI
+ * @license MIT © 2026 Saurabh Chauhan
  */
 function PreviewCard({ open, defaultOpen = false, onOpenChange, children }: PreviewCardProps) {
   const [current, setCurrent] = useControllableState(open, defaultOpen, onOpenChange)

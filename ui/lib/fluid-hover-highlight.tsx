@@ -1,11 +1,10 @@
-/*
+/*!
  * Vendored from Fluid Functionalism — `registry/default/fluid-hover-highlight.tsx` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
  *
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react` (the package's current name).
  * - `@/lib/*` and `@/hooks/*` imports rewritten to sibling `./*` paths.
  * - The fill is a `GooIndicator` (`./goo-indicator`, local): it melts from row
@@ -13,6 +12,8 @@
  *   `from`, `hidden` and `transition` behave as before; a square highlight
  *   (no radius) has nothing to melt and slides as before.
  */
+
+'use client'
 
 import { AnimatePresence, motion, type Transition, useReducedMotion } from 'motion/react'
 import { GooIndicator } from './goo-indicator'

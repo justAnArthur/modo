@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs'
+import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadModoConfig } from '../lib/config.loader'
 
@@ -8,29 +8,73 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const libRoot = resolve(__dirname, '..')
 const runtimeRoot = resolve(libRoot, 'src', 'runtime')
 const templatesRoot = resolve(libRoot, 'templates')
+const viteConfigFile = join(runtimeRoot, 'vite.config.ts')
+const libPackage = JSON.parse(readFileSync(resolve(libRoot, 'package.json'), 'utf8')) as {
+  name: string
+  version: string
+}
 const DEBUG = process.env.MODO_DEBUG
 
-const HELP = `modo — atomic design system renderer
+const HELP = `modo — turns a design system into its own docs site
 
 Usage:
   modo init <name>         Scaffold a design system in ./<name>
   modo init <dir> <name>   Scaffold it in <dir>/<name>
   modo dev                 Start the docs dev server
   modo build               Build the docs site into ./dist
-  modo add <kind> <name>   Add a primitive, component, block or token (<group>/[<group>/]<name> groups an item)
+  modo preview             Serve the built site
+  modo add <kind> <name>   Add a primitive, component, block, page or token (<group>/[<group>/]<name> groups an item)
   modo check               Validate modo.config.ts
 
-Options:
-  --config <file>          dev, build, check: the config file (default modo.config.ts)
-  --base <path>            build: public path the site is served under (default /)
-  --out <dir>              build: the output dir (default ./dist)
+Options (--flag value or --flag=value):
+  --config <file>          dev, build, preview, check: the config file (default modo.config.ts)
+  --port <port>            dev, preview: the port (default 5173 for dev, 4173 for preview)
+  --host [<host>]          dev, preview: the address to listen on (default localhost; a bare --host listens on all)
+  --base <path>            build, preview: public path the site is served under (default /)
+  --out <dir>              build, preview: the output dir (default ./dist)
   --help, -h               Show this help
   --version, -v            Print version
 `
 
+// The flags each command takes.
+const FLAGS = new Map<string, string[]>([
+  ['init', []],
+  ['dev', ['--config', '--port', '--host']],
+  ['build', ['--config', '--base', '--out']],
+  ['preview', ['--config', '--port', '--host', '--base', '--out']],
+  ['add', []],
+  ['check', ['--config']],
+])
+
+// Flags that may stand alone; a bare `--host` means every address, as in Vite.
+const BARE_FLAGS = new Set(['--host'])
+
+// Unscoped npm package names only: the name is also the project's directory.
+const PACKAGE_NAME = /^[a-z0-9][a-z0-9._~-]*$/
+
+interface Args {
+  positionals: string[]
+  flags: Map<string, string | true>
+}
+
+class UsageError extends Error {}
+
+// Vite 8's build() throws a BundleError whose message embeds every inner
+// error's stack; the inner errors say it in one line each.
+interface PluginError extends Error {
+  plugin?: string
+}
+
+function errorLines(err: unknown): string[] {
+  if (!(err instanceof Error)) return [String(err)]
+  const inner = (err as { errors?: unknown }).errors
+  if (!Array.isArray(inner) || inner.length === 0) return [err.message]
+  return inner.map((e: PluginError) => (e.plugin ? `[${e.plugin}] ${e.message}` : e.message))
+}
+
 function exitWithError(err: unknown) {
-  const msg = err instanceof Error ? err.message : String(err)
-  process.stderr.write(`Error: ${msg}\n`)
+  for (const line of errorLines(err)) process.stderr.write(`Error: ${line}\n`)
+  if (err instanceof UsageError) process.stderr.write(`\n${HELP}`)
   if (DEBUG && err instanceof Error) {
     process.stderr.write(`${err.stack ?? ''}\n`)
   }
@@ -38,73 +82,172 @@ function exitWithError(err: unknown) {
 }
 
 async function main() {
-  const args = process.argv.slice(2)
-  const cmd = args[0]
+  const [cmd, ...rest] = process.argv.slice(2)
 
-  if (!cmd || cmd === '--help' || cmd === '-h') {
+  if (!cmd || cmd === '--help' || cmd === '-h' || rest.includes('--help') || rest.includes('-h')) {
     process.stdout.write(HELP)
     return
   }
 
   if (cmd === '--version' || cmd === '-v') {
-    const pkg = JSON.parse(readFileSync(resolve(libRoot, 'package.json'), 'utf8'))
-    process.stdout.write(`${pkg.name} ${pkg.version}\n`)
+    process.stdout.write(`${libPackage.name} ${libPackage.version}\n`)
     return
   }
 
+  const known = FLAGS.get(cmd)
+  if (!known) throw new UsageError(`Unknown command: ${cmd}`)
+
+  const args = parseArgs(cmd, known, rest)
   switch (cmd) {
     case 'init':
-      return runInit(args.slice(1))
+      return runInit(args)
     case 'dev':
-      return runVite('dev', args.slice(1))
+      return runDev(args)
     case 'build':
-      return runVite('build', args.slice(1))
+      return runBuild(args)
+    case 'preview':
+      return runPreview(args)
     case 'add':
-      return runAdd(args.slice(1))
+      return runAdd(args)
     case 'check':
-      return runCheck(args.slice(1))
-    default:
-      process.stderr.write(`Unknown command: ${cmd}\n\n${HELP}`)
-      process.exit(1)
+      return runCheck(args)
   }
 }
 
-async function runInit(args: string[]) {
-  const [first, second] = args
-  if (!first) throw new Error('init requires a project name (e.g. `modo init my-ds`)')
+function parseArgs(cmd: string, known: string[], argv: string[]): Args {
+  const positionals: string[] = []
+  const flags = new Map<string, string | true>()
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]!
+    if (!arg.startsWith('-')) {
+      positionals.push(arg)
+      continue
+    }
+
+    const eq = arg.indexOf('=')
+    const name = eq >= 0 ? arg.slice(0, eq) : arg
+    if (!known.includes(name)) throw new UsageError(`Unknown option for \`modo ${cmd}\`: ${name}`)
+    if (eq >= 0) {
+      flags.set(name, arg.slice(eq + 1))
+      continue
+    }
+
+    const next = argv[i + 1]
+    if (next !== undefined && !next.startsWith('-')) {
+      flags.set(name, next)
+      i++
+      continue
+    }
+    if (!BARE_FLAGS.has(name)) throw new UsageError(`${name} needs a value`)
+    flags.set(name, true)
+  }
+  return { positionals, flags }
+}
+
+function stringFlag(args: Args, name: string): string | undefined {
+  const value = args.flags.get(name)
+  if (typeof value === 'boolean') throw new UsageError(`${name} needs a value`)
+  return value
+}
+
+function portFlag(args: Args): number | undefined {
+  const value = stringFlag(args, '--port')
+  if (value === undefined) return undefined
+  const port = Number(value)
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    throw new UsageError(`--port must be a port number, got ${value}`)
+  }
+  return port
+}
+
+function configOf(args: Args): string {
+  return resolve(process.cwd(), stringFlag(args, '--config') ?? 'modo.config.ts')
+}
+
+async function runInit(args: Args) {
+  const [first, second, extra] = args.positionals
+  if (!first) throw new UsageError('init requires a project name (e.g. `modo init my-ds`)')
+  if (extra) throw new UsageError(`init takes <name> or <dir> <name>, got an extra argument: ${extra}`)
   const outDir = second ? resolve(process.cwd(), first) : process.cwd()
   const name = second ?? first
+  if (name.length > 214 || !PACKAGE_NAME.test(name)) {
+    throw new Error(
+      `Invalid project name "${name}". It becomes the npm package name: use lowercase letters, digits, "-", ".", "_" or "~", starting with a letter or digit, at most 214 characters.`,
+    )
+  }
   const projectDir = resolve(outDir, name)
   if (existsSync(projectDir)) throw new Error(`Directory already exists: ${projectDir}`)
 
   cpSync(resolve(templatesRoot, 'default'), projectDir, { recursive: true, filter: src => !src.endsWith('.DS_Store') })
+  // npm leaves .gitignore out of published packages, so the template ships it as _gitignore.
+  renameSync(resolve(projectDir, '_gitignore'), resolve(projectDir, '.gitignore'))
   for (const rel of readdirSync(projectDir, { recursive: true, encoding: 'utf8' })) {
     const file = resolve(projectDir, rel)
     if (!statSync(file).isFile()) continue
     const text = readFileSync(file, 'utf8')
-    writeFileSync(file, text.replaceAll('__NAME__', name).replaceAll('__DESCRIPTION__', `${name} design system`))
+    writeFileSync(
+      file,
+      text
+        .replaceAll('__NAME__', name)
+        .replaceAll('__DESCRIPTION__', `${name} design system`)
+        .replaceAll('__MODO_VERSION__', `^${libPackage.version}`),
+    )
   }
-  process.stdout.write(`Scaffolded ${projectDir}\n`)
+
+  const pm = process.env.npm_config_user_agent?.split('/')[0] || 'npm'
+  process.stdout.write(
+    `Scaffolded ${projectDir}\n\nNext steps:\n  cd ${relative(process.cwd(), projectDir)}\n  ${pm} install\n  ${pm} run dev    # modo dev\n`,
+  )
 }
 
-async function runVite(mode: 'dev' | 'build', args: string[] = []) {
+// The runtime's vite.config.ts reads the project from these, then runs from its own dir.
+async function prepareRuntime(args: Args): Promise<string> {
   const cwd = process.cwd()
   const configPath = configOf(args)
-  const out = flag(args, '--out')
   await loadModoConfig(configPath)
   process.env.MODO_USER_ROOT = cwd
   process.env.MODO_CONFIG_PATH = configPath
+  // Vite 8 warns that this config won't load under `configLoader: 'native'`.
+  // It can't (the plugins import .tsx; Node strips types only from 22.18), and
+  // the user can't act on a config modo owns.
+  process.env.VITE_CONFIG_NATIVE_IGNORE_WARNING ??= 'true'
   process.chdir(runtimeRoot)
-  await importViteAndRun(runtimeRoot, mode, flag(args, '--base'), out && resolve(cwd, out))
+  return cwd
 }
 
-function configOf(args: string[]): string {
-  return resolve(process.cwd(), flag(args, '--config') ?? 'modo.config.ts')
+async function runDev(args: Args) {
+  const server = { port: portFlag(args), host: args.flags.get('--host') }
+  await prepareRuntime(args)
+  const vite = await import('vite')
+  const dev = await vite.createServer({ configFile: viteConfigFile, server })
+  await dev.listen()
+  dev.printUrls()
 }
 
-function flag(args: string[], name: string): string | undefined {
-  const i = args.indexOf(name)
-  return i >= 0 ? args[i + 1] : undefined
+async function runBuild(args: Args) {
+  const base = stringFlag(args, '--base')
+  const out = stringFlag(args, '--out')
+  const cwd = await prepareRuntime(args)
+  const vite = await import('vite')
+  await vite.build({ configFile: viteConfigFile, base, build: { outDir: out && resolve(cwd, out) } })
+}
+
+// Serves the built files as they are: no modo plugins, nothing rebuilds.
+async function runPreview(args: Args) {
+  const cwd = process.cwd()
+  const cfg = await loadModoConfig(configOf(args))
+  const outDir = resolve(cwd, stringFlag(args, '--out') ?? 'dist')
+  if (!existsSync(join(outDir, 'index.html'))) throw new Error(`No build in ${outDir}. Run \`modo build\` first.`)
+
+  const vite = await import('vite')
+  const server = await vite.preview({
+    configFile: false,
+    root: cwd,
+    base: stringFlag(args, '--base') ?? cfg.base ?? '/',
+    build: { outDir },
+    preview: { port: portFlag(args), host: args.flags.get('--host') ?? 'localhost' },
+  })
+  server.printUrls()
 }
 
 // An item is <tier>/[<group>/…]<id>/index.tsx with its examples beside it; a
@@ -116,10 +259,10 @@ const TIERS: Record<string, string> = {
   page: 'pages',
 }
 
-async function runAdd(args: string[]) {
-  const [kind, name] = args
+async function runAdd(args: Args) {
+  const [kind, name] = args.positionals
   if (!kind || !name || !(kind in TIERS || kind === 'token')) {
-    throw new Error('add requires `<kind> <name>`, kind one of primitive, component, block, page, token')
+    throw new UsageError('add requires `<kind> <name>`, kind one of primitive, component, block, page, token')
   }
   // `overlays/dialog` puts the item in a group folder, `inputs/date-time/calendar` in a nested one.
   const path = name.split('/').map(kebab)
@@ -146,22 +289,10 @@ async function runAdd(args: string[]) {
   }
 }
 
-async function runCheck(args: string[]) {
+async function runCheck(args: Args) {
   const configPath = configOf(args)
   const cfg = await loadModoConfig(configPath)
   process.stdout.write(`OK — ${configPath} is valid (name="${cfg.name}")\n`)
-}
-
-async function importViteAndRun(rt: string, mode: 'dev' | 'build', base?: string, outDir?: string) {
-  const configFile = join(rt, 'vite.config.ts')
-  const vite = await import('vite')
-  if (mode === 'dev') {
-    const server = await vite.createServer({ configFile })
-    await server.listen()
-    server.printUrls()
-    return
-  }
-  await vite.build({ configFile, base, build: { outDir } })
 }
 
 function kebab(s: string): string {

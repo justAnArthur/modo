@@ -1,13 +1,14 @@
-/*
+/*!
  * Vendored from Fluid Functionalism — `registry/default/hooks/use-keyboard-nav-gate.ts` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
  *
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `@/lib/*` and `@/hooks/*` imports rewritten to sibling `./*` paths.
  */
+
+'use client'
 
 import { type KeyboardEvent, useCallback, useEffect, useRef } from 'react'
 import { POPUP_NAV_KEYS } from './popup'

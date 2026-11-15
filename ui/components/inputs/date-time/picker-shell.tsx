@@ -12,6 +12,8 @@
  * panel is the Sheet item instead, from the bottom edge.
  */
 
+'use client'
+
 import { Popover } from '@base-ui/react/popover'
 import { type ButtonHTMLAttributes, forwardRef, type ReactNode, type RefObject, useCallback, useState } from 'react'
 import { type FieldVariant, fieldIconClasses, useFieldBox } from '../../../lib/field-classes'

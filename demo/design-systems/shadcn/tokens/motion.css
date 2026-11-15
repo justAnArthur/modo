@@ -1,0 +1,14 @@
+/*
+ * shadcn/ui motion: the Tailwind v4 defaults its `transition-*` utilities run
+ * on (tailwindcss@4.3.3 theme.css). Enter / exit animations come from
+ * tw-animate-css on top of the same curves.
+ */
+
+:root {
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+}

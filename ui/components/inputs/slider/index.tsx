@@ -1,10 +1,9 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/slider.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `framer-motion` → `motion/react`; `@/lib/*` imports rewritten to relative
  *   `../../../lib/*` paths.
  * - `var(--color-accent)` → `var(--accent)` (the hover-preview fill of both
@@ -33,6 +32,8 @@
  *   hex focus-ring fallback → `ring-focus-ring` / `border-focus-ring`;
  *   literal colors → color tokens.
  */
+
+'use client'
 
 import { Slider as SliderPrimitive } from '@base-ui/react/slider'
 import { AnimatePresence, animate, type MotionValue, motion, useMotionValue, useTransform } from 'motion/react'
@@ -1638,6 +1639,8 @@ interface SliderProps extends Omit<SliderEngineProps, 'value' | 'onChange'> {
  * design.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/slider.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Slider = forwardRef<HTMLDivElement, SliderProps>(
   ({ size, variant = 'pips', value: valueProp, defaultValue, onChange: onChangeProp, ...rest }, ref) => {

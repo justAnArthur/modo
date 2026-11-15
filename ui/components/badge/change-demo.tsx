@@ -4,6 +4,8 @@
  * time its button is pressed, so the example stays hook-free.
  */
 
+'use client'
+
 import { useState } from 'react'
 import Button from '../button'
 import Badge, { type BadgeProps } from './index'

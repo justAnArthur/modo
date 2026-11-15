@@ -1,14 +1,15 @@
-/*
+/*!
  * Vendored from Fluid Functionalism — `registry/default/hooks/use-fluid-hover.ts` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
  *
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - React 18 types: `sessionRef` typed `MutableRefObject<number>` (upstream
  *   targets React 19, where `RefObject.current` is mutable and non-null).
  */
+
+'use client'
 
 import {
   type Dispatch,

@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition (not part of Fluid Functionalism): the one renderer behind
  * every morphing overlay, driven by `lib/use-morph.ts`. It goes inside the
  * Base UI popup, which stays transparent and at its final size:

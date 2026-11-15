@@ -6,7 +6,7 @@ import { ArrowLeft, ArrowRight, Code, Copy, Link, Printer, RotateCw, Save, Sciss
 Right-click anywhere in the area (long-press on touch): the menu swells out of the exact point you pressed. Rows are Dropdown's, with a shortcut at the end.
 
 <ContextMenu>
-  <ContextMenu.Trigger className="flex h-56 w-full max-w-lg items-center justify-center rounded-xl border border-dashed border-border text-caption text-muted-foreground">
+  <ContextMenu.Trigger className="flex flex-wrap h-56 w-full max-w-lg items-center justify-center rounded-xl border border-dashed border-border text-caption text-muted-foreground">
     Right-click here
   </ContextMenu.Trigger>
   <ContextMenu.Content>
@@ -28,7 +28,7 @@ Right-click anywhere in the area (long-press on touch): the menu swells out of t
 `size="compact"` pins the rows to the 28px step of the size ladder, for dense surfaces.
 
 <ContextMenu size="compact">
-  <ContextMenu.Trigger className="flex h-40 w-full max-w-lg items-center justify-center rounded-xl border border-dashed border-border text-caption text-muted-foreground">
+  <ContextMenu.Trigger className="flex flex-wrap h-40 w-full max-w-lg items-center justify-center rounded-xl border border-dashed border-border text-caption text-muted-foreground">
     Right-click a file
   </ContextMenu.Trigger>
   <ContextMenu.Content className="w-48">
@@ -45,7 +45,7 @@ Right-click anywhere in the area (long-press on touch): the menu swells out of t
 `effect="morph"` grows the menu out of the point as one clean surface, without the goo.
 
 <ContextMenu>
-  <ContextMenu.Trigger className="flex h-40 w-full max-w-lg items-center justify-center rounded-xl border border-dashed border-border text-caption text-muted-foreground">
+  <ContextMenu.Trigger className="flex flex-wrap h-40 w-full max-w-lg items-center justify-center rounded-xl border border-dashed border-border text-caption text-muted-foreground">
     Right-click for a plain morph
   </ContextMenu.Trigger>
   <ContextMenu.Content effect="morph">

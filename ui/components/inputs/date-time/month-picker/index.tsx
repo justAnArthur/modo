@@ -5,6 +5,8 @@
  * `{ month, year }`.
  */
 
+'use client'
+
 import { addYears, endOfYear, format, type Locale, startOfMonth, startOfYear } from 'date-fns'
 import { type RefObject, useMemo, useRef } from 'react'
 import { defaultLocale, fieldLabel, parseMonthText } from '../../../../lib/date-locale'

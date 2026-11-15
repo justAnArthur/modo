@@ -5,8 +5,26 @@
  * (`_fluid/font-weight.ts`) animates both the wght and opsz variation axes,
  * so this workspace loads `@fontsource-variable/inter/opsz` in global.css.
  * global.css's `@theme inline` binds the same family for Tailwind utilities.
+ *
+ * The roles and weights mirror FF's JS type system: `--fs-*` is the default
+ * column of `typeScale` in `_fluid/size-context.tsx` (px per role; the
+ * compact column steps each one down), `--fw-*` the `fontWeights` ladder in
+ * `_fluid/font-weight.ts` (wght and opsz axes). The registry's components
+ * apply these as literal classes; the tokens name them for docs and for
+ * global.css's `text-<role>` utilities.
  */
 
 :root {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --fs-display: 28px;
+  --fs-title: 16px;
+  --fs-subtitle: 14px;
+  --fs-body: 13px;
+  --fs-caption: 12px;
+
+  --fw-normal: "wght" 400, "opsz" 14;
+  --fw-medium: "wght" 450, "opsz" 15;
+  --fw-semibold: "wght" 550, "opsz" 18;
+  --fw-bold: "wght" 700, "opsz" 25;
 }

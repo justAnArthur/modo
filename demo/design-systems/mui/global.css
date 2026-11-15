@@ -7,7 +7,8 @@
 
 /* The chrome's generic contract, wired to MUI by reference. Type: a page
    title is an h4, a section an h6 (MUI's medium-weight heading). Color: the
-   palette's divider, secondary text and primary main. */
+   palette's divider, secondary text and primary main. Spacing: the generic
+   4px-based steps, as MUI spacing units. */
 :root {
   --font-sans: var(--font-family);
   --font-size-h1: var(--text-h4);
@@ -24,6 +25,21 @@
   --border: var(--mui-palette-divider);
   --muted-foreground: var(--mui-palette-text-secondary);
   --ring: var(--mui-palette-primary-main);
+
+  --space-1: var(--mui-spacing-0_5);
+  --space-2: var(--mui-spacing-1);
+  --space-3: var(--mui-spacing-1_5);
+  --space-4: var(--mui-spacing-2);
+  --space-5: var(--mui-spacing-3);
+  --space-6: var(--mui-spacing-4);
+}
+
+/* The page reads the palette, so the dark block in tokens/colors.css
+   repaints it. */
+body {
+  margin: 0;
+  background: var(--mui-palette-background-default);
+  color: var(--mui-palette-text-primary);
 }
 
 /* Host-owned chrome visuals (the lib ships structure only): dividers on the

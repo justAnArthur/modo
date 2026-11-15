@@ -1,10 +1,10 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/default/sidebar-core.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*`
+ * - `framer-motion` → `motion/react`; `@/lib/*`
  *   imports rewritten to `../../../lib/*`, `@/components/ui/{button,tooltip}`
  *   to the Base siblings `../../button` / `../../overlays/tooltip`.
  * - Styling reads DS tokens (AGENTS.md styling): inline
@@ -24,6 +24,8 @@
  * - `SidebarInput`'s field ladder is the shared `lib/field-classes.ts` recipe.
  * - `useIsMobile` moved to `lib/use-is-mobile.ts`, shared with the pickers.
  */
+
+'use client'
 
 import { motion, useReducedMotion } from 'motion/react'
 import {

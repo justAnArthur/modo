@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition (not part of Fluid Functionalism): a sheet attached to an edge
  * of the window. Base UI's Drawer owns the behavior (swipe to dismiss, snap
  * points, focus, scroll lock); the panel grows through the shared morph layer
@@ -10,6 +10,8 @@
  * — MIT © 2026 Saurabh Chauhan, notice: LICENSE.beui) without porting their
  * drag, snap or focus code.
  */
+
+'use client'
 
 import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer'
 import { motion } from 'motion/react'

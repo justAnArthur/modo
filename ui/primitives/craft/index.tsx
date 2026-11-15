@@ -5,6 +5,8 @@
  * on purpose) next to the system's own items.
  */
 
+'use client'
+
 import type { ReactNode } from 'react'
 import Badge from '../../components/badge'
 import { useShape } from '../../lib/shape-context'

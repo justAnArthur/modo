@@ -1,13 +1,14 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Vendored from Fluid Functionalism — `registry/default/lib/shape-context.tsx` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
  *
- * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
+ * Local modifications: none.
  */
+
+'use client'
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 

@@ -1,10 +1,10 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/blocks/sidebar-workspace-header.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `@/components/ui/{sidebar,dropdown}` → `../../components/*`,
+ * - `@/components/ui/{sidebar,dropdown}` → `../../components/*`,
  *   `@/lib/sidebar-menu-grid` → `./menu-grid`, `@/lib/*` → `../../lib/*`.
  * - Styling reads DS tokens (AGENTS.md styling): inline
  *   `fontVariationSettings` → `weight-semibold`; `text-[13px]` / `text-[10px]`
@@ -15,6 +15,8 @@
  *   `openOnHover`), the topbar's trigger stays beside it, so the tile no
  *   longer cross-fades with a trigger over the row.
  */
+
+'use client'
 
 import { type ReactNode } from 'react'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '../../components/navigation/sidebar'

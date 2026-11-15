@@ -1,4 +1,3 @@
-import { config } from 'virtual:modo-config'
 import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
@@ -14,7 +13,8 @@ export function SidebarNav() {
   return (
     <>
       <NavSection
-        title={config.name}
+        // The header already names the system.
+        title="Explore"
         items={[
           { id: '/', name: 'Overview' },
           { id: '/canvas', name: 'Canvas' },

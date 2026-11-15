@@ -2,7 +2,7 @@
   "name": "@justanarthur/modo",
   "type": "module",
   "version": "0.9.0",
-  "description": "Atomic design system renderer — reads tokens/primitives/components/blocks and produces a docs site that uses the user's components in the chrome.",
+  "description": "Turns a design system into its own docs site: tokens, primitives, components, blocks and pages, live examples and a canvas, with the design system's own components in the chrome.",
   "license": "MIT",
   "keywords": [
     "design-system",
@@ -42,8 +42,12 @@
     "src/plugins",
     "src/exports",
     "templates",
+    "docs",
     "README.md"
   ],
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -72,11 +76,11 @@
   "dependencies": {
     "@babel/standalone": "^7.24.0",
     "@mdx-js/esbuild": "^3.1.1",
-    "@vitejs/plugin-react": "^4.3.0",
-    "esbuild": "^0.20.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "esbuild": "^0.28.2",
     "marked": "^18.0.14",
     "remark-gfm": "^4.0.1",
-    "vite": "^5.4.0",
+    "vite": "^8.3.8",
     "zod": "^3.23.0"
   },
   "peerDependencies": {

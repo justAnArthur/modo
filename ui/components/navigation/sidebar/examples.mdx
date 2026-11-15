@@ -11,7 +11,7 @@ import { SidebarWorkspaceHeader, WorkspaceTile } from '../../../blocks/sidebar-a
 
 The default layout sits flush with an inner border. Pick a row: the active background melts across to it, and the hover highlight drips from row to row.
 
-<div className="flex h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
+<div className="flex flex-wrap h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
     <Sidebar className="h-full" defaultValue="Chat">
       <Sidebar.Content>
@@ -37,7 +37,7 @@ The default layout sits flush with an inner border. Pick a row: the active backg
 
 `variant="floating"` lifts the sidebar onto its own card, one surface level up.
 
-<div className="flex h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
+<div className="flex flex-wrap h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
     <Sidebar variant="floating" className="h-full" defaultValue="Chat">
       <Sidebar.Content>
@@ -63,7 +63,7 @@ The default layout sits flush with an inner border. Pick a row: the active backg
 
 `variant="inset"` makes your content stand out: the main region becomes the card, and the sidebar sits on the page around it.
 
-<div className="flex h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
+<div className="flex flex-wrap h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
     <Sidebar variant="inset" className="h-full" defaultValue="Chat">
       <Sidebar.Content>
@@ -89,7 +89,7 @@ The default layout sits flush with an inner border. Pick a row: the active backg
 
 Two levels below the sections: a `collapsible` row folds its sub-menu, and the hover highlight flows from a parent into its children. Private starts folded to its label, Shared open with its rows closed, Recent open all the way down.
 
-<div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+<div className="flex flex-wrap h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
     <Sidebar className="h-full" defaultValue="API guidelines">
       <Sidebar.Content>
@@ -159,7 +159,7 @@ Two levels below the sections: a `collapsible` row folds its sub-menu, and the h
 
 A badge and up to three actions per row. The actions show on hover, so the label keeps the room at rest; the row menu grows out of its button. Section labels carry their own actions.
 
-<div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+<div className="flex flex-wrap h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
     <Sidebar className="h-full">
       <Sidebar.Content>
@@ -213,7 +213,7 @@ A badge and up to three actions per row. The actions show on hover, so the label
 
 The two ends of the rail: a workspace switcher and search on top, the user row at the bottom. Both menus grow out of their rows.
 
-<div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+<div className="flex flex-wrap h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
     <Sidebar className="h-full" defaultValue="Chat">
       <Sidebar.Header>
@@ -244,7 +244,7 @@ The two ends of the rail: a workspace switcher and search on top, the user row a
       <Sidebar.Footer>
         <SidebarUserFooter
           name="Micka Touillaud"
-          avatar={<span className="flex size-5 items-center justify-center rounded-full bg-muted-foreground text-micro-compact text-background">M</span>}
+          avatar={<span className="flex flex-wrap size-5 items-center justify-center rounded-full bg-muted-foreground text-micro-compact text-background">M</span>}
           menu={
             <>
               <MenuItem index={0} label="Profile" />
@@ -265,7 +265,7 @@ The two ends of the rail: a workspace switcher and search on top, the user row a
 
 Drag the rail on the inner edge to resize, click it or press `[` to collapse. With `openOnHover`, collapsing leaves the sidebar on hover: it opens when the pointer reaches the edge or the trigger beside it, and closes when it leaves. The trigger's dashed glyph shows the mode; press it to keep the sidebar open again.
 
-<div className="flex h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
+<div className="flex flex-wrap h-[480px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0} openOnHover>
     <Sidebar variant="inset" className="h-full" defaultValue="Summarise the Q3 board deck">
       <Sidebar.Content>
@@ -298,7 +298,7 @@ Drag the rail on the inner edge to resize, click it or press `[` to collapse. Wi
 
 Below `mobileBreakpoint` (768px by default) the sidebar is a Sheet: it grows out of the window's edge with the goo neck and swipes away. This one's breakpoint is set past any window, so the trigger always opens the drawer.
 
-<div className="flex h-[240px] w-full overflow-hidden rounded-xl border border-border bg-background">
+<div className="flex flex-wrap h-[240px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={100000}>
     <Sidebar defaultValue="Chat">
       <Sidebar.Content>

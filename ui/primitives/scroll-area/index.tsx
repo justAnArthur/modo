@@ -1,10 +1,9 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/scroll-area.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `@/lib/{utils,shape-context}` / `@/hooks/use-touch-primary` imports rewritten to `../../lib/*`.
  * - The root's forwardRef element type `ComponentRef<typeof ScrollAreaPrimitive.Root>` written out
  *   as `HTMLDivElement` (what Base UI's Root forwards): modo's parser needs a first type argument
@@ -20,6 +19,8 @@
  *   `--scroll-area-overflow-*` vars there (scroll-aware in browsers without scroll-driven
  *   animations, e.g. Firefox).
  */
+
+'use client'
 
 import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area'
 import {
@@ -79,6 +80,8 @@ interface ScrollAreaStatics {
  *   areas.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/scroll-area.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(
   ({ className, children, viewportClassName, orientation = 'vertical', ...props }, ref) => {

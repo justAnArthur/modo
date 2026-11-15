@@ -4,6 +4,8 @@
  * hours, minutes), or lay out as a strip above it on a narrow panel.
  */
 
+'use client'
+
 import { type KeyboardEvent, type ReactNode, useEffect, useRef } from 'react'
 import { FluidHoverHighlight } from './fluid-hover-highlight'
 import { useReduceMotion } from './reduced-motion'

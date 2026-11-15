@@ -5,6 +5,8 @@
  * copy these into an item.
  */
 
+'use client'
+
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover'
 import { motion } from 'motion/react'
 import { useState } from 'react'

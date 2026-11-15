@@ -1,6 +1,7 @@
 # ci.yml
 # ---
-# lint and typecheck on every push to main and every pull request.
+# lint, typecheck and test on every push to main and every pull request; on
+# pull requests also build the demo site, and smoke-test the packed lib.
 # ---
 
 name: ci
@@ -22,3 +23,35 @@ jobs:
       - run: bun run build
       - run: bun run check
       - run: bun run test
+      - name: ui tarball contents
+        run: .github/scripts/check-ui-pack.sh
+
+  # pages.yml builds it on main; this catches a broken site before the merge.
+  site:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      # The demo runner builds each site with `node`; Vite 8 needs 20.19+ or 22.12+.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: bun run build
+        working-directory: demo
+        env:
+          SITE_BASE: /
+
+  # `npm pack` the lib, `modo init` with it, install the tarball and build.
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: bun install --frozen-lockfile
+      - run: .github/scripts/smoke-init.sh

@@ -1,14 +1,16 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/blocks/sidebar-app/search-field.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `@/components/ui/{sidebar,dropdown}` → `../../components/*`,
+ * - `@/components/ui/{sidebar,dropdown}` → `../../components/*`,
  *   `@/lib/sidebar-menu-grid` → `./menu-grid`, `@/lib/*` → `../../lib/*`.
  * - Styling reads DS tokens (AGENTS.md styling): `text-[11px]` → `text-micro`;
  *   `duration-80` → `duration-fast`.
  */
+
+'use client'
 
 import { type ComponentProps } from 'react'
 import { SidebarInput } from '../../components/navigation/sidebar'

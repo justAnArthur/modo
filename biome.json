@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "root": true,
   "files": {
-    "includes": ["**", "!**/.github/banner.svg"]
+    "includes": ["**", "!**/.github/banner.svg", "!**/.github/brand"]
   },
   "vcs": {
     "enabled": true,

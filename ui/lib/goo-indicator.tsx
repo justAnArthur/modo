@@ -19,6 +19,8 @@
  * alike.
  */
 
+'use client'
+
 import { animate, motion, type Transition, useMotionValue, type ValueAnimationTransition } from 'motion/react'
 import { type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useReduceMotion } from './reduced-motion'

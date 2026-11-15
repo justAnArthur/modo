@@ -1,6 +1,6 @@
 import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
-import type { SiteConfig } from '../lib/schema'
+import { isComponentRef, type SiteConfig } from '../lib/schema'
 import { type LoadedComponent, type ParsedItemLite, type ResolvedShell, resolveShellSlots } from '../lib/slots'
 import type { BundleResult, Bundler } from './bundle'
 import { cssModule } from './css-module'
@@ -25,6 +25,7 @@ type PanelItemExport = {
 type ResolvedShellExport = ResolvedShell & {
   cssFiles: string[]
   panelItems: PanelItemExport[]
+  logo: LoadedComponent | null
 }
 
 type ShellResult = { shell: ResolvedShellExport; warnings: string[] }
@@ -34,7 +35,7 @@ type ShellResult = { shell: ResolvedShellExport; warnings: string[] }
 // only ever imported in the browser, never in node.
 async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
   const warnings: string[] = []
-  const config: Pick<SiteConfig, 'shell' | 'panel'> = result.config ?? {}
+  const config: Pick<SiteConfig, 'shell' | 'panel' | 'logo'> = result.config ?? {}
   const userItems: ParsedItemLite[] = result.items.map(it => ({
     name: it.name,
     id: it.id,
@@ -70,7 +71,10 @@ async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
       cssPaths: lc.cssPaths,
     })
   }
+  const logo = config.logo && isComponentRef(config.logo) ? await loadUserPath(config.logo) : null
+  if (config.logo && isComponentRef(config.logo) && !logo) warnings.push(`logo "${config.logo}" could not be resolved`)
   const cssFiles = [
+    ...(logo ? [logo] : []),
     resolved.Button,
     resolved.Link,
     resolved.Code,
@@ -95,6 +99,7 @@ async function resolveShellForUser(result: BundleResult): Promise<ShellResult> {
       },
       cssFiles,
       panelItems,
+      logo,
     },
     warnings,
   }
@@ -142,10 +147,10 @@ export function shellPlugin(options: Options): Plugin {
           __SidebarItem: shell.Sidebar.Item,
           __SidebarSection: shell.Sidebar.Section,
         }).map(([name, s]) => ({ name, ...s }))
-        const panelItemBindings = shell.panelItems.map((it, idx) => ({
-          name: `__PanelItem${idx}`,
-          ...it,
-        }))
+        const panelItemBindings = [
+          ...shell.panelItems.map((it, idx) => ({ name: `__PanelItem${idx}`, ...it })),
+          ...(shell.logo?.bundlePath ? [{ name: '__Logo', ...shell.logo }] : []),
+        ]
         const exportOf = (s: { name: string; exportName?: string }) =>
           `__mod_${s.name}[${JSON.stringify(s.exportName ?? 'default')}]`
         const fallbackImports = slotBindings
@@ -181,6 +186,7 @@ export function shellPlugin(options: Options): Plugin {
           `  Sidebar: { Root: __SidebarRoot, Item: __SidebarRoot.Item ?? __SidebarItem, Section: __SidebarRoot.Section ?? __SidebarSection },`,
           `};`,
           `export const panelItems = [${panelItemsJson}];`,
+          `export const Logo = ${shell.logo?.bundlePath ? '__Logo_Comp' : 'null'};`,
         ].join('\n')
       }
       if (id === SHELL_CSS_RESOLVED) {

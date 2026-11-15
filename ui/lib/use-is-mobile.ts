@@ -1,4 +1,4 @@
-/*
+/*!
  * Vendored from Fluid Functionalism — `registry/default/sidebar-core.tsx` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
@@ -7,6 +7,8 @@
  * Local modifications:
  * - Moved out of the sidebar so the date and time pickers share it; exported.
  */
+
+'use client'
 
 import { useEffect, useState } from 'react'
 

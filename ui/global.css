@@ -47,38 +47,82 @@
 
 /* The inset layout, as Sidebar.Inset draws it: both asides are inset
    Sidebars (DocsNav) and the content is the card between them. Each aside's
-   column follows its sidebar's width spring, so hiding one reflows the card;
-   below md both are drawers and the card takes the row. */
-[data-modo="app"] {
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-rows: none;
-  grid-template-areas: "sidebar content panel";
-}
-
-[data-modo="sidebar"],
-[data-modo="panel"] {
-  position: sticky;
-  top: 0;
-  /* Over the card: the corner triggers overlap it. */
-  z-index: 1;
-  height: 100vh;
-  max-height: none;
-  /* The Sidebar scrolls its own rows. */
-  overflow: visible;
-}
-
+   column follows its sidebar's width spring, so hiding one reflows the card.
+   Below md the lib's stacked layout stands: the header on top, the nav
+   folded under its menu toggle, the card at full width, the panel below. */
 [data-modo="content"] {
   margin: var(--space-2);
-  /* The inset topbar's band, where the corner triggers sit. */
-  padding-top: calc(3rem + var(--space-2));
   border-radius: var(--radius-xl);
   background-color: var(--surface-2);
   box-shadow: var(--shadow-2);
   transition: margin var(--duration-fast);
 }
 
-/* Flush with an open sidebar: its rows keep their own gutter. */
 @media (min-width: 768px) {
+  [data-modo="app"] {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: none;
+    grid-template-areas: "sidebar content panel";
+  }
+
+  [data-modo="sidebar"],
+  [data-modo="panel"] {
+    position: sticky;
+    top: 0;
+    /* Over the card: the corner triggers overlap it. */
+    z-index: 1;
+    height: 100vh;
+    max-height: none;
+    /* The Sidebar scrolls its own rows. */
+    overflow: visible;
+  }
+
+  /* modo's column scrolls what sits under the header; ui's Sidebar scrolls
+     its own rows and slides out by itself, so that layer stays open. */
+  [data-modo="sidebar"] > :not([data-modo="header"]),
+  [data-modo="panel"] > * {
+    overflow: visible;
+  }
+
+  /* The trigger belongs in the card's top corner, level with the panel's, so it
+     positions against the column (sticky, so a containing block), not the
+     Sidebar wrapper that starts under the brand. */
+  [data-modo="sidebar"] > [data-slot="sidebar-wrapper"] {
+    position: static;
+  }
+
+  /* The brand rides along with the Sidebar: it never sets the column's width
+     (inline-size containment), so the column follows the Sidebar's own slide
+     and clips the brand as it closes. It keeps its height, so the Sidebar and
+     its trigger never jump. */
+  [data-modo="sidebar"] > [data-modo="header"] {
+    contain: inline-size;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    white-space: nowrap;
+    /* Its own padding would still widen the column; the children carry it. */
+    padding-inline: 0;
+    /* The corner triggers' band (top-2, h-12): the brand centres on the toggle. */
+    box-sizing: border-box;
+    height: calc(3rem + var(--space-2));
+    padding-top: var(--space-2);
+    padding-bottom: 0;
+  }
+
+  [data-modo="sidebar"] > [data-modo="header"] > :first-child {
+    padding-left: var(--space-4);
+  }
+
+  [data-modo="sidebar"] > [data-modo="header"] > :last-child {
+    padding-right: var(--space-4);
+  }
+
+  [data-modo="content"] {
+    /* The inset topbar's band, where the corner triggers sit. */
+    padding-top: calc(3rem + var(--space-2));
+  }
+
+  /* Flush with an open sidebar: its rows keep their own gutter. */
   [data-modo="app"]:has(> [data-modo="sidebar"] [data-slot="sidebar"][data-state="expanded"]) > [data-modo="content"] {
     margin-left: 0;
   }

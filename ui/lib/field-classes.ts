@@ -5,6 +5,8 @@
  * the date and time pickers) builds on.
  */
 
+'use client'
+
 import { cva } from 'class-variance-authority'
 import { createContext, type MouseEvent, type RefObject, useContext } from 'react'
 import { useShape } from './shape-context'

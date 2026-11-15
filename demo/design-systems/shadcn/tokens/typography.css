@@ -1,0 +1,38 @@
+/*
+ * shadcn/ui type tokens: the scaffold's Geist family (global.css
+ * `@import "@fontsource-variable/geist"`) and the Tailwind v4 defaults its
+ * components set type with (tailwindcss@4.3.3 theme.css): the text scale with
+ * its paired line-heights, the weights and the leading steps. Same names and
+ * values as Tailwind's own theme variables, so `text-sm` and `var(--text-sm)`
+ * agree.
+ */
+
+:root {
+  --font-sans: "Geist Variable", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: calc(1 / 0.75);
+  --text-sm: 0.875rem;
+  --text-sm--line-height: calc(1.25 / 0.875);
+  --text-base: 1rem;
+  --text-base--line-height: calc(1.5 / 1);
+  --text-lg: 1.125rem;
+  --text-lg--line-height: calc(1.75 / 1.125);
+  --text-xl: 1.25rem;
+  --text-xl--line-height: calc(1.75 / 1.25);
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: calc(2 / 1.5);
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: calc(2.25 / 1.875);
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --leading-tight: 1.25;
+  --leading-snug: 1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.625;
+}

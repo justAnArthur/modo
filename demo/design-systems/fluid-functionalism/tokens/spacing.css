@@ -1,0 +1,18 @@
+/*
+ * Fluid Functionalism spacing: the shadcn foundation's Tailwind v4 base unit
+ * (tailwindcss@4.3.3 theme.css `--spacing`), which every `p-N` / `gap-N`
+ * utility multiplies. The registry's components step in half units
+ * (`gap-1.5`, `px-2.5`, `py-3.5`); the `--space-*` steps are the multiples
+ * modo's generic contract names (1, 2, 3, 4, 6, 8).
+ */
+
+:root {
+  --spacing: 0.25rem;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+}

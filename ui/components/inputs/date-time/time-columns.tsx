@@ -4,6 +4,8 @@
  * (with time) and the time picker share. Not an item (a file in a group folder).
  */
 
+'use client'
+
 import { format, type Locale } from 'date-fns'
 import { useMemo } from 'react'
 import { fieldLabel, type HourCycle } from '../../../lib/date-locale'

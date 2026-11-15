@@ -9,6 +9,8 @@
  * `lib/use-fluid-hover.ts` measures. Search's suggestions reuse the list.
  */
 
+'use client'
+
 import { Autocomplete } from '@base-ui/react/autocomplete'
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import {

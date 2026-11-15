@@ -1,10 +1,10 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/sidebar.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `framer-motion` → `motion/react`; `@/lib/*`
+ * - `framer-motion` → `motion/react`; `@/lib/*`
  *   imports rewritten to `../../../lib/*`, `@/components/ui/scroll-area` →
  *   `../../../primitives/scroll-area`, `@/components/ui/sidebar-{core,menu}` →
  *   the siblings `./sidebar-core` / `./sidebar-menu`.
@@ -22,6 +22,8 @@
  * - Upstream's `.scroll-divider` (app/globals.css) ships beside it as
  *   `sidebar.css`.
  */
+
+'use client'
 
 import {
   type CSSProperties,
@@ -221,6 +223,8 @@ type SidebarComponent = ForwardRefExoticComponent<SidebarProps & RefAttributes<H
  * - `useSidebar()` (named export) reads the provider's state.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/sidebar.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
   (

@@ -5,6 +5,8 @@
  * pass through to DayPicker, the way shadcn's Calendar does.
  */
 
+'use client'
+
 import {
   addDays,
   addYears,

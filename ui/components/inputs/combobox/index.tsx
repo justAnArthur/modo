@@ -1,10 +1,9 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/base/combobox.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped (no RSC here).
  * - Imports rewritten: `@/lib/*` → `../../../lib/*` (`SizeProvider` →
  *   `../../../primitives/sizes`), `@/hooks/*` → `../../../lib/*`,
  *   `@/lib/elevated` → `../../../primitives/surface`, `@/components/ui/scroll-area` →
@@ -49,7 +48,11 @@
  *   their box with the shared `useFieldBox` (ladder in the variant, state
  *   attributes, radius, inset), as every text field does; `variant` is typed
  *   `FieldVariant` (no `null`).
+ * - Both fields' wrappers cap at their container's width (`max-w-full`), so a
+ *   field given `w-[Npx] max-w-full` shrinks on a narrow screen.
  */
+
+'use client'
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox'
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
@@ -254,6 +257,8 @@ function toValues(v: string | readonly string[] | undefined): string[] {
  * - `Combobox.Empty` — what shows when nothing matches.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/combobox.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
 function Combobox({
   children,
@@ -535,7 +540,7 @@ const ComboboxInput = forwardRef<HTMLInputElement, ComboboxInputProps>(
     const { anchorRef } = useComboboxContext()
 
     return (
-      <div className="flex flex-col gap-1">
+      <div className="flex max-w-full flex-col gap-1">
         {/* The group is the popup's anchor, so the list spans the whole
             field (icon to chevron), not just the text input. */}
         <ComboboxPrimitive.InputGroup
@@ -632,7 +637,7 @@ const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
     const rowHeight = useChipRowHeight(compact ? 8 : 12)
 
     return (
-      <div className="flex flex-col gap-1">
+      <div className="flex max-w-full flex-col gap-1">
         <ComboboxPrimitive.Chips
           ref={anchorRef}
           // The field springs to the chip rows' measured height as they

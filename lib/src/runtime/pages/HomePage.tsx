@@ -7,6 +7,7 @@ import { cap, count } from '../text'
 import { GroupPreview } from '../tokens/token-page'
 import { declared } from '../tokens/token-row'
 import { Bento, BentoCard } from './bento'
+import { Credits } from './credits'
 
 export function HomePage() {
   // Light and dark blocks declare a token twice; count it once.
@@ -47,6 +48,7 @@ export function HomePage() {
           )
         })}
       </Bento>
+      <Credits />
     </>
   )
 }

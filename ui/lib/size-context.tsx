@@ -1,17 +1,18 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Vendored from Fluid Functionalism — `registry/default/lib/size-context.tsx` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
  * LICENSE.fluid-functionalism in this package.
  *
  * Local modifications:
- * - `"use client"` directive dropped (no RSC here).
  * - `SizeProvider` moved to `primitives/sizes/index.tsx`, the documented
  *   item (sized components import it from there); `SizeContext` exported for it.
  * - `sizeMap` text classes read DS tokens (AGENTS.md styling): `text-[13px]` /
  *   `text-[12px]` → `text-body` / `text-body-compact`.
  */
+
+'use client'
 
 import { createContext, useContext } from 'react'
 

@@ -202,6 +202,8 @@ export async function resolveShellSlots(
   // Genuinely-empty projects (no items, no shell mapping) shouldn't spam 7
   // warnings on every boot — the absence is the user's intent, not a bug.
   const silence = userItems.length === 0 && Object.keys(config.shell ?? {}).length === 0
+  // A plain fallback is a supported outcome, so it's one summary line, not one warning per slot.
+  const unresolved: string[] = []
 
   async function pick(
     slotName: ShellSlot['name'],
@@ -230,7 +232,7 @@ export async function resolveShellSlots(
       return { cssPaths: [], source: 'interface-match', resolvedPath: `${c.tier}/${c.id}`, bundlePath: c.bundleUrl }
     }
 
-    if (!silence) warnings.push(`Shell slot "${slotName}${member ? `.${member.name}` : ''}" could not be resolved`)
+    unresolved.push(`${slotName}${member ? `.${member.name}` : ''}`)
     return fallback
   }
 
@@ -265,6 +267,14 @@ export async function resolveShellSlots(
   const sidebarSection = sidebarFromRoot
     ? fallbackSection
     : await pick('Sidebar', sidebarMembers.Section, fallbackSection)
+
+  if (!silence && unresolved.length > 0) {
+    // With the Sidebar root on its fallback, its parts are too: name the slot once.
+    const named = unresolved.includes('Sidebar') ? unresolved.filter(n => !n.startsWith('Sidebar.')) : unresolved
+    warnings.push(
+      `Plain fallbacks for ${named.join(', ')}: no item matches by name and required props, and modo.config.ts \`shell\` pins none`,
+    )
+  }
 
   return {
     Button: rootPicks.Button,

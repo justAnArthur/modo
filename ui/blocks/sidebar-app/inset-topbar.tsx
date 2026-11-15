@@ -1,10 +1,10 @@
 // biome-ignore-all lint: vendored upstream code keeps its own patterns (see the header)
-/*
+/*!
  * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
  * `registry/blocks/sidebar-app/inset-topbar.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
  * Local modifications:
- * - `"use client"` dropped; `@/components/ui/{sidebar,dropdown}` → `../../components/*`,
+ * - `@/components/ui/{sidebar,dropdown}` → `../../components/*`,
  *   `@/lib/sidebar-menu-grid` → `./menu-grid`, `@/lib/*` → `../../lib/*`.
  * - No peek to hide behind: the sidebar opens on hover in flow (the
  *   provider's `openOnHover`), so the trigger stays, riding the inset's edge.

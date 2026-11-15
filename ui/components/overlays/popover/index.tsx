@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition (not part of Fluid Functionalism): a morphing popover. The
  * panel grows out of its trigger through `lib/use-morph.ts`, with the goo neck
  * by default. After beUI's gooey popover (github.com/starc007/ui-components
@@ -10,6 +10,8 @@
  * UI's Popover; neither project's own dismissal, gesture or positioning code
  * is ported.
  */
+
+'use client'
 
 import { Popover as PopoverPrimitive } from '@base-ui/react/popover'
 import {
@@ -207,6 +209,10 @@ interface PopoverProps {
  * - `Popover.Close` — closes it; same `render` / `asChild` shape.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/starc007/ui-components/blob/de52f337e520e7ee37749b36eb1c32df86137bcb/components/motion/popover.tsx beUI
+ * @source https://github.com/ibelick/motion-primitives/blob/120f64f6ca60348e251f929e9c81f11ccbe45eda/components/core/morphing-popover.tsx motion-primitives
+ * @license MIT © 2026 Saurabh Chauhan
+ * @license MIT © 2024 ibelick
  */
 function Popover({ open, defaultOpen = false, onOpenChange, modal = false, children }: PopoverProps) {
   const [current, setCurrent] = useControllableState(open, defaultOpen, onOpenChange)

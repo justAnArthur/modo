@@ -1,4 +1,4 @@
-/*
+/*!
  * Local addition (not part of Fluid Functionalism): shared parts for morphing
  * overlays. A part inside the trigger and its twin inside the overlay share a
  * motion `layoutId`, so the part flies from one to the other while the surface
@@ -7,6 +7,8 @@
  * @ 120f64f6ca60348e251f929e9c81f11ccbe45eda — MIT © 2024 ibelick, notice:
  * LICENSE.motion-primitives).
  */
+
+'use client'
 
 import { motion } from 'motion/react'
 import { createContext, type ReactNode, useContext } from 'react'

@@ -1,4 +1,4 @@
-/*
+/*!
  * Vendored from Fluid Functionalism — `registry/default/lib/utils.ts` at
  * github.com/mickadesign/fluid-functionalism@b3587bdbd83fc66c2a6aae3817ffb856cb09260b
  * (fluidfunctionalism.com). MIT License © 2026 Micka Touillaud — see
