@@ -8,7 +8,7 @@ export type ExampleRenderer = ((scope: ExampleScope) => ReactElement | null) & {
   identifiers: string[]
 }
 
-const cache = new Map<string, ExampleRenderer | string>()
+const cache = new Map<string, ExampleRenderer | null>()
 
 type Babel = typeof import('@babel/standalone')
 let babel: Babel | null = null
@@ -47,9 +47,9 @@ function stripImports(code: string): string {
  * `new Function('React', '__scope', …)` with a `var` declaration for each
  * identifier in the code that is an own key of the scope — nothing is written
  * to globals and unrelated globals (Map, Set, Math…) are never shadowed.
- * Returns the source string when it doesn't compile. Call `loadBabel()` first.
+ * Null when it doesn't compile (logged). Call `loadBabel()` first.
  */
-export function compileExampleBody(code: string): ExampleRenderer | string {
+export function compileExampleBody(code: string): ExampleRenderer | null {
   const cached = cache.get(code)
   if (cached !== undefined) return cached
   if (!babel) throw new Error('[modo] compileExampleBody before loadBabel()')
@@ -68,8 +68,8 @@ export function compileExampleBody(code: string): ExampleRenderer | string {
     js = (out.code ?? '').replace(/['"]use strict['"];?/, '')
   } catch (err) {
     console.error('[modo] example failed to compile:', (err as Error).message, `\n${code}`)
-    cache.set(code, code)
-    return code
+    cache.set(code, null)
+    return null
   }
 
   // Identifier tokens, minus member names (`Select.Item` → `Select`).
@@ -100,8 +100,4 @@ export function compileExampleBody(code: string): ExampleRenderer | string {
 
   cache.set(code, renderer)
   return renderer
-}
-
-export function isCompiledExample(value: unknown): value is ExampleRenderer {
-  return typeof value === 'function'
 }

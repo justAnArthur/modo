@@ -5,6 +5,7 @@ import type { Tier } from '../../lib/tiers'
 import { Heading } from '../anchor'
 import { Blocks, Inlines, splitLead } from '../markdown'
 import { mdxComponents } from '../mdx'
+import { NotFoundPage } from '../pages/not-found'
 import { ExampleBoundary, ItemExamples } from './examples'
 import { PageMeta } from './page-meta'
 import { PropTable } from './prop-table'
@@ -12,16 +13,7 @@ import { PropTable } from './prop-table'
 export function ItemPage({ tier, id }: { tier: Tier; id: string }) {
   const key = itemKey(tier, id)
   const entry = byId[key]
-  if (!entry) {
-    return (
-      <article>
-        <h1 data-modo="page-title">
-          {tier}/{id}
-        </h1>
-        <p data-modo="page-lead">Item not found.</p>
-      </article>
-    )
-  }
+  if (!entry) return <NotFoundPage />
   const { lead, body } = splitLead(entry.description)
   const examples = examplesMap[key] ?? []
   const docs = exampleDocs[key] ?? []

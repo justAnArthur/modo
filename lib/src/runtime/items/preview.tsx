@@ -2,12 +2,13 @@ import { exampleDocs, examples as examplesMap } from 'virtual:modo-items'
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react'
 import type { ParsedExample } from '../../lib/tsdoc'
 import { mdxComponents } from '../mdx'
-import { compileExampleBody, isCompiledExample } from './compile'
-import { bindings, ExampleBoundary, useBabel } from './examples'
+import { bindings, ExampleBoundary, useExample } from './examples'
 
-/** The item's first example — its first `@example`, else the first live block
-    of its examples.mdx — rendered bare. The same code the item page runs, so an
-    overview shows the real component, not a screenshot. */
+/**
+ * The item's first example (its first `@example`, else the first live block of
+ * its examples.mdx) rendered bare: the code the item page runs, so an overview
+ * shows the real component.
+ */
 export function ExamplePreview({ itemId }: { itemId: string }): ReactElement {
   const inline = examplesMap[itemId]?.[0]
   if (inline) return <InlinePreview example={inline} />
@@ -17,9 +18,9 @@ export function ExamplePreview({ itemId }: { itemId: string }): ReactElement {
 }
 
 function InlinePreview({ example }: { example: ParsedExample }): ReactElement | null {
-  if (!useBabel()) return null
-  const compiled = compileExampleBody(example.code)
-  if (!isCompiledExample(compiled)) return <span data-modo="bento-empty">Example did not compile</span>
+  const compiled = useExample(example.code)
+  if (compiled === undefined) return null
+  if (compiled === null) return <span data-modo="bento-empty">Example did not compile</span>
   return <ExampleBoundary>{compiled(bindings)}</ExampleBoundary>
 }
 
