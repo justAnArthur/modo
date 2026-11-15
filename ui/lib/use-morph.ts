@@ -380,6 +380,13 @@ function useMorph(
     const { effect, from } = run.current
     const shaped = drawsShape(effect)
     const box = el.getBoundingClientRect()
+    // A fresh run reads the radius here, once the popup is laid out: a popup
+    // Base UI keeps mounted while closed (Select) is still hidden, 0×0, when
+    // `open` flips, which would clamp it to 0 and draw square corners until
+    // the surface rests. A reopen mid-run keeps the one it has.
+    if (!geometry.current && refs.bg.current) {
+      targetRadius.current = radiusOf(refs.bg.current, box.width, box.height)
+    }
     const target = { x: 0, y: 0, w: box.width, h: box.height, r: targetRadius.current }
     const source = sourceRect(from, origin.current ?? {}, box, target)
     const blur = effect === 'goo' ? Math.max(GOO_SURFACE_BLUR, target.r * GOO_BLUR_RATIO) : 0
@@ -426,10 +433,6 @@ function useMorph(
     returnTo.current = null
     run.current = { effect: resolved, from }
     const first = !geometry.current
-    if (first && refs.bg.current) {
-      const box = popup.getBoundingClientRect()
-      targetRadius.current = radiusOf(refs.bg.current, box.width, box.height)
-    }
 
     let controls: ReturnType<typeof animate> | undefined
     const begin = () => {
