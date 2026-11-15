@@ -2,6 +2,7 @@ import { type ItemEntry, items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import { type CSSProperties, type ReactNode, useRef } from 'react'
+import { itemKey, itemPath, tokenPath } from '../../lib/paths'
 import { cap } from '../../lib/text'
 import { isScreenSized, TIERS, type Tier } from '../../lib/tiers'
 import { useLive, Viewport } from '../canvas/viewport'
@@ -18,7 +19,7 @@ export function CanvasPage() {
       {tokens.length > 0 && (
         <Column kind="foundations" title="Foundations" size={tokens.length}>
           {tokens.map(g => (
-            <Frame key={g.name} href={`/docs/tokens/${g.name}`} title={cap(g.name)}>
+            <Frame key={g.name} href={tokenPath(g.name)} title={cap(g.name)}>
               <GroupPreview group={g.name} />
             </Frame>
           ))}
@@ -30,8 +31,8 @@ export function CanvasPage() {
         return (
           <Column key={tier} kind={tier} title={cap(tier)} size={list.length}>
             {list.map(it => (
-              <Frame key={it.id} href={`/docs/${tier}/${it.id}`} title={it.name}>
-                <ExamplePreview itemId={`${tier}:${it.id}`} />
+              <Frame key={it.id} href={itemPath(tier, it.id)} title={it.name}>
+                <ExamplePreview itemId={itemKey(tier, it.id)} />
               </Frame>
             ))}
           </Column>

@@ -1,6 +1,7 @@
 import { resolve } from 'node:path'
 import type { Plugin } from 'vite'
-import { isComponentRef, type SiteConfig } from '../lib/schema'
+import { isComponentRef } from '../lib/refs'
+import type { SiteConfig } from '../lib/schema'
 import type { BundleResult, Bundler } from './bundle'
 import { type LoadedComponent, type ParsedItemLite, type ResolvedShell, resolveShellSlots } from './slots'
 import { cssModule } from './virtual'
@@ -110,7 +111,7 @@ export function shellPlugin(options: Options): Plugin {
   let cache: { result: BundleResult; value: Promise<ShellResult> } | null = null
   let lastReport = ''
   // An absolute path: a virtual module's relative import would resolve from the process cwd.
-  const slotsModule = JSON.stringify(resolve(options.libDir, 'src/runtime/shell/plain.tsx'))
+  const plainModule = JSON.stringify(resolve(options.libDir, 'src/runtime/shell/plain.tsx'))
 
   async function getCache(): Promise<ShellResult> {
     const result = await options.bundler.get()
@@ -155,7 +156,7 @@ export function shellPlugin(options: Options): Plugin {
           `__mod_${s.name}[${JSON.stringify(s.exportName ?? 'default')}]`
         const fallbackImports = slotBindings
           .filter(s => s.fallbackName && !s.bundlePath)
-          .map(s => `import { ${s.fallbackName} as __fb_${s.name} } from ${slotsModule};`)
+          .map(s => `import { ${s.fallbackName} as __fb_${s.name} } from ${plainModule};`)
           .join('\n')
         const imports = [
           fallbackImports,

@@ -1,5 +1,6 @@
 import { config } from 'virtual:modo-config'
 import { type ReactNode, useEffect } from 'react'
+import { pageTitle } from '../lib/head'
 import { TIERS, type Tier } from '../lib/tiers'
 import { PageIdScope } from './anchor'
 import { ItemPage } from './items/item-page'
@@ -60,8 +61,10 @@ export function Router(): ReactNode {
   // `#hash` misses it. The tab names the page and the design system.
   useEffect(() => {
     scrollToHash(window.location.hash)
-    const title = document.querySelector('[data-modo="page-title"]')?.textContent
-    document.title = title && title !== config.name ? `${title} · ${config.name}` : config.name
+    document.title = pageTitle(
+      config.name,
+      document.querySelector('[data-modo="page-title"]')?.textContent ?? undefined,
+    )
   }, [path])
 
   const route = routes.find(r => r.pattern.test(path))

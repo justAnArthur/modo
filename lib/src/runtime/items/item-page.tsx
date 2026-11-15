@@ -1,4 +1,5 @@
 import { byId, exampleDocs, examples as examplesMap } from 'virtual:modo-items'
+import { itemKey } from '../../lib/paths'
 import { cap } from '../../lib/text'
 import type { Tier } from '../../lib/tiers'
 import { Heading } from '../anchor'
@@ -9,7 +10,8 @@ import { PageMeta } from './page-meta'
 import { PropTable } from './prop-table'
 
 export function ItemPage({ tier, id }: { tier: Tier; id: string }) {
-  const entry = byId[`${tier}:${id}`]
+  const key = itemKey(tier, id)
+  const entry = byId[key]
   if (!entry) {
     return (
       <article>
@@ -21,8 +23,8 @@ export function ItemPage({ tier, id }: { tier: Tier; id: string }) {
     )
   }
   const { lead, body } = splitLead(entry.description)
-  const examples = examplesMap[`${tier}:${id}`] ?? []
-  const docs = exampleDocs[`${tier}:${id}`] ?? []
+  const examples = examplesMap[key] ?? []
+  const docs = exampleDocs[key] ?? []
   return (
     <article>
       <header>
@@ -54,7 +56,7 @@ export function ItemPage({ tier, id }: { tier: Tier; id: string }) {
       ) : null}
       <section data-modo="section">
         <Heading level={2} label="Props" modo="section-title" />
-        <PropTable itemId={`${tier}:${id}`} />
+        <PropTable itemId={key} />
       </section>
     </article>
   )

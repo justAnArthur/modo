@@ -1,3 +1,4 @@
+import { MUTED_ROLES, TYPE_ROLES, type TypeRole } from '../../lib/roles'
 import { resolved } from './measure'
 
 /* Host color tokens come in two shapes: a complete color (`oklch(0.2 0 0)`,
@@ -48,26 +49,16 @@ const CHROME: Array<[string, string, string]> = [
   ['--modo-ring', '--ring', 'currentColor'],
 ]
 
-/* Type roles' colors (`--color-<role>`), with the muted fallback where the
-   chrome has always dimmed a role. A role without either stays unset and
-   inherits. */
-const ROLES: Array<[string, string | null]> = [
-  ['h1', null],
-  ['h2', null],
-  ['h3', null],
-  ['h4', null],
-  ['p', null],
-  ['lead', 'var(--modo-muted)'],
-  ['eyebrow', 'var(--modo-muted)'],
-]
-
 export function installHostColors(): void {
   const el = document.documentElement
   for (const [own, token, fallback] of CHROME) {
     el.style.setProperty(own, colorExpr(token) ?? fallback)
   }
-  for (const [role, fallback] of ROLES) {
-    const expr = colorExpr(`--color-${role}`) ?? fallback
+  // Type roles' colors (`--color-<role>`), with the muted fallback where the
+  // chrome has always dimmed a role. A role without either stays unset and
+  // inherits.
+  for (const role of Object.keys(TYPE_ROLES) as TypeRole[]) {
+    const expr = colorExpr(`--color-${role}`) ?? (MUTED_ROLES.includes(role) ? 'var(--modo-muted)' : null)
     if (expr) el.style.setProperty(`--modo-color-${role}`, expr)
   }
 }
