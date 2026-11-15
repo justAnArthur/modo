@@ -1,3 +1,10 @@
+/*!
+ * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
+ * `registry/base/tabs.tsx` + `registry/base/tabs-subtle.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
+ * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
+ * Local changes: see PORTING.md.
+ */
+
 'use client'
 
 import { createContext, type Dispatch, type SetStateAction, useContext } from 'react'

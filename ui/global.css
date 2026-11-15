@@ -6,7 +6,7 @@
 
 @import "./base.css";
 
-/* modo's structural shell.css draws an unlayered `*:focus-visible` outline,
+/* modo's structural chrome CSS (shell/css) draws an unlayered `*:focus-visible` outline,
    which would outrank the layered fallback above and every component's own
    ring (a second ring on every control). Reverting both properties to the
    layered cascade hands focus styling back to @layer base and the utilities. */
