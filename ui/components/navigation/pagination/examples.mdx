@@ -1,0 +1,65 @@
+import Pagination from './index'
+
+# Pages
+
+The current page melts from page to page, and the hover glides along the strip. A click between two pages lands on the lit one.
+
+<Pagination count={12} defaultValue={5} />
+
+# Few pages
+
+With nothing to skip, every page shows.
+
+<Pagination count={5} defaultValue={2} />
+
+# Siblings and edges
+
+`siblings` widens the run around the current page; `edges` adds first and last buttons, for long runs of pages.
+
+<Pagination count={40} defaultValue={18} siblings={2} edges />
+
+# Jump to a page
+
+`variant="input"` swaps the strip for a field: type a page and press Enter. First and last come with it.
+
+<Pagination count={24} defaultValue={3} variant="input" />
+
+# Compact
+
+The strip steps down the size ladder with everything in it.
+
+<div className="flex flex-col gap-4">
+  <Pagination count={20} defaultValue={10} size="compact" />
+  <Pagination count={20} defaultValue={10} variant="input" size="compact" />
+</div>
+
+# Narrow
+
+The strip never wraps or shrinks its pages. On a phone, `siblings={0}` keeps only the current page between the ends, or `variant="input"` swaps the pages for the field.
+
+<div className="flex flex-col gap-4">
+  <Pagination count={12} defaultValue={5} siblings={0} />
+  <Pagination count={12} defaultValue={5} variant="input" />
+</div>
+
+# Translated labels
+
+Every label is a prop: the buttons' names and the field's name.
+
+<Pagination
+  count={8}
+  defaultValue={2}
+  variant="input"
+  label="Stránkovanie"
+  firstLabel="Prvá strana"
+  previousLabel="Predchádzajúca strana"
+  nextLabel="Ďalšia strana"
+  lastLabel="Posledná strana"
+  pageLabel="Strana"
+/>
+
+# Disabled
+
+`disabled` holds every control, e.g. while the next page loads.
+
+<Pagination count={12} defaultValue={4} disabled />

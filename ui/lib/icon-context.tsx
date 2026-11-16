@@ -19,10 +19,14 @@ import {
   Calendar,
   Check,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   ChevronsUpDown,
   Circle,
   CircleAlert,
+  CircleCheck,
   Clock,
   Copy,
   CornerDownLeft,
@@ -30,6 +34,7 @@ import {
   Dot,
   Ellipsis,
   EllipsisVertical,
+  File as FileIcon,
   Folder,
   Globe,
   Heart,
@@ -70,6 +75,7 @@ import {
   SquareLibrary,
   Star,
   Sun,
+  Upload,
   User,
   Users,
   X,
@@ -149,6 +155,12 @@ export type IconName =
   | 'folder'
   | 'sliders-horizontal'
   | 'minus'
+  | 'chevron-left'
+  | 'chevrons-left'
+  | 'chevrons-right'
+  | 'circle-check'
+  | 'file'
+  | 'upload'
 
 const defaultIcons: Record<IconName, IconComponent> = {
   'chevron-right': ChevronRight,
@@ -215,6 +227,12 @@ const defaultIcons: Record<IconName, IconComponent> = {
   'circle-alert': CircleAlert,
   info: Info,
   minus: Minus,
+  'chevron-left': ChevronLeft,
+  'chevrons-left': ChevronsLeft,
+  'chevrons-right': ChevronsRight,
+  'circle-check': CircleCheck,
+  file: FileIcon,
+  upload: Upload,
 }
 
 const IconContext = createContext<Record<IconName, IconComponent> | null>(null)
