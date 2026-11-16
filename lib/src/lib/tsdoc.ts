@@ -30,10 +30,15 @@ export interface ParsedTag {
   text: string
 }
 
+/** Reads a `{@include}` / `{@includeCode}` path (relative to the commented file); null when it can't. */
+export type ReadInclude = (path: string) => string | null
+
 interface ParseOptions {
-  /** Reads a `{@include}` / `{@includeCode}` path (relative to the item source); null when it can't. */
-  readFile?: (path: string) => string | null
+  readFile?: ReadInclude
 }
+
+/** What an item's doc comment says, apart from its props. */
+export type DocComment = Omit<ParsedItem, 'name' | 'props'>
 
 export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedItem {
   // Line comments only where `//` follows start/whitespace/punctuation, so
@@ -73,21 +78,11 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
     }
   }
 
-  const { lead, sections } = splitBlockTags(extractJsdocAbove(cleaned, jsdocAnchor) ?? '')
-  const errors: string[] = []
-  // Includes expand per section, after the tag split, so an included file
-  // can't start a new tag.
-  const include = (text: string) => expandIncludes(text, opts.readFile, errors)
-  const description = include(lead).trim()
-  const mdxExamples: string[] = []
-  const examples = extractExamples(
-    sections.filter(s => s.tag === 'example').map(s => s.text),
-    include,
-    mdxExamples,
-  )
-  const tags = sections.filter(s => s.tag !== 'example').map(s => ({ tag: s.tag, text: s.text.trim() }))
-
-  const result: ParsedItem = { name, description, props: [], examples, mdxExamples, tags, errors }
+  const result: ParsedItem = {
+    name,
+    props: [],
+    ...parseDocComment(extractJsdocAbove(cleaned, jsdocAnchor) ?? '', opts.readFile),
+  }
   if (fnStart === -1) {
     if (forwardRefPropsType) {
       const props = extractForwardRefProps(cleaned, forwardRefPropsType)
@@ -103,6 +98,24 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
   result.props = props.props
   result.errors.push(...props.errors)
   return result
+}
+
+/** A normalized doc comment (see `normalizeJsdoc`): its prose, examples and block tags. */
+export function parseDocComment(jsdoc: string, readFile?: ReadInclude): DocComment {
+  const { lead, sections } = splitBlockTags(jsdoc)
+  const errors: string[] = []
+  // Includes expand per section, after the tag split, so an included file
+  // can't start a new tag.
+  const include = (text: string) => expandIncludes(text, readFile, errors)
+  const description = include(lead).trim()
+  const mdxExamples: string[] = []
+  const examples = extractExamples(
+    sections.filter(s => s.tag === 'example').map(s => s.text),
+    include,
+    mdxExamples,
+  )
+  const tags = sections.filter(s => s.tag !== 'example').map(s => ({ tag: s.tag, text: s.text.trim() }))
+  return { description, examples, mdxExamples, tags, errors }
 }
 
 function fail(msg: string): ParsedItem {
@@ -170,7 +183,8 @@ function extractJsdocAbove(src: string, declIndex: number): string | null {
   return normalizeJsdoc(last[1] ?? '')
 }
 
-function normalizeJsdoc(raw: string): string {
+/** A doc comment's body without the leading `*` of each line. */
+export function normalizeJsdoc(raw: string): string {
   return raw
     .split('\n')
     .map(line => line.replace(/^\s*\*\s?/, ''))
@@ -277,32 +291,41 @@ function finishProps(litText: string, destructured: Array<{ name: string; defaul
 
   attachJsdocToProps(litBody, props)
 
-  // The code's own default wins over a documented `@default`.
   for (const p of props) {
     const d = destructured.find(dd => dd.name === p.name)
-    if (d?.default) p.default = d.default
+    if (d?.default) applyCodeDefault(p, d.default)
   }
 
   return props
 }
 
-// `@default x` fills the Default column; `@values a, b` is dropped when the
-// type already lists them (a literal union), else kept as prose.
 function attachJsdocToProps(litBody: string, props: ParsedProp[]): void {
   for (const m of litBody.matchAll(/\/\*\*([\s\S]*?)\*\/\s*([A-Za-z_$][\w$]*)\s*\??:/g)) {
     const prop = props.find(p => p.name === m[2])
-    if (!prop) continue
-    const doc = normalizeJsdoc(m[1] ?? '')
-    const def = doc.match(/@default\s+([^\n@]+)/)?.[1]?.trim()
-    if (def) prop.default = def
-    const literalUnion = /['"`]/.test(prop.type)
-    prop.description = doc
-      .replace(/@default\s+[^\n@]*/g, '')
-      .replace(/@values\s+([^\n@]*)/g, (_, values: string) =>
-        literalUnion ? '' : `One of ${values.trim().replace(/[^,\s]+/g, v => `\`${v}\``)}.`,
-      )
-      .trim()
+    if (prop) applyPropDoc(prop, normalizeJsdoc(m[1] ?? ''))
   }
+}
+
+/** The code's own default wins over a documented one, unless it only names a constant the docs spell out (`accept = DEFAULT_ACCEPT`). */
+export function applyCodeDefault(prop: ParsedProp, code: string): void {
+  const constant = /^[A-Za-z_$][\w$]*$/.test(code) && !/^(?:true|false|null|undefined)$/.test(code)
+  if (!(constant && prop.default)) prop.default = code
+}
+
+// `@default x`, else a closing "Defaults to `x`." sentence (kept in the
+// prose), fills the Default column; `@values a, b` is dropped when the type
+// already lists them (a literal union), else kept as prose.
+export function applyPropDoc(prop: ParsedProp, doc: string): void {
+  const def =
+    doc.match(/@default\s+([^\n@]+)/)?.[1]?.trim() ?? doc.match(/(?:^|[.!?]\s+)Defaults to `([^`]+)`\.(?:\s|$)/)?.[1]
+  if (def) prop.default = def
+  const literalUnion = /['"`]/.test(prop.type)
+  prop.description = doc
+    .replace(/@default\s+[^\n@]*/g, '')
+    .replace(/@values\s+([^\n@]*)/g, (_, values: string) =>
+      literalUnion ? '' : `One of ${values.trim().replace(/[^,\s]+/g, v => `\`${v}\``)}.`,
+    )
+    .trim()
 }
 
 function extractTopObjectLiteral(text: string): string | null {
