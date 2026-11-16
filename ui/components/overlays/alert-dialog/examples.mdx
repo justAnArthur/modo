@@ -1,5 +1,7 @@
 import AlertDialog from './index'
 import Button from '../../button'
+import Toast, { toast } from '../toast'
+import PendingDemo from './pending-demo'
 
 # Confirm a destructive step
 
@@ -18,6 +20,55 @@ A press outside does nothing; the answer is Cancel, Delete or Escape.
     </AlertDialog.Footer>
   </AlertDialog.Content>
 </AlertDialog>
+
+# Wait for the confirm
+
+`AlertDialog.Action`'s `onClick` returns a promise: the button folds into a spinner, Cancel greys out and Escape does nothing until it settles, then the dialog closes.
+
+<AlertDialog>
+  <AlertDialog.Trigger render={<Button variant="secondary">Archive workspace</Button>} />
+  <AlertDialog.Content>
+    <AlertDialog.Header>
+      <AlertDialog.Title>Archive this workspace?</AlertDialog.Title>
+      <AlertDialog.Description>Members lose access until it is restored.</AlertDialog.Description>
+    </AlertDialog.Header>
+    <AlertDialog.Footer>
+      <AlertDialog.Cancel>Cancel</AlertDialog.Cancel>
+      <AlertDialog.Action onClick={() => new Promise(resolve => setTimeout(resolve, 1600))}>Archive</AlertDialog.Action>
+    </AlertDialog.Footer>
+  </AlertDialog.Content>
+</AlertDialog>
+
+# With a mutation's pending
+
+`pending` takes a mutation's `isPending`. A plain `onClick={() => mutate()}` then keeps the dialog open and locked while it runs, and closes it once `pending` falls back to false.
+
+<PendingDemo />
+
+# When it fails
+
+A rejected promise keeps the dialog open and hands the reason to `onError` (here a toast), so the person can try again or cancel.
+
+<Toast manager={toast} position="bottom-right">
+  <AlertDialog>
+    <AlertDialog.Trigger render={<Button variant="secondary">Delete account</Button>} />
+    <AlertDialog.Content>
+      <AlertDialog.Header>
+        <AlertDialog.Title>Delete your account?</AlertDialog.Title>
+        <AlertDialog.Description>Everything you made goes with it.</AlertDialog.Description>
+      </AlertDialog.Header>
+      <AlertDialog.Footer>
+        <AlertDialog.Cancel>Keep it</AlertDialog.Cancel>
+        <AlertDialog.Action
+          onClick={() => new Promise((resolve, reject) => setTimeout(() => reject(new Error('The server is busy.')), 1400))}
+          onError={error => toast.error({ title: 'Could not delete', description: error.message })}
+        >
+          Delete
+        </AlertDialog.Action>
+      </AlertDialog.Footer>
+    </AlertDialog.Content>
+  </AlertDialog>
+</Toast>
 
 # From the pointer
 

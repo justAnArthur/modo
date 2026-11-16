@@ -8,16 +8,23 @@
 'use client'
 
 import { Tooltip as TooltipPrimitive } from '@base-ui/react/tooltip'
-import { motion, useMotionValue } from 'motion/react'
+import { type MotionValue, motion, useMotionValue } from 'motion/react'
 import {
+  cloneElement,
   createContext,
+  forwardRef,
+  type HTMLAttributes,
+  type MutableRefObject,
   type PointerEvent,
   type ReactElement,
   type ReactNode,
+  type RefObject,
   useContext,
   useEffect,
+  useMemo,
   useRef,
 } from 'react'
+import { useMergeRefs } from '../../../lib/merge-refs'
 import { MorphSurface } from '../../../lib/morph-layers'
 import {
   type Align,
@@ -28,7 +35,8 @@ import {
   usePortalContainer,
 } from '../../../lib/overlay'
 import { useShape } from '../../../lib/shape-context'
-import { type MorphEffect, type MorphFrom, type MorphTier, useMorph } from '../../../lib/use-morph'
+import { type SlotProps, slotRender } from '../../../lib/slot'
+import { type MorphEffect, type MorphFrom, type MorphOrigin, type MorphTier, useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 
 const DEFAULT_DELAY = 200
@@ -68,11 +76,213 @@ function TooltipProvider({ children, delayDuration = DEFAULT_DELAY, skipDelayDur
 
 type TooltipSide = Side
 
+/** What a tooltip's trigger and content read from its root. */
+interface TooltipState {
+  open: boolean
+  origin: RefObject<MorphOrigin>
+  // Set when Base UI closed this tooltip to hand off to a grouped neighbour.
+  handedOff: MutableRefObject<boolean>
+  delayDuration?: number
+  followCursor?: 'x' | 'y'
+  followOffset: MotionValue<number>
+}
+
+const TooltipStateContext = createContext<TooltipState | null>(null)
+
+function useTooltipState(part: string) {
+  const state = useContext(TooltipStateContext)
+  if (!state) throw new Error(`${part} must be inside a Tooltip.`)
+  return state
+}
+
+interface TooltipRootProps {
+  open?: boolean
+  defaultOpen?: boolean
+  onOpenChange?: (open: boolean) => void
+  delayDuration?: number
+  followCursor?: 'x' | 'y'
+  children?: ReactNode
+}
+
+function TooltipRoot({
+  open: held,
+  defaultOpen,
+  onOpenChange,
+  delayDuration,
+  followCursor,
+  children,
+}: TooltipRootProps) {
+  // The root tracks hover and focus even while `open` holds it, so letting go
+  // shows what the pointer is actually doing.
+  const root = useOverlayRoot({ defaultOpen, onOpenChange })
+  const open = held ?? root.open
+  const hasAmbientProvider = useContext(TooltipGroupContext)
+  const handedOff = useRef(false)
+  // A motion value, so pointer moves skip React renders.
+  const followOffset = useMotionValue(0)
+  // A held-open follow-cursor tooltip has no cursor to follow: it rests
+  // centered until a real pointer takes over.
+  useEffect(() => {
+    if (held && followCursor) followOffset.set(0)
+  }, [held, followCursor, followOffset])
+
+  const state = useMemo<TooltipState>(
+    () => ({ open, origin: root.state.origin, handedOff, delayDuration, followCursor, followOffset }),
+    [open, root.state.origin, delayDuration, followCursor, followOffset],
+  )
+
+  const tooltip = (
+    <TooltipStateContext.Provider value={state}>
+      <TooltipPrimitive.Root
+        open={open}
+        onOpenChange={(next, details) => {
+          // Base UI's hand-off between grouped tooltips: the next one shows in
+          // place (its popup carries `data-instant="delay"`) and the last one,
+          // closed with reason `none`, goes at once.
+          handedOff.current = !next && details.reason === 'none'
+          root.onOpenChange(next, details)
+        }}
+      >
+        {children}
+      </TooltipPrimitive.Root>
+    </TooltipStateContext.Provider>
+  )
+
+  if (hasAmbientProvider) return tooltip
+
+  return <TooltipPrimitive.Provider delay={delayDuration ?? DEFAULT_DELAY}>{tooltip}</TooltipPrimitive.Provider>
+}
+
+type TooltipTriggerProps = SlotProps
+
+const TooltipTrigger = forwardRef<HTMLButtonElement, TooltipTriggerProps>(
+  ({ render, asChild, children, onPointerMove, ...props }, ref) => {
+    const { delayDuration, followCursor, followOffset } = useTooltipState('Tooltip.Trigger')
+    const el = slotRender(render, asChild, children)
+
+    const follow = (event: PointerEvent<HTMLButtonElement>) => {
+      onPointerMove?.(event)
+      const rect = event.currentTarget.getBoundingClientRect()
+      followOffset.set(
+        followCursor === 'y'
+          ? event.clientY - (rect.top + rect.height / 2)
+          : event.clientX - (rect.left + rect.width / 2),
+      )
+    }
+
+    // Left undefined, the delay comes from the provider.
+    const shared = { ref, delay: delayDuration, onPointerMove: followCursor ? follow : onPointerMove, ...props }
+    return el ? (
+      <TooltipPrimitive.Trigger {...shared} render={el} />
+    ) : (
+      <TooltipPrimitive.Trigger {...shared}>{children}</TooltipPrimitive.Trigger>
+    )
+  },
+)
+TooltipTrigger.displayName = 'TooltipTrigger'
+
+interface TooltipContentProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'className'> {
+  /** The label. */
+  children?: ReactNode
+  /** The element the label renders as, inside the inverted surface; `children` go inside it. */
+  render?: ReactElement
+  /** Render the single child element as the label instead. Defaults to `false`. */
+  asChild?: boolean
+  /** Preferred side of the trigger; it flips when there is no room. Defaults to `'top'`. */
+  side?: TooltipSide
+  /** Alignment along that side. Defaults to `'center'`. */
+  align?: Align
+  /** Distance in px between the tooltip and the trigger. Defaults to `8`. */
+  sideOffset?: number
+  /** Portal target. Defaults to the nearest `PortalContainer`, else the document body. */
+  container?: HTMLElement | null
+  /** Classes for the label's surface. */
+  className?: string
+  /** Extra classes for the portalled positioner element: a z utility here lifts the whole tooltip above other fixed layers (default `z-50`). */
+  contentClassName?: string
+  /** Where the label grows from (see Morph): the trigger, the pointer, its own center, a viewport edge, or a ref to any element. Defaults to `'trigger'`. */
+  from?: MorphFrom
+  /** How it grows (see Morph): with the liquid goo neck, a plain morph, a slide or a fade. `followCursor` tooltips always fade. Defaults to `'goo'`. */
+  effect?: MorphEffect
+  /** Spring tier of a plain morph, slide or fade; goo runs on its own `spring.goo`. Defaults to `'moderate'`. */
+  tier?: MorphTier
+}
+
+const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
+  (
+    {
+      children,
+      render,
+      asChild,
+      side = 'top',
+      align,
+      sideOffset = 8,
+      container,
+      className,
+      contentClassName,
+      from,
+      effect = 'goo',
+      tier = 'moderate',
+      style,
+      ...props
+    },
+    ref,
+  ) => {
+    const { open, origin, handedOff, followCursor, followOffset } = useTooltipState('Tooltip.Content')
+    const shape = useShape()
+    const portal = usePortalContainer(container)
+    const morph = useMorph(open, origin, {
+      from,
+      effect: followCursor ? 'fade' : effect,
+      tier,
+      instant: popup => handedOff.current || popup.dataset.instant === 'delay',
+    })
+    const popupRef = useMergeRefs(ref, morph.popupRef)
+    const positioner = positionerProps(
+      { side, align, sideOffset, effect },
+      { side: 'top', align: 'center', sideOffset: 8 },
+    )
+    const label = render
+      ? children === undefined
+        ? render
+        : cloneElement(render, undefined, children)
+      : (slotRender(undefined, asChild, children) ?? children)
+
+    return (
+      <TooltipPrimitive.Portal container={portal}>
+        <TooltipPrimitive.Positioner {...positioner} className={cn(positioner.className, contentClassName)}>
+          <TooltipPrimitive.Popup
+            {...props}
+            ref={popupRef}
+            className="relative outline-none"
+            render={<motion.div style={{ ...style, ...(followCursor ? { [followCursor]: followOffset } : {}) }} />}
+          >
+            <MorphSurface
+              morph={morph}
+              bg="bg-foreground"
+              radius={shape.bg}
+              className={cn(
+                // The padding bump only applies where text-box trims, so
+                // both keep the same height (~26px).
+                'text-background text-caption weight-medium px-2 py-1 text-trim supports-[text-box:trim-both]:py-2',
+                className,
+              )}
+            >
+              {label}
+            </MorphSurface>
+          </TooltipPrimitive.Popup>
+        </TooltipPrimitive.Positioner>
+      </TooltipPrimitive.Portal>
+    )
+  },
+)
+TooltipContent.displayName = 'TooltipContent'
+
 interface TooltipProps {
-  /** The content displayed inside the tooltip. */
-  content: ReactNode
-  /** The trigger element. Must accept a ref. */
-  children: ReactElement
+  /** The content displayed inside the tooltip. Leave it out to use `Tooltip` as the root of a compound tooltip (`Tooltip.Trigger` + `Tooltip.Content` inside). */
+  content?: ReactNode
+  /** The trigger element, which must accept a ref; or, without `content`, the compound parts. */
+  children?: ReactNode
   /** Preferred side of the trigger to render the tooltip on; it flips when there is no room. Defaults to `'top'`. */
   side?: TooltipSide
   /** Alignment along that side. Defaults to `'center'`. */
@@ -114,7 +324,19 @@ interface TooltipProps {
  * `followCursor` tracks the pointer along one axis for tall or wide triggers,
  * while the other stays anchored by `side`. Built on Base UI's Tooltip.
  *
+ * Leave `content` out and `Tooltip` is the root of a compound tooltip: a
+ * `Tooltip.Trigger` and a `Tooltip.Content` inside it. The root keeps the
+ * state props (`open`, `defaultOpen`, `onOpenChange`, `delayDuration`,
+ * `followCursor`); placement and the morph move to the content. The label
+ * looks and moves the same either way.
+ *
  * Statics:
+ * - `Tooltip.Trigger` — the described element: `render={<Button/>}` or
+ *   `asChild`, else a plain button around `children`.
+ * - `Tooltip.Content` — the label: `side`, `align`, `sideOffset`,
+ *   `container`, `contentClassName`, the morph options `from`, `effect`,
+ *   `tier`, and `render` or `asChild` for the label's own element; other
+ *   props land on the popup.
  * - `Tooltip.Provider` — `TooltipProvider`: groups tooltips so moving from
  *   one trigger to an adjacent one skips the hover delay, and the morph: the
  *   next label shows in place.
@@ -128,110 +350,50 @@ interface TooltipProps {
 function Tooltip({
   content,
   children,
-  side = 'top',
+  side,
   align,
-  sideOffset = 8,
+  sideOffset,
   container,
   delayDuration,
   className,
   contentClassName,
-  open: held,
+  open,
   defaultOpen,
   onOpenChange,
   followCursor,
   from,
-  effect = 'goo',
-  tier = 'moderate',
+  effect,
+  tier,
 }: TooltipProps) {
-  // The root tracks hover and focus even while `open` holds it, so letting go
-  // shows what the pointer is actually doing.
-  const root = useOverlayRoot({ defaultOpen, onOpenChange })
-  const open = held ?? root.open
-  const shape = useShape()
-  const portal = usePortalContainer(container)
-  const hasAmbientProvider = useContext(TooltipGroupContext)
-  // Base UI's hand-off between grouped tooltips: the next one shows in place
-  // (its popup carries `data-instant="delay"`) and the last one, closed with
-  // reason `none`, goes at once (its own `data-instant` lasts only a frame or two).
-  const handedOff = useRef(false)
-  const morph = useMorph(open, root.state.origin, {
-    from,
-    effect: followCursor ? 'fade' : effect,
-    tier,
-    instant: popup => handedOff.current || popup.dataset.instant === 'delay',
-  })
+  const root = { open, defaultOpen, onOpenChange, delayDuration, followCursor }
+  if (content === undefined) return <TooltipRoot {...root}>{children}</TooltipRoot>
 
-  // A motion value, so pointer moves skip React renders.
-  const followOffset = useMotionValue(0)
-  // A held-open follow-cursor tooltip has no cursor to follow: it rests
-  // centered until a real pointer takes over.
-  useEffect(() => {
-    if (held && followCursor) followOffset.set(0)
-  }, [held, followCursor, followOffset])
-  const handleFollowMove = (event: PointerEvent) => {
-    if (!followCursor) return
-    const rect = event.currentTarget.getBoundingClientRect()
-    followOffset.set(
-      followCursor === 'y'
-        ? event.clientY - (rect.top + rect.height / 2)
-        : event.clientX - (rect.left + rect.width / 2),
-    )
-  }
-
-  const positioner = positionerProps(
-    { side, align, sideOffset, effect },
-    { side: 'top', align: 'center', sideOffset: 8 },
+  return (
+    <TooltipRoot {...root}>
+      <TooltipTrigger render={children as ReactElement} />
+      <TooltipContent
+        side={side}
+        align={align}
+        sideOffset={sideOffset}
+        container={container}
+        className={className}
+        contentClassName={contentClassName}
+        from={from}
+        effect={effect}
+        tier={tier}
+      >
+        {content}
+      </TooltipContent>
+    </TooltipRoot>
   )
-
-  const tooltip = (
-    <TooltipPrimitive.Root
-      open={open}
-      onOpenChange={(next, details) => {
-        handedOff.current = !next && details.reason === 'none'
-        root.onOpenChange(next, details)
-      }}
-    >
-      {/* Left undefined, the delay comes from the provider. */}
-      <TooltipPrimitive.Trigger
-        render={children}
-        delay={delayDuration}
-        onPointerMove={followCursor ? handleFollowMove : undefined}
-      />
-      <TooltipPrimitive.Portal container={portal}>
-        <TooltipPrimitive.Positioner {...positioner} className={cn(positioner.className, contentClassName)}>
-          <TooltipPrimitive.Popup
-            ref={morph.popupRef}
-            className="relative outline-none"
-            render={<motion.div style={followCursor ? { [followCursor]: followOffset } : {}} />}
-          >
-            <MorphSurface
-              morph={morph}
-              bg="bg-foreground"
-              radius={shape.bg}
-              className={cn(
-                // The padding bump only applies where text-box trims, so
-                // both keep the same height (~26px).
-                'text-background text-caption weight-medium px-2 py-1 text-trim supports-[text-box:trim-both]:py-2',
-                className,
-              )}
-            >
-              {content}
-            </MorphSurface>
-          </TooltipPrimitive.Popup>
-        </TooltipPrimitive.Positioner>
-      </TooltipPrimitive.Portal>
-    </TooltipPrimitive.Root>
-  )
-
-  if (hasAmbientProvider) return tooltip
-
-  return <TooltipPrimitive.Provider delay={delayDuration ?? DEFAULT_DELAY}>{tooltip}</TooltipPrimitive.Provider>
 }
 
+Tooltip.Trigger = TooltipTrigger
+Tooltip.Content = TooltipContent
 Tooltip.Provider = TooltipProvider
 Tooltip.PortalContainer = TooltipPortalContainer
 
-export type { TooltipProps, TooltipProviderProps, TooltipSide }
-export { Tooltip, TooltipPortalContainer, TooltipProvider }
+export type { TooltipContentProps, TooltipProps, TooltipProviderProps, TooltipSide, TooltipTriggerProps }
+export { Tooltip, TooltipContent, TooltipPortalContainer, TooltipProvider, TooltipTrigger }
 
 export default Tooltip

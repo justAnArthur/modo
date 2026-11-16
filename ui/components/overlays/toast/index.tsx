@@ -8,7 +8,7 @@
 
 'use client'
 
-import { Toast as ToastPrimitive } from '@base-ui/react/toast'
+import { type ToastManager, Toast as ToastPrimitive } from '@base-ui/react/toast'
 import { AnimatePresence, motion } from 'motion/react'
 import {
   cloneElement,
@@ -37,18 +37,9 @@ import { SurfaceProvider, useLift } from '../../../lib/surface-context'
 import { GOO_BLUR_RATIO, holdExit } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import Button from '../../button'
+import { type ToastSource, type ToastType, toastApi } from './manager'
 
-type ToastType = 'success' | 'loading' | 'error' | 'warning' | 'info' | 'action'
 type ToastPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
-
-interface ToastOptions {
-  title?: string
-  description?: string
-  type?: ToastType
-  /** Ms before it leaves; 0 keeps it until dismissed. */
-  timeout?: number
-  action?: { label: string; onClick?: () => void }
-}
 
 const GLYPH: Record<ToastType, IconName> = {
   success: 'check',
@@ -90,33 +81,15 @@ const ToastSettings = createContext<{ position: ToastPosition; timeout: number }
   timeout: 6000,
 })
 
-/** Shows toasts from inside a `Toast`: `show`, the per-state shortcuts, `promise` and `close`. */
+/**
+ * Shows toasts from inside a `Toast`: `show`, the per-state shortcuts
+ * (`success`, `error`, `warning`, `info`, `loading`), `promise`, `update` and
+ * `close`, the same calls as the global `toast`. Under a `Toast` with
+ * `manager={toast}` both work on one stack.
+ */
 function useToast() {
   const manager = ToastPrimitive.useToastManager()
-
-  return useMemo(() => {
-    const options = ({ action, ...rest }: ToastOptions, type: ToastType) => ({
-      ...rest,
-      type,
-      actionProps: action && { children: action.label, onClick: action.onClick },
-    })
-    const show = (o: ToastOptions) => manager.add(options(o, o.type ?? 'info'))
-
-    return {
-      show,
-      success: (o: ToastOptions) => show({ ...o, type: 'success' }),
-      error: (o: ToastOptions) => show({ ...o, type: 'error' }),
-      warning: (o: ToastOptions) => show({ ...o, type: 'warning' }),
-      info: (o: ToastOptions) => show({ ...o, type: 'info' }),
-      promise: <T,>(promise: Promise<T>, o: { loading: ToastOptions; success: ToastOptions; error: ToastOptions }) =>
-        manager.promise(promise, {
-          loading: options(o.loading, 'loading'),
-          success: options(o.success, 'success'),
-          error: options(o.error, 'error'),
-        }),
-      close: manager.close,
-    }
-  }, [manager])
+  return useMemo(() => toastApi(manager), [manager])
 }
 
 interface Box {
@@ -358,7 +331,9 @@ interface ToastProps {
   limit?: number
   /** Ms a toast stays; hovering pauses it. Defaults to `6000`. */
   timeout?: number
-  /** The part of the app that can show toasts, with `Toast.Trigger`s or `useToast()`. */
+  /** Also shows what this manager sends: pass the global `toast` so `toast()` calls from anywhere land here (mount one such `Toast` per app), or a manager from Base UI's `Toast.createToastManager()`. */
+  manager?: ToastSource
+  /** The part of the app that can show toasts, with `Toast.Trigger`s or `useToast()`. A `Toast` with a `manager` can stand alone. */
   children?: ReactNode
 }
 
@@ -377,8 +352,12 @@ interface ToastProps {
  *
  * `Toast` wraps the part of the app that shows toasts and renders them at
  * its `position`. Show one with `Toast.Trigger`, or call `useToast()`
- * inside it: `show`, `success`, `error`, `warning`, `info`, `promise` and
- * `close`.
+ * inside it: `show`, `success`, `error`, `warning`, `info`, `loading`,
+ * `promise`, `update` and `close`. Or mount one `<Toast manager={toast} />`
+ * near the root and call the global `toast` from anywhere, React or not:
+ * `toast('Saved')`, `toast.success({ title, description })`, the same
+ * shortcuts. A loading toast stays until it is updated to another type,
+ * then leaves on the default timeout.
  *
  * Statics:
  * - `Toast.Trigger` — a control that shows a toast when pressed:
@@ -390,11 +369,12 @@ interface ToastProps {
  * @source https://github.com/hiaaryan/sileo/blob/9793f844349983e140cf33cebbb8f51626d41407/src/sileo.tsx Sileo
  * @license MIT © 2026 hiaaryan
  */
-function Toast({ position = 'top-right', limit = 3, timeout = 6000, children }: ToastProps) {
+function Toast({ position = 'top-right', limit = 3, timeout = 6000, manager, children }: ToastProps) {
   const settings = useMemo(() => ({ position, timeout }), [position, timeout])
 
   return (
-    <ToastPrimitive.Provider limit={limit} timeout={timeout}>
+    // The provider only subscribes to the manager, which is all a `ToastSource` promises.
+    <ToastPrimitive.Provider limit={limit} timeout={timeout} toastManager={manager as ToastManager | undefined}>
       <ToastSettings.Provider value={settings}>
         {children}
         <ToastPrimitive.Portal>
@@ -409,7 +389,9 @@ function Toast({ position = 'top-right', limit = 3, timeout = 6000, children }: 
 
 Toast.Trigger = ToastTrigger
 
-export type { ToastOptions, ToastPosition, ToastProps, ToastTriggerProps, ToastType }
+export type { ToastInput, ToastOptions, ToastPromiseOptions, ToastSource, ToastType } from './manager'
+export { toast } from './manager'
+export type { ToastPosition, ToastProps, ToastTriggerProps }
 export { Toast, ToastTrigger, useToast }
 
 export default Toast

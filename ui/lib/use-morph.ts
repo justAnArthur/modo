@@ -49,6 +49,8 @@ interface MorphOptions extends MorphProps {
    * starts and on every frame.
    */
   instant?: (popup: HTMLElement) => boolean
+  /** Puts focus back on the trigger once a closed popup that held it is gone. Off when the owner places focus itself (Base UI's `finalFocus`). Defaults to `true`. */
+  returnFocus?: boolean
 }
 
 /** What opened the overlay: the pressed trigger and the press point. */
@@ -267,7 +269,15 @@ function useMorphOrigin() {
 function useMorph(
   open: boolean,
   origin: RefObject<MorphOrigin>,
-  { from = 'trigger', effect = 'goo', hideSource = false, tier = 'slow', exit, instant }: MorphOptions = {},
+  {
+    from = 'trigger',
+    effect = 'goo',
+    hideSource = false,
+    tier = 'slow',
+    exit,
+    instant,
+    returnFocus: refocus = true,
+  }: MorphOptions = {},
   onExited?: () => void,
 ) {
   const reduced = useReduceMotion()
@@ -447,7 +457,7 @@ function useMorph(
   }
 
   const closing = (popup: HTMLDivElement) => {
-    returnTo.current = popup.contains(document.activeElement) ? (origin.current?.trigger ?? null) : null
+    returnTo.current = refocus && popup.contains(document.activeElement) ? (origin.current?.trigger ?? null) : null
     if (!geometry.current) {
       exited.current?.()
       return
