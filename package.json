@@ -12,7 +12,7 @@
     "kits/*"
   ],
   "scripts": {
-    "build": "bun --filter '@justanarthur/modo' build && bun --filter '@justanarthur/modo-ui' build",
+    "build": "bun --filter '@justanarthur/modo' build && bun --filter '@justanarthur/modo-ui' build && bun --filter '@justanarthur/modo-ui-ai' build",
     "dev": "bun --filter '@modo/demo' dev",
     "check": "bun --filter '*' check",
     "test": "bun --filter '@justanarthur/modo' --filter '@justanarthur/modo-ui' test",

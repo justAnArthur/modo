@@ -28,7 +28,7 @@ Subpaths follow the docs' tiers and groups: `primitives/*`, `components/*`
 (`blocks/sidebar-app`). The shared systems are subpaths too, for components of
 your own: `lib/utils`, `lib/springs`, `lib/size-scale`, `lib/shape-classes`,
 `lib/field-classes`, `lib/field-box`, `lib/size-context`, `lib/shape-context`,
-`lib/icon-context`, `lib/use-controllable-state`, `lib/use-morph` and
+`lib/icon-context` (`useIcon`, `useIcons`, `IconProvider`), `lib/use-controllable-state`, `lib/use-morph`, `lib/surface-classes` and
 `lib/goo-indicator`; Button's, Badge's and FileDropzone's pure tables are
 `components/button/variants`, `components/badge/variants` and
 `components/inputs/file-dropzone/variants`.

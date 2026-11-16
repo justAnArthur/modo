@@ -1,0 +1,21 @@
+import Recap from './index'
+
+# With a decision
+
+The question and its answers follow the recap, the recommendation first.
+
+<div className="w-full max-w-2xl">
+  <Recap
+    recap="The five pages and six blocks are in and pass lint and the typecheck. Nothing is committed yet, and the narrow window is checked only in the docs frame."
+    ask="Commit on the branch?"
+    actions={['Commit', 'Not yet']}
+  />
+</div>
+
+# Recap only
+
+Nothing waits on you, so there is no question.
+
+<div className="w-full max-w-2xl">
+  <Recap recap="The parser keeps @values again and the test suite passes. The fix is committed on main." />
+</div>

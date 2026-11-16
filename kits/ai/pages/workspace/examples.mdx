@@ -1,0 +1,58 @@
+import Workspace from './index'
+import { ScreenFrame } from '../../mock/screen-frame'
+
+# Main window
+
+A 1280 × 800 window, scaled to the column, on DesktopShell with no title bar. Press ⌘K or click the sidebar's search to switch sessions, run a command or open a pane. A session mid-turn: the task list pinned under it, the composer streaming, the changes beside it. Pick another session, switch panes, open the chapter list.
+
+<ScreenFrame>
+  <Workspace />
+</ScreenFrame>
+
+# The claude process crashed
+
+When a profile's claude exits mid-turn, a banner over the transcript shows its last stderr with a restart; the failure-states block has the other kinds (reconnecting, rate-limited, offline, auth expired). The bell in the title bar is the inbox; the search beside it looks through every session's transcript; ⌘/ shows the shortcuts. Double-click the title to rename the session.
+
+<ScreenFrame>
+  <Workspace failure="cli-crashed" pane="file" />
+</ScreenFrame>
+
+# Split view
+
+A second session beside the first, opened from a row's menu or the split button in the title bar; it keeps a header of its own.
+
+<ScreenFrame width={1680} height={900}>
+  <Workspace split pane="pr" />
+</ScreenFrame>
+
+# Wrap-up
+
+The turn is done: the next-step box under the task list asks the one decision left.
+
+<ScreenFrame>
+  <Workspace wrapUp pane="tasks" />
+</ScreenFrame>
+
+# Terminal and a folded sessions sidebar
+
+With the sessions sidebar folded the session card keeps 8px to the window edge on both sides; the terminal is a prompt you type at.
+
+<ScreenFrame>
+  <Workspace sidebar={false} pane="terminal" />
+</ScreenFrame>
+
+# Extensions slot
+
+The side pane's last tab is a pane from your own MCP server or plugin: here, usage across every profile.
+
+<ScreenFrame>
+  <Workspace pane="extension" />
+</ScreenFrame>
+
+# Narrow window
+
+At 420px both sidebars start folded and the split drops out; the transcript and composer keep the room.
+
+<ScreenFrame width={420} height={780}>
+  <Workspace sidebar={false} pane="none" />
+</ScreenFrame>

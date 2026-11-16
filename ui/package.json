@@ -136,6 +136,11 @@
       "source": "./lib/goo-indicator.tsx",
       "default": "./dist/lib/goo-indicator.js"
     },
+    "./lib/surface-classes": {
+      "types": "./dist/lib/surface-classes.d.ts",
+      "source": "./lib/surface-classes.ts",
+      "default": "./dist/lib/surface-classes.js"
+    },
     "./unocss": {
       "types": "./dist/preset.d.ts",
       "default": "./dist/preset.js"

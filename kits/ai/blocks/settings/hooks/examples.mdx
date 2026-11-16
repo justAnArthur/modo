@@ -1,0 +1,16 @@
+import Hooks from './index'
+import { HOOKS } from '../../../mock/mock'
+
+# Hooks
+
+A row opens into its command, timeout and last run; one that failed says so in the row.
+
+<div className="@container w-full max-w-3xl">
+  <Hooks hooks={HOOKS} configDir="~/.claude-jobiflow" />
+</div>
+
+# Open
+
+<div className="@container w-full max-w-3xl">
+  <Hooks hooks={HOOKS} configDir="~/.claude-jobiflow" defaultOpen={[HOOKS[0].event + '-' + HOOKS[0].command]} />
+</div>

@@ -19,12 +19,14 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run lint
-      # The design systems type @justanarthur/modo/config from the lib's dist.
+      # The design systems type @justanarthur/modo/config from the lib's dist; builds lib, ui and the ai kit.
       - run: bun run build
       - run: bun run check
       - run: bun run test
       - name: ui tarball contents
         run: .github/scripts/check-ui-pack.sh
+      - name: ai kit tarball contents
+        run: .github/scripts/check-kit-pack.sh ai
 
   # pages.yml builds it on main; this catches a broken site before the merge.
   site:

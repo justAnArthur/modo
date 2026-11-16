@@ -209,7 +209,7 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 | `spinner-glyph.tsx` | `SpinnerGlyph` | The loading glyph (Button, `Progress.Spinner`). |
 | `use-keyboard-nav-gate.ts` | `useKeyboardNavGate` | Show a popup's ring only after keyboard use. |
 | `use-touch-primary.tsx` | `useTouchPrimary` | Skip pointer-only machinery on touch. |
-| `icon-context.tsx` | `useIcon`, `IconProvider`, `IconName`, `IconComponent` | Icons. |
+| `icon-context.tsx` | `useIcon`, `useIcons`, `IconProvider`, `IconName`, `IconComponent` | Icons. `useIcons` returns the whole map (the ai kit's `AiIconProvider` extends it). |
 | `utils.ts` | `cn` | Class merging that knows the local utilities. |
 
 The rest (refs, rects, dates and the date mask, the autosizing textarea) is listed in `ui/lib/README.md`.

@@ -1,0 +1,43 @@
+import Transcript from './index'
+import { DEMO_CHAPTERS, DEMO_TASKS, DemoBuilding, DemoSession } from '../../mock/demo-session'
+
+# Session
+
+A whole session: chapters, your turns with attachments and @-mentions, folded work with reasoning, tool runs, an Explore run and a background agent, the live turn at the bottom. Open the chapter list in the corner to jump.
+
+<div className="flex h-[720px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Transcript chapters={DEMO_CHAPTERS} footer={<Transcript.TaskList items={DEMO_TASKS} />}>
+    <DemoSession />
+  </Transcript>
+</div>
+
+# Show work
+
+Every turn's work starts unfolded; the eye in the corner folds it all again.
+
+<div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Transcript defaultShowWork>
+    <DemoBuilding />
+  </Transcript>
+</div>
+
+# Closing a turn
+
+The footer stays under the column: the pinned task list folded to one row, then the wrap-up box with its question.
+
+<div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Transcript
+    footer={
+      <>
+        <Transcript.TaskList items={DEMO_TASKS} defaultOpen={false} />
+        <Transcript.NextStep
+          recap="The five pages and six blocks are in and pass lint and the typecheck. Nothing is committed yet, and the narrow window is checked only in the docs frame."
+          ask="Commit the AI app on its branch?"
+          actions={['Commit', 'Not yet']}
+        />
+      </>
+    }
+  >
+    <DemoBuilding />
+  </Transcript>
+</div>

@@ -1,0 +1,36 @@
+import ShortcutsSheet from './index'
+import Button from '@justanarthur/modo-ui/components/button'
+import { SHORTCUTS } from '../../mock/mock-extras'
+
+# Sheet
+
+Press the button or ⌘/: the dialog grows out of it with the filter focused. Try "pane", "send" or "⌥".
+
+<ShortcutsSheet groups={SHORTCUTS} trigger={<Button variant="secondary">Keyboard shortcuts</Button>} />
+
+# The list
+
+`ShortcutsSheet.Panel` on its own: a chord is one keycap, a sequence several.
+
+<div className="flex h-[640px] w-full max-w-[880px] flex-col rounded-xl border border-border bg-background p-6">
+  <ShortcutsSheet.Panel groups={SHORTCUTS} className="flex-1" />
+</div>
+
+# Filtered
+
+Groups with nothing left hide.
+
+<div className="flex h-[280px] w-full max-w-[880px] flex-col rounded-xl border border-border bg-background p-6">
+  <ShortcutsSheet.Panel groups={SHORTCUTS} defaultQuery="pane" className="flex-1" />
+</div>
+
+# Light and dark
+
+<div className="grid w-full gap-3 @3xl:grid-cols-2">
+  <div className="light flex h-[360px] flex-col rounded-xl border border-border bg-background p-6 text-foreground">
+    <ShortcutsSheet.Panel groups={SHORTCUTS} defaultQuery="session" className="flex-1" />
+  </div>
+  <div className="dark flex h-[360px] flex-col rounded-xl border border-border bg-background p-6 text-foreground">
+    <ShortcutsSheet.Panel groups={SHORTCUTS} defaultQuery="session" className="flex-1" />
+  </div>
+</div>

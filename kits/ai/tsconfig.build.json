@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  // The declarations import modo-ui by its package name (its own dist types), never its sources.
+  "compilerOptions": { "paths": {} },
+  "include": ["index.ts", "lib", "components", "blocks"]
+}

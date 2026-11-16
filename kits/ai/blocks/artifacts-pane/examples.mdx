@@ -1,0 +1,23 @@
+import { SizeProvider } from '@justanarthur/modo-ui/primitives/sizes'
+import { PANE_ARTIFACTS } from '../../mock/mock-panes'
+import ArtifactsPane from './index'
+
+# Artifacts
+
+What Claude made in this session, newest first; a press opens one.
+
+<div className="w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background p-2">
+  <SizeProvider size="compact">
+    <ArtifactsPane artifacts={PANE_ARTIFACTS} />
+  </SizeProvider>
+</div>
+
+# No artifacts
+
+Before Claude makes anything, the pane says what lands there.
+
+<div className="w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background p-2">
+  <SizeProvider size="compact">
+    <ArtifactsPane artifacts={[]} />
+  </SizeProvider>
+</div>

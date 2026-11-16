@@ -1,0 +1,44 @@
+import HookDialog from './index'
+import Button from '@justanarthur/modo-ui/components/button'
+import { HOOK_GUARD, HOOK_LINT } from '../../mock/mock-config'
+
+# Add a hook
+
+Press the button: the dialog grows out of it. The snippet under the form follows every keystroke.
+
+<HookDialog trigger={<Button variant="secondary">Add hook</Button>} configDir="~/.claude-jobiflow" />
+
+# After an edit
+
+A PostToolUse hook on Edit and Write, checked into the repo.
+
+<div className="@container w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <HookDialog.Panel editing defaultHook={HOOK_LINT} />
+</div>
+
+# A guard
+
+A PreToolUse hook on Bash that exits 2 to block a dangerous command.
+
+<div className="@container w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <HookDialog.Panel editing defaultHook={HOOK_GUARD} configDir="~/.claude-jobiflow" />
+</div>
+
+# An event without a matcher
+
+Stop runs every time a turn ends, so the matcher stands disabled and the snippet leaves it out.
+
+<div className="@container w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <HookDialog.Panel defaultHook={{ event: 'Stop', command: 'osascript -e \'display notification "Turn done"\'', scope: 'local' }} />
+</div>
+
+# Light and dark
+
+<div className="grid w-full gap-3 @3xl:grid-cols-2">
+  <div className="light @container rounded-xl border border-border bg-background p-6 text-foreground">
+    <HookDialog.Panel defaultHook={HOOK_LINT} />
+  </div>
+  <div className="dark @container rounded-xl border border-border bg-background p-6 text-foreground">
+    <HookDialog.Panel defaultHook={HOOK_GUARD} />
+  </div>
+</div>

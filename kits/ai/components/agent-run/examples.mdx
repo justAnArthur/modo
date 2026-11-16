@@ -1,0 +1,30 @@
+import AgentRun from './index'
+import ToolCall from '../tool-call'
+
+# Sub-agent
+
+The run frames its own calls and ends with its report.
+
+<div className="w-full max-w-2xl">
+  <AgentRun agent="Explore" description="Find every overlay that skips the morph layer" meta="22 tool uses · 1m 04s">
+    <ToolCall.Group>
+      <ToolCall index={0} value="g" tool="Grep" summary={'"Popup" components/overlays'} meta="9 files" />
+      <ToolCall index={1} value="r" tool="Read" summary="components/overlays/toast/index.tsx" meta="402 lines" />
+    </ToolCall.Group>
+    <p className="m-0 text-body text-muted-foreground">Every overlay grows through useMorph; none hand-rolls its motion.</p>
+  </AgentRun>
+</div>
+
+# Background
+
+A background run carries a badge and keeps turning after the turn ends.
+
+<div className="w-full max-w-2xl">
+  <AgentRun agent="general-purpose" description="Run the full test suite on main" status="running" background meta="3 tool uses" />
+</div>
+
+# Failed
+
+<div className="w-full max-w-2xl">
+  <AgentRun agent="researcher" icon="globe" description="Compare three charting libraries" status="error" meta="5 tool uses · 12s" />
+</div>

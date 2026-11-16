@@ -1,0 +1,17 @@
+import Worktrees from './index'
+import { WORKTREES } from '../../../mock/mock'
+import { WORKTREES_ON_DISK } from '../../../mock/mock-settings'
+
+# Worktrees
+
+Hover a merged or stale worktree to remove it, or open it for its path and what removing it costs.
+
+<div className="@container w-full max-w-3xl">
+  <Worktrees worktrees={WORKTREES} onDisk={WORKTREES_ON_DISK} />
+</div>
+
+# Open
+
+<div className="@container w-full max-w-3xl">
+  <Worktrees worktrees={WORKTREES} onDisk={WORKTREES_ON_DISK} defaultOpen={['.worktrees/lib-canvas']} />
+</div>

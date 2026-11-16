@@ -1,0 +1,46 @@
+import QuestionPrompt from './index'
+
+# One answer
+
+The pick's background melts between options, the arrow keys move it, and "Other" takes free text.
+
+<div className="w-full max-w-2xl">
+  <QuestionPrompt
+    tag="Layout"
+    question="Where should the side panes open?"
+    options={[
+      { label: 'Right of the transcript (Recommended)', description: 'One pane at a time, tabs on top' },
+      { label: 'Below the transcript', description: 'Like an IDE panel; more room for wide diffs' },
+      { label: 'In a separate window', description: 'For a second screen' },
+    ]}
+  />
+</div>
+
+# Several answers
+
+`multiSelect`: neighbouring picks melt into one run.
+
+<div className="w-full max-w-2xl">
+  <QuestionPrompt
+    tag="Settings"
+    multiSelect
+    question="Which settings pages should the first build include?"
+    options={[{ label: 'MCP servers' }, { label: 'Hooks' }, { label: 'Skills and plugins' }, { label: 'Memory' }]}
+  />
+</div>
+
+# With previews
+
+Options with a `preview` show the picked one beside the list; on a narrow card the preview drops below.
+
+<div className="w-full max-w-2xl">
+  <QuestionPrompt
+    tag="Sidebar"
+    question="How should a running session show in the sidebar?"
+    options={[
+      { label: 'Turning arc', description: 'Leading glyph', preview: '◜ Design the AI app      now\n• Canvas page and pages tier    3m\n○ TSDoc parser drops @values   1h' },
+      { label: 'Badge', description: 'Trailing chip', preview: '  Design the AI app  Running\n  Canvas page and pages tier   Waiting\n  TSDoc parser drops @values' },
+      { label: 'Row tint', description: 'Whole row', preview: '▒ Design the AI app ▒▒▒▒▒▒▒▒\n  Canvas page and pages tier\n  TSDoc parser drops @values' },
+    ]}
+  />
+</div>
