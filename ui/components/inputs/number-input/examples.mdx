@@ -1,0 +1,78 @@
+import NumberInput from './index'
+import { InputGroup, Label } from '../input'
+
+# Number input
+
+Type a number, or step it with minus and plus. Hold a button to repeat; the arrow keys step too, Shift by ten. At the ends the stepper that would pass them dims.
+
+<div className="w-56 max-w-full">
+  <NumberInput variant="bordered" defaultValue={4} min={0} max={20} aria-label="Quantity" />
+</div>
+
+# Variants
+
+`borderless` is invisible until hovered or focused; `bordered` is framed at rest.
+
+<div className="flex flex-col gap-3 w-56 max-w-full">
+  <NumberInput defaultValue={2} aria-label="Borderless count" />
+  <NumberInput variant="bordered" defaultValue={2} aria-label="Bordered count" />
+</div>
+
+# With a Label
+
+`Label` pairs with the field through `htmlFor` and `id`.
+
+<div className="flex flex-col gap-1 w-56 max-w-full">
+  <Label htmlFor="number-guests">Guests</Label>
+  <NumberInput id="number-guests" variant="bordered" defaultValue={2} min={1} max={12} />
+</div>
+
+# Formats
+
+`format` takes `Intl.NumberFormat` options and `locale` the locale. Typing in the shown form parses back.
+
+<div className="flex flex-col gap-3 w-56 max-w-full">
+  <NumberInput variant="bordered" defaultValue={1234.5} format={{ style: 'currency', currency: 'EUR' }} locale="en-US" aria-label="Price in euros, US format" />
+  <NumberInput variant="bordered" defaultValue={1234.5} format={{ style: 'currency', currency: 'EUR' }} locale="sk-SK" aria-label="Price in euros, Slovak format" />
+  <NumberInput variant="bordered" defaultValue={0.25} step={0.05} format={{ style: 'percent' }} aria-label="Discount" />
+</div>
+
+# Units and scrubbing
+
+`endAdornment` holds a unit. With `scrub`, the start adornment is a handle: drag it sideways to change the value.
+
+<div className="flex flex-col gap-3 w-56 max-w-full">
+  <NumberInput variant="bordered" defaultValue={72} endAdornment="kg" aria-label="Weight in kilograms" />
+  <NumberInput variant="bordered" defaultValue={320} min={0} startAdornment="W" scrub stepper={false} aria-label="Width" />
+</div>
+
+# Compact
+
+The compact step shrinks the box, the text and the steppers together.
+
+<div className="w-44 max-w-full">
+  <NumberInput size="compact" variant="bordered" defaultValue={10} step={5} aria-label="Spacing" />
+</div>
+
+# States
+
+Invalid turns the field destructive, disabled dims it and its steppers, read-only hides the steppers and keeps the value selectable.
+
+<div className="flex flex-col gap-3 w-56 max-w-full">
+  <NumberInput variant="bordered" defaultValue={12} max={10} invalid aria-label="Invalid count" />
+  <NumberInput variant="bordered" defaultValue={3} disabled aria-label="Disabled count" />
+  <NumberInput variant="bordered" defaultValue={3} readOnly aria-label="Read-only count" />
+</div>
+
+# In a group
+
+Inside `InputGroup.Field` it joins the group's hover and takes the field's label and error.
+
+<InputGroup>
+  <InputGroup.Field label="Adults">
+    <NumberInput defaultValue={2} min={1} name="adults" />
+  </InputGroup.Field>
+  <InputGroup.Field label="Children" error="The room sleeps four.">
+    <NumberInput defaultValue={3} min={0} name="children" />
+  </InputGroup.Field>
+</InputGroup>
