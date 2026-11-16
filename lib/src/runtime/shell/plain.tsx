@@ -3,6 +3,7 @@ import type {
   CodeSlotProps,
   IconSlotProps,
   LinkSlotProps,
+  SelectOption,
   SelectSlotProps,
   SidebarItemProps,
   SidebarSectionProps,
@@ -28,12 +29,19 @@ export function PlainCode({ children }: CodeSlotProps) {
 }
 
 export function PlainSelect({ value, onValueChange, options }: SelectSlotProps) {
+  const option = (o: SelectOption) => (
+    <option key={o.value} value={o.value}>
+      {o.label}
+    </option>
+  )
+  const groups = [...new Set(options.flatMap(o => o.group ?? []))]
   return (
     <select value={value} onChange={e => onValueChange(e.target.value)}>
-      {options.map(o => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
+      {options.filter(o => o.group === undefined).map(option)}
+      {groups.map(group => (
+        <optgroup key={group} label={group}>
+          {options.filter(o => o.group === group).map(option)}
+        </optgroup>
       ))}
     </select>
   )
