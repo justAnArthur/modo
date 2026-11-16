@@ -1,6 +1,6 @@
 # Changelog
 
-Both packages are released from this repo by conventional commits (see [CONTRIBUTING.md](CONTRIBUTING.md)): `@justanarthur/modo` (`lib/`) and `@justanarthur/modo-ui` (`ui/`). Each release also gets GitHub release notes generated from its commits.
+The packages are released from this repo by conventional commits (see [CONTRIBUTING.md](CONTRIBUTING.md)): `@justanarthur/modo` (`lib/`), `@justanarthur/modo-ui` (`ui/`) and `@justanarthur/modo-ui-ai` (`kits/ai/`). Each release also gets GitHub release notes generated from its commits.
 
 ## Unreleased
 
@@ -33,6 +33,12 @@ Fixes:
 - Tokens `--sunken` (`bg-sunken`) and `--radius-shell` / `--radius-pill-shell` (`rounded-shell|pill-shell`); icons `file-diff` and `square`.
 - A standalone `Accordion` nested in an `Accordion.Group`'s panel keeps its own open state.
 - **Grouped Select options.** `SelectOption` takes an optional `group`: a Select lists the ungrouped options first, then each group under its heading, in first-seen order. Plain Select renders `<optgroup>`s; a host Select that ignores `group` keeps showing a flat list. The demo switcher uses it to list design systems and kits apart.
+- `useIcons()` (`lib/icon-context`) returns the whole icon map, for a kit that extends the set; `lib/surface-classes` (`SURFACE_BG`, `SURFACE_SHADOW`) is a subpath; the `SidebarApp` block exports its `SidebarSearchField` and `SidebarInsetTopbar`.
+- `VirtualList` and `LogView` measure in the element's own pixels, so a list inside a preview scaled with CSS `zoom` keeps its rows apart.
+
+### @justanarthur/modo-ui-ai
+
+- **New package (0.1.0): an AI agent app kit on modo-ui**, moved out of the AI desktop prototype (#44) and rebuilt on modo-ui's items: components `Message` (+ `Message.Working`), `ToolCall`, `AgentRun`, `Reasoning`, `WorkSummary`, `TodoList`, `Recap`, `ChapterNav`, `PromptCard`, `PermissionRequest`, `QuestionPrompt`, `PlanApproval`; blocks for the session (`Transcript`, which follows a streaming reply, `Composer`, `AgentPrompt`, `TranscriptSearch`, `CommandPalette`, `ShortcutsSheet`, `FailureState`), the sidebars and boards, the side pane and its panes, and settings; docs-only screens on mock data. modo-ui is a peer; the kit's glyphs extend its icon set through `AiIconProvider`; `styles.css` holds the kit's utilities for a host on modo-ui's prebuilt CSS. Docs at `/ai/`.
 
 ## 1.0.0 — 2026-11-16
 

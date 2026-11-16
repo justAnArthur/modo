@@ -204,8 +204,9 @@ Not part of the toolkit template: re-add this section after an `update` rewrites
 |---------|-----|--------|
 | `@justanarthur/modo` | `lib/` | `lib`, `modo`, `justanarthur`, `justanarthur/modo`, `@justanarthur/modo` |
 | `@justanarthur/modo-ui` | `ui/` | `ui`, `modo-ui`, `justanarthur/modo-ui`, `@justanarthur/modo-ui` |
+| `@justanarthur/modo-ui-ai` | `kits/ai/` | `ai`, `modo-ui-ai`, `justanarthur/modo-ui-ai`, `@justanarthur/modo-ui-ai` |
 
-`demo` and the demo design systems are private: their scopes never bump anything.
+`demo` and the demo design systems are private: their scopes never bump anything. A kit under `kits/` is a published package of its own (public `publishConfig`, `modo-ui` as a peer); `publish-npm-on-tag` builds it with its `build` script and publishes it like `ui`.
 
 ### GitHub releases
 
