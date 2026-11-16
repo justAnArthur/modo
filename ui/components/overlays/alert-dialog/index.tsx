@@ -1,12 +1,29 @@
 /*!
  * Local addition (not part of Fluid Functionalism): Base UI's AlertDialog root
- * under Dialog's parts, which Base UI shares between the two.
+ * under Dialog's parts, which Base UI shares between the two, plus a confirm
+ * that may wait on a promise or a mutation's pending state.
  */
 
 'use client'
 
 import { AlertDialog as AlertDialogPrimitive } from '@base-ui/react/alert-dialog'
-import { forwardRef, type ReactNode } from 'react'
+import {
+  cloneElement,
+  createContext,
+  forwardRef,
+  type MouseEvent,
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
+import type { OpenChangeDetails } from '../../../lib/overlay'
+import { type SlotProps, slotRender } from '../../../lib/slot'
+import Button, { type ButtonProps } from '../../button'
 import {
   DialogClose,
   DialogContent,
@@ -19,6 +36,24 @@ import {
   DialogTrigger,
 } from '../dialog'
 
+type ButtonVariant = NonNullable<ButtonProps['variant']>
+
+interface AlertDialogPending {
+  /** True while the confirm runs. */
+  pending: boolean
+  setPending: (pending: boolean) => void
+  /** Closes the dialog, past the pending lock. */
+  close: () => void
+}
+
+const AlertDialogPendingContext = createContext<AlertDialogPending | null>(null)
+
+function usePending(part: string) {
+  const state = useContext(AlertDialogPendingContext)
+  if (!state) throw new Error(`${part} must be inside an AlertDialog.`)
+  return state
+}
+
 // No ✕ by default: the way out is one of the dialog's own actions.
 const AlertDialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
   ({ showCloseButton = false, ...props }, ref) => (
@@ -27,12 +62,145 @@ const AlertDialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
 )
 AlertDialogContent.displayName = 'AlertDialogContent'
 
+interface AlertDialogActionProps extends Omit<SlotProps, 'onClick'> {
+  /** The confirm. Return a promise to keep the dialog open, the button loading and every way out locked until it settles: it closes on resolve and stays open on reject. A plain return closes it at once, or, with `pending` set, once `pending` turns true and back to false. `event.preventDefault()` keeps it open after a plain return. */
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => unknown
+  /** Called with the reason when the promise `onClick` returned rejects; the dialog stays open. */
+  onError?: (error: unknown) => void
+  /** Holds the pending state from outside (a mutation's `isPending`): loading, and the dialog locked, while true. Once set, a plain `onClick` (`() => mutate()`) leaves the dialog open until `pending` goes true and back to false, then closes it, on failure too; return the promise (`mutateAsync`) to stay open when it rejects. */
+  pending?: boolean
+  /** The Button's variant when there is no `render` element. Defaults to `'primary'`. */
+  variant?: ButtonVariant
+}
+
+const isThenable = (value: unknown): value is PromiseLike<unknown> =>
+  typeof value === 'object' && value !== null && typeof (value as PromiseLike<unknown>).then === 'function'
+
+const AlertDialogAction = forwardRef<HTMLButtonElement, AlertDialogActionProps>(
+  ({ onClick, onError, pending, variant = 'primary', render, asChild, children, disabled, ...props }, ref) => {
+    const { setPending, close } = usePending('AlertDialog.Action')
+    const [running, setRunning] = useState(false)
+    const busy = running || (pending ?? false)
+    // A plain onClick under a controlled `pending` waits for it to go true and back to false.
+    const awaiting = useRef(false)
+    const wasPending = useRef(pending)
+
+    useEffect(() => {
+      if (wasPending.current && !pending && awaiting.current) {
+        awaiting.current = false
+        close()
+      }
+      wasPending.current = pending
+    }, [pending, close])
+
+    useEffect(() => {
+      setPending(busy)
+    }, [busy, setPending])
+    useEffect(() => () => setPending(false), [setPending])
+
+    const press = (event: MouseEvent<HTMLButtonElement>) => {
+      if (busy) return
+      const result = onClick?.(event)
+      if (!isThenable(result)) {
+        if (event.defaultPrevented) return
+        if (pending === undefined) close()
+        else awaiting.current = true
+        return
+      }
+      // Lock at once, not a render later: an Escape in between must not slip through.
+      setPending(true)
+      setRunning(true)
+      Promise.resolve(result).then(
+        () => {
+          setRunning(false)
+          setPending(false)
+          close()
+        },
+        (error: unknown) => {
+          setRunning(false)
+          setPending(false)
+          onError?.(error)
+        },
+      )
+    }
+
+    const el = slotRender(render, asChild, children)
+    if (!el) {
+      return (
+        <Button ref={ref} variant={variant} loading={busy} disabled={disabled} onClick={press} {...props}>
+          {children}
+        </Button>
+      )
+    }
+    // A Button folds into its spinner; any other element is disabled and marked busy.
+    const state = el.type === Button ? { loading: busy } : { 'aria-busy': busy || undefined }
+    return cloneElement(el as ReactElement<Record<string, unknown>>, {
+      ...props,
+      ...state,
+      ref,
+      disabled: disabled || busy,
+      onClick: press,
+    })
+  },
+)
+AlertDialogAction.displayName = 'AlertDialogAction'
+
+interface AlertDialogCancelProps extends SlotProps {
+  /** The Button's variant when there is no `render` element. Defaults to `'ghost'`. */
+  variant?: ButtonVariant
+}
+
+const AlertDialogCancel = forwardRef<HTMLButtonElement, AlertDialogCancelProps>(
+  ({ variant = 'ghost', render, asChild, children, disabled, ...props }, ref) => {
+    const { pending } = usePending('AlertDialog.Cancel')
+    const el = slotRender(render, asChild, children) ?? <Button variant={variant}>{children}</Button>
+    return <DialogClose ref={ref} render={el} disabled={disabled || pending} {...props} />
+  },
+)
+AlertDialogCancel.displayName = 'AlertDialogCancel'
+
+interface AlertDialogRootProps {
+  open: boolean
+  onOpenChange: (next: boolean, details: OpenChangeDetails) => void
+  children?: ReactNode
+}
+
+/** The Base UI root, holding every dismissal while the confirm runs. */
+function AlertDialogRoot({ open, onOpenChange, children }: AlertDialogRootProps) {
+  const [pending, setPendingState] = useState(false)
+  // Read synchronously by the dismissal guard, ahead of the next render.
+  const locked = useRef(false)
+  const setPending = useCallback((next: boolean) => {
+    locked.current = next
+    setPendingState(next)
+  }, [])
+  const close = useCallback(() => onOpenChange(false, {}), [onOpenChange])
+  const ctx = useMemo(() => ({ pending, setPending, close }), [pending, setPending, close])
+
+  return (
+    <AlertDialogPendingContext.Provider value={ctx}>
+      <AlertDialogPrimitive.Root
+        open={open}
+        onOpenChange={(next, details) => {
+          if (!next && locked.current) {
+            details.cancel()
+            return
+          }
+          onOpenChange(next, details)
+        }}
+      >
+        {children}
+      </AlertDialogPrimitive.Root>
+    </AlertDialogPendingContext.Provider>
+  )
+}
+
 interface AlertDialogProps {
   /** Controlled open state. Pair with `onOpenChange`. */
   open?: boolean
   /** Initial open state, for an uncontrolled alert dialog. Defaults to `false`. */
   defaultOpen?: boolean
-  /** Called when the dialog opens or closes. */
+  /** Called when the dialog opens or closes. Not called for a dismissal held off while the confirm runs. */
   onOpenChange?: (open: boolean) => void
   /** The trigger and the content — `AlertDialog.Trigger` plus an `AlertDialog.Content`. */
   children?: ReactNode
@@ -49,16 +217,31 @@ interface AlertDialogProps {
  * morph options, and lifts 4 surface levels. Unlike Dialog it has no ✕
  * unless `showCloseButton` asks for one.
  *
- * Statics: the same parts as Dialog — `AlertDialog.Trigger`,
- * `AlertDialog.Content`, `AlertDialog.Header`, `AlertDialog.Footer`,
- * `AlertDialog.Title`, `AlertDialog.Description` and `AlertDialog.Close`.
+ * `AlertDialog.Action` is the confirm. When its `onClick` returns a promise,
+ * the button folds into a spinner and the dialog holds still: Cancel greys
+ * out, and Escape and every close are ignored until the promise settles. It
+ * closes when the promise resolves and stays open when it rejects, handing
+ * the reason to `onError`, so the person can try again or cancel. With a
+ * mutation's state in `pending` instead, a plain `onClick={() => mutate()}`
+ * keeps the dialog open, locked while `pending` is true, and closes it once
+ * `pending` falls back to false.
+ *
+ * Statics:
+ * - `AlertDialog.Action` — the confirm button: `onClick` (may return a
+ *   promise), `onError`, `pending`, `variant` (default `'primary'`), or
+ *   `render` / `asChild`.
+ * - `AlertDialog.Cancel` — closes without confirming, disabled while the
+ *   confirm runs: `variant` (default `'ghost'`), or `render` / `asChild`.
+ * - The same parts as Dialog — `AlertDialog.Trigger`, `AlertDialog.Content`,
+ *   `AlertDialog.Header`, `AlertDialog.Footer`, `AlertDialog.Title`,
+ *   `AlertDialog.Description` and `AlertDialog.Close`.
  *
  * @example {@include ./examples.mdx}
  */
 function AlertDialog({ children, open, defaultOpen, onOpenChange }: AlertDialogProps) {
   return (
     <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
-      {root => <AlertDialogPrimitive.Root {...root}>{children}</AlertDialogPrimitive.Root>}
+      {root => <AlertDialogRoot {...root}>{children}</AlertDialogRoot>}
     </DialogState>
   )
 }
@@ -70,8 +253,10 @@ AlertDialog.Footer = DialogFooter
 AlertDialog.Title = DialogTitle
 AlertDialog.Description = DialogDescription
 AlertDialog.Close = DialogClose
+AlertDialog.Action = AlertDialogAction
+AlertDialog.Cancel = AlertDialogCancel
 
-export type { AlertDialogProps }
-export { AlertDialog, AlertDialogContent }
+export type { AlertDialogActionProps, AlertDialogCancelProps, AlertDialogProps }
+export { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent }
 
 export default AlertDialog
