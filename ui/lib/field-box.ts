@@ -26,6 +26,8 @@ export interface FieldBoxOptions {
   disabled?: boolean
   /** Lit from outside, e.g. a group's fluid hover. */
   active?: boolean
+  /** Shows the value without letting it change: the ring answers, the fill never lifts. */
+  readOnly?: boolean
   /** Pins the field to one step of the size ladder. Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
 }
@@ -53,7 +55,7 @@ const FIELD_PX: Record<SizeVariant, string> = {
  * the returned `size`. Inside InputGroup.Field, unset `active` / `invalid` /
  * `disabled` come from the field (`FieldStateContext`).
  */
-export function useFieldBox({ variant, invalid, disabled, active, size }: FieldBoxOptions) {
+export function useFieldBox({ variant, invalid, disabled, active, readOnly, size }: FieldBoxOptions) {
   const field = useContext(FieldStateContext)
   const shape = useShape()
   const sizeClasses = useSize(size)
@@ -69,15 +71,22 @@ export function useFieldBox({ variant, invalid, disabled, active, size }: FieldB
       'data-active': (active ?? field?.active) || undefined,
       'data-invalid': isInvalid || undefined,
       'data-disabled': isDisabled || undefined,
+      'data-readonly': readOnly || undefined,
       className: cn(fieldVariants({ variant }), shape.input, FIELD_PX[sizeClasses.variant]),
     },
   }
 }
 
-/** A press anywhere in the box (icon, padding) focuses the control, without disturbing the control's own caret placement. */
+/**
+ * A press anywhere in the box (icon, padding) focuses the control, without
+ * disturbing the control's own caret placement. A press that reaches the box
+ * only through the React tree (a popup portalled out of an adornment) is left
+ * alone, so that popup can take focus itself.
+ */
 export function focusControlOnPress(control: RefObject<HTMLElement | null>) {
   return (e: MouseEvent) => {
     if (e.target === control.current) return
+    if (!e.currentTarget.contains(e.target as Node)) return
     e.preventDefault()
     control.current?.focus()
   }
