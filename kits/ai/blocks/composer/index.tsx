@@ -1,6 +1,8 @@
 /*!
- * Local addition: the AI app's composer, in a ShellCard. The draft is
- * InputMessage (attachments, queue, send and stop) with two controls: one +
+ * Local addition: the AI app's composer, in a ShellCard. The draft
+ * (./draft.tsx) is Fluid Functionalism's InputMessage (attachments, queue,
+ * history, suggestions, send and stop), ported in modo-ui and moved here, with
+ * two controls: one +
  * palette (attach, @-files, commands, skills, plugins) and one run-settings
  * popover (model, effort, permissions, fast mode, output style, context).
  * The shell's row says where the session runs: the project (with worktree
@@ -12,7 +14,6 @@
 
 import { SurfaceProvider, useSurface } from '@justanarthur/modo-ui'
 import ShellCard from '@justanarthur/modo-ui/blocks/shell-card'
-import InputMessage from '@justanarthur/modo-ui/components/AI/input-message'
 import Button from '@justanarthur/modo-ui/components/button'
 import ChoiceList from '@justanarthur/modo-ui/components/inputs/choice-list'
 import Select from '@justanarthur/modo-ui/components/inputs/select'
@@ -25,11 +26,18 @@ import Popover from '@justanarthur/modo-ui/components/overlays/popover'
 import { SURFACE_BG } from '@justanarthur/modo-ui/lib/surface-classes'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { SizeProvider } from '@justanarthur/modo-ui/primitives/sizes'
-import { type ComponentProps, useState } from 'react'
+import { useState } from 'react'
 import { useIcon } from '../../lib/icons'
 import { RowTrigger } from '../../lib/row-trigger'
 import type { Command, Model, PermissionMode, Profile, Project } from '../../lib/types'
 import ProfileSwitcher from '../profile-switcher'
+import {
+  ComposerDraft,
+  type ComposerDraftProps,
+  type DraftSlotContext,
+  type DraftStatus,
+  type QueuedMessage,
+} from './draft'
 
 /** One + button: attach, mention a file, run a command, skill or plugin — one searchable list. */
 function AddPalette({ files, commands, onAttach }: { files: string[]; commands: Command[]; onAttach: () => void }) {
@@ -294,14 +302,14 @@ function RunSettings({
 }
 
 /**
- * InputMessage paints a fixed surface 2; inside a lifted shell that reads as a
+ * The draft paints a fixed surface 2; inside a lifted shell that reads as a
  * hole. This lifts it one level above whatever holds it instead.
  */
-function LiftedInput(props: ComponentProps<typeof InputMessage>) {
+function LiftedDraft(props: ComposerDraftProps) {
   const level = Math.min(useSurface() + 1, 8)
   return (
     <SurfaceProvider value={level}>
-      <InputMessage {...props} className={cn(SURFACE_BG[level], props.className)} />
+      <ComposerDraft {...props} className={cn(SURFACE_BG[level], props.className)} />
     </SurfaceProvider>
   )
 }
@@ -339,8 +347,36 @@ interface ComposerProps {
   context?: number
   /** The conversation is being compacted: the context meter says so. Defaults to `false`. */
   compacting?: boolean
-  /** A reply is streaming: send queues and the button stops. Defaults to `false`. */
-  streaming?: boolean
+  /** Whether a reply is streaming. While it is, Enter queues the draft and the empty draft's button stops the reply; on the streaming→idle edge the head of the queue sends. Pair with `onStatusChange` / `onStop`, or set `defaultStatus`. */
+  status?: DraftStatus
+  /** The initial status when uncontrolled; Stop then flips it to `"idle"` itself. Defaults to `"idle"`. */
+  defaultStatus?: DraftStatus
+  /** Called with the status when the uncontrolled composer changes it (Stop). */
+  onStatusChange?: (status: DraftStatus) => void
+  /** Called when Stop is pressed. Halt the reply and set `status` to `"idle"`. */
+  onStop?: () => void
+  /** The draft's text, controlled. Pair with `onValueChange`. */
+  value?: string
+  /** The draft's initial text when uncontrolled. Defaults to `""`. */
+  defaultValue?: string
+  /** Called with the draft's text on every change. */
+  onValueChange?: (value: string) => void
+  /** The messages queued while a reply streams, controlled: `{ id, text, files }` each. Pair with `onQueueChange`. */
+  queue?: QueuedMessage[]
+  /** The initial queue when uncontrolled. Defaults to `[]`. */
+  defaultQueue?: QueuedMessage[]
+  /** Called when a message is queued, edited back, removed, reordered or sent from the queue. */
+  onQueueChange?: (queue: QueuedMessage[]) => void
+  /** Messages sent before, oldest first: ↑ on the draft's first line recalls them, ↓ on its last walks back to the draft. Defaults to `[]`. */
+  history?: string[]
+  /** Prompts listed under the draft while it is empty: ↓ / ↑ walk them without leaving the text, Enter or a click fills one in. */
+  suggestions?: string[]
+  /** A prompt shown as the placeholder with a Tab keycap: Tab fills it in. Wins over `placeholder`. */
+  placeholderSuggestion?: string
+  /** The file types the palette's Attach and a drop take, as an `accept` string. Defaults to `"image/png,image/jpeg,application/pdf"`. */
+  accept?: string
+  /** The most files a message takes; extra ones are dropped. */
+  maxFiles?: number
   /** A new session: the project and profile can still be picked. Otherwise they show where this session runs. Defaults to `false`. */
   target?: boolean
   /** The profile the session runs under, by id. Defaults to the first profile. */
@@ -349,8 +385,8 @@ interface ComposerProps {
   onProfileChange?: (profile: string) => void
   /** The draft's placeholder. Defaults to `'Ask, or type / for commands'`. */
   placeholder?: string
-  /** Called with the text when a message is sent. */
-  onSend?: (text: string) => void
+  /** Called with the trimmed text and the attached files when a message is sent, or sent from the queue. */
+  onSend?: (text: string, files: File[]) => void
   /** Classes for the root. */
   className?: string
 }
@@ -359,92 +395,123 @@ interface ComposerProps {
  * Where you write to the session, with every per-session control behind
  * four triggers, held in a ShellCard.
  *
- * The draft grows as you type, takes dropped files and pasted text, and
- * queues messages while a reply streams (see InputMessage); its + opens one
- * searchable palette (attach, mention a file, run a command, skill or
- * plugin). The row under it, on the shell, holds the rest. On the left,
- * where the session runs: the project, whose popover also holds the
- * worktree, the setup script and the base branch, and the profile, with two
- * thin lines for its session and weekly limits (see the profile switcher).
- * On the right, how it runs: one trigger showing the permission mode, the
- * model, the effort and a small context ring opens the model (with a note
- * on each), a tall effort slider, the permission mode, fast mode, the output
- * style and the context with a compact button. All three popovers share one
- * layout: a caption per section, then rows with the label on the left and
- * the control on the right.
+ * The draft grows with its text, then scrolls; Enter sends and Shift+Enter
+ * breaks the line. Files dropped anywhere on it, or attached from the +
+ * palette, preview as tiles above the text (images as themselves, PDFs by
+ * their first page with the optional `pdfjs-dist`, the rest as an icon).
+ * While a reply streams (`status`) the button queues what you type: queued
+ * messages stack above the draft, reorder by drag or Alt+↑/↓, come back into
+ * the draft on a double-click, and the first one sends when the reply ends;
+ * with the draft empty the button stops the reply. ↑ on the first line
+ * recalls sent messages (`history`); `suggestions` list prompts under an
+ * empty draft and `placeholderSuggestion` offers one behind a Tab keycap.
+ * The + opens one searchable palette: attach, mention a file, run a
+ * command, skill or plugin.
+ *
+ * The row under it, on the shell, holds the rest. On the left, where the
+ * session runs: the project, whose popover also holds the worktree, the
+ * setup script and the base branch, and the profile, with two thin lines for
+ * its session and weekly limits (see the profile switcher). On the right,
+ * how it runs: one trigger showing the permission mode, the model, the
+ * effort and a small context ring opens the model (with a note on each), a
+ * tall effort slider, the permission mode, fast mode, the output style and
+ * the context with a compact button. All three popovers share one layout: a
+ * caption per section, then rows with the label on the left and the control
+ * on the right.
+ *
+ * Every draft prop has its uncontrolled twin (`defaultValue`,
+ * `defaultQueue`, `defaultStatus`), so a composer runs with no state in the
+ * caller.
+ *
+ * Statics:
+ * - `Composer.Draft` — the draft alone, without the shell and its menus:
+ *   the props above plus `leftSlot` / `rightSlot` (content, or a render
+ *   function given `{ openFilePicker, files }`), `files` / `defaultFiles` /
+ *   `onFilesChange` (attachments are on once either is set), `minRows` /
+ *   `maxRows`, `size`, `disabled`, `showQueue` and `textareaProps`.
+ *
+ * Also exported: `FileThumbnail`, the square preview of an attachment, for
+ * the files a sent message carried.
  *
  * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/default/input-message.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
  */
-export default function Composer({
-  models,
-  efforts,
-  permissionModes,
-  outputStyles,
-  commands,
-  files,
-  projects,
-  branches,
-  branch,
-  profiles,
-  defaultModel,
-  defaultPermissionMode,
-  defaultEffort,
-  defaultFast = false,
-  context = 0.62,
-  compacting = false,
-  streaming = false,
-  target = false,
-  defaultProfile,
-  onProfileChange,
-  placeholder = 'Ask, or type / for commands',
-  onSend,
-  className,
-}: ComposerProps) {
-  return (
-    <ShellCard
-      variant="elevated"
-      className={cn('w-full', className)}
-      footer={
-        <SizeProvider size="compact">
-          <ShellCard.Footer className="justify-start gap-[var(--space-1)] pt-[var(--space-1)]">
-            <ProjectPicker projects={projects} branches={branches} branch={branch} locked={!target} />
-            <ProfileSwitcher
-              profiles={profiles}
-              defaultValue={defaultProfile}
-              onValueChange={onProfileChange}
-              side="top"
-            />
-            <div className="ml-auto min-w-0">
-              <RunSettings
-                models={models}
-                efforts={efforts}
-                permissionModes={permissionModes}
-                outputStyles={outputStyles}
-                context={context}
-                compacting={compacting}
-                defaultModel={defaultModel ?? models[0]?.name ?? ''}
-                defaultEffort={defaultEffort ?? efforts[Math.floor(efforts.length / 2)] ?? ''}
-                defaultMode={defaultPermissionMode ?? permissionModes[0]?.label ?? ''}
-                defaultFast={defaultFast}
+const Composer = Object.assign(
+  function Composer({
+    models,
+    efforts,
+    permissionModes,
+    outputStyles,
+    commands,
+    files,
+    projects,
+    branches,
+    branch,
+    profiles,
+    defaultModel,
+    defaultPermissionMode,
+    defaultEffort,
+    defaultFast = false,
+    context = 0.62,
+    compacting = false,
+    defaultStatus = 'idle',
+    target = false,
+    defaultProfile,
+    onProfileChange,
+    placeholder = 'Ask, or type / for commands',
+    className,
+    ...draft
+  }: ComposerProps) {
+    return (
+      <ShellCard
+        variant="elevated"
+        className={cn('w-full', className)}
+        footer={
+          <SizeProvider size="compact">
+            <ShellCard.Footer className="justify-start gap-[var(--space-1)] pt-[var(--space-1)]">
+              <ProjectPicker projects={projects} branches={branches} branch={branch} locked={!target} />
+              <ProfileSwitcher
+                profiles={profiles}
+                defaultValue={defaultProfile}
+                onValueChange={onProfileChange}
+                side="top"
               />
-            </div>
-          </ShellCard.Footer>
-        </SizeProvider>
-      }
-    >
-      <LiftedInput
-        placeholder={placeholder}
-        defaultStatus={streaming ? 'streaming' : 'idle'}
-        defaultFiles={[]}
-        onSend={text => onSend?.(text)}
-        leftSlot={({ openFilePicker }) => (
-          <AddPalette files={files} commands={commands} onAttach={() => openFilePicker()} />
-        )}
-      />
-    </ShellCard>
-  )
-}
+              <div className="ml-auto min-w-0">
+                <RunSettings
+                  models={models}
+                  efforts={efforts}
+                  permissionModes={permissionModes}
+                  outputStyles={outputStyles}
+                  context={context}
+                  compacting={compacting}
+                  defaultModel={defaultModel ?? models[0]?.name ?? ''}
+                  defaultEffort={defaultEffort ?? efforts[Math.floor(efforts.length / 2)] ?? ''}
+                  defaultMode={defaultPermissionMode ?? permissionModes[0]?.label ?? ''}
+                  defaultFast={defaultFast}
+                />
+              </div>
+            </ShellCard.Footer>
+          </SizeProvider>
+        }
+      >
+        <LiftedDraft
+          {...draft}
+          placeholder={placeholder}
+          defaultStatus={defaultStatus}
+          defaultFiles={[]}
+          leftSlot={({ openFilePicker }) => (
+            <AddPalette files={files} commands={commands} onAttach={() => openFilePicker()} />
+          )}
+        />
+      </ShellCard>
+    )
+  },
+  { Draft: ComposerDraft },
+)
 
-export type { ComposerProps }
+export { FileThumbnail } from './file-thumbnail'
+export type { ComposerDraftProps, ComposerProps, DraftSlotContext, DraftStatus, QueuedMessage }
+export { Composer, ComposerDraft }
 
-export { Composer }
+export default Composer

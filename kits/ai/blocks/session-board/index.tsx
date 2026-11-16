@@ -12,7 +12,6 @@
 'use client'
 
 import { SurfaceProvider, useSurface } from '@justanarthur/modo-ui'
-import InputMessage from '@justanarthur/modo-ui/components/AI/input-message'
 import Accordion from '@justanarthur/modo-ui/components/accordion'
 import Button from '@justanarthur/modo-ui/components/button'
 import Meter from '@justanarthur/modo-ui/components/meter'
@@ -31,6 +30,7 @@ import { useIcon } from '../../lib/icons'
 import { STATUS_GLYPH, STATUS_LABEL } from '../../lib/status-glyph'
 import type { Profile, Session, SessionGroup, SessionPrompt, SessionStatus } from '../../lib/types'
 import AgentPrompt from '../agent-prompt'
+import Composer from '../composer'
 import { ProfileTile } from '../profile-switcher'
 import Transcript from '../transcript'
 
@@ -275,7 +275,7 @@ function SessionPeek({
         />
       )}
       {session.prompt && <PendingPrompt prompt={session.prompt} onPatch={onPatch} />}
-      <InputMessage
+      <Composer.Draft
         size="compact"
         minRows={1}
         maxRows={4}

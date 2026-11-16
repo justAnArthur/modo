@@ -2,18 +2,18 @@
  * Local addition (not part of Fluid Functionalism): one turn of a chat with an
  * AI. The user's turn is a bubble on the right with its attachments and
  * @-mentions; the assistant's is rendered markdown on the page (Markdown.Prose from modo-ui),
- * with the working dots while it streams. Generalised from the AI app's
- * transcript.
+ * with the working dots while it streams (Fluid Functionalism's
+ * ThinkingIndicator, in ./working.tsx). Generalised from the AI app's transcript.
  */
 
 'use client'
 
-import ThinkingIndicator from '@justanarthur/modo-ui/components/AI/thinking-indicator'
 import { MarkdownProse } from '@justanarthur/modo-ui/components/markdown'
 import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import type { ReactNode } from 'react'
 import { useIcon } from '../../lib/icons'
+import { Working, type WorkingProps } from './working'
 
 type MessageRole = 'user' | 'assistant'
 
@@ -59,21 +59,6 @@ function Attachment({ name, detail, kind = 'file' }: AttachmentProps) {
   )
 }
 
-interface WorkingProps {
-  /** A short line beside the dots: what it is doing. */
-  label?: string
-}
-
-/** The in-flight dots, for a reply that hasn't started or a turn still running. */
-function Working({ label }: WorkingProps) {
-  return (
-    <div className="flex items-center gap-2">
-      <ThinkingIndicator variant="goo" size="compact" />
-      {label && <span className="text-caption text-muted-foreground">{label}</span>}
-    </div>
-  )
-}
-
 interface MessageProps {
   /** Who speaks: `user` is a bubble on the right, `assistant` is text on the page. */
   role: MessageRole
@@ -100,7 +85,11 @@ interface MessageProps {
  * Statics:
  * - `Message.Mention` — an @-file chip inline in the text: `path`.
  * - `Message.Attachment` — a file, image or pasted-text chip: `name`, `detail`, `kind`.
- * - `Message.Working` — the in-flight dots on their own: `label`.
+ * - `Message.Working` — the in-flight dots on their own: three dots that melt
+ *   into one blob and split again beside a word that cycles (Thinking,
+ *   Planning, …) in the width of the longest, and an optional `label`. One
+ *   static "Thinking…" is announced; reduced motion holds the dots apart and
+ *   the word still.
  *
  * @example {@include ./examples.mdx}
  */

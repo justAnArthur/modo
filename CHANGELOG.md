@@ -35,6 +35,9 @@ Fixes:
 ### @justanarthur/modo-ui-ai
 
 - **New package (0.1.0): an AI agent app kit on modo-ui**, moved out of the AI desktop prototype (#44) and rebuilt on modo-ui's items: components `Message` (+ `Message.Working`), `ToolCall`, `AgentRun`, `Reasoning`, `WorkSummary`, `TodoList`, `Recap`, `ChapterNav`, `PromptCard`, `PermissionRequest`, `QuestionPrompt`, `PlanApproval`; blocks for the session (`Transcript`, which follows a streaming reply, `Composer`, `AgentPrompt`, `TranscriptSearch`, `CommandPalette`, `ShortcutsSheet`, `FailureState`), the sidebars and boards, the side pane and its panes, and settings; docs-only screens on mock data. modo-ui is a peer; the kit's glyphs extend its icon set through `AiIconProvider`; `styles.css` holds the kit's utilities for a host on modo-ui's prebuilt CSS. Docs at `/ai/`.
+- **The composer's draft is the old modo-ui `InputMessage`**, merged into `Composer` instead of a second chat item: `Composer.Draft` (also `ComposerDraft`) is the draft alone, with attachments (PDF previews through the optional peer `pdfjs-dist`), the queue while a reply streams, history and suggestions; `Composer` takes `value` / `defaultValue` / `onValueChange`, `status` / `defaultStatus` / `onStatusChange` and `onStop` (in place of `streaming`), `queue` / `defaultQueue` / `onQueueChange`, `history`, `suggestions`, `placeholderSuggestion`, `accept` and `maxFiles`, and `onSend` gets the files too. `FileThumbnail` is exported; `styles.css` carries the draft's edge states. SessionBoard's reply box is `Composer.Draft`.
+- **`Message.Working` is the old modo-ui `ThinkingIndicator`** (its goo look): the dots and the cycling word, flush with the text.
+- modo-ui 2.0 is the peer.
 
 ## 1.0.0 — 2026-11-16
 

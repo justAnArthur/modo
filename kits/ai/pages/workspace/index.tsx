@@ -307,7 +307,7 @@ export default function Workspace({
         <Composer
           {...COMPOSER}
           branch={session?.branch}
-          streaming={pending === 'none' && !nextStep}
+          status={pending === 'none' && !nextStep ? 'streaming' : 'idle'}
           onSend={text => setSent([...sent, text])}
         />
       </div>
