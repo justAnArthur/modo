@@ -117,7 +117,10 @@ const Accordion = forwardRef<HTMLDivElement, AccordionProps>((props, ref) => {
           const { style: _style, ...root } = rootProps as HTMLAttributes<HTMLDivElement>
           return (
             <div {...root} ref={ref} className={cn('flex flex-col', className)} {...htmlProps(rest)}>
-              <StandaloneContext.Provider value={standalone}>{children}</StandaloneContext.Provider>
+              {/* Its own root even inside a group's panel, not one more row of that group. */}
+              <AccordionGroupContext.Provider value={null}>
+                <StandaloneContext.Provider value={standalone}>{children}</StandaloneContext.Provider>
+              </AccordionGroupContext.Provider>
             </div>
           )
         }}
