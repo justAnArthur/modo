@@ -43,6 +43,14 @@ import {
 } from './menu-item'
 import { MenuPopup } from './menu-popup'
 import { NO_INDICES, type PanelSelectionProps, usePanelRows, usePanelSelection } from './panel-state'
+import {
+  DropdownSub,
+  DropdownSubContent,
+  type DropdownSubContentProps,
+  type DropdownSubProps,
+  DropdownSubTrigger,
+  type DropdownSubTriggerProps,
+} from './submenu'
 
 interface DropdownProps extends HTMLAttributes<HTMLDivElement> {
   /** `Dropdown.Item` rows, plus `Dropdown.Label` and `Dropdown.Separator`. */
@@ -74,6 +82,9 @@ type DropdownComponent = ForwardRefExoticComponent<DropdownProps & RefAttributes
   Separator: typeof DropdownSeparator
   Search: typeof DropdownSearch
   Empty: typeof DropdownEmpty
+  Sub: typeof DropdownSub
+  SubTrigger: typeof DropdownSubTrigger
+  SubContent: typeof DropdownSubContent
 }
 
 /**
@@ -95,13 +106,24 @@ type DropdownComponent = ForwardRefExoticComponent<DropdownProps & RefAttributes
  * the query too, keeping only the rows whose `label` matches and showing
  * `Dropdown.Empty` when none do.
  *
+ * Rows are the panel's children and number themselves in order, so `index`
+ * is needed only to key a row on something else. Captions, rules, the search
+ * and the empty state take no number. In the popup, `Dropdown.Sub` nests a
+ * menu: its `Dropdown.SubTrigger` row opens a `Dropdown.SubContent` beside it
+ * on hover, a press or ArrowRight (ArrowLeft and Escape close it), grown out
+ * of that row through the same morph, with rows, selection and fluid hover of
+ * its own. The trigger row stays lit while its submenu is open.
+ *
  * Statics: Dropdown.Menu (the popup root: open, defaultOpen, onOpenChange,
  * disabled, size), Dropdown.Trigger (render or asChild), Dropdown.Content
  * (the popup panel: the selection props above, side, align, sideOffset,
  * container and the morph options from, effect, hideSource, tier),
- * Dropdown.Item (a row: index, label, icon, checked, onSelect, shortcut,
- * disabled), Dropdown.Label, Dropdown.Separator, Dropdown.Search and
- * Dropdown.Empty.
+ * Dropdown.Item (a row: label, icon, index, checked, onSelect, shortcut,
+ * disabled), Dropdown.Label, Dropdown.Separator, Dropdown.Search,
+ * Dropdown.Empty, and in the popup Dropdown.Sub (open, defaultOpen,
+ * onOpenChange, disabled), Dropdown.SubTrigger (label, icon, index, disabled,
+ * openOnHover, delay, closeDelay) and Dropdown.SubContent (Dropdown.Content's
+ * props; it opens on the right, aligned to the start, 8px out).
  *
  * @example {@include ./examples.mdx}
  * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/dropdown.tsx Fluid Functionalism
@@ -252,6 +274,8 @@ interface DropdownContentProps
   children: ReactNode
   /** Extra classes for the popup surface — it is 18rem wide by default, at least the trigger's width. */
   className?: string
+  /** Keep the popup mounted (hidden) while closed, so the submenus inside, which inherit it, keep their own selection across opens. Defaults to `false`. */
+  keepMounted?: boolean
 }
 
 const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
@@ -286,6 +310,9 @@ Object.assign(Dropdown, {
   Separator: DropdownSeparator,
   Search: DropdownSearch,
   Empty: DropdownEmpty,
+  Sub: DropdownSub,
+  SubTrigger: DropdownSubTrigger,
+  SubContent: DropdownSubContent,
 })
 
 export type {
@@ -294,6 +321,9 @@ export type {
   DropdownMenuProps,
   DropdownProps,
   DropdownSearchProps,
+  DropdownSubContentProps,
+  DropdownSubProps,
+  DropdownSubTriggerProps,
   DropdownTriggerProps,
   MenuItemRenderOptions,
 }
@@ -305,6 +335,9 @@ export {
   DropdownMenu,
   DropdownSearch,
   DropdownSeparator,
+  DropdownSub,
+  DropdownSubContent,
+  DropdownSubTrigger,
   DropdownTrigger,
   MenuItem,
   useDropdown,
