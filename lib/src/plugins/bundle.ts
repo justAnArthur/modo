@@ -2,11 +2,13 @@ import { existsSync, mkdirSync, readdirSync, rmdirSync, rmSync, statSync } from 
 import { join, relative, resolve } from 'node:path'
 import mdx from '@mdx-js/esbuild'
 import esbuild, { type BuildOptions, type Message, type Metafile } from 'esbuild'
+import remarkFrontmatter from 'remark-frontmatter'
 import remarkGfm from 'remark-gfm'
 import { isComponentRef, splitRef } from '../lib/refs'
 import type { SiteConfig } from '../lib/schema'
 import { loadModoConfig } from '../node/config-loader'
 import { discoverCssForFile, itemsRootOf, parseItems, type SourceItem } from '../node/discover'
+import { type DiscoveredGuide, discoverGuides } from '../node/discover-guides'
 import { resolveUserFile } from '../node/resolve-ref'
 import { remarkModoExamples } from './mdx-examples'
 import { createReporter } from './report'
@@ -19,6 +21,11 @@ export interface BundledItem extends SourceItem {
   /** The built `.mdx` examples (.modo-tmp/build/examples/<tier>/<id>.mjs). */
   mdxExamples: string[]
   /** The entry's output (.modo-tmp/build/items/<tier>/<id>.mjs). */
+  bundlePath: string
+}
+
+export interface BundledGuide extends Omit<DiscoveredGuide, 'file'> {
+  /** The entry's output (.modo-tmp/build/guides/<slug>.mjs). */
   bundlePath: string
 }
 
@@ -35,6 +42,8 @@ interface BundledExtra {
 export interface BundleResult {
   config: SiteConfig | null
   items: BundledItem[]
+  /** The `guides/` folder's `.mdx` pages, in file-name order. */
+  guides: BundledGuide[]
   /** Keyed by the reference exactly as written in modo.config.ts. */
   extras: Map<string, BundledExtra>
   /** The `examples` module; `exports` excludes `default`. */
@@ -97,6 +106,14 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
 
     for (const it of parsed) for (const doc of it.mdxExamples) keyFor(doc, `examples/${it.tier}/${it.id}`)
 
+    const found = discoverGuides(resolve(root, 'guides'))
+    errors.push(...found.errors)
+    warnings.push(...found.warnings)
+    const guideKeys = found.guides.map(({ file, ...guide }) => ({
+      guide,
+      key: keyFor(file, `guides/${guide.slug || 'index'}`),
+    }))
+
     const extraPaths = [
       ...Object.values(config?.shell ?? {}),
       ...(config?.panel?.items ?? []).map(it => it.component),
@@ -139,6 +156,8 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
       items.push({ ...it, mdxExamples: docKeys.map(out), bundlePath: out(key) })
     }
 
+    const guides = guideKeys.filter(({ key }) => ok(key)).map(({ guide, key }) => ({ ...guide, bundlePath: out(key) }))
+
     const extras = new Map<string, BundledExtra>()
     for (const [p, { file, key, exportName }] of extraKeys) {
       if (!ok(key)) continue
@@ -167,7 +186,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     }
 
     report({ lines: await failureLines(failures), errors, warnings })
-    return { config, items, extras, scope, errorCount: failures.length + errors.length }
+    return { config, items, guides, extras, scope, errorCount: failures.length + errors.length }
   }
 
   return {
@@ -219,7 +238,7 @@ function baseOptions(userRoot: string, outdir: string): BuildOptions {
       ].join('\n'),
     },
     loader: { '.ts': 'ts', '.tsx': 'tsx', '.css': 'empty', '.svg': 'dataurl' },
-    plugins: [mdx({ remarkPlugins: [remarkGfm, remarkModoExamples], jsxImportSource: 'react' })],
+    plugins: [mdx({ remarkPlugins: [remarkGfm, remarkFrontmatter, remarkModoExamples], jsxImportSource: 'react' })],
     jsx: 'automatic',
     jsxImportSource: 'react',
     logLevel: 'silent',

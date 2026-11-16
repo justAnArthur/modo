@@ -1,10 +1,13 @@
 import { config } from 'virtual:modo-config'
+import { guides } from 'virtual:modo-guides'
 import { items } from 'virtual:modo-items'
+import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
-import { tierPath, tokenPath } from '../../lib/paths'
+import { guidePath, tierPath, tokenPath } from '../../lib/paths'
 import { cap, count } from '../../lib/text'
 import { isScreenSized, TIERS } from '../../lib/tiers'
 import { ExamplePreview, hasPreview } from '../items/preview'
+import { withBase } from '../location'
 import { GroupPreview } from '../tokens/group-page'
 import { declared } from '../tokens/parts'
 import { Bento, BentoCard } from './bento'
@@ -25,6 +28,17 @@ export function HomePage() {
         </p>
       </header>
       <Bento>
+        {guides.length > 0 && (
+          <BentoCard href={guidePath(guides[0]!.slug)} title="Guides" meta={count(guides.length, 'guide')}>
+            <ol data-modo="guide-list">
+              {guides.map(g => (
+                <li key={g.slug}>
+                  <shell.Link href={withBase(guidePath(g.slug))}>{g.title}</shell.Link>
+                </li>
+              ))}
+            </ol>
+          </BentoCard>
+        )}
         {tokens.length > 0 && (
           <BentoCard href={tokenPath()} title="Foundations" meta={count(tokens.length, 'group')} span="wide">
             <GroupPreview group={tokens[0]!.name} />

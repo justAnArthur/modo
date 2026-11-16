@@ -1,4 +1,4 @@
-import { cap } from '../lib/text'
+import { nameTitle, ORDER_PREFIX } from '../lib/text'
 
 interface Group<T> {
   title: string
@@ -6,11 +6,15 @@ interface Group<T> {
   groups: Group<T>[]
 }
 
+/** A group folder's title: `titles` names it by its bare name, else `02-form-controls` → `Form controls`. */
+export function groupTitle(folder: string, titles: Readonly<Record<string, string>> = {}): string {
+  return titles[folder.replace(ORDER_PREFIX, '')] ?? nameTitle(folder)
+}
+
 /**
  * Items as a tree of their group folders (`group` is the folder path,
  * `inputs/date-time`): each level lists its own items first, then its groups
- * in folder-name order; items keep their order. `form-controls` → `Form controls`,
- * unless `titles` names the folder.
+ * in folder-name order (a `02-` prefix sorts them); items keep their order.
  */
 export function groupTree<T extends { group?: string }>(
   list: readonly T[],
@@ -22,7 +26,7 @@ export function groupTree<T extends { group?: string }>(
   return {
     items: list.filter(it => folder(it) === undefined),
     groups: keys.map(key => ({
-      title: titles[key] ?? cap(key.replaceAll('-', ' ')),
+      title: groupTitle(key, titles),
       ...groupTree(
         list.filter(it => folder(it) === key),
         titles,

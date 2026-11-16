@@ -1,0 +1,36 @@
+---
+title: Getting started
+description: Install the package, pick how its styles reach your app, and render a component.
+---
+
+import Button from '../components/button'
+
+## Install
+
+```sh
+npm install @justanarthur/modo-ui
+```
+
+React 18 or later is a peer dependency. Import from the package root, or one item per subpath (`primitives/*`, `components/*`, `blocks/*`, following the docs' tiers and groups):
+
+```tsx
+import { Button, Switch } from '@justanarthur/modo-ui'
+import Dialog from '@justanarthur/modo-ui/components/overlays/dialog'
+```
+
+## Styles
+
+The components are styled with utility classes. Pick one path:
+
+- **Prebuilt CSS**, no tooling: `import '@justanarthur/modo-ui/styles.css'` brings the reset, the tokens, the base styles, the Inter font and every utility the components use.
+- **Tailwind CSS v4**: `@import "@justanarthur/modo-ui/tailwind.css"` after `@import "tailwindcss"` adds the theme, the token utilities and an `@source` for the components.
+- **UnoCSS**: add `presetModoUi()` beside `presetWind4()` and `modoUiContent` to `content.inline`, then import `virtual:uno.css` and `@justanarthur/modo-ui/base.css`.
+
+## First component
+
+Values take `value` / `defaultValue` / `onValueChange`, overlays `open` / `defaultOpen` / `onOpenChange`, and `size` is `default` or `compact`:
+
+<div className="flex flex-wrap items-center gap-2">
+  <Button variant="primary">Save</Button>
+  <Button variant="secondary" size="compact">Cancel</Button>
+</div>

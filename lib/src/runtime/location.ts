@@ -1,22 +1,27 @@
 import { useSyncExternalStore } from 'react'
+import { decodePath } from '../lib/paths'
 
 export const NAVIGATE = 'modo:navigate'
 // '' or the `--base` the site was built with, minus its trailing slash.
 export const BASE = import.meta.env.BASE_URL.slice(0, -1)
 
-/** An app path (`/docs/...`) as a URL under the site's base. */
+/** An app path (`/docs/...`, a guide's `/guides/návod`) as a URL under the site's base, escaped. */
 export function withBase(path: string): string {
-  return BASE + path
+  return BASE + encodeURI(path)
 }
 
-/** A content link's href: root-relative ones are app paths, so they get the base. */
+/** A content link's href: root-relative ones are app paths, so they get the base (as written: it may be escaped already). */
 export function contentHref(href: string): string {
-  return href.startsWith('/') && !href.startsWith('//') ? withBase(href) : href
+  return href.startsWith('/') && !href.startsWith('//') ? BASE + href : href
 }
 
 // Static hosts redirect a route dir to its trailing-slash form.
 export function appPath(pathname: string): string {
-  return pathname.slice(BASE.length).replace(/(.)\/$/, '$1') || '/'
+  return (
+    decodePath(pathname)
+      .slice(BASE.length)
+      .replace(/(.)\/$/, '$1') || '/'
+  )
 }
 
 function subscribe(onChange: () => void) {
