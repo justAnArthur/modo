@@ -86,33 +86,43 @@ function SessionRow({ session, reorder, onOpenSplit }: SessionRowProps) {
       </Sidebar.MenuButton>
       <Sidebar.MenuBadge>{session.updated}</Sidebar.MenuBadge>
       <Sidebar.MenuActions showOnHover>
-        {/* An array, not `&&`: the cluster counts its children to size the row's gutter, `false` included. */}
-        {reorder ? [<ReorderAction key="reorder" />] : []}
-        <Tooltip content={session.pinned ? 'Unpin' : 'Pin'} side="top">
-          <Sidebar.MenuAction aria-label={session.pinned ? 'Unpin' : 'Pin'}>
-            <Pin />
-          </Sidebar.MenuAction>
-        </Tooltip>
-        <Tooltip content="Archive" side="top">
-          <Sidebar.MenuAction aria-label="Archive">
-            <Archive />
-          </Sidebar.MenuAction>
-        </Tooltip>
-        <DropdownMenu>
-          <DropdownTrigger
-            render={
-              <Sidebar.MenuAction aria-label="More options">
-                <More />
+        {/* Filtered: the cluster sizes the row's gutter by its child count, nulls included. A pinned row trades Archive (in its menu) for the grip. */}
+        {[
+          reorder && <ReorderAction key="reorder" />,
+          <Tooltip key="pin" content={session.pinned ? 'Unpin' : 'Pin'} side="top">
+            <Sidebar.MenuAction aria-label={session.pinned ? 'Unpin' : 'Pin'}>
+              <Pin />
+            </Sidebar.MenuAction>
+          </Tooltip>,
+          !reorder && (
+            <Tooltip key="archive" content="Archive" side="top">
+              <Sidebar.MenuAction aria-label="Archive">
+                <Archive />
               </Sidebar.MenuAction>
-            }
-          />
-          <DropdownContent className="w-[240px] min-w-0" align="start" sideOffset={4}>
-            <MenuItem index={0} icon={Columns} label="Open in split view" onSelect={() => onOpenSplit?.(session.id)} />
-            <MenuItem index={1} icon={Pencil} label="Rename" />
-            <MenuItem index={2} icon={Dot} label="Mark as unread" />
-            <MenuItem index={3} icon={Branch} label="Fork into a new session" />
-          </DropdownContent>
-        </DropdownMenu>
+            </Tooltip>
+          ),
+          <DropdownMenu key="more">
+            <DropdownTrigger
+              render={
+                <Sidebar.MenuAction aria-label="More options">
+                  <More />
+                </Sidebar.MenuAction>
+              }
+            />
+            <DropdownContent className="w-[240px] min-w-0" align="start" sideOffset={4}>
+              <MenuItem
+                index={0}
+                icon={Columns}
+                label="Open in split view"
+                onSelect={() => onOpenSplit?.(session.id)}
+              />
+              <MenuItem index={1} icon={Pencil} label="Rename" />
+              <MenuItem index={2} icon={Dot} label="Mark as unread" />
+              <MenuItem index={3} icon={Branch} label="Fork into a new session" />
+              {reorder && <MenuItem index={4} icon={Archive} label="Archive" />}
+            </DropdownContent>
+          </DropdownMenu>,
+        ].filter(Boolean)}
       </Sidebar.MenuActions>
       {children.length > 0 && (
         <Sidebar.MenuSub>

@@ -217,6 +217,17 @@ function Sortable({
     if (lifted && e.relatedTarget) setLifted(null)
   }
 
+  const live = (
+    <>
+      <span id={hintId} className="sr-only">
+        Press Space to lift, the arrow keys to move, Space to drop.
+      </span>
+      <span aria-live="assertive" className="sr-only">
+        {announcement}
+      </span>
+    </>
+  )
+
   return (
     <>
       <Reorder.Group
@@ -250,13 +261,10 @@ function Sortable({
             className={itemClassName}
           />
         ))}
+        {/* Inside a host list the box is the only place that isn't the list itself. */}
+        {as === 'none' && live}
       </Reorder.Group>
-      <span id={hintId} className="sr-only">
-        Press Space to lift, the arrow keys to move, Space to drop.
-      </span>
-      <span aria-live="assertive" className="sr-only">
-        {announcement}
-      </span>
+      {as !== 'none' && live}
     </>
   )
 }
