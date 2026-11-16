@@ -32,7 +32,9 @@ const useClient: BunupPlugin = {
   },
 }
 
-// the components run in the browser, the UnoCSS preset in the host's Node config
+// the components run in the browser; the UnoCSS preset and docs/vite.ts (a modo
+// `vite` extension) in the host's Node config, which never strips types under
+// node_modules, so both ship as JS
 export default defineConfig([
   {
     ...shared,
@@ -40,9 +42,16 @@ export default defineConfig([
     // Every lib module and item `variants.ts` is an entry, so each lands in a
     // chunk of its own: the directive then marks exactly the client modules,
     // and one chunk holds each context for the barrel and every subpath.
-    entry: ['index.ts', '{primitives,components,blocks}/**/index.tsx', 'components/**/variants.ts', 'lib/*.{ts,tsx}'],
+    // docs/index.ts is the docs chrome (`./docs`), which the barrel never imports.
+    entry: [
+      'index.ts',
+      '{primitives,components,blocks}/**/index.tsx',
+      'components/**/variants.ts',
+      'lib/*.{ts,tsx}',
+      'docs/index.ts',
+    ],
     target: 'browser',
     plugins: [useClient],
   },
-  { ...shared, name: 'preset', entry: ['preset.ts'], target: 'node' },
+  { ...shared, name: 'preset', entry: ['preset.ts', 'docs/vite.ts'], target: 'node' },
 ])
