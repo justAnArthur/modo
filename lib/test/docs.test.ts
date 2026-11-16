@@ -332,6 +332,10 @@ describe('parity with the plain parser', () => {
       'forwardRef over a type alias',
       `type P = { a: string }\nconst X = forwardRef<HTMLDivElement, P>(() => null)\nexport default X\n`,
     ],
+    [
+      'parts through Object.assign',
+      `interface PopoverProps {\n  /** Opens it. */\n  open?: boolean\n}\nfunction Trigger() {\n  return null\n}\n/** Popover. */\nconst Popover = Object.assign(\n  function Popover({ open = false }: PopoverProps) {\n    return null\n  },\n  { Trigger },\n)\nexport default Popover\n`,
+    ],
   ]
 
   test.each(cases)('%s', async (_, src) => {

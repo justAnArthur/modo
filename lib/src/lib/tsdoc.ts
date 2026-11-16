@@ -68,7 +68,12 @@ export function parseItemSource(src: string, opts: ParseOptions = {}): ParsedIte
     // The doc block belongs to the component declaration, not to wherever the
     // `export default` statement happens to sit (often the bottom of the file,
     // below sub-components that may carry their own JSDoc).
-    const declStart = fnStart !== -1 ? fnStart : cleaned.search(new RegExp(`(?:const|let|var)\\s+${name}\\s*=`))
+    // `const X = Object.assign(function X(…) {…}, { Part })` carries the block on the const.
+    const assigned = cleaned.search(
+      new RegExp(`(?:const|let|var)\\s+${name}\\s*=\\s*Object\\.assign\\(\\s*function\\s+${name}\\s*[(<]`),
+    )
+    const declared = cleaned.search(new RegExp(`(?:const|let|var)\\s+${name}\\s*=`))
+    const declStart = [assigned, fnStart, declared].find(index => index !== -1) ?? -1
     jsdocAnchor = declStart !== -1 ? declStart : (identMatch.index ?? 0)
     if (fnStart === -1) {
       forwardRefPropsType =

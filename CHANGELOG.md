@@ -14,6 +14,10 @@ Both packages are released from this repo by conventional commits (see [CONTRIBU
 Fixes:
 
 - An inline `@example` written as bare JSX (`@example <X />`, or JSX lines after `@example`) is an example instead of being dropped; one with no code at all is a warning.
+Fixes:
+
+- Without typescript installed, the plain parser reads an item written as `const X = Object.assign(function X(…) {…}, { Part })`: its doc block on the const, its props from the function.
+
 ### @justanarthur/modo-ui
 
 Fixes:
