@@ -14,6 +14,7 @@
     <meta property="og:image:height" content="640" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="stylesheet" href="./tokens/colors.css" />
+    <link rel="stylesheet" href="./tokens/motion.css" />
     <style>
       :root {
         --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -21,13 +22,17 @@
         --font-size-display: clamp(2rem, 1.4rem + 3vw, 3.25rem);
         --font-size-lead: 1.125rem;
         --font-size-body: 1rem;
+        --font-size-title: 1.0625rem;
         --font-size-sm: 0.875rem;
+        --font-size-xs: 0.8125rem;
         --font-weight-medium: 500;
         --font-weight-semibold: 600;
+        --radius-sm: 6px;
         --radius-md: 10px;
         --radius-lg: 16px;
         --radius-full: 999px;
         --measure: 64rem;
+        --opacity-faint: 0.45;
       }
 
       * {
@@ -125,7 +130,7 @@
 
       .drop .piece {
         fill: var(--foreground);
-        animation: drop 720ms cubic-bezier(0.2, 0.9, 0.3, 1) 200ms both;
+        animation: drop 720ms var(--ease-out) 200ms both;
       }
 
       /* Motion only, never opacity: a paused or throttled animation must still show the piece. */
@@ -203,39 +208,221 @@
 
       .cards {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
       }
 
+      /* The published design system leads at double width, so five cards fill two rows. */
+      .card[data-featured] {
+        grid-column: span 2;
+      }
+
+      .cards[data-group="kits"] {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      /* Elevation, not borders: the card sits one surface up and rises a step on hover. */
       .card {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        padding: 20px;
-        border: 1px solid var(--border);
         border-radius: var(--radius-lg);
         background: var(--card);
-        transition: border-color 120ms;
+        box-shadow: var(--shadow-card);
+        transition:
+          box-shadow var(--duration-fast) var(--ease-out),
+          background-color var(--duration-fast) var(--ease-out),
+          translate var(--duration-spring) var(--ease-spring);
       }
 
       .card:hover {
-        border-color: var(--ring);
+        background: var(--card-raised);
+        box-shadow: var(--shadow-card-raised);
+        translate: 0 -2px;
       }
 
-      /* A kit is a package, not a design system: an outlined card with a tag, beside the filled ones. */
-      .card[data-group="kits"] {
-        background: transparent;
-        border-style: dashed;
+      .card:active {
+        translate: 0;
       }
 
-      .tag {
-        align-self: flex-start;
-        padding: 2px 8px;
-        border: 1px solid var(--border);
+      .card:focus-visible {
+        outline: 2px solid var(--focus-ring);
+        outline-offset: 3px;
+        border-radius: var(--radius-lg);
+      }
+
+      /* The site in its own colours: --site-* come from its colour tokens, set on the card by the runner. */
+      .preview {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 184px;
+        margin: 6px 6px 0;
+        padding: 20px 20px 0;
+        overflow: hidden;
+        border-radius: var(--radius-md);
+        background: var(--sunken);
+      }
+
+      .mock {
+        flex: 1;
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+        background: var(--site-bg);
+        box-shadow: var(--shadow-mock);
+        transition: translate var(--duration-spring) var(--ease-spring);
+      }
+
+      .card:hover .mock {
+        translate: 0 -6px;
+      }
+
+      .mock i,
+      .mock b {
+        display: block;
         border-radius: var(--radius-full);
-        font-size: var(--font-size-sm);
-        font-weight: var(--font-weight-medium);
-        color: var(--muted-foreground);
+      }
+
+      .mock i {
+        height: 5px;
+        background: var(--site-soft);
+        opacity: var(--opacity-faint);
+      }
+
+      .mock i.short {
+        width: 55%;
+      }
+
+      .mock-side {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 22%;
+        padding-right: 12px;
+        border-right: 1px solid var(--site-line);
+      }
+
+      .mock-side i:first-child {
+        background: var(--site-fg);
+        width: 70%;
+      }
+
+      .mock-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .mock i.mock-title {
+        width: 45%;
+        height: 9px;
+        margin-bottom: 2px;
+        background: var(--site-fg);
+        opacity: 1;
+      }
+
+      .mock-row {
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+      }
+
+      .mock-row b {
+        width: 52px;
+        height: 16px;
+        border-radius: var(--radius-sm);
+        background: var(--site-accent);
+      }
+
+      .mock-row b.quiet {
+        width: 40px;
+        background: var(--site-muted);
+        box-shadow: inset 0 0 0 1px var(--site-line);
+      }
+
+      .mock-card {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        margin-top: 4px;
+        padding: 10px;
+        border-radius: var(--radius-sm);
+        background: var(--site-card);
+        box-shadow: inset 0 0 0 1px var(--site-line);
+      }
+
+      .mock-chat {
+        gap: 10px;
+      }
+
+      .mock-bubble {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 72%;
+        padding: 8px 10px;
+        border-radius: var(--radius-md);
+        background: var(--site-muted);
+      }
+
+      .mock-bubble.mine {
+        align-self: flex-end;
+        width: 40%;
+        background: var(--site-accent);
+      }
+
+      .mock-bubble.mine i {
+        background: var(--site-bg);
+      }
+
+      .mock-composer {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: auto;
+        padding: 6px;
+        border-radius: var(--radius-md);
+        background: var(--site-card);
+        box-shadow: inset 0 0 0 1px var(--site-line);
+      }
+
+      .mock-composer b {
+        width: 16px;
+        height: 16px;
+        background: var(--site-fg);
+      }
+
+      .swatches {
+        position: absolute;
+        right: 12px;
+        top: 10px;
+        display: flex;
+        padding: 4px;
+        border-radius: var(--radius-full);
+        background: var(--card-raised);
+        box-shadow: var(--shadow-mock);
+      }
+
+      .swatch {
+        width: 14px;
+        height: 14px;
+        border-radius: var(--radius-full);
+        background: var(--swatch);
+        box-shadow: 0 0 0 2px var(--card-raised);
+      }
+
+      .swatch + .swatch {
+        margin-left: -3px;
+      }
+
+      .card-body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 6px;
+        padding: 16px 18px 18px;
       }
 
       .card-title {
@@ -243,33 +430,93 @@
         align-items: center;
         justify-content: space-between;
         gap: 8px;
+        font-size: var(--font-size-title);
         font-weight: var(--font-weight-semibold);
       }
 
-      .card-title span {
+      .arrow {
+        width: 16px;
+        height: 16px;
         color: var(--muted-foreground);
-        transition: translate 120ms;
+        transition:
+          translate var(--duration-spring) var(--ease-spring),
+          color var(--duration-fast) var(--ease-out);
       }
 
-      .card:hover .card-title span {
+      .card:hover .arrow,
+      .card:focus-visible .arrow {
         translate: 3px 0;
+        color: var(--foreground);
       }
 
-      .card p {
-        margin: 0;
+      .tagline {
         font-size: var(--font-size-sm);
         color: var(--muted-foreground);
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+        text-wrap: pretty;
       }
 
-      .card code {
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px 12px;
         margin-top: auto;
-        padding-top: 8px;
-        font: var(--font-size-sm) / 1.4 var(--font-mono);
+        padding-top: 6px;
+        font-size: var(--font-size-xs);
         color: var(--muted-foreground);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .meta .stack {
+        color: var(--foreground);
+        font-weight: var(--font-weight-medium);
+      }
+
+      /* A kit is an app built on a design system: wide, its preview an app screen beside the text. */
+      @media (min-width: 48rem) {
+        .card[data-group="kits"] {
+          flex-direction: row;
+        }
+
+        .card[data-group="kits"] .preview {
+          flex: 0 0 58%;
+          height: 232px;
+          margin: 6px 0 6px 6px;
+        }
+
+        .card[data-group="kits"] .card-body {
+          flex: 1;
+          justify-content: flex-end;
+          gap: 8px;
+          padding: 24px;
+        }
+
+        .card[data-group="kits"] .card-title {
+          font-size: var(--font-size-lead);
+        }
+
+        .card[data-group="kits"] .tagline {
+          font-size: var(--font-size-body);
+        }
+      }
+
+      @media (max-width: 60rem) {
+        .cards {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 36rem) {
+        .cards {
+          grid-template-columns: minmax(0, 1fr);
+        }
+
+        .card[data-featured] {
+          grid-column: auto;
+        }
+
+        .preview {
+          height: 152px;
+        }
       }
 
       footer {
@@ -288,8 +535,15 @@
 
       @media (prefers-reduced-motion: reduce) {
         .card,
-        .card-title span {
+        .mock,
+        .arrow {
           transition: none;
+        }
+
+        .card:hover,
+        .card:hover .mock,
+        .card:hover .arrow {
+          translate: none;
         }
 
         .drop .piece {
@@ -345,7 +599,7 @@
             <h2 id="kits">Kits</h2>
             <p>Packages built on modo ui, each with its own docs site.</p>
           </div>
-          <div class="cards">{{kits}}</div>
+          <div class="cards" data-group="kits">{{kits}}</div>
         </section>
       </main>
 

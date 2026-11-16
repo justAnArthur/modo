@@ -117,24 +117,204 @@ async function buildSite() {
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 const read = (path: string) => readFileSync(path, 'utf8')
 
-async function card(name: string) {
+// ---- landing cards ----
+
+interface Site {
+  name: string
+  dir: string
+  root: string
+  config: { name?: string; description?: string; root?: string }
+  pkg: { name: string; description?: string; private?: boolean; [deps: string]: unknown }
+}
+
+// One line per site, written for the landing page: descriptions run long and were clamped mid-word.
+const TAGLINES: Record<string, string> = JSON.parse(read(join(LANDING_DIR, 'taglines.json')))
+const TIERS = ['primitives', 'components', 'blocks', 'pages'] as const
+// Matched against the site's dependencies, in this order: what it styles with, then what it builds on.
+const STACK: [dep: string, label: string][] = [
+  ['@mui/material', 'MUI'],
+  ['tailwindcss', 'Tailwind'],
+  ['unocss', 'UnoCSS'],
+  ['radix-ui', 'Radix'],
+  ['@base-ui/react', 'Base UI'],
+  ['@justanarthur/modo-ui', 'modo ui'],
+]
+// The preview's roles, each the first token the site defines (shadcn, a plain `--bg`, MUI's palette).
+const ROLES = {
+  bg: ['background', 'bg', 'mui-palette-background-default'],
+  fg: ['foreground', 'fg', 'mui-palette-text-primary'],
+  card: ['card', 'mui-palette-background-paper', 'background', 'bg'],
+  muted: ['muted', 'mui-palette-action-hover', 'mui-palette-grey-100'],
+  soft: ['muted-foreground', 'mui-palette-text-secondary'],
+  line: ['border', 'mui-palette-divider'],
+  accent: ['brand', 'mui-palette-primary-main', 'primary', 'accent'],
+}
+const SWATCHES = [
+  'focus-ring',
+  'mui-palette-secondary-main',
+  'destructive',
+  'mui-palette-error-main',
+  'status-success',
+  'mui-palette-success-main',
+  'status-warning',
+  'mui-palette-warning-main',
+  'chart-1',
+  'chart-3',
+]
+
+async function siteOf(name: string): Promise<Site> {
   const dir = dirOf(name)
   const config = (await import(join(dir, 'modo.config.ts'))).default
-  const description = config.description ?? JSON.parse(read(join(dir, 'package.json'))).description ?? ''
-  const href = `${SITE_BASE}${name}/`
-  const tag = groupOf(name) === 'kits' ? '<span class="tag">Kit</span>' : ''
-  return `<a class="card" data-group="${groupOf(name)}" href="${esc(href)}">${tag}<div class="card-title">${esc(config.name ?? name)}<span aria-hidden="true">→</span></div><p>${esc(description)}</p><code>${esc(href)}</code></a>`
+  return { name, dir, root: join(dir, config.root ?? '.'), config, pkg: JSON.parse(read(join(dir, 'package.json'))) }
+}
+
+const depsOf = (site: Site) =>
+  Object.keys({ ...(site.pkg.dependencies as object), ...(site.pkg.devDependencies as object) })
+
+// Splits at top-level commas: `light-dark(a, b)` holds parenthesised colours.
+function splitArgs(s: string) {
+  const parts: string[] = []
+  let depth = 0
+  let start = 0
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '(') depth++
+    else if (s[i] === ')') depth--
+    else if (s[i] === ',' && depth === 0) {
+      parts.push(s.slice(start, i).trim())
+      start = i + 1
+    }
+  }
+  return [...parts, s.slice(start).trim()]
+}
+
+type Scheme = Map<string, string>
+
+// The site's colour tokens per scheme: `:root` blocks (with `light-dark()` split) and `.dark` blocks.
+function schemes(css: string) {
+  const light: Scheme = new Map()
+  const dark: Scheme = new Map()
+  const plain = css.replace(/\/\*[\s\S]*?\*\//g, '')
+  for (const [, selector, body] of plain.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selectors = selector!.split(',').map(s => s.trim())
+    const darkOnly = selectors.every(s => /\.dark$/.test(s))
+    if (!darkOnly && !selectors.includes(':root')) continue
+    for (const [, key, value] of body!.matchAll(/--([\w-]+)\s*:\s*([^;]+);/g)) {
+      const both = value!.trim().match(/^light-dark\((.*)\)$/)
+      const [l, d] = both ? splitArgs(both[1]!) : [value!.trim(), value!.trim()]
+      if (darkOnly) dark.set(key!, l!)
+      else {
+        light.set(key!, l!)
+        if (both || !dark.has(key!)) dark.set(key!, d!)
+      }
+    }
+  }
+  return { light, dark }
+}
+
+// Inlines `var()` references from the same scheme; a reference it can't resolve drops the value.
+function resolve(scheme: Scheme, key: string, seen = new Set<string>()): string | undefined {
+  const value = scheme.get(key)
+  if (!value || seen.has(key)) return undefined
+  seen.add(key)
+  let missing = false
+  const out = value.replace(/var\(\s*--([\w-]+)\s*(?:,[^()]*)?\)/g, (_, ref: string) => {
+    const hit = resolve(scheme, ref, seen)
+    if (!hit) missing = true
+    return hit ?? ''
+  })
+  return missing ? undefined : out
+}
+
+function pick(light: Scheme, dark: Scheme, keys: string[]) {
+  for (const key of keys) {
+    const l = resolve(light, key)
+    if (!l) continue
+    const d = resolve(dark, key) ?? l
+    return l === d ? l : `light-dark(${l}, ${d})`
+  }
+  return undefined
+}
+
+// A kit without colour tokens wears those of the site it depends on (ai → ui).
+function colorsFile(site: Site, sites: Site[]): string | undefined {
+  const own = join(site.root, 'tokens', 'colors.css')
+  if (existsSync(own)) return own
+  const base = sites.find(s => s !== site && depsOf(site).includes(s.pkg.name))
+  return base && colorsFile(base, sites)
+}
+
+function palette(site: Site, sites: Site[]) {
+  const file = colorsFile(site, sites)
+  if (!file) return { vars: '', swatches: [] }
+  const { light, dark } = schemes(read(file))
+  const roles = Object.entries(ROLES).flatMap(([role, keys]) => {
+    const value = pick(light, dark, keys)
+    return value ? [[role, value] as const] : []
+  })
+  const byRole = Object.fromEntries(roles)
+  const swatches = [
+    ...new Set([byRole.fg, byRole.accent, ...SWATCHES.map(key => pick(light, dark, [key]))].filter(Boolean)),
+  ].slice(0, 5) as string[]
+  return { vars: roles.map(([role, value]) => `--site-${role}: ${value}`).join('; '), swatches }
+}
+
+function itemCounts(site: Site) {
+  return TIERS.flatMap(tier => {
+    const dir = join(site.root, tier)
+    if (!existsSync(dir)) return []
+    const n = readdirSync(dir, { recursive: true, encoding: 'utf8' }).filter(
+      rel => basename(rel) === 'index.tsx' && !rel.includes('node_modules'),
+    ).length
+    return n === 0 ? [] : [`${n} ${n === 1 ? tier.slice(0, -1) : tier}`]
+  })
+}
+
+function stack(site: Site) {
+  const deps = depsOf(site)
+  const labels = STACK.filter(([dep]) => deps.includes(dep)).map(([, label]) => label)
+  return labels.length > 0 ? labels : ['CSS']
+}
+
+// A schematic of the site in its own colours: a docs page for a design system, an app screen for a kit.
+const DOCS_MOCK =
+  '<span class="mock-side"><i></i><i></i><i></i><i></i></span><span class="mock-main"><i class="mock-title"></i><i></i><i class="short"></i><span class="mock-row"><b></b><b class="quiet"></b></span><span class="mock-card"><i></i><i class="short"></i></span></span>'
+const APP_MOCK =
+  '<span class="mock-side"><i></i><i></i><i></i></span><span class="mock-main mock-chat"><span class="mock-bubble"><i></i><i class="short"></i></span><span class="mock-bubble mine"><i></i></span><span class="mock-bubble"><i></i><i></i><i class="short"></i></span><span class="mock-composer"><b></b></span></span>'
+
+const ARROW =
+  '<svg class="arrow" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9m-3.5-3.5L12.5 8 9 11.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>'
+
+function card(site: Site, sites: Site[]) {
+  const group = groupOf(site.name)
+  const { vars, swatches } = palette(site, sites)
+  const tagline = TAGLINES[site.name] ?? site.config.description ?? site.pkg.description ?? ''
+  const featured = group === 'design-systems' && !site.pkg.private
+  const strip = swatches.map(c => `<span class="swatch" style="--swatch: ${esc(c)}"></span>`).join('')
+  const meta = [
+    `<span class="stack">${stack(site).join(' · ')}</span>`,
+    ...itemCounts(site).map(c => `<span>${c}</span>`),
+  ]
+  return [
+    `<a class="card" data-group="${group}"${featured ? ' data-featured' : ''} href="${esc(`${SITE_BASE}${site.name}/`)}" style="${esc(vars)}">`,
+    `<span class="preview" aria-hidden="true"><span class="mock">${group === 'kits' ? APP_MOCK : DOCS_MOCK}</span><span class="swatches">${strip}</span></span>`,
+    `<span class="card-body"><span class="card-title">${esc(site.config.name ?? site.name)}${ARROW}</span>`,
+    `<span class="tagline">${esc(tagline)}</span><span class="meta">${meta.join('')}</span></span></a>`,
+  ].join('')
 }
 
 async function cards(group: Group) {
-  return (await Promise.all(targets.filter(name => groupOf(name) === group).map(card))).join('')
+  const sites = await Promise.all(all.map(siteOf))
+  const shown = sites.filter(s => targets.includes(s.name) && groupOf(s.name) === group)
+  // A published design system leads its section, at double width.
+  const ordered = [...shown.filter(s => !s.pkg.private), ...shown.filter(s => s.pkg.private)]
+  return ordered.map(site => card(site, sites)).join('')
 }
 
 // A group with no sites (no kits yet) drops its whole section.
-const EMPTY_SECTION = /\s*<section\b(?:(?!<\/section>)[\s\S])*<div class="cards"><\/div>\s*<\/section>/g
+const EMPTY_SECTION = /\s*<section\b(?:(?!<\/section>)[\s\S])*<div class="cards"[^>]*><\/div>\s*<\/section>/g
 
-// The template links its colors so it previews on its own; the build inlines them.
-const COLORS_LINK = '<link rel="stylesheet" href="./tokens/colors.css" />'
+// The template links its tokens so it previews on its own; the build inlines them.
+const TOKEN_LINK = /<link rel="stylesheet" href="\.\/(tokens\/[\w-]+\.css)" \/>/g
 
 // Self-contained: the brand assets are inlined, so the page works under any SITE_BASE.
 async function landing() {
@@ -150,7 +330,7 @@ async function landing() {
     kits: await cards('kits'),
   }
   return read(join(LANDING_DIR, 'index.html'))
-    .replace(COLORS_LINK, `<style>\n${read(join(LANDING_DIR, 'tokens', 'colors.css'))}</style>`)
+    .replace(TOKEN_LINK, (_, path: string) => `<style>\n${read(join(LANDING_DIR, path))}</style>`)
     .replace(/\{\{(\w+)\}\}/g, (_, key: string) => fills[key]!)
     .replace(EMPTY_SECTION, '')
 }

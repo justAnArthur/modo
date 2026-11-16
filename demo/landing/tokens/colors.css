@@ -5,8 +5,14 @@
   --muted-foreground: #737373;
   --border: rgba(0, 0, 0, 0.08);
   --card: #ffffff;
+  --card-raised: #ffffff;
+  --sunken: #f0f0f0;
   --hover: rgba(0, 0, 0, 0.04);
   --ring: #a3a3a3;
+  --focus-ring: #6b97ff;
+  --shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(0, 0, 0, 0.03);
+  --shadow-card-raised: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 6px 16px rgba(0, 0, 0, 0.06), 0 16px 40px rgba(0, 0, 0, 0.06);
+  --shadow-mock: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -16,7 +22,13 @@
     --muted-foreground: #a3a3a3;
     --border: rgba(255, 255, 255, 0.1);
     --card: #1f1f1f;
+    --card-raised: #262626;
+    --sunken: #141414;
     --hover: rgba(255, 255, 255, 0.05);
     --ring: #737373;
+    --focus-ring: #6b97ff;
+    --shadow-card: inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-card-raised: inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-mock: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 4px 12px rgba(0, 0, 0, 0.4);
   }
 }
