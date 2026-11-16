@@ -35,6 +35,8 @@ is specific to this package.
   controls. `blocks/` — compositions (SidebarApp, ShellCard, DesktopShell).
 - `modo.components.tsx` — docs-only adapters for the chrome's slots (`Select`, `Icon`, `DocsNav`) and the
   Theme panel item. `global.css` — base styles and the chrome's look through `data-modo` attributes.
+  `vite.ts` — the docs site's Vite extension (UnoCSS, theme script); `withUno(configFile)` gives a kit
+  (`kits/<name>/`) the same over its own uno config.
 - `guides/` — the docs' Getting started and Theming pages (not shipped). `test/` — `bun test` for the
   pure helpers (`date-mask`, FileDropzone's `variants`) and the shape radii against their tokens.
 
