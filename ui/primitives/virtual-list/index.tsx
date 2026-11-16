@@ -150,7 +150,9 @@ const VirtualList = forwardRef<VirtualListHandle, VirtualListProps>(
     const listTop = useCallback(() => {
       const inner = innerRef.current
       if (!scroller || !inner) return 0
-      return inner.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop
+      // getBoundingClientRect is in zoomed px (a scaled preview's CSS `zoom`), scrollTop in the element's own.
+      const zoom = (inner as HTMLElement & { currentCSSZoom?: number }).currentCSSZoom ?? 1
+      return (inner.getBoundingClientRect().top - scroller.getBoundingClientRect().top) / zoom + scroller.scrollTop
     }, [scroller])
 
     useLayoutEffect(() => {

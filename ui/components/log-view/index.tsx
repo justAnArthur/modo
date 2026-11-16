@@ -213,7 +213,9 @@ function LogView({
 
   // One line's height in the log's type: unwrapped rows all share it.
   useLayoutEffect(() => {
-    setRowHeight(probe.current?.getBoundingClientRect().height ?? 0)
+    // In the element's own px, which the rows are laid out in, under a scaled preview's CSS `zoom` too.
+    const el = probe.current as (HTMLSpanElement & { currentCSSZoom?: number }) | null
+    setRowHeight(el ? el.getBoundingClientRect().height / (el.currentCSSZoom ?? 1) : 0)
   }, [])
 
   const digits = String(lines.length).length
