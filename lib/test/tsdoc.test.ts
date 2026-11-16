@@ -131,6 +131,33 @@ describe('parseItemSource', () => {
     ])
   })
 
+  test('a bare JSX @example on the tag line is the code', () => {
+    const r = parseItemSource('/**\n * Lead.\n * @example <Greeting name="Ada" />\n */\nexport default function X() {}')
+    expect([r.examples, r.errors]).toEqual([[{ code: '<Greeting name="Ada" />' }], []])
+  })
+
+  test('a bare multi-line JSX @example runs to the next tag', () => {
+    const r = parseItemSource(
+      '/**\n * @example\n * <Stack>\n *   <X />\n * </Stack>\n * @since 1.2\n */\nexport default function X() {}',
+    )
+    expect([r.examples, r.tags]).toEqual([[{ code: '<Stack>\n  <X />\n</Stack>' }], [{ tag: 'since', text: '1.2' }]])
+  })
+
+  test('a bare JSX @example takes a # title and caption above it, as a fenced one does', () => {
+    const r = parseItemSource(
+      '/**\n * @example\n * # Tones\n * Two of them.\n * <X />\n * <X tone="accent" />\n */\nexport default function X() {}',
+    )
+    expect(r.examples).toEqual([{ title: 'Tones', description: 'Two of them.', code: '<X />\n<X tone="accent" />' }])
+  })
+
+  test('an @example with neither a fence nor JSX is reported, not dropped silently', () => {
+    const r = parseItemSource('/**\n * @example Just words.\n */\nexport default function X() {}')
+    expect([r.examples, r.errors]).toEqual([
+      [],
+      ['@example without code: fence it, or start its JSX on a line of its own with `<`'],
+    ])
+  })
+
   test('an @ line inside a ~~~ fence is code, not a tag', () => {
     const r = parseItemSource('/**\n * Lead.\n * ~~~css\n * @deprecated\n * ~~~\n */\nexport default function X() {}')
     expect(r.tags).toEqual([])

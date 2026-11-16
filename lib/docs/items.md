@@ -260,7 +260,7 @@ The borderless strip.
 
 ## Inline @example
 
-For a few short cases you can write an example inside the block. It needs a fenced code block; a `# Title` line and caption above the fence are optional.
+For a few short cases you can write an example inside the block. The code is a fenced block, or bare JSX: everything from the first line that starts with `<` up to the next tag. A `# Title` line and a caption above the code are optional. An `@example` with neither a fence nor JSX is reported as a warning.
 
 ````tsx
 /**
@@ -272,6 +272,8 @@ For a few short cases you can write an example inside the block. It needs a fenc
  * <Badge>Neutral</Badge>
  * <Badge tone="accent">New</Badge>
  * ```
+ *
+ * @example <Badge tone="accent">Bare</Badge>
  */
 ````
 

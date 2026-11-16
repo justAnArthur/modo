@@ -113,6 +113,7 @@ export function parseDocComment(jsdoc: string, readFile?: ReadInclude): DocComme
     sections.filter(s => s.tag === 'example').map(s => s.text),
     include,
     mdxExamples,
+    errors,
   )
   const tags = sections.filter(s => s.tag !== 'example').map(s => ({ tag: s.tag, text: s.text.trim() }))
   return { description, examples, mdxExamples, tags, errors }
@@ -378,7 +379,12 @@ function expandIncludes(text: string, readFile: ParseOptions['readFile'], errors
   })
 }
 
-function extractExamples(sections: string[], include: (text: string) => string, docs: string[]): ParsedExample[] {
+function extractExamples(
+  sections: string[],
+  include: (text: string) => string,
+  docs: string[],
+  errors: string[],
+): ParsedExample[] {
   const out: ParsedExample[] = []
   for (const section of sections) {
     const raw = section.trim()
@@ -392,32 +398,33 @@ function extractExamples(sections: string[], include: (text: string) => string, 
     if (!block) continue
     const parsed = parseExampleBlock(block)
     if (parsed) out.push(parsed)
+    else errors.push('@example without code: fence it, or start its JSX on a line of its own with `<`')
   }
   return out
 }
 
+// The code is a fenced block, else bare JSX: everything from the first line
+// that starts with `<` (`@example <X />` counts). Above it sit an optional
+// `# Title` and caption.
 function parseExampleBlock(block: string): ParsedExample | null {
   const fence = block.match(/```(?:tsx|jsx|ts|js)?\s*\n([\s\S]*?)```/)
-  if (!fence) return null
-  const code = (fence[1] ?? '').trim()
-  const head = block.slice(0, fence.index).trim()
-  let title: string | undefined
-  let description: string | undefined
-  if (head) {
-    const lines = head.split('\n')
-    const titleLine = lines.find(l => l.trim().startsWith('# '))
-    if (titleLine) {
-      title = titleLine.replace(/^#\s+/, '').trim()
-      const rest = lines
-        .filter(l => l !== titleLine)
-        .join('\n')
-        .trim()
-      if (rest) description = rest
-    } else {
-      description = head
-    }
-  }
-  return { title, description, code }
+  const jsx = fence ? null : block.match(/^[ \t]*</m)
+  const at = fence?.index ?? jsx?.index
+  if (at === undefined) return null
+  const code = (fence ? (fence[1] ?? '') : block.slice(at)).trim()
+  return { ...exampleHead(block.slice(0, at).trim()), code }
+}
+
+function exampleHead(head: string): Pick<ParsedExample, 'title' | 'description'> {
+  if (!head) return {}
+  const lines = head.split('\n')
+  const titleLine = lines.find(l => l.trim().startsWith('# '))
+  if (!titleLine) return { description: head }
+  const rest = lines
+    .filter(l => l !== titleLine)
+    .join('\n')
+    .trim()
+  return { title: titleLine.replace(/^#\s+/, '').trim(), description: rest || undefined }
 }
 
 function matchClosing(src: string, openIdx: number, openCh: string, closeCh: string): number | undefined {
