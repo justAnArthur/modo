@@ -386,19 +386,20 @@ interface PluginCatalogProps {
  *
  * @example {@include ./examples.mdx}
  */
-function PluginCatalog({ trigger, open, defaultOpen = false, onOpenChange, ...panel }: PluginCatalogProps) {
-  const [isOpen, setOpen] = useControllableState(open, defaultOpen, onOpenChange)
-  return (
-    <Dialog open={isOpen} onOpenChange={setOpen}>
-      {trigger && <Dialog.Trigger render={trigger} />}
-      <Dialog.Content width="xl" aria-label="Plugin catalog" className="flex h-[min(640px,85dvh)] flex-col">
-        <PluginCatalogPanel {...panel} className="flex-1" />
-      </Dialog.Content>
-    </Dialog>
-  )
-}
-
-PluginCatalog.Panel = PluginCatalogPanel
+const PluginCatalog = Object.assign(
+  function PluginCatalog({ trigger, open, defaultOpen = false, onOpenChange, ...panel }: PluginCatalogProps) {
+    const [isOpen, setOpen] = useControllableState(open, defaultOpen, onOpenChange)
+    return (
+      <Dialog open={isOpen} onOpenChange={setOpen}>
+        {trigger && <Dialog.Trigger render={trigger} />}
+        <Dialog.Content width="xl" aria-label="Plugin catalog" className="flex h-[min(640px,85dvh)] flex-col">
+          <PluginCatalogPanel {...panel} className="flex-1" />
+        </Dialog.Content>
+      </Dialog>
+    )
+  },
+  { Panel: PluginCatalogPanel },
+)
 
 export type { PluginCatalogPanelProps, PluginCatalogProps }
 export { PluginCatalog, PluginCatalogPanel }

@@ -51,34 +51,35 @@ interface WorkSummaryProps {
  *
  * @example {@include ./examples.mdx}
  */
-function WorkSummary({ summary, detail, running = false, children }: WorkSummaryProps) {
-  const showWork = useContext(ShowWorkContext)
-  return (
-    <Accordion
-      key={String(showWork)}
-      type="single"
-      collapsible
-      defaultValue={showWork ? 'work' : undefined}
-      size="compact"
-      className="-mx-2.5 w-auto max-w-none"
-    >
-      <Accordion.Item value="work">
-        <Accordion.Trigger className="[&>span:first-child]:min-w-0">
-          <span className="flex min-w-0 items-center gap-2">
-            {running && <Spinner className="size-3.5" />}
-            <span className="shrink-0">{summary}</span>
-            {detail && <span className="min-w-0 truncate weight-normal text-muted-foreground">{detail}</span>}
-          </span>
-        </Accordion.Trigger>
-        <Accordion.Content>
-          <div className="flex flex-col gap-2 border-l border-border pb-1 pl-[var(--space-3)]">{children}</div>
-        </Accordion.Content>
-      </Accordion.Item>
-    </Accordion>
-  )
-}
-
-WorkSummary.Provider = WorkSummaryProvider
+const WorkSummary = Object.assign(
+  function WorkSummary({ summary, detail, running = false, children }: WorkSummaryProps) {
+    const showWork = useContext(ShowWorkContext)
+    return (
+      <Accordion
+        key={String(showWork)}
+        type="single"
+        collapsible
+        defaultValue={showWork ? 'work' : undefined}
+        size="compact"
+        className="-mx-2.5 w-auto max-w-none"
+      >
+        <Accordion.Item value="work">
+          <Accordion.Trigger className="[&>span:first-child]:min-w-0">
+            <span className="flex min-w-0 items-center gap-2">
+              {running && <Spinner className="size-3.5" />}
+              <span className="shrink-0">{summary}</span>
+              {detail && <span className="min-w-0 truncate weight-normal text-muted-foreground">{detail}</span>}
+            </span>
+          </Accordion.Trigger>
+          <Accordion.Content>
+            <div className="flex flex-col gap-2 border-l border-border pb-1 pl-[var(--space-3)]">{children}</div>
+          </Accordion.Content>
+        </Accordion.Item>
+      </Accordion>
+    )
+  },
+  { Provider: WorkSummaryProvider },
+)
 
 export type { WorkSummaryProps, WorkSummaryProviderProps }
 export { WorkSummary, WorkSummaryProvider }

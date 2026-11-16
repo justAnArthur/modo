@@ -100,15 +100,12 @@ function Task({ title, brief, where, onDecide }: TaskProps) {
  *
  * @example {@include ./examples.mdx}
  */
-function AgentPrompt(props: AgentPromptProps) {
-  return <PromptCard {...props} />
-}
-
-AgentPrompt.Permission = PermissionRequest
-AgentPrompt.Question = QuestionPrompt
-AgentPrompt.Plan = PlanApproval
-AgentPrompt.Offer = Offer
-AgentPrompt.Task = Task
+const AgentPrompt = Object.assign(
+  function AgentPrompt(props: AgentPromptProps) {
+    return <PromptCard {...props} />
+  },
+  { Permission: PermissionRequest, Question: QuestionPrompt, Plan: PlanApproval, Offer: Offer, Task: Task },
+)
 
 export type { AgentPromptProps, OfferProps, TaskProps }
 

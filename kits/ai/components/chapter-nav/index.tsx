@@ -62,59 +62,60 @@ interface ChapterNavProps {
  *
  * @example {@include ./examples.mdx}
  */
-function ChapterNav({ chapters, defaultValue, onValueChange }: ChapterNavProps) {
-  const [current, setCurrent] = useControllableState<string>(
-    undefined,
-    defaultValue ?? chapters[chapters.length - 1]?.id ?? '',
-    onValueChange,
-  )
-  const ListTree = useIcon('list-tree')
+const ChapterNav = Object.assign(
+  function ChapterNav({ chapters, defaultValue, onValueChange }: ChapterNavProps) {
+    const [current, setCurrent] = useControllableState<string>(
+      undefined,
+      defaultValue ?? chapters[chapters.length - 1]?.id ?? '',
+      onValueChange,
+    )
+    const ListTree = useIcon('list-tree')
 
-  const pick = (id: string) => {
-    setCurrent(id)
-    document.getElementById(id)?.scrollIntoView({ block: 'start' })
-  }
+    const pick = (id: string) => {
+      setCurrent(id)
+      document.getElementById(id)?.scrollIntoView({ block: 'start' })
+    }
 
-  return (
-    <Popover>
-      <Popover.Trigger
-        render={
-          <Button variant="ghost" size="icon-compact" aria-label="Chapters">
-            <ListTree />
-          </Button>
-        }
-      />
-      <Popover.Content side="bottom" align="end" sideOffset={8} className={LIST_POPOVER}>
-        <List.Section title="Chapters">
-          <ChoiceList
-            label="Chapters"
-            value={current}
-            onValueChange={pick}
-            options={chapters.map((chapter, i) => ({
-              value: chapter.id,
-              label: chapter.title,
-              content: (
-                <span className="flex min-w-0 flex-1 gap-2">
-                  <span className="w-4 shrink-0 text-right text-caption tabular-nums text-muted-foreground">
-                    {i + 1}
+    return (
+      <Popover>
+        <Popover.Trigger
+          render={
+            <Button variant="ghost" size="icon-compact" aria-label="Chapters">
+              <ListTree />
+            </Button>
+          }
+        />
+        <Popover.Content side="bottom" align="end" sideOffset={8} className={LIST_POPOVER}>
+          <List.Section title="Chapters">
+            <ChoiceList
+              label="Chapters"
+              value={current}
+              onValueChange={pick}
+              options={chapters.map((chapter, i) => ({
+                value: chapter.id,
+                label: chapter.title,
+                content: (
+                  <span className="flex min-w-0 flex-1 gap-2">
+                    <span className="w-4 shrink-0 text-right text-caption tabular-nums text-muted-foreground">
+                      {i + 1}
+                    </span>
+                    <span className="flex min-w-0 flex-col">
+                      <span className="truncate text-body text-foreground">{chapter.title}</span>
+                      {chapter.detail && (
+                        <span className="truncate text-caption text-muted-foreground">{chapter.detail}</span>
+                      )}
+                    </span>
                   </span>
-                  <span className="flex min-w-0 flex-col">
-                    <span className="truncate text-body text-foreground">{chapter.title}</span>
-                    {chapter.detail && (
-                      <span className="truncate text-caption text-muted-foreground">{chapter.detail}</span>
-                    )}
-                  </span>
-                </span>
-              ),
-            }))}
-          />
-        </List.Section>
-      </Popover.Content>
-    </Popover>
-  )
-}
-
-ChapterNav.Break = ChapterBreak
+                ),
+              }))}
+            />
+          </List.Section>
+        </Popover.Content>
+      </Popover>
+    )
+  },
+  { Break: ChapterBreak },
+)
 
 export type { ChapterBreakProps, ChapterNavItem, ChapterNavProps }
 export { ChapterBreak, ChapterNav }

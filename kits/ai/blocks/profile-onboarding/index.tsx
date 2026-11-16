@@ -545,33 +545,34 @@ interface ProfileOnboardingProps {
  *
  * @example {@include ./examples.mdx}
  */
-function ProfileOnboarding({
-  trigger,
-  open,
-  defaultOpen = false,
-  onOpenChange,
-  onComplete,
-  ...panel
-}: ProfileOnboardingProps) {
-  const [isOpen, setOpen] = useControllableState(open, defaultOpen, onOpenChange)
-  return (
-    <Dialog open={isOpen} onOpenChange={setOpen}>
-      {trigger && <Dialog.Trigger render={trigger} />}
-      <Dialog.Content width="lg" aria-label="Add a profile">
-        <ProfileOnboardingPanel
-          {...panel}
-          onCancel={() => setOpen(false)}
-          onComplete={profile => {
-            onComplete?.(profile)
-            setOpen(false)
-          }}
-        />
-      </Dialog.Content>
-    </Dialog>
-  )
-}
-
-ProfileOnboarding.Panel = ProfileOnboardingPanel
+const ProfileOnboarding = Object.assign(
+  function ProfileOnboarding({
+    trigger,
+    open,
+    defaultOpen = false,
+    onOpenChange,
+    onComplete,
+    ...panel
+  }: ProfileOnboardingProps) {
+    const [isOpen, setOpen] = useControllableState(open, defaultOpen, onOpenChange)
+    return (
+      <Dialog open={isOpen} onOpenChange={setOpen}>
+        {trigger && <Dialog.Trigger render={trigger} />}
+        <Dialog.Content width="lg" aria-label="Add a profile">
+          <ProfileOnboardingPanel
+            {...panel}
+            onCancel={() => setOpen(false)}
+            onComplete={profile => {
+              onComplete?.(profile)
+              setOpen(false)
+            }}
+          />
+        </Dialog.Content>
+      </Dialog>
+    )
+  },
+  { Panel: ProfileOnboardingPanel },
+)
 
 export type { ProfileOnboardingPanelProps, ProfileOnboardingProps }
 export { ProfileOnboarding, ProfileOnboardingPanel }

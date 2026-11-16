@@ -107,33 +107,34 @@ interface ToolCallProps {
  *
  * @example {@include ./examples.mdx}
  */
-function ToolCall({ tool, summary, value, index, icon, status = 'done', meta, children }: ToolCallProps) {
-  const Icon = useIcon(icon ?? TOOL_ICON[tool.toLowerCase()] ?? 'wrench')
-  return (
-    <Accordion.Item value={value} index={index} disabled={!children}>
-      <Accordion.Trigger className="[&>span:first-child]:min-w-0">
-        <span className="flex min-w-0 items-center gap-2">
-          <Icon size={14} strokeWidth={1.5} className="shrink-0" />
-          <span className="shrink-0">{tool}</span>
-          <span className="min-w-0 truncate font-mono text-caption-compact weight-normal text-muted-foreground">
-            {summary}
+const ToolCall = Object.assign(
+  function ToolCall({ tool, summary, value, index, icon, status = 'done', meta, children }: ToolCallProps) {
+    const Icon = useIcon(icon ?? TOOL_ICON[tool.toLowerCase()] ?? 'wrench')
+    return (
+      <Accordion.Item value={value} index={index} disabled={!children}>
+        <Accordion.Trigger className="[&>span:first-child]:min-w-0">
+          <span className="flex min-w-0 items-center gap-2">
+            <Icon size={14} strokeWidth={1.5} className="shrink-0" />
+            <span className="shrink-0">{tool}</span>
+            <span className="min-w-0 truncate font-mono text-caption-compact weight-normal text-muted-foreground">
+              {summary}
+            </span>
+            {meta && (
+              <span className="ml-auto shrink-0 text-caption-compact weight-normal text-muted-foreground">{meta}</span>
+            )}
+            <ToolStatusMark status={status} />
           </span>
-          {meta && (
-            <span className="ml-auto shrink-0 text-caption-compact weight-normal text-muted-foreground">{meta}</span>
-          )}
-          <ToolStatusMark status={status} />
-        </span>
-      </Accordion.Trigger>
-      {children && (
-        <Accordion.Content>
-          <div className="pb-2">{children}</div>
-        </Accordion.Content>
-      )}
-    </Accordion.Item>
-  )
-}
-
-ToolCall.Group = ToolCallGroup
+        </Accordion.Trigger>
+        {children && (
+          <Accordion.Content>
+            <div className="pb-2">{children}</div>
+          </Accordion.Content>
+        )}
+      </Accordion.Item>
+    )
+  },
+  { Group: ToolCallGroup },
+)
 
 export type { ToolCallGroupProps, ToolCallProps, ToolCallStatus, ToolStatusMarkProps }
 export { ToolCall, ToolCallGroup, ToolStatusMark }

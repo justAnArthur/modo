@@ -144,40 +144,41 @@ interface ShortcutsSheetProps {
  *
  * @example {@include ./examples.mdx}
  */
-function ShortcutsSheet({
-  groups,
-  trigger,
-  open,
-  defaultOpen = false,
-  onOpenChange,
-  hotkey = '/',
-  defaultQuery,
-}: ShortcutsSheetProps) {
-  const [isOpen, setOpen] = useControllableState(open, defaultOpen, onOpenChange)
+const ShortcutsSheet = Object.assign(
+  function ShortcutsSheet({
+    groups,
+    trigger,
+    open,
+    defaultOpen = false,
+    onOpenChange,
+    hotkey = '/',
+    defaultQuery,
+  }: ShortcutsSheetProps) {
+    const [isOpen, setOpen] = useControllableState(open, defaultOpen, onOpenChange)
 
-  useEffect(() => {
-    if (!hotkey) return
-    const onKey = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === hotkey) {
-        event.preventDefault()
-        setOpen(!isOpen)
+    useEffect(() => {
+      if (!hotkey) return
+      const onKey = (event: KeyboardEvent) => {
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === hotkey) {
+          event.preventDefault()
+          setOpen(!isOpen)
+        }
       }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [hotkey, isOpen, setOpen])
+      window.addEventListener('keydown', onKey)
+      return () => window.removeEventListener('keydown', onKey)
+    }, [hotkey, isOpen, setOpen])
 
-  return (
-    <Dialog open={isOpen} onOpenChange={setOpen}>
-      {trigger && <Dialog.Trigger render={trigger} />}
-      <Dialog.Content width="xl" aria-label="Keyboard shortcuts" className="flex h-[min(600px,80dvh)] flex-col">
-        <ShortcutsSheetPanel groups={groups} defaultQuery={defaultQuery} className="flex-1" />
-      </Dialog.Content>
-    </Dialog>
-  )
-}
-
-ShortcutsSheet.Panel = ShortcutsSheetPanel
+    return (
+      <Dialog open={isOpen} onOpenChange={setOpen}>
+        {trigger && <Dialog.Trigger render={trigger} />}
+        <Dialog.Content width="xl" aria-label="Keyboard shortcuts" className="flex h-[min(600px,80dvh)] flex-col">
+          <ShortcutsSheetPanel groups={groups} defaultQuery={defaultQuery} className="flex-1" />
+        </Dialog.Content>
+      </Dialog>
+    )
+  },
+  { Panel: ShortcutsSheetPanel },
+)
 
 export type { ShortcutsSheetPanelProps, ShortcutsSheetProps }
 export { ShortcutsSheet, ShortcutsSheetPanel }

@@ -375,38 +375,39 @@ interface McpServerDialogProps {
  *
  * @example {@include ./examples.mdx}
  */
-function McpServerDialog({
-  trigger,
-  open,
-  defaultOpen = false,
-  onOpenChange,
-  onSave,
-  onDelete,
-  ...panel
-}: McpServerDialogProps) {
-  const [isOpen, setOpen] = useControllableState(open, defaultOpen, onOpenChange)
-  const close = <T,>(handler?: (server: T) => void) =>
-    handler &&
-    ((server: T) => {
-      handler(server)
-      setOpen(false)
-    })
-  return (
-    <Dialog open={isOpen} onOpenChange={setOpen}>
-      {trigger && <Dialog.Trigger render={trigger} />}
-      <Dialog.Content width="lg" aria-label="MCP server" className="@container">
-        <McpServerDialogPanel
-          {...panel}
-          onSave={close(onSave)}
-          onDelete={close(onDelete)}
-          onCancel={() => setOpen(false)}
-        />
-      </Dialog.Content>
-    </Dialog>
-  )
-}
-
-McpServerDialog.Panel = McpServerDialogPanel
+const McpServerDialog = Object.assign(
+  function McpServerDialog({
+    trigger,
+    open,
+    defaultOpen = false,
+    onOpenChange,
+    onSave,
+    onDelete,
+    ...panel
+  }: McpServerDialogProps) {
+    const [isOpen, setOpen] = useControllableState(open, defaultOpen, onOpenChange)
+    const close = <T,>(handler?: (server: T) => void) =>
+      handler &&
+      ((server: T) => {
+        handler(server)
+        setOpen(false)
+      })
+    return (
+      <Dialog open={isOpen} onOpenChange={setOpen}>
+        {trigger && <Dialog.Trigger render={trigger} />}
+        <Dialog.Content width="lg" aria-label="MCP server" className="@container">
+          <McpServerDialogPanel
+            {...panel}
+            onSave={close(onSave)}
+            onDelete={close(onDelete)}
+            onCancel={() => setOpen(false)}
+          />
+        </Dialog.Content>
+      </Dialog>
+    )
+  },
+  { Panel: McpServerDialogPanel },
+)
 
 export type { McpServerDialogPanelProps, McpServerDialogProps }
 export { McpServerDialog, McpServerDialogPanel }

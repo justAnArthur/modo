@@ -429,38 +429,39 @@ interface TranscriptSearchProps {
  *
  * @example {@include ./examples.mdx}
  */
-function TranscriptSearch({
-  trigger,
-  open,
-  defaultOpen = false,
-  onOpenChange,
-  onOpen,
-  ...panel
-}: TranscriptSearchProps) {
-  const [isOpen, setOpen] = useControllableState(open, defaultOpen, onOpenChange)
-  return (
-    <Dialog open={isOpen} onOpenChange={setOpen}>
-      {trigger && <Dialog.Trigger render={trigger} />}
-      <Dialog.Content
-        width="xl"
-        position="top"
-        aria-label="Search transcripts"
-        className="flex h-[min(560px,76dvh)] flex-col p-4"
-      >
-        <TranscriptSearchPanel
-          {...panel}
-          className="flex-1"
-          onOpen={(sessionId, messageId) => {
-            onOpen?.(sessionId, messageId)
-            setOpen(false)
-          }}
-        />
-      </Dialog.Content>
-    </Dialog>
-  )
-}
-
-TranscriptSearch.Panel = TranscriptSearchPanel
+const TranscriptSearch = Object.assign(
+  function TranscriptSearch({
+    trigger,
+    open,
+    defaultOpen = false,
+    onOpenChange,
+    onOpen,
+    ...panel
+  }: TranscriptSearchProps) {
+    const [isOpen, setOpen] = useControllableState(open, defaultOpen, onOpenChange)
+    return (
+      <Dialog open={isOpen} onOpenChange={setOpen}>
+        {trigger && <Dialog.Trigger render={trigger} />}
+        <Dialog.Content
+          width="xl"
+          position="top"
+          aria-label="Search transcripts"
+          className="flex h-[min(560px,76dvh)] flex-col p-4"
+        >
+          <TranscriptSearchPanel
+            {...panel}
+            className="flex-1"
+            onOpen={(sessionId, messageId) => {
+              onOpen?.(sessionId, messageId)
+              setOpen(false)
+            }}
+          />
+        </Dialog.Content>
+      </Dialog>
+    )
+  },
+  { Panel: TranscriptSearchPanel },
+)
 
 export type { TranscriptSearchPanelProps, TranscriptSearchProps }
 export { TranscriptSearch, TranscriptSearchPanel }

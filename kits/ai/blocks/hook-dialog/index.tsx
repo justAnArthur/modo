@@ -250,26 +250,27 @@ interface HookDialogProps {
  *
  * @example {@include ./examples.mdx}
  */
-function HookDialog({ trigger, open, defaultOpen = false, onOpenChange, onSave, ...panel }: HookDialogProps) {
-  const [isOpen, setOpen] = useControllableState(open, defaultOpen, onOpenChange)
-  return (
-    <Dialog open={isOpen} onOpenChange={setOpen}>
-      {trigger && <Dialog.Trigger render={trigger} />}
-      <Dialog.Content width="lg" aria-label="Hook" className="@container">
-        <HookDialogPanel
-          {...panel}
-          onCancel={() => setOpen(false)}
-          onSave={hook => {
-            onSave?.(hook)
-            setOpen(false)
-          }}
-        />
-      </Dialog.Content>
-    </Dialog>
-  )
-}
-
-HookDialog.Panel = HookDialogPanel
+const HookDialog = Object.assign(
+  function HookDialog({ trigger, open, defaultOpen = false, onOpenChange, onSave, ...panel }: HookDialogProps) {
+    const [isOpen, setOpen] = useControllableState(open, defaultOpen, onOpenChange)
+    return (
+      <Dialog open={isOpen} onOpenChange={setOpen}>
+        {trigger && <Dialog.Trigger render={trigger} />}
+        <Dialog.Content width="lg" aria-label="Hook" className="@container">
+          <HookDialogPanel
+            {...panel}
+            onCancel={() => setOpen(false)}
+            onSave={hook => {
+              onSave?.(hook)
+              setOpen(false)
+            }}
+          />
+        </Dialog.Content>
+      </Dialog>
+    )
+  },
+  { Panel: HookDialogPanel },
+)
 
 export type { HookDialogPanelProps, HookDialogProps }
 export { HookDialog, HookDialogPanel }

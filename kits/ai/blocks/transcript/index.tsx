@@ -91,98 +91,106 @@ interface TranscriptProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Transcript({ children, chapters, defaultShowWork = false, footer, className }: TranscriptProps) {
-  const [showWork, setShowWork] = useState(defaultShowWork)
-  const [following, setFollowing] = useState(true)
-  const Eye = useIcon('eye')
-  const Down = useIcon('arrow-down')
-  const column = useRef<HTMLDivElement | null>(null)
-  const viewport = useRef<HTMLElement | null>(null)
-  const atEnd = useRef(true)
+const Transcript = Object.assign(
+  function Transcript({ children, chapters, defaultShowWork = false, footer, className }: TranscriptProps) {
+    const [showWork, setShowWork] = useState(defaultShowWork)
+    const [following, setFollowing] = useState(true)
+    const Eye = useIcon('eye')
+    const Down = useIcon('arrow-down')
+    const column = useRef<HTMLDivElement | null>(null)
+    const viewport = useRef<HTMLElement | null>(null)
+    const atEnd = useRef(true)
 
-  // Scrolls only the transcript's own viewport: scrollIntoView would move every scrolling ancestor too.
-  const toEnd = () => {
-    const el = viewport.current
-    if (el) el.scrollTop = el.scrollHeight
-  }
-
-  // A session opens on its latest turn.
-  useLayoutEffect(() => {
-    viewport.current = column.current?.closest<HTMLElement>('[data-slot="scroll-area-viewport"]') ?? null
-    toEnd()
-  }, [])
-
-  // Content that grows under a reader at the end fires no scroll event, so `atEnd` still holds.
-  useEffect(() => {
-    const el = viewport.current
-    const content = column.current
-    if (!el || !content) return
-    const onScroll = () => {
-      const end = el.scrollHeight - el.scrollTop - el.clientHeight < 8
-      if (end === atEnd.current) return
-      atEnd.current = end
-      setFollowing(end)
+    // Scrolls only the transcript's own viewport: scrollIntoView would move every scrolling ancestor too.
+    const toEnd = () => {
+      const el = viewport.current
+      if (el) el.scrollTop = el.scrollHeight
     }
-    const observer = new ResizeObserver(() => {
-      if (atEnd.current) toEnd()
-    })
-    el.addEventListener('scroll', onScroll, { passive: true })
-    observer.observe(content)
-    return () => {
-      el.removeEventListener('scroll', onScroll)
-      observer.disconnect()
-    }
-  }, [])
 
-  return (
-    <div className={cn('@container relative flex min-h-0 flex-1 flex-col', className)}>
-      {/* A narrow column has no margin to float them in: there they take a row of their own above it. */}
-      <div className="flex shrink-0 items-center justify-end gap-0.5 px-3 pt-1 @3xl:absolute @3xl:right-3 @3xl:top-2 @3xl:z-20 @3xl:p-0">
-        <Button
-          variant="ghost"
-          size="icon-compact"
-          aria-label={showWork ? 'Hide work' : 'Show work'}
-          aria-pressed={showWork}
-          active={showWork}
-          onClick={() => setShowWork(!showWork)}
-        >
-          <Eye />
-        </Button>
-        {chapters && chapters.length > 0 && <ChapterNav chapters={chapters} />}
-      </div>
-      <ScrollArea className="min-h-0 flex-1" viewportClassName="scroll-fade">
-        <WorkSummary.Provider open={showWork}>
-          <div ref={column} className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 py-6 [contain:inline-size]">
-            {children}
-          </div>
-        </WorkSummary.Provider>
-      </ScrollArea>
-      {!following && (
-        <div className="pointer-events-none relative z-20 mx-auto flex w-full max-w-3xl justify-center px-6">
-          <Button variant="secondary" size="compact" className="pointer-events-auto absolute bottom-2" onClick={toEnd}>
-            <Down />
-            Latest
+    // A session opens on its latest turn.
+    useLayoutEffect(() => {
+      viewport.current = column.current?.closest<HTMLElement>('[data-slot="scroll-area-viewport"]') ?? null
+      toEnd()
+    }, [])
+
+    // Content that grows under a reader at the end fires no scroll event, so `atEnd` still holds.
+    useEffect(() => {
+      const el = viewport.current
+      const content = column.current
+      if (!el || !content) return
+      const onScroll = () => {
+        const end = el.scrollHeight - el.scrollTop - el.clientHeight < 8
+        if (end === atEnd.current) return
+        atEnd.current = end
+        setFollowing(end)
+      }
+      const observer = new ResizeObserver(() => {
+        if (atEnd.current) toEnd()
+      })
+      el.addEventListener('scroll', onScroll, { passive: true })
+      observer.observe(content)
+      return () => {
+        el.removeEventListener('scroll', onScroll)
+        observer.disconnect()
+      }
+    }, [])
+
+    return (
+      <div className={cn('@container relative flex min-h-0 flex-1 flex-col', className)}>
+        {/* A narrow column has no margin to float them in: there they take a row of their own above it. */}
+        <div className="flex shrink-0 items-center justify-end gap-0.5 px-3 pt-1 @3xl:absolute @3xl:right-3 @3xl:top-2 @3xl:z-20 @3xl:p-0">
+          <Button
+            variant="ghost"
+            size="icon-compact"
+            aria-label={showWork ? 'Hide work' : 'Show work'}
+            aria-pressed={showWork}
+            active={showWork}
+            onClick={() => setShowWork(!showWork)}
+          >
+            <Eye />
           </Button>
+          {chapters && chapters.length > 0 && <ChapterNav chapters={chapters} />}
         </div>
-      )}
-      {footer && <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-6 pb-3">{footer}</div>}
-    </div>
-  )
-}
-
-Transcript.User = User
-Transcript.Assistant = Assistant
-Transcript.Work = WorkSummary
-Transcript.Thinking = Reasoning
-Transcript.Tools = ToolCall.Group
-Transcript.Tool = ToolCall
-Transcript.Agent = AgentRun
-Transcript.Chapter = ChapterNav.Break
-Transcript.Mention = Message.Mention
-Transcript.Attachment = Message.Attachment
-Transcript.Working = Message.Working
-Transcript.TaskList = TodoList
-Transcript.NextStep = Recap
+        <ScrollArea className="min-h-0 flex-1" viewportClassName="scroll-fade">
+          <WorkSummary.Provider open={showWork}>
+            <div ref={column} className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 py-6 [contain:inline-size]">
+              {children}
+            </div>
+          </WorkSummary.Provider>
+        </ScrollArea>
+        {!following && (
+          <div className="pointer-events-none relative z-20 mx-auto flex w-full max-w-3xl justify-center px-6">
+            <Button
+              variant="secondary"
+              size="compact"
+              className="pointer-events-auto absolute bottom-2"
+              onClick={toEnd}
+            >
+              <Down />
+              Latest
+            </Button>
+          </div>
+        )}
+        {footer && <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-6 pb-3">{footer}</div>}
+      </div>
+    )
+  },
+  {
+    User: User,
+    Assistant: Assistant,
+    Work: WorkSummary,
+    Thinking: Reasoning,
+    Tools: ToolCall.Group,
+    Tool: ToolCall,
+    Agent: AgentRun,
+    Chapter: ChapterNav.Break,
+    Mention: Message.Mention,
+    Attachment: Message.Attachment,
+    Working: Message.Working,
+    TaskList: TodoList,
+    NextStep: Recap,
+  },
+)
 
 /** A chapter in the corner list: ChapterNavItem, named for the session. */
 type TocChapter = ChapterNavItem

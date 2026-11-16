@@ -302,68 +302,69 @@ interface InboxProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Inbox({
-  items,
-  onAction,
-  onMarkAllRead,
-  open,
-  defaultOpen = false,
-  onOpenChange,
-  side = 'bottom',
-  align = 'end',
-  trigger,
-  className,
-}: InboxProps) {
-  const Bell = useIcon('bell')
-  const [cleared, setCleared] = useState(false)
-  const unread = cleared ? 0 : items.filter(i => !i.read).length
+const Inbox = Object.assign(
+  function Inbox({
+    items,
+    onAction,
+    onMarkAllRead,
+    open,
+    defaultOpen = false,
+    onOpenChange,
+    side = 'bottom',
+    align = 'end',
+    trigger,
+    className,
+  }: InboxProps) {
+    const Bell = useIcon('bell')
+    const [cleared, setCleared] = useState(false)
+    const unread = cleared ? 0 : items.filter(i => !i.read).length
 
-  return (
-    <Popover open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
-      <Popover.Trigger
-        render={
-          trigger ?? (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label={unread > 0 ? `Inbox, ${unread} unread` : 'Inbox'}
-              className={cn('relative', className)}
-            >
-              <Bell />
-              {unread > 0 && (
-                <span
-                  aria-hidden="true"
-                  className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-micro tabular-nums text-background"
-                >
-                  {unread > 9 ? '9+' : unread}
-                </span>
-              )}
-            </Button>
-          )
-        }
-      />
-      <Popover.Content
-        side={side}
-        align={align}
-        sideOffset={8}
-        className="flex max-h-[520px] w-96 flex-col p-[var(--space-2)]"
-      >
-        <SizeProvider size="default">
-          <InboxList
-            items={items}
-            onAction={onAction}
-            onMarkAllRead={() => {
-              setCleared(true)
-              onMarkAllRead?.()
-            }}
-          />
-        </SizeProvider>
-      </Popover.Content>
-    </Popover>
-  )
-}
-
-Inbox.List = InboxList
+    return (
+      <Popover open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
+        <Popover.Trigger
+          render={
+            trigger ?? (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={unread > 0 ? `Inbox, ${unread} unread` : 'Inbox'}
+                className={cn('relative', className)}
+              >
+                <Bell />
+                {unread > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-micro tabular-nums text-background"
+                  >
+                    {unread > 9 ? '9+' : unread}
+                  </span>
+                )}
+              </Button>
+            )
+          }
+        />
+        <Popover.Content
+          side={side}
+          align={align}
+          sideOffset={8}
+          className="flex max-h-[520px] w-96 flex-col p-[var(--space-2)]"
+        >
+          <SizeProvider size="default">
+            <InboxList
+              items={items}
+              onAction={onAction}
+              onMarkAllRead={() => {
+                setCleared(true)
+                onMarkAllRead?.()
+              }}
+            />
+          </SizeProvider>
+        </Popover.Content>
+      </Popover>
+    )
+  },
+  { List: InboxList },
+)
 
 export type { InboxListProps, InboxProps }
 export { Inbox, InboxList }

@@ -7,34 +7,29 @@ The packages are released from this repo by conventional commits (see [CONTRIBUT
 ### @justanarthur/modo
 
 - **Open any example full screen.** Example cards get Open full screen beside Copy and Show code: the example alone on its item's route (`?example=<title slug>`, else its position), without the chrome, across the whole viewport. A modified or middle click opens a new tab; Escape, Back or the close button returns. The Icon contract gains `maximize`, the Button contract passes the click event and `onAuxClick`; new hooks `example-solo`, `example-solo-stage`, `example-solo-actions`.
+- **Grouped Select options.** `SelectOption` takes an optional `group`: a Select lists the ungrouped options first, then each group under its heading, in first-seen order. Plain Select renders `<optgroup>`s; a host Select that ignores `group` keeps showing a flat list. The demo switcher uses it to list design systems and kits apart.
 
-### @justanarthur/modo-ui
-
-- The docs Icon draws `maximize` (lucide `Maximize2`).
 Fixes:
 
 - An inline `@example` written as bare JSX (`@example <X />`, or JSX lines after `@example`) is an example instead of being dropped; one with no code at all is a warning.
-Fixes:
-
 - Without typescript installed, the plain parser reads an item written as `const X = Object.assign(function X(…) {…}, { Part })`: its doc block on the const, its props from the function.
 
 ### @justanarthur/modo-ui
 
-Fixes:
-
-- The compound parts of the function roots (`Popover.Trigger`, `Dialog.Content`, `Select.Item`, `Tooltip.Provider`, `Morph.Part`, …) are typed in the published `.d.ts`; CI type-checks every part from `dist`.
-### @justanarthur/modo-ui
-
+- The docs Icon draws `maximize` (lucide `Maximize2`).
 - New primitives: `Sortable` (drag or keyboard reorder, `Sortable.Handle`, `useSortableHandle`, `as="none"` inside a host list), `VirtualList` (windowed rows, fixed or measured, `scrollToIndex`) and `Resizable` (split panes with keyboard separators, collapsible panels, nesting).
 - New components: `List` (settings rows), `ChoiceList` (Radio's rows over rich content), `KeyValue`, `Breadcrumb` (folds into a menu), `Meter` (bar, line, ring; `marker`, `tone`), `StatusDot` (+ `statusGlyph`), `Kbd` and `EmptyState`.
 - Icons `eye`, `eye-off` and `grip-vertical`.
 - New components: `Diff` (a unified patch), `Markdown` (+ `Markdown.Prose`, on `marked`, now a dependency), `LogView` (ANSI output on `VirtualList`), `Tree`, `EditableText` and `Lightbox`; blocks `ShellCard` and `DesktopShell`.
 - `VirtualList` takes `follow` / `onFollowChange` (stay at the end of a growing list), `contentWidth` and a `scrollToEnd()` handle; `Resizable` panels glide to sizes set by key, reset or controlled `sizes`.
 - Tokens `--sunken` (`bg-sunken`) and `--radius-shell` / `--radius-pill-shell` (`rounded-shell|pill-shell`); icons `file-diff` and `square`.
-- A standalone `Accordion` nested in an `Accordion.Group`'s panel keeps its own open state.
-- **Grouped Select options.** `SelectOption` takes an optional `group`: a Select lists the ungrouped options first, then each group under its heading, in first-seen order. Plain Select renders `<optgroup>`s; a host Select that ignores `group` keeps showing a flat list. The demo switcher uses it to list design systems and kits apart.
 - `useIcons()` (`lib/icon-context`) returns the whole icon map, for a kit that extends the set; `lib/surface-classes` (`SURFACE_BG`, `SURFACE_SHADOW`) is a subpath; the `SidebarApp` block exports its `SidebarSearchField` and `SidebarInsetTopbar`.
 - `VirtualList` and `LogView` measure in the element's own pixels, so a list inside a preview scaled with CSS `zoom` keeps its rows apart.
+
+Fixes:
+
+- The compound parts of the function roots (`Popover.Trigger`, `Dialog.Content`, `Select.Item`, `Tooltip.Provider`, `Morph.Part`, …) are typed in the published `.d.ts`; CI type-checks every part from `dist`.
+- A standalone `Accordion` nested in an `Accordion.Group`'s panel keeps its own open state.
 
 ### @justanarthur/modo-ui-ai
 

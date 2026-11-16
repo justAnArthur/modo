@@ -104,35 +104,34 @@ interface MessageProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Message({ role, children, attachments, streaming = false, className }: MessageProps) {
-  const shape = useShape()
+const Message = Object.assign(
+  function Message({ role, children, attachments, streaming = false, className }: MessageProps) {
+    const shape = useShape()
 
-  if (role === 'assistant')
+    if (role === 'assistant')
+      return (
+        <MarkdownProse className={className}>
+          {children}
+          {streaming && <Working />}
+        </MarkdownProse>
+      )
+
     return (
-      <MarkdownProse className={className}>
-        {children}
-        {streaming && <Working />}
-      </MarkdownProse>
-    )
-
-  return (
-    <div className={cn('flex flex-col items-end gap-2 pl-[12%]', className)}>
-      {attachments && <div className="flex flex-wrap justify-end gap-2">{attachments}</div>}
-      <div
-        className={cn(
-          'min-w-0 bg-muted px-[var(--space-3)] py-[var(--space-2)] text-body text-foreground',
-          shape.container,
-        )}
-      >
-        {children}
+      <div className={cn('flex flex-col items-end gap-2 pl-[12%]', className)}>
+        {attachments && <div className="flex flex-wrap justify-end gap-2">{attachments}</div>}
+        <div
+          className={cn(
+            'min-w-0 bg-muted px-[var(--space-3)] py-[var(--space-2)] text-body text-foreground',
+            shape.container,
+          )}
+        >
+          {children}
+        </div>
       </div>
-    </div>
-  )
-}
-
-Message.Mention = Mention
-Message.Attachment = Attachment
-Message.Working = Working
+    )
+  },
+  { Mention: Mention, Attachment: Attachment, Working: Working },
+)
 
 export type { AttachmentKind, AttachmentProps, MentionProps, MessageProps, MessageRole, WorkingProps }
 export { Attachment, Mention, Message, Working }
