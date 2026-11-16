@@ -8,7 +8,8 @@
 'use client'
 
 import { type ReactNode, useMemo } from 'react'
-import { SizeContext, type SizeVariant, sizeMap } from '../../lib/size-context'
+import { SizeContext } from '../../lib/size-context'
+import { type SizeVariant, sizeMap } from '../../lib/size-scale'
 import { useControllableState } from '../../lib/use-controllable-state'
 
 /**
@@ -68,13 +69,7 @@ function SizeScope({ size, children }: { size?: SizeVariant; children: ReactNode
   return size ? <SizeProvider size={size}>{children}</SizeProvider> : children
 }
 
-export type { SizeClasses, SizeVariant, TypeScaleRole, TypeScaleStep } from '../../lib/size-context'
-export {
-  sizeMap,
-  typeScale,
-  useSize,
-  useSizeContext,
-  useSizeVariant,
-  useTypeScale,
-} from '../../lib/size-context'
+export { useSize, useSizeContext, useSizeVariant, useTypeScale } from '../../lib/size-context'
+export type { SizeClasses, SizeVariant, TypeScaleRole, TypeScaleStep } from '../../lib/size-scale'
+export { sizeMap, typeScale } from '../../lib/size-scale'
 export { SizeProvider, SizeScope }

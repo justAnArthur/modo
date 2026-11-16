@@ -19,6 +19,8 @@
  *   same rect.
  */
 
+'use client'
+
 import type { ReactNode, Ref } from 'react'
 import { MorphPartInOverlay } from './morph-part'
 import { GOO_MATRIX, type Morph } from './use-morph'

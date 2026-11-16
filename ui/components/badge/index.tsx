@@ -7,7 +7,7 @@
 
 'use client'
 
-import { cva, type VariantProps } from 'class-variance-authority'
+import type { VariantProps } from 'class-variance-authority'
 import { AnimatePresence, animate, motion } from 'motion/react'
 import { forwardRef, type HTMLAttributes, type ReactNode, useLayoutEffect, useRef } from 'react'
 import { useReduceMotion } from '../../lib/reduced-motion'
@@ -15,45 +15,7 @@ import { useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSizeVariant } from '../../lib/size-context'
 import { spring, springEnter } from '../../lib/springs'
 import { cn } from '../../lib/utils'
-
-const badgeColors = {
-  gray: 'var(--badge-gray)',
-  red: 'var(--badge-red)',
-  orange: 'var(--badge-orange)',
-  amber: 'var(--badge-amber)',
-  yellow: 'var(--badge-yellow)',
-  lime: 'var(--badge-lime)',
-  green: 'var(--badge-green)',
-  emerald: 'var(--badge-emerald)',
-  teal: 'var(--badge-teal)',
-  cyan: 'var(--badge-cyan)',
-  blue: 'var(--badge-blue)',
-  indigo: 'var(--badge-indigo)',
-  violet: 'var(--badge-violet)',
-  purple: 'var(--badge-purple)',
-  fuchsia: 'var(--badge-fuchsia)',
-  pink: 'var(--badge-pink)',
-  rose: 'var(--badge-rose)',
-} as const
-
-type BadgeColor = keyof typeof badgeColors
-
-const badgeVariants = cva('inline-flex items-center weight-medium whitespace-nowrap', {
-  variants: {
-    variant: {
-      solid: '',
-      dot: 'border border-border text-foreground',
-    },
-    size: {
-      default: 'h-6 px-2.5 text-caption gap-1.5',
-      compact: 'h-5 px-2 text-caption-compact gap-1',
-    },
-  },
-  defaultVariants: {
-    variant: 'solid',
-    size: 'default',
-  },
-})
+import { type BadgeColor, badgeColors, badgeVariants } from './variants'
 
 type BadgeSize = SizeVariant
 
@@ -215,7 +177,9 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
 
 Badge.displayName = 'Badge'
 
-export type { BadgeColor, BadgeProps, BadgeSize }
-export { Badge, badgeColors, badgeVariants }
+export type { BadgeColor } from './variants'
+export { badgeColors, badgeVariants } from './variants'
+export type { BadgeProps, BadgeSize }
+export { Badge }
 
 export default Badge

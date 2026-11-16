@@ -7,7 +7,8 @@
 
 import { Field } from '@base-ui/react/field'
 import { forwardRef, type Ref, type TextareaHTMLAttributes, useRef } from 'react'
-import { type FieldVariant, focusControlOnPress, useFieldBox } from '../../../lib/field-classes'
+import { focusControlOnPress, useFieldBox } from '../../../lib/field-box'
+import type { FieldVariant } from '../../../lib/field-classes'
 import { mergeRefs } from '../../../lib/merge-refs'
 import type { SizeVariant } from '../../../lib/size-context'
 import { useAutosizeTextarea } from '../../../lib/use-autosize-textarea'

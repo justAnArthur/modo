@@ -21,7 +21,8 @@ import {
   useRef,
   useState,
 } from 'react'
-import { type FieldVariant, fieldIconClasses, useFieldBox } from '../../../lib/field-classes'
+import { useFieldBox } from '../../../lib/field-box'
+import { type FieldVariant, fieldIconClasses } from '../../../lib/field-classes'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { FocusRing } from '../../../lib/focus-ring'
 import { GooIndicator } from '../../../lib/goo-indicator'

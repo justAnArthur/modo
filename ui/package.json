@@ -53,6 +53,10 @@
       "types": "./dist/primitives/*/index.d.ts",
       "default": "./dist/primitives/*/index.js"
     },
+    "./components/*/variants": {
+      "types": "./dist/components/*/variants.d.ts",
+      "default": "./dist/components/*/variants.js"
+    },
     "./components/*": {
       "types": "./dist/components/*/index.d.ts",
       "default": "./dist/components/*/index.js"
@@ -60,6 +64,54 @@
     "./blocks/*": {
       "types": "./dist/blocks/*/index.d.ts",
       "default": "./dist/blocks/*/index.js"
+    },
+    "./lib/utils": {
+      "types": "./dist/lib/utils.d.ts",
+      "default": "./dist/lib/utils.js"
+    },
+    "./lib/springs": {
+      "types": "./dist/lib/springs.d.ts",
+      "default": "./dist/lib/springs.js"
+    },
+    "./lib/size-scale": {
+      "types": "./dist/lib/size-scale.d.ts",
+      "default": "./dist/lib/size-scale.js"
+    },
+    "./lib/shape-classes": {
+      "types": "./dist/lib/shape-classes.d.ts",
+      "default": "./dist/lib/shape-classes.js"
+    },
+    "./lib/field-classes": {
+      "types": "./dist/lib/field-classes.d.ts",
+      "default": "./dist/lib/field-classes.js"
+    },
+    "./lib/field-box": {
+      "types": "./dist/lib/field-box.d.ts",
+      "default": "./dist/lib/field-box.js"
+    },
+    "./lib/size-context": {
+      "types": "./dist/lib/size-context.d.ts",
+      "default": "./dist/lib/size-context.js"
+    },
+    "./lib/shape-context": {
+      "types": "./dist/lib/shape-context.d.ts",
+      "default": "./dist/lib/shape-context.js"
+    },
+    "./lib/icon-context": {
+      "types": "./dist/lib/icon-context.d.ts",
+      "default": "./dist/lib/icon-context.js"
+    },
+    "./lib/use-controllable-state": {
+      "types": "./dist/lib/use-controllable-state.d.ts",
+      "default": "./dist/lib/use-controllable-state.js"
+    },
+    "./lib/use-morph": {
+      "types": "./dist/lib/use-morph.d.ts",
+      "default": "./dist/lib/use-morph.js"
+    },
+    "./lib/goo-indicator": {
+      "types": "./dist/lib/goo-indicator.d.ts",
+      "default": "./dist/lib/goo-indicator.js"
     },
     "./unocss": {
       "types": "./dist/preset.d.ts",
@@ -75,7 +127,8 @@
     "build": "rm -rf dist && NODE_ENV=production bunup && bun scripts/build-css.ts",
     "build:docs": "modo build --out docs-dist",
     "dev": "modo dev",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "check:dist": "bun scripts/check-dist.ts"
   },
   "dependencies": {
     "@base-ui/react": "1.4.1",
