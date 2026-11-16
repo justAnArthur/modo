@@ -105,7 +105,7 @@ controlled + uncontrolled.
 | `Badge` | `components/data-display/badge` | — | L | `variant` `solid` \| `dot` \| `outline`, `color`, `size`; a new label springs width and blur-crossfades. |
 | `Avatar` | `components/data-display/avatar` | `.Image .Fallback` | L | Base UI Avatar; the image fades in, the fallback shows while it loads or fails; `shape` `circle` \| `square`. |
 | `Progress` | `components/feedback/progress` | `.Spinner` | L | Base UI Progress; the fill slides on `spring.moderate`; `value={null}` sweeps on `--duration-loop`; `label`, `showValue`, `format`. `.Spinner` is Button's loading glyph. |
-| `Meter` | `components/feedback/meter` | — | L | Base UI Meter; `variant` `bar` \| `line` \| `ring`; the fill slides; `warnAt` / `errorAt` or `tone`; `marker`. |
+| `Meter` | `components/feedback/meter` | — | L | Base UI Meter; `variant` `bar` \| `line` \| `ring`; the fill slides; `warnAt` / `errorAt` or `tone`; `marker`; the ring scales with a size class and centres its children; `animate={false}` for clock-driven values. |
 | `StatusDot` | `components/feedback/status-dot` | `.glyph` (= `statusGlyph`) | L | `running` (the loading glyph), `waiting`, `unread`, `idle`, `success`, `error`; `label` for screen readers. |
 | `Kbd` | `components/data-display/kbd` | — | L | `variant` `outline` (keycap, `micro`) \| `plain` (Dropdown's shortcut text). |
 | `EmptyState` | `components/feedback/empty-state` | — | L | `icon`, `title`, `description`, `actions`; `size` steps the actions too. |

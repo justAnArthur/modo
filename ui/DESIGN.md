@@ -613,7 +613,8 @@ shared systems above (look and motion). Ready-made patterns to reach for before 
   button's glyph.
 - **Meter** — a read-only share of a budget as a bar, a bare line or a ring; the bar slides like
   Progress's, ink at rest, the warning and error status hues as the budget runs out; a thin ink tick
-  marks a pace.
+  marks a pace. The ring scales past the glyph for timers, with the time in its centre; a value on a
+  clock steps instead of springing.
 - **StatusDot** — a run state as a glyph: running is the loading button's glyph, the rest dots in
   their status hue (idle a muted ring).
 - **Kbd** — a keycap chip in `micro` on a hairline, or plain muted caption text at a row's end, the
