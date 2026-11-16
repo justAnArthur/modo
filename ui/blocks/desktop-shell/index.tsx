@@ -18,6 +18,18 @@ import { SizeProvider } from '../../primitives/sizes'
 
 type DesktopPlatform = 'mac' | 'windows' | 'linux'
 
+/** Where the title and controls live: one bar across the window, or the main card's own header. */
+type DesktopTitleBar = 'window' | 'card'
+
+// The left column clears the corner controls by one control height.
+const CORNER_CLEARANCE = {
+  default: '[&>[data-slot=sidebar]_[data-sidebar=sidebar]]:pt-9',
+  compact: '[&>[data-slot=sidebar]_[data-sidebar=sidebar]]:pt-7',
+} as const
+
+// The corner's width past the card's 8px inset: the traffic lights' 72px (on mac) and the 28px toggle.
+const CORNER_ROOM = { mac: 'w-23 shrink-0', windows: 'w-6 shrink-0', linux: 'w-6 shrink-0' } as const
+
 // Below this window width the side pane takes the main card's place.
 const NARROW = 768
 
@@ -26,6 +38,8 @@ interface DesktopShellProps {
   platform?: DesktopPlatform
   /** Draws stand-ins for the window controls, for a preview in the browser; a native window draws its own. Defaults to `false`. */
   showControls?: boolean
+  /** `'window'` draws one bar across the window. `'card'` drops it: the window controls and the sidebar toggle sit in the sidebar's top corner, and the title, your controls and the side pane toggle head the main card. Defaults to `'window'`. */
+  titleBar?: DesktopTitleBar
   /** Pins the title bar to one step of the size ladder (36px default, 28px compact). Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
   /** The title bar's middle: the window's title, truncated to fit. */
@@ -129,6 +143,13 @@ function WindowControls() {
  * sidebar toggle, your `leading` controls, the `title`, your `trailing`
  * controls and the side pane toggle.
  *
+ * With `titleBar="card"` there is no bar across the window: the window
+ * controls and the sidebar toggle sit in the sidebar's top corner (the
+ * sidebar's content starts below them), and the title, `trailing` and the
+ * side pane toggle head the main card, which drags the window too. With the
+ * sidebar folded, the corner controls stay put and the card's header makes
+ * room for them.
+ *
  * Under it, the main content is an inset card between two Sidebars: the left
  * one is yours (`left`), the right one holds the side pane (`right`). Each
  * resizes from its rail and folds from its toggle, its rail, or `[` and `]`,
@@ -142,6 +163,7 @@ function WindowControls() {
 export default function DesktopShell({
   platform = 'mac',
   showControls = false,
+  titleBar = 'window',
   size: sizeProp,
   title,
   leading,
@@ -177,38 +199,48 @@ export default function DesktopShell({
     return () => observer.disconnect()
   }, [])
   const paneOpen = hasRight && rightOpen
+  const inCard = titleBar === 'card'
+
+  const corner = (
+    <>
+      {platform === 'mac' && (
+        <div data-tauri-drag-region className="flex h-full w-18 shrink-0 items-center">
+          {showControls && <TrafficLights />}
+        </div>
+      )}
+      {hasLeft && <Toggle side="left" label={leftLabel} open={leftOpen} onClick={() => setLeftOpen(!leftOpen)} />}
+      {leading}
+    </>
+  )
+  const rest = (
+    <>
+      <div data-tauri-drag-region className="flex h-full min-w-0 flex-1 items-center gap-2 px-1">
+        {title}
+      </div>
+      {trailing}
+      {hasRight && <Toggle side="right" label={rightLabel} open={rightOpen} onClick={() => setRightOpen(!rightOpen)} />}
+      {showControls && platform !== 'mac' && <WindowControls />}
+    </>
+  )
+  const bar = cn('flex shrink-0 select-none items-center gap-1 pr-1.5', size.control, platform !== 'mac' && 'pl-1.5')
 
   return (
-    <div ref={root} className={cn('@container flex h-full w-full flex-col bg-background', className)}>
+    <div ref={root} className={cn('@container relative flex h-full w-full flex-col bg-background', className)}>
       <SizeProvider size={size.variant}>
-        <header
-          data-tauri-drag-region
-          className={cn(
-            'flex shrink-0 select-none items-center gap-1 pr-1.5',
-            size.control,
-            platform !== 'mac' && 'pl-1.5',
-          )}
-        >
-          {platform === 'mac' && (
-            <div data-tauri-drag-region className="flex h-full w-18 shrink-0 items-center">
-              {showControls && <TrafficLights />}
-            </div>
-          )}
-          {hasLeft && <Toggle side="left" label={leftLabel} open={leftOpen} onClick={() => setLeftOpen(!leftOpen)} />}
-          {leading}
-          <div data-tauri-drag-region className="flex h-full min-w-0 flex-1 items-center gap-2 px-1">
-            {title}
+        {inCard ? (
+          <div data-tauri-drag-region className={cn(bar, 'absolute top-0 left-0 z-20')}>
+            {corner}
           </div>
-          {trailing}
-          {hasRight && (
-            <Toggle side="right" label={rightLabel} open={rightOpen} onClick={() => setRightOpen(!rightOpen)} />
-          )}
-          {showControls && platform !== 'mac' && <WindowControls />}
-        </header>
+        ) : (
+          <header data-tauri-drag-region className={bar}>
+            {corner}
+            {rest}
+          </header>
+        )}
       </SizeProvider>
       {/* Sidebar defaults to the viewport's height; under the title bar both columns take the body's. */}
       <Sidebar.Provider
-        className="min-h-0 flex-1 [&>[data-slot=sidebar]]:h-full"
+        className={cn('min-h-0 flex-1 [&>[data-slot=sidebar]]:h-full', inCard && CORNER_CLEARANCE[size.variant])}
         persist={false}
         mobileBreakpoint={0}
         shortcut={hasLeft ? undefined : null}
@@ -231,7 +263,22 @@ export default function DesktopShell({
           </Sidebar>
           {/* The inset's margins come from its peer, the side pane; the left sidebar is in the outer provider, so that side is set here: flush while it is open (its rows bring their own gutter), 8px once it folds. */}
           <Sidebar.Inset className={cn('@container min-h-0 min-w-0', hasLeft && leftOpen && '!ml-0')}>
-            {narrow && paneOpen ? right : main}
+            {inCard && (
+              <SizeProvider size={size.variant}>
+                <header data-tauri-drag-region className={cn(bar, 'pl-1.5')}>
+                  {/* Room for the corner controls, which stay put when the sidebar folds. */}
+                  {!(hasLeft && leftOpen) && <div data-tauri-drag-region className={CORNER_ROOM[platform]} />}
+                  {rest}
+                </header>
+              </SizeProvider>
+            )}
+            {inCard ? (
+              <div className="flex min-h-0 flex-1 flex-col">{narrow && paneOpen ? right : main}</div>
+            ) : narrow && paneOpen ? (
+              right
+            ) : (
+              main
+            )}
           </Sidebar.Inset>
         </Sidebar.Provider>
       </Sidebar.Provider>
@@ -239,4 +286,4 @@ export default function DesktopShell({
   )
 }
 
-export type { DesktopPlatform, DesktopShellProps }
+export type { DesktopPlatform, DesktopShellProps, DesktopTitleBar }

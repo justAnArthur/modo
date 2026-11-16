@@ -296,6 +296,7 @@ export default function Workspace({
   return (
     <DesktopShell
       showControls
+      titleBar="card"
       className="min-h-[640px]"
       leftLabel="Sessions sidebar"
       leftOpen={leftOpen}

@@ -47,6 +47,51 @@ The title bar starts after the traffic lights (drawn here with `showControls`; a
 </div>
 </div>
 
+# No title bar
+
+With `titleBar="card"` nothing runs across the window: the traffic lights and the sidebar toggle sit in the sidebar's corner, and the title, your controls and the side pane toggle head the main card. Fold the sidebar and the card's header makes room for the corner.
+
+<div className="w-full overflow-x-auto">
+<div className="h-[560px] w-[960px] overflow-hidden rounded-xl border border-border">
+  <DesktopShell
+    showControls
+    titleBar="card"
+    title={<span className="truncate text-body weight-medium text-foreground">Quarterly notes</span>}
+    trailing={
+      <Button variant="ghost" size="icon-compact" aria-label="Search">
+        <Search />
+      </Button>
+    }
+    left={
+      <Sidebar variant="inset" defaultValue="inbox">
+        <Sidebar.Content>
+          <Sidebar.Group>
+            <Sidebar.GroupLabel>Library</Sidebar.GroupLabel>
+            <Sidebar.Menu>
+              <Sidebar.MenuItem><Sidebar.MenuButton icon={Inbox} value="inbox">Inbox</Sidebar.MenuButton></Sidebar.MenuItem>
+              <Sidebar.MenuItem><Sidebar.MenuButton icon={Star} value="starred">Starred</Sidebar.MenuButton></Sidebar.MenuItem>
+              <Sidebar.MenuItem><Sidebar.MenuButton icon={Folder} value="projects">Projects</Sidebar.MenuButton></Sidebar.MenuItem>
+            </Sidebar.Menu>
+          </Sidebar.Group>
+        </Sidebar.Content>
+      </Sidebar>
+    }
+    right={
+      <div className="flex flex-col gap-2 p-4">
+        <span className="text-subtitle text-foreground">Details</span>
+        <span className="text-body text-muted-foreground">The side pane: anything about what the main card shows.</span>
+      </div>
+    }
+    main={
+      <div className="flex flex-1 flex-col gap-2 p-6">
+        <span className="text-title text-foreground">Quarterly notes</span>
+        <span className="text-body text-muted-foreground">The main card keeps an even gutter to whichever sidebar is open.</span>
+      </div>
+    }
+  />
+</div>
+</div>
+
 # Windows and Linux
 
 Off macOS the title bar starts at the edge; the stand-in window controls sit at its end. Here the side pane starts folded and there is no left sidebar.
