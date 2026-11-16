@@ -3,6 +3,7 @@ import { globSync, readFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
+import ts from 'typescript'
 
 // After `bun run build`: the package's shape for 1.0.
 // - "use client" marks exactly the client chunks, and the server-safe
@@ -142,6 +143,43 @@ const imports = specifiers.map(specifier => `await import(${JSON.stringify(speci
 const node = spawnSync('node', ['--input-type=module', '-e', imports], { cwd: ROOT, encoding: 'utf8' })
 if (node.status !== 0) failures.push(`an entry does not load in Node:\n${node.stderr}`)
 
+// bunup's .d.ts bundler drops a function's expando statics (`X.Part = …` emits a
+// `declare namespace X`), so compound parts go through `Object.assign`. Every capitalized
+// static the JS carries must type-check from the .d.ts, as a consumer reaches it.
+const statics: string[] = []
+for (const [i, specifier] of specifiers.entries()) {
+  for (const [name, value] of Object.entries(await import(specifier))) {
+    if (typeof value !== 'function' && (typeof value !== 'object' || !value)) continue
+    for (const part of Object.keys(value).filter(key => /^[A-Z]/.test(key))) statics.push(`m${i}.${name}.${part}`)
+  }
+}
+const consumer = join(ROOT, '__check-dist-consumer__.ts')
+const consumerSource = [
+  ...specifiers.map((specifier, i) => `import * as m${i} from ${JSON.stringify(specifier)}`),
+  ...statics,
+].join('\n')
+const tsOptions: ts.CompilerOptions = {
+  noEmit: true,
+  strict: true,
+  skipLibCheck: true,
+  target: ts.ScriptTarget.ES2022,
+  module: ts.ModuleKind.ESNext,
+  moduleResolution: ts.ModuleResolutionKind.Bundler,
+  jsx: ts.JsxEmit.ReactJSX,
+}
+const host = ts.createCompilerHost(tsOptions)
+const { fileExists, readFile, getSourceFile } = host
+host.fileExists = file => file === consumer || fileExists(file)
+host.readFile = file => (file === consumer ? consumerSource : readFile(file))
+host.getSourceFile = (file, version, ...rest) =>
+  file === consumer ? ts.createSourceFile(file, consumerSource, version) : getSourceFile(file, version, ...rest)
+for (const diagnostic of ts.getPreEmitDiagnostics(ts.createProgram([consumer], tsOptions, host))) {
+  const line = diagnostic.file?.getLineAndCharacterOfPosition(diagnostic.start ?? 0).line ?? 0
+  failures.push(
+    `consumer types: ${consumerSource.split('\n')[line]}: ${ts.flattenDiagnosticMessageText(diagnostic.messageText, ' ')}`,
+  )
+}
+
 // A modo host bundles and documents a re-exported item from its `source`: every file
 // that source reaches (relative imports, `{@include}`d examples) must ship, and every
 // package it imports must be one the host installs with ui.
@@ -180,6 +218,7 @@ console.log(
   `${contexts.length} contexts, one declaration each; Button follows ./lib/size-context: ${plain !== compact}`,
 )
 console.log(`${specifiers.length} exports entries with JS and .d.ts, all loaded in Node`)
+console.log(`${statics.length} compound statics typed in the .d.ts`)
 console.log(`${sourceTargets.length} source targets shipped, reaching ${reached.size} shipped files`)
 
 if (failures.length) {
