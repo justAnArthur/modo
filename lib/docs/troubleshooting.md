@@ -48,10 +48,16 @@ Fix the source and save; dev rebuilds.
 
 | Message | Meaning |
 | --- | --- |
-| `warning: <tier>/<id>: No type literal found on parameter` | The parser found no props type, so there's no props table. An item with no props at all gets this too; it is harmless. |
-| `warning: <tier>/<id>: Could not find object type literal` | The props type is a name that isn't an `interface` or object `type` in the same file (an import, a `ComponentProps<…>`). Declare it in `index.tsx` to get a table. See [items.md](./items.md#props). |
+| `warning: typescript (>=5) is not installed: …` | modo reads items with its plain parser. Add `typescript` to your devDependencies for re-exported items, `{@inheritDoc}` and props from other types. See [items.md](./items.md#without-typescript). |
+| `warning: <tier>/<id>: No type literal found on parameter` | Plain parser only: no props type found, so there's no props table. An item with no props at all gets this too; it is harmless. |
+| `warning: <tier>/<id>: Could not find object type literal` | Plain parser only: the props type is a name that isn't an `interface` or object `type` in the same file. Install `typescript`, or declare it in `index.tsx`. See [items.md](./items.md#props). |
 | `warning: <tier>/<id>: No \`export default\` found` | The parser found no `export default`. |
-| `warning: <tier>/<id>: {@include ./x.md}: file not found` | An include path is wrong. Paths are relative to `index.tsx`. |
+| `warning: <tier>/<id>: Could not resolve the default export from "x"` | The item re-exports a module that doesn't resolve. See [items.md](./items.md#re-exported-items). |
+| `warning: <tier>/<id>: The default export is not a component` | The default export has no call signature, so there's no props table. |
+| `warning: <tier>/<id>: {@inheritDoc x}: could not resolve "x"` | The reference is neither a module with a default export nor a name in the file's scope. See [items.md](./items.md#inheritdoc). |
+| `warning: <tier>/<id>: {@inheritDoc}: circular` | Bases inherit from each other in a loop. |
+| `warning: <tier>/<id>: {@include ./x.md}: file not found` | An include path is wrong, or leaves the package the block belongs to. Paths are relative to the file the block is in. |
+| `warning: <tier>/<id>: @example {@include ./x.mdx}: outside <dir>` | A block read from a package includes a file outside that package. |
 | `warning: <tier>/<id>: @example include not found: x.mdx` | The `@example {@include …}` file is missing. |
 | `warning: examples export "X" collides with the item "X"` | An `examples` export has an item's name. The item wins; alias the export. |
 | `warning: SHARED BUILD DISABLED — …` | The combined build failed but no single entry reproduces the error. Every entry is bundled on its own, so modules shared between items (contexts, providers) are duplicated. Look at the error printed with it. |

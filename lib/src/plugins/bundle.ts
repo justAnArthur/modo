@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, readdirSync, rmdirSync, rmSync, statSync } from 'node:fs'
 import { join, relative, resolve } from 'node:path'
 import mdx from '@mdx-js/esbuild'
-import esbuild, { type BuildOptions, type Message, type Metafile } from 'esbuild'
+import esbuild, { type BuildOptions, type Message, type Metafile, type Plugin } from 'esbuild'
 import remarkFrontmatter from 'remark-frontmatter'
 import remarkGfm from 'remark-gfm'
 import { isComponentRef, splitRef } from '../lib/refs'
@@ -9,7 +9,8 @@ import type { SiteConfig } from '../lib/schema'
 import { loadModoConfig } from '../node/config-loader'
 import { discoverCssForFile, itemsRootOf, parseItems, type SourceItem } from '../node/discover'
 import { type DiscoveredGuide, discoverGuides } from '../node/discover-guides'
-import { resolveUserFile } from '../node/resolve-ref'
+import { createDocsService } from '../node/docs'
+import { isModoPackage, packageDirOf, resolveSourceExport, resolveUserFile } from '../node/resolve-ref'
 import { remarkModoExamples } from './mdx-examples'
 import { createReporter } from './report'
 
@@ -76,6 +77,9 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
 
   let current: Promise<BundleResult> | null = null
   let last: Promise<unknown> = Promise.resolve()
+  // One per bundler: in dev, each run reuses the files the last one parsed.
+  const docs = createDocsService({ root: userRoot })
+  let warnedNoTypeScript = false
 
   async function run(): Promise<BundleResult> {
     const failures: EntryFailure[] = []
@@ -87,8 +91,15 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
     })
     const root = itemsRootOf(userRoot, config)
     if (!existsSync(root)) errors.push(`root "${config?.root}" not found (resolved to ${root})`)
-    const { items: sources, errors: itemErrors, warnings } = parseItems(userRoot, root)
+    const service = await docs
+    const { items: sources, errors: itemErrors, warnings } = parseItems(userRoot, root, service)
     errors.push(...itemErrors)
+    if (!service && !warnedNoTypeScript) {
+      warnedNoTypeScript = true
+      warnings.push(
+        'typescript (>=5) is not installed: items are read by the plain parser, without re-exported items, {@inheritDoc} or props declared in other types',
+      )
+    }
     const parsed = sources.map(it => ({ ...it, key: `items/${it.tier}/${it.id}` }))
 
     const keyByFile = new Map<string, string>()
@@ -206,6 +217,34 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
   }
 }
 
+/**
+ * A design system documented with modo that publishes its sources (`source` export condition)
+ * is bundled from them, as its docs are read from them: an item and the examples.mdx beside its
+ * source then share one copy of each module. Only those packages, and only when the source
+ * ships; every other import resolves with esbuild's default conditions.
+ */
+function modoSources(): Plugin {
+  return {
+    name: 'modo:sources',
+    setup(build) {
+      const cache = new Map<string, string | null>()
+      build.onStart(() => cache.clear())
+      build.onResolve({ filter: /^[^./]/ }, args => {
+        if (args.kind === 'entry-point') return undefined
+        const key = `${args.resolveDir}\0${args.path}`
+        let path = cache.get(key)
+        if (path === undefined) {
+          const file = resolveSourceExport(args.path, args.resolveDir)
+          const pkg = file && packageDirOf(file)
+          path = file && pkg && isModoPackage(pkg) ? file : null
+          cache.set(key, path)
+        }
+        return path ? { path } : undefined
+      })
+    },
+  }
+}
+
 function baseOptions(userRoot: string, outdir: string): BuildOptions {
   return {
     absWorkingDir: userRoot,
@@ -238,7 +277,10 @@ function baseOptions(userRoot: string, outdir: string): BuildOptions {
       ].join('\n'),
     },
     loader: { '.ts': 'ts', '.tsx': 'tsx', '.css': 'empty', '.svg': 'dataurl' },
-    plugins: [mdx({ remarkPlugins: [remarkGfm, remarkFrontmatter, remarkModoExamples], jsxImportSource: 'react' })],
+    plugins: [
+      modoSources(),
+      mdx({ remarkPlugins: [remarkGfm, remarkFrontmatter, remarkModoExamples], jsxImportSource: 'react' }),
+    ],
     jsx: 'automatic',
     jsxImportSource: 'react',
     logLevel: 'silent',

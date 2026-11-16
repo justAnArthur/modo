@@ -112,7 +112,11 @@
       "peerDependencies": {
         "react": ">=18",
         "react-dom": ">=18",
+        "typescript": ">=5",
       },
+      "optionalPeers": [
+        "typescript",
+      ],
     },
     "ui": {
       "name": "@justanarthur/modo-ui",

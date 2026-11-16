@@ -108,17 +108,29 @@ A block tag counts only at the start of a line, outside a code fence. Any other 
 
 ## Props
 
-The props table comes from the source, not from TypeScript's checker:
+The props table comes from TypeScript's checker, so the props type can be written any way TypeScript understands:
 
-- The destructured parameter and its inline object type: `function X({ a, b = 1 }: { a: string; b?: number })`.
-- Or a bare type name that resolves to an `interface` or object `type` in the same file: `function X(props: XProps)`.
-- Or `const X = forwardRef<HTMLElement, XProps>(…)`, which reads `XProps` from the same file.
+- The first parameter's type: `function X({ a, b = 1 }: { a: string; b?: number })`, `function X(props: XProps)`.
+- Or `const X = forwardRef<HTMLElement, XProps>(…)` (also under `memo`), else the component's own call signature (`Object.assign(Root, { Header })`).
+- `extends`, `Omit` / `Pick` / `Partial`, intersections and unions, and types imported from other files or packages all resolve. A union's props are merged; a prop is optional unless every member has it.
 
-Each prop's JSDoc is its description, in Markdown. Two tags are read from it:
+Which members make the table:
+
+- Members declared in your own files, in the package the item's docs were read from (a [re-export](#re-exported-items)), or in another package documented with modo (one that depends on `@justanarthur/modo`).
+- Not members inherited from other packages' typings: React's DOM attributes (`HTMLAttributes`), a headless library's props. Re-declare one in your type to list it.
+- Not keys an object literal yields through inference (cva's `VariantProps`), nor index signatures.
+
+Props are listed by declaring type, in the order the types first appear, then in source order.
+
+Each prop's JSDoc is its description, in Markdown. Its default comes from, in order:
+
+1. The destructuring: `b = 1`. A bare constant (`accept = DEFAULT_ACCEPT`) gives way to a documented default.
+2. `@default x` in the prop's JSDoc.
+3. A closing sentence of the form "Defaults to `x`." (kept in the description).
 
 | Tag | Effect |
 | --- | --- |
-| `@default x` | Fills the Default column. A default in the destructuring (`b = 1`) wins over it. |
+| `@default x` | Fills the Default column. |
 | `@values a, b` | Names the allowed values as "One of `a`, `b`." It is dropped when the type already lists them as a literal union. |
 
 ```tsx
@@ -127,12 +139,57 @@ interface BadgeProps {
   tone?: string
   /** @default 'md' */
   size?: 'sm' | 'md'
+  /** Shows a dot before the label. Defaults to `false`. */
+  dot?: boolean
 }
 ```
 
-Quoted prop names (`'aria-label'?: string`) and index signatures are left out of the table. Types imported from another file don't resolve; declare the props type in `index.tsx` if you want a table.
-
 Shell slot matching reads these props too: keep `children` (and `href` for a Link) visible in the type. See [shell.md](./shell.md).
+
+### Without TypeScript
+
+`typescript` (5 or later) is an optional peer dependency. Without it, modo prints one `[modo:bundle] warning:` and reads items with a plain parser: the props come from the inline object type, or a same-file `interface` / object `type` (`function X(props: XProps)`, `forwardRef<HTMLElement, XProps>`); quoted prop names, inherited members and imported types are left out, and re-exported items and `{@inheritDoc}` don't resolve.
+
+## Re-exported items
+
+An item may be another package's component. Its `index.tsx` re-exports it, in any of these forms:
+
+```tsx
+export { default } from '@acme/ds/components/button'
+export { Button as default } from '@acme/ds/components/button'
+import Button from '@acme/ds/components/button'
+export default Button
+```
+
+modo follows the export to its declaration and reads the docs, props and `@example {@include ./examples.mdx}` there, next to that file. A relative re-export (`export { default } from './impl'`) works the same way.
+
+- A package that publishes its sources under a `source` export condition (`"./components/*": { "source": "./components/*/index.tsx", "default": "./dist/…" }`) is read from them. If that package is documented with modo, the items and their examples are bundled from the same sources, so they share one copy of each module.
+- Otherwise its typings (`.d.ts`) are read, and its examples.mdx is looked for beside them.
+- The page's block tags (`@since`, `@deprecated`, `@source`) are the target's.
+
+## {@inheritDoc}
+
+A wrapper documents what it adds and inherits the rest:
+
+```tsx
+import Button, { type ButtonProps } from '@acme/ds/components/button'
+
+/**
+ * {@inheritDoc @acme/ds/components/button}
+ *
+ * The fancy one glows.
+ *
+ * @example {@include ./examples.mdx}
+ */
+export default function FancyButton({ glow = false, ...props }: ButtonProps & { glow?: boolean }) {
+  return <Button data-glow={glow} {...props} />
+}
+```
+
+- The reference is a module specifier (its default export) or a name in the file's scope (`{@inheritDoc Button}`).
+- The base's description comes first, then the wrapper's own. Its examples (inline and examples.mdx) come before the wrapper's.
+- The base's props show when the wrapper's type includes them; the wrapper's block tags are its own.
+- A base may inherit from another; a cycle and an unresolvable reference are `[modo:bundle] warning:`s.
 
 ## examples.mdx
 
@@ -229,7 +286,7 @@ Inline examples render before the `examples.mdx` ones.
 
 ## Includes
 
-Includes are TypeDoc inline tags, usable anywhere in the block. Paths are relative to `index.tsx`. They are not recursive.
+Includes are TypeDoc inline tags, usable anywhere in the block. Paths are relative to the file the block is in (`index.tsx`, or a re-exported item's source). They are not recursive, and they stay inside the package the block belongs to (and your project, for your own files): a block read from `node_modules` can't include a file outside its package.
 
 | Tag | Effect |
 | --- | --- |

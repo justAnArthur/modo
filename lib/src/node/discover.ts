@@ -3,6 +3,7 @@ import { relative, resolve, sep } from 'node:path'
 import type { SiteConfig } from '../lib/schema'
 import { TIERS, type Tier } from '../lib/tiers'
 import { type ParsedItem, parseItemSource } from '../lib/tsdoc'
+import type { DocsService } from './docs'
 
 export interface DiscoveredItem {
   id: string
@@ -63,54 +64,67 @@ export function itemsRootOf(userRoot: string, config: Pick<SiteConfig, 'root'> |
 
 /**
  * Every item under `root` (the tiers' folder), parsed; paths stay relative to the project root.
- * A repeated id is an error; a parse problem or missing include, a warning.
+ * Read through the compiler when `docs` is given, else by the plain parser (no re-exports,
+ * `{@inheritDoc}` or props from other types). A repeated id is an error; a parse problem or
+ * missing include, a warning.
  */
 export function parseItems(
   userRoot: string,
   root: string,
+  docs?: DocsService | null,
 ): { items: SourceItem[]; errors: string[]; warnings: string[] } {
-  const items: SourceItem[] = []
+  const found: Array<DiscoveredItem & { tier: Tier }> = []
   const errors: string[] = []
   const warnings: string[] = []
   for (const tier of TIERS) {
     const tierDir = resolve(root, tier)
     if (!existsSync(tierDir)) continue
     const seen = new Set<string>()
-    for (const { id, group, dir } of discoverItems(tierDir)) {
+    for (const item of discoverItems(tierDir)) {
       // Ids key urls and bundle entries per tier, so a group can't repeat one.
-      if (seen.has(id)) {
-        errors.push(`${relative(userRoot, dir)}: another ${tier} item is already named "${id}"; skipped`)
+      if (seen.has(item.id)) {
+        errors.push(`${relative(userRoot, item.dir)}: another ${tier} item is already named "${item.id}"; skipped`)
         continue
       }
-      seen.add(id)
-      const file = resolve(dir, 'index.tsx')
-      const { errors: parseErrors, ...parsed } = parseItemSource(readFileSync(file, 'utf8'), {
-        readFile: path => {
-          try {
-            return readFileSync(resolve(dir, path), 'utf8')
-          } catch {
-            return null
-          }
-        },
-      })
-      if (parseErrors.length > 0) warnings.push(`${tier}/${id}: ${parseErrors.join('; ')}`)
-      const mdxExamples = parsed.mdxExamples.map(path => resolve(dir, path))
-      for (const doc of mdxExamples.filter(d => !existsSync(d))) {
-        warnings.push(`${tier}/${id}: @example include not found: ${relative(dir, doc)}`)
-      }
-      items.push({
-        ...parsed,
-        id,
-        tier,
-        group,
-        // Anonymous: the item is named after its folder.
-        name: parsed.name || id,
-        mdxExamples: mdxExamples.filter(d => existsSync(d)),
-        cssFiles: discoverCssForFile(file),
-        file,
-        path: relative(userRoot, file).split(sep).join('/'),
-      })
+      seen.add(item.id)
+      found.push({ ...item, tier })
     }
   }
+
+  docs?.refresh(found.map(it => resolve(it.dir, 'index.tsx')))
+  const items: SourceItem[] = []
+  for (const { id, group, dir, tier } of found) {
+    const file = resolve(dir, 'index.tsx')
+    const { errors: parseErrors, ...parsed } = docs ? docs.parse(file) : parseSource(file)
+    if (parseErrors.length > 0) warnings.push(`${tier}/${id}: ${parseErrors.join('; ')}`)
+    const mdxExamples = parsed.mdxExamples.map(path => resolve(dir, path))
+    for (const doc of mdxExamples.filter(d => !existsSync(d))) {
+      warnings.push(`${tier}/${id}: @example include not found: ${relative(dir, doc)}`)
+    }
+    items.push({
+      ...parsed,
+      id,
+      tier,
+      group,
+      // Anonymous: the item is named after its folder.
+      name: parsed.name || id,
+      mdxExamples: mdxExamples.filter(d => existsSync(d)),
+      cssFiles: discoverCssForFile(file),
+      file,
+      path: relative(userRoot, file).split(sep).join('/'),
+    })
+  }
   return { items, errors, warnings }
+}
+
+function parseSource(file: string): ParsedItem {
+  return parseItemSource(readFileSync(file, 'utf8'), {
+    readFile: path => {
+      try {
+        return readFileSync(resolve(file, '..', path), 'utf8')
+      } catch {
+        return null
+      }
+    },
+  })
 }

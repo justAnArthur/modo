@@ -19,7 +19,7 @@ For each slot, in order:
 | Select | `components/` | `Select` | `value`, `onValueChange`, `options` | `<select>` |
 | Sidebar | `components/` | `Sidebar` | `children` | `<nav>` |
 
-The name is the default export's function or const name, not the folder name. Props come from the parsed TSDoc type (see [items.md](./items.md#props)), so `children` must be visible there: a props type imported from another file hides it. A Select that declares `onChange` instead of `onValueChange` doesn't match.
+The name is the default export's function or const name, not the folder name. Props come from the item's props table (see [items.md](./items.md#props)), so `children` must be visible there: inherited from another package's typings (`ButtonHTMLAttributes`), it's left out; the slot types below count. A Select that declares `onChange` instead of `onValueChange` doesn't match.
 
 ## Typing slot components
 
