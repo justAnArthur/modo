@@ -210,16 +210,19 @@ fades the whole thing and stops the popup opening.
 
 Own the query with `query` + `onQueryChange`, pass `filter={null}` so the
 list shows exactly what you hand it, and set `loading` while the answer is
-on its way: the chevron blurs into a spinner and a status row sits under the
-rows. The footer's "Load more" asks for the next page. `RemoteDemo` is a docs
-stage: a fake server that answers after 600ms.
+on its way: the chevron blurs into a spinner and a status row is pinned under
+the rows, in sight however far the list scrolls. The footer's "Load more" asks
+for the next page and leaves the caret in the field. `RemoteDemo` is a docs
+stage: a fake server that answers after 600ms, asked only while the list is
+open, so a pick, which writes its label into the field, fetches nothing.
 
 <RemoteDemo />
 
 # Footer
 
 `Combobox.Content`'s `footer` stays pinned under the list while the rows
-scroll. A function gets `{ close, query }`.
+scroll. A press on its button leaves focus and the caret in the input; Tab
+still reaches it. A function gets `{ close, query }`.
 
 <Combobox items={['Design', 'Engineering', 'Marketing', 'Operations', 'Sales', 'Support']}>
   <Combobox.Input placeholder="Pick a team…" />

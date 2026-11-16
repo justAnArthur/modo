@@ -11,6 +11,7 @@ import {
   forwardRef,
   type HTMLAttributes,
   type ReactNode,
+  type RefObject,
   useCallback,
   useContext,
   useEffect,
@@ -59,8 +60,69 @@ interface ComboboxContentProps extends AnchorProps, MorphProps, Omit<HTMLAttribu
   className?: string
   /** `Combobox.Empty` and `Combobox.List`. */
   children: ReactNode
-  /** Pinned under the list, past a hairline: a "Load more" or "Add new…" action. A function gets `{ close, query }`. */
+  /** Pinned under the list, past a hairline: a "Load more" or "Add new…" action. A press on a button there keeps focus in the input; Tab reaches it. A function gets `{ close, query }`. */
   footer?: ComboboxFooter
+}
+
+/**
+ * A press on a footer control leaves focus, and the caret, in the input, so
+ * the arrows and typing carry on. A text field in the footer still takes the
+ * press. The keyboard reaches the controls by Tab (`useFooterFocus`).
+ */
+function keepInputFocus(e: MouseEvent) {
+  if ((e.target as HTMLElement).closest('input, textarea, select, [contenteditable]')) return
+  e.preventDefault()
+}
+
+const TABBABLE =
+  'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
+
+/**
+ * The popup is portalled, so the page's tab order never reaches the footer:
+ * Tab from the open field steps into it, and Tab or Shift+Tab off its ends
+ * steps back to the field (Tab also closes the list, so the next Tab moves on).
+ * A close while focus is in the footer (Escape, an action that closes) hands
+ * focus back to the field too.
+ */
+function useFooterFocus(
+  open: boolean,
+  close: () => void,
+  anchorRef: RefObject<HTMLDivElement>,
+  footerRef: RefObject<HTMLDivElement>,
+) {
+  useEffect(() => {
+    const footer = footerRef.current
+    const input = anchorRef.current?.querySelector<HTMLInputElement>('input[role="combobox"]')
+    if (!footer || !input) return
+    if (!open) {
+      if (footer.contains(document.activeElement)) input.focus()
+      return
+    }
+    const tabbables = () => [...footer.querySelectorAll<HTMLElement>(TABBABLE)]
+
+    const intoFooter = (e: KeyboardEvent) => {
+      const first = tabbables()[0]
+      if (e.key !== 'Tab' || e.shiftKey || !first) return
+      e.preventDefault()
+      first.focus()
+    }
+    const outOfFooter = (e: KeyboardEvent) => {
+      const all = tabbables()
+      if (e.key !== 'Tab' || e.target !== (e.shiftKey ? all[0] : all.at(-1))) return
+      e.preventDefault()
+      input.focus()
+      if (!e.shiftKey) close()
+    }
+
+    input.addEventListener('keydown', intoFooter)
+    footer.addEventListener('keydown', outOfFooter)
+    footer.addEventListener('mousedown', keepInputFocus)
+    return () => {
+      input.removeEventListener('keydown', intoFooter)
+      footer.removeEventListener('keydown', outOfFooter)
+      footer.removeEventListener('mousedown', keepInputFocus)
+    }
+  })
 }
 
 export const ComboboxContent = forwardRef<HTMLDivElement, ComboboxContentProps>(
@@ -82,10 +144,14 @@ export const ComboboxContent = forwardRef<HTMLDivElement, ComboboxContentProps>(
     ref,
   ) => {
     const { open, origin } = useOverlay('Combobox.Content')
-    const { anchorRef, close, inputValue } = useComboboxContext()
+    const { anchorRef, close, inputValue, loading, loadingLabel } = useComboboxContext()
+    const LoaderIcon = useIcon('loader')
+    const size = useSize()
     const morph = useMorph(open, origin, { from, effect, hideSource, tier })
     const popupRef = useMergeRefs(ref, morph.popupRef)
     const footerNode = typeof footer === 'function' ? footer({ close, query: inputValue.trim() }) : footer
+    const footerRef = useRef<HTMLDivElement>(null)
+    useFooterFocus(open, close, anchorRef, footerRef)
 
     return (
       <ComboboxPrimitive.Portal container={usePortalContainer(container)}>
@@ -107,9 +173,33 @@ export const ComboboxContent = forwardRef<HTMLDivElement, ComboboxContentProps>(
               )}
             >
               {children}
+              {/* Outside the scrolling list, so a long stale list can't push it out of sight. Always mounted: a live region announces what enters it. */}
+              <div role="status" className="shrink-0">
+                {loading && (
+                  // Not a row: no hover, no pick.
+                  <div
+                    className={cn(
+                      'flex items-center justify-center text-muted-foreground',
+                      size.control,
+                      size.itemPx,
+                      size.gap,
+                      size.text,
+                    )}
+                  >
+                    <LoaderIcon
+                      size={size.icon}
+                      strokeWidth={1.5}
+                      className="shrink-0 animate-spin motion-reduce:animate-none"
+                    />
+                    <span className="truncate text-trim">{loadingLabel}</span>
+                  </div>
+                )}
+              </div>
               {footerNode !== undefined && footerNode !== null && footerNode !== false && (
                 // Outside the scrolling list, so it stays put while the rows scroll.
-                <div className="shrink-0 border-t border-border p-1">{footerNode}</div>
+                <div ref={footerRef} className="shrink-0 border-t border-border p-1">
+                  {footerNode}
+                </div>
               )}
             </PopupSurface>
           </ComboboxPrimitive.Popup>
@@ -130,11 +220,9 @@ interface ComboboxListProps {
 
 export const ComboboxList = forwardRef<HTMLDivElement, ComboboxListProps>(({ className, children }, ref) => {
   const { open } = useOverlay('Combobox.List')
-  const { multiple, inputValue, createRow, loading, loadingLabel } = useComboboxContext()
+  const { multiple, inputValue, createRow } = useComboboxContext()
   const highlight = useContext(ComboboxHighlightContext)
   const PlusIcon = useIcon('plus')
-  const LoaderIcon = useIcon('loader')
-  const size = useSize()
   const containerRef = useRef<HTMLDivElement>(null)
   const listRef = useMergeRefs(containerRef, ref)
   const hover = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
@@ -226,26 +314,6 @@ export const ComboboxList = forwardRef<HTMLDivElement, ComboboxListProps>(({ cla
             )}
           </ComboboxPrimitive.Collection>
         </ComboboxPrimitive.List>
-        {loading && (
-          // Not a row: no hover, no pick. Under the rows, so the items already here hold still while more arrive.
-          <div
-            role="status"
-            className={cn(
-              'flex shrink-0 items-center justify-center text-muted-foreground',
-              size.control,
-              size.itemPx,
-              size.gap,
-              size.text,
-            )}
-          >
-            <LoaderIcon
-              size={size.icon}
-              strokeWidth={1.5}
-              className="shrink-0 animate-spin motion-reduce:animate-none"
-            />
-            <span className="truncate text-trim">{loadingLabel}</span>
-          </div>
-        )}
       </ScrollArea>
     </ComboboxListContext.Provider>
   )
