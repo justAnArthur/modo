@@ -25,6 +25,7 @@ interface ShapeClasses {
   mergedRadius: number
 }
 
+// biome-ignore-start lint/plugin: upstream radii, kept in step with bgRadius / mergedRadius
 const shapeMap: Record<ShapeVariant, ShapeClasses> = {
   pill: {
     variant: 'pill',
@@ -53,6 +54,7 @@ const shapeMap: Record<ShapeVariant, ShapeClasses> = {
     bgRadius: 8,
     mergedRadius: 8,
   },
+  // biome-ignore-end lint/plugin: upstream radii
 }
 
 export type { ShapeClasses, ShapeVariant }
