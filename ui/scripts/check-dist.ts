@@ -111,7 +111,10 @@ if (plain === compact)
 const packed = spawnSync('npm', ['pack', '--dry-run', '--json'], { cwd: ROOT, encoding: 'utf8' })
 const shipped = new Set<string>(JSON.parse(packed.stdout)[0].files.map((file: { path: string }) => file.path))
 const specifiers: string[] = []
-for (const [subpath, value] of Object.entries<string | { types: string; default: string }>(pkg.exports)) {
+const sourceTargets: string[] = []
+for (const [subpath, value] of Object.entries<string | { types: string; source?: string; default: string }>(
+  pkg.exports,
+)) {
   if (typeof value === 'string') {
     if (!shipped.has(value.slice(2))) failures.push(`${subpath}: ${value} is not in the tarball`)
     continue
@@ -128,6 +131,9 @@ for (const [subpath, value] of Object.entries<string | { types: string; default:
     const types = value.types.slice(2).replace('*', star)
     if (!shipped.has(js)) failures.push(`${subpath}: ${js} is not in the tarball`)
     if (!shipped.has(types)) failures.push(`${subpath}: ${types} is not in the tarball`)
+    const source = value.source?.slice(2).replace('*', star)
+    if (source && !shipped.has(source)) failures.push(`${subpath}: its source ${source} is not in the tarball`)
+    if (source) sourceTargets.push(source)
     specifiers.push(`${PACKAGE}${subpath.slice(1).replace('*', star)}`)
   }
 }
@@ -135,6 +141,36 @@ for (const [subpath, value] of Object.entries<string | { types: string; default:
 const imports = specifiers.map(specifier => `await import(${JSON.stringify(specifier)})`).join('\n')
 const node = spawnSync('node', ['--input-type=module', '-e', imports], { cwd: ROOT, encoding: 'utf8' })
 if (node.status !== 0) failures.push(`an entry does not load in Node:\n${node.stderr}`)
+
+// A modo host bundles and documents a re-exported item from its `source`: every file
+// that source reaches (relative imports, `{@include}`d examples) must ship, and every
+// package it imports must be one the host installs with ui.
+const installed = new Set([...Object.keys(pkg.dependencies), ...Object.keys(pkg.peerDependencies)])
+const SPECIFIER =
+  /^\s*(?:import|export)\s[^'";]*?from\s*['"]([^'"]+)['"]|^\s*import\s*['"]([^'"]+)['"]|\bimport\(\s*['"]([^'"]+)['"]\s*\)|\{@include(?:Code)?\s+([^\s}]+)\s*\}/gm
+// code to read in an examples.mdx, not code that runs
+const FENCE = /^```[\s\S]*?^```/gm
+const reached = new Set<string>()
+const queue = [...sourceTargets]
+for (let file = queue.pop(); file; file = queue.pop()) {
+  if (reached.has(file)) continue
+  reached.add(file)
+  for (const [, ...groups] of read(file).replace(FENCE, '').matchAll(SPECIFIER)) {
+    const spec = groups.find(Boolean)!
+    if (!spec.startsWith('.')) {
+      const name = spec
+        .split('/')
+        .slice(0, spec.startsWith('@') ? 2 : 1)
+        .join('/')
+      if (!installed.has(name)) failures.push(`${file} imports ${spec}, which is not a dependency`)
+      continue
+    }
+    const base = join(dirname(file), spec)
+    const hit = ['', '.ts', '.tsx', '/index.ts', '/index.tsx'].map(ext => base + ext).find(f => shipped.has(f))
+    if (hit) queue.push(hit)
+    else failures.push(`${file} imports ${spec}, which is not in the tarball`)
+  }
+}
 
 const client = [...chunks.values()].filter(chunk => chunk.client).length
 console.log(
@@ -144,6 +180,7 @@ console.log(
   `${contexts.length} contexts, one declaration each; Button follows ./lib/size-context: ${plain !== compact}`,
 )
 console.log(`${specifiers.length} exports entries with JS and .d.ts, all loaded in Node`)
+console.log(`${sourceTargets.length} source targets shipped, reaching ${reached.size} shipped files`)
 
 if (failures.length) {
   console.error(failures.join('\n'))
