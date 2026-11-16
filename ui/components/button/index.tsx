@@ -13,6 +13,7 @@ import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
 import {
   type ButtonHTMLAttributes,
   forwardRef,
+  type MouseEvent,
   type ReactElement,
   type ReactNode,
   useLayoutEffect,
@@ -27,6 +28,8 @@ import { spring, springEnter } from '../../lib/springs'
 import { cn } from '../../lib/utils'
 import { buttonVariants } from './variants'
 
+type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'outline' | 'ghost' | 'destructive' | 'success' | 'link'
+
 type ButtonSizeCanonical = 'default' | 'compact' | 'icon' | 'icon-compact'
 
 /** `icon-sm` is the modo chrome's name for `icon-compact` (its shell Button contract). */
@@ -35,15 +38,15 @@ type ButtonSize = ButtonSizeCanonical | 'icon-sm'
 interface ButtonProps
   extends ButtonHTMLAttributes<HTMLButtonElement>,
     Omit<VariantProps<typeof buttonVariants>, 'size'> {
-  /** Visual style of the button. Defaults to `"primary"`. */
-  variant?: 'primary' | 'secondary' | 'tertiary' | 'ghost'
+  /** Visual style of the button. `outline` frames it in the control border; `destructive` and `success` tint the label and a wash of their hue; `link` is underlined-on-hover text at the control height. Defaults to `"primary"`. */
+  variant?: ButtonVariant
   /** Step on the size ladder (36px default, 28px compact — see Sizes), or its square icon-only step. `"icon-sm"` is `"icon-compact"` (the modo chrome's name). Omitted, the button follows the surrounding SizeProvider. */
   size?: ButtonSize
   /** Render this element (a link) with the button's styling and internals; its handlers and refs merge with the button's. */
   render?: ReactElement
   /** `render` spelled as the single child element: the child becomes the button and its children the label. Defaults to `false`. */
   asChild?: boolean
-  /** Folds the button into a circle around a spinner and disables it; the button keeps its box, so nothing around it moves. Defaults to `false`. */
+  /** Folds the button into a circle around a spinner and blocks presses; the button keeps its box, so nothing around it moves, and keeps keyboard focus (`aria-disabled`, not `disabled`). Defaults to `false`. */
   loading?: boolean
   /** Icon displayed before the label. */
   leadingIcon?: IconComponent
@@ -63,7 +66,7 @@ interface ButtonProps
    side at any width — a scale would warp (2% of a 400px button is 8px
    sideways but under 1px vertically). Fill colors are opaque color-mix()es
    rather than alpha so the fill and its spread ring never seam. */
-const bgVariants: Record<string, string> = {
+const bgVariants: Record<ButtonVariant, string> = {
   primary:
     '[--btn-bg:var(--foreground)] group-hover:[--btn-bg:color-mix(in_oklab,var(--foreground)_90%,var(--background))] group-active:[--btn-bg:color-mix(in_oklab,var(--foreground)_80%,var(--background))] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   secondary:
@@ -79,11 +82,21 @@ const bgVariants: Record<string, string> = {
   ghost:
     // biome-ignore lint/plugin: upstream ring geometry; its transparent rest state reads no token
     'bg-transparent shadow-[0_0_0_1px_transparent] group-hover:bg-hover group-hover:shadow-[0_0_0_1px_var(--hover)] group-active:bg-active group-active:shadow-[0_0_0_0px_var(--active)]',
+  // Tertiary's hand-off on the control border.
+  outline:
+    'bg-transparent shadow-button-outline group-hover:bg-hover group-active:bg-active group-active:shadow-button-outline-pressed',
+  // A status as an action: a wash of its hue (the ghost recipe, a 1px ring
+  // of the same wash as the spread), deepening on hover and press.
+  destructive:
+    'bg-destructive-wash ring-1 ring-destructive-wash group-hover:bg-destructive-wash-hover group-hover:ring-destructive-wash-hover group-active:bg-destructive-wash-active group-active:ring-destructive-wash-active group-active:ring-0',
+  success:
+    'bg-success-wash ring-1 ring-success-wash group-hover:bg-success-wash-hover group-hover:ring-success-wash-hover group-active:bg-success-wash-active group-active:ring-success-wash-active group-active:ring-0',
+  link: 'bg-transparent',
 }
 
 /* Forced-active (`active` prop): pressed colors at full size; the
    geometric press-collapse still reacts on top. */
-const activeBgVariants: Record<string, string> = {
+const activeBgVariants: Record<ButtonVariant, string> = {
   primary:
     '[--btn-bg:color-mix(in_oklab,var(--foreground)_80%,var(--background))] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   secondary:
@@ -91,9 +104,18 @@ const activeBgVariants: Record<string, string> = {
   tertiary:
     'bg-active shadow-[0_0_0_1px_var(--border),inset_0_0_0_0px_var(--border)] group-active:shadow-[0_0_0_0px_var(--border),inset_0_0_0_1px_var(--border)]',
   ghost: 'bg-active shadow-[0_0_0_1px_var(--active)] group-active:shadow-[0_0_0_0px_var(--active)]',
+  outline: 'bg-active shadow-button-outline group-active:shadow-button-outline-pressed',
+  destructive: 'bg-destructive-wash-active ring-1 ring-destructive-wash-active group-active:ring-0',
+  success: 'bg-success-wash-active ring-1 ring-success-wash-active group-active:ring-0',
+  link: 'bg-transparent',
 }
 
 const enter = springEnter(spring.moderate)
+
+function swallow(event: MouseEvent) {
+  event.preventDefault()
+  event.stopPropagation()
+}
 
 /* The surface contracts from the button's box into a circle one control tall
    around the spinner; the button's own box never changes. Left and right mix
@@ -139,14 +161,23 @@ function useLoadingMorph(loading: boolean) {
 /**
  * Versatile button with variants, sizes, loading state, and icon support.
  *
- * Four variants (primary, secondary, tertiary, ghost) on the two-step size
- * ladder: 36px by default, 28px compact — an explicit `size` wins, otherwise
- * the button follows the surrounding SizeProvider. The press effect shrinks
- * the fill by exactly 1px per side at any width, icons thicken their stroke
- * on hover, and `loading` folds the surface into a circle around a spinner
- * (and back when it ends) while the button keeps its box, so nothing around
- * it moves. Built on Base UI's Button; `render` (or `asChild`) renders your
- * own element, e.g. a link, with the button's styling instead.
+ * Upstream's four variants (primary, secondary, tertiary, ghost) plus four
+ * local ones on the two-step size ladder: 36px by default, 28px compact — an
+ * explicit `size` wins, otherwise the button follows the surrounding
+ * SizeProvider. The press effect shrinks the fill by exactly 1px per side at
+ * any width, icons thicken their stroke on hover, and `loading` folds the
+ * surface into a circle around a spinner (and back when it ends) while the
+ * button keeps its box, so nothing around it moves. A loading button blocks
+ * presses but keeps keyboard focus. Built on Base UI's Button; `render` (or
+ * `asChild`) renders your own element, e.g. a link, with the button's
+ * styling instead.
+ *
+ * `outline` frames the button in the control border, which holds 3:1
+ * against any surface where tertiary's hairline doesn't. `destructive` and
+ * `success` put the hue's text on a wash of itself, never a solid fill, so a
+ * view keeps one primary; their labels hold AA contrast at rest, hover and
+ * press. `link` is foreground text at the control height whose underline
+ * fades in on hover.
  *
  * @example {@include ./examples.mdx}
  * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/button.tsx Fluid Functionalism
@@ -156,7 +187,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       className,
-      variant,
+      variant = 'primary',
       size,
       render,
       asChild = false,
@@ -181,7 +212,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const iconSize = isCompact ? 14 : 16
     const spinnerSizeClass = isCompact ? 'h-7 w-7' : 'h-9 w-9'
     const shape = useShape()
-    const bgClass = active ? activeBgVariants[variant ?? 'primary'] : bgVariants[variant ?? 'primary']
+    const bgClass = active ? activeBgVariants[variant] : bgVariants[variant]
 
     const surface = useLoadingMorph(loading)
 
@@ -265,6 +296,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         iconRight: !isIconOnly && !!TrailingIcon,
       }),
       shape.button,
+      // A held link shows its underline.
+      active && variant === 'link' && 'decoration-current',
       className,
     )
 
@@ -272,7 +305,16 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       return slotElement(
         template,
         'button',
-        { ...props, ref, 'aria-busy': loading || undefined, className: rootClassName, style },
+        {
+          ...props,
+          ref,
+          'aria-busy': loading || undefined,
+          'aria-disabled': loading || props['aria-disabled'],
+          // A pending action blocks a second press, and a link's navigation.
+          onClickCapture: loading ? swallow : props.onClickCapture,
+          className: rootClassName,
+          style,
+        },
         internals,
       )
     }
@@ -282,6 +324,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         className={rootClassName}
         disabled={disabled || loading}
+        // Loading disables through aria-disabled, so a keyboard user keeps focus on it.
+        focusableWhenDisabled={loading && !disabled}
         aria-busy={loading || undefined}
         style={style}
         {...props}
@@ -295,7 +339,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button'
 
 export { buttonVariants } from './variants'
-export type { ButtonProps, ButtonSize }
+export type { ButtonProps, ButtonSize, ButtonVariant }
 export { Button }
 
 export default Button
