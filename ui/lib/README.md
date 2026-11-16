@@ -15,9 +15,11 @@ Reach for these before writing the pattern by hand. One line each: what it is, w
 
 ## Size and surface
 
+- `size-scale.ts` — `sizeMap`, `typeScale` and their types (`SizeVariant`, `SizeClasses`): the ladder's class tables, pure, so a Server Component can read them. `size-context.tsx` re-exports them beside the hooks (`useSize`, `useSizeVariant`, `useTypeScale`).
+- `shape-classes.ts` — `shapeMap` and `ShapeVariant`: the shape's class tables, pure. `shape-context.tsx` re-exports them beside `ShapeProvider` / `useShape`.
 - `primitives/sizes` `SizeScope` — `<SizeScope size={size}>`: wraps a component's subtree for its own `size` prop. Replaces `size ? <SizeProvider size={size}>{x}</SizeProvider> : x`.
 - `surface-context.tsx` `useLift(offset)` — the level `offset` above the substrate, capped at 8. Replaces `Math.min(useSurface() + N, 8)`; re-provide it with `SurfaceProvider`.
-- `row-index.tsx` — `IndexedRows` numbers a group's rows; `useRowIndex(own?)` is a row's index (0 outside a group); `useRowPosition()` is `undefined` outside `IndexedRows` (a table's header row).
+- `row-index.tsx` — `IndexedRows` numbers a group's rows; `useRowIndex(own?)` is a row's index (0 outside a group); `useRowPosition()` is `undefined` outside `IndexedRows` (a table's header row). `isRow(child)` picks which children count, so a label or separator between rows takes no position (Dropdown).
 
 ## Rows, focus, labels
 
@@ -35,16 +37,16 @@ Reach for these before writing the pattern by hand. One line each: what it is, w
   - `positionerProps(props, { side, align, sideOffset })`: spread on the `Positioner`; handles opening in place.
   - `PortalContainer` + `usePortalContainer(container)`: scope every overlay's portal (replaces `Tooltip.PortalContainer`'s and ColorPicker's own contexts).
   - A popup may be mounted while closed (Select): reset overlay indices on close, remeasure on open.
-- `use-morph.ts` `MorphProps` — `from`, `effect`, `hideSource`, `tier`, documented once: extend it in a content's props.
+- `use-morph.ts` `MorphProps` — `from`, `effect`, `hideSource`, `tier`, documented once: extend it in a content's props. `returnFocus: false` when the owner places focus itself (Base UI's `finalFocus`).
 - `popup-surface.tsx` — `<PopupSurface morph lift="popup|panel" radius? className>`: the lift, the re-provided level, the background, the shadow (fixed 3 for popups, the level's for panels) and `MorphSurface`.
 - `popup.ts` — `POPUP_SHAPE`: the shape every popup list reads (`shapeMap.rounded`, whatever the global shape: pill corners break the rows' concentric fit). Never `shapeMap.rounded` inline. Also `popupScrollAreaClass` / `popupViewportClass`, `POPUP_NAV_KEYS`, `isDisabledRow`.
-- `popup-rows.tsx` — `rowClasses({ size, shape, lit, disabled })`, `rowLabelClass`, `<RowIcon icon lit />`, `<CheckMark checked reserve? />` (reduced-motion aware), `PopupLabel`, `PopupSeparator`. A checked row's background is a `<GooIndicator rect className={cn('bg-active', shape.bg)} />`.
+- `popup-rows.tsx` — `rowClasses({ size, shape, lit, disabled })`, `rowLabelClass`, `rowLabelBoxClass(label)` (text trims and truncates; a node label keeps its own box) over `isTextLabel(label)`, `<RowIcon icon lit />`, `<CheckMark checked reserve? />` (reduced-motion aware), `PopupLabel`, `PopupSeparator`. A checked row's background is a `<GooIndicator rect className={cn('bg-active', shape.bg)} />`.
 - `slot.tsx` — `slotPart<Props>(Primitive.Trigger, 'Name')`: a Base UI trigger or close part that takes `render` / `asChild`. `slotRender`: the same for a part you write by hand. `resolveSlotTemplate` + `slotElement`: `render` / `asChild` on a plain element, merging classes, styles, handlers and refs (Button, Sidebar).
 
 ## Text fields and dates
 
 - `field-box.ts` — `useFieldBox({ variant, invalid, disabled, readOnly, required, active, size })`: the box around a text field's control (the ladder in its `variant`, `data-active` / `data-invalid` / `data-disabled` / `data-readonly`, radius, inset), returning the resolved state for the control's attributes; `focusControlOnPress(ref)` for a press in its padding. `FieldStateContext` carries a field's state (Field, InputGroup.Field) to the control inside it, and `useFieldState({ invalid, disabled, readOnly, required })` resolves a control's own props against it (own prop wins) for a root that is not the box (Select, Combobox, the pickers). Its `labelId` names a control Base UI doesn't label.
-- `field-classes.ts` — the ladder's class tables: `fieldVariants`, `fieldIconClasses` for a leading icon, `fieldTextInset[size]` lines a label or message up with the text inside.
+- `field-classes.ts` — the ladder's class tables, pure: `fieldVariants` (with `data-readonly`: the ring when lit or focused, never the fill), `fieldIconClasses` for a leading icon, `fieldAdornmentClasses` + `FIELD_ADORNMENT_ICON[size]` for content beside the text (a unit, a prefix), `fieldActionClasses` + `FIELD_ACTION[size]` + `FIELD_ACTION_RADIUS[shape]` for an icon button inside the box (4px inside the ring; `FIELD_ACTION_BOX` / `FIELD_ACTION_END` for a side-by-side pair), `fieldTextInset[size]` lines a label or message up with the text inside.
 - `spinner-glyph.tsx` — `<SpinnerGlyph className />`: Button's figure-eight loading glyph (Button, Progress.Spinner), on `--duration-loop`, breathing under reduced motion.
 - `use-autosize-textarea.ts` — `useAutosizeTextarea(ref, { minRows, maxRows }, deps)`: grows a textarea with its text, then scrolls; returns the measure.
 - `date-locale.ts` — `monthRange(today, startMonth?, endMonth?)`: the `{ start, end }` months a picker offers: `startMonth` / `endMonth`, else 100 years back and 50 ahead. Calendar and MonthPicker share it. Also the locale readers (`hourCycleOf`, `parseDateText`, `parseTimeText`, `parseMonthText`, `fieldLabel`).
