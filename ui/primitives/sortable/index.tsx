@@ -146,128 +146,131 @@ interface SortableProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Sortable({
-  items,
-  order,
-  defaultOrder,
-  onOrderChange,
-  orientation = 'vertical',
-  as = 'ul',
-  handle = false,
-  label,
-  className,
-  itemClassName,
-}: SortableProps) {
-  const [ids, setIds] = useControllableState(order, defaultOrder ?? items.map(item => item.id), onOrderChange)
-  const [lifted, setLifted] = useState<{ id: string; from: string[] } | null>(null)
-  const [dragging, setDragging] = useState<string | null>(null)
-  const [announcement, setAnnouncement] = useState('')
-  const targets = useRef(new Map<string, HTMLElement>())
-  const reduced = useReduceMotion()
-  const hintId = useId()
-  const horizontal = orientation === 'horizontal'
-  const byId = new Map(items.map(item => [item.id, item]))
-  const labelOf = (id: string) => byId.get(id)?.label ?? id
-  const position = (list: string[], id: string) => `position ${list.indexOf(id) + 1} of ${list.length}`
+const Sortable = Object.assign(
+  function Sortable({
+    items,
+    order,
+    defaultOrder,
+    onOrderChange,
+    orientation = 'vertical',
+    as = 'ul',
+    handle = false,
+    label,
+    className,
+    itemClassName,
+  }: SortableProps) {
+    const [ids, setIds] = useControllableState(order, defaultOrder ?? items.map(item => item.id), onOrderChange)
+    const [lifted, setLifted] = useState<{ id: string; from: string[] } | null>(null)
+    const [dragging, setDragging] = useState<string | null>(null)
+    const [announcement, setAnnouncement] = useState('')
+    const targets = useRef(new Map<string, HTMLElement>())
+    const reduced = useReduceMotion()
+    const hintId = useId()
+    const horizontal = orientation === 'horizontal'
+    const byId = new Map(items.map(item => [item.id, item]))
+    const labelOf = (id: string) => byId.get(id)?.label ?? id
+    const position = (list: string[], id: string) => `position ${list.indexOf(id) + 1} of ${list.length}`
 
-  // A move re-inserts the lifted node, which drops its focus.
-  useLayoutEffect(() => {
-    if (lifted) targets.current.get(lifted.id)?.focus({ preventScroll: true })
-  }, [ids, lifted])
+    // A move re-inserts the lifted node, which drops its focus.
+    useLayoutEffect(() => {
+      if (lifted) targets.current.get(lifted.id)?.focus({ preventScroll: true })
+    }, [ids, lifted])
 
-  const onKeyDown = (id: string) => (e: KeyboardEvent) => {
-    if (e.key === ' ' || e.key === 'Enter') {
-      e.preventDefault()
-      if (lifted) {
-        setLifted(null)
-        setAnnouncement(`Dropped ${labelOf(id)} at ${position(ids, id)}.`)
-      } else {
-        setLifted({ id, from: ids })
-        setAnnouncement(
-          `Lifted ${labelOf(id)}, ${position(ids, id)}. Use the arrow keys to move, Space to drop, Escape to cancel.`,
-        )
+    const onKeyDown = (id: string) => (e: KeyboardEvent) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault()
+        if (lifted) {
+          setLifted(null)
+          setAnnouncement(`Dropped ${labelOf(id)} at ${position(ids, id)}.`)
+        } else {
+          setLifted({ id, from: ids })
+          setAnnouncement(
+            `Lifted ${labelOf(id)}, ${position(ids, id)}. Use the arrow keys to move, Space to drop, Escape to cancel.`,
+          )
+        }
+        return
       }
-      return
-    }
-    if (!lifted) return
-    if (e.key === 'Escape') {
+      if (!lifted) return
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setIds(lifted.from)
+        setLifted(null)
+        setAnnouncement(`Cancelled. ${labelOf(id)} is back at ${position(lifted.from, id)}.`)
+        return
+      }
+
+      const back = horizontal ? 'ArrowLeft' : 'ArrowUp'
+      const forward = horizontal ? 'ArrowRight' : 'ArrowDown'
+      if (e.key !== back && e.key !== forward) return
       e.preventDefault()
-      setIds(lifted.from)
-      setLifted(null)
-      setAnnouncement(`Cancelled. ${labelOf(id)} is back at ${position(lifted.from, id)}.`)
-      return
+      const from = ids.indexOf(id)
+      const to = from + (e.key === forward ? 1 : -1)
+      if (to < 0 || to >= ids.length) return
+      const next = [...ids]
+      next.splice(from, 1)
+      next.splice(to, 0, id)
+      setIds(next)
+      setAnnouncement(`Moved ${labelOf(id)} to ${position(next, id)}.`)
     }
 
-    const back = horizontal ? 'ArrowLeft' : 'ArrowUp'
-    const forward = horizontal ? 'ArrowRight' : 'ArrowDown'
-    if (e.key !== back && e.key !== forward) return
-    e.preventDefault()
-    const from = ids.indexOf(id)
-    const to = from + (e.key === forward ? 1 : -1)
-    if (to < 0 || to >= ids.length) return
-    const next = [...ids]
-    next.splice(from, 1)
-    next.splice(to, 0, id)
-    setIds(next)
-    setAnnouncement(`Moved ${labelOf(id)} to ${position(next, id)}.`)
-  }
+    const onBlur = (e: FocusEvent) => {
+      // A null related target is the move re-inserting the node; anything else is the user leaving.
+      if (lifted && e.relatedTarget) setLifted(null)
+    }
 
-  const onBlur = (e: FocusEvent) => {
-    // A null related target is the move re-inserting the node; anything else is the user leaving.
-    if (lifted && e.relatedTarget) setLifted(null)
-  }
+    const live = (
+      <>
+        <span id={hintId} className="sr-only">
+          Press Space to lift, the arrow keys to move, Space to drop.
+        </span>
+        <span aria-live="assertive" className="sr-only">
+          {announcement}
+        </span>
+      </>
+    )
 
-  const live = (
-    <>
-      <span id={hintId} className="sr-only">
-        Press Space to lift, the arrow keys to move, Space to drop.
-      </span>
-      <span aria-live="assertive" className="sr-only">
-        {announcement}
-      </span>
-    </>
-  )
-
-  return (
-    <>
-      <Reorder.Group
-        axis={horizontal ? 'x' : 'y'}
-        values={ids}
-        onReorder={setIds}
-        as={as === 'none' ? 'div' : as}
-        role={as === 'none' ? 'none' : undefined}
-        // A name would override `role="none"` and turn the box back into a group.
-        aria-label={as === 'none' ? undefined : label}
-        className={cn('relative flex', horizontal ? 'flex-row' : 'flex-col', className)}
-      >
-        {ids.map(id => (
-          <Row
-            key={id}
-            id={id}
-            item={byId.get(id)}
-            handle={handle}
-            bare={as === 'none'}
-            raised={lifted?.id === id || dragging === id}
-            transition={reduced ? STILL : MOVE}
-            hintId={hintId}
-            focusRef={node => {
-              if (node) targets.current.set(id, node)
-              else targets.current.delete(id)
-            }}
-            onKeyDown={onKeyDown(id)}
-            onBlur={onBlur}
-            onDragStart={() => setDragging(id)}
-            onDragEnd={() => setDragging(null)}
-            className={itemClassName}
-          />
-        ))}
-        {/* Inside a host list the box is the only place that isn't the list itself. */}
-        {as === 'none' && live}
-      </Reorder.Group>
-      {as !== 'none' && live}
-    </>
-  )
-}
+    return (
+      <>
+        <Reorder.Group
+          axis={horizontal ? 'x' : 'y'}
+          values={ids}
+          onReorder={setIds}
+          as={as === 'none' ? 'div' : as}
+          role={as === 'none' ? 'none' : undefined}
+          // A name would override `role="none"` and turn the box back into a group.
+          aria-label={as === 'none' ? undefined : label}
+          className={cn('relative flex', horizontal ? 'flex-row' : 'flex-col', className)}
+        >
+          {ids.map(id => (
+            <Row
+              key={id}
+              id={id}
+              item={byId.get(id)}
+              handle={handle}
+              bare={as === 'none'}
+              raised={lifted?.id === id || dragging === id}
+              transition={reduced ? STILL : MOVE}
+              hintId={hintId}
+              focusRef={node => {
+                if (node) targets.current.set(id, node)
+                else targets.current.delete(id)
+              }}
+              onKeyDown={onKeyDown(id)}
+              onBlur={onBlur}
+              onDragStart={() => setDragging(id)}
+              onDragEnd={() => setDragging(null)}
+              className={itemClassName}
+            />
+          ))}
+          {/* Inside a host list the box is the only place that isn't the list itself. */}
+          {as === 'none' && live}
+        </Reorder.Group>
+        {as !== 'none' && live}
+      </>
+    )
+  },
+  { Handle: SortableHandle },
+)
 
 interface RowProps {
   id: string
@@ -341,8 +344,6 @@ function Row({
     </Reorder.Item>
   )
 }
-
-Sortable.Handle = SortableHandle
 
 export type { SortableAs, SortableHandleProps, SortableItem, SortableOrientation, SortableProps }
 export { Sortable, SortableHandle, useSortableHandle }

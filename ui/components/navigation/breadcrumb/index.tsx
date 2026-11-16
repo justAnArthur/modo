@@ -181,90 +181,93 @@ interface BreadcrumbProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Breadcrumb({ items: itemsProp, children, size: sizeProp, className }: BreadcrumbProps) {
-  const items =
-    itemsProp ??
-    Children.toArray(children)
-      .filter(isValidElement<BreadcrumbItemProps>)
-      .map(child => child.props)
-  const size = useSize(sizeProp)
-  const shape = useShape()
-  const navRef = useRef<HTMLElement>(null)
-  const measureRef = useRef<HTMLOListElement>(null)
-  const listRef = useRef<HTMLOListElement>(null)
-  const hover = useFluidHover(listRef, { axis: 'x', gapClick: false })
-  const [folded, setFolded] = useState(0)
-  const labels = items.map(item => item.label).join('\n')
+const Breadcrumb = Object.assign(
+  function Breadcrumb({ items: itemsProp, children, size: sizeProp, className }: BreadcrumbProps) {
+    const items =
+      itemsProp ??
+      Children.toArray(children)
+        .filter(isValidElement<BreadcrumbItemProps>)
+        .map(child => child.props)
+    const size = useSize(sizeProp)
+    const shape = useShape()
+    const navRef = useRef<HTMLElement>(null)
+    const measureRef = useRef<HTMLOListElement>(null)
+    const listRef = useRef<HTMLOListElement>(null)
+    const hover = useFluidHover(listRef, { axis: 'x', gapClick: false })
+    const [folded, setFolded] = useState(0)
+    const labels = items.map(item => item.label).join('\n')
 
-  // The measuring copy holds every crumb, a separator and the ellipsis, so the
-  // fold is computed from real widths whatever the font or the size step.
-  useLayoutEffect(() => {
-    const nav = navRef.current
-    const measure = measureRef.current
-    if (!nav || !measure) return
-    const fit = () => {
-      const widths = [...measure.children].map(cell => (cell as HTMLElement).offsetWidth)
-      const ellipsis = widths.pop() ?? 0
-      const separator = widths.pop() ?? 0
-      setFolded(foldCount(widths, separator, ellipsis, nav.clientWidth))
-    }
-    fit()
-    const observer = new ResizeObserver(fit)
-    observer.observe(nav)
-    return () => observer.disconnect()
-  }, [labels, size.variant])
+    // The measuring copy holds every crumb, a separator and the ellipsis, so the
+    // fold is computed from real widths whatever the font or the size step.
+    useLayoutEffect(() => {
+      const nav = navRef.current
+      const measure = measureRef.current
+      if (!nav || !measure) return
+      const fit = () => {
+        const widths = [...measure.children].map(cell => (cell as HTMLElement).offsetWidth)
+        const ellipsis = widths.pop() ?? 0
+        const separator = widths.pop() ?? 0
+        setFolded(foldCount(widths, separator, ellipsis, nav.clientWidth))
+      }
+      fit()
+      const observer = new ResizeObserver(fit)
+      observer.observe(nav)
+      return () => observer.disconnect()
+    }, [labels, size.variant])
 
-  const first = items.slice(0, 1)
-  const hidden = items.slice(1, 1 + folded)
-  const rest = items.slice(1 + folded)
-  const last = items.length - 1
-  // Fluid hover indices: the first crumb, then the ellipsis, then the rest.
-  const restOffset = folded > 0 ? 2 : 1
+    const first = items.slice(0, 1)
+    const hidden = items.slice(1, 1 + folded)
+    const rest = items.slice(1 + folded)
+    const last = items.length - 1
+    // Fluid hover indices: the first crumb, then the ellipsis, then the rest.
+    const restOffset = folded > 0 ? 2 : 1
 
-  const nav = (
-    <nav ref={navRef} aria-label="Breadcrumb" className={cn('relative flex w-full min-w-0', className)}>
-      <ol
-        ref={measureRef}
-        aria-hidden="true"
-        className="pointer-events-none invisible absolute top-0 left-0 flex whitespace-nowrap"
-      >
-        {items.map((item, i) => (
-          <li key={`${item.label}-${i}`} className={cn('flex', size.control, size.itemPx, size.text)}>
-            {item.label}
+    const nav = (
+      <nav ref={navRef} aria-label="Breadcrumb" className={cn('relative flex w-full min-w-0', className)}>
+        <ol
+          ref={measureRef}
+          aria-hidden="true"
+          className="pointer-events-none invisible absolute top-0 left-0 flex whitespace-nowrap"
+        >
+          {items.map((item, i) => (
+            <li key={`${item.label}-${i}`} className={cn('flex', size.control, size.itemPx, size.text)}>
+              {item.label}
+            </li>
+          ))}
+          <Separator />
+          <li className={cn('flex items-center', size.control, size.itemPx)}>
+            <span style={{ width: size.icon }} />
           </li>
-        ))}
-        <Separator />
-        <li className={cn('flex items-center', size.control, size.itemPx)}>
-          <span style={{ width: size.icon }} />
-        </li>
-      </ol>
+        </ol>
 
-      <ol ref={listRef} {...hover.handlers} className="relative flex min-w-0 items-center">
-        <FluidHoverHighlight hover={hover} className={shape.bg} />
-        {first.map(item => (
-          <Crumb key="first" item={item} current={last === 0} index={0} hover={hover} />
-        ))}
-        {folded > 0 && (
-          <>
-            <Separator />
-            <Overflow items={hidden} index={1} hover={hover} />
-          </>
-        )}
-        {rest.map((item, i) => (
-          <RestCrumb
-            key={`${item.label}-${1 + folded + i}`}
-            item={item}
-            current={1 + folded + i === last}
-            index={restOffset + i}
-            hover={hover}
-          />
-        ))}
-      </ol>
-    </nav>
-  )
+        <ol ref={listRef} {...hover.handlers} className="relative flex min-w-0 items-center">
+          <FluidHoverHighlight hover={hover} className={shape.bg} />
+          {first.map(item => (
+            <Crumb key="first" item={item} current={last === 0} index={0} hover={hover} />
+          ))}
+          {folded > 0 && (
+            <>
+              <Separator />
+              <Overflow items={hidden} index={1} hover={hover} />
+            </>
+          )}
+          {rest.map((item, i) => (
+            <RestCrumb
+              key={`${item.label}-${1 + folded + i}`}
+              item={item}
+              current={1 + folded + i === last}
+              index={restOffset + i}
+              hover={hover}
+            />
+          ))}
+        </ol>
+      </nav>
+    )
 
-  return <SizeScope size={sizeProp}>{nav}</SizeScope>
-}
+    return <SizeScope size={sizeProp}>{nav}</SizeScope>
+  },
+  { Item: BreadcrumbItem },
+)
 
 function RestCrumb(props: CrumbProps) {
   return (
@@ -274,8 +277,6 @@ function RestCrumb(props: CrumbProps) {
     </>
   )
 }
-
-Breadcrumb.Item = BreadcrumbItem
 
 export type { BreadcrumbItemProps, BreadcrumbProps }
 export { Breadcrumb, BreadcrumbItem }
