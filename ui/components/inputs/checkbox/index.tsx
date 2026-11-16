@@ -15,6 +15,7 @@ import {
   type ForwardRefExoticComponent,
   forwardRef,
   type HTMLAttributes,
+  type PointerEvent,
   type ReactNode,
   type RefAttributes,
   useCallback,
@@ -25,7 +26,9 @@ import {
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { FocusRing } from '../../../lib/focus-ring'
+import { useIcon } from '../../../lib/icon-context'
 import { mergeRefs } from '../../../lib/merge-refs'
+import { useReduceMotion } from '../../../lib/reduced-motion'
 import { focusRowOnPress, useRowGroup } from '../../../lib/row-group'
 import { IndexedRows, useRowIndex } from '../../../lib/row-index'
 import { useShape } from '../../../lib/shape-context'
@@ -140,12 +143,14 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
 CheckboxGroup.displayName = 'CheckboxGroup'
 
 interface CheckboxProps extends HTMLAttributes<HTMLDivElement> {
-  /** Text label for the checkbox. */
-  label: string
+  /** Text label for the checkbox. Omit it, outside a group, for the bare box (see Bare): name it with `aria-label`, `aria-labelledby` or a `<label htmlFor>` pointing at its `id`. */
+  label?: string
   /** Whether the checkbox is checked (controlled). Defaults to the group's checked set inside a `Checkbox.Group`, else its own state. */
   checked?: boolean
   /** Whether a standalone checkbox starts checked (uncontrolled). Defaults to `false`. */
   defaultChecked?: boolean
+  /** Shows a dash instead of the check: some, not all, of what it stands for is on. A press checks it. Defaults to `false`. */
+  indeterminate?: boolean
   /** Called with the new state whenever the checkbox is toggled, in a group or not. */
   onCheckedChange?: (checked: boolean) => void
   /** Called when the checkbox is toggled (a group's `onCheckedIndicesChange` fires too). */
@@ -166,15 +171,117 @@ type CheckboxComponent = ForwardRefExoticComponent<CheckboxProps & RefAttributes
   Group: typeof CheckboxGroup
 }
 
+// Icon swap (motion.md): the dash shares the check's cell, so the box never resizes.
+const SHOWN = { opacity: 1, scale: 1, filter: 'blur(0px)' }
+const HIDDEN = { opacity: 0, scale: 0.6, filter: 'blur(4px)' }
+const swapEnter = { type: 'tween' as const, duration: spring.fast.duration, ease: 'easeOut' as const }
+const swapLeave = { type: 'tween' as const, ...spring.fast.exit, ease: 'easeIn' as const }
+
+interface CheckboxBoxProps {
+  checked: boolean
+  indeterminate: boolean
+  /** Lit: the border darkens. */
+  active: boolean
+  compact: boolean
+  /** Already checked at mount: the check is there, not drawn in. */
+  skipAnimation: boolean
+  /** A bare box keeps its border when marked: a lone check would read as a bullet. */
+  bare: boolean
+}
+
+function CheckboxBox({ checked, indeterminate, active, compact, skipAnimation, bare }: CheckboxBoxProps) {
+  const Minus = useIcon('minus')
+  const reduced = useReduceMotion()
+  const marked = checked || indeterminate
+
+  return (
+    <>
+      <div
+        className={cn(
+          'absolute inset-0 border-solid border-[1.5px] transition-all duration-fast',
+          compact ? 'rounded-sm' : 'rounded-box',
+          marked && !bare ? 'border-transparent' : active || marked ? 'border-control' : 'border-border',
+        )}
+      />
+      <AnimatePresence>
+        {checked && !indeterminate && (
+          <CheckboxPrimitive.Indicator
+            keepMounted
+            render={indicatorProps => {
+              const {
+                style: _s,
+                onDrag: _onDrag,
+                onDragStart: _onDragStart,
+                onDragEnd: _onDragEnd,
+                onAnimationStart: _onAnimationStart,
+                onAnimationEnd: _onAnimationEnd,
+                onAnimationIteration: _onAnimationIteration,
+                ...rest
+              } = indicatorProps as React.HTMLAttributes<SVGSVGElement>
+              return (
+                <motion.svg
+                  {...rest}
+                  width={compact ? 16 : 18}
+                  height={compact ? 16 : 18}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-foreground"
+                  initial={{ opacity: 1 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 1 }}
+                >
+                  <motion.path
+                    d="M6 12L10 16L18 8"
+                    initial={{ pathLength: skipAnimation ? 1 : 0 }}
+                    animate={{
+                      pathLength: 1,
+                      transition: { duration: spring.fast.duration, ease: 'easeOut' },
+                    }}
+                    exit={{
+                      pathLength: 0,
+                      transition: { duration: 0.04, ease: 'easeIn' },
+                    }}
+                  />
+                </motion.svg>
+              )
+            }}
+          />
+        )}
+      </AnimatePresence>
+      {/* The dash blurs in where the check retracts, and back. */}
+      <motion.span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 flex items-center justify-center text-foreground"
+        initial={false}
+        animate={indeterminate ? SHOWN : reduced ? { opacity: 0 } : HIDDEN}
+        transition={indeterminate ? swapEnter : swapLeave}
+      >
+        <Minus size={compact ? 14 : 16} strokeWidth={2} />
+      </motion.span>
+    </>
+  )
+}
+
 /**
- * Checkbox with a self-drawing check, alone or in a group with merged
+ * Checkbox with a self-drawing check, alone, bare, or in a group with merged
  * backgrounds for contiguous picks.
  *
  * The whole row is the hit target; Space or Enter toggles it, the check mark
  * draws itself in, and the checked label animates to semibold without
  * shifting its width. A standalone checkbox keeps its own state from
  * `defaultChecked`, or is controlled with `checked`; `onCheckedChange`
- * reports every toggle.
+ * reports every toggle. `indeterminate` shows a dash (`aria-checked="mixed"`),
+ * which blurs into the check when it is pressed; the press reports `true`.
+ *
+ * Without a `label`, outside a group, the checkbox is the box alone: Base
+ * UI's checkbox, so a `<label htmlFor>` pointing at its `id` toggles it,
+ * `aria-label` names it, and `name` / `value` take part in a form. It sits in
+ * a table cell or beside a label you lay out yourself, and keeps its border
+ * when checked, so the check never reads as a bullet.
  *
  * In a `Checkbox.Group`, contiguous checked rows share one background: a
  * checked row's background grows out of its center and melts into its
@@ -200,6 +307,7 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
       label,
       checked: checkedProp,
       defaultChecked = false,
+      indeterminate = false,
       onCheckedChange,
       onToggle: onToggleProp,
       index: indexProp,
@@ -219,14 +327,19 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
     const [ownChecked, setOwnChecked] = useControllableState(checkedProp, defaultChecked, onCheckedChange)
     const [hovered, setHovered] = useState(false)
     const disabled = disabledProp ?? group?.disabled ?? false
+    const bare = label === undefined && !group
 
     // An explicit `checked` wins, then the group's set, then the row's own state.
     const checked = checkedProp ?? (group ? group.checkedIndices.has(index) : ownChecked)
     const onToggle = () => {
       if (disabled) return
+      // A dash checks, as a native mixed checkbox does.
+      const next = indeterminate || !checked
       onToggleProp?.()
-      group?.setItemChecked(index, !checked)
-      setOwnChecked(!checked)
+      group?.setItemChecked(index, next)
+      // Checked and dashed at once: only the dash goes, so the setter would skip the report.
+      if (next === checked) onCheckedChange?.(next)
+      else setOwnChecked(next)
     }
 
     useRegisterFluidHoverItem(group?.registerItem, index, internalRef)
@@ -236,10 +349,52 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
     }, [])
 
     const isActive = !disabled && (group ? group.activeIndex === index : hovered)
-    const skipAnimation = !hasMounted.current
     const shape = useShape()
     const sizeClasses = useSize(size)
     const compact = sizeClasses.variant === 'compact'
+    const box = (
+      <CheckboxBox
+        checked={checked}
+        indeterminate={indeterminate}
+        active={isActive}
+        compact={compact}
+        skipAnimation={!hasMounted.current}
+        bare={bare}
+      />
+    )
+    const hover = {
+      onPointerEnter: (e: PointerEvent) => {
+        if (e.pointerType === 'mouse') setHovered(true)
+      },
+      onPointerLeave: () => setHovered(false),
+    }
+
+    if (bare) {
+      return (
+        <CheckboxPrimitive.Root
+          ref={mergeRefs(internalRef, ref)}
+          render={<div />}
+          checked={checked}
+          indeterminate={indeterminate}
+          onCheckedChange={onToggle}
+          disabled={disabled}
+          name={name}
+          value={value}
+          {...hover}
+          className={cn(
+            'relative inline-flex shrink-0 cursor-pointer outline-none',
+            'focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+            compact ? 'size-3.5 rounded-sm' : 'size-4 rounded-box',
+            disabled && 'opacity-50 pointer-events-none',
+            className,
+          )}
+          // The root renders a div (`render`); its handlers are typed for Base UI's span.
+          {...(props as HTMLAttributes<HTMLSpanElement>)}
+        >
+          {box}
+        </CheckboxPrimitive.Root>
+      )
+    }
 
     return (
       <div
@@ -247,14 +402,11 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
         data-fluid-hover-index={index}
         tabIndex={disabled ? -1 : 0}
         role="checkbox"
-        aria-checked={checked}
+        aria-checked={indeterminate ? 'mixed' : checked}
         aria-disabled={disabled || undefined}
         aria-label={label}
         onClick={onToggle}
-        onPointerEnter={e => {
-          if (e.pointerType === 'mouse') setHovered(true)
-        }}
-        onPointerLeave={() => setHovered(false)}
+        {...hover}
         onMouseDown={focusRowOnPress}
         onKeyDown={e => {
           if (e.key === ' ' || e.key === 'Enter') {
@@ -274,10 +426,11 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
         {/* The row is the control; the primitive draws the box and carries the form input. */}
         <CheckboxPrimitive.Root
           checked={checked}
+          indeterminate={indeterminate}
           disabled={disabled}
           name={name}
           value={value}
-          onCheckedChange={() => onToggle()}
+          onCheckedChange={onToggle}
           tabIndex={-1}
           aria-hidden
           className={cn(
@@ -286,69 +439,10 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
           )}
           onClick={e => e.stopPropagation()}
         >
-          <div
-            className={cn(
-              'absolute inset-0 border-solid transition-all duration-fast',
-              compact ? 'rounded-sm' : 'rounded-box',
-              checked
-                ? 'border-[1.5px] border-transparent'
-                : isActive
-                  ? 'border-[1.5px] border-control'
-                  : 'border-[1.5px] border-border',
-            )}
-          />
-          <AnimatePresence>
-            {checked && (
-              <CheckboxPrimitive.Indicator
-                keepMounted
-                render={indicatorProps => {
-                  const {
-                    style: _s,
-                    onDrag: _onDrag,
-                    onDragStart: _onDragStart,
-                    onDragEnd: _onDragEnd,
-                    onAnimationStart: _onAnimationStart,
-                    onAnimationEnd: _onAnimationEnd,
-                    onAnimationIteration: _onAnimationIteration,
-                    ...rest
-                  } = indicatorProps as React.HTMLAttributes<SVGSVGElement>
-                  return (
-                    <motion.svg
-                      {...rest}
-                      width={compact ? 16 : 18}
-                      height={compact ? 16 : 18}
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-foreground"
-                      initial={{ opacity: 1 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 1 }}
-                    >
-                      <motion.path
-                        d="M6 12L10 16L18 8"
-                        initial={{ pathLength: skipAnimation ? 1 : 0 }}
-                        animate={{
-                          pathLength: 1,
-                          transition: { duration: spring.fast.duration, ease: 'easeOut' },
-                        }}
-                        exit={{
-                          pathLength: 0,
-                          transition: { duration: 0.04, ease: 'easeIn' },
-                        }}
-                      />
-                    </motion.svg>
-                  )
-                }}
-              />
-            )}
-          </AnimatePresence>
+          {box}
         </CheckboxPrimitive.Root>
 
-        <WeightLabel emphasized={checked} lit={checked || isActive} trim className={sizeClasses.text}>
+        <WeightLabel emphasized={checked} lit={checked || indeterminate || isActive} trim className={sizeClasses.text}>
           {label}
         </WeightLabel>
       </div>
