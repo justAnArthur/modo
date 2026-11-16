@@ -92,6 +92,17 @@ describe('parseItemSource', () => {
     ])
   })
 
+  test('a generic component takes its props from a generic interface', () => {
+    const r = parseItemSource(
+      `interface PickerProps<T extends Kind = 'date'> {\n  /** The value. */\n  value?: ValueOf<T> | null\n}\n/** Picker. */\nfunction Picker<T extends Kind = 'date'>({ value = null }: PickerProps<T>) {}\nexport default Picker\n`,
+    )
+    expect([r.description, r.props, r.errors]).toEqual([
+      'Picker.',
+      [{ name: 'value', optional: true, type: 'ValueOf<T> | null', description: 'The value.', default: 'null' }],
+      [],
+    ])
+  })
+
   test('a forwardRef over a type alias', () => {
     const r = parseItemSource(
       `type P = { a: string }\nconst X = forwardRef<HTMLDivElement, P>(() => null)\nexport default X\n`,
