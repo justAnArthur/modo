@@ -21,18 +21,21 @@ is specific to this package.
   (`--duration-*`), radius, spacing. The surface ladder and shadows are in `primitives/surface/surface.css`.
 - `uno.config.ts` — the utilities over the tokens (`text-<role>`, `weight-*`, `duration-<tier>`,
   `bg-surface-N`, `shadow-surface-N`, `rounded-box|glyph`). `lib/utils.ts` — `cn`, which knows them.
-- `lib/` — the shared systems: `springs` (+ `springEnter`), `size-context`, `shape-context`,
-  `surface-*` (+ `useLift`), `use-fluid-hover` + `fluid-hover-highlight`, `goo-indicator`,
-  `use-morph` + `morph-layers` + `morph-part`, `reduced-motion`, `use-controllable-state`, `slot`,
-  `icon-context`, `field-classes`, `date-locale` (+ `monthRange`), `popup` (`POPUP_SHAPE`), and the
-  helpers listed in `lib/README.md` (refs, rects, focus ring, `WeightLabel`, row groups that skip
-  `aria-disabled` rows, overlay roots and surfaces, popup rows). Use them before writing the pattern
-  by hand.
+- `lib/` — the shared systems: `springs` (+ `springEnter`), `size-context` (+ the pure `size-scale`),
+  `shape-context` (+ the pure `shape-classes`), `surface-*` (+ `useLift`), `use-fluid-hover` +
+  `fluid-hover-highlight`, `goo-indicator`, `use-morph` + `morph-layers` + `morph-part`,
+  `reduced-motion`, `use-controllable-state`, `slot`, `icon-context`, `field-classes` (the classes) +
+  `field-box` (`useFieldBox`, `useFieldState`), `spinner-glyph`, `date-locale` (+ `monthRange`),
+  `date-mask`, `popup` (`POPUP_SHAPE`), and the helpers listed in `lib/README.md` (refs, rects, focus
+  ring, `WeightLabel`, row groups that skip `aria-disabled` rows, overlay roots and surfaces, popup
+  rows). Use them before writing the pattern by hand.
 - `primitives/` — the systems as documented items (Surface, Sizes, FluidHover, Motion, Morph,
-  ScrollArea, Code, Craft). `components/[inputs|navigation|overlays]/` — controls. `blocks/` —
-  compositions.
+  ScrollArea, Separator, Skeleton, Code, Craft). `components/[inputs|navigation|overlays]/` —
+  controls. `blocks/` — compositions.
 - `modo.components.tsx` — docs-only adapters for the chrome's slots (`Select`, `Icon`, `DocsNav`) and the
   Theme panel item. `global.css` — base styles and the chrome's look through `data-modo` attributes.
+- `guides/` — the docs' Getting started and Theming pages (not shipped). `test/` — `bun test` for the
+  pure helpers (`date-mask`, FileDropzone's `variants`).
 
 ## rules that matter most
 
@@ -59,7 +62,12 @@ is specific to this package.
   `dist/`) ending in "Local changes: see PORTING.md". Record every local change in `PORTING.md`'s
   file map, not in the header.
 - **Client modules.** A module with hooks, context, handlers or browser APIs puts `'use client'` right
-  after its header; `bunup.config.ts` hoists it to the top of each output chunk for RSC hosts.
+  after its header; `bunup.config.ts` hoists it to the top of each output chunk for RSC hosts. Pure
+  tables live in their own module without the directive (`size-scale`, `shape-classes`,
+  `field-classes`, a component's `variants.ts`), so a Server Component can import them. Every lib
+  module is its own chunk; `bun run check:dist` proves it after a build.
+- **Fields.** A control takes `invalid` / `disabled` / `readOnly` / `required` from an enclosing `Field`
+  (`useFieldBox`, or `useFieldState` when its root isn't the box); its own prop wins.
 
 ## checks
 
@@ -69,6 +77,10 @@ bunx tsc -p . --noEmit
 
 ```bash
 cd .. && bun run lint
+```
+
+```bash
+bun run build && bun run check:dist && bun test
 ```
 
 ```bash
