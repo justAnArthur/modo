@@ -139,6 +139,9 @@
      ring, so the frame moves in with the fill. */
   --shadow-button-outline: 0 0 0 1px var(--control-border), inset 0 0 0 0 var(--control-border);
   --shadow-button-outline-pressed: 0 0 0 0 var(--control-border), inset 0 0 0 1px var(--control-border);
+  /* The ghost variant's rest ring: the 1px spread its hover wash grows into,
+     transparent so the ring fades in instead of popping. */
+  --shadow-button-ghost: 0 0 0 1px transparent;
 
   /* ── Placeholders ──
      The Skeleton's fill: a foreground mix like --border, so it tracks the

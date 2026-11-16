@@ -81,8 +81,7 @@ const bgVariants: Record<ButtonVariant, string> = {
   // Translucent fill + same-color spread never double up: outer shadows
   // render only outside the surface box.
   ghost:
-    // biome-ignore lint/plugin: upstream ring geometry; its transparent rest state reads no token
-    'bg-transparent shadow-[0_0_0_1px_transparent] group-hover:bg-hover group-hover:shadow-[0_0_0_1px_var(--hover)] group-active:bg-active group-active:shadow-[0_0_0_0px_var(--active)]',
+    'bg-transparent shadow-button-ghost group-hover:bg-hover group-hover:shadow-[0_0_0_1px_var(--hover)] group-active:bg-active group-active:shadow-[0_0_0_0px_var(--active)]',
   // Tertiary's hand-off on the control border.
   outline:
     'bg-transparent shadow-button-outline group-hover:bg-hover group-active:bg-active group-active:shadow-button-outline-pressed',

@@ -33,7 +33,7 @@ import type { Preset } from 'unocss'
 const TYPE_ROLES = ['display', 'title', 'subtitle', 'body', 'caption', 'micro'] as const
 const WEIGHTS = ['normal', 'medium', 'semibold', 'bold'] as const
 const TIERS = ['fast', 'moderate', 'slow'] as const
-const RADII = ['box', 'glyph'] as const
+const RADII = ['box', 'glyph', 'pill', 'focus-ring', 'pill-focus-ring'] as const
 
 export const theme = {
   font: {
@@ -130,6 +130,7 @@ export const theme = {
     'surface-7': 'var(--shadow-7)',
     'surface-8': 'var(--shadow-8)',
     thumb: 'var(--shadow-thumb)',
+    'button-ghost': 'var(--shadow-button-ghost)',
     'button-outline': 'var(--shadow-button-outline)',
     'button-outline-pressed': 'var(--shadow-button-outline-pressed)',
     'picker-thumb': 'var(--shadow-picker-thumb)',
