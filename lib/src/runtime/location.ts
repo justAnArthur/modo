@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { decodePath } from '../lib/paths'
+import { decodePath, EXAMPLE_PARAM } from '../lib/paths'
 
 export const NAVIGATE = 'modo:navigate'
 // '' or the `--base` the site was built with, minus its trailing slash.
@@ -36,4 +36,16 @@ function subscribe(onChange: () => void) {
 /** The current app path; re-renders on client navigation and history moves. */
 export function usePath(): string {
   return useSyncExternalStore(subscribe, () => appPath(window.location.pathname))
+}
+
+/** The `?example=` key: the item page shows that one example full screen. */
+export function useExampleParam(): string | null {
+  return useSyncExternalStore(subscribe, () => new URLSearchParams(window.location.search).get(EXAMPLE_PARAM))
+}
+
+/** Client navigation to another page, which starts at its top (Back/Forward keep the browser's restore). */
+export function navigate(url: URL | string, state: unknown = {}) {
+  window.history.pushState(state, '', url)
+  window.scrollTo({ top: 0, behavior: 'instant' })
+  window.dispatchEvent(new Event(NAVIGATE))
 }

@@ -15,3 +15,11 @@ export function nameTitle(name: string): string {
 export function count(n: number, noun: string): string {
   return `${n} ${noun}${n === 1 ? '' : 's'}`
 }
+
+/** A heading's anchor: `Two words` → `two-words`. */
+export function slug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-|-$/g, '')
+}

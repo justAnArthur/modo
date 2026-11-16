@@ -2,6 +2,16 @@
 
 Both packages are released from this repo by conventional commits (see [CONTRIBUTING.md](CONTRIBUTING.md)): `@justanarthur/modo` (`lib/`) and `@justanarthur/modo-ui` (`ui/`). Each release also gets GitHub release notes generated from its commits.
 
+## Unreleased
+
+### @justanarthur/modo
+
+- **Open any example full screen.** Example cards get Open full screen beside Copy and Show code: the example alone on its item's route (`?example=<title slug>`, else its position), without the chrome, across the whole viewport. A modified or middle click opens a new tab; Escape, Back or the close button returns. The Icon contract gains `maximize`, the Button contract passes the click event and `onAuxClick`; new hooks `example-solo`, `example-solo-stage`, `example-solo-actions`.
+
+### @justanarthur/modo-ui
+
+- The docs Icon draws `maximize` (lucide `Maximize2`).
+
 ## 1.0.0 — 2026-11-16
 
 The first stable release of both packages. From here on the public API follows semver: a breaking change means a new major.

@@ -67,7 +67,7 @@ Beyond its required props, each slot receives a few more. Forward them.
 
 ### Button
 
-The chrome's icon buttons: copy code, show code, theme toggle, menu, canvas zoom.
+The chrome's icon buttons: copy code, show code, open full screen, theme toggle, menu, canvas zoom.
 
 ```tsx
 <Button variant="ghost" size="icon-sm" aria-label="Show code" aria-pressed={open} onClick={toggle}>
@@ -75,7 +75,7 @@ The chrome's icon buttons: copy code, show code, theme toggle, menu, canvas zoom
 </Button>
 ```
 
-It gets `variant="ghost"`, `size="icon-sm"`, `aria-label`, `onClick`, and `aria-pressed` on toggles. The child is an `Icon` or a short text glyph.
+It gets `variant="ghost"`, `size="icon-sm"`, `aria-label`, `onClick`, and `aria-pressed` on toggles. Open full screen also gets `onAuxClick`, and reads the click event `onClick` is called with: forward both, so a modified or middle click opens the example in a new tab. The child is an `Icon` or a short text glyph.
 
 ### Link
 
@@ -111,7 +111,8 @@ The chrome asks for icons by name and draws them inside your Button or Link.
 | `copy`, `check` | Copy code, and its done state. |
 | `link` | Heading anchors. |
 | `menu` | The nav toggle on small screens. |
-| `close` | The same toggle while the nav drawer is open. |
+| `maximize` | Open full screen on an example. |
+| `close` | The nav toggle while the drawer is open, and closing a full-screen example. |
 | `sun`, `moon` | The theme toggle (with [`theme`](./config.md#theme)). |
 | a [`socials`](./config.md#socials) key | `github`, `npm`, or whatever key you used. |
 

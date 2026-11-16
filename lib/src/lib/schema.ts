@@ -21,7 +21,7 @@ export interface ShellConfig {
   Code?: string
   /**
    * The chrome's icons. Matched in `primitives/` by `name`. Gets `name` and `label`: one of `code`, `copy`,
-   * `check`, `link`, `menu`, `sun`, `moon`, or a `socials` key (`github`, `npm`, …). Draw the label for a name
+   * `check`, `link`, `maximize`, `menu`, `close`, `sun`, `moon`, or a `socials` key (`github`, `npm`, …). Draw the label for a name
    * you have no glyph for.
    */
   Icon?: string

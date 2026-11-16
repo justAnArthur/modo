@@ -90,6 +90,34 @@ h4[data-modo="example-card-title"] {
   overflow-x: auto;
 }
 
+/* A full-screen example (`?example=<key>`): one example alone, no chrome. The
+   stage lays it out like a card's, across the whole viewport, so a
+   screen-sized demo renders at 1:1. */
+[data-modo="example-solo"] {
+  display: flex;
+  min-height: 100dvh;
+  font-family: var(--modo-font-sans);
+}
+
+[data-modo="example-solo-stage"] {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: safe center;
+  gap: var(--space-3, 12px);
+  padding: var(--space-6, 32px);
+}
+
+[data-modo="example-solo-actions"] {
+  position: fixed;
+  top: var(--space-2, 8px);
+  right: var(--space-2, 8px);
+  display: flex;
+  gap: var(--space-1, 4px);
+}
+
 /* Shown on hover or keyboard focus inside the owner; always on touch. */
 
 :is([data-modo="example-actions"], [data-modo="code-actions"], [data-modo="anchor"]) {

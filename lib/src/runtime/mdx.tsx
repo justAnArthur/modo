@@ -1,9 +1,10 @@
 import { shell } from 'virtual:modo-shell'
-import { isValidElement, type ReactNode } from 'react'
+import { isValidElement, type ReactNode, useContext } from 'react'
 import { type HeadingRole, headingRoles } from '../lib/example-groups'
+import { exampleKey } from '../lib/paths'
 import { Heading } from './anchor'
 import { CodeBlock } from './code-block'
-import { bindings, ExampleFrame, ExampleTitle } from './items/examples'
+import { bindings, ExampleDocContext, ExampleFrame, ExampleTitle } from './items/examples'
 import { contentHref } from './location'
 
 export function textOf(node: ReactNode): string {
@@ -67,9 +68,26 @@ export const mdxComponents: Record<string, unknown> = {
   h1: mdxHeading(1),
   h2: mdxHeading(2),
   h3: mdxHeading(3),
-  ModoExample: ({ code, children }: { code: string; children: ReactNode }) => (
+  ModoExample,
+}
+
+/** The props lib/src/plugins/mdx-examples.ts gives a live block. */
+export interface ModoExampleProps {
+  code: string
+  /** The block's position among the file's live blocks, from 0. */
+  index: string
+  /** The example heading above it. */
+  title?: string
+  children: ReactNode
+}
+
+function ModoExample({ code, index, title, children }: ModoExampleProps) {
+  const doc = useContext(ExampleDocContext)
+  return (
     <div data-modo="example-card">
-      <ExampleFrame code={code}>{children}</ExampleFrame>
+      <ExampleFrame code={code} fullScreen={exampleKey(title, Number(index), doc)}>
+        {children}
+      </ExampleFrame>
     </div>
-  ),
+  )
 }

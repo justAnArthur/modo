@@ -1,3 +1,4 @@
+import { slug } from './text'
 import type { Tier } from './tiers'
 
 /** The key items are stored under in the virtual modules: `tier:id`. */
@@ -13,6 +14,18 @@ export function tierPath(tier: Tier): string {
 /** An item's page as an app path (`/docs/primitives/button`). */
 export function itemPath(tier: Tier, id: string): string {
   return `${tierPath(tier)}/${id}`
+}
+
+/** The query param that shows one of an item page's examples full screen: `?example=<key>`. */
+export const EXAMPLE_PARAM = 'example'
+
+/**
+ * An example's full-screen key: its title's slug, else its position: `3` for
+ * the item's third `@example`, `2.1` for the first live block of its second .mdx (`doc` 1).
+ */
+export function exampleKey(title: string | undefined, index: number, doc?: number): string {
+  if (title) return slug(title)
+  return doc === undefined ? String(index + 1) : `${doc + 1}.${index + 1}`
 }
 
 /** The Foundations overview, or one token group's page, as an app path. */
