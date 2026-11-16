@@ -36,6 +36,12 @@
   },
   "files": [
     "dist",
+    "index.ts",
+    "lib/*.ts",
+    "lib/*.tsx",
+    "primitives",
+    "components",
+    "blocks",
     "README.md",
     "LICENSE*"
   ],
@@ -47,70 +53,87 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "source": "./index.ts",
       "default": "./dist/index.js"
     },
     "./primitives/*": {
       "types": "./dist/primitives/*/index.d.ts",
+      "source": "./primitives/*/index.tsx",
       "default": "./dist/primitives/*/index.js"
     },
     "./components/*/variants": {
       "types": "./dist/components/*/variants.d.ts",
+      "source": "./components/*/variants.ts",
       "default": "./dist/components/*/variants.js"
     },
     "./components/*": {
       "types": "./dist/components/*/index.d.ts",
+      "source": "./components/*/index.tsx",
       "default": "./dist/components/*/index.js"
     },
     "./blocks/*": {
       "types": "./dist/blocks/*/index.d.ts",
+      "source": "./blocks/*/index.tsx",
       "default": "./dist/blocks/*/index.js"
     },
     "./lib/utils": {
       "types": "./dist/lib/utils.d.ts",
+      "source": "./lib/utils.ts",
       "default": "./dist/lib/utils.js"
     },
     "./lib/springs": {
       "types": "./dist/lib/springs.d.ts",
+      "source": "./lib/springs.ts",
       "default": "./dist/lib/springs.js"
     },
     "./lib/size-scale": {
       "types": "./dist/lib/size-scale.d.ts",
+      "source": "./lib/size-scale.ts",
       "default": "./dist/lib/size-scale.js"
     },
     "./lib/shape-classes": {
       "types": "./dist/lib/shape-classes.d.ts",
+      "source": "./lib/shape-classes.ts",
       "default": "./dist/lib/shape-classes.js"
     },
     "./lib/field-classes": {
       "types": "./dist/lib/field-classes.d.ts",
+      "source": "./lib/field-classes.ts",
       "default": "./dist/lib/field-classes.js"
     },
     "./lib/field-box": {
       "types": "./dist/lib/field-box.d.ts",
+      "source": "./lib/field-box.ts",
       "default": "./dist/lib/field-box.js"
     },
     "./lib/size-context": {
       "types": "./dist/lib/size-context.d.ts",
+      "source": "./lib/size-context.tsx",
       "default": "./dist/lib/size-context.js"
     },
     "./lib/shape-context": {
       "types": "./dist/lib/shape-context.d.ts",
+      "source": "./lib/shape-context.tsx",
       "default": "./dist/lib/shape-context.js"
     },
     "./lib/icon-context": {
       "types": "./dist/lib/icon-context.d.ts",
+      "source": "./lib/icon-context.tsx",
       "default": "./dist/lib/icon-context.js"
     },
     "./lib/use-controllable-state": {
       "types": "./dist/lib/use-controllable-state.d.ts",
+      "source": "./lib/use-controllable-state.ts",
       "default": "./dist/lib/use-controllable-state.js"
     },
     "./lib/use-morph": {
       "types": "./dist/lib/use-morph.d.ts",
+      "source": "./lib/use-morph.ts",
       "default": "./dist/lib/use-morph.js"
     },
     "./lib/goo-indicator": {
       "types": "./dist/lib/goo-indicator.d.ts",
+      "source": "./lib/goo-indicator.tsx",
       "default": "./dist/lib/goo-indicator.js"
     },
     "./unocss": {
