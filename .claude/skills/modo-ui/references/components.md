@@ -64,6 +64,15 @@ controlled + uncontrolled.
 | A list of thousands of rows | `VirtualList` (fixed or measured rows, `scrollToIndex`) |
 | Drag to reorder | `Sortable` (`handle`, keyboard, `as="none"` in a host list; `useSortableHandle`) |
 | Split panes | `Resizable` (`.Panel`, `.Handle`; nests) |
+| A growing list pinned to its end (a log, a chat) | `VirtualList follow` (`onFollowChange`, `scrollToEnd()`) |
+| Terminal or log output | `LogView` (ANSI colors, `follow` + jump to latest, `wrap`, `lineNumbers`) |
+| Rendered markdown (a reply, a README) | `Markdown` (`streaming`; `Markdown.Prose` for hand-built rich text) |
+| A file's change | `Diff` (unified patch, `path`, `wrap`) |
+| A file tree, an outline | `Tree` |
+| Rename in place | `EditableText` |
+| Images full-window | `Lightbox` (`.Trigger` thumbnails) |
+| A card in a tray, with a meta row | `ShellCard` (`.Inner`, `.Footer`) |
+| A desktop app's window frame | `DesktopShell` |
 | A raised container | `Elevated` (`offset`) |
 | A dense region | `SizeProvider size="compact"` |
 | A custom hover list | `FluidHover` (+ the re-exported hook for custom lists) |
@@ -83,8 +92,8 @@ controlled + uncontrolled.
 | `Separator` | `primitives/separator` | — | The one hairline on Base UI's Separator; `orientation`. |
 | `Skeleton` | `primitives/skeleton` | — | A `bg-skeleton` block pulsing on `--duration-loop`, or `rows` on the control height (`bordered` frames them); `aria-hidden`. |
 | `Sortable` | `primitives/sortable` | `.Handle`; `useSortableHandle` | motion's `Reorder` by pointer or keyboard (Space, arrows, Escape), announced; `items`, `order` / `defaultOrder` / `onOrderChange`, `orientation`, `handle`, `as` (`ul` \| `ol` \| `none`). The held item lifts +2. |
-| `VirtualList` | `primitives/virtual-list` | ref: `scrollToIndex(index, align)` | Mounts only the rows in view; `count`, `renderItem`, `itemHeight` or measured (`estimateHeight`), `overscan`; scrolls itself or a surrounding ScrollArea. |
-| `Resizable` | `primitives/resizable` | `.Panel .Handle` | Split panes in percent; `direction`, `sizes` / `onSizesChange`, `step`; panels take `defaultSize`, `minSize`, `maxSize`, `collapsible`; the handle is a keyboard separator. |
+| `VirtualList` | `primitives/virtual-list` | ref: `scrollToIndex(index, align)`, `scrollToEnd()` | Mounts only the rows in view; `count`, `renderItem`, `itemHeight` or measured (`estimateHeight`), `overscan`; scrolls itself or a surrounding ScrollArea; `follow` (+ `onFollowChange`) stays at the end of a growing list; `contentWidth` for rows wider than the viewport. |
+| `Resizable` | `primitives/resizable` | `.Panel .Handle` | Split panes in percent; `direction`, `sizes` / `onSizesChange`, `step`; panels take `defaultSize`, `minSize`, `maxSize`, `collapsible`; the handle is a keyboard separator; a size set other than by dragging glides (`duration-moderate`). |
 | `Code` | `primitives/code` | — | sugar-high tokens in `--syntax-*`, one surface step up. Also the docs chrome's Code slot. |
 | `Craft` | `primitives/craft` | `demos.tsx` (the bad sides) | Docs stage: a bad and a good version side by side (`bad`, `good`, `badNote`, `goodNote`). One rule per pair. |
 
@@ -101,6 +110,9 @@ controlled + uncontrolled.
 | `Kbd` | `components/kbd` | — | L | `variant` `outline` (keycap, `micro`) \| `plain` (Dropdown's shortcut text). |
 | `EmptyState` | `components/empty-state` | — | L | `icon`, `title`, `description`, `actions`; `size` steps the actions too. |
 | `List` | `components/list` | `.Section .Row` | L | A settings list on one control height; controls end on the caption edge; `LIST_POPOVER`, `LIST_SWITCH` (a bare Switch). |
+| `Diff` | `components/diff` | `parsePatch` | — | A unified patch; added / removed lines on the success / error hues over a 16% wash, hunks on `bg-hover`; `path` heads it with `+n −n`, `actions`; `lineNumbers`, `wrap`; lifts +1 like Code. |
+| `Markdown` | `components/markdown` | `.Prose` | — | marked's lexer → elements (raw HTML stays text); fences on Code, tables on Table, task lists; `streaming` settles an open fence or a half-typed marker. |
+| `LogView` | `components/log-view` | `parseAnsi` | — | ANSI SGR on the syntax / status hues, prompt lines, `lineNumbers` (sticky gutter), `wrap`, `follow` with a jump-to-latest button, `maxHeight`; rows are a `VirtualList`; lifts +1. |
 | `Card` | `components/card` | `.Group .Header .Title .Description .Action .Content .Footer .Divider .Media .Image .Eyebrow .Feature .Button` | L H W C | Transparent and borderless (`border="outlined"` frames one on its own; `.Divider` a hairline inside); only clickable cards join the group's hover; stretched link. A card with a `value` selects itself in `Card.Group` (`value` / `defaultValue` / `onValueChange`). `Card.Button` is a compact `Button`. |
 | `Table` | `components/table` | `.Header .Body .Footer .Row .Head .Cell .Caption .Empty` | L H C | Row hover, semantic markup; a `Table.Head` with a `value` sorts (`sort` / `defaultSort` / `onSortChange` on the root); `stacked` turns rows into cards in a narrow container (each Cell's `label` captions it). |
 | `Copy` | `components/copy` | — | L M | Click anywhere to copy; the glyph melts into a status disc behind the check. |
@@ -122,6 +134,7 @@ controlled + uncontrolled.
 | `Label` | — | L | A plain `<label>` lined up with the field's text (`fieldTextInset`); `invalid`, `size`. Also exported from `inputs/input`. |
 | `Field` | `.Label .Description .Error .Control` | L | Base UI Field: label, description and error on the text inset; hands `invalid` / `disabled` / `readOnly` / `required` to the control inside (own prop wins, via `useFieldState`); `validationMode`. |
 | `KeyValue` | — | L C | Rows of two monospace Inputs; `secret` values behind an `InputAction` reveal; duplicate keys go invalid; the whole array through `onValueChange`. |
+| `EditableText` | — | L | Text that becomes an input in one borderless field box (`useFieldBox`): double-click, Enter / F2 or the hover pencil; Enter or blur commits, Escape restores; `value` / `defaultValue` / `onValueChange`, `editButton`, `disabled`, `size`. |
 | `NumberInput` | — | L C | Base UI NumberField on the field ladder; steppers are field actions; `format`, `min` / `max` / `step`, `scrub`, `wheel`, adornments; `value` is `number \| null`. |
 | `FileDropzone` | `.Row` | L | A dashed drop zone around a hidden file input; `accept`, `maxSize`, `maxFiles`, `onFilesChange` / `onFilesRejected` (announced); drag verdicts restyle it; `FileDropzone.Row` (`FileRow`) shows a file with `status` / `progress`. Pure helpers in `variants.ts`. |
 | `Textarea` | — | L C | Multi-line Input on the field ladder; grows from `minRows` to `maxRows`, then scrolls; `onValueChange`, `readOnly`, `required`. |
@@ -138,6 +151,7 @@ controlled + uncontrolled.
 | `NavigationMenu` | `.List .Item .Trigger .Content .Link` | L S H G M W C | Site header menu: one shared panel morphs out of its trigger and springs to each panel's size; liquid marker under the open item or the active link; `value` / `defaultValue` / `onValueChange` (the open item); `Link` takes `icon` / `description` in a panel, `render` for router links. |
 | `Pagination` | — | L H G C | The current page is a `GooIndicator`; `count`, `value` / `defaultValue` / `onValueChange`, `siblings`, `edges`, `variant="input"` (a jump-to-page field); every label a prop. |
 | `Breadcrumb` | `.Item` | L H | `items` or children; one fluid hover; the middle folds into a Dropdown when the trail doesn't fit. |
+| `Tree` | — | L S H G W | `items` (`id`, `label`, `icon`, `children`); the selection is a `GooIndicator`, one fluid hover across levels, branches fold on a measured height under a guide; WAI-ARIA tree keys and typeahead; `value` / `defaultValue` / `onValueChange`, `expanded` / `defaultExpanded` / `onExpandedChange`. |
 | `Accordion` | `.Group .Item .Trigger .Content` | L H M W C | Panel morphs out of its row; `highlight` `item` \| `trigger`. |
 | `Sidebar` | `.Provider .Trigger .Rail .Inset .Input .Header .Content .Footer .Separator .Group .GroupLabel .GroupAction .GroupActions .GroupContent .Menu .MenuItem .MenuButton .MenuAction .MenuActions .MenuBadge .MenuSkeleton .MenuSub .MenuSubItem .MenuSubButton` | L S H G C | Liquid active rows and hover; `openOnHover`; collapsible rows; `[` / `]` toggles (`shortcutScope`); rows on the ladder; mobile `Sheet`. |
 
@@ -157,12 +171,15 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 | `Dialog` | `.Trigger .Content .Header .Footer .Title .Description .Close` | `width` `sm` \| `lg` \| `xl` on the content, `position`, `showCloseButton`, `container`; backdrop fades with the morph; scopes `Morph.Part`. |
 | `AlertDialog` | as Dialog + `.Action .Cancel` | Always modal, no outside dismissal, no ✕ by default. `.Action` keeps the dialog open, loading and locked while a returned promise (or `pending`) settles; `onError`. Built by composing Dialog's parts. |
 | `Sheet` | Dialog's + `.Provider .Indent` | Base UI Drawer; grows from its edge; a swipe-dismiss slides on from the release point. |
+| `Lightbox` | `.Trigger` | Base UI Dialog; the image grows out of its thumbnail (`effect: 'morph'`, `hideSource`) and closes into the current one; arrows, swipe, click-to-zoom (`zoom`); `value` / `defaultValue` / `onValueChange` (the open index, `null` closed). |
 | `Toast` | `.Trigger`; `useToast()`, `toast` | Pill melts into a body; six `--status-*` states; promise toasts. The global `toast` works anywhere once `<Toast manager={toast} />` is mounted. |
 
 ## blocks
 
 | Item | Path | Notes |
 |---|---|---|
+| `ShellCard` | `blocks/shell-card` | A raised inner card (`.Inner`, +2) in a `bg-sunken` tray with a meta row (`.Footer`); corners `rounded-shell` / `rounded-pill-shell`; `variant="elevated"` lifts the tray instead. |
+| `DesktopShell` | `blocks/desktop-shell` | A desktop window: a drag-region title bar (`platform`, `showControls`), a left `Sidebar`, the main card and a side pane split off it on `Resizable` (`]`, toggle, drag to fold); `titleBar="card"` drops the window-wide bar; the pane takes the card's place under 768px. |
 | `SidebarApp` | `blocks/sidebar-app` | A full app shell (FF preset `sa1FQfCxH6`): workspace header, search, nav, user footer, inset topbar. `variant`, `side`, `openOnHover`, `contained`. |
 
 ## Shared system files (`lib/`)

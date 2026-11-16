@@ -20,6 +20,8 @@ colors:
   muted-dark: "oklch(0.235 0 0)"
   muted-foreground: "oklch(0.556 0 0)"
   muted-foreground-dark: "oklch(0.7155 0 0)"
+  sunken: "oklch(0.955 0 0)"
+  sunken-dark: "oklch(0.17 0 0)"
   accent: "oklch(0.922 0 0)"
   accent-dark: "oklch(0.439 0 0)"
   selected: "oklch(0.87 0 0)"
@@ -179,7 +181,9 @@ rounded:
   2xl: 16px
   pill: 20px
   pill-focus-ring: 22px
+  shell: 20px
   3xl: 24px
+  pill-shell: 32px
   full: 9999px
 spacing:
   space-1: 4px
@@ -374,6 +378,8 @@ Two text colors, a greyscale ground, one blue.
 - **Surfaces (`bg-surface-1` … `bg-surface-8`)** — the elevation ladder (see Elevation & Depth). Prefer a
   surface level over `card`/`background` for anything that floats or nests.
 - **Muted (`bg-muted`)** — a recessed track: the segmented tabs' well, a sunken field at rest.
+- **Sunken (`bg-sunken`)** — a tray set into the page, below surface 1 in both schemes (greyer in light,
+  darker in dark), so a card resting in it lifts out: ShellCard's shell.
 - **Accent (`bg-accent`)** — the secondary button and the switch's off track. `selected` is a firmer
   grey for persistent selection fills.
 - **Hover / Active (`bg-hover`, `bg-active`)** — translucent overlays (black 4% / 7% in light, white 6% /
@@ -502,7 +508,8 @@ everything renders without a provider:
 
 A rounded surface nested close inside another uses concentric corners: inner = outer − inset − border.
 The shipped pair (12 → 8) assumes a 4px inset. Small boxes use `rounded-box` (5px: checkbox squares,
-keycaps) and `rounded-glyph` (3px). Thumbs, dots and the loading button are circles (`rounded-full`).
+keycaps) and `rounded-glyph` (3px). A shell one spacing step around a container (ShellCard) takes
+`rounded-shell` / `rounded-pill-shell` (the container's corner + `--space-2`). Thumbs, dots and the loading button are circles (`rounded-full`).
 Never write a radius: read `shape.*` so the pill mode follows.
 
 ## Motion
@@ -615,6 +622,17 @@ shared systems above (look and motion). Ready-made patterns to reach for before 
 - **Sortable and Resizable** — a held item lifts two surface steps and the others slide aside on
   `spring.moderate`; a split's handle is a hairline that thickens on `spring.fast` while held, the
   focus ring's color for keyboard focus.
+- **Diff, LogView and Markdown** — text on the page in the theme's own hues: a diff's lines on the
+  success and error hues over a 16% wash, a log's ANSI colors on the syntax and status tokens, both one
+  surface step up like Code; rendered markdown in body type, inline code on a soft wash, links
+  underlined in the hairline color.
+- **Tree** — Sidebar's rows nested: the selection a liquid background, one hover highlight across
+  every level, branches folding under a hairline guide that hangs from the chevron.
+- **EditableText** — the text and its input share one borderless field box, so renaming moves nothing.
+- **Lightbox** — the image grows out of its thumbnail over the scrim and closes back into the current
+  one; controls fade with the growth.
+- **ShellCard and DesktopShell** — a raised card resting in a sunken tray with its meta row; a desktop
+  window's frame, the main card inset between a sidebar and a side pane split off it.
 - **Pagination** — the current page is a liquid indicator that melts from page to page, under one
   fluid hover highlight.
 - **NavigationMenu** — a site header strip; its one panel grows from the open trigger and morphs

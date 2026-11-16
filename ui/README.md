@@ -217,6 +217,7 @@ show them):
 | `useFieldBox`, `useFieldState` (`lib/field-box`) | The field ladder's box around a control of your own, and an enclosing `Field`'s state resolved against a control's own props. |
 | `useToast()`, `toast` | Show toasts: `useToast()` inside a `Toast`, or the global `toast` anywhere once `<Toast manager={toast} />` is mounted (one per app). Both have `show`, `success`, `error`, `warning`, `info`, `loading`, `promise`, `update` and `close`. |
 | `Sortable`, `useSortableHandle`, `VirtualList`, `Resizable` | Building blocks for lists and layouts: reorder by pointer or keyboard (the handle props for a button of your own), render only the rows in view (a ref's `scrollToIndex`), and split a region into panes that resize. |
+| `Diff`, `Markdown`, `LogView`, `parsePatch`, `parseAnsi` | Text on the page: a unified patch, a markdown string (on `marked`, raw HTML stays text, `streaming` for text that is still arriving) and terminal output with ANSI colors that follows its tail; the parsers for your own rendering. |
 | `cn` | Class merging that knows the token utilities (`cn('text-body', 'text-muted-foreground')` keeps both). |
 
 ## Documenting ui items in your own modo site
