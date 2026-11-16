@@ -78,7 +78,7 @@ New since 0.6:
 - Controls take `invalid`, `disabled`, `readOnly` and `required` from an enclosing `Field`; `useFieldState` does the same for your own.
 - Input: `readOnly`, `required`, `startAdornment` / `endAdornment`, `InputAction` and `InputAdornment`; a `type` swap keeps the caret. Textarea: `readOnly`, `required`.
 - Checkbox `indeterminate`; Checkbox, Radio and Switch without a `label` render the bare control.
-- Select rows need no `index`; `Select.Value`; node row labels with `textValue`; `readOnly`. Combobox `query` / `defaultQuery` / `onQueryChange`, `filter={null}`, `loading`, a `Content` `footer`, `readOnly`.
+- Select rows need no `index`; `Select.Value`; node row labels with `textValue`; `readOnly`. Combobox `query` / `defaultQuery` / `onQueryChange`, `filter={null}`, `loading` (a status row pinned under the rows), a `Content` `footer` (a press keeps the caret in the input; Tab reaches it), `readOnly`.
 - DatePicker `editable` (type over the locale's numeric mask; an invalid entry marks the field, Escape restores it); DatePicker and DateRangePicker take `valueType="string"` for ISO-string values and `labels`.
 - Popover takes `anchor`, `alignOffset`, the `collision*` props and `initialFocus` / `finalFocus`, and `onOpenChange` gets Base UI's details. Tooltip takes `.Trigger` / `.Content`. `AlertDialog.Action` waits on a returned promise or `pending`; `AlertDialog.Cancel`. A global `toast()` next to `useToast()`, once `<Toast manager={toast} />` is mounted.
 - Dropdown submenus (`Dropdown.Sub`, `.SubTrigger`, `.SubContent`); rows number themselves (`index` optional); `Dropdown.Content keepMounted`.

@@ -81,7 +81,7 @@ interface ComboboxProps {
   defaultQuery?: string
   /** Called with the field's text on every keystroke, and when a pick, a clear or a close rewrites it. */
   onQueryChange?: (query: string) => void
-  /** Items are on their way: the chevron turns into a spinner, a status row sits under the list and the empty message waits. Defaults to `false`. */
+  /** Items are on their way: the chevron turns into a spinner, a status row is pinned under the scrolling rows (announced, in sight however long the list) and the empty message waits. Defaults to `false`. */
   loading?: boolean
   /** The loading row's text. Defaults to `"Loading…"`. */
   loadingLabel?: ReactNode
@@ -126,9 +126,11 @@ interface ComboboxProps {
  * For items that come from elsewhere (a server, a paged API), own the query
  * with `query` + `onQueryChange`, pass `filter={null}` so the list shows
  * exactly the items you hand it, and set `loading` while they are on their
- * way: the chevron blurs into a spinner and a status row sits under the rows
- * in place of the empty message. `Combobox.Content`'s `footer` pins an action
- * under the list ("Load more", "Add new…"). `readOnly` shows the picks and
+ * way: the chevron blurs into a spinner and a status row, pinned under the
+ * scrolling rows so a long stale list can't hide it, stands in for the empty
+ * message. `Combobox.Content`'s `footer` pins an action under the list ("Load
+ * more", "Add new…"); a press on it leaves focus and the caret in the input,
+ * and Tab still reaches it from the keyboard. `readOnly` shows the picks and
  * takes no input. A row's label may be any node (an avatar and a name); it
  * keeps its own box, where text is trimmed and truncated.
  *
