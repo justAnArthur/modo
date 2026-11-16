@@ -68,8 +68,9 @@ interface ButtonProps
    sideways but under 1px vertically). Fill colors are opaque color-mix()es
    rather than alpha so the fill and its spread ring never seam. */
 const bgVariants: Record<ButtonVariant, string> = {
+  // The `--primary*` hooks (tokens/colors.css); `--shadow-button-primary` joins the press ring.
   primary:
-    '[--btn-bg:var(--foreground)] group-hover:[--btn-bg:color-mix(in_oklab,var(--foreground)_90%,var(--background))] group-active:[--btn-bg:color-mix(in_oklab,var(--foreground)_80%,var(--background))] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+    '[--btn-bg:var(--primary)] group-hover:[--btn-bg:var(--primary-hover)] group-active:[--btn-bg:var(--primary-active)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg),var(--shadow-button-primary)] group-active:shadow-[0_0_0_0px_var(--btn-bg),var(--shadow-button-primary)]',
   secondary:
     '[--btn-bg:var(--accent)] group-hover:[--btn-bg:color-mix(in_oklab,var(--accent)_80%,var(--background))] group-active:[--btn-bg:var(--accent)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   // The border ring is an outer 1px shadow at rest that hands off to an
@@ -98,7 +99,7 @@ const bgVariants: Record<ButtonVariant, string> = {
    geometric press-collapse still reacts on top. */
 const activeBgVariants: Record<ButtonVariant, string> = {
   primary:
-    '[--btn-bg:color-mix(in_oklab,var(--foreground)_80%,var(--background))] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+    '[--btn-bg:var(--primary-active)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg),var(--shadow-button-primary)] group-active:shadow-[0_0_0_0px_var(--btn-bg),var(--shadow-button-primary)]',
   secondary:
     '[--btn-bg:var(--accent)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   tertiary:

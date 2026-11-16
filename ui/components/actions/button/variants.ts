@@ -19,7 +19,7 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: 'text-background',
+        primary: 'text-primary-foreground',
         secondary: 'text-foreground',
         tertiary: 'text-foreground',
         ghost: 'text-muted-foreground hover:text-foreground',
