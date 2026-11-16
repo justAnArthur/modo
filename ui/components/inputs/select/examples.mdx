@@ -1,18 +1,19 @@
 import Select from './index'
 import { Bell, Globe, Mail, Monitor, Moon, Shield, Sun, User } from 'lucide-react'
+import Badge from '../../badge'
 
 # Basic
 
-A trigger, a popover, four options. Give every item its `index` — that is
-what the fluid hover measures rows by.
+A trigger, a popover, four options. Rows number themselves in document
+order, so they need no `index`.
 
 <Select defaultValue="banana">
   <Select.Trigger placeholder="Select a fruit…" />
   <Select.Content>
-    <Select.Item index={0} value="apple">Apple</Select.Item>
-    <Select.Item index={1} value="banana">Banana</Select.Item>
-    <Select.Item index={2} value="cherry">Cherry</Select.Item>
-    <Select.Item index={3} value="mango">Mango</Select.Item>
+    <Select.Item value="apple">Apple</Select.Item>
+    <Select.Item value="banana">Banana</Select.Item>
+    <Select.Item value="cherry">Cherry</Select.Item>
+    <Select.Item value="mango">Mango</Select.Item>
   </Select.Content>
 </Select>
 
@@ -25,17 +26,17 @@ hover fill, for toolbars and dense headers.
   <Select>
     <Select.Trigger variant="bordered" placeholder="Bordered" />
     <Select.Content>
-      <Select.Item index={0} value="apple">Apple</Select.Item>
-      <Select.Item index={1} value="banana">Banana</Select.Item>
-      <Select.Item index={2} value="cherry">Cherry</Select.Item>
+      <Select.Item value="apple">Apple</Select.Item>
+      <Select.Item value="banana">Banana</Select.Item>
+      <Select.Item value="cherry">Cherry</Select.Item>
     </Select.Content>
   </Select>
   <Select>
     <Select.Trigger variant="borderless" placeholder="Borderless" />
     <Select.Content>
-      <Select.Item index={0} value="apple">Apple</Select.Item>
-      <Select.Item index={1} value="banana">Banana</Select.Item>
-      <Select.Item index={2} value="cherry">Cherry</Select.Item>
+      <Select.Item value="apple">Apple</Select.Item>
+      <Select.Item value="banana">Banana</Select.Item>
+      <Select.Item value="cherry">Cherry</Select.Item>
     </Select.Content>
   </Select>
 </div>
@@ -48,30 +49,30 @@ stroke while their row is hovered or checked.
 <Select defaultValue="system">
   <Select.Trigger icon={Monitor} placeholder="Theme" />
   <Select.Content>
-    <Select.Item index={0} value="system" icon={Monitor}>System</Select.Item>
-    <Select.Item index={1} value="light" icon={Sun}>Light</Select.Item>
-    <Select.Item index={2} value="dark" icon={Moon}>Dark</Select.Item>
+    <Select.Item value="system" icon={Monitor}>System</Select.Item>
+    <Select.Item value="light" icon={Sun}>Light</Select.Item>
+    <Select.Item value="dark" icon={Moon}>Dark</Select.Item>
   </Select.Content>
 </Select>
 
 # Groups
 
 Select.Group + Select.Label caption a run of rows, Select.Separator rules
-between them. Indices keep counting across the groups.
+between them. The rows keep counting across the groups.
 
 <Select>
   <Select.Trigger placeholder="Settings…" />
   <Select.Content>
     <Select.Group>
       <Select.Label>Account</Select.Label>
-      <Select.Item index={0} value="profile" icon={User}>Profile</Select.Item>
-      <Select.Item index={1} value="email" icon={Mail}>Email</Select.Item>
+      <Select.Item value="profile" icon={User}>Profile</Select.Item>
+      <Select.Item value="email" icon={Mail}>Email</Select.Item>
     </Select.Group>
     <Select.Separator />
     <Select.Group>
       <Select.Label>Preferences</Select.Label>
-      <Select.Item index={2} value="notifications" icon={Bell}>Notifications</Select.Item>
-      <Select.Item index={3} value="privacy" icon={Shield}>Privacy</Select.Item>
+      <Select.Item value="notifications" icon={Bell}>Notifications</Select.Item>
+      <Select.Item value="privacy" icon={Shield}>Privacy</Select.Item>
     </Select.Group>
   </Select.Content>
 </Select>
@@ -101,8 +102,8 @@ fade at both edges, and the overlays scrolling with the rows.
       ['utc+9', '(UTC+9) Tokyo'],
       ['utc+10', '(UTC+10) Sydney'],
       ['utc+12', '(UTC+12) Auckland'],
-    ].map(([value, label], i) => (
-      <Select.Item key={value} index={i} value={value}>{label}</Select.Item>
+    ].map(([value, label]) => (
+      <Select.Item key={value} value={value}>{label}</Select.Item>
     ))}
   </Select.Content>
 </Select>
@@ -115,9 +116,9 @@ the message underneath.
 <Select>
   <Select.Trigger placeholder="Select a role…" error="Please select a role to continue." />
   <Select.Content>
-    <Select.Item index={0} value="admin">Admin</Select.Item>
-    <Select.Item index={1} value="editor">Editor</Select.Item>
-    <Select.Item index={2} value="viewer">Viewer</Select.Item>
+    <Select.Item value="admin">Admin</Select.Item>
+    <Select.Item value="editor">Editor</Select.Item>
+    <Select.Item value="viewer">Viewer</Select.Item>
   </Select.Content>
 </Select>
 
@@ -130,15 +131,15 @@ dims the row and makes it invisible to the hover highlight.
   <Select disabled>
     <Select.Trigger placeholder="Disabled" />
     <Select.Content>
-      <Select.Item index={0} value="a">Option A</Select.Item>
+      <Select.Item value="a">Option A</Select.Item>
     </Select.Content>
   </Select>
   <Select>
     <Select.Trigger placeholder="Some disabled…" />
     <Select.Content>
-      <Select.Item index={0} value="a">Available</Select.Item>
-      <Select.Item index={1} value="b" disabled>Unavailable</Select.Item>
-      <Select.Item index={2} value="c">Available</Select.Item>
+      <Select.Item value="a">Available</Select.Item>
+      <Select.Item value="b" disabled>Unavailable</Select.Item>
+      <Select.Item value="c">Available</Select.Item>
     </Select.Content>
   </Select>
 </div>
@@ -151,17 +152,54 @@ The menu oozes out of its trigger by default. `effect="morph"` with `hideSource`
   <Select defaultValue="goo">
     <Select.Trigger placeholder="Goo" />
     <Select.Content>
-      <Select.Item index={0} value="goo">Goo</Select.Item>
-      <Select.Item index={1} value="neck">Liquid neck</Select.Item>
-      <Select.Item index={2} value="drop">Drop</Select.Item>
+      <Select.Item value="goo">Goo</Select.Item>
+      <Select.Item value="neck">Liquid neck</Select.Item>
+      <Select.Item value="drop">Drop</Select.Item>
     </Select.Content>
   </Select>
   <Select defaultValue="morph">
     <Select.Trigger placeholder="Morph" />
     <Select.Content effect="morph" hideSource>
-      <Select.Item index={0} value="morph">Morph</Select.Item>
-      <Select.Item index={1} value="grow">Grow</Select.Item>
-      <Select.Item index={2} value="shrink">Shrink back</Select.Item>
+      <Select.Item value="morph">Morph</Select.Item>
+      <Select.Item value="grow">Grow</Select.Item>
+      <Select.Item value="shrink">Shrink back</Select.Item>
     </Select.Content>
   </Select>
 </div>
+
+# Node labels
+
+A row's label may be any node: it keeps its own box in the row and in the
+trigger, where text is trimmed and truncated. `textValue` is what typeahead
+matches. `Select.Value` as the trigger's children takes its own placeholder.
+
+<Select defaultValue="beta">
+  <Select.Trigger className="w-[220px]">
+    <Select.Value placeholder="Release channel…" />
+  </Select.Trigger>
+  <Select.Content>
+    <Select.Item value="stable" textValue="Stable">
+      <span className="flex items-center gap-2">Stable <Badge color="blue" size="compact">1.4</Badge></span>
+    </Select.Item>
+    <Select.Item value="beta" textValue="Beta">
+      <span className="flex items-center gap-2">Beta <Badge color="blue" size="compact">1.5</Badge></span>
+    </Select.Item>
+    <Select.Item value="canary" textValue="Canary">
+      <span className="flex items-center gap-2">Canary <Badge color="blue" size="compact">nightly</Badge></span>
+    </Select.Item>
+  </Select.Content>
+</Select>
+
+# Read-only
+
+`readOnly` shows the value and keeps the popup shut, for a form you may
+look at but not change.
+
+<Select readOnly defaultValue="editor">
+  <Select.Trigger placeholder="Role" />
+  <Select.Content>
+    <Select.Item value="admin">Admin</Select.Item>
+    <Select.Item value="editor">Editor</Select.Item>
+    <Select.Item value="viewer">Viewer</Select.Item>
+  </Select.Content>
+</Select>

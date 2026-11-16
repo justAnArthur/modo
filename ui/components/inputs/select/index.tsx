@@ -38,7 +38,16 @@ import {
   usePortalContainer,
 } from '../../../lib/overlay'
 import { isDisabledRow, POPUP_SHAPE, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
-import { CheckMark, PopupLabel, PopupSeparator, RowIcon, rowClasses, rowLabelClass } from '../../../lib/popup-rows'
+import {
+  CheckMark,
+  isTextLabel,
+  PopupLabel,
+  PopupSeparator,
+  RowIcon,
+  rowClasses,
+  rowLabelBoxClass,
+  rowLabelClass,
+} from '../../../lib/popup-rows'
 import { PopupSurface } from '../../../lib/popup-surface'
 import { useRowFocus } from '../../../lib/row-group'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
@@ -57,6 +66,10 @@ const selectionAckMs = 300
 interface SelectContextValue {
   value: string
   disabled: boolean
+  /** Each `Select.Item`'s place in document order, by value: a row's index when it sets none. */
+  indexByValue: Map<string, number>
+  /** Whether the picked row's label is plain text (trimmed and truncated in the trigger) or a node (laid out as is). */
+  textLabel: boolean
 }
 
 const SelectContext = createContext<SelectContextValue | null>(null)
@@ -77,16 +90,17 @@ interface SelectContentContextValue {
 const SelectContentContext = createContext<SelectContentContextValue | null>(null)
 
 /**
- * The `{ value, label }` pairs of the `Select.Item` children, for Base UI's
- * `items`: the trigger shows an initial value's label before the popup has
- * ever mounted. A non-string label falls back to the value.
+ * The `{ value, label }` pairs of the `Select.Item` children in document
+ * order, through groups, maps and conditionals. Base UI's `items` takes them,
+ * so the trigger shows an initial value's label, whatever node it is, before
+ * the popup has ever mounted; their order numbers the rows.
  */
 function collectSelectItems(node: ReactNode, out: { value: string; label: ReactNode }[] = []) {
   Children.forEach(node, child => {
     if (!isValidElement(child)) return
     const props = child.props as { value?: unknown; children?: ReactNode }
     if (typeof props.value === 'string') {
-      out.push({ value: props.value, label: typeof props.children === 'string' ? props.children : props.value })
+      out.push({ value: props.value, label: props.children ?? props.value })
     } else if (props.children) {
       collectSelectItems(props.children, out)
     }
@@ -111,6 +125,8 @@ interface SelectProps {
   onOpenChange?: (open: boolean) => void
   /** Disables the entire select. Defaults to `false`. */
   disabled?: boolean
+  /** Shows the value but takes no pick: the popup stays shut. Defaults to `false`. */
+  readOnly?: boolean
   /** Name for form submission (renders a hidden native input). */
   name?: string
   /** Marks the select as required in forms. Defaults to `false`. */
@@ -135,10 +151,22 @@ interface SelectProps {
  * `defaultOpen`, controlled through `value` + `onValueChange` and `open` +
  * `onOpenChange`.
  *
- * Statics: Select.Trigger (variant, icon, placeholder, error), Select.Content
- * (the popup: side, align, sideOffset, container and the morph options from,
- * effect, hideSource, tier), Select.Item (index, value, icon, disabled),
- * Select.Group, Select.Label and Select.Separator.
+ * Rows need no `index`: they take their place in document order, inside a
+ * `Select.Group` or out of a `map`. A row's label may be any node (an icon
+ * and text, a badge): it keeps its own box in the row and in the trigger,
+ * where text is trimmed and truncated, and its `textValue` is what typeahead
+ * matches.
+ *
+ * Statics:
+ * - `Select.Trigger` — the field: `variant`, `icon`, `placeholder`, `error`;
+ *   children replace its value slot (a `Select.Value`).
+ * - `Select.Value` — the value slot: the picked row's label, else the muted `placeholder`.
+ * - `Select.Content` — the popup: `side`, `align`, `sideOffset`, `container` and the
+ *   morph options `from`, `effect`, `hideSource`, `tier`.
+ * - `Select.Item` — one row: `value`, optional `index`, `textValue`, `icon`, `disabled`;
+ *   its children are the label.
+ * - `Select.Group`, `Select.Label`, `Select.Separator` — sections, their captions and
+ *   the hairlines between them.
  *
  * @example {@include ./examples.mdx}
  * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/select.tsx Fluid Functionalism
@@ -153,6 +181,7 @@ function Select({
   defaultOpen,
   onOpenChange,
   disabled = false,
+  readOnly = false,
   name,
   required,
   size,
@@ -174,7 +203,10 @@ function Select({
     root.onOpenChange(next, details)
   }
 
-  const ctx = useMemo(() => ({ value, disabled }), [value, disabled])
+  const indexByValue = useMemo(() => new Map(items.map((item, index) => [item.value, index])), [items])
+  const picked = items.find(item => item.value === value)
+  const textLabel = picked === undefined || isTextLabel(picked.label)
+  const ctx = useMemo(() => ({ value, disabled, indexByValue, textLabel }), [value, disabled, indexByValue, textLabel])
 
   return (
     <SizeScope size={size}>
@@ -188,6 +220,7 @@ function Select({
             onOpenChange={handleOpenChange}
             items={items}
             disabled={disabled}
+            readOnly={readOnly}
             name={name}
             required={required}
             modal={false}
@@ -202,7 +235,33 @@ function Select({
 
 Select.displayName = 'Select'
 
+interface SelectValueProps {
+  /** Shown, muted, while nothing is selected. Defaults to `"Select…"`. */
+  placeholder?: ReactNode
+  /** Extra classes for the value slot. */
+  className?: string
+}
+
+/** The trigger's value slot: the picked row's label, else the muted placeholder. */
+function SelectValue({ placeholder = 'Select…', className }: SelectValueProps) {
+  const { textLabel } = useSelectContext()
+  return (
+    <SelectPrimitive.Value
+      placeholder={placeholder}
+      className={cn(
+        textLabel ? rowLabelClass : 'flex min-w-0 flex-1 items-center',
+        'text-left text-foreground data-[placeholder]:text-muted-foreground',
+        className,
+      )}
+    />
+  )
+}
+
+SelectValue.displayName = 'SelectValue'
+
 interface SelectTriggerProps extends Omit<HTMLAttributes<HTMLButtonElement>, 'children'> {
+  /** Replaces the built-in value slot, typically with a `Select.Value`. The icon and chevron stay. */
+  children?: ReactNode
   /** Framed at rest, or invisible until hovered or focused. Defaults to `"bordered"`. */
   variant?: FieldVariant
   /** Optional icon displayed before the value. */
@@ -218,7 +277,7 @@ interface SelectTriggerProps extends Omit<HTMLAttributes<HTMLButtonElement>, 'ch
 }
 
 const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
-  ({ className, variant = 'bordered', icon: Icon, placeholder = 'Select…', error, size, ...props }, ref) => {
+  ({ className, variant = 'bordered', icon: Icon, placeholder = 'Select…', error, size, children, ...props }, ref) => {
     const { disabled } = useSelectContext()
     const field = useFieldBox({ variant, invalid: error ? true : undefined, disabled: disabled || undefined, size })
     const sizeClasses = field.size
@@ -243,10 +302,7 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
         >
           <span className={cn('flex min-w-0 flex-1 items-center', sizeClasses.gap)}>
             {Icon && <Icon size={sizeClasses.icon} strokeWidth={1.5} className={fieldIconClasses} />}
-            <SelectPrimitive.Value
-              placeholder={placeholder}
-              className={cn(rowLabelClass, 'text-left text-foreground data-[placeholder]:text-muted-foreground')}
-            />
+            {children ?? <SelectValue placeholder={placeholder} />}
           </span>
           <svg
             aria-hidden
@@ -373,19 +429,22 @@ SelectContent.displayName = 'SelectContent'
 interface SelectItemProps extends HTMLAttributes<HTMLDivElement> {
   /** Optional icon displayed before the label. */
   icon?: IconComponent
-  /** Position index within the content — what fluid hover measures rows by. */
-  index: number
+  /** Position among the menu's rows — what fluid hover measures rows by. Defaults to the row's place in document order; set it only for rows rendered by a component of your own, which the walk can't see into. */
+  index?: number
   /** Unique value for this option. */
   value: string
+  /** The row as text, for typeahead, when its label is not plain text. */
+  textValue?: string
   /** Disables this individual item. Defaults to `false`. */
   disabled?: boolean
-  /** The row label. A string label is also what the trigger shows for this value. */
+  /** The row label, text or any node; the trigger shows it for this value. */
   children?: ReactNode
 }
 
 const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
-  ({ className, children, icon: Icon, value, index, disabled = false, ...props }, ref) => {
+  ({ className, children, icon: Icon, value, index: indexProp, textValue, disabled = false, ...props }, ref) => {
     const selectCtx = useSelectContext()
+    const index = indexProp ?? selectCtx.indexByValue.get(value) ?? 0
     const contentCtx = useContext(SelectContentContext)
     const internalRef = useRef<HTMLDivElement>(null)
     const mergedRef = useMergeRefs(internalRef, ref)
@@ -407,7 +466,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
       <SelectPrimitive.Item
         value={value}
         disabled={disabled}
-        label={typeof children === 'string' ? children : undefined}
+        label={textValue ?? (isTextLabel(children) ? Children.toArray(children).join('') : undefined)}
         render={
           <div
             ref={mergedRef}
@@ -418,7 +477,9 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
         }
       >
         {Icon && <RowIcon icon={Icon} lit={lit} />}
-        <SelectPrimitive.ItemText render={<span className={rowLabelClass} />}>{children}</SelectPrimitive.ItemText>
+        <SelectPrimitive.ItemText render={<span className={rowLabelBoxClass(children)} />}>
+          {children}
+        </SelectPrimitive.ItemText>
         <CheckMark checked={isChecked} reserve />
       </SelectPrimitive.Item>
     )
@@ -437,13 +498,14 @@ const SelectLabel = PopupLabel
 const SelectSeparator = PopupSeparator
 
 Select.Trigger = SelectTrigger
+Select.Value = SelectValue
 Select.Content = SelectContent
 Select.Item = SelectItem
 Select.Group = SelectGroup
 Select.Label = SelectLabel
 Select.Separator = SelectSeparator
 
-export type { SelectContentProps, SelectItemProps, SelectProps, SelectTriggerProps }
-export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger }
+export type { SelectContentProps, SelectItemProps, SelectProps, SelectTriggerProps, SelectValueProps }
+export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue }
 
 export default Select
