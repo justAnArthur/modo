@@ -35,6 +35,12 @@ New since 0.9:
 - `engines`: Node 20.19+ or 22.12+, the floor of Vite 8.
 - The shell contract is public: `@justanarthur/modo` exports the slot prop types (`ButtonSlotProps`, `LinkSlotProps`, `CodeSlotProps`, `IconSlotProps`, `SelectSlotProps`, `SidebarSlotProps`, `SidebarItemProps`, `SidebarSectionProps`), `ShellComponents`, `PanelItemProps`, `SelectOption`, `IconName` and the config interfaces (`ShellConfig`, `ThemeConfig`, `RepoConfig`, `PanelConfig`, `PanelItem`).
 - The `vite` extension path resolves like every other module path: the extension is optional.
+- `shell`, `panel`, `examples` and `vite` references may be package specifiers (`@scope/ds/docs#Select`), resolved through the package's `exports` (`source`, then `import`, then `default`).
+- `root`: the folder holding the tiers, `tokens/` and `guides/`, for a library that keeps its sources in a subfolder. `modo add` takes `--config`.
+- Free-form MDX guides from `guides/`, at `/guides/<slug>`: frontmatter `title` / `description`, a `01-` prefix to order them, folders as sidebar sections with an `index.mdx` landing page; a Guides sidebar section and an overview card. Group folder titles drop a `01-` prefix too.
+- Group an item's examples: in `examples.mdx` a `#` with `##` under it becomes a group, with a nested On this page.
+- Props through the TypeScript compiler: inherited, `Omit` / `Pick`, intersected, imported and generic props types; a closing "Defaults to `x`." fills the Default column. `typescript` (>=5) is an optional peer: without it a plain parser reads same-file types, with one warning.
+- An item may re-export another package's component: its docs, props and examples come from the package's `source` condition or its typings. `{@inheritDoc <ref>}` prepends a base's description and examples. Includes stay inside their package.
 
 Breaking:
 
@@ -68,6 +74,17 @@ New since 0.6:
 - Form controls take `name`: Checkbox (with `disabled` and `value`), `Radio.Group`, Switch, Select, Combobox, Slider, ColorPicker and the date and time pickers.
 - `Tabs variant="subtle"`; `Card.Group` selects both ways (`value` / `defaultValue` / `onValueChange`); `Dropdown.Item` takes `shortcut`; ContextMenu shares Dropdown's selection and search.
 - `useLift`, `SizeScope` and a named `SidebarApp` / `Craft` export from the package root.
+- New items: `Avatar`, `Field` (label, description and error around any control), `FileDropzone` with `FileDropzone.Row` (drag verdicts, announced rejections, upload progress), `Label` (its own item, still exported from `inputs/input`), `NavigationMenu` (one panel morphing out of its trigger and between panels), `NumberInput` (Base UI NumberField on the field ladder), `Pagination` (a liquid current page, a jump-to-page field), `Progress` with `Progress.Spinner`, `Separator` and `Skeleton`.
+- Controls take `invalid`, `disabled`, `readOnly` and `required` from an enclosing `Field`; `useFieldState` does the same for your own.
+- Input: `readOnly`, `required`, `startAdornment` / `endAdornment`, `InputAction` and `InputAdornment`; a `type` swap keeps the caret. Textarea: `readOnly`, `required`.
+- Checkbox `indeterminate`; Checkbox, Radio and Switch without a `label` render the bare control.
+- Select rows need no `index`; `Select.Value`; node row labels with `textValue`; `readOnly`. Combobox `query` / `defaultQuery` / `onQueryChange`, `filter={null}`, `loading`, a `Content` `footer`, `readOnly`.
+- DatePicker `editable` (type over the locale's numeric mask; an invalid entry marks the field, Escape restores it); DatePicker and DateRangePicker take `valueType="string"` for ISO-string values and `labels`.
+- Popover takes `anchor`, `alignOffset`, the `collision*` props and `initialFocus` / `finalFocus`, and `onOpenChange` gets Base UI's details. Tooltip takes `.Trigger` / `.Content`. `AlertDialog.Action` waits on a returned promise or `pending`; `AlertDialog.Cancel`. A global `toast()` next to `useToast()`, once `<Toast manager={toast} />` is mounted.
+- Dropdown submenus (`Dropdown.Sub`, `.SubTrigger`, `.SubContent`); rows number themselves (`index` optional); `Dropdown.Content keepMounted`.
+- Table `Footer`, `Caption`, `Empty`, sortable heads (`sort` / `defaultSort` / `onSortChange`) and `stacked` rows. Button `outline`, `destructive`, `success` and `link`, and a loading Button keeps focus; Badge `outline`; `Card.Divider` and `border`; link tabs (`Tabs.Item` `href`).
+- Server-safe helpers: `./lib/{utils,springs,size-scale,shape-classes,field-classes}` and `./components/*/variants` carry no `'use client'`; the hooks and contexts are exported per subpath too (`./lib/field-box`, `./lib/use-morph`, …). CI checks the built `dist/`.
+- Tokens: the button washes (`--destructive-strong`, `--destructive-wash*`, `--success-strong`, `--success-wash*`), `--shadow-button-outline*`, `--skeleton` and `--duration-loop`.
 
 Breaking:
 

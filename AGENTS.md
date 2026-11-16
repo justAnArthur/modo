@@ -11,10 +11,10 @@ modo turns a design system (DS) into its own docs site. The lib brings no conten
   - `src/plugins` — the Vite plugins.
   - `src/runtime` — the renderer, a plain Vite SPA: its structural CSS in `shell/css/*.css` (imported in order from `main.tsx`, `contract.css` first), the virtual modules' types in `virtual/*.d.ts`.
   - `templates/` — the scaffold and the `modo add` stubs.
-- `ui/` — the npm package `@justanarthur/modo-ui`: Fluid Functionalism (Base UI) on UnoCSS (springs, fluid hover, size ladder, surface elevation), a DS that is also published. `bun run build` writes the components, types and stylesheets to `dist/` (`index.ts` barrel, `bunup.config.ts`, `scripts/build-css.ts`); its docs build with `--out`, so they never touch `dist/`. `preset.ts` is the single source of the theme and token utilities: `uno.config.ts`, the shipped UnoCSS preset and the generated `tailwind.css` all read it. `base.css` holds the theme and base styles shipped to consumers; `global.css` imports it and adds the docs chrome. Its own guide is `ui/AGENTS.md`, its design language `ui/DESIGN.md`, its rules shown as bad / good pairs on the `primitives/craft` page; building in it follows the `modo-ui` skill (`.claude/skills/modo-ui`).
+- `ui/` — the npm package `@justanarthur/modo-ui`: Fluid Functionalism (Base UI) on UnoCSS (springs, fluid hover, size ladder, surface elevation), a DS that is also published. `bun run build` writes the components, types and stylesheets to `dist/` (`index.ts` barrel, `bunup.config.ts`, `scripts/build-css.ts`); its docs build with `--out`, so they never touch `dist/`. `preset.ts` is the single source of the theme and token utilities: `uno.config.ts`, the shipped UnoCSS preset and the generated `tailwind.css` all read it. `base.css` holds the theme and base styles shipped to consumers; `global.css` imports it and adds the docs chrome. Its own guide is `ui/AGENTS.md`, its design language `ui/DESIGN.md`, its rules shown as bad / good pairs on the `primitives/craft` page; `guides/` holds the docs' Getting started and Theming pages (not shipped); building in it follows the `modo-ui` skill (`.claude/skills/modo-ui`).
 - `demo/` — the harness. `scripts/run-design-systems.ts` runs the lib's CLI once per DS (one dev server per port, or one static build each) and splices in the demo-switcher. `components/demo-switcher/` renders `shell.Select` to navigate between peers.
 - `demo/design-systems/<name>/` — one workspace package per DS, each with its own deps (the runner also picks up `ui/`):
-  - `filled/` — the minimal reference.
+  - `filled/` — the minimal reference, with a `guides/` folder.
   - `shadcn/` — shadcn/ui pulled with the real CLI (Tailwind v4).
   - `fluid-functionalism/` — the @fluid registry layer on its own shadcn foundation.
   - `mui/` — adapters over `@mui/material`; `scripts/extract-tokens.ts` extracts the default theme into token files.
@@ -73,7 +73,7 @@ Two vocabularies:
   - `text-syntax-*` (code highlighting), `font-mono`;
   - `spring.*` and `--duration-*`;
   - the morph layer (`lib/use-morph.ts` + `MorphSurface`, docs `primitives/morph`) and the liquid indicators (`lib/goo-indicator.tsx`): overlays grow from their source and travelling indicators melt between items through them, never through hand-rolled animation.
-  - the field ladder (`lib/field-classes.ts`): a text field builds the box around its control with `useFieldBox` (the ladder in its `variant`, `data-active` / `data-invalid` / `data-disabled`, the shape's radius and inset; `focusControlOnPress` for a press in its padding) and re-declares `variant` / `invalid` / `disabled` / `size` in its props; it takes `value` / `defaultValue` / `onValueChange` (the value, not an event); a leading icon takes `fieldIconClasses`; a label or message that lines up with the text inside reads `fieldTextInset`. Never its own hover, focus or invalid fills.
+  - the field ladder (`lib/field-classes.ts` for the classes, `lib/field-box.ts` for the hooks): a text field builds the box around its control with `useFieldBox` (the ladder in its `variant`, `data-active` / `data-invalid` / `data-disabled` / `data-readonly`, the shape's radius and inset; `focusControlOnPress` for a press in its padding) and re-declares `variant` / `invalid` / `disabled` / `readOnly` / `size` in its props; a control whose root is not the box reads an enclosing `Field` through `useFieldState` (own prop wins); it takes `value` / `defaultValue` / `onValueChange` (the value, not an event); a leading icon takes `fieldIconClasses`, content beside the text `fieldAdornmentClasses`, an icon button inside the box `fieldActionClasses` + `FIELD_ACTION`; a label or message that lines up with the text inside reads `fieldTextInset`. Never its own hover, focus or invalid fills.
   - dates and times (`components/inputs/date-time/`): pickers sit on react-day-picker, styled through its `classNames` and custom components (never its stylesheet); they take a react-day-picker / date-fns `locale`, open through the group's `picker-shell.tsx`, and list months, years, hours and minutes in a `ScrollColumn` (`lib/scroll-column.tsx`).
 
 Rules:
@@ -109,16 +109,16 @@ Rules:
   - It is an entry of the shared build (`@mdx-js/esbuild` + `remark-gfm`). Every top-level JSX block is a live example: `lib/src/plugins/mdx-examples.ts` wraps it in `ModoExample`, the example card, and keeps its source for Show code / Copy.
   - Imports are real: the item is `./index`, other items are `../../<tier>/<id>` (one `../` more per group folder), packages are imported by name. Items and `examples` scope exports also resolve as JSX tags without an import, but an identifier used in an expression (`icon={Plus}`) needs one.
   - Expressions are plain JS (acorn): no TS syntax such as `as const`. MDX isn't typechecked.
-  - `#`/`##` become example titles (`example-<slug>` ids); `###` is a sub-heading. All get anchors and feed the TOC.
+  - Headings (all anchored; `example-<slug>` ids on example and group titles; the TOC lists h2–h4): a `#` followed by `##` (before the next `#`) is a group (h3, `example-group-title`), each `##` under it an example (h4), and a `###` a sub-heading one level below its example (h5 in a group, so not in the TOC). Every other `#` or `##` is an example (h3), its `###` h4. A group may hold its own example straight under its `#`. The build marks each top-level heading's role (`lib/src/lib/example-groups.ts`, `remarkModoExamples`); the runtime only renders the mark.
   - Prose typography is `@scope`d down to the example cards, so it never leaks into a live example.
   - A CSS scanner (UnoCSS `content`, Tailwind `@source`) must include `.mdx`, since example classes live there.
 - **Markdown** renders everywhere: item, example and prop descriptions.
   - `marked` lexer → React. Links and fences go through the shell's `Link` / `Code`; raw HTML shows as text.
   - The first paragraph is the lead; the rest renders in `data-modo="prose"`.
-- **Props** come from the destructured params plus the inline object type and per-prop JSDoc.
-  - In a prop's JSDoc, `@default x` fills the Default column (the code's own default wins); `@values a, b` names the allowed values and is dropped when the type already lists them.
-  - A bare identifier type resolves to a same-file interface or type alias.
-  - `const X = forwardRef<…, XProps>` resolves `XProps`.
+- **Props** come from the TypeScript checker: `extends`, `Omit` / `Pick` / `Partial`, intersections and imported types; members inherited from other packages' typings stay out unless that package is documented with modo.
+  - Defaults: the destructuring, else `@default x`, else a closing "Defaults to `x`." in the prop's JSDoc (a bare constant gives way to the documented value). `@values a, b` names the allowed values and is dropped when the type already lists them.
+  - An item may re-export another component: its docs, props and `examples.mdx` are read from the target (the `source` condition, else its `.d.ts`). `{@inheritDoc <specifier|name>}` prepends a base's description and examples. Includes stay inside their package.
+  - Without `typescript` (optional peer, >=5) the plain parser reads same-file types only (`interface` / `type`, `forwardRef<…, XProps>`). Docs: `lib/docs/items.md`.
   - Shell slot matching reads these props, so a converted component must keep `children` (and `href` for Link) visible.
 - **Parser rules:**
   - `@example` counts only at the start of a JSDoc line.
@@ -146,7 +146,7 @@ Rules:
   - The chrome looks for user components per slot, matched by name plus required props (`SLOTS` in `lib/src/lib/contract.ts`). Primitives: Button (`children`), Link (`href`, `children`), Code (`children`), Icon (`name`). Components: Select (`value`, `onValueChange`, `options`), Sidebar Root/Item/Section (`children`). A host Select that declares `onChange` instead falls back to Plain.
   - Type a slot or panel component with the exported contract types: `import type { SelectSlotProps, PanelItemProps } from '@justanarthur/modo'`.
   - Unmatched slots fall back to the lib's Plain components; `modo.config.ts: shell` pins slots.
-  - A `shell` / `panel.items[].component` reference may name an export: `./modo.components.tsx#Select` (else the default export). Several refs into one file share its build entry, so a DS can keep all its docs-only components in one `modo.components.tsx`.
+  - A `shell` / `panel.items[].component` reference may name an export: `./modo.components.tsx#Select` (else the default export), or be a package specifier (`@scope/ds/docs#Select`), resolved through `exports` (`source` > `import` > `default`). Several refs into one file share its build entry, so a DS can keep all its docs-only components in one `modo.components.tsx`.
   - Contracts beyond the matched props:
     - Button gets `variant="ghost"`, `size="icon-sm"`, `aria-label`, `aria-pressed`.
     - Link gets `aria-label` on icon-only anchors and `title` from Markdown links; forward them.
@@ -156,6 +156,7 @@ Rules:
   - A host Link needn't forward data attributes: the chrome puts its hooks on wrappers.
   - One Sidebar drives both sides: each `panel.items` entry is a `Sidebar.Section`.
 - **`modo.config.ts` hooks:**
+  - `root` — the folder (from the project root) holding the tiers, `tokens/` and `guides/`; other paths stay project-relative.
   - `css` — injected right after the lib's structural CSS, before tokens.
   - `examples` — a module whose named exports are in scope in every example. Alias any export that collides with an item name; an unresolvable path yields scope `{}` in dev and fails `modo build`.
   - `vite` — default-exports `(config) => config`, imported natively; the path resolves like every other ref (extension optional). This is how Tailwind/Uno get added. The CLI applies it to `createViteConfig`'s result, then merges its own flags (`--port`, `--host`, `--base`, `--out`) over it.
@@ -174,6 +175,7 @@ Rules:
   - Compound parts hang off the default export (`Card.Header = …`; TypeScript types the assignments). For a forwardRef const, cast the `Object.assign` result to a type with the parts.
   - Examples may use compound JSX.
 - `<tier>/<name>/examples.mdx` — the item's examples; `<name>.md` for prose (see **docs**).
+- `guides/**/*.mdx` (under `root`) — free-form pages at `/guides/<slug>`. Frontmatter `title` / `description`; a `01-` prefix orders a file or folder and is dropped from slugs and titles; a folder's `index.mdx` is its landing page; non-ASCII and spaces allowed. Built in the shared build (top-level JSX is a live example; headings feed the TOC). Docs: `lib/docs/guides.md`.
 - `<tier>/<name>/<name>.tsx` — vendored upstream source, imported by an adapter.
   - When the upstream component is the item, rename it to `index.tsx` instead (with a local-modifications header).
   - Adapters only for real API transforms: shell contracts, options→children, prop narrowing.
@@ -185,7 +187,7 @@ Rules:
 - All DSs: `bun dev` at the root or in `demo/` (ports 5173+i). The runner builds the lib's CLI first when it's missing or older than `lib/src`.
 - One DS: `bun dev <name>` in `demo/`.
 - The site: `bun run build` in `demo/` builds every DS into `demo/dist/<name>/` (`SITE_BASE` sets the public path). `.github/workflows/pages.yml` deploys it to GitHub Pages on push to `main`.
-- Checks (CI runs them on every push and pull request): `bun run lint`, `bun run build && bun run check` (typechecks every workspace), `bun run test` (the lib's parser tests), `.github/scripts/check-ui-pack.sh` (the ui tarball holds its entry, styles and licence) and `.github/scripts/smoke-init.sh` (packs the lib, `modo init`s a project with it and builds it). Pull requests also build the demo site.
+- Checks (CI runs them on every push and pull request): `bun run lint`, `bun run build && bun run check` (typechecks every workspace), `bun run test` (the lib's parser tests and ui's `test/`), `.github/scripts/check-ui-pack.sh` (the ui tarball holds its entry, styles and licence, and `bun run check:dist` passes) and `.github/scripts/smoke-init.sh` (packs the lib, `modo init`s a project with it and builds it). Pull requests also build the demo site.
 
 ## commits
 
@@ -197,8 +199,8 @@ Rules:
 - nav: `sidebar-nav`, `sidebar-section`, `sidebar-section-title`, `sidebar-section-items`, `sidebar-item` (`aria-current="page"` when active), `toc`, `toc-label` (`data-level`).
 - page: `page-eyebrow`, `page-title`, `page-lead`, `page-meta`, `page-meta-entry` (`data-kind`: `deprecated`, `status`, `since`, `repo`), `credits`, `credits-list`, `credit` (the overview's upstreams from `@source` / `@license`), `prose`, `section`, `section-title`, `anchor`, `hero`, `hero-stats`.
 - canvas (`/canvas`, every foundation and item live on one pan-and-zoom surface): `canvas` (`data-moving`, `data-panning`, `data-space` while in use), `canvas-world`, `canvas-column` (`data-kind`), `canvas-frames`, `canvas-frame`, `canvas-frame-title`, `canvas-stage`, `canvas-controls`, `canvas-zoom`.
-- overviews: `bento`, `bento-card` (`data-span="wide|full"`), `bento-stage` (`data-clipped` when the preview is cut off), `bento-fit` (the preview's scaled layer), `bento-meta`, `bento-title`, `bento-count`, `bento-desc`, `bento-empty`; previews `color-strip`, `token-chip`, `type-preview`, `type-preview-lines`, `type-preview-line`, `space-preview`, `space-stair`, `radius-preview`, `radius-corner`, `motion-preview`, `motion-curves`, `motion-bar`.
-- examples: `example-card`, `example-card-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`, `code-block`, `code-actions`, `icon-label`.
+- overviews: `bento`, `bento-card` (`data-span="wide|full"`), `bento-stage` (`data-clipped` when the preview is cut off), `bento-fit` (the preview's scaled layer), `bento-meta`, `bento-title`, `bento-count`, `bento-desc`, `bento-empty`, `guide-list` (the Guides card's links); previews `color-strip`, `token-chip`, `type-preview`, `type-preview-lines`, `type-preview-line`, `space-preview`, `space-stair`, `radius-preview`, `radius-corner`, `motion-preview`, `motion-curves`, `motion-bar`.
+- examples: `example-card`, `example-card-title`, `example-group-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`, `code-block`, `code-actions`, `icon-label`.
 - tables and tokens: `prop-table-scroll`, `prop-table`, `token-list`, `token-row`, `token-name`, `token-meta`, `swatch` (`data-kind`).
 - colors: `color-grid`, `color-stack`, `color-tile` (`data-flush` when it matches the page), `color-tile-name`, `color-tile-pair`, `color-tile-foot`, `color-tile-value`, `color-tile-schemes` (the light / dark chip, when the host declares both).
 - foundations: `token-label`, `token-empty` (a group without variables); typography `type-elements`, `type-element`, `type-families`, `type-family`, `type-family-head`, `type-family-name`, `type-family-sample`, `type-family-weights`, `type-family-weight`, `type-glyph`, `type-scale`, `type-step`, `type-sample`, `type-metrics`, `type-weights`, `type-weight`; radius `radius-grid`, `radius-tile`, `radius-stage`, `radius-shape`, `radius-uses`, `radius-use` (`data-kind="control|card"`); spacing `space-scale`, `space-step`, `space-ruler`, `space-bar`, `space-specimen`, `space-insets`, `space-inset`, `space-inset-box`; motion `motion-list` (`data-end` while the dots sit at the far end), `motion-row`, `motion-lane`, `motion-track`, `motion-dot`, `motion-curve`, `motion-curve-axis`.

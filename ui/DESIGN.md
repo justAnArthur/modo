@@ -36,6 +36,8 @@ colors:
   active-dark: "rgb(255 255 255 / 0.1)"
   scrim: "oklch(0 0 0 / 0.4)"
   scrim-dark: "oklch(0 0 0 / 0.8)"
+  skeleton: "color-mix(in oklab, oklch(0.205 0 0) 8%, transparent)"
+  skeleton-dark: "color-mix(in oklab, oklch(0.97 0 0) 8%, transparent)"
   brand: "oklch(0.693 0.16 265)"
   brand-hover: "oklch(0.649 0.164 264.76)"
   focus-ring: "oklch(0.693 0.16 265)"
@@ -44,7 +46,20 @@ colors:
   destructive-dark: "oklch(0.7106 0.1661 22.22)"
   destructive-light: "oklch(0.971 0.013 17.38)"
   destructive-light-dark: "oklch(0.2575 0.0886 26.04)"
+  destructive-strong: "oklch(0.47 0.175 27)"
+  destructive-strong-dark: "oklch(0.81 0.105 22)"
+  destructive-wash: "color-mix(in oklab, oklch(0.6368 0.2078 25.33) 16%, transparent)"
+  destructive-wash-dark: "color-mix(in oklab, oklch(0.7106 0.1661 22.22) 16%, transparent)"
+  destructive-wash-hover: "color-mix(in oklab, oklch(0.6368 0.2078 25.33) 20%, transparent)"
+  destructive-wash-hover-dark: "color-mix(in oklab, oklch(0.7106 0.1661 22.22) 20%, transparent)"
+  destructive-wash-active: "color-mix(in oklab, oklch(0.6368 0.2078 25.33) 24%, transparent)"
+  destructive-wash-active-dark: "color-mix(in oklab, oklch(0.7106 0.1661 22.22) 24%, transparent)"
   status-success: "oklch(0.723 0.192 149.58)"
+  success-strong: "oklch(0.46 0.12 151)"
+  success-strong-dark: "oklch(0.83 0.15 152)"
+  success-wash: "color-mix(in oklab, oklch(0.723 0.192 149.58) 16%, transparent)"
+  success-wash-hover: "color-mix(in oklab, oklch(0.723 0.192 149.58) 20%, transparent)"
+  success-wash-active: "color-mix(in oklab, oklch(0.723 0.192 149.58) 24%, transparent)"
   status-loading: "oklch(0.715 0 0)"
   status-warning: "oklch(0.7686 0.1647 70.08)"
   status-info: "oklch(0.623 0.188 259.81)"
@@ -221,6 +236,35 @@ components:
     height: "{spacing.control}"
   button-ghost-hover:
     backgroundColor: "{colors.hover}"
+  button-outline:
+    backgroundColor: "{colors.active}"
+    textColor: "{colors.foreground}"
+    rounded: "{rounded.lg}"
+    height: "{spacing.control}"
+    padding: 0 16px
+    boxShadow: "0 0 0 1px {colors.control-border}, inset 0 0 0 0 {colors.control-border}"
+  button-outline-pressed:
+    boxShadow: "0 0 0 0 {colors.control-border}, inset 0 0 0 1px {colors.control-border}"
+  button-destructive:
+    backgroundColor: "{colors.destructive-wash}"
+    textColor: "{colors.destructive-strong}"
+    rounded: "{rounded.lg}"
+    height: "{spacing.control}"
+    padding: 0 16px
+  button-destructive-hover:
+    backgroundColor: "{colors.destructive-wash-hover}"
+  button-destructive-active:
+    backgroundColor: "{colors.destructive-wash-active}"
+  button-success:
+    backgroundColor: "{colors.success-wash}"
+    textColor: "{colors.success-strong}"
+    rounded: "{rounded.lg}"
+    height: "{spacing.control}"
+    padding: 0 16px
+  button-success-hover:
+    backgroundColor: "{colors.success-wash-hover}"
+  button-success-active:
+    backgroundColor: "{colors.success-wash-active}"
   button-compact:
     typography: "{typography.body-compact}"
     height: "{spacing.control-compact}"
@@ -341,6 +385,11 @@ Two text colors, a greyscale ground, one blue.
 - **Destructive (`text-destructive`, `bg-destructive-light`)** — errors and destructive confirms only.
 - **Status (`text-status-*`, `bg-status-*/16`)** — success, loading, error, warning, info, action. A
   status shows as tinted text on a 16% wash of itself, never as a solid fill behind text.
+- **Strong and wash (`text-destructive-strong`, `bg-destructive-wash`, `text-success-strong`,
+  `bg-success-wash`)** — the destructive and success buttons: the hue's `-strong` step (darker in light,
+  lighter in dark) on a 16 / 20 / 24% wash of itself at rest, hover and press, so a 13px label holds AA
+  on every surface level.
+- **Skeleton (`bg-skeleton`)** — 8% of foreground: the loading placeholder, quieter than any border.
 - **Scrim (`bg-scrim`)** — behind a modal dialog; it fades with the morph's progress.
 - **Syntax (`text-syntax-*`)** — low-chroma hues for code, so code reads as text first.
 
@@ -467,7 +516,10 @@ hand-written duration; never a fourth speed.
 | `spring.slow` | 240ms spring, bounce 0.12 | 160ms | Large surfaces: plain morphs, the search field's growth, shared parts |
 | `spring.goo` | 250ms visual, bounce 0.15 | 200ms spring back | Every goo morph, so the liquid neck is on screen long enough to read |
 
-CSS consumers use `duration-fast|moderate|slow[-exit]` and `delay-*`. Animate `transform` and `opacity`;
+CSS consumers use `duration-fast|moderate|slow[-exit]` and `delay-*`. `--duration-loop` (2s) is the
+period of pending-state loops (the skeleton's pulse, the spinner, the indeterminate progress bar); they
+never land, so it is not a spring tier. Under reduced motion the spinner breathes in place and the
+skeleton dips half as far. Animate `transform` and `opacity`;
 a measured geometry engine (the morph layer, `GooIndicator`) is the only thing that writes boxes.
 
 The signature behaviors:
@@ -502,11 +554,21 @@ shared systems above (look and motion). Ready-made patterns to reach for before 
   the hover overlay). A component token with no `backgroundColor` is transparent over its substrate.
   Sizes `default` 36 / `compact` 28 / `icon` / `icon-compact`. Icons sit 4px closer to their edge than
   text. `active` holds the pressed look while a menu it opened is showing. One primary per view.
+  `outline` frames the fill in the control border (3:1 against the surfaces, where `border` is a
+  hairline), the ring moving inward on press; `destructive` and `success` put the hue's `-strong` text
+  on a wash of itself, never a solid fill; `link` is text at control height with a fading underline. A
+  loading button keeps focus and swallows presses.
 - **Inputs** — transparent and ringless at rest, a `bg-muted/50` wash plus a `ring-border` ring on
   hover, `bg-card` plus the ring on focus; the label sits above in muted body text. Errors: destructive caption at
   `weight-medium`, a `destructive-light` wash. A text field signals focus by its fill alone; a button
   field (Select's trigger, the date and time pickers, ColorPicker.Popover's trigger) takes the same
   fill and also the brand ring on `:focus-visible`, since a keyboard user has no caret to follow.
+  A read-only field shows the ring when lit or focused but never lifts its fill. Icon buttons inside a
+  field (a clear, a reveal, NumberInput's stepper pair) sit 4px inside the ring as field actions.
+- **Forms** — `Field` stacks label, control, description and error on the field's text inset, and its
+  state (invalid, disabled, read-only, required) reaches the control inside. A drop zone
+  (FileDropzone) is a dashed container that turns solid while files hover over it and destructive when
+  it refuses them.
 - **Lists and menus** — rows on the control height, `itemPx` inset, one fluid hover highlight, rows
   without their own `:hover` fill. Disabled rows stay registered but are skipped. Keyboard focus earns a
   1px brand ring that springs between rows; pointer focus never shows it. Every popup list opens 6px
@@ -518,6 +580,8 @@ shared systems above (look and motion). Ready-made patterns to reach for before 
     background land before it closes.
   - Base UI keeps a Select's popup mounted after its first pick, so it is mounted while closed: it
     resets its row indices on close and remeasures on open.
+  - Select and Combobox rows take node labels (an avatar and a name) and keep their box; only a text
+    label trims and truncates.
 - **Selection** — checkbox and radio rows melt their selected backgrounds into one run; tabs and
   subtle tabs carry an elevated (+3) or translucent indicator that melts between items; the selected
   label goes `weight-semibold`.
@@ -530,6 +594,17 @@ shared systems above (look and motion). Ready-made patterns to reach for before 
 - **Toasts** — a status pill that melts into a body; status color as text on a 16% wash.
 - **Cards** — transparent and borderless, inheriting the substrate; hairline dividers and the fluid
   hover do the framing; only clickable cards join the hover.
+- **Separator** — the one hairline, `border`, never thicker or colored.
+- **Skeleton** — `bg-skeleton` blocks on the item radius, rows on the control height.
+- **Progress** — a full-width fill slid in on `spring.moderate` (never scaled, so its rounded end
+  keeps its shape); unknown progress sweeps a segment on `--duration-loop`; the spinner is the loading
+  button's glyph.
+- **Pagination** — the current page is a liquid indicator that melts from page to page, under one
+  fluid hover highlight.
+- **NavigationMenu** — a site header strip; its one panel grows from the open trigger and morphs
+  between panels' sizes while content slides in from that side; one hover highlight and a liquid
+  marker under the open item or the current page; panel rows follow popup rows (`POPUP_SHAPE`, one
+  ring, keyboard only); the panel opens 6px below the strip.
 
 ## Do's and Don'ts
 

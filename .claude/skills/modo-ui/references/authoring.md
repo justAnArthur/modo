@@ -154,7 +154,8 @@ highlight, a liquid current-page indicator, a `WeightLabel`, controlled + uncont
 icons from the icon context, the ghost `Button`, and a `size` prop that pins the subtree. It
 typechecks, passes Biome and renders in light, dark and compact. Use it as the starting shape for any
 strip or list of choices; for overlays start from Popover (see
-[components.md](components.md#which-file-to-copy)).
+[components.md](components.md#which-file-to-copy)). The shipped `Pagination` grew from it (first / last
+buttons, a jump-to-page field, every label a prop): read it for the finished control.
 
 `components/navigation/pagination/index.tsx`:
 
@@ -244,7 +245,7 @@ function PageButton({ page, index, current, lit, register, onSelect }: PageButto
 
 interface PaginationProps {
   /** Number of pages. */
-  total: number
+  count: number
   /** Controlled current page, counted from 1. Pair with `onValueChange`. */
   value?: number
   /** Initial page, for an uncontrolled pagination. Defaults to `1`. */
@@ -272,7 +273,7 @@ interface PaginationProps {
  * @example {@include ./examples.mdx}
  */
 function Pagination({
-  total,
+  count,
   value,
   defaultValue = 1,
   onValueChange,
@@ -289,7 +290,7 @@ function Pagination({
   const ArrowRight = useIcon('arrow-right')
   const iconSize = size.variant === 'compact' ? 'icon-compact' : 'icon'
 
-  const list = slots(current, total, siblings)
+  const list = slots(current, count, siblings)
   const pages = list.filter((slot): slot is number => slot !== 'gap')
   // A page change can re-key the strip; hold the last measured rect so the
   // indicator travels from where it was instead of blinking out mid-measure.
@@ -344,7 +345,7 @@ function Pagination({
         variant="ghost"
         size={iconSize}
         aria-label="Next page"
-        disabled={current >= total}
+        disabled={current >= count}
         onClick={() => setCurrent(current + 1)}
       >
         <ArrowRight />
@@ -371,19 +372,19 @@ import Pagination from './index'
 
 The current page melts from page to page, and the hover glides along the strip. A click between two pages lands on the lit one.
 
-<Pagination total={12} defaultValue={5} />
+<Pagination count={12} defaultValue={5} />
 
 # Few pages
 
 With nothing to skip, every page shows.
 
-<Pagination total={5} defaultValue={2} />
+<Pagination count={5} defaultValue={2} />
 
 # Compact
 
 The strip steps down the size ladder with everything around it.
 
-<Pagination total={20} defaultValue={10} size="compact" />
+<Pagination count={20} defaultValue={10} size="compact" />
 ```
 
 What each part shows:

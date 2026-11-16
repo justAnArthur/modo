@@ -13,10 +13,14 @@ controlled + uncontrolled.
 
 | You need | Reach for |
 |---|---|
-| An action | `Button` (`primary` / `secondary` / `tertiary` / `ghost`; `icon` sizes; `loading`; `asChild` for links) |
-| A status or category label | `Badge` (`solid` / `dot`, 17 colors; changes animate) |
-| A text field, with label and error | `InputGroup` + `InputGroup.Field` |
-| A multi-line text field | `Textarea` (+ `Label`) |
+| An action | `Button` (`primary` / `secondary` / `tertiary` / `outline` / `ghost` / `destructive` / `success` / `link`; `icon` sizes; `loading`; `asChild` for links) |
+| A status or category label | `Badge` (`solid` / `dot` / `outline`, 17 colors; changes animate) |
+| A person's or team's picture | `Avatar` (`.Image`, `.Fallback`; `shape` `circle` / `square`) |
+| A text field, with label and error | `Field` (`.Label`, `.Description`, `.Error`) around any control, or `InputGroup` + `InputGroup.Field` for a stack of fields |
+| Text or an icon button inside a field | `Input` `startAdornment` / `endAdornment` with `InputAdornment` / `InputAction` |
+| A number, with steppers or a unit | `NumberInput` (`format`, `scrub`, adornments) |
+| A file upload | `FileDropzone` + `FileDropzone.Row` (drag verdicts, rejections, upload progress) |
+| A multi-line text field | `Textarea` (in a `Field`, or with `Label`) |
 | A read-only value to copy | `Copy` |
 | A chat or prompt composer | `InputMessage` (attachments, queue, send/stop) |
 | One of a few options, all visible | `Radio.Group`, or `Tabs variant="subtle"` for a view switch |
@@ -26,10 +30,12 @@ controlled + uncontrolled.
 | A number in a range | `Slider` (pips by default, compact = dense fill + range) |
 | A color | `ColorPicker` (inline) or `ColorPicker.Popover` |
 | A date, range, time, duration or month | `DatePicker`, `DateRangePicker`, `TimePicker`, `DurationPicker`, `MonthPicker`; `Calendar` inline |
-| Switching views | `Tabs` (`variant="segmented"`: elevated indicator; `"subtle"`: pills) |
+| Switching views | `Tabs` (`variant="segmented"`: elevated indicator; `"subtle"`: pills; `href` for link tabs) |
+| A site header menu | `NavigationMenu` (one panel morphing between triggers) |
+| Page navigation | `Pagination` (`count`; `variant="input"` for tables) |
 | Collapsible sections | `Accordion` / `Accordion.Group` |
 | App navigation | `Sidebar` (+ the `SidebarApp` block for a full shell) |
-| A menu of actions or choices | `Dropdown` (inline panel or popup; search, filter, single/multi check) |
+| A menu of actions or choices | `Dropdown` (inline panel or popup; search, filter, single/multi check; submenus) |
 | Right-click / long-press actions | `ContextMenu` |
 | ⌘K palette | `Command` |
 | A search box | `Search` (pill or icon that grows in place; suggestions) |
@@ -37,11 +43,14 @@ controlled + uncontrolled.
 | A preview behind a link | `PreviewCard` |
 | A short hint | `Tooltip` |
 | A blocking task | `Dialog` (`Dialog.Content width`: `sm` / `lg` / `xl`) |
-| A confirm that must be answered | `AlertDialog` |
+| A confirm that must be answered | `AlertDialog` (`.Action` waits on a returned promise or `pending`) |
 | A panel on an edge, swipeable | `Sheet` (`side`, `snapPoints`) |
-| A transient notice | `Toast` (`useToast()`, six states, promise toasts) |
+| A transient notice | `Toast` (`useToast()`, or the global `toast` with `<Toast manager={toast} />`; six states, promise toasts) |
 | Grouped content, clickable tiles | `Card` / `Card.Group` (`columns` grid with xy hover; selection both ways) |
-| Tabular data | `Table` |
+| Tabular data | `Table` (sortable heads, footer, caption, empty row, `stacked` cards when narrow) |
+| Progress or a spinner | `Progress` (`value={null}` sweeps), `Progress.Spinner` |
+| A loading placeholder | `Skeleton` (a block, or `rows`) |
+| A divider between groups | `Separator` |
 | "Working…" | `ThinkingIndicator` (`shimmer` or `goo`) |
 | A scroll region | `ScrollArea` (+ `scroll-fade`) |
 | A raised container | `Elevated` (`offset`) |
@@ -60,6 +69,8 @@ controlled + uncontrolled.
 | `Motion` | `primitives/motion` | re-exports `spring`, `exitFallbackMs` | Docs stage for the spring tiers (plays one tier's enter and exit). |
 | `Morph` | `primitives/morph` | `.Part` (= `MorphPart`) | Docs stage for the morph engine: `from` × `effect`, `hideSource`, `tier`; also documents the liquid indicators. |
 | `ScrollArea` | `primitives/scroll-area` | `.Bar` | Hover-revealed thin thumb, native physics on touch, `viewportClassName` (pair with `scroll-fade`). |
+| `Separator` | `primitives/separator` | — | The one hairline on Base UI's Separator; `orientation`. |
+| `Skeleton` | `primitives/skeleton` | — | A `bg-skeleton` block pulsing on `--duration-loop`, or `rows` on the control height (`bordered` frames them); `aria-hidden`. |
 | `Code` | `primitives/code` | — | sugar-high tokens in `--syntax-*`, one surface step up. Also the docs chrome's Code slot. |
 | `Craft` | `primitives/craft` | `demos.tsx` (the bad sides) | Docs stage: a bad and a good version side by side (`bad`, `good`, `badNote`, `goodNote`). One rule per pair. |
 
@@ -67,10 +78,12 @@ controlled + uncontrolled.
 
 | Item | Path | Statics | Systems | Notes |
 |---|---|---|---|---|
-| `Button` | `components/button` | — | L C | Press shrinks the fill 1px/side; icons thicken; `loading` folds into a circle (box unchanged); `active` forces pressed. Serves the chrome's Button slot. |
-| `Badge` | `components/badge` | — | L | `variant` `solid` \| `dot`, `color`, `size`; a new label springs width and blur-crossfades. |
-| `Card` | `components/card` | `.Group .Header .Title .Description .Action .Content .Footer .Media .Image .Eyebrow .Feature .Button` | L H W C | Transparent and borderless; only clickable cards join the group's hover; stretched link. A card with a `value` selects itself in `Card.Group` (`value` / `defaultValue` / `onValueChange`). `Card.Button` is a compact `Button`. |
-| `Table` | `components/table` | `.Header .Body .Row .Head .Cell` | L H | Row hover, semantic markup. |
+| `Button` | `components/button` | — | L C | 8 variants: `primary`, `secondary`, `tertiary`, `outline` (control-border frame), `ghost`, `destructive` / `success` (`-strong` text on a wash), `link`. Press shrinks the fill 1px/side; icons thicken; `loading` folds into a circle (box unchanged) and keeps focus; `active` forces pressed. `buttonVariants` in `variants.ts` is server-safe. Serves the chrome's Button slot. |
+| `Badge` | `components/badge` | — | L | `variant` `solid` \| `dot` \| `outline`, `color`, `size`; a new label springs width and blur-crossfades. |
+| `Avatar` | `components/avatar` | `.Image .Fallback` | L | Base UI Avatar; the image fades in, the fallback shows while it loads or fails; `shape` `circle` \| `square`. |
+| `Progress` | `components/progress` | `.Spinner` | L | Base UI Progress; the fill slides on `spring.moderate`; `value={null}` sweeps on `--duration-loop`; `label`, `showValue`, `format`. `.Spinner` is Button's loading glyph. |
+| `Card` | `components/card` | `.Group .Header .Title .Description .Action .Content .Footer .Divider .Media .Image .Eyebrow .Feature .Button` | L H W C | Transparent and borderless (`border="outlined"` frames one on its own; `.Divider` a hairline inside); only clickable cards join the group's hover; stretched link. A card with a `value` selects itself in `Card.Group` (`value` / `defaultValue` / `onValueChange`). `Card.Button` is a compact `Button`. |
+| `Table` | `components/table` | `.Header .Body .Footer .Row .Head .Cell .Caption .Empty` | L H C | Row hover, semantic markup; a `Table.Head` with a `value` sorts (`sort` / `defaultSort` / `onSortChange` on the root); `stacked` turns rows into cards in a narrow container (each Cell's `label` captions it). |
 | `Copy` | `components/copy` | — | L M | Click anywhere to copy; the glyph melts into a status disc behind the check. |
 | `ThinkingIndicator` | `components/AI/thinking-indicator` | — | — | `variant` `shimmer` (default) \| `goo` (three dots melting). |
 | `InputMessage` | `components/AI/input-message` | — | L S C | Composer: auto-resize, actions, attachments, queue, status, history. |
@@ -79,24 +92,30 @@ controlled + uncontrolled.
 
 | Item | Statics | Systems | Notes |
 |---|---|---|---|
-| `Checkbox` | `.Group` | L H G C | Contiguous checks melt into one run (`useSelectionRuns` + merge/split blocks). Rows take `disabled`, `name`, `value`. |
-| `Radio` | `.Group` | L H G C | Selected background is a `GooIndicator`; index or value mode; `name` / `disabled` on the group. |
-| `Select` | `.Trigger .Content .Item .Group .Label .Separator` | L S H M C | Popup morphs out of the trigger; the check draws itself as the pick lands; a pick holds the popup 300ms; keyboard ring in the list; `name`. |
-| `Combobox` | `.Input .Chips .Content .List .Item .Empty` | L S H M C | `multiple`, chips, `creatable`; no ring in the list (the input keeps focus); `name`. |
-| `Switch` | `.Group` | L G C | Thumb is a `GooIndicator` that stretches as it travels; on = `bg-brand`; `description`, `trackSide`; `name` / `value`. |
+| `Checkbox` | `.Group` | L H G C | Contiguous checks melt into one run (`useSelectionRuns` + merge/split blocks). Rows take `disabled`, `name`, `value`, `indeterminate`; without a `label`, the bare box. |
+| `Radio` | `.Group` | L H G C | Selected background is a `GooIndicator`; index or value mode; `name` / `disabled` on the group; without a `label`, a bare radio for a layout of your own. |
+| `Select` | `.Trigger .Value .Content .Item .Group .Label .Separator` | L S H M C | Popup morphs out of the trigger; the check draws itself as the pick lands; a pick holds the popup 300ms; keyboard ring in the list; rows number themselves (`index` optional); node labels with `textValue`; `readOnly`, `required`, `name`. |
+| `Combobox` | `.Input .Chips .Content .List .Item .Empty` | L S H M C | `multiple`, chips, `creatable`; `query` / `defaultQuery` / `onQueryChange`, `filter={null}` for remote results, `loading`, `Content footer`; node row labels; `readOnly`, `name`; no ring in the list (the input keeps focus). |
+| `Switch` | `.Group` | L G C | Thumb is a `GooIndicator` that stretches as it travels; on = `bg-brand`; `description`, `trackSide`; `name` / `value`; without a `label`, the bare track. |
 | `Slider` | — | L C | Default: pips + scrubber; compact (or any compact-only prop): fill, range, value. `onValueChange`, `name`. |
-| `Input`, `InputGroup` | `.Field` | L H W C | `Input` stands alone (`onValueChange`, `invalid`, `variant`); fields share one hover; error state on Base UI Field; a field takes a Textarea or picker as children. |
-| `Textarea` | — | L C | Multi-line Input on the field ladder; grows from `minRows` to `maxRows`, then scrolls; `onValueChange`. |
+| `Input`, `InputGroup` | `.Field` | L H W C | `Input` stands alone (`onValueChange`, `invalid`, `variant`, `readOnly`, `startAdornment` / `endAdornment`; `InputAction`, `InputAdornment`); a `type` swap keeps the caret; fields share one hover; error state on Base UI Field; a field takes a Textarea or picker as children. |
+| `Label` | — | L | A plain `<label>` lined up with the field's text (`fieldTextInset`); `invalid`, `size`. Also exported from `inputs/input`. |
+| `Field` | `.Label .Description .Error .Control` | L | Base UI Field: label, description and error on the text inset; hands `invalid` / `disabled` / `readOnly` / `required` to the control inside (own prop wins, via `useFieldState`); `validationMode`. |
+| `NumberInput` | — | L C | Base UI NumberField on the field ladder; steppers are field actions; `format`, `min` / `max` / `step`, `scrub`, `wheel`, adornments; `value` is `number \| null`. |
+| `FileDropzone` | `.Row` | L | A dashed drop zone around a hidden file input; `accept`, `maxSize`, `maxFiles`, `onFilesChange` / `onFilesRejected` (announced); drag verdicts restyle it; `FileDropzone.Row` (`FileRow`) shows a file with `status` / `progress`. Pure helpers in `variants.ts`. |
+| `Textarea` | — | L C | Multi-line Input on the field ladder; grows from `minRows` to `maxRows`, then scrolls; `onValueChange`, `readOnly`, `required`. |
 | `ColorPicker` | `.Popover` | L S M C | HEX / RGB / HSL / OKLCH, alpha, swatches, eyedropper; `name`. |
 | `Calendar` | — | L H | `inputs/date-time`. react-day-picker in one scrolling list of months, month and year columns (`columnsSide`); DayPicker props pass through. |
-| `DatePicker`, `DateRangePicker`, `TimePicker`, `DurationPicker`, `MonthPicker` | — | L S M C | `inputs/date-time`. A field whose panel morphs out of it (a `Sheet` under 640px); `value` with `null` for empty; `disabled` (the field) and `disabledDays` (matchers); `name`; a react-day-picker `locale`. |
+| `DatePicker`, `DateRangePicker`, `TimePicker`, `DurationPicker`, `MonthPicker` | — | L S M C | `inputs/date-time`. A field whose panel morphs out of it (a `Sheet` under 640px); `value` with `null` for empty; `disabled` (the field) and `disabledDays` (matchers); `name`; a react-day-picker `locale`. DatePicker `editable` (type over the locale's numeric mask); DatePicker and DateRangePicker take `valueType="string"` (ISO strings) and `labels`. |
 | `Search` | — | L S M C | Grows its own width in place (`spring.slow`) over its neighbours; suggestions ooze out; Escape closes → clears → collapses. |
 
 ## components/navigation
 
 | Item | Statics | Systems | Notes |
 |---|---|---|---|
-| `Tabs` | `.List .Item .Panel` | L S H G W C | `variant="segmented"`: a well (`bg-muted`), +3 elevated indicator, hover pill that drips back into it. `"subtle"`: a borderless strip with a `bg-active` pill, manual activation, `activeLabel`. |
+| `Tabs` | `.List .Item .Panel` | L S H G W C | `variant="segmented"`: a well (`bg-muted`), +3 elevated indicator, hover pill that drips back into it. `"subtle"`: a borderless strip with a `bg-active` pill, manual activation, `activeLabel`. `Tabs.Item` `href` (or a router link as `render`) makes link tabs. |
+| `NavigationMenu` | `.List .Item .Trigger .Content .Link` | L S H G M W C | Site header menu: one shared panel morphs out of its trigger and springs to each panel's size; liquid marker under the open item or the active link; `value` / `defaultValue` / `onValueChange` (the open item); `Link` takes `icon` / `description` in a panel, `render` for router links. |
+| `Pagination` | — | L H G C | The current page is a `GooIndicator`; `count`, `value` / `defaultValue` / `onValueChange`, `siblings`, `edges`, `variant="input"` (a jump-to-page field); every label a prop. |
 | `Accordion` | `.Group .Item .Trigger .Content` | L H M W C | Panel morphs out of its row; `highlight` `item` \| `trigger`. |
 | `Sidebar` | `.Provider .Trigger .Rail .Inset .Input .Header .Content .Footer .Separator .Group .GroupLabel .GroupAction .GroupActions .GroupContent .Menu .MenuItem .MenuButton .MenuAction .MenuActions .MenuBadge .MenuSkeleton .MenuSub .MenuSubItem .MenuSubButton` | L S H G C | Liquid active rows and hover; `openOnHover`; collapsible rows; `[` / `]` toggles (`shortcutScope`); rows on the ladder; mobile `Sheet`. |
 
@@ -107,16 +126,16 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 
 | Item | Statics | Notes |
 |---|---|---|
-| `Popover` | `.Trigger .Content .Title .Description .Close` | The reference morphing overlay. `openOnHover`, `side`, `align`, `sideOffset` (= the neck, 12). |
+| `Popover` | `.Trigger .Content .Title .Description .Close` | The reference morphing overlay. `openOnHover`, `side`, `align`, `sideOffset` (= the neck, 12); `.Content` `anchor` (also the morph's source), `alignOffset`, `collision*`, `initialFocus` / `finalFocus`; `onOpenChange` gets Base UI's details. |
 | `PreviewCard` | `.Trigger .Content` | Hover card from a link; `delay`, `closeDelay`. |
-| `Tooltip` | `.Provider .PortalContainer` | Inverted; `open` / `defaultOpen`, `side`, `align`, `container`; grouped hand-off is instant; `followCursor` fades. `.PortalContainer` scopes every overlay's portal. |
-| `Dropdown` | `.Menu .Trigger .Content .Item .Label .Separator .Search .Empty` | Inline or popup; `filter` search; checked index / indices; `shortcut` on `Dropdown.Item`; opens with its first row focused. |
+| `Tooltip` | `.Trigger .Content .Provider .PortalContainer` | Inverted; the `content` prop, or `.Trigger` / `.Content` (`render` / `asChild`); `open` / `defaultOpen`, `side`, `align`, `container`; grouped hand-off is instant; `followCursor` fades. `.PortalContainer` scopes every overlay's portal. |
+| `Dropdown` | `.Menu .Trigger .Content .Item .Label .Separator .Search .Empty .Sub .SubTrigger .SubContent` | Inline or popup; `filter` search; checked index / indices; rows number themselves (`index` optional); `shortcut` on `Dropdown.Item`; submenus; `.Content keepMounted`; opens with its first row focused. |
 | `ContextMenu` | `.Trigger .Content .Item .Label .Separator` | Grows from the press point; rows are Dropdown's `MenuItem` (`shortcut`), and it shares Dropdown's selection and search. |
 | `Command` | `.Trigger .Content .Palette .Shortcut` | ⌘K; grouped commands; one fluid highlight follows Base UI's. |
 | `Dialog` | `.Trigger .Content .Header .Footer .Title .Description .Close` | `width` `sm` \| `lg` \| `xl` on the content, `position`, `showCloseButton`, `container`; backdrop fades with the morph; scopes `Morph.Part`. |
-| `AlertDialog` | as Dialog | Always modal, no outside dismissal, no ✕ by default. Built by composing Dialog's parts. |
+| `AlertDialog` | as Dialog + `.Action .Cancel` | Always modal, no outside dismissal, no ✕ by default. `.Action` keeps the dialog open, loading and locked while a returned promise (or `pending`) settles; `onError`. Built by composing Dialog's parts. |
 | `Sheet` | Dialog's + `.Provider .Indent` | Base UI Drawer; grows from its edge; a swipe-dismiss slides on from the release point. |
-| `Toast` | `.Trigger`; `useToast()` | Pill melts into a body; six `--status-*` states; promise toasts. |
+| `Toast` | `.Trigger`; `useToast()`, `toast` | Pill melts into a body; six `--status-*` states; promise toasts. The global `toast` works anywhere once `<Toast manager={toast} />` is mounted. |
 
 ## blocks
 
@@ -129,8 +148,8 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 | File | Exports | Use it for |
 |---|---|---|
 | `springs.ts` | `spring.{fast,moderate,slow,goo}`, `springEnter`, `exitFallbackMs` | Every transition. |
-| `size-context.tsx` | `useSize`, `useSizeVariant`, `useTypeScale`, `SizeContext`, `sizeMap`, `typeScale` | The ladder. |
-| `shape-context.tsx` | `useShape`, `ShapeProvider`, `shapeMap` | Radii (rounded / pill). |
+| `size-context.tsx`, `size-scale.ts` | `useSize`, `useSizeVariant`, `useTypeScale`, `SizeContext`; `sizeMap`, `typeScale` (pure, re-exported) | The ladder. |
+| `shape-context.tsx`, `shape-classes.ts` | `useShape`, `ShapeProvider`; `shapeMap` (pure, re-exported) | Radii (rounded / pill). |
 | `surface-context.tsx`, `surface-classes.ts` | `useSurface`, `useLift`, `SurfaceProvider`; `SURFACE_BG`, `SURFACE_SHADOW`, `surfaceClasses` | Elevation. |
 | `use-fluid-hover.ts`, `fluid-hover-highlight.tsx` | `useFluidHover`, `useRegisterFluidHoverItem`, `ItemRect`; `FluidHoverHighlight` | One highlight per list. |
 | `goo-indicator.tsx` | `GooIndicator`, `GooLayer`, `union` | Anything that travels between items. |
@@ -143,26 +162,29 @@ All morph (`from`, `effect`, `hideSource`, `tier` on the content part) and lift 
 | `slot.tsx` | `SlotProps`, `slotPart`, `slotRender`, `resolveSlotTemplate`, `slotElement` | `render={<Button/>}` / `asChild` on any part that wraps a control, or on a plain element. |
 | `popup.ts` | `POPUP_SHAPE`, `popupScrollAreaClass`, `popupViewportClass`, `POPUP_NAV_KEYS`, `isDisabledRow` | The popup shape, list scrolling and row rules. |
 | `overlay.tsx`, `popup-surface.tsx` | `useOverlayRoot`, `useOverlay`, `OverlayContext`, `AnchorProps`, `positionerProps`, `PortalContainer`, `usePortalContainer`; `PopupSurface` | An overlay's root state, anchoring, portal and lifted surface. |
-| `popup-rows.tsx` | `rowClasses`, `rowLabelClass`, `RowIcon`, `CheckMark`, `PopupLabel`, `PopupSeparator` | A popup list's rows. |
-| `row-group.tsx`, `focus-ring.tsx`, `row-index.tsx` | `useRowFocus`, `useRowGroup`, `focusRowOnPress`, `rowIndexOf`; `FocusRing`; `IndexedRows`, `useRowIndex`, `useRowPosition` | A list's keyboard focus, its ring and its row numbers. |
+| `popup-rows.tsx` | `rowClasses`, `rowLabelClass`, `rowLabelBoxClass`, `isTextLabel`, `RowIcon`, `CheckMark`, `PopupLabel`, `PopupSeparator` | A popup list's rows. |
+| `row-group.tsx`, `focus-ring.tsx`, `row-index.tsx` | `useRowFocus`, `useRowGroup`, `focusRowOnPress`, `rowIndexOf`; `FocusRing`; `IndexedRows` (`isRow`), `useRowIndex`, `useRowPosition` | A list's keyboard focus, its ring and its row numbers. |
 | `weight-label.tsx` | `WeightLabel` | A label that changes weight without reflowing. |
-| `field-classes.ts` | `useFieldBox`, `focusControlOnPress`, `fieldVariants`, `fieldIconClasses`, `fieldTextInset`, `FieldStateContext` | The field ladder. |
+| `field-classes.ts` | `fieldVariants`, `fieldIconClasses`, `fieldAdornmentClasses`, `FIELD_ADORNMENT_ICON`, `fieldActionClasses`, `FIELD_ACTION`, `FIELD_ACTION_BOX`, `FIELD_ACTION_END`, `FIELD_ACTION_RADIUS`, `fieldTextInset` | The field ladder's classes (pure). |
+| `field-box.ts` | `useFieldBox`, `focusControlOnPress`, `FieldStateContext`, `useFieldState` | A field's box, and an enclosing `Field`'s state for a control. |
+| `spinner-glyph.tsx` | `SpinnerGlyph` | The loading glyph (Button, `Progress.Spinner`). |
 | `use-keyboard-nav-gate.ts` | `useKeyboardNavGate` | Show a popup's ring only after keyboard use. |
 | `use-touch-primary.tsx` | `useTouchPrimary` | Skip pointer-only machinery on touch. |
 | `icon-context.tsx` | `useIcon`, `IconProvider`, `IconName`, `IconComponent` | Icons. |
 | `utils.ts` | `cn` | Class merging that knows the local utilities. |
 
-The rest (refs, rects, dates, the autosizing textarea) is listed in `ui/lib/README.md`.
+The rest (refs, rects, dates and the date mask, the autosizing textarea) is listed in `ui/lib/README.md`.
 
 ## Which file to copy
 
 | Building | Start from |
 |---|---|
-| An anchored morphing overlay | `components/overlays/popover/index.tsx` (166 lines, on the shared overlay helpers) |
+| An anchored morphing overlay | `components/overlays/popover/index.tsx` (on the shared overlay helpers) |
 | A modal overlay | `components/overlays/dialog/index.tsx`; reuse its parts like `alert-dialog/index.tsx` does |
 | A menu with rows | `components/overlays/context-menu/index.tsx` (rows from `dropdown/menu-item.tsx`) |
 | A control that grows in place | `components/inputs/search/index.tsx` |
-| A strip with a traveling indicator | `components/navigation/tabs/` (`list.tsx`, `item.tsx`); or the template in [authoring.md](authoring.md) |
+| A strip with a traveling indicator | `components/navigation/tabs/` (`list.tsx`, `item.tsx`), `navigation/pagination/index.tsx`, or the template in [authoring.md](authoring.md) |
+| A field with actions inside | `components/inputs/number-input/index.tsx` (`useFieldBox` + side-by-side field actions) |
 | Multi-select with merged runs | `components/inputs/checkbox/index.tsx` |
 | A state morph inside a control | `components/button/index.tsx` (`useLoadingMorph`), `copy/index.tsx` (glyph goo) |
 | A hook-free docs stage for an interactive example | `components/badge/change-demo.tsx`, `components/button/loading-demo.tsx` |

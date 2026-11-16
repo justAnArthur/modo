@@ -25,7 +25,13 @@ import Dialog from '@justanarthur/modo-ui/components/overlays/dialog'
 
 Subpaths follow the docs' tiers and groups: `primitives/*`, `components/*`
 (`components/button`, `components/inputs/select`, …) and `blocks/*`
-(`blocks/sidebar-app`).
+(`blocks/sidebar-app`). The shared systems are subpaths too, for components of
+your own: `lib/utils`, `lib/springs`, `lib/size-scale`, `lib/shape-classes`,
+`lib/field-classes`, `lib/field-box`, `lib/size-context`, `lib/shape-context`,
+`lib/icon-context`, `lib/use-controllable-state`, `lib/use-morph` and
+`lib/goo-indicator`; Button's, Badge's and FileDropzone's pure tables are
+`components/button/variants`, `components/badge/variants` and
+`components/inputs/file-dropzone/variants`.
 
 ## Styles
 
@@ -132,8 +138,13 @@ The same conventions run through every component:
   `SizeProvider`, so one `<SizeProvider size="compact">` makes a whole
   region dense, menus included.
 - **Forms.** Checkbox, `Radio.Group`, Switch, Select, Combobox, Slider,
-  ColorPicker and the date and time pickers take `name` and submit their value
-  with the surrounding form; Input and Textarea are native fields.
+  NumberInput, ColorPicker and the date and time pickers take `name` and
+  submit their value with the surrounding form; Input and Textarea are native
+  fields. Text fields, Select and Combobox take `readOnly` and `required`.
+- **Fields.** Wrap a control in `Field` for a label, a description and an
+  error (`Field.Label`, `.Description`, `.Error`); the control takes the
+  field's `invalid`, `disabled`, `readOnly` and `required` unless it sets its
+  own.
 - **Overlays.** Content parts that anchor to a trigger (Popover, PreviewCard,
   Dropdown, Select, Combobox) take `side`, `align`, `sideOffset` and
   `container`, plus the morph options `from`, `effect`, `hideSource` and
@@ -141,24 +152,39 @@ The same conventions run through every component:
   another element (a preview frame, a shadow root). `Dialog.Content` and
   `AlertDialog.Content` take `width`: `sm` (400px), `lg` (540px) or `xl`
   (880px). `Tooltip` takes `open` / `defaultOpen` to pin it, `side`, `align`
-  and `container`.
+  and `container`, and `Tooltip.Trigger` / `Tooltip.Content` for a trigger of
+  your own. `Popover.Content` also takes `anchor`, `alignOffset`, the
+  `collision*` props and `initialFocus` / `finalFocus`.
 - **Tabs** take `variant`: `segmented` (a track with an elevated indicator,
   the default) or `subtle` (a borderless strip with a pill).
 - **Date pickers.** `disabled` turns the field off; `disabledDays` takes
   react-day-picker matchers for the days that can't be picked.
+  `valueType="string"` makes DatePicker and DateRangePicker take and report
+  ISO strings instead of `Date`s; `labels` replaces their texts; DatePicker's
+  `editable` lets the field be typed into.
 
 ```tsx
 <Select name="plan" defaultValue="pro" onValueChange={setPlan}>…</Select>
 <Input size="compact" onValueChange={setQuery} />
 <DatePicker disabledDays={{ before: new Date() }} />
+<Field invalid>
+  <Field.Label>Email</Field.Label>
+  <Input type="email" />
+  <Field.Error>Enter a valid email.</Field.Error>
+</Field>
 ```
 
 ## Next.js and React Server Components
 
 - Every module with state, effects, handlers or browser APIs opens with
   `'use client'`, kept at the top of each built chunk, so the components work
-  from Server Components (Next.js App Router) as client components. `cn` and
-  the class tables stay server-safe.
+  from Server Components (Next.js App Router) as client components.
+- `@justanarthur/modo-ui/lib/{utils,springs,size-scale,shape-classes,field-classes}`
+  and `components/{button,badge,inputs/file-dropzone}/variants` carry no
+  `'use client'`, so a Server Component can call `cn`, read the class tables,
+  build a link with `buttonVariants` or check a file with `acceptsFile`. The
+  components and the context and hook subpaths are client modules; each
+  context is one instance, shared by the barrel, the items and the subpaths.
 - In a Server Component, use the named parts (`CardHeader`, `DialogContent`,
   `TabsList`, `SidebarMenuButton`, …) rather than the dotted form
   (`Card.Header`): React can't read a property off a client module from the
@@ -188,6 +214,8 @@ show them):
 | `useSurface`, `useLift(offset)`, `SurfaceProvider`, `Elevated` | The surface ladder: the substrate level, the level `offset` above it (capped at 8), re-providing it, and a raised `div`. |
 | `useFluidHover`, `FluidHoverHighlight`, `FluidHover` | The fluid hover highlight: the hook and its highlight for a custom list, or the container for a simple one. |
 | `IconProvider`, `ShapeProvider` | Swap the icon set, or switch every radius between rounded and pill. |
+| `useFieldBox`, `useFieldState` (`lib/field-box`) | The field ladder's box around a control of your own, and an enclosing `Field`'s state resolved against a control's own props. |
+| `useToast()`, `toast` | Show toasts: `useToast()` inside a `Toast`, or the global `toast` anywhere once `<Toast manager={toast} />` is mounted (one per app). Both have `show`, `success`, `error`, `warning`, `info`, `loading`, `promise`, `update` and `close`. |
 | `cn` | Class merging that knows the token utilities (`cn('text-body', 'text-muted-foreground')` keeps both). |
 
 ## Credits
