@@ -1,6 +1,6 @@
 import FileDropzone from './index'
 import UploadDemo from './upload-demo'
-import { InputGroup, Label } from '../input'
+import Field from '../field'
 
 # Dropzone
 
@@ -12,10 +12,11 @@ Drag files over the zone, or click it (or Tab to it and press Enter) to pick the
 
 Without `multiple` the zone takes one file: drag several and it says the rest will be skipped; drag only files of another type and it refuses the drop.
 
-<div className="flex flex-col gap-1 w-96 max-w-full">
-  <Label htmlFor="dropzone-avatar">Avatar</Label>
-  <FileDropzone id="dropzone-avatar" accept="image/*" description="PNG or JPG" />
-</div>
+<Field className="w-96 max-w-full">
+  <Field.Label>Avatar</Field.Label>
+  <FileDropzone accept="image/*" description="PNG or JPG" />
+  <Field.Description>Shown next to your name.</Field.Description>
+</Field>
 
 # Compact
 
@@ -44,16 +45,22 @@ Every line is a prop, the announced reasons included.
 
 # States
 
-Invalid takes the field's destructive line; disabled dims the zone; read-only takes no files.
+Inside a Field the zone takes its state: invalid turns it destructive, required marks the label (and is announced), disabled dims it, read-only takes no files.
 
 <div className="flex flex-col gap-3 w-96 max-w-full">
-  <InputGroup className="w-full">
-    <InputGroup.Field label="Contract" error="Attach the signed contract.">
-      <FileDropzone accept=".pdf" required />
-    </InputGroup.Field>
-  </InputGroup>
-  <FileDropzone disabled label="Uploads are paused" />
-  <FileDropzone readOnly label="No file attached" />
+  <Field invalid required>
+    <Field.Label>Contract</Field.Label>
+    <FileDropzone accept=".pdf" />
+    <Field.Error>Attach the signed contract.</Field.Error>
+  </Field>
+  <Field disabled>
+    <Field.Label>Receipts</Field.Label>
+    <FileDropzone label="Uploads are paused" />
+  </Field>
+  <Field readOnly>
+    <Field.Label>Signature</Field.Label>
+    <FileDropzone label="No file attached" />
+  </Field>
 </div>
 
 # File rows

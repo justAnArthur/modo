@@ -15,6 +15,7 @@ import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
 import { cn } from '../../../lib/utils'
 import Button from '../../button'
+import Progress, { Spinner } from '../../progress'
 import { formatFileSize } from './variants'
 
 /** Where a file is in its upload: `idle` (picked), `uploading`, `done` or `error`. */
@@ -35,7 +36,7 @@ interface FileRowProps {
   icon?: IconComponent
   /** Where the file is in its upload; sets the status glyph and the progress bar. Defaults to `"idle"`. */
   status?: FileRowStatus
-  /** Upload progress from 0 to 100, shown as a bar while `status` is `"uploading"`. */
+  /** Upload progress from 0 to 100, shown as a bar while `status` is `"uploading"` (see Progress). Omitted, a spinner turns instead. */
   progress?: number
   /** Accessible name of the upload's bar, and the status line while no `progress` is known. Defaults to `"Uploading"`. */
   uploadingLabel?: string
@@ -62,24 +63,27 @@ interface FileRowProps {
 // Literal tables: UnoCSS only generates the classes it can read whole.
 const THUMB = { default: 'size-8', compact: 'size-7' }
 const ROW_PAD = { default: 'py-1.5', compact: 'py-1' }
+// The figure-eight fills the middle of its box: one step up from the glyph size reads as an icon beside it.
+const SPINNER = { default: 'size-6', compact: 'size-5' }
 
-function StatusGlyph({ status, size }: { status: FileRowStatus; size: SizeVariant }) {
+function StatusGlyph({ status, size }: { status: FileRowStatus | 'working'; size: SizeVariant }) {
   const Done = useIcon('circle-check')
   const Failed = useIcon('circle-alert')
   const reduced = useReduceMotion()
   const icon = useSize(size).icon
-  const shown = status === 'done' || status === 'error'
 
   return (
-    // Decorative: the meta line carries the error, the bar the progress.
+    // Decorative: the meta line carries the error and the upload, the bar its progress.
     <span aria-hidden="true" className="inline-grid shrink-0 place-items-center">
       <AnimatePresence initial={false} mode="popLayout">
-        {shown && (
+        {status !== 'idle' && status !== 'uploading' && (
           <motion.span
             key={status}
             className={cn(
               'col-start-1 row-start-1 flex',
-              status === 'done' ? 'text-status-success' : 'text-destructive',
+              status === 'done' && 'text-status-success',
+              status === 'error' && 'text-destructive',
+              status === 'working' && 'text-muted-foreground',
             )}
             // Under reduced motion the glyphs only fade.
             initial={{ opacity: 0, scale: reduced ? 1 : 0.6 }}
@@ -87,32 +91,12 @@ function StatusGlyph({ status, size }: { status: FileRowStatus; size: SizeVarian
             exit={{ opacity: 0, scale: reduced ? 1 : 0.8, transition: spring.fast.exit }}
             transition={spring.fast}
           >
-            {status === 'done' ? <Done size={icon} strokeWidth={2} /> : <Failed size={icon} strokeWidth={2} />}
+            {status === 'done' && <Done size={icon} strokeWidth={2} />}
+            {status === 'error' && <Failed size={icon} strokeWidth={2} />}
+            {status === 'working' && <Spinner className={SPINNER[size]} />}
           </motion.span>
         )}
       </AnimatePresence>
-    </span>
-  )
-}
-
-function UploadBar({ progress, label }: { progress: number; label: string }) {
-  const value = Math.min(Math.max(progress, 0), 100)
-
-  return (
-    <span
-      role="progressbar"
-      aria-label={label}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.round(value)}
-      className="mt-1 block h-1 overflow-hidden rounded-full bg-accent"
-    >
-      <motion.span
-        className="block h-full origin-left rounded-full bg-foreground"
-        initial={false}
-        animate={{ scaleX: value / 100 }}
-        transition={spring.moderate}
-      />
     </span>
   )
 }
@@ -197,10 +181,10 @@ function FileRow({
             {meta}
           </span>
         )}
-        {uploading && progress != null && <UploadBar progress={progress} label={uploadingLabel} />}
+        {uploading && progress != null && <Progress value={progress} aria-label={uploadingLabel} className="mt-1" />}
       </div>
 
-      <StatusGlyph status={shown} size={size.variant} />
+      <StatusGlyph status={uploading && progress == null ? 'working' : shown} size={size.variant} />
       {actions}
       {onRemove && (
         <Button variant="ghost" size="icon-compact" aria-label={removeLabel} disabled={disabled} onClick={onRemove}>

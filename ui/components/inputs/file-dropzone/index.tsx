@@ -16,11 +16,10 @@ import {
   forwardRef,
   type ReactNode,
   type RefAttributes,
-  useContext,
   useRef,
   useState,
 } from 'react'
-import { FieldStateContext } from '../../../lib/field-box'
+import { useFieldState } from '../../../lib/field-box'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { useReduceMotion } from '../../../lib/reduced-motion'
 import { useShape } from '../../../lib/shape-context'
@@ -59,17 +58,17 @@ interface FileDropzoneProps {
   icon?: IconComponent
   /** Content in place of the glyph and labels. */
   children?: ReactNode
-  /** Id of the file input, for a `Label`'s `htmlFor`. Inside `InputGroup.Field` it is wired for you. */
+  /** Id of the file input, for a `Label`'s `htmlFor`. Inside a Field it is wired for you. */
   id?: string
-  /** Tells assistive tech a file is required (`aria-required`). The zone keeps no files, so native validation never blocks a submit: check your own list. Defaults to `false`. */
+  /** Tells assistive tech a file is required (`aria-required`). The zone keeps no files, so native validation never blocks a submit: check your own list. Defaults to the enclosing Field's, else `false`. */
   required?: boolean
-  /** Turns the zone destructive. Defaults to the surrounding field's error. */
+  /** Turns the zone destructive. Defaults to the enclosing Field's, else `false`. */
   invalid?: boolean
   /** Ids of the elements describing the file input (help text, an error), set on the input. */
   'aria-describedby'?: string
-  /** Dims the zone and turns files away. Defaults to the surrounding field's `disabled`. */
+  /** Dims the zone and turns files away. Defaults to the enclosing Field's, else `false`. */
   disabled?: boolean
-  /** Shows the zone without taking files: no browse, no drop, no hover. Defaults to `false`. */
+  /** Shows the zone without taking files: no browse, no drop, no hover. Defaults to the enclosing Field's, else `false`. */
   readOnly?: boolean
   /** Pins the zone to one step of the size ladder: compact tightens the padding and steps the text down. Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
@@ -111,8 +110,8 @@ type FileDropzoneComponent = ForwardRefExoticComponent<FileDropzoneProps & RefAt
  * `required` is only announced. The list, the upload and its errors stay
  * yours; show each file in a `FileDropzone.Row`. The zone is a label around
  * a hidden file input, so Tab reaches it, a click, Enter or Space opens the
- * picker, and inside `InputGroup.Field` it is labelled and takes the field's
- * error and disabled state. The ref reaches the input: `ref.current.click()`
+ * picker, and inside a Field it is labelled and takes the field's invalid,
+ * disabled, read-only and required state (its own props win). The ref reaches the input: `ref.current.click()`
  * reopens the picker, e.g. to replace a file. Every line is a prop, for
  * translation.
  *
@@ -147,26 +146,24 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
       icon,
       children,
       id,
-      required = false,
+      required,
       invalid,
       disabled,
-      readOnly = false,
+      readOnly,
       size: sizeProp,
       className,
       'aria-describedby': ariaDescribedBy,
     },
     ref,
   ) => {
-    const field = useContext(FieldStateContext)
+    const field = useFieldState({ invalid, disabled, readOnly, required })
     const size = useSize(sizeProp)
     const shape = useShape()
     const reduced = useReduceMotion()
     const Upload = useIcon('upload')
     const Glyph = icon ?? Upload
 
-    const isInvalid = invalid ?? field?.invalid ?? false
-    const isDisabled = disabled ?? field?.disabled ?? false
-    const closed = isDisabled || readOnly
+    const closed = field.disabled || field.readOnly
 
     const [drag, setDrag] = useState<DragState>('idle')
     const [announcement, setAnnouncement] = useState({ text: '', key: 0 })
@@ -230,9 +227,9 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
           onDragLeave={onDragLeave}
           onDrop={onDrop}
           data-dragging={drag === 'idle' ? undefined : drag}
-          data-invalid={isInvalid || undefined}
-          data-disabled={isDisabled || undefined}
-          data-readonly={readOnly || undefined}
+          data-invalid={field.invalid || undefined}
+          data-disabled={field.disabled || undefined}
+          data-readonly={field.readOnly || undefined}
           className={cn(
             'group/zone relative flex cursor-pointer flex-col items-center justify-center text-center',
             'border border-dashed border-border transition-[background-color,border-color,opacity] duration-fast',
@@ -255,8 +252,8 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
             id={id}
             disabled={closed}
             // Not native `required`: the input is cleared after every pick, so it would always be missing.
-            aria-required={required || undefined}
-            aria-invalid={isInvalid || undefined}
+            aria-required={field.required || undefined}
+            aria-invalid={field.invalid || undefined}
             // Only when given: an undefined one would override the Field's own.
             {...(ariaDescribedBy && { 'aria-describedby': ariaDescribedBy })}
             render={<input type="file" accept={accept} multiple={multiple} onChange={onChange} className="sr-only" />}

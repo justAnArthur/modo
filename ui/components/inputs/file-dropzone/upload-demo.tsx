@@ -8,7 +8,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { InputGroup } from '../input'
+import Field from '../field'
 import FileDropzone, { type FileDropzoneProps, type FileRejection } from './index'
 
 interface Upload {
@@ -38,20 +38,21 @@ export default function UploadDemo(props: FileDropzoneProps) {
   const error = rejected.map(({ file, reason }) => `${file.name} ${REASONS[reason]}.`).join(' ')
 
   return (
+    // The rows sit outside the Field, so a full (disabled) field still lets them be removed.
     <div className="flex w-96 max-w-full flex-col gap-2">
-      <InputGroup className="w-full">
-        <InputGroup.Field label="Attachments" error={error || undefined} disabled={left <= 0}>
-          <FileDropzone
-            {...props}
-            maxFiles={left}
-            onFilesChange={files => {
-              setRejected([])
-              setUploads(list => [...list, ...files.map(file => ({ file, progress: 0 }))])
-            }}
-            onFilesRejected={setRejected}
-          />
-        </InputGroup.Field>
-      </InputGroup>
+      <Field invalid={rejected.length > 0} disabled={left <= 0}>
+        <Field.Label>Attachments</Field.Label>
+        <FileDropzone
+          {...props}
+          maxFiles={left}
+          onFilesChange={files => {
+            setRejected([])
+            setUploads(list => [...list, ...files.map(file => ({ file, progress: 0 }))])
+          }}
+          onFilesRejected={setRejected}
+        />
+        <Field.Error>{error}</Field.Error>
+      </Field>
       {uploads.length > 0 && (
         <div className="flex flex-col">
           {uploads.map(upload => (
