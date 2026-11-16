@@ -600,6 +600,21 @@ shared systems above (look and motion). Ready-made patterns to reach for before 
 - **Progress** — a full-width fill slid in on `spring.moderate` (never scaled, so its rounded end
   keeps its shape); unknown progress sweeps a segment on `--duration-loop`; the spinner is the loading
   button's glyph.
+- **Meter** — a read-only share of a budget as a bar, a bare line or a ring; the bar slides like
+  Progress's, ink at rest, the warning and error status hues as the budget runs out; a thin ink tick
+  marks a pace.
+- **StatusDot** — a run state as a glyph: running is the loading button's glyph, the rest dots in
+  their status hue (idle a muted ring).
+- **Kbd** — a keycap chip in `micro` on a hairline, or plain muted caption text at a row's end, the
+  same as a menu row's shortcut.
+- **EmptyState** — an icon in a muted tile, a title, a line on what to do and its actions, centered.
+- **List** — settings rows on one control height, a caption per section, the controls ending on the
+  caption's edge, nothing framed. ChoiceList is Radio's row behavior over rows of any content.
+- **Breadcrumb** — muted crumbs under one fluid hover, the current page in the text color, middle
+  crumbs folding into an ellipsis menu when the trail runs out of room.
+- **Sortable and Resizable** — a held item lifts two surface steps and the others slide aside on
+  `spring.moderate`; a split's handle is a hairline that thickens on `spring.fast` while held, the
+  focus ring's color for keyboard focus.
 - **Pagination** — the current page is a liquid indicator that melts from page to page, under one
   fluid hover highlight.
 - **NavigationMenu** — a site header strip; its one panel grows from the open trigger and morphs

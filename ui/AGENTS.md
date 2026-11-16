@@ -30,7 +30,8 @@ is specific to this package.
   ring, `WeightLabel`, row groups that skip `aria-disabled` rows, overlay roots and surfaces, popup
   rows). Use them before writing the pattern by hand.
 - `primitives/` — the systems as documented items (Surface, Sizes, FluidHover, Motion, Morph,
-  ScrollArea, Separator, Skeleton, Code, Craft). `components/[inputs|navigation|overlays]/` —
+  ScrollArea, Separator, Skeleton, Code, Craft) and the list and layout pieces (Sortable, VirtualList,
+  Resizable). `components/[inputs|navigation|overlays]/` —
   controls. `blocks/` — compositions.
 - `modo.components.tsx` — docs-only adapters for the chrome's slots (`Select`, `Icon`, `DocsNav`) and the
   Theme panel item. `global.css` — base styles and the chrome's look through `data-modo` attributes.
