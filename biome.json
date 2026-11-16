@@ -40,7 +40,7 @@
   "plugins": [
     {
       "path": "./biome/arbitrary-values.grit",
-      "includes": ["**/demo/**", "**/ui/**", "**/lib/templates/**"]
+      "includes": ["**/demo/**", "**/ui/**", "**/kits/**", "**/lib/templates/**"]
     },
     "./biome/literal-colors.grit",
     {
@@ -51,7 +51,7 @@
   ],
   "overrides": [
     {
-      "includes": ["lib/package.json", "ui/package.json"],
+      "includes": ["lib/package.json", "ui/package.json", "kits/*/package.json"],
       "formatter": {
         "enabled": false
       }

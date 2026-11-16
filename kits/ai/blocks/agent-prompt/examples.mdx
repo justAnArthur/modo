@@ -1,0 +1,44 @@
+import AgentPrompt from './index'
+
+# Offer
+
+The agent asks where a task you named should run: a new session, or here.
+
+<div className="w-full max-w-2xl">
+  <AgentPrompt.Offer title="Port the settings screen to Tauri" brief="It builds on nothing in this session and ends in its own branch." />
+</div>
+
+# Task
+
+Work the agent noticed on its own, to start as a session or dismiss.
+
+<div className="w-full max-w-2xl">
+  <AgentPrompt.Task
+    title="Fix the parser's @values test"
+    brief="CI fails on parser › keeps @values since the TSDoc refactor. Restore the tag and add a regression test."
+    where="jobiflow · new worktree"
+  />
+</div>
+
+# All prompts
+
+The whole family under the transcript; each generic prompt has its own page.
+
+<div className="flex w-full max-w-2xl flex-col gap-3">
+  <AgentPrompt.Permission tool="Bash" command="bun run check" rule="bun run *" />
+  <AgentPrompt.Question
+    tag="Layout"
+    question="Where should the side panes open?"
+    options={[
+      { label: 'Right of the transcript (Recommended)', description: 'One pane at a time, tabs on top' },
+      { label: 'Below the transcript', description: 'Like an IDE panel; more room for wide diffs' },
+    ]}
+  />
+  <AgentPrompt.Plan>
+    <ol className="m-0">
+      <li>Split the prompts into generic components.</li>
+      <li>Keep the session cards in the block.</li>
+    </ol>
+  </AgentPrompt.Plan>
+  <AgentPrompt.Offer title="Port the settings screen to Tauri" />
+</div>

@@ -1,0 +1,50 @@
+import WorkSummary from './index'
+import Reasoning from '../reasoning'
+import ToolCall from '../tool-call'
+
+# Folded work
+
+Press the row: the reasoning and the calls are inside.
+
+<div className="w-full max-w-2xl">
+  <WorkSummary summary="Worked for 52s" detail="Thought 8s · 2 reads">
+    <Reasoning duration="8s">
+      <p className="m-0">The rules live in DESIGN.md; the craft page shows them as pairs.</p>
+    </Reasoning>
+    <ToolCall.Group>
+      <ToolCall index={0} value="design" tool="Read" summary="ui/DESIGN.md" meta="543 lines" />
+      <ToolCall index={1} value="agents" tool="Read" summary="ui/AGENTS.md" meta="81 lines" />
+    </ToolCall.Group>
+  </WorkSummary>
+</div>
+
+# Running
+
+While the turn runs, the Spinner turns in the row.
+
+<div className="w-full max-w-2xl">
+  <WorkSummary summary="Working…" detail="bun run check" running>
+    <ToolCall.Group>
+      <ToolCall index={0} value="check" tool="Bash" summary="bun run check" status="running" />
+    </ToolCall.Group>
+  </WorkSummary>
+</div>
+
+# Show all
+
+A provider set `open` unfolds every turn's work at once.
+
+<div className="flex w-full max-w-2xl flex-col gap-2">
+  <WorkSummary.Provider open>
+    <WorkSummary summary="Worked for 12s" detail="1 search">
+      <ToolCall.Group>
+        <ToolCall index={0} value="grep" tool="Grep" summary={'"useMorph" ui/'} meta="14 files" />
+      </ToolCall.Group>
+    </WorkSummary>
+    <WorkSummary summary="Worked for 4s" detail="1 edit">
+      <ToolCall.Group>
+        <ToolCall index={0} value="edit" tool="Edit" summary="ui/components/badge/index.tsx" meta="+1 −1" />
+      </ToolCall.Group>
+    </WorkSummary>
+  </WorkSummary.Provider>
+</div>

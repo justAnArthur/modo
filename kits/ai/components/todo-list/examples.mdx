@@ -1,0 +1,32 @@
+import TodoList from './index'
+
+# Plan
+
+Done steps take a check, the step in progress turns, the rest wait on a ring.
+
+<div className="w-full max-w-2xl">
+  <TodoList
+    items={[
+      { content: 'Read the design rules and the craft page', status: 'completed' },
+      { content: 'Add Meter and Diff components', status: 'completed' },
+      { content: 'Assemble the pages', status: 'in_progress' },
+      { content: 'Lint, typecheck, check both themes', status: 'pending' },
+    ]}
+  />
+</div>
+
+# Folded
+
+Folded to one row, the header names the step in progress.
+
+<div className="w-full max-w-2xl">
+  <TodoList
+    defaultOpen={false}
+    title="Plan"
+    items={[
+      { content: 'Draft the migration', status: 'completed' },
+      { content: 'Run it on staging', status: 'in_progress' },
+      { content: 'Run it on production', status: 'pending' },
+    ]}
+  />
+</div>
