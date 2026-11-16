@@ -49,6 +49,10 @@
      light, darker in dark), so a card resting in it lifts out: ShellCard. */
   --sunken: light-dark(oklch(0.955 0 0), oklch(0.17 0 0));
 
+  /* True black in both schemes, for a surface that has to match hardware
+     (a display notch, a bezel) rather than the theme. */
+  --ink: oklch(0 0 0);
+
   /* ── Interactive states ── */
   --accent: light-dark(oklch(0.922 0 0), oklch(0.439 0 0));
   --accent-foreground: light-dark(oklch(0.205 0 0), oklch(0.97 0 0));

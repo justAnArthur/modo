@@ -2,6 +2,12 @@
 
 The packages are released from this repo by conventional commits (see [CONTRIBUTING.md](CONTRIBUTING.md)): `@justanarthur/modo` (`lib/`), `@justanarthur/modo-ui` (`ui/`) and `@justanarthur/modo-ui-ai` (`kits/ai/`). Each release also gets GitHub release notes generated from its commits.
 
+## Unreleased
+
+### @justanarthur/modo-ui
+
+- Token `--ink` (`bg-ink`, `fill-ink`, `text-ink`, `border-ink`): true black in both schemes, for surfaces that match hardware.
+
 ## 2026-11-17
 
 ### @justanarthur/modo 1.1.0

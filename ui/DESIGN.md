@@ -22,6 +22,7 @@ colors:
   muted-foreground-dark: "oklch(0.7155 0 0)"
   sunken: "oklch(0.955 0 0)"
   sunken-dark: "oklch(0.17 0 0)"
+  ink: "oklch(0 0 0)"
   accent: "oklch(0.922 0 0)"
   accent-dark: "oklch(0.439 0 0)"
   selected: "oklch(0.87 0 0)"
@@ -380,6 +381,9 @@ Two text colors, a greyscale ground, one blue.
 - **Muted (`bg-muted`)** — a recessed track: the segmented tabs' well, a sunken field at rest.
 - **Sunken (`bg-sunken`)** — a tray set into the page, below surface 1 in both schemes (greyer in light,
   darker in dark), so a card resting in it lifts out: ShellCard's shell.
+- **Ink (`bg-ink`, `fill-ink`, `text-ink`, `border-ink`)** — true black in both schemes, for a surface
+  that has to match the device rather than the theme (a display notch, a bezel). Never a dark-mode
+  background or page text: those stay the surfaces and foreground.
 - **Accent (`bg-accent`)** — the secondary button and the switch's off track. `selected` is a firmer
   grey for persistent selection fills.
 - **Hover / Active (`bg-hover`, `bg-active`)** — translucent overlays (black 4% / 7% in light, white 6% /
