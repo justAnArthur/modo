@@ -25,6 +25,7 @@ Fixes:
 - Tokens `--sunken` (`bg-sunken`) and `--radius-shell` / `--radius-pill-shell` (`rounded-shell|pill-shell`); icons `file-diff` and `square`.
 - `useIcons()` (`lib/icon-context`) returns the whole icon map, for a kit that extends the set; `lib/surface-classes` (`SURFACE_BG`, `SURFACE_SHADOW`) is a subpath; the `SidebarApp` block exports its `SidebarSearchField` and `SidebarInsetTopbar`.
 - `VirtualList` and `LogView` measure in the element's own pixels, so a list inside a preview scaled with CSS `zoom` keeps its rows apart.
+- Barrel exports `GooFilter`, `useAutosizeTextarea` and `useTouchPrimary`, for a kit and components of your own.
 
 Fixes:
 

@@ -63,9 +63,10 @@ export * from './components/table'
 export type { GooIndicatorProps } from './lib/goo-indicator'
 export { GooIndicator } from './lib/goo-indicator'
 export { IconProvider } from './lib/icon-context'
-export { MorphSurface } from './lib/morph-layers'
+export { GooFilter, MorphSurface } from './lib/morph-layers'
 export { useReduceMotion } from './lib/reduced-motion'
 export { ShapeProvider } from './lib/shape-context'
+export { useAutosizeTextarea } from './lib/use-autosize-textarea'
 export { useControllableState } from './lib/use-controllable-state'
 export type {
   Morph as MorphState,
@@ -77,6 +78,7 @@ export type {
   MorphTier,
 } from './lib/use-morph'
 export { useMorph } from './lib/use-morph'
+export { useTouchPrimary } from './lib/use-touch-primary'
 export { cn } from './lib/utils'
 export * from './primitives/code'
 export * from './primitives/craft'
