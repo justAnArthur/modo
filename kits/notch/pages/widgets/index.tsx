@@ -14,7 +14,7 @@ import { TABS } from '../../mock/data'
 import { ArtworkTile, panelTabs } from '../../mock/island-content'
 import { SceneDesk } from '../../mock/scene'
 
-interface WidgetsPageProps {
+interface WidgetsProps {
   /** The tab open at first. Defaults to `'now-playing'`. */
   tab?: string
   /** Show the tabs under the screen too. Defaults to `true`. */
@@ -35,7 +35,7 @@ interface WidgetsPageProps {
  *
  * @example {@include ./examples.mdx}
  */
-export default function WidgetsPage({ tab: initial = 'now-playing', picker = true }: WidgetsPageProps) {
+export default function Widgets({ tab: initial = 'now-playing', picker = true }: WidgetsProps) {
   const [tab, setTab] = useState(initial)
   const [state, setState] = useState<IslandState>('expanded')
 

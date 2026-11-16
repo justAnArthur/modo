@@ -29,7 +29,7 @@ const SCENES: (Scene & { state: IslandState })[] = [
   { value: 'empty', label: 'Nothing playing', state: 'expanded' },
 ]
 
-interface NowPlayingPageProps {
+interface MusicProps {
   /** The scene at first. Defaults to `'expanded'`. */
   scene?: string
   /** Show the scenes under the screen. Defaults to `true`. */
@@ -49,7 +49,7 @@ interface NowPlayingPageProps {
  *
  * @example {@include ./examples.mdx}
  */
-export default function NowPlayingPage({ scene: initial = 'expanded', picker = true }: NowPlayingPageProps) {
+export default function Music({ scene: initial = 'expanded', picker = true }: MusicProps) {
   const [scene, setScene] = useState(initial)
   const [index, setIndex] = useState(0)
   const [playing, setPlaying] = useState(true)

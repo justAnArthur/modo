@@ -7,7 +7,7 @@
 import SettingsWindow from '../../blocks/settings-window'
 import { ABOUT, MockWindow, PERMISSIONS, PLUGINS } from '../../mock/settings'
 
-interface SettingsPageProps {
+interface SettingsProps {
   /** The page open at first. Defaults to `'general'`. */
   page?: string
 }
@@ -27,7 +27,7 @@ interface SettingsPageProps {
  *
  * @example {@include ./examples.mdx}
  */
-export default function SettingsPage({ page = 'general' }: SettingsPageProps) {
+export default function Settings({ page = 'general' }: SettingsProps) {
   return (
     <MockWindow title="Just Notch Settings">
       <SettingsWindow name="Just Notch" defaultValue={page} plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />

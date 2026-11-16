@@ -54,7 +54,7 @@ export function usePair(pair: string): Pair {
   return { ...media, minimal: <Timer.Minimal run={run} /> }
 }
 
-interface SplitPageProps {
+interface SplitProps {
   /** The pair shown at first. Defaults to `'media-timer'`. */
   pair?: string
   /** Show the pairs under the screen. Defaults to `true`. */
@@ -75,7 +75,7 @@ interface SplitPageProps {
  *
  * @example {@include ./examples.mdx}
  */
-export default function SplitPage({ pair: initial = 'media-timer', picker = true }: SplitPageProps) {
+export default function Split({ pair: initial = 'media-timer', picker = true }: SplitProps) {
   const [pair, setPair] = useState(initial)
   const [state, setState] = useState<IslandState>('split')
   const parts = usePair(pair)

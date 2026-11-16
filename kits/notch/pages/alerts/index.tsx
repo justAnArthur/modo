@@ -50,7 +50,7 @@ export function useAlert(alert: string): ReactNode {
   return null
 }
 
-interface AlertsPageProps {
+interface AlertsProps {
   /** The alert shown at first. Defaults to `'charging'`. */
   alert?: string
   /** Show the alerts under the screen. Defaults to `true`. */
@@ -71,7 +71,7 @@ interface AlertsPageProps {
  *
  * @example {@include ./examples.mdx}
  */
-export default function AlertsPage({ alert: initial = 'charging', picker = true }: AlertsPageProps) {
+export default function Alerts({ alert: initial = 'charging', picker = true }: AlertsProps) {
   const [alert, setAlert] = useState(initial)
   const [state, setState] = useState<IslandState>('flash')
   const flash = useAlert(alert)
