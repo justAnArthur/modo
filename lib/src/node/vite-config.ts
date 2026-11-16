@@ -8,7 +8,8 @@ import { itemsPlugin } from '../plugins/items'
 import { shellPlugin } from '../plugins/shell'
 import { tokensPlugin } from '../plugins/tokens'
 import { loadModoConfig } from './config-loader'
-import { resolveUserFile } from './discover'
+import { itemsRootOf } from './discover'
+import { resolveUserFile } from './resolve-ref'
 
 export interface ViteConfigOptions {
   /** The package root of the lib: the runtime and the plain fallbacks live under it. */
@@ -25,13 +26,14 @@ export async function createViteConfig({ libDir, userRoot, configPath }: ViteCon
   // configPlugin reports config errors with full detail once Vite starts.
   const site = await loadModoConfig(configPath).catch(() => null)
   const bundler = createBundler({ userRoot, configPath })
+  const itemsRoot = itemsRootOf(userRoot, site)
   const config: UserConfig = {
     root: resolve(libDir, 'src', 'runtime'),
     base: site?.base,
     plugins: [
       configPlugin({ userRoot, configPath }),
       tokensPlugin({ userRoot, configPath }),
-      itemsPlugin({ userRoot, bundler }),
+      itemsPlugin({ userRoot, itemsRoot, bundler }),
       shellPlugin({ libDir, bundler }),
       react(),
     ],
@@ -44,8 +46,9 @@ export async function createViteConfig({ libDir, userRoot, configPath }: ViteCon
       watch: { ignored: ['**/.modo-tmp/**'] },
       fs: {
         // The workspace root: Bun hoists deps into the monorepo's node_modules
-        // store, and Vite 403s font URLs resolved there without it.
-        allow: [searchForWorkspaceRoot(userRoot), libDir],
+        // store, and Vite 403s font URLs resolved there without it. The
+        // config's `root` too, which may sit outside the project.
+        allow: [searchForWorkspaceRoot(userRoot), itemsRoot, libDir],
       },
     },
     // Item bundles import React from the design system, the runtime from the

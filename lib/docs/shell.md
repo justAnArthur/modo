@@ -47,7 +47,7 @@ A pin wins even over a matching item. A pin that doesn't load (missing file, fai
 
 ## Pinning slots
 
-A `shell` value is a path relative to the project root: a file, or a folder with an `index.tsx`. Add `#Name` for a named export. Several pins into one file share one build entry, so you can keep all docs-only adapters in one `modo.components.tsx`.
+A `shell` value is a path relative to the project root (a file, or a folder with an `index.tsx`) or a package specifier such as `@acme/ds/docs#DocsNav`, resolved through the package's `exports` (see [config.md](./config.md#package-specifiers)). Add `#Name` for a named export. Several pins into one file share one build entry, so you can keep all docs-only adapters in one `modo.components.tsx`.
 
 ```ts
 // ui/modo.config.ts

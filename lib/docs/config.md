@@ -1,6 +1,6 @@
 # modo.config.ts
 
-The CLI reads `modo.config.ts` from the project root. Pass `--config <file>` to `dev`, `build`, `preview` or `check` to use another file. `modo check` validates it and exits non-zero on an error.
+The CLI reads `modo.config.ts` from the project root. Pass `--config <file>` to `dev`, `build`, `preview`, `add` or `check` to use another file. `modo check` validates it and exits non-zero on an error.
 
 ```ts
 import { defineConfig } from '@justanarthur/modo/config'
@@ -14,7 +14,7 @@ export default defineConfig({
 
 `defineConfig` only types the object. The config is bundled with esbuild before it runs, so it can import other modules. CSS imports in it are ignored.
 
-The schema is strict: an unknown key is an error. Paths are relative to the project root (the folder holding the config).
+The schema is strict: an unknown key is an error. Paths are relative to the project root: the folder you run `modo` in, which usually holds the config. A module reference (`shell`, `panel`, `examples`, `vite`) may instead be a [package specifier](#package-specifiers).
 
 | Field | Type | Default |
 | --- | --- | --- |
@@ -33,6 +33,7 @@ The schema is strict: an unknown key is an error. Paths are relative to the proj
 | [`css`](#css) | `string` (stylesheet path) | none |
 | [`vite`](#vite) | `string` (module path) | none |
 | [`examples`](#examples) | `string` (module path) | none |
+| [`root`](#root) | `string` (folder path) | `'.'` |
 | [`groups`](#groups) | `Record<string, string>` (titles) | from folder names |
 
 ## name
@@ -139,7 +140,7 @@ repo: { url: 'https://github.com/justAnArthur/modo', dir: 'ui' },
 
 ## shell
 
-Pins docs-chrome slots to your components. A value is a path relative to the project root: a file, or a folder with an `index.tsx`. Add `#Name` to use a named export instead of the default one. An unpinned slot uses the item that matches it by name and props, else a plain HTML fallback. See [shell.md](./shell.md).
+Pins docs-chrome slots to your components. A value is a path relative to the project root (a file, or a folder with an `index.tsx`) or a [package specifier](#package-specifiers). Add `#Name` to use a named export instead of the default one. An unpinned slot uses the item that matches it by name and props, else a plain HTML fallback. See [shell.md](./shell.md).
 
 ```ts
 shell: {
@@ -149,6 +150,28 @@ shell: {
   Sidebar: './modo.components.tsx#DocsNav',
 },
 ```
+
+### Package specifiers
+
+A `shell`, `panel` or `examples` reference (and `vite`) that is not a file in the project resolves as a package specifier, looked up in `node_modules` from the project root upwards. A design system can publish its docs adapters once and every docs site that uses it names them:
+
+```ts
+shell: { Sidebar: '@acme/ds/docs#DocsNav', Select: '@acme/ds/docs#Select' },
+panel: { items: [{ label: 'Theme', component: '@acme/ds/docs#ThemeSwitcher' }] },
+```
+
+The package's `exports` map the subpath, `*` patterns included. Of its conditions, `source` wins, then `import`, then `default`, whatever their order in `package.json`, so a package that maps its TypeScript sources under `source` is bundled from them; built JavaScript works too. A package without `exports` resolves the subpath as a file or folder under it. Stylesheets beside the resolved file load with it, as for a local module. A linked workspace package resolves to its real path.
+
+```json
+{
+  "name": "@acme/ds",
+  "exports": {
+    "./docs": { "source": "./docs/index.ts", "default": "./dist/docs/index.js" }
+  }
+}
+```
+
+A project path wins over a package of the same name, so `./` makes a local reference unambiguous.
 
 ## panel
 
@@ -219,6 +242,16 @@ export { Plus, Search } from 'lucide-react'
 ```
 
 If an export has the same name as an item, the item wins and the build warns. Alias the export (`export { Search as SearchIcon }`). A path that doesn't resolve is a build error.
+
+## root
+
+The folder holding the item tiers (`primitives/`, `components/`, `blocks/`, `pages/`) and `tokens/`, relative to the project root. Use it when a library keeps its sources in a subfolder:
+
+```ts
+root: './src', // reads src/components/…, src/tokens/…
+```
+
+It moves only the tiers and tokens: `css`, `vite`, `examples`, `logo`, `favicon` and the `shell` and `panel` modules stay relative to the project root, as does `.modo-tmp`. Item pages' Source links and paths are relative to the project root too (`src/components/button/index.tsx`), so [`repo.dir`](#repo) still names the project root's folder. `modo add` creates items and tokens under it, and `modo check` and the build fail when it doesn't exist. Restart `modo dev` after changing it.
 
 ## groups
 

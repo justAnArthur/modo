@@ -6,7 +6,8 @@ import remarkGfm from 'remark-gfm'
 import { isComponentRef, splitRef } from '../lib/refs'
 import type { SiteConfig } from '../lib/schema'
 import { loadModoConfig } from '../node/config-loader'
-import { discoverCssForFile, parseItems, resolveUserFile, type SourceItem } from '../node/discover'
+import { discoverCssForFile, itemsRootOf, parseItems, type SourceItem } from '../node/discover'
+import { resolveUserFile } from '../node/resolve-ref'
 import { remarkModoExamples } from './mdx-examples'
 import { createReporter } from './report'
 
@@ -69,12 +70,16 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
 
   async function run(): Promise<BundleResult> {
     const failures: EntryFailure[] = []
-    const { items: sources, errors, warnings } = parseItems(userRoot)
+    const errors: string[] = []
     const config = await loadModoConfig(configPath).catch((err: Error) => {
       // configPlugin reports the full error; items still build without it.
       errors.push(`modo.config: ${err.message}`)
       return null
     })
+    const root = itemsRootOf(userRoot, config)
+    if (!existsSync(root)) errors.push(`root "${config?.root}" not found (resolved to ${root})`)
+    const { items: sources, errors: itemErrors, warnings } = parseItems(userRoot, root)
+    errors.push(...itemErrors)
     const parsed = sources.map(it => ({ ...it, key: `items/${it.tier}/${it.id}` }))
 
     const keyByFile = new Map<string, string>()
@@ -97,7 +102,7 @@ export function createBundler(opts: { userRoot: string; configPath: string }): B
       ...(config?.panel?.items ?? []).map(it => it.component),
       config?.logo && isComponentRef(config.logo) ? config.logo : undefined,
     ].filter((p): p is string => typeof p === 'string')
-    // Several refs into one file (`./modo.components.tsx#Select`) share its entry.
+    // Several refs into one file (`./modo.components.tsx#Select`, `@scope/ds/docs#Select`) share its entry.
     const extraKeys = new Map<string, { file: string; key: string; exportName: string }>()
     for (const p of new Set(extraPaths)) {
       const { path, exportName } = splitRef(p)
