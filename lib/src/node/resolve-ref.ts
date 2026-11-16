@@ -2,6 +2,8 @@ import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 
 const EXTS = ['.tsx', '.ts', '.jsx', '.js']
+const TS_FILE = /\.[cm]?tsx?$/
+const MODO = '@justanarthur/modo'
 
 // `source` first: a design system that publishes its sources maps them under
 // it, and the docs bundle those rather than the built copy.
@@ -33,16 +35,68 @@ export function resolvePackageFile(spec: string, fromDir: string): string | null
   if (!bare) return null
   const pkgDir = findPackageDir(bare.name, fromDir)
   if (!pkgDir) return null
-  const { exports } = JSON.parse(readFileSync(join(pkgDir, 'package.json'), 'utf8')) as { exports?: unknown }
+  const { exports } = readPackageJson(pkgDir) ?? {}
   const file =
-    exports === undefined ? resolveFile(resolve(pkgDir, bare.subpath)) : exportedFile(pkgDir, exports, bare.subpath)
+    exports === undefined
+      ? resolveFile(resolve(pkgDir, bare.subpath))
+      : exportedFile(pkgDir, exports, bare.subpath, pick)
   // Symlinked workspace packages: the real path, so the bundle sees one copy of each module.
   return file && realpathSync(file)
 }
 
-function exportedFile(pkgDir: string, exports: unknown, subpath: string): string | null {
+/**
+ * The TypeScript source a package publishes for a bare specifier under its `source` export
+ * condition (`"./x": { "source": "./x/index.tsx", "default": "./dist/x.js" }`), real path.
+ * Null when the package has no `source` target for it, or that file isn't TypeScript or doesn't ship.
+ */
+export function resolveSourceExport(spec: string, fromDir: string): string | null {
+  const bare = splitBare(spec)
+  const pkgDir = bare && findPackageDir(bare.name, fromDir)
+  const exports = pkgDir ? readPackageJson(pkgDir)?.exports : undefined
+  if (!bare || !pkgDir || exports === undefined) return null
+  const file = exportedFile(pkgDir, exports, bare.subpath, pickSource)
+  return file && TS_FILE.test(file) ? realpathSync(file) : null
+}
+
+/** The nearest folder at or above `file`'s holding a package.json. */
+export function packageDirOf(file: string): string | null {
+  for (let dir = dirname(file); ; dir = dirname(dir)) {
+    if (existsSync(join(dir, 'package.json'))) return dir
+    if (dirname(dir) === dir) return null
+  }
+}
+
+/** A design system documented with modo (its package.json depends on the lib, in any dependency field), or the lib itself. */
+export function isModoPackage(pkgDir: string): boolean {
+  const pkg = readPackageJson(pkgDir)
+  if (pkg?.name === MODO) return true
+  return [pkg?.dependencies, pkg?.devDependencies, pkg?.peerDependencies].some(deps => deps?.[MODO])
+}
+
+interface PackageJson {
+  name?: string
+  exports?: unknown
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+  peerDependencies?: Record<string, string>
+}
+
+function readPackageJson(dir: string): PackageJson | null {
+  try {
+    return JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8')) as PackageJson
+  } catch {
+    return null
+  }
+}
+
+function exportedFile(
+  pkgDir: string,
+  exports: unknown,
+  subpath: string,
+  choose: (target: unknown) => string | null,
+): string | null {
   const entry = exportsEntry(exports, subpath)
-  const target = entry && pick(entry.target)
+  const target = entry && choose(entry.target)
   if (!target) return null
   const file = resolve(pkgDir, entry.star === undefined ? target : target.replaceAll('*', entry.star))
   return existsSync(file) && !file.endsWith('.d.ts') ? file : null
@@ -96,6 +150,19 @@ function pick(target: unknown): string | null {
   const conditions = target as Record<string, unknown>
   for (const condition of CONDITIONS) {
     const hit = condition in conditions ? pick(conditions[condition]) : null
+    if (hit) return hit
+  }
+  return null
+}
+
+/** Like `pick`, but only a target reached through a `source` condition. */
+function pickSource(target: unknown): string | null {
+  if (Array.isArray(target)) return target.map(pickSource).find(t => t !== null) ?? null
+  if (typeof target !== 'object' || target === null) return null
+  const conditions = target as Record<string, unknown>
+  for (const condition of CONDITIONS) {
+    if (!(condition in conditions)) continue
+    const hit = condition === 'source' ? pick(conditions.source) : pickSource(conditions[condition])
     if (hit) return hit
   }
   return null

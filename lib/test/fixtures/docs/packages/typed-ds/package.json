@@ -1,0 +1,10 @@
+{
+  "name": "typed-ds",
+  "type": "module",
+  "exports": {
+    "./components/*": {
+      "types": "./build/components/*/index.d.ts",
+      "default": "./build/components/*/index.js"
+    }
+  }
+}
