@@ -75,7 +75,7 @@ interface IslandProps {
   expanded?: ReactNode
   /** The alert below the notch (`flash`), such as an IslandFlash. */
   flash?: ReactNode
-  /** Names what the wings show; a new one swaps them with the blur. Defaults to the state. */
+  /** Names what the wings or the flash show; a new one swaps them with the blur, so one alert replacing another reads as new. Defaults to the state. */
   activity?: string
   /** The accessible name of the press that opens it. Defaults to `'Open the island'`. */
   label?: string
@@ -305,7 +305,7 @@ export default function Island({
     )
   else if (state === 'flash' && flash)
     content = (
-      <Layer key="flash" shape={shape} top={notch.height} reduced={reduced} interactive>
+      <Layer key={`flash:${activity ?? ''}`} shape={shape} top={notch.height} reduced={reduced} interactive>
         <div className="flex size-full items-center px-5 pb-1">
           <div className="min-w-0 flex-1">{flash}</div>
         </div>

@@ -1,0 +1,25 @@
+import Devices from './index'
+import { FlashIsland, WidgetIsland } from '../../mock/island-content'
+import { DEVICES } from '../../mock/data'
+
+# Devices
+
+Connected first, each with its charge; a low one turns to the warning and error hues.
+
+<WidgetIsland tab="devices">
+  <Devices devices={DEVICES} />
+</WidgetIsland>
+
+# None paired
+
+<WidgetIsland tab="devices">
+  <Devices devices={[]} onOpenSettings={() => {}} />
+</WidgetIsland>
+
+# Connected
+
+`Devices.Connected`, the flash when a device connects.
+
+<FlashIsland>
+  <Devices.Connected device={DEVICES[0]} />
+</FlashIsland>

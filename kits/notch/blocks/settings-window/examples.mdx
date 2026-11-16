@@ -1,0 +1,30 @@
+import SettingsWindow from './index'
+import { ABOUT, MockWindow, PERMISSIONS, PLUGINS } from '../../mock/settings'
+
+# Settings
+
+General, Plugins, Permissions and About, then a page per plugin's settings.
+
+<MockWindow title="Settings">
+  <SettingsWindow name="Just Notch" plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />
+</MockWindow>
+
+# Plugins
+
+<MockWindow title="Settings">
+  <SettingsWindow name="Just Notch" defaultValue="plugins" plugins={PLUGINS} defaultEnabled={{ stats: false, devices: false }} permissions={PERMISSIONS} about={ABOUT} />
+</MockWindow>
+
+# Permissions
+
+A spinner while one is read; Open Settings beside one that isn't granted.
+
+<MockWindow title="Settings">
+  <SettingsWindow name="Just Notch" defaultValue="permissions" plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />
+</MockWindow>
+
+# A plugin's settings
+
+<MockWindow title="Settings">
+  <SettingsWindow name="Just Notch" defaultValue="plugin:calendar" plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />
+</MockWindow>

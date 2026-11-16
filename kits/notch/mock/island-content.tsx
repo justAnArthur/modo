@@ -1,197 +1,108 @@
 /*!
- * Mock: what the docs put in the island, on the kit's components and mock
- * data: a now-playing wing glyph, a timer bubble, a charging flash and the
- * open panel with its tabs. Pages and blocks can start from these; nothing
- * here ships.
+ * Mock: what the docs put in the island, on the kit's blocks and mock data:
+ * the now-playing wings, a timer bubble, a charging flash and the open
+ * island with a tab per widget. Pages and examples start from these; nothing
+ * here ships in the barrel.
  */
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import Meter from '@justanarthur/modo-ui/components/meter'
 import Tabs from '@justanarthur/modo-ui/components/navigation/tabs'
 import { useSize } from '@justanarthur/modo-ui/lib/size-context'
-import { SizeProvider } from '@justanarthur/modo-ui/primitives/sizes'
-import { Music, Pause, Play, Settings, SkipBack, SkipForward, Zap } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
-import BatteryGlyph from '../components/battery-glyph'
-import Countdown from '../components/countdown'
-import Equalizer from '../components/equalizer'
+import Agenda from '../blocks/agenda'
+import Controls from '../blocks/controls'
+import Devices from '../blocks/devices'
+import ExpandedIsland, { type ExpandedIslandTab } from '../blocks/expanded-island'
+import NowPlaying, { type NowPlayingTrack } from '../blocks/now-playing'
+import PowerAlert from '../blocks/power-alert'
+import Shelf, { type ShelfFile } from '../blocks/shelf'
+import SystemStats from '../blocks/system-stats'
+import Timer, { type TimerRun } from '../blocks/timer'
 import Island from '../components/island'
-import IslandFlash from '../components/island-flash'
-import IslandTabs from '../components/island-tabs'
-import MediaScrubber from '../components/media-scrubber'
-import { INSET, ISLAND_STATES, type IslandState } from '../lib/geometry'
-import { useIsland } from '../lib/island-context'
-import { EVENTS, POWER, TABS, TIMER, TRACK } from './data'
+import { ISLAND_STATES, type IslandState } from '../lib/geometry'
+import { MockArtwork } from './artwork'
+import { AGENDA_NOW, DEVICES, EVENTS, FILES, POWER, SAMPLES, TABS, TIMER, TRACK } from './data'
 import { useFitScale } from './fit'
 
-/** A square standing in for a track's artwork: no image, a tile one surface up. */
-export function ArtworkTile({ className = 'size-5.5 rounded-glyph' }: { className?: string }) {
-  return (
-    <span className={`flex shrink-0 items-center justify-center bg-surface-3 text-muted-foreground ${className}`}>
-      <Music size={12} strokeWidth={1.5} />
-    </span>
-  )
+const MINUTE = 60_000
+
+/** The mock track, with generated artwork. */
+export const PLAYING: NowPlayingTrack = { ...TRACK, artwork: <MockArtwork /> }
+
+/** The mock shelf, two files with previews. */
+export const SHELF: ShelfFile[] = FILES.map(file =>
+  file.id === 'cover'
+    ? { ...file, thumbnail: <MockArtwork variant="dusk" /> }
+    : file.id === 'demo'
+      ? { ...file, thumbnail: <MockArtwork variant="night" /> }
+      : file,
+)
+
+/** A focus run with `left` of its length to go, from now. */
+export function focusRun(left = 0.62, minutes = TIMER.minutes): TimerRun {
+  return { kind: 'focus', total: minutes * MINUTE, endsAt: Date.now() + left * minutes * MINUTE }
+}
+
+/** A run made once, when the component mounts, so it keeps counting down across renders. */
+export function useRun(left?: number) {
+  return useState(() => focusRun(left))[0]
+}
+
+/** The now-playing glyph for the compact island's left wing. */
+export function ArtworkTile() {
+  return <NowPlaying.Leading track={PLAYING} />
 }
 
 /** The timer's ring for the split bubble. */
 export function TimerBubble() {
-  return <Meter variant="ring" label="Focus" value={0.62} tone="default" animate={false} className="size-5" />
+  return <Timer.Minimal run={useRun()} />
 }
 
 /** The charging alert, for the island's `flash`. */
 export function ChargingFlash() {
-  return (
-    <IslandFlash
-      icon={<Zap size={18} strokeWidth={1.5} fill="currentColor" />}
-      tone="success"
-      title="Charging"
-      caption={POWER.untilFull}
-      value={`${POWER.level}%`}
-      trailing={<BatteryGlyph level={POWER.level} charging />}
-    />
-  )
+  return <PowerAlert kind="charging" level={POWER.level} minutes={POWER.untilFull} />
 }
 
-function Player() {
-  const [playing, setPlaying] = useState(true)
-  return (
-    <div className="flex size-full items-center gap-5">
-      <ArtworkTile className="size-24 rounded-2xl" />
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <div className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate text-subtitle weight-semibold text-foreground">{TRACK.title}</span>
-            <span className="truncate text-caption text-muted-foreground">{TRACK.artist}</span>
-          </div>
-          <Equalizer playing={playing} />
-        </div>
-        <MediaScrubber position={TRACK.position} duration={TRACK.duration} playing={playing} />
-        <div className="flex items-center justify-center gap-2">
-          <Button variant="ghost" size="icon" aria-label="Previous">
-            <SkipBack size={16} strokeWidth={1.5} fill="currentColor" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={playing ? 'Pause' : 'Play'}
-            onClick={() => setPlaying(!playing)}
-          >
-            {playing ? (
-              <Pause size={18} strokeWidth={1.5} fill="currentColor" />
-            ) : (
-              <Play size={18} strokeWidth={1.5} fill="currentColor" />
-            )}
-          </Button>
-          <Button variant="ghost" size="icon" aria-label="Next">
-            <SkipForward size={16} strokeWidth={1.5} fill="currentColor" />
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
+/** Every widget of the open island, by tab value. */
+export function widgetFor(tab: string): ReactNode {
+  if (tab === 'now-playing') return <NowPlaying track={PLAYING} />
+  if (tab === 'timer') return <Timer />
+  if (tab === 'calendar') return <Agenda events={EVENTS} now={AGENDA_NOW} />
+  if (tab === 'shelf') return <Shelf defaultValue={SHELF} onAirDrop={() => {}} />
+  if (tab === 'controls')
+    return <Controls defaultValue={{ volume: 0.6, brightness: 0.8, keyboard: 0.35 }} output="MacBook Pro Speakers" />
+  if (tab === 'devices') return <Devices devices={DEVICES} />
+  if (tab === 'stats') return <SystemStats samples={SAMPLES} />
+  return null
 }
 
-function TimerWidget() {
-  return (
-    <div className="flex size-full items-center justify-center gap-5">
-      <Meter
-        variant="ring"
-        label={TIMER.label}
-        value={0.62}
-        tone="default"
-        animate={false}
-        className="size-20 text-subtitle"
-      >
-        <Countdown duration={TIMER.minutes * 60_000 * 0.62} />
-      </Meter>
-      <div className="flex flex-col">
-        <span className="text-subtitle weight-semibold text-foreground">{TIMER.label}</span>
-        <span className="text-caption text-muted-foreground">{TIMER.minutes} min session</span>
-      </div>
-    </div>
-  )
+const WIDGET_TABS: ExpandedIslandTab[] = TABS.map(tab => ({ ...tab, content: widgetFor(tab.value) }))
+
+/** The open island's tabs, a view per widget, with `views` in place of the mock ones. */
+export function panelTabs(views: Record<string, ReactNode> = {}): ExpandedIslandTab[] {
+  return WIDGET_TABS.map(tab => (tab.value in views ? { ...tab, content: views[tab.value] } : tab))
 }
 
-function CalendarWidget() {
-  return (
-    <ul className="m-0 flex list-none flex-col gap-1 p-0">
-      {EVENTS.map(event => (
-        <li key={event.title} className="flex items-center gap-3 rounded-box bg-surface-2 px-3 py-2">
-          <span className="w-10 shrink-0 text-caption tabular-nums text-muted-foreground">{event.time}</span>
-          <span className="min-w-0 flex-1 truncate text-body text-foreground">{event.title}</span>
-          {event.place && <span className="shrink-0 text-caption text-muted-foreground">{event.place}</span>}
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-const WIDGETS: Record<string, () => ReactNode> = {
-  'now-playing': Player,
-  timer: TimerWidget,
-  calendar: CalendarWidget,
-}
-
-/**
- * The open island: icon tabs in the wings with settings at the far right, the
- * tab's title (the hovered one's as a preview) and its widget.
- */
+/** The open island: a tab per widget in the wings, settings at the far right. */
 export function ExpandedPanel({ defaultTab = 'now-playing' }: { defaultTab?: string }) {
-  const island = useIsland()
-  const [tab, setTab] = useState(defaultTab)
-  const [hovered, setHovered] = useState<string | null>(null)
-  const title = TABS.find(t => t.value === (hovered ?? tab))?.label
-  const Widget = WIDGETS[tab]
-  const notch = island?.geometry.notch.height ?? 32
-
-  return (
-    <div className="flex size-full flex-col">
-      <SizeProvider size="compact">
-        <div className="flex shrink-0 items-center" style={{ height: notch, paddingInline: INSET }}>
-          <IslandTabs
-            tabs={TABS}
-            value={tab}
-            onValueChange={setTab}
-            onHoverChange={setHovered}
-            trailing={
-              <Button variant="ghost" size="icon-compact" aria-label="Settings">
-                <Settings size={14} strokeWidth={1.5} />
-              </Button>
-            }
-          />
-        </div>
-      </SizeProvider>
-      <div className="flex min-h-0 flex-1 flex-col pb-3" style={{ paddingInline: INSET }}>
-        <div className="flex h-6 shrink-0 items-end">
-          <span className="truncate text-caption weight-medium text-muted-foreground">{title}</span>
-        </div>
-        <div className="min-h-0 flex-1 overflow-y-auto py-2">
-          {Widget ? (
-            <Widget />
-          ) : (
-            <div className="flex size-full items-center justify-center text-caption text-muted-foreground">
-              Nothing here yet
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
+  return <ExpandedIsland tabs={WIDGET_TABS} defaultValue={defaultTab} onSettings={() => {}} />
 }
+
+type DemoIslandProps = Omit<
+  React.ComponentProps<typeof Island>,
+  'leading' | 'trailing' | 'minimal' | 'flash' | 'expanded'
+> & { defaultTab?: string }
 
 /** Every slot filled, so any state shows something: the docs' island. */
-export function DemoIsland(
-  props: Omit<React.ComponentProps<typeof Island>, 'leading' | 'trailing' | 'minimal' | 'flash' | 'expanded'>,
-) {
+export function DemoIsland({ defaultTab, ...props }: DemoIslandProps) {
   return (
     <Island
       leading={<ArtworkTile />}
-      trailing={<Equalizer />}
+      trailing={<NowPlaying.Trailing />}
       minimal={<TimerBubble />}
       flash={<ChargingFlash />}
-      expanded={<ExpandedPanel />}
+      expanded={<ExpandedPanel defaultTab={defaultTab} />}
       activity="now-playing"
       {...props}
     />
@@ -216,7 +127,7 @@ export function IslandPlayground({ defaultState = 'compact' }: { defaultState?: 
         <DemoIsland state={state} onStateChange={setState} expandOnHover />
       </ScreenEdge>
       <Tabs variant="subtle" value={state} onValueChange={v => setState(v as IslandState)} size={size.variant}>
-        <Tabs.List>
+        <Tabs.List className="max-w-full overflow-x-auto scrollbar-hide">
           {ISLAND_STATES.map(s => (
             <Tabs.Item key={s} value={s} label={STATE_LABEL[s]} />
           ))}
@@ -247,6 +158,58 @@ export function ScreenEdge({
         className="relative mx-auto overflow-hidden rounded-box bg-sunken"
         style={{ width: scale < 1 ? width : '100%', maxWidth: width, height, zoom: scale }}
       >
+        {children}
+      </div>
+    </div>
+  )
+}
+
+/** The open island on a strip of screen, on `tab`, its view replaced by `children` when given. */
+export function WidgetIsland({ tab, children, height = 340 }: { tab: string; children?: ReactNode; height?: number }) {
+  const tabs = panelTabs(children ? { [tab]: children } : {})
+  return (
+    <ScreenEdge height={height}>
+      <Island
+        defaultState="expanded"
+        collapsedState="idle"
+        expanded={<ExpandedIsland tabs={tabs} defaultValue={tab} onSettings={() => {}} />}
+      />
+    </ScreenEdge>
+  )
+}
+
+/** A flash below the notch, on a strip of screen. */
+export function FlashIsland({ children, activity }: { children: ReactNode; activity?: string }) {
+  return (
+    <ScreenEdge height={112}>
+      <Island defaultState="flash" collapsedState="idle" flash={children} activity={activity} />
+    </ScreenEdge>
+  )
+}
+
+/** An activity in the compact island's wings, with a second one's bubble when `minimal` is given. */
+export function WingsIsland({
+  leading,
+  trailing,
+  minimal,
+}: {
+  leading: ReactNode
+  trailing: ReactNode
+  minimal?: ReactNode
+}) {
+  return (
+    <ScreenEdge height={64}>
+      <Island defaultState={minimal ? 'split' : 'compact'} leading={leading} trailing={trailing} minimal={minimal} />
+    </ScreenEdge>
+  )
+}
+
+/** Lays `children` out at `width` and scales them down whole when the column is narrower. */
+export function Fit({ width, children }: { width: number; children: ReactNode }) {
+  const { outer, scale } = useFitScale(width)
+  return (
+    <div ref={outer} className="flex w-full justify-center">
+      <div className="shrink-0" style={{ width: scale < 1 ? width : '100%', maxWidth: width, zoom: scale }}>
         {children}
       </div>
     </div>

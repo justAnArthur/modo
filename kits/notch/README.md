@@ -56,10 +56,20 @@ export function NotchPanel({ state, onStateChange }) {
 | `BatteryGlyph` | A battery that fills to its level, with a charging bolt and status tones. |
 | `MediaScrubber` | Elapsed / scrubber / remaining on modo-ui's Slider; seeks once on commit. |
 | `Countdown` | Time left as `4:05` or `4m`, re-rendering only on the shown unit's edge. |
+| `NowPlaying` | The player for the open island, with `.Leading` / `.Trailing` (compact wings), `.Minimal` (split bubble), `.Flash` (track change) and `.Artwork`. |
+| `PowerAlert` | Charging, on battery, low and critical flashes. |
+| `Shelf` | Files dropped on the notch: tiles with a context menu, AirDrop and Clear; `.Drop` (the drop target flash), `.Leading`, `.Trailing`. |
+| `Timer` | Picker, running ring and countdown, Pomodoro cycles; `.Leading`, `.Trailing`, `.Minimal`, `.Done` (time's up). |
+| `Agenda` | Today and tomorrow, access states; `.Leading`, `.Trailing`, `.Minimal`, `.UpNext`, `.Starting` (the countdown to the next event). |
+| `Controls` | Volume, brightness and keyboard backlight sliders; `.Level` is the HUD flash. |
+| `Devices` | Bluetooth devices and their batteries; `.Connected` flash. |
+| `SystemStats` | CPU, memory and network tiles with sparklines; `.Leading`, `.Trailing`. |
+| `ExpandedIsland` | The open island's layout: tabs in the wings, the tab's title, a fixed-height scrolling view. |
+| `SettingsWindow` | The app's settings: General, Plugins, Permissions, About and each plugin's page. |
 | `useIsland()` | The enclosing Island's state, notch and panel geometry and current outline. |
 | `shapeFor`, `islandPath`, `stripLayout`, … | The pure geometry (`@justanarthur/modo-ui-notch/lib/geometry`). |
 
-Each component is also a subpath: `@justanarthur/modo-ui-notch/components/island`.
+Each component and block is also a subpath: `@justanarthur/modo-ui-notch/components/island`, `@justanarthur/modo-ui-notch/blocks/now-playing`.
 
 ## License
 

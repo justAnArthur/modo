@@ -60,6 +60,11 @@
       "source": "./components/*/index.tsx",
       "default": "./dist/components/*/index.js"
     },
+    "./blocks/*": {
+      "types": "./dist/blocks/*/index.d.ts",
+      "source": "./blocks/*/index.tsx",
+      "default": "./dist/blocks/*/index.js"
+    },
     "./lib/geometry": {
       "types": "./dist/lib/geometry.d.ts",
       "source": "./lib/geometry.ts",

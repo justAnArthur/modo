@@ -1,0 +1,23 @@
+import SystemStats from './index'
+import { WidgetIsland, WingsIsland } from '../../mock/island-content'
+import { SAMPLES } from '../../mock/data'
+
+# System
+
+The latest reading as the figure, every reading so far as the trend.
+
+<WidgetIsland tab="stats">
+  <SystemStats samples={SAMPLES} />
+</WidgetIsland>
+
+# Measuring
+
+Before the first reading.
+
+<WidgetIsland tab="stats">
+  <SystemStats samples={[]} />
+</WidgetIsland>
+
+# Compact
+
+<WingsIsland leading={<SystemStats.Leading />} trailing={<SystemStats.Trailing sample={SAMPLES[SAMPLES.length - 1]} />} />
