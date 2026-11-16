@@ -34,7 +34,7 @@ import { cn } from '../../../lib/utils'
 import { TabsListContext, useTabs } from './context'
 
 interface TabsListProps extends ComponentPropsWithoutRef<typeof TabsPrimitive.List> {
-  /** Arrow keys select as they move focus. Defaults to `true` for `segmented`, `false` for `subtle` (Enter or Space selects). */
+  /** Arrow keys select as they move focus. Defaults to `true` for `segmented`, `false` for `subtle` (Enter or Space selects) and for link tabs (Enter follows the link). */
   activateOnFocus?: boolean
 }
 
@@ -61,9 +61,11 @@ const TabsList = forwardRef<HTMLDivElement, TabsListProps>(
     const focus = useRowFocus(hover)
 
     // Positions match IndexedRows: one per element child.
-    const values = Children.toArray(children)
+    const items = Children.toArray(children)
       .filter(isValidElement)
-      .map(child => (child.props as { value?: unknown }).value)
+      .map(child => child.props as { value?: unknown; href?: string; render?: unknown })
+    const values = items.map(item => item.value)
+    const links = items.some(item => item.href !== undefined || item.render !== undefined)
     const first = values.find((v): v is string => typeof v === 'string')
 
     useLayoutEffect(() => {
@@ -91,7 +93,7 @@ const TabsList = forwardRef<HTMLDivElement, TabsListProps>(
     return (
       <TabsListContext.Provider value={listContext}>
         <TabsPrimitive.List
-          activateOnFocus={activateOnFocus ?? !subtle}
+          activateOnFocus={activateOnFocus ?? !(subtle || links)}
           ref={mergedRef}
           onMouseMove={e => {
             mouseInside.current = true
