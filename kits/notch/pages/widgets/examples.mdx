@@ -1,0 +1,20 @@
+import WidgetsPage from './index'
+import { TABS } from '../../mock/data'
+import { WidgetIsland } from '../../mock/island-content'
+
+# Widgets
+
+Pick a tab in the island or under the screen.
+
+<WidgetsPage />
+
+# Every tab
+
+<div className="grid w-full grid-cols-1 gap-3 md:grid-cols-2">
+  {TABS.map(tab => (
+    <div key={tab.value} className="flex min-w-0 flex-col gap-1">
+      <span className="text-caption text-muted-foreground">{tab.label}</span>
+      <WidgetIsland tab={tab.value} />
+    </div>
+  ))}
+</div>

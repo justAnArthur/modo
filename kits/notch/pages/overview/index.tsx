@@ -4,19 +4,12 @@
 
 'use client'
 
-import Tabs from '@justanarthur/modo-ui/components/navigation/tabs'
 import { useState } from 'react'
 import { ISLAND_STATES, type IslandState } from '../../lib/geometry'
-import { MockDesktop } from '../../mock/desktop'
 import { DemoIsland } from '../../mock/island-content'
+import { SceneDesk } from '../../mock/scene'
 
-const LABEL: Record<IslandState, string> = {
-  idle: 'Idle',
-  compact: 'Compact',
-  split: 'Split',
-  expanded: 'Expanded',
-  flash: 'Flash',
-}
+const SCENES = ISLAND_STATES.map(state => ({ value: state, label: state.charAt(0).toUpperCase() + state.slice(1) }))
 
 interface OverviewProps {
   /** The island's state at first. Defaults to `'compact'`. */
@@ -36,23 +29,26 @@ interface OverviewProps {
  * island, closes it back to where it was. The wallpaper and the menu bar are
  * made of the theme's tokens; the island stays true black in both schemes.
  *
+ * The components draw the island; the blocks fill it: NowPlaying, Timer,
+ * Agenda, Shelf, Controls, Devices and SystemStats each come with the parts
+ * for the wings, the bubble and their flash, PowerAlert is the power
+ * flashes, ExpandedIsland the open island's layout and SettingsWindow the
+ * app's settings. The other pages put them on the screen: now playing,
+ * every alert, every widget, two activities at once and the settings.
+ *
  * @example {@include ./examples.mdx}
  */
 export default function Overview({ state: initial = 'compact', picker = true }: OverviewProps) {
   const [state, setState] = useState<IslandState>(initial)
 
   return (
-    <div className="flex w-full flex-col items-center gap-4">
-      <MockDesktop island={<DemoIsland state={state} onStateChange={setState} expandOnHover />} />
-      {picker && (
-        <Tabs variant="subtle" value={state} onValueChange={value => setState(value as IslandState)}>
-          <Tabs.List>
-            {ISLAND_STATES.map(s => (
-              <Tabs.Item key={s} value={s} label={LABEL[s]} />
-            ))}
-          </Tabs.List>
-        </Tabs>
-      )}
-    </div>
+    <SceneDesk
+      height={640}
+      picker={picker}
+      scenes={SCENES}
+      value={state}
+      onValueChange={value => setState(value as IslandState)}
+      island={<DemoIsland state={state} onStateChange={setState} expandOnHover />}
+    />
   )
 }
