@@ -1,0 +1,55 @@
+import IslandFlash from './index'
+import BatteryGlyph from '../battery-glyph'
+import Equalizer from '../equalizer'
+import Button from '@justanarthur/modo-ui/components/button'
+import { BatteryLow, Headphones, Music, Zap } from 'lucide-react'
+
+# Charging
+
+The icon and the figure take the tone's hue.
+
+<div className="dark w-full max-w-md rounded-box bg-ink px-5 py-4 text-foreground">
+  <IslandFlash
+    icon={<Zap size={18} strokeWidth={1.5} fill="currentColor" />}
+    tone="success"
+    title="Charging"
+    caption="38 min until full"
+    value="82%"
+    trailing={<BatteryGlyph level={82} charging />}
+  />
+</div>
+
+# Low battery
+
+<div className="dark w-full max-w-md rounded-box bg-ink px-5 py-4 text-foreground">
+  <IslandFlash
+    icon={<BatteryLow size={18} strokeWidth={1.5} />}
+    tone="warning"
+    title="Low battery"
+    caption="Plug in soon"
+    value="18%"
+    trailing={<BatteryGlyph level={18} />}
+  />
+</div>
+
+# With an action
+
+<div className="dark w-full max-w-md rounded-box bg-ink px-5 py-4 text-foreground">
+  <IslandFlash
+    icon={<Headphones size={18} strokeWidth={1.5} />}
+    title="AirPods Pro"
+    caption="Connected"
+    action={<Button variant="ghost" size="compact">Settings</Button>}
+  />
+</div>
+
+# Next track
+
+<div className="dark w-full max-w-md rounded-box bg-ink px-5 py-4 text-foreground">
+  <IslandFlash
+    icon={<span className="flex size-8 items-center justify-center rounded-box bg-surface-3 text-muted-foreground"><Music size={14} strokeWidth={1.5} /></span>}
+    title="Midnight City"
+    caption="M83"
+    trailing={<Equalizer />}
+  />
+</div>

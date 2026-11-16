@@ -1,0 +1,21 @@
+import MediaScrubber from './index'
+
+# Playing
+
+Elapsed, the scrubber and the time remaining, running on a second at a time. Drag to seek.
+
+<div className="dark w-full max-w-md rounded-box bg-ink px-5 py-4 text-foreground">
+  <MediaScrubber position={71} duration={243} playing />
+</div>
+
+# Paused
+
+<div className="w-full max-w-md">
+  <MediaScrubber position={190} duration={258} />
+</div>
+
+# Default size
+
+<div className="w-full max-w-md">
+  <MediaScrubber position={12} duration={330} size="default" />
+</div>
