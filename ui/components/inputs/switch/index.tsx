@@ -38,8 +38,8 @@ import { cn } from '../../../lib/utils'
 import { SizeScope } from '../../../primitives/sizes'
 
 interface SwitchProps extends HTMLAttributes<HTMLDivElement> {
-  /** Text label displayed next to the switch. */
-  label: string
+  /** Text label displayed next to the switch. Omit it, outside a group, for the bare track (see Bare): name it with `aria-label`, `aria-labelledby` or a `<label htmlFor>` pointing at its `id`. */
+  label?: string
   /** Secondary text under the label: what turning the switch on does. With one, the label stays at full contrast. */
   description?: ReactNode
   /** The side of the label the track sits on; `"end"` pushes it to the row's far edge, as in a settings list (always, inside a `Switch.Group`). Defaults to `"start"`. */
@@ -116,6 +116,12 @@ const DRAG_DEAD_ZONE = 2
  * change). `size` pins it to one step of the size ladder; otherwise it
  * follows the surrounding SizeProvider. `description` adds a muted line under
  * the label and `trackSide="end"` moves the track to the row's far edge.
+ *
+ * Without a `label`, outside a group, the switch is the track alone: Base
+ * UI's switch, toggled by a click, Space / Enter, or a `<label htmlFor>`
+ * pointing at its `id`, with the thumb still draggable. Name it with
+ * `aria-label` or `aria-labelledby`; it sits in a table cell or a layout of
+ * your own.
  *
  * Statics:
  * - `Switch.Group` — switches as a settings list in one outlined frame: each
@@ -267,6 +273,58 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
       pointerStart.current = null
     }, [setDragX])
 
+    const trackClass = cn(
+      'relative shrink-0 rounded-full outline-none cursor-pointer',
+      'transition-colors duration-fast',
+      // Offset: a ring flush on the coloured track would read as part of it.
+      'focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+      isChecked ? (hovered ? 'bg-brand-hover' : 'bg-brand') : hovered ? 'bg-accent-hover' : 'bg-accent',
+    )
+    const trackStyle = { width: m.trackWidth, height: m.trackHeight }
+    const thumbElement = (
+      <SwitchPrimitive.Thumb className="pointer-events-none absolute inset-0">
+        <GooIndicator
+          rect={thumb}
+          className="rounded-full bg-thumb"
+          shadow="shadow-thumb"
+          transition={dragX === null ? (thumbTransition ?? spring.moderate) : false}
+        />
+      </SwitchPrimitive.Thumb>
+    )
+
+    // Bare: the track alone is the control, and Base UI's own activation
+    // (click, keyboard, a label's htmlFor) toggles it.
+    if (label === undefined && !group) {
+      return (
+        <SwitchPrimitive.Root
+          ref={mergeRefs(rowRef, ref)}
+          checked={isChecked}
+          onCheckedChange={() => {
+            // The drag already toggled on release; its click must not toggle back.
+            if (didDrag.current) return
+            toggle()
+          }}
+          name={name}
+          value={value}
+          disabled={disabled}
+          onPointerEnter={e => {
+            if (e.pointerType === 'mouse') setHovered(true)
+          }}
+          onPointerLeave={() => setHovered(false)}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
+          className={cn(trackClass, 'touch-none', disabled && 'opacity-50 pointer-events-none', className)}
+          style={trackStyle}
+          // The root's handlers are typed for Base UI's span.
+          {...(props as HTMLAttributes<HTMLSpanElement>)}
+        >
+          {thumbElement}
+        </SwitchPrimitive.Root>
+      )
+    }
+
     return (
       <div
         ref={mergeRefs(rowRef, ref)}
@@ -301,29 +359,12 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
           aria-describedby={description ? descriptionId : undefined}
           disabled={disabled}
           tabIndex={0}
-          className={cn(
-            'relative shrink-0 rounded-full outline-none cursor-pointer',
-            end && 'order-last',
-            'transition-colors duration-fast',
-            // Offset: a ring flush on the coloured track would read as part of it.
-            'focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
-            isChecked ? (hovered ? 'bg-brand-hover' : 'bg-brand') : hovered ? 'bg-accent-hover' : 'bg-accent',
-          )}
-          style={{
-            width: m.trackWidth,
-            height: m.trackHeight,
-          }}
+          className={cn(trackClass, end && 'order-last')}
+          style={trackStyle}
           // Base UI re-dispatches this click on its hidden input, which bubbles to the row and toggles it: stop the original so a press toggles once.
           onClick={e => e.stopPropagation()}
         >
-          <SwitchPrimitive.Thumb className="pointer-events-none absolute inset-0">
-            <GooIndicator
-              rect={thumb}
-              className="rounded-full bg-thumb"
-              shadow="shadow-thumb"
-              transition={dragX === null ? (thumbTransition ?? spring.moderate) : false}
-            />
-          </SwitchPrimitive.Thumb>
+          {thumbElement}
         </SwitchPrimitive.Root>
 
         <span className={cn('flex min-w-0 flex-col gap-1', end && 'flex-1')}>

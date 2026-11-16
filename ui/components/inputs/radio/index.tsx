@@ -23,6 +23,7 @@ import {
   useContext,
   useEffect,
   useRef,
+  useState,
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { FocusRing } from '../../../lib/focus-ring'
@@ -137,6 +138,42 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
     const selectedRect = resolvedSelectedIndex >= 0 ? itemRects[resolvedSelectedIndex] : null
     const shape = useShape()
 
+    // Bare radios lay themselves out: with no labelled row among the children
+    // the group draws no rows and leaves the arrow keys to Base UI's group.
+    const hasRows = Children.toArray(children).some(
+      child => isValidElement(child) && (child.props as { label?: string }).label !== undefined,
+    )
+    const context = {
+      registerItem,
+      activeIndex,
+      selectedIndex: resolvedSelectedIndex >= 0 ? resolvedSelectedIndex : null,
+      selectedValue: valueMode || !hasRows ? value : undefined,
+      onValueChange: setValue,
+      hasSelection,
+      selectIndex,
+      disabled,
+    }
+
+    if (!hasRows) {
+      return (
+        <SizeScope size={size}>
+          <RadioGroupContext.Provider value={context}>
+            <RadioGroupPrimitive
+              ref={mergeRefs(containerRef, ref)}
+              value={value ?? null}
+              onValueChange={v => setValue(v as string)}
+              name={name}
+              disabled={disabled}
+              className={cn('flex flex-col gap-2', className)}
+              {...props}
+            >
+              {children}
+            </RadioGroupPrimitive>
+          </RadioGroupContext.Provider>
+        </SizeScope>
+      )
+    }
+
     const content = (
       <div
         ref={mergeRefs(containerRef, ref)}
@@ -162,18 +199,7 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
 
     return (
       <SizeScope size={size}>
-        <RadioGroupContext.Provider
-          value={{
-            registerItem,
-            activeIndex,
-            selectedIndex: resolvedSelectedIndex >= 0 ? resolvedSelectedIndex : null,
-            selectedValue: valueMode ? value : undefined,
-            onValueChange: setValue,
-            hasSelection,
-            selectIndex,
-            disabled,
-          }}
-        >
+        <RadioGroupContext.Provider value={context}>
           {/* Each valued row renders a Base UI radio, which needs this group above it. */}
           {valueMode ? (
             <RadioGroupPrimitive
@@ -195,15 +221,15 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
 RadioGroup.displayName = 'RadioGroup'
 
 interface RadioProps extends HTMLAttributes<HTMLDivElement> {
-  /** Text label for the radio item. */
-  label: string
+  /** Text label for the radio item. Omit it for the bare circle in a layout of your own (see Bare): it then needs a `value`, and a name from `aria-label`, `aria-labelledby` or a `<label htmlFor>` pointing at its `id`. */
+  label?: string
   /** Position within the `Radio.Group`: the row's `selectedIndex`. Defaults to its order among the group's rows. */
   index?: number
   /** Whether this item is selected. Defaults to the group's selection. */
   selected?: boolean
   /** Called when this item is selected (the group's change callbacks fire too). */
   onSelect?: () => void
-  /** The row's value: selects it by value and submits it under the group's `name`. */
+  /** The row's value: selects it by value and submits it under the group's `name`. A bare radio needs one. */
   value?: string
   /** Disables the row. Defaults to the group's `disabled`. */
   disabled?: boolean
@@ -213,6 +239,46 @@ interface RadioProps extends HTMLAttributes<HTMLDivElement> {
 
 type RadioComponent = ForwardRefExoticComponent<RadioProps & RefAttributes<HTMLDivElement>> & {
   Group: typeof RadioGroup
+}
+
+interface RadioCircleProps {
+  selected: boolean
+  /** Lit: the border darkens. */
+  active: boolean
+  compact: boolean
+  /** Already selected at mount: the dot is there, not scaled in. */
+  skipAnimation: boolean
+  /** A bare circle keeps its border when picked: a lone dot would read as a bullet. */
+  bare: boolean
+}
+
+function RadioCircle({ selected, active, compact, skipAnimation, bare }: RadioCircleProps) {
+  return (
+    <>
+      <div
+        className={cn(
+          'absolute inset-0 rounded-full border-solid border-[1.5px] transition-all duration-fast',
+          selected && !bare ? 'border-transparent' : active || selected ? 'border-control' : 'border-border',
+        )}
+      />
+      <AnimatePresence>
+        {selected && (
+          <motion.div
+            className="absolute inset-0 flex items-center justify-center"
+            initial={{
+              opacity: skipAnimation ? 1 : 0,
+              scale: skipAnimation ? 1 : 0.3,
+            }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.3, transition: { duration: 0.04 } }}
+            transition={spring.fast}
+          >
+            <div className={cn('rounded-full bg-foreground', compact ? 'w-[7px] h-[7px]' : 'w-[8px] h-[8px]')} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  )
 }
 
 /**
@@ -225,6 +291,14 @@ type RadioComponent = ForwardRefExoticComponent<RadioProps & RefAttributes<HTMLD
  * and select, with a roving tabindex on the selected row. The group numbers
  * its rows in order, so they need no `index`. FF's per-row `selected` /
  * `onSelect` still work and override the group for their row.
+ *
+ * Without a `label` a radio is the circle alone: Base UI's radio, picked by
+ * its `value`, named by a `<label htmlFor>` pointing at its `id` or by
+ * `aria-label`. Lay bare radios out however you like inside the group (a
+ * row with a description, a grid of cards); when none of its direct children
+ * is a labelled row, the group draws no rows of its own (no hover, selected
+ * background or ring) and Base UI moves focus and selection with the arrow
+ * keys. A picked bare circle keeps its border.
  *
  * Statics:
  * - `Radio.Group` — the list. Select by index — uncontrolled with
@@ -246,15 +320,17 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
     const { registerItem, activeIndex, selectedIndex, selectedValue, onValueChange, hasSelection, selectIndex } = group
     const index = useRowIndex(indexProp)
     const disabled = disabledProp ?? group.disabled
+    const bare = label === undefined
+    const [hovered, setHovered] = useState(false)
 
-    useRegisterFluidHoverItem(registerItem, index, internalRef)
+    // A bare radio is no row: it joins neither the hover nor the arrow keys.
+    useRegisterFluidHoverItem(bare ? undefined : registerItem, index, internalRef)
 
     useEffect(() => {
       hasMounted.current = true
     }, [])
 
-    const isActive = !disabled && activeIndex === index
-    const skipAnimation = !hasMounted.current
+    const isActive = !disabled && (bare ? hovered : activeIndex === index)
     const shape = useShape()
     const sizeClasses = useSize(size)
     const compact = sizeClasses.variant === 'compact'
@@ -268,6 +344,46 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
       if (value !== undefined) onValueChange(value)
       onSelect?.()
       selectIndex(index)
+    }
+
+    const circle = (
+      <RadioCircle
+        selected={isSelected}
+        active={isActive}
+        compact={compact}
+        skipAnimation={!hasMounted.current}
+        bare={bare}
+      />
+    )
+
+    if (bare) {
+      return (
+        <RadioPrimitive.Root
+          ref={mergeRefs(internalRef, ref)}
+          render={<div />}
+          value={value}
+          disabled={disabled}
+          // Base UI's group picks it; this reports the row's own `onSelect`.
+          onClick={() => {
+            if (!disabled) onSelect?.()
+          }}
+          onPointerEnter={e => {
+            if (e.pointerType === 'mouse') setHovered(true)
+          }}
+          onPointerLeave={() => setHovered(false)}
+          className={cn(
+            'relative inline-flex shrink-0 cursor-pointer rounded-full outline-none',
+            'focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+            compact ? 'size-3.5' : 'size-4',
+            disabled && 'opacity-50 pointer-events-none',
+            className,
+          )}
+          // The root renders a div (`render`); its handlers are typed for Base UI's span.
+          {...(props as HTMLAttributes<HTMLSpanElement>)}
+        >
+          {circle}
+        </RadioPrimitive.Root>
+      )
     }
 
     return (
@@ -294,34 +410,7 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
         )}
         {...props}
       >
-        <div className={cn('relative shrink-0', compact ? 'w-[14px] h-[14px]' : 'w-[16px] h-[16px]')}>
-          <div
-            className={cn(
-              'absolute inset-0 rounded-full border-solid transition-all duration-fast',
-              isSelected
-                ? 'border-[1.5px] border-transparent'
-                : isActive
-                  ? 'border-[1.5px] border-control'
-                  : 'border-[1.5px] border-border',
-            )}
-          />
-          <AnimatePresence>
-            {isSelected && (
-              <motion.div
-                className="absolute inset-0 flex items-center justify-center"
-                initial={{
-                  opacity: skipAnimation ? 1 : 0,
-                  scale: skipAnimation ? 1 : 0.3,
-                }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.3, transition: { duration: 0.04 } }}
-                transition={spring.fast}
-              >
-                <div className={cn('rounded-full bg-foreground', compact ? 'w-[7px] h-[7px]' : 'w-[8px] h-[8px]')} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        <div className={cn('relative shrink-0', compact ? 'w-[14px] h-[14px]' : 'w-[16px] h-[16px]')}>{circle}</div>
 
         <WeightLabel emphasized={isSelected} lit={isSelected || isActive} trim className={sizeClasses.text}>
           {label}

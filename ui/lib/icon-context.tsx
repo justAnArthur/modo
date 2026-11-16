@@ -43,6 +43,7 @@ import {
   Mail,
   Menu,
   MessageCircle,
+  Minus,
   Monitor,
   Moon,
   Paintbrush,
@@ -145,6 +146,7 @@ export type IconName =
   | 'calendar'
   | 'folder'
   | 'sliders-horizontal'
+  | 'minus'
 
 const defaultIcons: Record<IconName, IconComponent> = {
   'chevron-right': ChevronRight,
@@ -209,6 +211,7 @@ const defaultIcons: Record<IconName, IconComponent> = {
   'sliders-horizontal': SlidersHorizontal,
   'circle-alert': CircleAlert,
   info: Info,
+  minus: Minus,
 }
 
 const IconContext = createContext<Record<IconName, IconComponent> | null>(null)
