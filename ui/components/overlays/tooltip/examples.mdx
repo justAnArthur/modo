@@ -41,6 +41,25 @@ with a description, a small stack of rows.
   <Button leadingIcon={Plus}>Save</Button>
 </Tooltip>
 
+# Compound parts
+
+Leave `content` out and `Tooltip` is the root: a `Tooltip.Trigger` (`render` or `asChild`) and a `Tooltip.Content` with the placement and morph options, and `render` or `asChild` for the label's own element. It looks and moves the same as the one-prop form.
+
+<div className="flex flex-wrap gap-3">
+  <Tooltip>
+    <Tooltip.Trigger asChild>
+      <Button variant="secondary">Archive</Button>
+    </Tooltip.Trigger>
+    <Tooltip.Content asChild>
+      <span>Moves it out of the inbox</span>
+    </Tooltip.Content>
+  </Tooltip>
+  <Tooltip delayDuration={0}>
+    <Tooltip.Trigger render={<Button variant="secondary">Start aligned</Button>} />
+    <Tooltip.Content side="bottom" align="start">Lines up with the trigger's start edge</Tooltip.Content>
+  </Tooltip>
+</div>
+
 # Follow cursor
 
 For tall or wide triggers, a centered tooltip sits far from the pointer —
