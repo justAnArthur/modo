@@ -9,6 +9,7 @@
 import {
   Children,
   cloneElement,
+  createElement,
   isValidElement,
   type ReactElement,
   type ReactNode,
@@ -16,6 +17,8 @@ import {
   useMemo,
   useState,
 } from 'react'
+import { PopupLabel, PopupSeparator } from '../../../lib/popup-rows'
+import { IndexedRows } from '../../../lib/row-index'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { DropdownEmpty, type DropdownFilterContextValue, DropdownSearch } from './dropdown-search'
 
@@ -95,6 +98,11 @@ export function usePanelSelection(
   return { checkedIndex: renderedIndex, checkedIndices: renderedIndices, multiple, selfManaged, toggleIndex }
 }
 
+const NOT_ROWS = new Set<unknown>([PopupLabel, PopupSeparator, DropdownSearch, DropdownEmpty])
+
+/** Every element child but the panel's captions, rules, search and empty state takes a row index. */
+const isPanelRow = (child: ReactElement) => !NOT_ROWS.has(child.type)
+
 interface PanelRows {
   /** The rows re-indexed, with `Dropdown.Empty` only when nothing matched; the children untouched when nothing filters. */
   content: ReactNode
@@ -106,10 +114,13 @@ interface PanelRows {
 }
 
 /**
+ * Numbers the rows that bring no `index` by their order (`IndexedRows`).
+ *
  * Uncontrolled search: a `Dropdown.Search filter` among the panel's direct
- * children hands it the query. The panel keeps the rows (a string `label` and
- * a numeric `index`) whose label contains it, re-indexes them from 0 for the
- * fluid hover and stamps each with its authored `sourceIndex`.
+ * children hands it the query. The panel keeps the rows (a string `label`)
+ * whose label contains it, re-indexes them from 0 for the fluid hover and
+ * stamps each with its authored index (its `index`, else its position) as
+ * `sourceIndex`.
  */
 export function usePanelRows(children: ReactNode): PanelRows {
   const [query, setQuery] = useState('')
@@ -125,11 +136,13 @@ export function usePanelRows(children: ReactNode): PanelRows {
   const filterCtx = useMemo(() => ({ query, setQuery }), [query])
 
   const { content, sourceOf } = useMemo(() => {
-    if (!filtering) return { content: children, sourceOf: NO_INDICES }
+    if (!filtering)
+      return { content: createElement(IndexedRows, { isRow: isPanelRow, children }), sourceOf: NO_INDICES }
     const needle = query.trim().toLowerCase()
     const rendered: ReactNode[] = []
     const empties: ReactNode[] = []
     const sources: number[] = []
+    let position = 0
     for (const child of Children.toArray(children)) {
       if (!isValidElement(child)) {
         rendered.push(child)
@@ -142,16 +155,18 @@ export function usePanelRows(children: ReactNode): PanelRows {
       }
 
       const row = child.props as { label?: unknown; index?: unknown }
-      if (typeof row.label !== 'string' || typeof row.index !== 'number') {
+      const authored = typeof row.index === 'number' ? row.index : position
+      if (isPanelRow(child)) position++
+      if (typeof row.label !== 'string') {
         rendered.push(child)
         continue
       }
 
       if (needle && !row.label.toLowerCase().includes(needle)) continue
       rendered.push(
-        cloneElement(child as ReactElement<Record<string, unknown>>, { index: sources.length, sourceIndex: row.index }),
+        cloneElement(child as ReactElement<Record<string, unknown>>, { index: sources.length, sourceIndex: authored }),
       )
-      sources.push(row.index)
+      sources.push(authored)
     }
     if (sources.length === 0) rendered.push(...empties)
     return { content: rendered as ReactNode, sourceOf: sources }
