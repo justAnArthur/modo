@@ -1,0 +1,60 @@
+import Label from './index'
+import Input, { InputGroup } from '../input'
+import Textarea from '../textarea'
+import SizeProvider from '../../../primitives/sizes'
+import { Mail } from 'lucide-react'
+
+# Basic
+
+`htmlFor` points the label at the control's `id`; a click on it focuses the field. It starts where the field's text does.
+
+<div className="flex w-72 max-w-full flex-col gap-1">
+  <Label htmlFor="label-name">Name</Label>
+  <Input id="label-name" placeholder="Ada Lovelace" variant="bordered" />
+</div>
+
+# Invalid
+
+`invalid` turns it destructive, matching an invalid Input.
+
+<div className="flex w-72 max-w-full flex-col gap-1">
+  <Label htmlFor="label-invalid" invalid>
+    Email
+  </Label>
+  <Input id="label-invalid" icon={Mail} defaultValue="ada@" variant="bordered" invalid />
+</div>
+
+# Sizes
+
+It reads the surrounding SizeProvider like the field below it; `size` pins it to one step.
+
+<div className="flex w-72 max-w-full flex-col gap-4">
+  <div className="flex flex-col gap-1">
+    <Label htmlFor="label-default">Default</Label>
+    <Input id="label-default" placeholder="36px field" variant="bordered" />
+  </div>
+  <SizeProvider size="compact">
+    <div className="flex flex-col gap-1">
+      <Label htmlFor="label-compact">Compact</Label>
+      <Input id="label-compact" placeholder="28px field" variant="bordered" />
+    </div>
+  </SizeProvider>
+</div>
+
+# Over a Textarea
+
+Any field on the field box shares the inset, so the label lines up with a Textarea's first line too.
+
+<div className="flex w-72 max-w-full flex-col gap-1">
+  <Label htmlFor="label-notes">Notes</Label>
+  <Textarea id="label-notes" placeholder="Anything we should know?" variant="bordered" />
+</div>
+
+# In a field
+
+`InputGroup.Field` renders the Label through Base UI's `Field.Label` and links it; the field hands it its invalid and disabled state.
+
+<InputGroup>
+  <InputGroup.Field label="Workspace" defaultValue="Analytical Engines" disabled />
+  <InputGroup.Field label="Email" icon={Mail} defaultValue="ada@" error="Enter a full address." />
+</InputGroup>
