@@ -6,7 +6,7 @@
 
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Button from '../../button'
 import Combobox from './index'
 
@@ -36,20 +36,30 @@ interface RemoteDemoProps {
 }
 
 export default function RemoteDemo({ latency = 600 }: RemoteDemoProps) {
+  const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [limit, setLimit] = useState(PAGE)
   const [items, setItems] = useState<string[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
+  const answered = useRef<string | null>(null)
 
+  // Asks only while the list is open: a pick or a close rewrites the query, and a shut field has nothing to show.
   useEffect(() => {
+    if (!open) {
+      setLoading(false)
+      return
+    }
+    const request = `${query}\n${limit}`
+    if (request === answered.current) return
     setLoading(true)
     const timer = setTimeout(() => {
       const q = query.trim().toLocaleLowerCase()
       setItems(PEOPLE.filter(name => name.toLocaleLowerCase().includes(q)).slice(0, limit))
       setLoading(false)
+      answered.current = request
     }, latency)
     return () => clearTimeout(timer)
-  }, [query, limit, latency])
+  }, [open, query, limit, latency])
 
   const more = !loading && items.length === limit
 
@@ -59,6 +69,8 @@ export default function RemoteDemo({ latency = 600 }: RemoteDemoProps) {
       filter={null}
       loading={loading}
       loadingLabel="Searching…"
+      open={open}
+      onOpenChange={setOpen}
       query={query}
       onQueryChange={next => {
         setQuery(next)
