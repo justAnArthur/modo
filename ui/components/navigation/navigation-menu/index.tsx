@@ -150,6 +150,8 @@ const NavigationMenu = forwardRef<HTMLElement, NavigationMenuProps>(
                 )}
                 anchor={list}
                 collisionPadding={8}
+                // Sized to the panel, so a flip to the top places the panel against the strip, not a panel-height above it.
+                className="h-[var(--positioner-height)] w-[var(--positioner-width)]"
               >
                 <NavigationMenuPrimitive.Popup
                   ref={morph.popupRef}
