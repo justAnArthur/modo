@@ -23,7 +23,7 @@ export const cn: CnFunction = createCn({
       'font-variation': [{ weight: ['normal', 'medium', 'semibold', 'bold'] }],
       duration: [{ duration: TIERS }],
       delay: [{ delay: TIERS }],
-      rounded: [{ rounded: ['box', 'glyph'] }],
+      rounded: [{ rounded: ['box', 'glyph', 'shell', 'pill-shell'] }],
       'text-box': ['text-trim'],
     },
   },

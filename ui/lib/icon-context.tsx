@@ -36,6 +36,7 @@ import {
   EllipsisVertical,
   Eye,
   EyeOff,
+  FileDiff,
   File as FileIcon,
   Folder,
   Globe,
@@ -75,6 +76,7 @@ import {
   Shield,
   SkipForward,
   SlidersHorizontal,
+  Square,
   SquareLibrary,
   Star,
   Sun,
@@ -167,6 +169,8 @@ export type IconName =
   | 'eye'
   | 'eye-off'
   | 'grip-vertical'
+  | 'file-diff'
+  | 'square'
 
 const defaultIcons: Record<IconName, IconComponent> = {
   'chevron-right': ChevronRight,
@@ -242,6 +246,8 @@ const defaultIcons: Record<IconName, IconComponent> = {
   eye: Eye,
   'eye-off': EyeOff,
   'grip-vertical': GripVertical,
+  'file-diff': FileDiff,
+  square: Square,
 }
 
 const IconContext = createContext<Record<IconName, IconComponent> | null>(null)
