@@ -9,6 +9,7 @@
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox'
 import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react'
+import { useFieldState } from '../../../lib/field-box'
 import { OverlayContext, useOverlayRoot } from '../../../lib/overlay'
 import type { SizeVariant } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
@@ -161,16 +162,21 @@ function Combobox({
   onQueryChange,
   loading = false,
   loadingLabel = 'Loading…',
-  readOnly = false,
+  readOnly: readOnlyProp,
   onCreate,
   createLabel = defaultCreateLabel,
   creatable = false,
   hideSelected = false,
-  disabled = false,
+  disabled: disabledProp,
   name,
-  required,
+  required: requiredProp,
   size,
 }: ComboboxProps) {
+  const { disabled, readOnly, required } = useFieldState({
+    disabled: disabledProp,
+    readOnly: readOnlyProp,
+    required: requiredProp,
+  })
   const isMultiple = !!multiple
   // Memoized on the prop: a consumer's array is state, so everything keyed on it changes only with the selection.
   const controlledValues = useMemo(() => (value === undefined ? undefined : toValues(value)), [value])

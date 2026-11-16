@@ -84,6 +84,8 @@ interface InputProps
   disabled?: boolean
   /** Shows the value without letting it change: it can be selected and copied, the ring answers hover and focus, the fill never lifts. Defaults to `false`. */
   readOnly?: boolean
+  /** Marks the value required: the browser's validation (and an enclosing Field's) reports it missing while empty. Defaults to `false`. */
+  required?: boolean
   /** The input's type. Swapping it (a password reveal) keeps the caret and the selection where they were. Defaults to `"text"`. */
   type?: string
   /** Pins the input to one step of the size ladder (default 36px, compact 28px). Defaults to the surrounding SizeProvider. */
@@ -144,7 +146,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
       variant = 'borderless',
       invalid,
       disabled,
-      readOnly = false,
+      readOnly,
+      required,
       type = 'text',
       onSelect,
       size,
@@ -156,7 +159,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
 
     const inputRef = useRef<HTMLInputElement | null>(null)
-    const box = useFieldBox({ variant, invalid, disabled, readOnly, size })
+    const box = useFieldBox({ variant, invalid, disabled, readOnly, required, size })
     const { size: sizeClasses, props: boxProps } = box
     const keepSelection = useSelectionAcrossType(inputRef, type)
 
@@ -179,7 +182,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           value={value}
           onChange={e => setValue(e.target.value)}
           disabled={box.disabled}
-          readOnly={readOnly}
+          readOnly={box.readOnly}
+          required={box.required}
           aria-invalid={box.invalid || undefined}
           className={cn(
             // min-w-0: the adornments take their width first, the text the rest.
@@ -369,7 +373,13 @@ const InputField = forwardRef<HTMLDivElement, InputFieldProps>(
     useRegisterFluidHoverItem(registerItem, index, internalRef)
 
     const fieldState = useMemo(
-      () => ({ active: activeIndex === index, invalid: !!error, disabled: !!disabled }),
+      () => ({
+        active: activeIndex === index,
+        invalid: !!error,
+        disabled: !!disabled,
+        readOnly: false,
+        required: false,
+      }),
       [activeIndex, index, error, disabled],
     )
 

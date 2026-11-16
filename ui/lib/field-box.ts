@@ -28,17 +28,44 @@ export interface FieldBoxOptions {
   active?: boolean
   /** Shows the value without letting it change: the ring answers, the fill never lifts. */
   readOnly?: boolean
+  /** Marks the value required. */
+  required?: boolean
   /** Pins the field to one step of the size ladder. Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
 }
 
 /**
- * State a field wrapper (InputGroup.Field) hands to whatever control it
- * holds: lit by the group's fluid hover, its error, its disabled state.
- * `useFieldBox` reads it, so any field built on the box joins in; the
- * control's own props win.
+ * State a field wrapper (Field, InputGroup.Field) hands to whatever control
+ * it holds: lit by a group's fluid hover, its error, disabled, read-only and
+ * required, and the id of its label for a control Base UI doesn't label (a
+ * picker's button). `useFieldState` reads it, so any control that resolves
+ * its state through it joins in; the control's own props win.
  */
-export const FieldStateContext = createContext<{ active: boolean; invalid: boolean; disabled: boolean } | null>(null)
+export interface FieldState {
+  active: boolean
+  invalid: boolean
+  disabled: boolean
+  readOnly: boolean
+  required: boolean
+  labelId?: string
+}
+
+export const FieldStateContext = createContext<FieldState | null>(null)
+
+type OwnFieldState = Partial<Pick<FieldState, 'active' | 'invalid' | 'disabled' | 'readOnly' | 'required'>>
+
+/** A control's own state props, each unset one taken from the enclosing field (else off). */
+export function useFieldState(own: OwnFieldState): FieldState {
+  const field = useContext(FieldStateContext)
+  return {
+    active: own.active ?? field?.active ?? false,
+    invalid: own.invalid ?? field?.invalid ?? false,
+    disabled: own.disabled ?? field?.disabled ?? false,
+    readOnly: own.readOnly ?? field?.readOnly ?? false,
+    required: own.required ?? field?.required ?? false,
+    labelId: field?.labelId,
+  }
+}
 
 // Literal table: one notch tighter than the ladder's `px`, since the ring is
 // invisible at rest and the roomier inset would read as a gap.
@@ -52,26 +79,23 @@ const FIELD_PX: Record<SizeVariant, string> = {
  * variant, the state attributes it reads, the shape's input radius and the
  * horizontal inset. Spread `props` on the element around the control (or the
  * control itself, for a button field); the height stays with the item, from
- * the returned `size`. Inside InputGroup.Field, unset `active` / `invalid` /
- * `disabled` come from the field (`FieldStateContext`).
+ * the returned `size`. Inside a Field or InputGroup.Field, unset state props
+ * come from the field (`useFieldState`); the resolved ones come back for the
+ * control's `aria-invalid` / `disabled` / `readOnly` / `required`.
  */
-export function useFieldBox({ variant, invalid, disabled, active, readOnly, size }: FieldBoxOptions) {
-  const field = useContext(FieldStateContext)
+export function useFieldBox({ variant, size, ...own }: FieldBoxOptions) {
+  const state = useFieldState(own)
   const shape = useShape()
   const sizeClasses = useSize(size)
-  const isInvalid = invalid ?? field?.invalid ?? false
-  const isDisabled = disabled ?? field?.disabled ?? false
 
   return {
+    ...state,
     size: sizeClasses,
-    /** Resolved with the field's state, for the control's `aria-invalid` / `disabled`. */
-    invalid: isInvalid,
-    disabled: isDisabled,
     props: {
-      'data-active': (active ?? field?.active) || undefined,
-      'data-invalid': isInvalid || undefined,
-      'data-disabled': isDisabled || undefined,
-      'data-readonly': readOnly || undefined,
+      'data-active': state.active || undefined,
+      'data-invalid': state.invalid || undefined,
+      'data-disabled': state.disabled || undefined,
+      'data-readonly': state.readOnly || undefined,
       className: cn(fieldVariants({ variant }), shape.input, FIELD_PX[sizeClasses.variant]),
     },
   }

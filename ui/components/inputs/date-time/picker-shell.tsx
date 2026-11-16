@@ -17,11 +17,11 @@ import {
   type ReactElement,
   type ReactNode,
   type RefObject,
-  useContext,
+  useId,
   useRef,
   useState,
 } from 'react'
-import { FieldStateContext, focusControlOnPress, useFieldBox } from '../../../lib/field-box'
+import { focusControlOnPress, useFieldBox, useFieldState } from '../../../lib/field-box'
 import { type FieldVariant, fieldIconClasses } from '../../../lib/field-classes'
 import { type IconName, useIcon } from '../../../lib/icon-context'
 import {
@@ -48,6 +48,8 @@ interface PickerFieldOptions extends MorphProps {
   variant?: FieldVariant
   invalid?: boolean
   disabled?: boolean
+  /** Shows the value but never opens the panel; set by an enclosing read-only Field. */
+  readOnly?: boolean
   placeholder?: string
   /** Submits the value under this name in a form. */
   name?: string
@@ -89,16 +91,29 @@ interface PickerShellProps extends PickerFieldOptions {
  * place over it with `effect="morph"` + `hideSource`), or a bottom sheet on a
  * phone. Controlled: the picker owns `open`, since a pick or Enter closes it.
  */
-function PickerShell({ size, name, formValue, disabled: disabledProp, ...props }: PickerShellProps) {
+function PickerShell({
+  size,
+  name,
+  formValue,
+  disabled: disabledProp,
+  readOnly: readOnlyProp,
+  onOpenChange,
+  ...props
+}: PickerShellProps) {
   const mobile = useIsMobile(640)
-  const fieldState = useContext(FieldStateContext)
   // Resolved here as well as in the box: the trigger, not only the field, must turn off.
-  const disabled = disabledProp ?? fieldState?.disabled ?? false
+  const { disabled, readOnly } = useFieldState({ disabled: disabledProp, readOnly: readOnlyProp })
   const values = formValue === undefined ? [] : [formValue].flat()
+  const panelProps = {
+    ...props,
+    disabled,
+    readOnly,
+    onOpenChange: (next: boolean) => (next && readOnly ? undefined : onOpenChange(next)),
+  }
 
   return (
     <SizeScope size={size}>
-      {mobile ? <PickerSheet {...props} disabled={disabled} /> : <PickerPopover {...props} disabled={disabled} />}
+      {mobile ? <PickerSheet {...panelProps} /> : <PickerPopover {...panelProps} />}
       {name && values.map((value, i) => <input key={i} type="hidden" name={name} value={value} disabled={disabled} />)}
     </SizeScope>
   )
@@ -108,21 +123,28 @@ type PanelProps = Omit<PickerShellProps, 'size' | 'name' | 'formValue'>
 
 type PickerFieldProps = Pick<
   PanelProps,
-  'icon' | 'display' | 'placeholder' | 'variant' | 'invalid' | 'disabled' | 'id' | 'className'
+  'icon' | 'display' | 'placeholder' | 'variant' | 'invalid' | 'disabled' | 'readOnly' | 'id' | 'className'
 > &
   Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'>
 
 // Forwards its ref: Base UI anchors the panel to the field through it.
 const PickerField = forwardRef<HTMLButtonElement, PickerFieldProps>(
-  ({ icon, display, placeholder, variant = 'bordered', invalid, disabled, id, className, ...props }, ref) => {
+  (
+    { icon, display, placeholder, variant = 'bordered', invalid, disabled, readOnly, id: idProp, className, ...props },
+    ref,
+  ) => {
     const Icon = useIcon(icon)
-    const box = useFieldBox({ variant, invalid, disabled })
+    const box = useFieldBox({ variant, invalid, disabled, readOnly })
+    const ownId = useId()
+    const id = idProp ?? ownId
 
     return (
       <button
         ref={ref}
         type="button"
         id={id}
+        // Inside a Field, its label names the button, followed by the value it shows.
+        aria-labelledby={box.labelId ? `${box.labelId} ${id}` : undefined}
         {...box.props}
         // Base UI's trigger props (open state, handlers, aria) arrive here.
         {...props}
