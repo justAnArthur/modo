@@ -1,0 +1,92 @@
+import Markdown from './index'
+
+export const reply = `## Moving the docs to the pages tier
+
+Every screen is now a **page item**, so it renders at screen size. Two pieces were *missing* and became components: \`Meter\` and \`Diff\`. The old route is ~~kept~~ gone.
+
+### What changed
+
+1. Blocks carry the reusable parts.
+2. Pages assemble them:
+   - the settings screen
+   - the transcript
+3. The router reads the tier.
+
+- [x] Move the screens
+- [x] Rewire the sidebar
+- [ ] Write the changelog
+
+> Raw HTML such as <b>this</b> shows as text, never as markup.
+
+\`\`\`sh
+bun run check
+\`\`\`
+
+---
+
+A line that ends with two spaces  
+breaks without starting a paragraph.`
+
+export const partial = `Here is the adapter so far:
+
+\`\`\`tsx
+export default function Select({ options }) {
+  return (
+    <Menu>
+      {options.map(o => (`
+
+export const versions = `| Package | Version | Change |
+| :-- | :-: | --: |
+| \`@justanarthur/modo\` | 1.1.0 | minor |
+| \`@justanarthur/modo-ui\` | 1.0.1 | patch |
+| \`demo\` | — | none |`
+
+export const links = `Read the [design language](#design) first, then the [Fluid Functionalism docs](https://fluidfunctionalism.com "fluidfunctionalism.com") for the upstream craft. Bare URLs link too: https://github.com/mickadesign/fluid-functionalism.
+
+![A grey placeholder](data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='80'%3E%3Crect width='320' height='80' rx='8' fill='gray' fill-opacity='.25'/%3E%3C/svg%3E "An image renders inline")`
+
+# Reply
+
+Every element a reply can hold: headings, emphasis, ordered, nested and task lists, a quote, a fence, a rule and a line break.
+
+<div className="w-full max-w-xl">
+  <Markdown>{reply}</Markdown>
+</div>
+
+# Streaming
+
+A snapshot mid-fence: the open fence shows as code so far.
+
+<div className="w-full max-w-xl">
+  <Markdown streaming>{partial}</Markdown>
+</div>
+
+# Table
+
+Column alignment comes from the delimiter row; rows share Table's hover.
+
+<div className="w-full max-w-xl">
+  <Markdown>{versions}</Markdown>
+</div>
+
+# Links
+
+Links on the site stay in the tab; links that leave it open a new one. Images render inline, at most the column's width.
+
+<div className="w-full max-w-xl">
+  <Markdown>{links}</Markdown>
+</div>
+
+# Prose
+
+`Markdown.Prose` is the column alone, for rich text you build from elements.
+
+<div className="w-full max-w-xl">
+  <Markdown.Prose>
+    <p>The same type and rhythm, with <code>inline code</code> and a <a href="#prose">link</a>.</p>
+    <ul>
+      <li>Lists keep their markers</li>
+      <li>and their spacing.</li>
+    </ul>
+  </Markdown.Prose>
+</div>
