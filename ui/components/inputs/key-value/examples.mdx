@@ -1,0 +1,58 @@
+import KeyValue from './index'
+
+# Environment variables
+
+Secret values stay masked; the eye inside the field shows one. Hover a row to remove it.
+
+<div className="w-full max-w-lg">
+  <KeyValue
+    label="Environment variables"
+    keyPlaceholder="NAME"
+    valuePlaceholder="value"
+    secretByDefault
+    defaultValue={[
+      { key: 'NODE_ENV', value: 'production' },
+      { key: 'DATABASE_URL', value: 'postgres://app@db:5432/app', secret: true },
+      { key: 'API_TOKEN', value: 'sk-test-1234', secret: true },
+    ]}
+  />
+</div>
+
+# Headers
+
+Borderless fields read as a quiet table until you reach for one.
+
+<div className="w-full max-w-lg">
+  <KeyValue
+    label="Request headers"
+    keyPlaceholder="Header"
+    addLabel="Add header"
+    variant="borderless"
+    defaultValue={[
+      { key: 'Accept', value: 'application/json' },
+      { key: 'Cache-Control', value: 'no-cache' },
+    ]}
+  />
+</div>
+
+# Duplicate key
+
+A key used twice turns both rows invalid and is named under the list. Rename one to clear it.
+
+<div className="w-full max-w-lg">
+  <KeyValue
+    defaultValue={[
+      { key: 'REGION', value: 'eu-west-1' },
+      { key: 'REGION', value: 'us-east-1' },
+      { key: 'LOG_LEVEL', value: 'info' },
+    ]}
+  />
+</div>
+
+# Compact
+
+The rows step down the size ladder.
+
+<div className="w-full max-w-md">
+  <KeyValue size="compact" defaultValue={[{ key: 'PORT', value: '3000' }]} />
+</div>
