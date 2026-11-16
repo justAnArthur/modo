@@ -33,7 +33,7 @@ import type { Preset } from 'unocss'
 const TYPE_ROLES = ['display', 'title', 'subtitle', 'body', 'caption', 'micro'] as const
 const WEIGHTS = ['normal', 'medium', 'semibold', 'bold'] as const
 const TIERS = ['fast', 'moderate', 'slow'] as const
-const RADII = ['box', 'glyph', 'pill', 'focus-ring', 'pill-focus-ring'] as const
+const RADII = ['box', 'glyph', 'pill', 'focus-ring', 'pill-focus-ring', 'shell', 'pill-shell'] as const
 
 export const theme = {
   font: {
@@ -56,6 +56,7 @@ export const theme = {
     // rgb(var(--overlay) / 0.08) ramp.
     overlay: 'rgb(var(--overlay))',
     selected: 'var(--selected)',
+    sunken: 'var(--sunken)',
     thumb: 'var(--thumb)',
     picker: { edge: 'var(--picker-edge)', ring: 'var(--picker-ring)' },
     control: 'var(--control-border)',
@@ -115,10 +116,12 @@ export const theme = {
     },
   },
   // Arbitrary `transition-[a,b]` only accepts properties wind4 knows; FF
-  // also tweens these two (icon stroke on hover, the Inter weight ladder).
+  // also tweens these (icon stroke on hover, the Inter weight ladder).
   property: {
     'stroke-width': 'stroke-width',
     'font-variation-settings': 'font-variation-settings',
+    // Resizable's panels glide to a size set by key or toggle.
+    'flex-grow': 'flex-grow',
   },
   shadow: {
     'surface-1': 'var(--shadow-1)',

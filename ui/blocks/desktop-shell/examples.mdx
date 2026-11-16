@@ -1,0 +1,153 @@
+import DesktopShell from './index'
+import Sidebar from '../../components/navigation/sidebar'
+import Button from '../../components/button'
+import { FileText, Folder, Inbox, Search, Star } from 'lucide-react'
+
+# macOS window
+
+The title bar starts after the traffic lights (drawn here with `showControls`; a native window draws its own). Fold the sidebar with its toggle or `[`, the side pane with `]`. Drag the sidebar's rail, or the gutter between the card and the pane, to resize; double-click the gutter to reset it. The window is 960px wide: scroll it sideways in a narrow column.
+
+<div className="w-full overflow-x-auto">
+<div className="h-[560px] w-[960px] overflow-hidden rounded-xl border border-border">
+  <DesktopShell
+    showControls
+    title={<span className="truncate text-body weight-medium text-foreground">Quarterly notes</span>}
+    trailing={
+      <Button variant="ghost" size="icon-compact" aria-label="Search">
+        <Search />
+      </Button>
+    }
+    left={
+      <Sidebar variant="inset" defaultValue="inbox">
+        <Sidebar.Content>
+          <Sidebar.Group>
+            <Sidebar.GroupLabel>Library</Sidebar.GroupLabel>
+            <Sidebar.Menu>
+              <Sidebar.MenuItem><Sidebar.MenuButton icon={Inbox} value="inbox">Inbox</Sidebar.MenuButton></Sidebar.MenuItem>
+              <Sidebar.MenuItem><Sidebar.MenuButton icon={Star} value="starred">Starred</Sidebar.MenuButton></Sidebar.MenuItem>
+              <Sidebar.MenuItem><Sidebar.MenuButton icon={Folder} value="projects">Projects</Sidebar.MenuButton></Sidebar.MenuItem>
+            </Sidebar.Menu>
+          </Sidebar.Group>
+        </Sidebar.Content>
+      </Sidebar>
+    }
+    right={
+      <div className="flex flex-col gap-2 p-4">
+        <span className="text-subtitle text-foreground">Details</span>
+        <span className="text-body text-muted-foreground">The side pane: anything about what the main card shows.</span>
+      </div>
+    }
+    main={
+      <div className="flex flex-1 flex-col gap-2 p-6">
+        <span className="text-title text-foreground">Quarterly notes</span>
+        <span className="text-body text-muted-foreground">The main card keeps an even gutter to whichever sidebar is open.</span>
+      </div>
+    }
+  />
+</div>
+</div>
+
+# No title bar
+
+With `titleBar="card"` nothing runs across the window: the traffic lights and the sidebar toggle sit in the sidebar's corner, and the title, your controls and the side pane toggle head the main card. Fold the sidebar and the card's header makes room for the corner.
+
+<div className="w-full overflow-x-auto">
+<div className="h-[560px] w-[960px] overflow-hidden rounded-xl border border-border">
+  <DesktopShell
+    showControls
+    titleBar="card"
+    title={<span className="truncate text-body weight-medium text-foreground">Quarterly notes</span>}
+    trailing={
+      <Button variant="ghost" size="icon-compact" aria-label="Search">
+        <Search />
+      </Button>
+    }
+    left={
+      <Sidebar variant="inset" defaultValue="inbox">
+        <Sidebar.Content>
+          <Sidebar.Group>
+            <Sidebar.GroupLabel>Library</Sidebar.GroupLabel>
+            <Sidebar.Menu>
+              <Sidebar.MenuItem><Sidebar.MenuButton icon={Inbox} value="inbox">Inbox</Sidebar.MenuButton></Sidebar.MenuItem>
+              <Sidebar.MenuItem><Sidebar.MenuButton icon={Star} value="starred">Starred</Sidebar.MenuButton></Sidebar.MenuItem>
+              <Sidebar.MenuItem><Sidebar.MenuButton icon={Folder} value="projects">Projects</Sidebar.MenuButton></Sidebar.MenuItem>
+            </Sidebar.Menu>
+          </Sidebar.Group>
+        </Sidebar.Content>
+      </Sidebar>
+    }
+    right={
+      <div className="flex flex-col gap-2 p-4">
+        <span className="text-subtitle text-foreground">Details</span>
+        <span className="text-body text-muted-foreground">The side pane: anything about what the main card shows.</span>
+      </div>
+    }
+    main={
+      <div className="flex flex-1 flex-col gap-2 p-6">
+        <span className="text-title text-foreground">Quarterly notes</span>
+        <span className="text-body text-muted-foreground">The main card keeps an even gutter to whichever sidebar is open.</span>
+      </div>
+    }
+  />
+</div>
+</div>
+
+# Windows and Linux
+
+Off macOS the title bar starts at the edge; the stand-in window controls sit at its end. Here the side pane starts folded and there is no left sidebar.
+
+<div className="w-full overflow-x-auto">
+<div className="h-[420px] w-[960px] overflow-hidden rounded-xl border border-border">
+  <DesktopShell
+    platform="windows"
+    showControls
+    defaultRightOpen={false}
+    title={
+      <span className="flex min-w-0 items-center gap-2 text-body text-foreground">
+        <FileText size={14} strokeWidth={1.5} className="shrink-0" />
+        <span className="truncate">report.md</span>
+      </span>
+    }
+    right={<div className="p-4 text-body text-muted-foreground">Outline</div>}
+    main={<div className="p-6 text-body text-muted-foreground">The document.</div>}
+  />
+</div>
+</div>
+
+# Compact
+
+`size="compact"` steps the title bar down the ladder to 28px.
+
+<div className="w-full overflow-x-auto">
+<div className="h-[320px] w-[960px] overflow-hidden rounded-xl border border-border">
+  <DesktopShell
+    size="compact"
+    showControls
+    title={<span className="truncate text-body-compact text-foreground">Compact window</span>}
+    main={<div className="p-6 text-body text-muted-foreground">Only the main card.</div>}
+  />
+</div>
+</div>
+
+# Narrow window
+
+Below 768px the open side pane takes the main card's place; fold it with `]` or its toggle to get the card back.
+
+<div className="h-[480px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <DesktopShell
+    showControls
+    defaultLeftOpen={false}
+    title={<span className="truncate text-body weight-medium text-foreground">Narrow</span>}
+    left={
+      <Sidebar variant="inset">
+        <Sidebar.Content>
+          <Sidebar.Menu>
+            <Sidebar.MenuItem><Sidebar.MenuButton icon={Inbox} value="inbox">Inbox</Sidebar.MenuButton></Sidebar.MenuItem>
+          </Sidebar.Menu>
+        </Sidebar.Content>
+      </Sidebar>
+    }
+    right={<div className="p-4 text-body text-muted-foreground">The side pane, in the card's place.</div>}
+    main={<div className="p-6 text-body text-muted-foreground">The main card.</div>}
+  />
+</div>

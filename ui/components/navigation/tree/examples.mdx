@@ -1,0 +1,76 @@
+import Tree from './index'
+import { File, FileText, Folder, Image, Settings } from 'lucide-react'
+
+# File tree
+
+Pick a file and the selection melts across to it; pick a folder and it folds open or shut. Try the keyboard too: arrows, Home, End, and typing a name.
+
+<div className="w-72">
+  <Tree
+    label="Files"
+    defaultExpanded={['src', 'components']}
+    defaultValue="button"
+    items={[
+      { id: 'src', label: 'src', children: [
+        { id: 'components', label: 'components', children: [
+          { id: 'button', label: 'button.tsx' },
+          { id: 'dialog', label: 'dialog.tsx' },
+          { id: 'tree', label: 'tree.tsx' },
+        ] },
+        { id: 'lib', label: 'lib', children: [
+          { id: 'utils', label: 'utils.ts' },
+          { id: 'springs', label: 'springs.ts' },
+        ] },
+        { id: 'index', label: 'index.ts' },
+      ] },
+      { id: 'package', label: 'package.json' },
+      { id: 'readme', label: 'README.md' },
+    ]}
+  />
+</div>
+
+# Compact
+
+The rows step down the size ladder, guides and chevrons with them.
+
+<div className="w-64">
+  <Tree
+    label="Outline"
+    size="compact"
+    defaultExpanded={['intro', 'usage']}
+    items={[
+      { id: 'intro', label: 'Introduction', children: [
+        { id: 'why', label: 'Why a tree' },
+        { id: 'install', label: 'Install' },
+      ] },
+      { id: 'usage', label: 'Usage', children: [
+        { id: 'controlled', label: 'Controlled' },
+        { id: 'keyboard', label: 'Keyboard' },
+      ] },
+      { id: 'api', label: 'API' },
+    ]}
+  />
+</div>
+
+# With icons
+
+An `icon` sits ahead of the label and thickens while its row is lit.
+
+<div className="w-72">
+  <Tree
+    label="Project"
+    defaultExpanded={['app', 'assets']}
+    defaultValue="logo"
+    items={[
+      { id: 'app', label: 'app', icon: Folder, children: [
+        { id: 'page', label: 'page.tsx', icon: FileText },
+        { id: 'assets', label: 'assets', icon: Folder, children: [
+          { id: 'logo', label: 'logo.png', icon: Image },
+          { id: 'hero', label: 'hero.png', icon: Image },
+        ] },
+      ] },
+      { id: 'config', label: 'config.ts', icon: Settings },
+      { id: 'license', label: 'LICENSE', icon: File },
+    ]}
+  />
+</div>

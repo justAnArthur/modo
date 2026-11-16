@@ -1,0 +1,33 @@
+import EditableText from './index'
+import { MessageCircle } from 'lucide-react'
+
+# Session title
+
+Double-click the title, or focus it and press Enter or F2, or press the pencil. Enter or clicking away keeps the change; Escape puts the old title back.
+
+<EditableText label="Session title" defaultValue="Refactor the tree keyboard model" placeholder="Untitled session" />
+
+# In a list row
+
+Inside a row the box fills the width it is given and the title truncates; the pencil shows when you point at the row.
+
+<div className="flex w-80 flex-col">
+  {['Fix the breadcrumb overflow', 'Draft the release notes', ''].map((title, i) => (
+    <div key={i} className="flex items-center gap-2 pl-2">
+      <MessageCircle size={16} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
+      <EditableText label="Session title" defaultValue={title} placeholder="Untitled session" className="flex-1" />
+    </div>
+  ))}
+</div>
+
+# Compact
+
+The box steps down the size ladder with the region around it.
+
+<EditableText size="compact" label="Branch name" defaultValue="feat/editable-text" />
+
+# Disabled
+
+Dimmed, and it no longer turns into an input.
+
+<EditableText disabled defaultValue="Archived session" />

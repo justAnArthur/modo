@@ -28,6 +28,10 @@ Fixes:
 - New primitives: `Sortable` (drag or keyboard reorder, `Sortable.Handle`, `useSortableHandle`, `as="none"` inside a host list), `VirtualList` (windowed rows, fixed or measured, `scrollToIndex`) and `Resizable` (split panes with keyboard separators, collapsible panels, nesting).
 - New components: `List` (settings rows), `ChoiceList` (Radio's rows over rich content), `KeyValue`, `Breadcrumb` (folds into a menu), `Meter` (bar, line, ring; `marker`, `tone`), `StatusDot` (+ `statusGlyph`), `Kbd` and `EmptyState`.
 - Icons `eye`, `eye-off` and `grip-vertical`.
+- New components: `Diff` (a unified patch), `Markdown` (+ `Markdown.Prose`, on `marked`, now a dependency), `LogView` (ANSI output on `VirtualList`), `Tree`, `EditableText` and `Lightbox`; blocks `ShellCard` and `DesktopShell`.
+- `VirtualList` takes `follow` / `onFollowChange` (stay at the end of a growing list), `contentWidth` and a `scrollToEnd()` handle; `Resizable` panels glide to sizes set by key, reset or controlled `sizes`.
+- Tokens `--sunken` (`bg-sunken`) and `--radius-shell` / `--radius-pill-shell` (`rounded-shell|pill-shell`); icons `file-diff` and `square`.
+- A standalone `Accordion` nested in an `Accordion.Group`'s panel keeps its own open state.
 
 ## 1.0.0 — 2026-11-16
 

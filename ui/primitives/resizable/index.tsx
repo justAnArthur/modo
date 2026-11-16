@@ -46,6 +46,8 @@ interface GroupState {
   defaults: number[]
   step: number
   setSizes: (sizes: number[]) => void
+  dragging: boolean
+  setDragging: (dragging: boolean) => void
 }
 
 const ResizableGroupContext = createContext<GroupState | null>(null)
@@ -105,6 +107,7 @@ interface ResizablePanelProps {
 function ResizablePanel({ children, className }: ResizablePanelProps) {
   const group = useGroup()
   const index = useContext(ResizableIndexContext)
+  const reduced = useReduceMotion()
   const size = group.sizes[index] ?? 0
 
   return (
@@ -112,7 +115,12 @@ function ResizablePanel({ children, className }: ResizablePanelProps) {
       id={`${group.id}-${index}`}
       data-resizable-panel=""
       data-collapsed={size === 0 ? '' : undefined}
-      className={cn('min-h-0 min-w-0 overflow-hidden', className)}
+      // A drag follows the pointer; a size set any other way (a key, a reset, a controlled toggle) tweens there.
+      className={cn(
+        'min-h-0 min-w-0 overflow-hidden',
+        !group.dragging && !reduced && 'transition-[flex-grow] duration-moderate',
+        className,
+      )}
       style={{ flex: `${size} 1 0px` }}
     >
       {children}
@@ -133,7 +141,11 @@ function ResizableHandle({ label = 'Resize', className }: ResizableHandleProps) 
   const reduced = useReduceMotion()
   const [hovered, setHovered] = useState(false)
   const drag = useRef<{ start: number; sizes: number[]; pxPerPercent: number } | null>(null)
-  const [dragging, setDragging] = useState(false)
+  const [dragging, setOwnDragging] = useState(false)
+  const setDragging = (next: boolean) => {
+    setOwnDragging(next)
+    group.setDragging(next)
+  }
   const horizontal = group.direction === 'horizontal'
   const limits = group.limits[index] ?? NO_LIMITS
   const size = group.sizes[index] ?? 0
@@ -253,7 +265,9 @@ interface ResizableProps {
  * keyboard, arrows move it a step, Home and End take the panel before it to
  * its smallest and largest size, and a double-click puts every panel back to
  * its starting size. A collapsible panel snaps shut when dragged below half
- * its minimum. Sizes work uncontrolled (each panel's `defaultSize`) or
+ * its minimum. A drag follows the pointer; every other change of size (a
+ * key, a reset, new controlled `sizes`, such as a toggle folding a pane)
+ * glides there. Sizes work uncontrolled (each panel's `defaultSize`) or
  * controlled (`sizes` + `onSizesChange`). Groups nest: put a Resizable inside
  * a panel to split it the other way.
  *
@@ -278,7 +292,8 @@ const Resizable = forwardRef<HTMLDivElement, ResizableProps>(
     const sizeKey = panels.map(({ props }) => props.defaultSize).join()
     const defaults = useMemo(() => defaultSizes(panels.map(({ props }) => props.defaultSize)), [sizeKey])
     const [current, setCurrent] = useControllableState(sizes, defaults, onSizesChange)
-    const group = { id, direction, sizes: current, limits, defaults, step, setSizes: setCurrent }
+    const [dragging, setDragging] = useState(false)
+    const group = { id, direction, sizes: current, limits, defaults, step, setSizes: setCurrent, dragging, setDragging }
 
     let panel = -1
     const indexed = items.map(child => {

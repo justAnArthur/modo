@@ -20,7 +20,7 @@ is specific to this package.
 - `tokens/*.css` — colors (`light-dark()`), typography (`--text-*`, `--leading-*`, `--weight-*`), motion
   (`--duration-*`), radius, spacing. The surface ladder and shadows are in `primitives/surface/surface.css`.
 - `uno.config.ts` — the utilities over the tokens (`text-<role>`, `weight-*`, `duration-<tier>`,
-  `bg-surface-N`, `shadow-surface-N`, `rounded-box|glyph|pill|focus-ring|pill-focus-ring`). `lib/utils.ts` — `cn`, which knows them.
+  `bg-surface-N`, `shadow-surface-N`, `rounded-box|glyph|pill|focus-ring|pill-focus-ring|shell|pill-shell`). `lib/utils.ts` — `cn`, which knows them.
 - `lib/` — the shared systems: `springs` (+ `springEnter`), `size-context` (+ the pure `size-scale`),
   `shape-context` (+ the pure `shape-classes`), `surface-*` (+ `useLift`), `use-fluid-hover` +
   `fluid-hover-highlight`, `goo-indicator`, `use-morph` + `morph-layers` + `morph-part`,
@@ -32,7 +32,7 @@ is specific to this package.
 - `primitives/` — the systems as documented items (Surface, Sizes, FluidHover, Motion, Morph,
   ScrollArea, Separator, Skeleton, Code, Craft) and the list and layout pieces (Sortable, VirtualList,
   Resizable). `components/[inputs|navigation|overlays]/` —
-  controls. `blocks/` — compositions.
+  controls. `blocks/` — compositions (SidebarApp, ShellCard, DesktopShell).
 - `modo.components.tsx` — docs-only adapters for the chrome's slots (`Select`, `Icon`, `DocsNav`) and the
   Theme panel item. `global.css` — base styles and the chrome's look through `data-modo` attributes.
 - `guides/` — the docs' Getting started and Theming pages (not shipped). `test/` — `bun test` for the

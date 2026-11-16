@@ -2,7 +2,7 @@
  * Local addition (not part of Fluid Functionalism): a windowed list. Only the
  * rows inside the scroll viewport (plus an overscan) are mounted, at fixed
  * or measured heights, scrolled by the list itself or by a surrounding
- * ScrollArea.
+ * ScrollArea; `follow` keeps a growing list pinned to its end.
  */
 
 'use client'
@@ -16,6 +16,8 @@ type VirtualListAlign = 'auto' | 'start' | 'center' | 'end'
 interface VirtualListHandle {
   /** Scrolls the row at `index` into view: only as far as needed (`auto`), or to the viewport's start, center or end. */
   scrollToIndex: (index: number, align?: VirtualListAlign) => void
+  /** Scrolls to the very end and, with `follow`, starts following again. */
+  scrollToEnd: () => void
 }
 
 interface VirtualListProps {
@@ -29,6 +31,12 @@ interface VirtualListProps {
   estimateHeight?: number
   /** Rows rendered beyond each edge of the viewport, so a fast scroll never shows a gap. Defaults to `6`. */
   overscan?: number
+  /** Stay scrolled to the end while rows are added or grow, as long as the reader is at the end; scrolling up lets go, scrolling back down (or `scrollToEnd`) follows again. A followed list starts at its end. Defaults to `false`. */
+  follow?: boolean
+  /** Called when following starts or stops, e.g. to show a jump-to-latest button. Only with `follow`. */
+  onFollowChange?: (following: boolean) => void
+  /** Width of the rows as a CSS length, for rows wider than the viewport (unwrapped log lines) that scroll sideways. Defaults to the list's width. */
+  contentWidth?: string
   /** Accessible name of the list. */
   label?: string
   /** Classes for the root. On its own it is the scroller: give it a height. Inside a ScrollArea the area scrolls it. */
@@ -91,12 +99,28 @@ function Row({ index, count, top, height, observer, children }: RowProps) {
  * (`estimateHeight` stands in until then), so wrapping text and rows of
  * different kinds just work. On its own the list scrolls itself; inside a
  * ScrollArea it follows the area's viewport, so the list can sit below a
- * header in one scroll. A `ref` gives `scrollToIndex(index, align)`.
+ * header in one scroll. With `follow` a growing list (a log, a chat) stays
+ * at its end until the reader scrolls up. A `ref` gives
+ * `scrollToIndex(index, align)` and `scrollToEnd()`.
  *
  * @example {@include ./examples.mdx}
  */
 const VirtualList = forwardRef<VirtualListHandle, VirtualListProps>(
-  ({ count, renderItem, itemHeight, estimateHeight = 36, overscan = 6, label, className }, ref) => {
+  (
+    {
+      count,
+      renderItem,
+      itemHeight,
+      estimateHeight = 36,
+      overscan = 6,
+      follow = false,
+      onFollowChange,
+      contentWidth,
+      label,
+      className,
+    },
+    ref,
+  ) => {
     const rootRef = useRef<HTMLDivElement>(null)
     const innerRef = useRef<HTMLUListElement>(null)
     const [scroller, setScroller] = useState<HTMLElement | null>(null)
@@ -110,6 +134,12 @@ const VirtualList = forwardRef<VirtualListHandle, VirtualListProps>(
       offsets.push((offsets[i] ?? 0) + (itemHeight ?? heights.current.get(i) ?? estimateHeight))
     const latest = useRef(offsets)
     latest.current = offsets
+    const total = offsets[count] ?? 0
+
+    // Whether the reader is at the end; starts true so a followed list opens there.
+    const following = useRef(true)
+    const followChange = useRef(onFollowChange)
+    followChange.current = onFollowChange
 
     useLayoutEffect(() => {
       const root = rootRef.current
@@ -125,7 +155,14 @@ const VirtualList = forwardRef<VirtualListHandle, VirtualListProps>(
 
     useLayoutEffect(() => {
       if (!scroller) return
-      const update = () => setView({ top: scroller.scrollTop - listTop(), height: scroller.clientHeight })
+      const update = () => {
+        setView({ top: scroller.scrollTop - listTop(), height: scroller.clientHeight })
+        if (!follow) return
+        const atEnd = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight <= 2
+        if (atEnd === following.current) return
+        following.current = atEnd
+        followChange.current?.(atEnd)
+      }
       update()
       scroller.addEventListener('scroll', update, { passive: true })
       const resize = new ResizeObserver(update)
@@ -134,7 +171,12 @@ const VirtualList = forwardRef<VirtualListHandle, VirtualListProps>(
         scroller.removeEventListener('scroll', update)
         resize.disconnect()
       }
-    }, [scroller, listTop])
+    }, [scroller, listTop, follow])
+
+    // Content grew under a reader at the end: no scroll event fires, so `following` still holds.
+    useLayoutEffect(() => {
+      if (follow && following.current && scroller) scroller.scrollTop = scroller.scrollHeight
+    }, [follow, scroller, count, total])
 
     // One observer for every mounted row, made on first use: rows attach before this component's effects run.
     const rows = useRef<ResizeObserver | null>(null)
@@ -175,8 +217,14 @@ const VirtualList = forwardRef<VirtualListHandle, VirtualListProps>(
           // Measured rows land on estimates first; once the rows there are measured, land again.
           if (!itemHeight) requestAnimationFrame(() => requestAnimationFrame(jump))
         },
+        scrollToEnd() {
+          if (!scroller) return
+          if (follow && !following.current) followChange.current?.(true)
+          following.current = true
+          scroller.scrollTop = scroller.scrollHeight
+        },
       }),
-      [scroller, listTop, count, itemHeight],
+      [scroller, listTop, count, itemHeight, follow],
     )
 
     const first = Math.max(0, rowAt(offsets, count, view.top) - overscan)
@@ -194,7 +242,12 @@ const VirtualList = forwardRef<VirtualListHandle, VirtualListProps>(
           className,
         )}
       >
-        <ul ref={innerRef} aria-label={label} className="relative" style={{ height: offsets[count] }}>
+        <ul
+          ref={innerRef}
+          aria-label={label}
+          className={cn('relative', contentWidth && 'min-w-full')}
+          style={{ height: total, width: contentWidth }}
+        >
           {visible.map(i => (
             <Row key={i} index={i} count={count} top={offsets[i] ?? 0} height={itemHeight} observer={observer}>
               {renderItem(i)}

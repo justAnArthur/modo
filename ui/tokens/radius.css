@@ -15,4 +15,10 @@
   --radius-pill: 20px;
   --radius-focus-ring: 10px;
   --radius-pill-focus-ring: 22px;
+
+  /* A shell one spacing step around a container, concentric with it: the
+     container's corner (12px rounded, 24px pill) plus the inset, read by
+     `rounded-shell|pill-shell` (ShellCard). */
+  --radius-shell: calc(12px + var(--space-2));
+  --radius-pill-shell: calc(24px + var(--space-2));
 }
