@@ -109,7 +109,17 @@ const RowTrigger = forwardRef<HTMLButtonElement, ButtonHTMLAttributes<HTMLButton
 )
 
 /** Where a session runs: the project, a worktree of its own and how it is set up. */
-function ProjectPicker({ projects, branches, locked }: { projects: Project[]; branches: string[]; locked: boolean }) {
+function ProjectPicker({
+  projects,
+  branches,
+  branch,
+  locked,
+}: {
+  projects: Project[]
+  branches: string[]
+  branch?: string
+  locked: boolean
+}) {
   const [project, setProject] = useState(projects[0]?.label ?? '')
   const [worktree, setWorktree] = useState(true)
   const Folder = useIcon('folder')
@@ -146,6 +156,11 @@ function ProjectPicker({ projects, branches, locked }: { projects: Project[]; br
             />
           </List.Section>
           <List.Section title="Checkout">
+            {branch && (
+              <List.Row label="Branch">
+                <span className="min-w-0 truncate font-mono text-caption text-muted-foreground">{branch}</span>
+              </List.Row>
+            )}
             <List.Row label="New worktree">
               <Switch
                 label="New worktree"
@@ -341,6 +356,8 @@ interface ComposerProps {
   projects: Project[]
   /** Branches a new worktree can start from. */
   branches: string[]
+  /** The session's own branch, shown in the project menu. Omit before the session has one. */
+  branch?: string
   /** The profiles a session can run under. */
   profiles: Profile[]
   /** Initial model, by name. Defaults to the first model. */
@@ -400,6 +417,7 @@ export default function Composer({
   files,
   projects,
   branches,
+  branch,
   profiles,
   defaultModel,
   defaultPermissionMode,
@@ -422,7 +440,7 @@ export default function Composer({
       footer={
         <SizeProvider size="compact">
           <ShellCard.Footer className="justify-start gap-[var(--space-1)] pt-[var(--space-1)]">
-            <ProjectPicker projects={projects} branches={branches} locked={!target} />
+            <ProjectPicker projects={projects} branches={branches} branch={branch} locked={!target} />
             <ProfileSwitcher
               profiles={profiles}
               defaultValue={defaultProfile}

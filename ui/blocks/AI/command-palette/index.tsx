@@ -6,6 +6,7 @@
 
 'use client'
 
+import type { ReactElement } from 'react'
 import Button from '../../../components/button'
 import Kbd from '../../../components/kbd'
 import Command, { type CommandGroup } from '../../../components/overlays/command'
@@ -40,6 +41,8 @@ interface CommandPaletteProps {
   onOpenChange?: (open: boolean) => void
   /** The key that toggles it with ⌘ (Ctrl elsewhere); `false` leaves the keyboard alone. Defaults to `'k'`. */
   hotkey?: string | false
+  /** Replaces the Search button. `null` draws no trigger: the hotkey and `open` still work. */
+  trigger?: ReactElement | null
   /** The trigger's label. Defaults to `'Search'`. */
   label?: string
   /** Classes for the trigger. */
@@ -73,6 +76,7 @@ export default function CommandPalette({
   defaultOpen,
   onOpenChange,
   hotkey = 'k',
+  trigger,
   label = 'Search',
   className,
 }: CommandPaletteProps) {
@@ -191,25 +195,29 @@ export default function CommandPalette({
 
   return (
     <Command open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange} hotkey={hotkey}>
-      <Command.Trigger
-        render={
-          <Button
-            variant="secondary"
-            size="compact"
-            leadingIcon={icons.search}
-            aria-label={label}
-            className={className}
-          >
-            {/* A narrow window keeps the icon: the label and hotkey need the room the title wants. */}
-            <span className="hidden @lg:inline">{label}</span>
-            {hotkey && (
-              <Kbd variant="plain" className="ml-3 hidden @lg:inline-flex">
-                {`⌘${hotkey.toUpperCase()}`}
-              </Kbd>
-            )}
-          </Button>
-        }
-      />
+      {trigger !== null && (
+        <Command.Trigger
+          render={
+            trigger ?? (
+              <Button
+                variant="secondary"
+                size="compact"
+                leadingIcon={icons.search}
+                aria-label={label}
+                className={className}
+              >
+                {/* A narrow window keeps the icon: the label and hotkey need the room the title wants. */}
+                <span className="hidden @lg:inline">{label}</span>
+                {hotkey && (
+                  <Kbd variant="plain" className="ml-3 hidden @lg:inline-flex">
+                    {`⌘${hotkey.toUpperCase()}`}
+                  </Kbd>
+                )}
+              </Button>
+            )
+          }
+        />
+      )}
       <Command.Content
         label="Command palette"
         placeholder="Search sessions, commands and settings…"

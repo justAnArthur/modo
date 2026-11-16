@@ -19,6 +19,7 @@ import Tooltip from '../../../components/overlays/tooltip'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import Sortable, { useSortableHandle } from '../../../primitives/sortable'
 import { SidebarSearchField } from '../../sidebar-app/search-field'
+import Inbox, { type InboxAction, type InboxItem } from '../inbox'
 import { ProfileTile } from '../profile-switcher'
 import ProfileUsage from '../profile-usage'
 import type { SessionFilter } from '../session-board'
@@ -235,6 +236,12 @@ interface SessionSidebarProps {
   onValueChange?: (value: string) => void
   /** Called when a row's menu asks to open its session in split view. */
   onOpenSplit?: (id: string) => void
+  /** What needs you across sessions: a header row opens them, with the unread count. Omit for no inbox row. */
+  inbox?: InboxItem[]
+  /** Called when an inbox row is answered or opened. */
+  onInboxAction?: (item: InboxItem, action: InboxAction) => void
+  /** Called when the search field is clicked or Enter is pressed in it: open your ⌘K palette. Omit to keep it a plain field. */
+  onSearch?: () => void
   /** Called by the footer's settings row. */
   onOpenSettings?: () => void
   /** The sidebar's layout (see Sidebar). Defaults to `'inset'`. */
@@ -283,6 +290,9 @@ export default function SessionSidebar({
   onValueChange,
   onOpenSplit,
   onOpenSettings,
+  inbox,
+  onInboxAction,
+  onSearch,
   variant = 'inset',
   className,
 }: SessionSidebarProps) {
@@ -290,6 +300,8 @@ export default function SessionSidebar({
   const Board = useIcon('layout-dashboard')
   const Settings = useIcon('settings')
   const Filter = useIcon('sliders-horizontal')
+  const Bell = useIcon('bell')
+  const unread = inbox?.filter(item => !item.read).length ?? 0
   const waiting = everySession(pinned, groups).filter(s => s.status === 'waiting').length
 
   return (
@@ -309,6 +321,22 @@ export default function SessionSidebar({
                 <span className="ml-auto text-micro tabular-nums text-muted-foreground">{waiting} need you</span>
               </Sidebar.MenuButton>
             </Sidebar.MenuItem>
+            {inbox && (
+              <Sidebar.MenuItem>
+                <Inbox
+                  items={inbox}
+                  onAction={onInboxAction}
+                  side="right"
+                  align="start"
+                  trigger={
+                    <Sidebar.MenuButton icon={Bell} aria-label={unread > 0 ? `Inbox, ${unread} unread` : 'Inbox'}>
+                      Inbox
+                    </Sidebar.MenuButton>
+                  }
+                />
+                {unread > 0 && <Sidebar.MenuBadge>{unread}</Sidebar.MenuBadge>}
+              </Sidebar.MenuItem>
+            )}
             <Sidebar.MenuItem>
               <Sidebar.MenuButton icon={Plus} value="new">
                 New session
@@ -318,11 +346,21 @@ export default function SessionSidebar({
               </Sidebar.MenuButton>
             </Sidebar.MenuItem>
           </Sidebar.Menu>
-          <SidebarSearchField placeholder="Search sessions" />
+          <SidebarSearchField
+            placeholder="Search sessions"
+            {...(onSearch && {
+              readOnly: true,
+              onClick: onSearch,
+              onKeyDown: e => {
+                if (e.key === 'Enter') onSearch()
+              },
+            })}
+          />
         </div>
       </Sidebar.Header>
 
-      <Sidebar.Content>
+      {/* No hairline at the scroll edges: the fade alone says the list goes on. */}
+      <Sidebar.Content className="before:!content-none after:!content-none">
         {list === 'filters' && <SessionFilters pinned={pinned} groups={groups} profiles={profiles} />}
         {list === 'sessions' && (
           <>

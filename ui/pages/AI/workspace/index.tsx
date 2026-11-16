@@ -12,7 +12,6 @@ import AgentPrompt from '../../../blocks/AI/agent-prompt'
 import CommandPalette from '../../../blocks/AI/command-palette'
 import Composer from '../../../blocks/AI/composer'
 import FailureState, { type FailureKind } from '../../../blocks/AI/failure-states'
-import Inbox from '../../../blocks/AI/inbox'
 import SessionSidebar from '../../../blocks/AI/session-sidebar'
 import ShortcutsSheet from '../../../blocks/AI/shortcuts-sheet'
 import SidePane, { type PaneId } from '../../../blocks/AI/side-pane'
@@ -24,6 +23,7 @@ import Badge from '../../../components/badge'
 import Button from '../../../components/button'
 import Diff from '../../../components/diff'
 import EditableText from '../../../components/inputs/editable-text'
+import { DropdownContent, DropdownMenu, DropdownTrigger, MenuItem } from '../../../components/overlays/dropdown'
 import Tooltip from '../../../components/overlays/tooltip'
 import { useIcon } from '../../../lib/icon-context'
 import Resizable from '../../../primitives/resizable'
@@ -191,10 +191,12 @@ interface WorkspaceProps {
  * The AI app's main window: every session of every profile on the
  * left, one session in the middle, and what it touches on the right.
  *
- * The window is a DesktopShell: its title bar shows the session's title,
- * branch and profile, the ⌘K search (see CommandPalette: switch sessions,
- * start one, run a command, open a pane or a setting), the split button and
- * the sidebar toggles. The sidebar groups sessions by project with their
+ * The window is a DesktopShell with no title bar: the main card's header
+ * shows the session's title and profile, the split button, a menu that
+ * searches transcripts or shows the shortcuts, and the side pane toggle.
+ * The sidebar holds the inbox, and its search field opens the ⌘K palette
+ * (see CommandPalette: switch sessions, start one, run a command, open a
+ * pane or a setting). The sidebar groups sessions by project with their
  * live state and switches the profile. The session is the transcript, the
  * pinned task list under the latest message, whatever the agent waits on (a
  * permission, a question, a plan to approve, a session offer) and the
@@ -229,9 +231,10 @@ export default function Workspace({
   const [titles, setTitles] = useState<Record<string, string>>({})
   const [searchOpen, setSearchOpen] = useState(false)
   const [shortcutsOpen, setShortcutsOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const session = findSession(selected)
   const profile = PROFILES.find(p => p.id === session?.profile)
-  const Branch = useIcon('git-branch')
+  const Keyboard = useIcon('command')
   const Columns = useIcon('columns-2')
   const Search = useIcon('search')
   const More = useIcon('more-horizontal')
@@ -288,7 +291,7 @@ export default function Workspace({
         <DemoSession />
       </Transcript>
       <div className="mx-auto w-full max-w-3xl px-6 pb-4">
-        <Composer {...COMPOSER} streaming={pending === 'none' && !nextStep} />
+        <Composer {...COMPOSER} branch={session?.branch} streaming={pending === 'none' && !nextStep} />
       </div>
     </div>
   )
@@ -311,12 +314,6 @@ export default function Workspace({
             onValueChange={title => setTitles({ ...titles, [selected]: title })}
             className="min-w-24 weight-medium"
           />
-          {session?.branch && (
-            <span className="hidden min-w-0 items-center gap-1 text-caption text-muted-foreground @xl:flex">
-              <Branch size={12} strokeWidth={1.5} className="shrink-0" />
-              <span className="truncate font-mono">{session.branch}</span>
-            </span>
-          )}
           {profile && (
             <span className="hidden shrink-0 text-caption text-muted-foreground @2xl:inline">
               {profile.name} · {profile.defaultModel}
@@ -326,7 +323,6 @@ export default function Workspace({
       }
       trailing={
         <>
-          <Inbox items={INBOX} align="end" />
           <TranscriptSearch
             sessions={TRANSCRIPTS}
             projects={PROJECTS}
@@ -337,16 +333,6 @@ export default function Workspace({
               setSelected(id)
               setSearchOpen(false)
             }}
-            trigger={
-              <Button
-                variant="ghost"
-                size="icon-compact"
-                aria-label="Search transcripts"
-                className="hidden @md:inline-flex"
-              >
-                <Search />
-              </Button>
-            }
           />
           <ShortcutsSheet groups={SHORTCUTS} open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
           <CommandPalette
@@ -357,7 +343,9 @@ export default function Workspace({
             settings={SETTINGS_SECTIONS}
             profile={session?.profile}
             onSelect={onPick}
-            className="mr-1"
+            open={paletteOpen}
+            onOpenChange={setPaletteOpen}
+            trigger={null}
           />
           <Tooltip content="Split view" side="bottom">
             <Button
@@ -372,12 +360,31 @@ export default function Workspace({
               <Columns />
             </Button>
           </Tooltip>
-          <Button variant="ghost" size="icon-compact" aria-label="Session options">
-            <More />
-          </Button>
+          <DropdownMenu>
+            <DropdownTrigger
+              render={
+                <Button variant="ghost" size="icon-compact" aria-label="Session options">
+                  <More />
+                </Button>
+              }
+            />
+            <DropdownContent align="end" sideOffset={4} className="w-[240px] min-w-0">
+              <MenuItem index={0} icon={Search} label="Search transcripts" onSelect={() => setSearchOpen(true)} />
+              <MenuItem index={1} icon={Keyboard} label="Keyboard shortcuts" onSelect={() => setShortcutsOpen(true)} />
+            </DropdownContent>
+          </DropdownMenu>
         </>
       }
-      left={<SessionSidebar {...SESSIONS} value={selected} onValueChange={setSelected} onOpenSplit={setSplitId} />}
+      left={
+        <SessionSidebar
+          {...SESSIONS}
+          value={selected}
+          onValueChange={setSelected}
+          onOpenSplit={setSplitId}
+          inbox={INBOX}
+          onSearch={() => setPaletteOpen(true)}
+        />
+      }
       right={
         <SidePane
           data={SIDE_PANE_DATA}

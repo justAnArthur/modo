@@ -8,7 +8,7 @@
 
 'use client'
 
-import { type ReactNode, useRef, useState } from 'react'
+import { type ReactElement, type ReactNode, useRef, useState } from 'react'
 import Button from '../../../components/button'
 import Popover from '../../../components/overlays/popover'
 import StatusDot from '../../../components/status-dot'
@@ -274,6 +274,8 @@ interface InboxProps {
   side?: 'top' | 'right' | 'bottom' | 'left'
   /** Where the panel lines up along that side. Defaults to `'end'`. */
   align?: 'start' | 'center' | 'end'
+  /** Replaces the bell (a sidebar row, say); it gets the unread count's label. */
+  trigger?: ReactElement
   /** Classes for the bell. */
   className?: string
 }
@@ -305,6 +307,7 @@ function Inbox({
   onOpenChange,
   side = 'bottom',
   align = 'end',
+  trigger,
   className,
 }: InboxProps) {
   const Bell = useIcon('bell')
@@ -315,22 +318,24 @@ function Inbox({
     <Popover open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
       <Popover.Trigger
         render={
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={unread > 0 ? `Inbox, ${unread} unread` : 'Inbox'}
-            className={cn('relative', className)}
-          >
-            <Bell />
-            {unread > 0 && (
-              <span
-                aria-hidden="true"
-                className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-micro tabular-nums text-background"
-              >
-                {unread > 9 ? '9+' : unread}
-              </span>
-            )}
-          </Button>
+          trigger ?? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label={unread > 0 ? `Inbox, ${unread} unread` : 'Inbox'}
+              className={cn('relative', className)}
+            >
+              <Bell />
+              {unread > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-1 text-micro tabular-nums text-background"
+                >
+                  {unread > 9 ? '9+' : unread}
+                </span>
+              )}
+            </Button>
+          )
         }
       />
       <Popover.Content
