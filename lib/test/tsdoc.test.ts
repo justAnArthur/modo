@@ -31,6 +31,18 @@ describe('parseItemSource', () => {
     expect(r.props).toEqual([{ name: 'a', optional: false, type: 'string', description: 'A.' }])
   })
 
+  test('parts through Object.assign: the block on the const, props from the function', () => {
+    const r = parseItemSource(
+      `interface PopoverProps {\n  /** Opens it. */\n  open?: boolean\n}\nfunction Trigger() {\n  return null\n}\n/** Popover. */\nconst Popover = Object.assign(\n  function Popover({ open = false }: PopoverProps) {\n    return null\n  },\n  { Trigger },\n)\nexport default Popover\n`,
+    )
+    expect([r.name, r.description, r.props, r.errors]).toEqual([
+      'Popover',
+      'Popover.',
+      [{ name: 'open', optional: true, type: 'boolean', default: 'false', description: 'Opens it.' }],
+      [],
+    ])
+  })
+
   test('a component without props has no props and no errors', () => {
     const r = parseItemSource(`/** Divider. */\nexport default function Divider() {}`)
     expect([r.props, r.errors]).toEqual([[], []])

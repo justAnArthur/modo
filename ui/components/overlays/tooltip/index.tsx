@@ -347,51 +347,54 @@ interface TooltipProps {
  * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/tooltip.tsx Fluid Functionalism
  * @license MIT © 2026 Micka Touillaud
  */
-function Tooltip({
-  content,
-  children,
-  side,
-  align,
-  sideOffset,
-  container,
-  delayDuration,
-  className,
-  contentClassName,
-  open,
-  defaultOpen,
-  onOpenChange,
-  followCursor,
-  from,
-  effect,
-  tier,
-}: TooltipProps) {
-  const root = { open, defaultOpen, onOpenChange, delayDuration, followCursor }
-  if (content === undefined) return <TooltipRoot {...root}>{children}</TooltipRoot>
+const Tooltip = Object.assign(
+  function Tooltip({
+    content,
+    children,
+    side,
+    align,
+    sideOffset,
+    container,
+    delayDuration,
+    className,
+    contentClassName,
+    open,
+    defaultOpen,
+    onOpenChange,
+    followCursor,
+    from,
+    effect,
+    tier,
+  }: TooltipProps) {
+    const root = { open, defaultOpen, onOpenChange, delayDuration, followCursor }
+    if (content === undefined) return <TooltipRoot {...root}>{children}</TooltipRoot>
 
-  return (
-    <TooltipRoot {...root}>
-      <TooltipTrigger render={children as ReactElement} />
-      <TooltipContent
-        side={side}
-        align={align}
-        sideOffset={sideOffset}
-        container={container}
-        className={className}
-        contentClassName={contentClassName}
-        from={from}
-        effect={effect}
-        tier={tier}
-      >
-        {content}
-      </TooltipContent>
-    </TooltipRoot>
-  )
-}
-
-Tooltip.Trigger = TooltipTrigger
-Tooltip.Content = TooltipContent
-Tooltip.Provider = TooltipProvider
-Tooltip.PortalContainer = TooltipPortalContainer
+    return (
+      <TooltipRoot {...root}>
+        <TooltipTrigger render={children as ReactElement} />
+        <TooltipContent
+          side={side}
+          align={align}
+          sideOffset={sideOffset}
+          container={container}
+          className={className}
+          contentClassName={contentClassName}
+          from={from}
+          effect={effect}
+          tier={tier}
+        >
+          {content}
+        </TooltipContent>
+      </TooltipRoot>
+    )
+  },
+  {
+    Trigger: TooltipTrigger,
+    Content: TooltipContent,
+    Provider: TooltipProvider,
+    PortalContainer: TooltipPortalContainer,
+  },
+)
 
 export type { TooltipContentProps, TooltipProps, TooltipProviderProps, TooltipSide, TooltipTriggerProps }
 export { Tooltip, TooltipContent, TooltipPortalContainer, TooltipProvider, TooltipTrigger }

@@ -106,28 +106,31 @@ interface ContextMenuProps {
  *
  * @example {@include ./examples.mdx}
  */
-function ContextMenu({ open, defaultOpen, onOpenChange, disabled = false, size, children }: ContextMenuProps) {
-  const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
+const ContextMenu = Object.assign(
+  function ContextMenu({ open, defaultOpen, onOpenChange, disabled = false, size, children }: ContextMenuProps) {
+    const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
 
-  return (
-    <SizeScope size={size}>
-      <OverlayContext.Provider value={root.state}>
-        <ContextMenuPrimitive.Root open={root.open} disabled={disabled} onOpenChange={root.onOpenChange}>
-          {children}
-        </ContextMenuPrimitive.Root>
-      </OverlayContext.Provider>
-    </SizeScope>
-  )
-}
-
-ContextMenu.Trigger = ContextMenuPrimitive.Trigger
-ContextMenu.Content = ContextMenuContent
-ContextMenu.Item = MenuItem
-ContextMenu.Label = DropdownLabel
-ContextMenu.Separator = DropdownSeparator
-ContextMenu.Sub = DropdownSub
-ContextMenu.SubTrigger = DropdownSubTrigger
-ContextMenu.SubContent = DropdownSubContent
+    return (
+      <SizeScope size={size}>
+        <OverlayContext.Provider value={root.state}>
+          <ContextMenuPrimitive.Root open={root.open} disabled={disabled} onOpenChange={root.onOpenChange}>
+            {children}
+          </ContextMenuPrimitive.Root>
+        </OverlayContext.Provider>
+      </SizeScope>
+    )
+  },
+  {
+    Trigger: ContextMenuPrimitive.Trigger,
+    Content: ContextMenuContent,
+    Item: MenuItem,
+    Label: DropdownLabel,
+    Separator: DropdownSeparator,
+    Sub: DropdownSub,
+    SubTrigger: DropdownSubTrigger,
+    SubContent: DropdownSubContent,
+  },
+)
 
 export type { ContextMenuContentProps, ContextMenuProps }
 export { ContextMenu, ContextMenuContent }

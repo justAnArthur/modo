@@ -136,114 +136,6 @@ interface SelectProps {
   size?: SizeVariant
 }
 
-/**
- * An animated select menu: fluid hover on the rows, a popup that oozes out of
- * its trigger, and a checkmark that draws itself as the selection lands.
- *
- * Built on Base UI's Select — positioning and collision flipping, dismissal,
- * typeahead, combobox ARIA and the hidden form input all come from the
- * primitive. This layer adds the magnetic hover background, the selected
- * background that melts from the old row to the picked one, a keyboard
- * focus ring that only appears once you actually use the keyboard, and the
- * popup's open and close through the shared morph (see Morph), goo by
- * default. A pick holds the popup open for 300ms so that acknowledgment is
- * seen; Escape and outside presses close at once. The trigger sits on the
- * field box, like Combobox's field. Uncontrolled through `defaultValue` and
- * `defaultOpen`, controlled through `value` + `onValueChange` and `open` +
- * `onOpenChange`.
- *
- * Rows need no `index`: they take their place in document order, inside a
- * `Select.Group` or out of a `map`. A row's label may be any node (an icon
- * and text, a badge): it keeps its own box in the row and in the trigger,
- * where text is trimmed and truncated, and its `textValue` is what typeahead
- * matches.
- *
- * Statics:
- * - `Select.Trigger` — the field: `variant`, `icon`, `placeholder`, `error`;
- *   children replace its value slot (a `Select.Value`).
- * - `Select.Value` — the value slot: the picked row's label, else the muted `placeholder`.
- * - `Select.Content` — the popup: `side`, `align`, `sideOffset`, `container` and the
- *   morph options `from`, `effect`, `hideSource`, `tier`.
- * - `Select.Item` — one row: `value`, optional `index`, `textValue`, `icon`, `disabled`;
- *   its children are the label.
- * - `Select.Group`, `Select.Label`, `Select.Separator` — sections, their captions and
- *   the hairlines between them.
- *
- * @example {@include ./examples.mdx}
- * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/select.tsx Fluid Functionalism
- * @license MIT © 2026 Micka Touillaud
- */
-function Select({
-  children,
-  value: valueProp,
-  defaultValue = '',
-  onValueChange,
-  open,
-  defaultOpen,
-  onOpenChange,
-  disabled: disabledProp,
-  readOnly: readOnlyProp,
-  name,
-  required: requiredProp,
-  size,
-}: SelectProps) {
-  const { disabled, readOnly, required } = useFieldState({
-    disabled: disabledProp,
-    readOnly: readOnlyProp,
-    required: requiredProp,
-  })
-  const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
-  const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
-  const items = useMemo(() => collectSelectItems(children), [children])
-
-  const ack = useRef<number | undefined>(undefined)
-  useEffect(() => () => clearTimeout(ack.current), [])
-
-  // Any other close (Escape, outside press, the trigger) is at once and cancels a pending ack.
-  const handleOpenChange = (next: boolean, details: OpenChangeDetails & { reason: string }) => {
-    clearTimeout(ack.current)
-    if (!next && details.reason === 'item-press') {
-      ack.current = window.setTimeout(() => root.setOpen(false), selectionAckMs)
-      return
-    }
-    root.onOpenChange(next, details)
-  }
-
-  const indexByValue = useMemo(() => new Map(items.map((item, index) => [item.value, index])), [items])
-  const picked = items.find(item => item.value === value)
-  const textLabel = picked === undefined || isTextLabel(picked.label)
-  const ctx = useMemo(
-    () => ({ value, disabled, readOnly, indexByValue, textLabel }),
-    [value, disabled, readOnly, indexByValue, textLabel],
-  )
-
-  return (
-    <SizeScope size={size}>
-      <SelectContext.Provider value={ctx}>
-        <OverlayContext.Provider value={root.state}>
-          {/* Non-modal: the page keeps scrolling and the popup follows its trigger. */}
-          <SelectPrimitive.Root
-            value={value === '' ? null : value}
-            onValueChange={next => setValue(next ?? '')}
-            open={root.open}
-            onOpenChange={handleOpenChange}
-            items={items}
-            disabled={disabled}
-            readOnly={readOnly}
-            name={name}
-            required={required}
-            modal={false}
-          >
-            {children}
-          </SelectPrimitive.Root>
-        </OverlayContext.Provider>
-      </SelectContext.Provider>
-    </SizeScope>
-  )
-}
-
-Select.displayName = 'Select'
-
 interface SelectValueProps {
   /** Shown, muted, while nothing is selected. Defaults to `"Select…"`. */
   placeholder?: ReactNode
@@ -506,13 +398,122 @@ SelectGroup.displayName = 'SelectGroup'
 const SelectLabel = PopupLabel
 const SelectSeparator = PopupSeparator
 
-Select.Trigger = SelectTrigger
-Select.Value = SelectValue
-Select.Content = SelectContent
-Select.Item = SelectItem
-Select.Group = SelectGroup
-Select.Label = SelectLabel
-Select.Separator = SelectSeparator
+/**
+ * An animated select menu: fluid hover on the rows, a popup that oozes out of
+ * its trigger, and a checkmark that draws itself as the selection lands.
+ *
+ * Built on Base UI's Select — positioning and collision flipping, dismissal,
+ * typeahead, combobox ARIA and the hidden form input all come from the
+ * primitive. This layer adds the magnetic hover background, the selected
+ * background that melts from the old row to the picked one, a keyboard
+ * focus ring that only appears once you actually use the keyboard, and the
+ * popup's open and close through the shared morph (see Morph), goo by
+ * default. A pick holds the popup open for 300ms so that acknowledgment is
+ * seen; Escape and outside presses close at once. The trigger sits on the
+ * field box, like Combobox's field. Uncontrolled through `defaultValue` and
+ * `defaultOpen`, controlled through `value` + `onValueChange` and `open` +
+ * `onOpenChange`.
+ *
+ * Rows need no `index`: they take their place in document order, inside a
+ * `Select.Group` or out of a `map`. A row's label may be any node (an icon
+ * and text, a badge): it keeps its own box in the row and in the trigger,
+ * where text is trimmed and truncated, and its `textValue` is what typeahead
+ * matches.
+ *
+ * Statics:
+ * - `Select.Trigger` — the field: `variant`, `icon`, `placeholder`, `error`;
+ *   children replace its value slot (a `Select.Value`).
+ * - `Select.Value` — the value slot: the picked row's label, else the muted `placeholder`.
+ * - `Select.Content` — the popup: `side`, `align`, `sideOffset`, `container` and the
+ *   morph options `from`, `effect`, `hideSource`, `tier`.
+ * - `Select.Item` — one row: `value`, optional `index`, `textValue`, `icon`, `disabled`;
+ *   its children are the label.
+ * - `Select.Group`, `Select.Label`, `Select.Separator` — sections, their captions and
+ *   the hairlines between them.
+ *
+ * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/select.tsx Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
+ */
+const Select = Object.assign(
+  function Select({
+    children,
+    value: valueProp,
+    defaultValue = '',
+    onValueChange,
+    open,
+    defaultOpen,
+    onOpenChange,
+    disabled: disabledProp,
+    readOnly: readOnlyProp,
+    name,
+    required: requiredProp,
+    size,
+  }: SelectProps) {
+    const { disabled, readOnly, required } = useFieldState({
+      disabled: disabledProp,
+      readOnly: readOnlyProp,
+      required: requiredProp,
+    })
+    const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
+    const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
+    const items = useMemo(() => collectSelectItems(children), [children])
+
+    const ack = useRef<number | undefined>(undefined)
+    useEffect(() => () => clearTimeout(ack.current), [])
+
+    // Any other close (Escape, outside press, the trigger) is at once and cancels a pending ack.
+    const handleOpenChange = (next: boolean, details: OpenChangeDetails & { reason: string }) => {
+      clearTimeout(ack.current)
+      if (!next && details.reason === 'item-press') {
+        ack.current = window.setTimeout(() => root.setOpen(false), selectionAckMs)
+        return
+      }
+      root.onOpenChange(next, details)
+    }
+
+    const indexByValue = useMemo(() => new Map(items.map((item, index) => [item.value, index])), [items])
+    const picked = items.find(item => item.value === value)
+    const textLabel = picked === undefined || isTextLabel(picked.label)
+    const ctx = useMemo(
+      () => ({ value, disabled, readOnly, indexByValue, textLabel }),
+      [value, disabled, readOnly, indexByValue, textLabel],
+    )
+
+    return (
+      <SizeScope size={size}>
+        <SelectContext.Provider value={ctx}>
+          <OverlayContext.Provider value={root.state}>
+            {/* Non-modal: the page keeps scrolling and the popup follows its trigger. */}
+            <SelectPrimitive.Root
+              value={value === '' ? null : value}
+              onValueChange={next => setValue(next ?? '')}
+              open={root.open}
+              onOpenChange={handleOpenChange}
+              items={items}
+              disabled={disabled}
+              readOnly={readOnly}
+              name={name}
+              required={required}
+              modal={false}
+            >
+              {children}
+            </SelectPrimitive.Root>
+          </OverlayContext.Provider>
+        </SelectContext.Provider>
+      </SizeScope>
+    )
+  },
+  {
+    Trigger: SelectTrigger,
+    Value: SelectValue,
+    Content: SelectContent,
+    Item: SelectItem,
+    Group: SelectGroup,
+    Label: SelectLabel,
+    Separator: SelectSeparator,
+  },
+)
 
 export type { SelectContentProps, SelectItemProps, SelectProps, SelectTriggerProps, SelectValueProps }
 export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue }

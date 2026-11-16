@@ -173,7 +173,7 @@ Rules:
   - Optional group folders: `<tier>/<group>/<name>/index.tsx`, nesting further (`components/inputs/date-time/calendar/`). A folder without an `index.tsx` is a group.
   - A group is a nested sidebar `Section` and a headed section of the tier overview (`form-controls` → "Form controls"), a nested group one level deeper in both. Each level lists its own items first, then its groups by folder name.
   - The id stays `<name>`, so urls, bundle keys and `tier:id` don't change; ids stay unique per tier across groups.
-  - Compound parts hang off the default export (`Card.Header = …`; TypeScript types the assignments). For a forwardRef const, cast the `Object.assign` result to a type with the parts.
+  - Compound parts hang off the default export through `Object.assign`: `const Card = Object.assign(function Card(…) { … }, { Header: CardHeader })`, the doc block above the `const`, the parts declared before it. For a forwardRef const, cast it to a type with the parts and `Object.assign` them. Not `Card.Header = …`: it typechecks in the source, but bunup's `.d.ts` drops it (ui's `check:dist` catches that).
   - Examples may use compound JSX.
 - `<tier>/<name>/examples.mdx` — the item's examples; `<name>.md` for prose (see **docs**).
 - `guides/**/*.mdx` (under `root`) — free-form pages at `/guides/<slug>`. Frontmatter `title` / `description`; a `01-` prefix orders a file or folder and is dropped from slugs and titles; a folder's `index.mdx` is its landing page; non-ASCII and spaces allowed. Built in the shared build (top-level JSX is a live example; headings feed the TOC). Docs: `lib/docs/guides.md`.

@@ -244,7 +244,8 @@ What makes it read as this system rather than "a component library":
   `lib/*` module; never copy a context into an item.
 - **The docs parser is strict** (authoring.md): props come only from members declared one per line in a
   same-file interface; a `forwardRef`'s first type argument has no `<` or `,`; statics are attached by
-  assignment (`X.Part = …`) or `Object.assign` with a typed cast; examples are hook-free plain JS.
+  `const X = Object.assign(function X(…) {…}, { Part })` or, for a `forwardRef`, `Object.assign` with a typed cast
+  (never `X.Part = …`: bunup's `.d.ts` drops it); examples are hook-free plain JS.
 - **Base UI unmounts a closed popup when `getAnimations()` settles.** JS-driven exits need a hold
   (`holdExit` in `use-morph.ts`); `useMorph` already does it.
 - **Vendored files keep upstream's code** (formatted in the repo style, lint-exempt where needed); their
