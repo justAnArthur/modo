@@ -7,12 +7,12 @@
 
 'use client'
 
-import Kbd from '@justanarthur/modo-ui/components/kbd'
+import Kbd from '@justanarthur/modo-ui/components/data-display/kbd'
 import Input from '@justanarthur/modo-ui/components/inputs/input'
 import Dialog from '@justanarthur/modo-ui/components/overlays/dialog'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import ScrollArea from '@justanarthur/modo-ui/primitives/scroll-area'
+import ScrollArea from '@justanarthur/modo-ui/primitives/layout/scroll-area'
 import { type ReactElement, useEffect } from 'react'
 import { useIcon } from '../../../lib/icons'
 

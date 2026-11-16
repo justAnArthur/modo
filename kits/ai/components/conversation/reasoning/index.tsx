@@ -6,7 +6,7 @@
 
 'use client'
 
-import Accordion from '@justanarthur/modo-ui/components/accordion'
+import Accordion from '@justanarthur/modo-ui/components/containers/accordion'
 import type { ReactNode } from 'react'
 
 interface ReasoningProps {

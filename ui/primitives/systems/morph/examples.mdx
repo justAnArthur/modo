@@ -1,0 +1,136 @@
+import Checkbox from '../../../components/inputs/checkbox'
+import Radio from '../../../components/inputs/radio'
+import Switch from '../../../components/inputs/switch'
+import Tabs from '../../../components/navigation/tabs'
+import FluidHover from '../fluid-hover'
+import Morph from './index'
+
+# Effects
+
+The same panel, four ways in. Goo is the default: the surface melts out of the trigger and pinches off.
+
+<div className="flex w-full flex-wrap items-start justify-center gap-x-6 gap-y-48 pb-40">
+  <Morph effect="goo" label="Goo">
+    <div className="flex flex-col gap-1">
+      <span className="text-subtitle weight-semibold text-foreground">Goo</span>
+      <span className="text-caption text-muted-foreground">A liquid neck to the trigger, then the panel lets go.</span>
+    </div>
+  </Morph>
+  <Morph effect="morph" label="Morph">
+    <div className="flex flex-col gap-1">
+      <span className="text-subtitle weight-semibold text-foreground">Morph</span>
+      <span className="text-caption text-muted-foreground">The trigger's box grows into the panel.</span>
+    </div>
+  </Morph>
+  <Morph effect="slide" label="Slide">
+    <div className="flex flex-col gap-1">
+      <span className="text-subtitle weight-semibold text-foreground">Slide</span>
+      <span className="text-caption text-muted-foreground">The finished panel travels in from the trigger.</span>
+    </div>
+  </Morph>
+  <Morph effect="fade" label="Fade">
+    <div className="flex flex-col gap-1">
+      <span className="text-subtitle weight-semibold text-foreground">Fade</span>
+      <span className="text-caption text-muted-foreground">No movement: what every effect becomes under reduced motion.</span>
+    </div>
+  </Morph>
+</div>
+
+# Sources
+
+`from` picks the starting point. Press the pointer stage anywhere on the button to see the circle start under your cursor; the edges start at the side of the window.
+
+<div className="flex w-full flex-wrap items-start justify-center gap-x-6 gap-y-48 pb-40">
+  <Morph from="trigger" label="Trigger">
+    <span className="text-caption text-muted-foreground">From the pressed trigger.</span>
+  </Morph>
+  <Morph from="pointer" label="Pointer">
+    <span className="text-caption text-muted-foreground">From the press point, as a circle.</span>
+  </Morph>
+  <Morph from="center" label="Center">
+    <span className="text-caption text-muted-foreground">Unfolds from its own center.</span>
+  </Morph>
+  <Morph from="left" label="Left edge">
+    <span className="text-caption text-muted-foreground">From the left side of the window.</span>
+  </Morph>
+  <Morph from="bottom" label="Bottom edge">
+    <span className="text-caption text-muted-foreground">From the bottom of the window.</span>
+  </Morph>
+</div>
+
+# Becoming the panel
+
+With `hideSource`, the trigger disappears while the panel is open, so it reads as turning into it. With `effect="morph"` too, the panel opens in place, over its trigger: press the panel to close it.
+
+<div className="flex w-full flex-wrap items-start justify-center gap-x-6 gap-y-48 pb-40">
+  <Morph hideSource label="Goo">
+    <span className="text-caption text-muted-foreground">The trigger melts into the panel.</span>
+  </Morph>
+  <Morph hideSource effect="morph" label="Morph">
+    <span className="text-caption text-muted-foreground">The trigger grows into the panel.</span>
+  </Morph>
+</div>
+
+# Two speeds
+
+Goo always runs on `spring.goo`, so the neck has time to stretch; a plain morph takes a tier: `moderate` for small panels, `slow` by default.
+
+<div className="flex w-full flex-wrap items-start justify-center gap-x-6 gap-y-48 pb-40">
+  <Morph effect="morph" tier="moderate" label="Moderate">
+    <span className="text-caption text-muted-foreground">spring.moderate</span>
+  </Morph>
+  <Morph effect="morph" tier="slow" label="Slow">
+    <span className="text-caption text-muted-foreground">spring.slow</span>
+  </Morph>
+</div>
+
+# Liquid indicators
+
+Click a tab next door: the indicator stretches toward it and lets go. Click a far one: a droplet stays behind and catches up.
+
+<div className="flex w-full flex-col items-center gap-6">
+  <Tabs defaultValue="library" className="max-w-full">
+    <Tabs.List>
+      <Tabs.Item value="library" label="Library" />
+      <Tabs.Item value="recents" label="Recents" />
+      <Tabs.Item value="favorites" label="Favorites" />
+      <Tabs.Item value="settings" label="Settings" />
+    </Tabs.List>
+  </Tabs>
+  <Tabs variant="subtle" defaultValue="Teamspaces">
+    <Tabs.List>
+      {['Teamspaces', 'Recents', 'Favorites', 'Shared'].map(label => (
+        <Tabs.Item key={label} value={label} label={label} />
+      ))}
+    </Tabs.List>
+  </Tabs>
+</div>
+
+# Thumbs, picks and highlights
+
+The thumb melts across its track, the radio pick flows between rows, and the hover highlight drips from row to row.
+
+<div className="flex flex-wrap items-start justify-center gap-6">
+  <div className="flex flex-col gap-2">
+    <Switch label="Wi-Fi" />
+    <Switch label="Bluetooth" defaultChecked />
+  </div>
+  <Radio.Group defaultSelectedIndex={0} className="w-48">
+    {['Daily', 'Weekly', 'Monthly'].map(label => (
+      <Radio key={label} label={label} />
+    ))}
+  </Radio.Group>
+  <div className="w-48 rounded-xl border border-border/60">
+    <FluidHover className="p-2" items={['Inbox', 'Drafts', 'Sent', 'Archive']} />
+  </div>
+</div>
+
+# Merging picks
+
+Check Bananas: it grows out of its row and melts the picks above and below into one. Uncheck it to pinch them apart.
+
+<Checkbox.Group defaultCheckedIndices={[0, 2]}>
+  {['Apples', 'Bananas', 'Cherries', 'Dates'].map(label => (
+    <Checkbox key={label} label={label} />
+  ))}
+</Checkbox.Group>

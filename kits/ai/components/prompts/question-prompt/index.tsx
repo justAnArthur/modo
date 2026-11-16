@@ -6,12 +6,12 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
+import Button from '@justanarthur/modo-ui/components/actions/button'
 import Checkbox from '@justanarthur/modo-ui/components/inputs/checkbox'
 import ChoiceList from '@justanarthur/modo-ui/components/inputs/choice-list'
 import Input from '@justanarthur/modo-ui/components/inputs/input'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import Code from '@justanarthur/modo-ui/primitives/code'
+import Code from '@justanarthur/modo-ui/primitives/content/code'
 import { useState } from 'react'
 import PromptCard from '../prompt-card'
 

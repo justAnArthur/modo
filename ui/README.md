@@ -24,13 +24,13 @@ import Dialog from '@justanarthur/modo-ui/components/overlays/dialog'
 ```
 
 Subpaths follow the docs' tiers and groups: `primitives/*`, `components/*`
-(`components/button`, `components/inputs/select`, …) and `blocks/*`
+(`components/actions/button`, `components/inputs/select`, …) and `blocks/*`
 (`blocks/sidebar-app`). The shared systems are subpaths too, for components of
 your own: `lib/utils`, `lib/springs`, `lib/size-scale`, `lib/shape-classes`,
 `lib/field-classes`, `lib/field-box`, `lib/size-context`, `lib/shape-context`,
 `lib/icon-context` (`useIcon`, `useIcons`, `IconProvider`), `lib/use-controllable-state`, `lib/use-morph`, `lib/surface-classes` and
 `lib/goo-indicator`; Button's, Badge's and FileDropzone's pure tables are
-`components/button/variants`, `components/badge/variants` and
+`components/actions/button/variants`, `components/data-display/badge/variants` and
 `components/inputs/file-dropzone/variants`.
 
 ## Styles
@@ -222,7 +222,7 @@ A [modo](https://github.com/justAnArthur/modo/tree/main/lib) site can list ui
 items next to its own. Re-export one as an item:
 
 ```tsx
-// components/button/index.tsx
+// components/actions/button/index.tsx
 export { default } from '@justanarthur/modo-ui/components/button'
 ```
 

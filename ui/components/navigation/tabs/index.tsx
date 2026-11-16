@@ -20,7 +20,7 @@ import {
 import type { SizeVariant } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
-import { SizeScope } from '../../../primitives/sizes'
+import { SizeScope } from '../../../primitives/systems/sizes'
 import { TabsContext, type TabsVariant } from './context'
 import { TabItem } from './item'
 import { TabsList } from './list'

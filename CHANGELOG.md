@@ -30,6 +30,39 @@ Fixes:
 Breaking:
 
 - **The AI items left modo-ui for `@justanarthur/modo-ui-ai`.** `InputMessage` (with `FileThumbnail` and the types `InputMessageProps`, `InputMessageSlotContext`, `InputMessageStatus`, `QueuedMessage`) is the ai kit's `Composer.Draft` (`ComposerDraft`), and the Composer block takes its draft props; `ThinkingIndicator` (`ThinkingIndicatorProps`) is the ai kit's `Message.Working`, its goo look only. The subpaths `components/AI/input-message` and `components/AI/thinking-indicator`, the `.shimmer-text` utility and the optional peer `pdfjs-dist` (now the kit's) are gone.
+- **Every primitive and component sits in a group folder**, so the sidebar and the tier overviews read as a few sections: primitives in `systems/` (Craft, Sizes, Surface, Motion, Morph, FluidHover), `layout/` (ScrollArea, Separator, Resizable, VirtualList, Sortable) and `content/` (Code, Skeleton); components in `actions/`, `data-display/`, `feedback/` and `containers/` beside `inputs/`, `navigation/` and `overlays/`. Docs URLs keep the item id; the package subpaths follow the folders, with no aliases for the old ones (the barrel is unchanged; `variants` moves with its item, e.g. `components/actions/button/variants`):
+
+| Old subpath | New subpath |
+|---|---|
+| `primitives/code` | `primitives/content/code` |
+| `primitives/craft` | `primitives/systems/craft` |
+| `primitives/fluid-hover` | `primitives/systems/fluid-hover` |
+| `primitives/morph` | `primitives/systems/morph` |
+| `primitives/motion` | `primitives/systems/motion` |
+| `primitives/resizable` | `primitives/layout/resizable` |
+| `primitives/scroll-area` | `primitives/layout/scroll-area` |
+| `primitives/separator` | `primitives/layout/separator` |
+| `primitives/sizes` | `primitives/systems/sizes` |
+| `primitives/skeleton` | `primitives/content/skeleton` |
+| `primitives/sortable` | `primitives/layout/sortable` |
+| `primitives/surface` | `primitives/systems/surface` |
+| `primitives/virtual-list` | `primitives/layout/virtual-list` |
+| `components/accordion` | `components/containers/accordion` |
+| `components/avatar` | `components/data-display/avatar` |
+| `components/badge` | `components/data-display/badge` |
+| `components/button` | `components/actions/button` |
+| `components/card` | `components/containers/card` |
+| `components/copy` | `components/actions/copy` |
+| `components/diff` | `components/data-display/diff` |
+| `components/empty-state` | `components/feedback/empty-state` |
+| `components/kbd` | `components/data-display/kbd` |
+| `components/list` | `components/data-display/list` |
+| `components/log-view` | `components/data-display/log-view` |
+| `components/markdown` | `components/data-display/markdown` |
+| `components/meter` | `components/feedback/meter` |
+| `components/progress` | `components/feedback/progress` |
+| `components/status-dot` | `components/feedback/status-dot` |
+| `components/table` | `components/data-display/table` |
 
 Fixes:
 

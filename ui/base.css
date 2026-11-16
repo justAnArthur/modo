@@ -11,7 +11,7 @@
  *
  * Where upstream's sections went:
  * - §1 design tokens → tokens/colors.css; the surface ladder and shadow
- *   recipes → primitives/surface/surface.css. All HEX migrated to oklch.
+ *   recipes → primitives/systems/surface/surface.css. All HEX migrated to oklch.
  * - §2 theme switching → the color-scheme / --overlay block below (the
  *   shadow re-pointing lives in surface.css).
  * - §3 `@theme inline` → preset.ts `theme`; the `--fs-*` roles and

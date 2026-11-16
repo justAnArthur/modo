@@ -33,7 +33,7 @@ import { SurfaceProvider, useLift } from '../../../lib/surface-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { holdExit, type MorphOrigin, useMorph, useMorphOrigin } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import Button from '../../button'
+import Button from '../../actions/button'
 
 /** One image: its source, its description, and optionally a smaller thumbnail and a caption. */
 interface LightboxImage {

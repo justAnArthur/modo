@@ -7,15 +7,15 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import { Spinner } from '@justanarthur/modo-ui/components/progress'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import { Spinner } from '@justanarthur/modo-ui/components/feedback/progress'
 import Checkbox from '@justanarthur/modo-ui/components/inputs/checkbox'
 import Input from '@justanarthur/modo-ui/components/inputs/input'
 import KeyValue, { type KeyValuePair } from '@justanarthur/modo-ui/components/inputs/key-value'
 import Dialog from '@justanarthur/modo-ui/components/overlays/dialog'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import Code from '@justanarthur/modo-ui/primitives/code'
+import Code from '@justanarthur/modo-ui/primitives/content/code'
 import { type ReactElement, type ReactNode, useState } from 'react'
 import { type ConfigScope, Field, Fieldset, SCOPE_NOTE, SCOPES, Segmented } from '../../../lib/config-parts'
 import { useIcon } from '../../../lib/icons'

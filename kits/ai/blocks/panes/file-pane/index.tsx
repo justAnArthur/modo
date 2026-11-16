@@ -8,7 +8,7 @@
 
 import Breadcrumb from '@justanarthur/modo-ui/components/navigation/breadcrumb'
 import Tree, { type TreeItem } from '@justanarthur/modo-ui/components/navigation/tree'
-import Code from '@justanarthur/modo-ui/primitives/code'
+import Code from '@justanarthur/modo-ui/primitives/content/code'
 import { useState } from 'react'
 import { useIcon } from '../../../lib/icons'
 import { IconAction, PaneSection } from '../../../lib/pane-parts'

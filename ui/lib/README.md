@@ -17,7 +17,7 @@ Reach for these before writing the pattern by hand. One line each: what it is, w
 
 - `size-scale.ts` — `sizeMap`, `typeScale` and their types (`SizeVariant`, `SizeClasses`): the ladder's class tables, pure, so a Server Component can read them. `size-context.tsx` re-exports them beside the hooks (`useSize`, `useSizeVariant`, `useTypeScale`).
 - `shape-classes.ts` — `shapeMap` and `ShapeVariant`: the shape's class tables, pure. `shape-context.tsx` re-exports them beside `ShapeProvider` / `useShape`.
-- `primitives/sizes` `SizeScope` — `<SizeScope size={size}>`: wraps a component's subtree for its own `size` prop. Replaces `size ? <SizeProvider size={size}>{x}</SizeProvider> : x`.
+- `primitives/systems/sizes` `SizeScope` — `<SizeScope size={size}>`: wraps a component's subtree for its own `size` prop. Replaces `size ? <SizeProvider size={size}>{x}</SizeProvider> : x`.
 - `surface-context.tsx` `useLift(offset)` — the level `offset` above the substrate, capped at 8. Replaces `Math.min(useSurface() + N, 8)`; re-provide it with `SurfaceProvider`.
 - `row-index.tsx` — `IndexedRows` numbers a group's rows; `useRowIndex(own?)` is a row's index (0 outside a group); `useRowPosition()` is `undefined` outside `IndexedRows` (a table's header row). `isRow(child)` picks which children count, so a label or separator between rows takes no position (Dropdown).
 

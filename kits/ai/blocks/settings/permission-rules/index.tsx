@@ -7,9 +7,9 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import Badge, { type BadgeColor } from '@justanarthur/modo-ui/components/badge'
-import List from '@justanarthur/modo-ui/components/list'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import Badge, { type BadgeColor } from '@justanarthur/modo-ui/components/data-display/badge'
+import List from '@justanarthur/modo-ui/components/data-display/list'
 import Input from '@justanarthur/modo-ui/components/inputs/input'
 import Select from '@justanarthur/modo-ui/components/inputs/select'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'

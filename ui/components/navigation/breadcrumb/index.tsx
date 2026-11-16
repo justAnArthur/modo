@@ -13,7 +13,7 @@ import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { type UseFluidHoverReturn, useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
-import { SizeScope } from '../../../primitives/sizes'
+import { SizeScope } from '../../../primitives/systems/sizes'
 import Dropdown from '../../overlays/dropdown'
 
 interface BreadcrumbItemProps {

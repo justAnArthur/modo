@@ -19,7 +19,7 @@ import type { Preset } from 'unocss'
  *   its shape, and its default `dark: 'class'` is the `.dark` ancestor
  *   contract the components are written against.
  * - Theme colors point straight at the CSS variables in tokens/colors.css and
- *   primitives/surface/surface.css. wind4 applies an opacity modifier to a
+ *   primitives/systems/surface/surface.css. wind4 applies an opacity modifier to a
  *   var() color with color-mix(), so `bg-accent/12` works on the
  *   light-dark() tokens.
  * - The radius scale is wind4's default on purpose: shape-context pairs

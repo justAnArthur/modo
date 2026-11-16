@@ -13,7 +13,7 @@ import { useFieldState } from '../../../lib/field-box'
 import { OverlayContext, useOverlayRoot } from '../../../lib/overlay'
 import type { SizeVariant } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
-import { SizeScope } from '../../../primitives/sizes'
+import { SizeScope } from '../../../primitives/systems/sizes'
 import {
   ComboboxContext,
   ComboboxHighlightContext,

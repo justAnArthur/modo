@@ -5,8 +5,8 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import Code from '@justanarthur/modo-ui/primitives/code'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import Code from '@justanarthur/modo-ui/primitives/content/code'
 import type { ReactNode } from 'react'
 import PromptCard from '../prompt-card'
 

@@ -14,13 +14,13 @@ import {
   useFluidHover,
   useRegisterFluidHoverItem,
 } from '@justanarthur/modo-ui'
-import Button from '@justanarthur/modo-ui/components/button'
-import StatusDot from '@justanarthur/modo-ui/components/status-dot'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import StatusDot from '@justanarthur/modo-ui/components/feedback/status-dot'
 import Popover from '@justanarthur/modo-ui/components/overlays/popover'
 import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import ScrollArea from '@justanarthur/modo-ui/primitives/scroll-area'
-import { SizeProvider } from '@justanarthur/modo-ui/primitives/sizes'
+import ScrollArea from '@justanarthur/modo-ui/primitives/layout/scroll-area'
+import { SizeProvider } from '@justanarthur/modo-ui/primitives/systems/sizes'
 import { type ReactElement, type ReactNode, useRef, useState } from 'react'
 import { type IconName, useIcon } from '../../../lib/icons'
 

@@ -6,8 +6,8 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import { Spinner } from '@justanarthur/modo-ui/components/progress'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import { Spinner } from '@justanarthur/modo-ui/components/feedback/progress'
 import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { useState } from 'react'

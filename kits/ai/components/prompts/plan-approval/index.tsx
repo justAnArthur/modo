@@ -5,10 +5,10 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import { MarkdownProse } from '@justanarthur/modo-ui/components/markdown'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import { MarkdownProse } from '@justanarthur/modo-ui/components/data-display/markdown'
 import Textarea from '@justanarthur/modo-ui/components/inputs/textarea'
-import ScrollArea from '@justanarthur/modo-ui/primitives/scroll-area'
+import ScrollArea from '@justanarthur/modo-ui/primitives/layout/scroll-area'
 import { type ReactNode, useState } from 'react'
 import PromptCard from '../prompt-card'
 

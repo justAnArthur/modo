@@ -26,7 +26,7 @@ import { type SizeVariant, useSizeVariant } from '../../../lib/size-context'
 import { type SlotProps, slotPart } from '../../../lib/slot'
 import { type MorphProps, useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import { Button } from '../../button'
+import { Button } from '../../actions/button'
 
 type DialogSlotProps = SlotProps
 type DialogWidth = 'sm' | 'lg' | 'xl'

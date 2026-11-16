@@ -7,10 +7,10 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import Badge, { type BadgeColor } from '@justanarthur/modo-ui/components/badge'
-import Markdown from '@justanarthur/modo-ui/components/markdown'
-import EmptyState from '@justanarthur/modo-ui/components/empty-state'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import Badge, { type BadgeColor } from '@justanarthur/modo-ui/components/data-display/badge'
+import Markdown from '@justanarthur/modo-ui/components/data-display/markdown'
+import EmptyState from '@justanarthur/modo-ui/components/feedback/empty-state'
 import ChoiceList from '@justanarthur/modo-ui/components/inputs/choice-list'
 import Input from '@justanarthur/modo-ui/components/inputs/input'
 import Select from '@justanarthur/modo-ui/components/inputs/select'
@@ -18,7 +18,7 @@ import Tabs from '@justanarthur/modo-ui/components/navigation/tabs'
 import Dialog from '@justanarthur/modo-ui/components/overlays/dialog'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import ScrollArea from '@justanarthur/modo-ui/primitives/scroll-area'
+import ScrollArea from '@justanarthur/modo-ui/primitives/layout/scroll-area'
 import { type ReactElement, useState } from 'react'
 import { useIcon } from '../../../lib/icons'
 

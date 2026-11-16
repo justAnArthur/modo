@@ -5,8 +5,8 @@
  * and status, and a few updates.
  */
 
-import Badge from '../../components/badge'
-import Card from '../../components/card'
+import Card from '../../components/containers/card'
+import Badge from '../../components/data-display/badge'
 import type { NavItem } from './nav-data'
 
 const STATUS = {

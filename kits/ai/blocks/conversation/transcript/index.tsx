@@ -9,10 +9,10 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import Markdown from '@justanarthur/modo-ui/components/markdown'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import Markdown from '@justanarthur/modo-ui/components/data-display/markdown'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import ScrollArea from '@justanarthur/modo-ui/primitives/scroll-area'
+import ScrollArea from '@justanarthur/modo-ui/primitives/layout/scroll-area'
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import AgentRun from '../../../components/conversation/agent-run'
 import ChapterNav, { type ChapterNavItem } from '../../../components/conversation/chapter-nav'

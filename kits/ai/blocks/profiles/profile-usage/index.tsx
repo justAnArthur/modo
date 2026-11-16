@@ -8,12 +8,12 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import List, { LIST_POPOVER } from '@justanarthur/modo-ui/components/list'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import List, { LIST_POPOVER } from '@justanarthur/modo-ui/components/data-display/list'
 import Sidebar from '@justanarthur/modo-ui/components/navigation/sidebar'
 import Popover from '@justanarthur/modo-ui/components/overlays/popover'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import { SizeProvider } from '@justanarthur/modo-ui/primitives/sizes'
+import { SizeProvider } from '@justanarthur/modo-ui/primitives/systems/sizes'
 import { useIcon } from '../../../lib/icons'
 import { duration, type LimitPace, paceOf, percent, VERDICT_TEXT } from '../../../lib/pace'
 import { PaceBar } from '../../../lib/pace-bar'

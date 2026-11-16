@@ -5,11 +5,11 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import Accordion from '@justanarthur/modo-ui/components/accordion'
-import Badge from '@justanarthur/modo-ui/components/badge'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import Accordion from '@justanarthur/modo-ui/components/containers/accordion'
+import Badge from '@justanarthur/modo-ui/components/data-display/badge'
 import Switch from '@justanarthur/modo-ui/components/inputs/switch'
-import Code from '@justanarthur/modo-ui/primitives/code'
+import Code from '@justanarthur/modo-ui/primitives/content/code'
 import { useIcon } from '../../../lib/icons'
 import { IconAction, PaneSection } from '../../../lib/pane-parts'
 import type { PaneCheck, PanePullRequest } from '../../../lib/side-pane-types'

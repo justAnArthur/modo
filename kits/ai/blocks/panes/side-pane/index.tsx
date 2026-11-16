@@ -8,14 +8,14 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
+import Button from '@justanarthur/modo-ui/components/actions/button'
 import Tabs from '@justanarthur/modo-ui/components/navigation/tabs'
 import Dropdown from '@justanarthur/modo-ui/components/overlays/dropdown'
 import Tooltip from '@justanarthur/modo-ui/components/overlays/tooltip'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import ScrollArea from '@justanarthur/modo-ui/primitives/scroll-area'
-import { SizeProvider } from '@justanarthur/modo-ui/primitives/sizes'
+import ScrollArea from '@justanarthur/modo-ui/primitives/layout/scroll-area'
+import { SizeProvider } from '@justanarthur/modo-ui/primitives/systems/sizes'
 import { type IconName, useIcon, useIcons } from '../../../lib/icons'
 import type {
   PaneArtifact,

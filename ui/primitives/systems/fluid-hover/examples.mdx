@@ -1,0 +1,84 @@
+import ScrollArea from '../../layout/scroll-area'
+import FluidHover from './index'
+
+# Blink or glide
+
+Plain `:hover` blinks off in every gap; this one glides, melting from row to
+row. Run the cursor down the rows, into the padding and past the last row.
+
+<div className="w-64 rounded-xl border border-border/60">
+  <FluidHover className="p-2" items={['Inbox', 'Drafts', 'Sent', 'Archive', 'Trash']} />
+</div>
+
+# 3 axes
+
+The same highlight down a list, across a strip and to the closest card.
+
+<div className="flex w-full max-w-md flex-col gap-8">
+  <div className="flex flex-col gap-2">
+    <span className="text-caption text-muted-foreground">axis y — lists: menus, tables, radios</span>
+    <div className="rounded-xl border border-border/60">
+      <FluidHover className="p-2" items={['Inbox', 'Drafts', 'Sent', 'Archive', 'Trash']} />
+    </div>
+  </div>
+  <div className="flex flex-col gap-2">
+    <span className="text-caption text-muted-foreground">axis x — strips: tabs, segmented controls</span>
+    <div className="w-max max-w-full overflow-x-auto scrollbar-hide rounded-xl border border-border/60">
+      <FluidHover axis="x" className="p-1" items={['Library', 'Recents', 'Favorites', 'Settings']} />
+    </div>
+  </div>
+  <div className="flex flex-col gap-2">
+    <span className="text-caption text-muted-foreground">axis xy — grids: card groups</span>
+    <FluidHover columns={2} className="rounded-xl border border-border/60 p-2">
+      {[
+        { title: 'Inbox', description: 'Everything new lands here.' },
+        { title: 'Drafts', description: 'Unsent, saved as you type.' },
+        { title: 'Sent', description: 'Delivered and archived.' },
+        { title: 'Trash', description: 'Emptied after 30 days.' },
+      ].map((card) => (
+        <FluidHover.Item key={card.title}>
+          <span className="text-body text-foreground">{card.title}</span>
+          <span className="text-caption text-muted-foreground">{card.description}</span>
+        </FluidHover.Item>
+      ))}
+    </FluidHover>
+  </div>
+</div>
+
+# When to split a list
+
+The workspace rows, nested chats included, are one list; the account rows
+below the divider are a second. Knowledge is disabled.
+
+<div className="w-64 rounded-xl border border-border/60">
+  <FluidHover className="p-2">
+    <FluidHover.Item>Chat</FluidHover.Item>
+    <FluidHover.Item className="text-muted-foreground"><span className="w-4 shrink-0" />Today</FluidHover.Item>
+    <FluidHover.Item className="text-muted-foreground"><span className="w-4 shrink-0" />Yesterday</FluidHover.Item>
+    <FluidHover.Item>Agents</FluidHover.Item>
+    <FluidHover.Item disabled>Knowledge</FluidHover.Item>
+    <FluidHover.Item>Runs</FluidHover.Item>
+  </FluidHover>
+  <div className="h-px bg-border" />
+  <FluidHover className="p-2" items={['Profile', 'Log out']} />
+</div>
+
+# What it costs
+
+60 rows, and the work per move does not grow with them.
+
+<ScrollArea viewportClassName="scroll-fade" className="h-72 w-72 rounded-xl border border-border/60">
+  <FluidHover
+    className="p-2"
+    items={Array.from({ length: 60 }, (_, i) => 'Message ' + String(i + 1).padStart(3, '0'))}
+  />
+</ScrollArea>
+
+# Reduced motion
+
+This list follows the reduce-motion setting of the system it runs on: turn
+it on to see the highlight fade in place instead of sliding.
+
+<div className="w-64 rounded-xl border border-border/60">
+  <FluidHover className="p-2" items={['Inbox', 'Drafts', 'Sent', 'Archive', 'Trash']} />
+</div>

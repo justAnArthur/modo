@@ -36,7 +36,7 @@ import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useLift } from '../../../lib/surface-context'
 import { GOO_BLUR_RATIO, holdExit } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import Button from '../../button'
+import Button from '../../actions/button'
 import { type ToastSource, type ToastType, toastApi } from './manager'
 
 type ToastPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'

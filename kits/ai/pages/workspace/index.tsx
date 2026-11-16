@@ -8,9 +8,9 @@
 'use client'
 
 import DesktopShell from '@justanarthur/modo-ui/blocks/desktop-shell'
-import Button from '@justanarthur/modo-ui/components/button'
-import Badge from '@justanarthur/modo-ui/components/badge'
-import Diff from '@justanarthur/modo-ui/components/diff'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import Badge from '@justanarthur/modo-ui/components/data-display/badge'
+import Diff from '@justanarthur/modo-ui/components/data-display/diff'
 import EditableText from '@justanarthur/modo-ui/components/inputs/editable-text'
 import {
   DropdownContent,
@@ -19,7 +19,7 @@ import {
   MenuItem,
 } from '@justanarthur/modo-ui/components/overlays/dropdown'
 import Tooltip from '@justanarthur/modo-ui/components/overlays/tooltip'
-import Resizable from '@justanarthur/modo-ui/primitives/resizable'
+import Resizable from '@justanarthur/modo-ui/primitives/layout/resizable'
 import { Fragment, useState } from 'react'
 import AgentPrompt from '../../blocks/conversation/agent-prompt'
 import Composer from '../../blocks/conversation/composer'

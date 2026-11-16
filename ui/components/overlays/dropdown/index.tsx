@@ -31,8 +31,8 @@ import { useFluidHover } from '../../../lib/use-fluid-hover'
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../../lib/use-merge-split'
 import type { MorphProps } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import { SizeScope } from '../../../primitives/sizes'
-import { Elevated } from '../../../primitives/surface'
+import { SizeScope } from '../../../primitives/systems/sizes'
+import { Elevated } from '../../../primitives/systems/surface'
 import { DropdownEmpty, DropdownFilterContext, DropdownSearch, type DropdownSearchProps } from './dropdown-search'
 import {
   DropdownContext,

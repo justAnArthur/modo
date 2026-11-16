@@ -5,7 +5,7 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
+import Button from '@justanarthur/modo-ui/components/actions/button'
 import Switch from '@justanarthur/modo-ui/components/inputs/switch'
 import { useIcon } from '../../../lib/icons'
 import { Group, Section, Toggles } from '../../../lib/settings-parts'

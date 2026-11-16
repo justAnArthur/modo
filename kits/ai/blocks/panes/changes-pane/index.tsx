@@ -5,8 +5,8 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import Diff, { parsePatch } from '@justanarthur/modo-ui/components/diff'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import Diff, { parsePatch } from '@justanarthur/modo-ui/components/data-display/diff'
 import ChoiceList from '@justanarthur/modo-ui/components/inputs/choice-list'
 import Input from '@justanarthur/modo-ui/components/inputs/input'
 import { useSize } from '@justanarthur/modo-ui/lib/size-context'

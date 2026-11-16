@@ -7,9 +7,9 @@
 
 'use client'
 
-import Accordion from '@justanarthur/modo-ui/components/accordion'
-import { Spinner } from '@justanarthur/modo-ui/components/progress'
-import { statusGlyph } from '@justanarthur/modo-ui/components/status-dot'
+import Accordion from '@justanarthur/modo-ui/components/containers/accordion'
+import { Spinner } from '@justanarthur/modo-ui/components/feedback/progress'
+import { statusGlyph } from '@justanarthur/modo-ui/components/feedback/status-dot'
 import type { ReactNode } from 'react'
 import { type IconName, useIcon } from '../../../lib/icons'
 

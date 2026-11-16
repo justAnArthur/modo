@@ -15,7 +15,7 @@ export default defineConfig({
   },
   vite: './vite.ts',
   shell: {
-    Button: './components/button',
+    Button: './components/actions/button',
     Select: './modo.components.tsx#Select',
     Icon: './modo.components.tsx#Icon',
     Sidebar: './modo.components.tsx#DocsNav',

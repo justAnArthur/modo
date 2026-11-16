@@ -12,7 +12,7 @@
 'use client'
 
 import { SidebarSearchField } from '@justanarthur/modo-ui/blocks/sidebar-app'
-import Kbd from '@justanarthur/modo-ui/components/kbd'
+import Kbd from '@justanarthur/modo-ui/components/data-display/kbd'
 import Sidebar from '@justanarthur/modo-ui/components/navigation/sidebar'
 import {
   DropdownContent,
@@ -21,7 +21,7 @@ import {
   MenuItem,
 } from '@justanarthur/modo-ui/components/overlays/dropdown'
 import Tooltip from '@justanarthur/modo-ui/components/overlays/tooltip'
-import Sortable, { useSortableHandle } from '@justanarthur/modo-ui/primitives/sortable'
+import Sortable, { useSortableHandle } from '@justanarthur/modo-ui/primitives/layout/sortable'
 import { useMemo } from 'react'
 import { type IconComponent, useIcon } from '../../../lib/icons'
 import { STATUS_GLYPH, STATUS_LABEL } from '../../../lib/status-glyph'

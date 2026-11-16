@@ -7,8 +7,8 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import List, { LIST_POPOVER } from '@justanarthur/modo-ui/components/list'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import List, { LIST_POPOVER } from '@justanarthur/modo-ui/components/data-display/list'
 import ChoiceList from '@justanarthur/modo-ui/components/inputs/choice-list'
 import Popover from '@justanarthur/modo-ui/components/overlays/popover'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'

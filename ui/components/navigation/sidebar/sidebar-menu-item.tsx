@@ -23,7 +23,7 @@ import type { SizeVariant } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { useIsoLayoutEffect } from '../../../lib/use-iso-layout-effect'
 import { cn } from '../../../lib/utils'
-import { SizeScope } from '../../../primitives/sizes'
+import { SizeScope } from '../../../primitives/systems/sizes'
 import { MenuItemContext, type MenuItemContextValue, MenuScopeContext, useMenuScope } from './menu-scope'
 
 export interface SidebarMenuProps extends HTMLAttributes<HTMLUListElement> {

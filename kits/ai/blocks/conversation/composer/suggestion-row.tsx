@@ -9,7 +9,7 @@
 import { useIcon } from '@justanarthur/modo-ui/lib/icon-context'
 import { useSize } from '@justanarthur/modo-ui/lib/size-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import { useRegisterFluidHoverItem } from '@justanarthur/modo-ui/primitives/fluid-hover'
+import { useRegisterFluidHoverItem } from '@justanarthur/modo-ui/primitives/systems/fluid-hover'
 import { useRef } from 'react'
 
 interface SuggestionRowProps {

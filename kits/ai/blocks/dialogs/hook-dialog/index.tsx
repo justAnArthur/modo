@@ -6,14 +6,14 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
+import Button from '@justanarthur/modo-ui/components/actions/button'
 import Input from '@justanarthur/modo-ui/components/inputs/input'
 import Select from '@justanarthur/modo-ui/components/inputs/select'
 import Textarea from '@justanarthur/modo-ui/components/inputs/textarea'
 import Dialog from '@justanarthur/modo-ui/components/overlays/dialog'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import Code from '@justanarthur/modo-ui/primitives/code'
+import Code from '@justanarthur/modo-ui/primitives/content/code'
 import { type ReactElement, useState } from 'react'
 import {
   type ConfigScope,

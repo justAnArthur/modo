@@ -6,10 +6,10 @@
 
 'use client'
 
-import Badge from '@justanarthur/modo-ui/components/badge'
+import Badge from '@justanarthur/modo-ui/components/data-display/badge'
 import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import Elevated from '@justanarthur/modo-ui/primitives/surface'
+import Elevated from '@justanarthur/modo-ui/primitives/systems/surface'
 import type { ReactNode } from 'react'
 import { type IconName, useIcon } from '../../../lib/icons'
 

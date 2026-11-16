@@ -28,7 +28,7 @@ Read in this order and stop when you have what you need:
 | Read | For |
 |---|---|
 | `ui/DESIGN.md` | The look: every token, the roles, elevation, shapes, motion, do's and don'ts. |
-| `ui/primitives/craft` | The rules as bad / good pairs you can try in the dev server (`/docs/primitives/craft`). |
+| `ui/primitives/systems/craft` | The rules as bad / good pairs you can try in the dev server (`/docs/primitives/craft`). |
 | This file | The systems as code, the workflow, the quality bar, gotchas. |
 | [references/components.md](references/components.md) | What already exists (statics, key props, systems used) and which file to copy for a new kind of thing. |
 | [references/motion.md](references/motion.md) | Recipes: springs, fluid hover, liquid indicators, morphing overlays, shared parts, ghost-span, icon swaps, state morphs. |
@@ -54,9 +54,9 @@ Upstream's craft, docs and snippets assume a shadcn + Tailwind + Next app. Read 
 | `typeClass(role)`, `useSize().type.<role>`, `--fs-*` / `--lh-*` | `text-<role>` / `text-<role>-compact` utilities over `--text-*` / `--leading-*`. Compact keeps the role's leading. |
 | `fontWeights.semibold` + inline `fontVariationSettings` | `weight-normal\|medium\|semibold\|bold` utilities. |
 | `duration-80\|160\|240`, a hex focus ring | `duration-fast\|moderate\|slow[-exit]`; `ring-focus-ring` / `border-focus-ring`. |
-| `@/hooks/use-fluid-hover`, `@/components/fluid-hover-highlight` | `lib/use-fluid-hover.ts`, `lib/fluid-hover-highlight.tsx` (re-exported by `primitives/fluid-hover`). The fill is a `GooIndicator`: it melts from row to row. |
-| `@/lib/elevated` (`Elevated`) | `primitives/surface`; tables in `lib/surface-classes.ts`, context in `lib/surface-context.tsx`. |
-| `SizeProvider` from `@/lib/size-context` | `primitives/sizes`; the hooks stay in `lib/size-context.tsx`. |
+| `@/hooks/use-fluid-hover`, `@/components/fluid-hover-highlight` | `lib/use-fluid-hover.ts`, `lib/fluid-hover-highlight.tsx` (re-exported by `primitives/systems/fluid-hover`). The fill is a `GooIndicator`: it melts from row to row. |
+| `@/lib/elevated` (`Elevated`) | `primitives/systems/surface`; tables in `lib/surface-classes.ts`, context in `lib/surface-context.tsx`. |
+| `SizeProvider` from `@/lib/size-context` | `primitives/systems/sizes`; the hooks stay in `lib/size-context.tsx`. |
 | Popups enter with `scaleY`, tooltips slide + fade, indicators slide | The morph layer (`lib/use-morph.ts` + `lib/morph-layers.tsx`) and the liquid indicators (`lib/goo-indicator.tsx`). |
 | `<MotionConfig reducedMotion="user">` at the root | No root wrapper here. Read `useReduceMotion()` (`lib/reduced-motion.ts`): the OS setting or a MotionConfig asking for it. |
 | React 19 (`ref` as a prop, 1-arg `useRef(null)`) | React 18.3: `forwardRef`, `useRef<T \| null>(null)`, `MutableRefObject` casts where a forwarded ref is written. |
@@ -75,8 +75,9 @@ Upstream's craft, docs and snippets assume a shadcn + Tailwind + Next app. Read 
    a composition (a settings panel is Dialog + `Tabs variant="subtle"` + InputGroup + Switch) or a prop on an
    existing item. Compose in an example or a block before adding an item; wrap a shipped item rather
    than forking it (AlertDialog is 77 lines over Dialog's parts).
-2. **Pick the home.** `primitives/` for a system or building piece, `components/[inputs|navigation|overlays]/`
-   for a control, `blocks/` for a composition. Folder name = id (kebab-case); default export =
+2. **Pick the home.** `primitives/<systems|layout|content>/` for a system or building piece,
+   `components/<group>/` for a control (`actions`, `inputs`, `navigation`, `overlays`, `data-display`,
+   `feedback`, `containers`), `blocks/` for a composition. Folder name = id (kebab-case); default export =
    PascalCase.
 3. **Behavior from Base UI.** Focus management, dismissal, positioning, typeahead, roving focus, ARIA
    and scroll lock come from `@base-ui/react/<part>`. The design system only draws on top of it.
@@ -114,7 +115,7 @@ mapping in `uno.config.ts` (`theme` for a color or shadow, a `rule` for a new ut
 class group in `lib/utils.ts` when the utility's prefix could be mistaken for another group by `cn`.
 Biome already rejects arbitrary token values and literal colors (`biome/*.grit`).
 
-### Size ladder (`lib/size-context.tsx` + `lib/size-scale.ts`, `primitives/sizes`)
+### Size ladder (`lib/size-context.tsx` + `lib/size-scale.ts`, `primitives/systems/sizes`)
 
 ```tsx
 const size = useSize(sizeProp) // explicit prop > surrounding SizeProvider > 'default'
@@ -124,7 +125,7 @@ size.px / size.itemPx / size.gap / size.icon / size.segmentItem / size.segmentPa
 size.variant      // 'default' | 'compact' — for `compact ? 'text-caption-compact' : 'text-caption'`
 ```
 
-A compound that takes `size` wraps its subtree in `<SizeScope size={size}>` (`primitives/sizes`: a
+A compound that takes `size` wraps its subtree in `<SizeScope size={size}>` (`primitives/systems/sizes`: a
 provider only when `size` is set) so its parts and the menus it opens follow (see `Tabs`). `size` is
 always `SizeVariant`; never invent a third height or a size alias.
 
@@ -134,7 +135,7 @@ always `SizeVariant`; never invent a third height or a size alias.
 pill), `shape.container` (12 / 24), `shape.focusRing` (10 / 22, for a ring drawn 2px outside),
 `shape.mergedBg`, and the numbers `shape.bgRadius` / `shape.mergedRadius` for JS geometry.
 
-### Surfaces (`primitives/surface`, `lib/surface-*`)
+### Surfaces (`primitives/systems/surface`, `lib/surface-*`)
 
 ```tsx
 const level = useLift(2) // min(substrate + 2, 8): +1 code, +2 popups, +3 the tabs indicator, +4 dialogs
@@ -169,7 +170,7 @@ thumbs, small panels, widths; `slow` large surfaces and shared parts; `goo` only
 engine. Animate `transform` / `opacity`; only the morph engine and `GooIndicator` write boxes. Respect
 `useReduceMotion()`: drop travel, keep fades.
 
-### Fluid hover (`primitives/fluid-hover`, `lib/use-fluid-hover.ts`)
+### Fluid hover (`primitives/systems/fluid-hover`, `lib/use-fluid-hover.ts`)
 
 Every list, menu, strip or grid with hover gets exactly one highlight. Simple lists use the
 `FluidHover` container (`items` or `FluidHover.Item` children); anything custom uses
@@ -256,11 +257,11 @@ What makes it read as this system rather than "a component library":
 
 ## The Craft page
 
-`primitives/craft` puts a naive version next to the system's item, one rule per pair: weight without
+`primitives/systems/craft` puts a naive version next to the system's item, one rule per pair: weight without
 reflow, hover that never blinks, a press that keeps its shape, copy from anywhere, overlays that come
 from somewhere, indicators that travel, surfaces that lift at any depth, a ring only for the keyboard.
 When a review turns up a new rule worth teaching, add a pair: the bad side goes in
-`primitives/craft/demos.tsx` (a small component breaking exactly that one rule and nothing else, on
+`primitives/systems/craft/demos.tsx` (a small component breaking exactly that one rule and nothing else, on
 tokens), the good side is the shipped item used in `examples.mdx`, and each side gets a one-line
 `badNote` / `goodNote` written from what a user sees.
 

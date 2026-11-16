@@ -7,7 +7,7 @@
 'use client'
 
 import { SurfaceProvider, useAutosizeTextarea, useReduceMotion, useTouchPrimary } from '@justanarthur/modo-ui'
-import { Button } from '@justanarthur/modo-ui/components/button'
+import { Button } from '@justanarthur/modo-ui/components/actions/button'
 import { useIcon } from '@justanarthur/modo-ui/lib/icon-context'
 import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import { type SizeVariant, useSize } from '@justanarthur/modo-ui/lib/size-context'
@@ -15,8 +15,8 @@ import { spring } from '@justanarthur/modo-ui/lib/springs'
 import { surfaceClasses } from '@justanarthur/modo-ui/lib/surface-classes'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import { FluidHoverHighlight, useFluidHover } from '@justanarthur/modo-ui/primitives/fluid-hover'
-import { SizeScope } from '@justanarthur/modo-ui/primitives/sizes'
+import { FluidHoverHighlight, useFluidHover } from '@justanarthur/modo-ui/primitives/systems/fluid-hover'
+import { SizeScope } from '@justanarthur/modo-ui/primitives/systems/sizes'
 import { AnimatePresence, motion, Reorder } from 'motion/react'
 import {
   forwardRef,

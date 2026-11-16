@@ -6,7 +6,7 @@
 'use client'
 
 import { useSurface } from '@justanarthur/modo-ui'
-import LogView from '@justanarthur/modo-ui/components/log-view'
+import LogView from '@justanarthur/modo-ui/components/data-display/log-view'
 import { SURFACE_BG } from '@justanarthur/modo-ui/lib/surface-classes'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { type ReactNode, useRef, useState } from 'react'

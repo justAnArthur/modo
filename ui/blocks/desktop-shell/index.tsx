@@ -7,7 +7,7 @@
 'use client'
 
 import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from 'react'
-import Button from '../../components/button'
+import Button from '../../components/actions/button'
 import Sidebar from '../../components/navigation/sidebar'
 import { useSidebarShortcut } from '../../components/navigation/sidebar/sidebar-shortcut'
 import Tooltip from '../../components/overlays/tooltip'
@@ -18,8 +18,8 @@ import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
 import { SurfaceProvider, useLift } from '../../lib/surface-context'
 import { useControllableState } from '../../lib/use-controllable-state'
 import { cn } from '../../lib/utils'
-import Resizable from '../../primitives/resizable'
-import { SizeProvider } from '../../primitives/sizes'
+import Resizable from '../../primitives/layout/resizable'
+import { SizeProvider } from '../../primitives/systems/sizes'
 
 type DesktopPlatform = 'mac' | 'windows' | 'linux'
 

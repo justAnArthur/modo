@@ -7,7 +7,7 @@
 
 import { useSize } from '@justanarthur/modo-ui/lib/size-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import FluidHover from '@justanarthur/modo-ui/primitives/fluid-hover'
+import FluidHover from '@justanarthur/modo-ui/primitives/systems/fluid-hover'
 import { type IconName, useIcon } from '../../../lib/icons'
 import { PaneEmpty, PaneSection } from '../../../lib/pane-parts'
 import type { ArtifactKind, PaneArtifact } from '../../../lib/side-pane-types'

@@ -6,7 +6,7 @@
 
 'use client'
 
-import Badge from '@justanarthur/modo-ui/components/badge'
+import Badge from '@justanarthur/modo-ui/components/data-display/badge'
 import { useSize } from '@justanarthur/modo-ui/lib/size-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { duration, paceOf, percent, VERDICT_TEXT } from '../../../lib/pace'

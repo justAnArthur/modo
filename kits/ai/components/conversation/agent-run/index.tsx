@@ -6,7 +6,7 @@
 
 'use client'
 
-import Badge from '@justanarthur/modo-ui/components/badge'
+import Badge from '@justanarthur/modo-ui/components/data-display/badge'
 import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import type { ReactNode } from 'react'

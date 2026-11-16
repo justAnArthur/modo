@@ -8,7 +8,7 @@
 
 'use client'
 
-import { MarkdownProse } from '@justanarthur/modo-ui/components/markdown'
+import { MarkdownProse } from '@justanarthur/modo-ui/components/data-display/markdown'
 import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import type { ReactNode } from 'react'

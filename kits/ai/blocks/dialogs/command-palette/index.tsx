@@ -6,8 +6,8 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import Kbd from '@justanarthur/modo-ui/components/kbd'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import Kbd from '@justanarthur/modo-ui/components/data-display/kbd'
 import Command, { type CommandGroup } from '@justanarthur/modo-ui/components/overlays/command'
 import type { ReactElement } from 'react'
 import { useIcons } from '../../../lib/icons'

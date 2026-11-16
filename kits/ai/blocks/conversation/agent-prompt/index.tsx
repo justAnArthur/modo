@@ -8,7 +8,7 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
+import Button from '@justanarthur/modo-ui/components/actions/button'
 import PermissionRequest from '../../../components/prompts/permission-request'
 import PlanApproval from '../../../components/prompts/plan-approval'
 import PromptCard, { type PromptCardProps } from '../../../components/prompts/prompt-card'

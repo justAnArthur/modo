@@ -27,7 +27,7 @@ import { SurfaceProvider, useSurface } from '../../../lib/surface-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import type { MorphProps } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import { SizeScope } from '../../../primitives/sizes'
+import { SizeScope } from '../../../primitives/systems/sizes'
 import { AlphaSlider, HueSlider } from './channel-sliders'
 import {
   buildParsed,

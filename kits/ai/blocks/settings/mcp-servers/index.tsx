@@ -6,8 +6,8 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import Badge from '@justanarthur/modo-ui/components/badge'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import Badge from '@justanarthur/modo-ui/components/data-display/badge'
 import Tooltip from '@justanarthur/modo-ui/components/overlays/tooltip'
 import type { ReactNode } from 'react'
 import { useIcon } from '../../../lib/icons'

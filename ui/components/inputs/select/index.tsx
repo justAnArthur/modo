@@ -56,8 +56,8 @@ import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid
 import { useKeyboardNavGate } from '../../../lib/use-keyboard-nav-gate'
 import { type MorphProps, useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import { ScrollArea } from '../../../primitives/scroll-area'
-import { SizeScope } from '../../../primitives/sizes'
+import { ScrollArea } from '../../../primitives/layout/scroll-area'
+import { SizeScope } from '../../../primitives/systems/sizes'
 
 // A pick holds the popup open this long, so the check drawing in and the
 // selected background springing to the row are seen before the close.

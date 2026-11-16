@@ -6,7 +6,7 @@ description: >-
   one hover highlight that glides between rows, labels that get heavier without moving, eight nesting
   surface levels, and overlays that melt out of whatever opened them through a liquid neck. Light values
   are the plain token names; `-dark` twins are the dark scheme (every color is one light-dark() token in
-  tokens/colors.css and primitives/surface/surface.css).
+  tokens/colors.css and primitives/systems/surface/surface.css).
 colors:
   primary: "oklch(0.205 0 0)"
   on-primary: "oklch(0.985 0 0)"
@@ -340,7 +340,7 @@ components:
 
 The `ui` design system: Fluid Functionalism (Base UI flavor, MIT © 2026 Micka Touillaud) on UnoCSS and
 `cn`, plus a local morph layer that makes overlays and indicators liquid. The front matter holds the
-normative values; the CSS custom properties in `tokens/*.css` and `primitives/surface/surface.css` are
+normative values; the CSS custom properties in `tokens/*.css` and `primitives/systems/surface/surface.css` are
 the source they are copied from, and they win if the two ever disagree. Component code never writes
 these values: it reads the utility that maps to each token (the class in backticks below).
 

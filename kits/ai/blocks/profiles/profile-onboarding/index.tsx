@@ -8,11 +8,11 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import Copy from '@justanarthur/modo-ui/components/copy'
-import List from '@justanarthur/modo-ui/components/list'
-import LogView from '@justanarthur/modo-ui/components/log-view'
-import { Spinner } from '@justanarthur/modo-ui/components/progress'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import Copy from '@justanarthur/modo-ui/components/actions/copy'
+import List from '@justanarthur/modo-ui/components/data-display/list'
+import LogView from '@justanarthur/modo-ui/components/data-display/log-view'
+import { Spinner } from '@justanarthur/modo-ui/components/feedback/progress'
 import ChoiceList from '@justanarthur/modo-ui/components/inputs/choice-list'
 import Input, { Label } from '@justanarthur/modo-ui/components/inputs/input'
 import Dialog from '@justanarthur/modo-ui/components/overlays/dialog'

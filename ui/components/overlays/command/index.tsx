@@ -35,7 +35,7 @@ import type { SlotProps } from '../../../lib/slot'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import type { MorphProps } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import { ScrollArea } from '../../../primitives/scroll-area'
+import { ScrollArea } from '../../../primitives/layout/scroll-area'
 import { DialogContent, DialogState, DialogTrigger } from '../dialog'
 
 /** One command: the label the query matches, plus what the row shows and does. */

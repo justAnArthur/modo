@@ -6,9 +6,9 @@
 
 'use client'
 
-import Card from '@justanarthur/modo-ui/components/card'
+import Card from '@justanarthur/modo-ui/components/containers/card'
 import Sidebar from '@justanarthur/modo-ui/components/navigation/sidebar'
-import FluidHover from '@justanarthur/modo-ui/primitives/fluid-hover'
+import FluidHover from '@justanarthur/modo-ui/primitives/systems/fluid-hover'
 import Composer from '../../blocks/conversation/composer'
 import SessionSidebar from '../../blocks/sessions/session-sidebar'
 import { STATUS_GLYPH } from '../../lib/status-glyph'

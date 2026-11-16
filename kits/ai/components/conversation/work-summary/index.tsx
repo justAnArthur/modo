@@ -7,8 +7,8 @@
 
 'use client'
 
-import Accordion from '@justanarthur/modo-ui/components/accordion'
-import { Spinner } from '@justanarthur/modo-ui/components/progress'
+import Accordion from '@justanarthur/modo-ui/components/containers/accordion'
+import { Spinner } from '@justanarthur/modo-ui/components/feedback/progress'
 import { createContext, type ReactNode, useContext } from 'react'
 
 const ShowWorkContext = createContext(false)

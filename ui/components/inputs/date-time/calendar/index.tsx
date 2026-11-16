@@ -15,7 +15,7 @@ import { dividedColumns, ScrollColumn } from '../../../../lib/scroll-column'
 import { useShape } from '../../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../../lib/size-context'
 import { cn } from '../../../../lib/utils'
-import { SizeScope } from '../../../../primitives/sizes'
+import { SizeScope } from '../../../../primitives/systems/sizes'
 import { monthKey, useMonthWindow } from './use-month-window'
 
 const WEEKEND = { dayOfWeek: [0, 6] }

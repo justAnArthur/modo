@@ -2,9 +2,8 @@
 
 How things move in `ui`, as code you can paste. Shipped items already follow all of
 it; these recipes are for what you build next to them, so a new list moves at the same magnitudes as
-the Select beside it. Imports are written from an item at `components/<group>/<name>/index.tsx`; drop
-one `../` for an ungrouped item. The live pages are `primitives/motion`, `primitives/fluid-hover` and
-`primitives/morph` in the dev server.
+the Select beside it. Imports are written from an item at `components/<group>/<name>/index.tsx`. The live pages are `primitives/systems/motion`, `primitives/systems/fluid-hover` and
+`primitives/systems/morph` in the dev server.
 
 ## Contents
 
@@ -83,7 +82,7 @@ to row. A fresh entry fades in where the pointer is; a click in a gap goes to th
 **Plain list or grid** — the container does it all:
 
 ```tsx
-import FluidHover from '../../../primitives/fluid-hover'
+import FluidHover from '../../../primitives/systems/fluid-hover'
 
 <FluidHover className="w-64 p-1" items={['Profile', 'Billing', 'Team']} />
 

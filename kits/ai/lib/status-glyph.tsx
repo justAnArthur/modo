@@ -4,7 +4,7 @@
  * and idle use the Sidebar's own dots, so only those two map here.
  */
 
-import { statusGlyph } from '@justanarthur/modo-ui/components/status-dot'
+import { statusGlyph } from '@justanarthur/modo-ui/components/feedback/status-dot'
 import type { IconComponent } from './icons'
 import type { SessionStatus } from './types'
 
