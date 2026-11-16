@@ -2,7 +2,7 @@
 
 Both packages are released from this repo by conventional commits (see [CONTRIBUTING.md](CONTRIBUTING.md)): `@justanarthur/modo` (`lib/`) and `@justanarthur/modo-ui` (`ui/`). Each release also gets GitHub release notes generated from its commits.
 
-## Unreleased → 1.0.0
+## 1.0.0 — 2026-11-16
 
 The first stable release of both packages. From here on the public API follows semver: a breaking change means a new major.
 
