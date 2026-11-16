@@ -615,6 +615,9 @@ shared systems above (look and motion). Ready-made patterns to reach for before 
   Progress's, ink at rest, the warning and error status hues as the budget runs out; a thin ink tick
   marks a pace. The ring scales past the glyph for timers, with the time in its centre; a value on a
   clock steps instead of springing.
+- **Sparkline** — a trend line in the text color or a status hue, stretched across its box at a constant
+  1.5px stroke, an optional 16% wash under it, a hairline baseline until there are two points; it never
+  animates.
 - **StatusDot** — a run state as a glyph: running is the loading button's glyph, the rest dots in
   their status hue (idle a muted ring).
 - **Kbd** — a keycap chip in `micro` on a hairline, or plain muted caption text at a row's end, the

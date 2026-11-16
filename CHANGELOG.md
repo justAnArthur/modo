@@ -8,6 +8,7 @@ The packages are released from this repo by conventional commits (see [CONTRIBUT
 
 - Token `--ink` (`bg-ink`, `fill-ink`, `text-ink`, `border-ink`): true black in both schemes, for surfaces that match hardware.
 - `Meter`'s ring scales with a size class, centres its `children` (a countdown's time) and takes `animate={false}` for a value that ticks on a clock.
+- New component `Sparkline` (an inline trend line: `values`, `secondary`, `max`, `area`, `tone`).
 
 ## 2026-11-17
 

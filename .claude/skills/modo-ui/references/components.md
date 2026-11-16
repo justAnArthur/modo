@@ -54,6 +54,8 @@ controlled + uncontrolled.
 | Tabular data | `Table` (sortable heads, footer, caption, empty row, `stacked` cards when narrow) |
 | Progress or a spinner | `Progress` (`value={null}` sweeps), `Progress.Spinner` |
 | A share of a budget (usage, a context window) | `Meter` (`bar` / `line` / `ring`, `marker`, `tone`) |
+| A timer or countdown ring | `Meter variant="ring"` with a size class, children in the centre, `animate={false}` |
+| A small trend line (CPU, traffic) | `Sparkline` (`secondary`, `area`, `max`, `tone`) |
 | A run state (running, waiting, failed…) | `StatusDot`, `statusGlyph(status)` for an icon slot |
 | A keyboard shortcut | `Kbd` (`outline` chip or `plain`) |
 | "Nothing here yet" | `EmptyState` |
@@ -116,6 +118,7 @@ controlled + uncontrolled.
 | `Card` | `components/containers/card` | `.Group .Header .Title .Description .Action .Content .Footer .Divider .Media .Image .Eyebrow .Feature .Button` | L H W C | Transparent and borderless (`border="outlined"` frames one on its own; `.Divider` a hairline inside); only clickable cards join the group's hover; stretched link. A card with a `value` selects itself in `Card.Group` (`value` / `defaultValue` / `onValueChange`). `Card.Button` is a compact `Button`. |
 | `Table` | `components/data-display/table` | `.Header .Body .Footer .Row .Head .Cell .Caption .Empty` | L H C | Row hover, semantic markup; a `Table.Head` with a `value` sorts (`sort` / `defaultSort` / `onSortChange` on the root); `stacked` turns rows into cards in a narrow container (each Cell's `label` captions it). Body rows number in document order (`lib/row-order`); `containerClassName`. |
 | `Copy` | `components/actions/copy` | — | L M | Click anywhere to copy; the glyph melts into a status disc behind the check. `variant="chip"` (an inline chip) / `"glyph"`. |
+| `Sparkline` | `components/data-display/sparkline` | — | L | An SVG trend line stretched to its box (non-scaling stroke); `values`, `secondary`, `max` (else auto), `area` (16% wash), `tone` / `secondaryTone`; a baseline under two points; no animation. |
 
 ## components/inputs
 
