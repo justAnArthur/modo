@@ -4,10 +4,10 @@
  * the plugin catalog.
  */
 
-import type { HookConfig } from '../blocks/hook-dialog'
-import type { McpConnectionTest, McpServerConfig } from '../blocks/mcp-server-dialog'
-import type { PermissionSettings } from '../blocks/permission-rules'
-import type { CatalogPlugin } from '../blocks/plugin-catalog'
+import type { HookConfig } from '../blocks/dialogs/hook-dialog'
+import type { McpConnectionTest, McpServerConfig } from '../blocks/dialogs/mcp-server-dialog'
+import type { PermissionSettings } from '../blocks/settings/permission-rules'
+import type { CatalogPlugin } from '../blocks/settings/plugin-catalog'
 
 export const MCP_TAKEN = ['ai-app', 'github', 'linear', 'postgres']
 

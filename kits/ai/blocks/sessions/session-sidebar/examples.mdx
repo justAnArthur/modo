@@ -1,0 +1,43 @@
+import SessionSidebar from './index'
+import Sidebar from '@justanarthur/modo-ui/components/navigation/sidebar'
+import { SidebarInsetTopbar } from '@justanarthur/modo-ui/blocks/sidebar-app'
+import { SESSIONS } from '../../../mock/mock'
+
+# Sessions
+
+Pinned first, then a group per project and per section, the archive folded at the bottom. Hover a row for pin, archive and its menu; the canvas session folds its two linked children.
+
+<div className="flex h-[640px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <SessionSidebar {...SESSIONS} className="h-full" defaultValue="ai-app" />
+    <Sidebar.Inset className="min-h-0">
+      <SidebarInsetTopbar />
+    </Sidebar.Inset>
+  </Sidebar.Provider>
+</div>
+
+# Flush
+
+`variant="sidebar"` sits flush against the session with a hairline, for a denser window.
+
+<div className="flex h-[640px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <SessionSidebar {...SESSIONS} className="h-full" variant="sidebar" defaultValue="billing" />
+    <Sidebar.Inset className="min-h-0">
+      <SidebarInsetTopbar />
+    </Sidebar.Inset>
+  </Sidebar.Provider>
+</div>
+
+# Filters
+
+`list="filters"` is the overview's sidebar: the board beside it is the session list, so the content filters it instead, by state, project and profile, with counts.
+
+<div className="flex h-[640px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <SessionSidebar {...SESSIONS} className="h-full" list="filters" defaultValue="state:waiting" />
+    <Sidebar.Inset className="min-h-0">
+      <SidebarInsetTopbar />
+    </Sidebar.Inset>
+  </Sidebar.Provider>
+</div>

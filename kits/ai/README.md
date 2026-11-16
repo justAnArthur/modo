@@ -25,9 +25,9 @@ import { Message, ToolCall, Transcript } from '@justanarthur/modo-ui-ai'
 import Composer from '@justanarthur/modo-ui-ai/blocks/composer'
 ```
 
-Subpaths follow the docs' tiers: `components/*` (`components/message`,
-`components/tool-call`, …) and `blocks/*` (`blocks/transcript`,
-`blocks/side-pane`, `blocks/settings/hooks`, …), plus `lib/icons` and the pure
+Subpaths follow the docs' tiers and groups: `components/*` (`components/conversation/message`,
+`components/conversation/tool-call`, …) and `blocks/*` (`blocks/conversation/transcript`,
+`blocks/panes/side-pane`, `blocks/settings/hooks`, …), plus `lib/icons` and the pure
 `lib/pace` (how a usage limit reads against the time left).
 
 A PDF attached in the composer previews its first page through the optional

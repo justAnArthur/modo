@@ -1,0 +1,23 @@
+import { SizeProvider } from '@justanarthur/modo-ui/primitives/sizes'
+import { PANE_TASKS } from '../../../mock/mock-panes'
+import TasksPane from './index'
+
+# Tasks
+
+Background agents, shells and child sessions: stop a running one, retry one that failed or stopped.
+
+<div className="w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background p-2">
+  <SizeProvider size="compact">
+    <TasksPane tasks={PANE_TASKS} />
+  </SizeProvider>
+</div>
+
+# No tasks
+
+With nothing running in the background, the pane says what runs there.
+
+<div className="w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background p-2">
+  <SizeProvider size="compact">
+    <TasksPane tasks={[]} />
+  </SizeProvider>
+</div>

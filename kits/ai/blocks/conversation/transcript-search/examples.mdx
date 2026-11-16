@@ -1,0 +1,50 @@
+import TranscriptSearch from './index'
+import Button from '@justanarthur/modo-ui/components/button'
+import { PROFILES, PROJECTS } from '../../../mock/mock'
+import { TRANSCRIPTS } from '../../../mock/mock-extras'
+
+# Search
+
+Press the button: the search grows out of it with the field focused. Try "zoom" or "retry"; the arrow keys move through the hits and Enter opens one.
+
+<TranscriptSearch
+  trigger={<Button variant="secondary">Search transcripts</Button>}
+  sessions={TRANSCRIPTS}
+  projects={PROJECTS}
+  profiles={PROFILES}
+/>
+
+# Hits by session
+
+Each matching line with one line of context on each side, grouped under its session.
+
+<div className="flex h-[520px] w-full max-w-[880px] flex-col rounded-xl border border-border bg-background p-4">
+  <TranscriptSearch.Panel className="flex-1" sessions={TRANSCRIPTS} projects={PROJECTS} profiles={PROFILES} defaultQuery="zoom" />
+</div>
+
+# Filtered
+
+One project, the past week: older and other sessions drop out.
+
+<div className="flex h-[400px] w-full max-w-[880px] flex-col rounded-xl border border-border bg-background p-4">
+  <TranscriptSearch.Panel
+    className="flex-1"
+    sessions={TRANSCRIPTS}
+    projects={PROJECTS}
+    profiles={PROFILES}
+    defaultQuery="retr"
+    defaultProject="~/Projects/jobiflow/api"
+    defaultRange="week"
+  />
+</div>
+
+# Light and dark
+
+<div className="grid w-full gap-3 @3xl:grid-cols-2">
+  <div className="light flex h-[420px] flex-col rounded-xl border border-border bg-background p-4 text-foreground">
+    <TranscriptSearch.Panel className="flex-1" sessions={TRANSCRIPTS} projects={PROJECTS} profiles={PROFILES} defaultQuery="meter" />
+  </div>
+  <div className="dark flex h-[420px] flex-col rounded-xl border border-border bg-background p-4 text-foreground">
+    <TranscriptSearch.Panel className="flex-1" sessions={TRANSCRIPTS} projects={PROJECTS} profiles={PROFILES} defaultQuery="meter" />
+  </div>
+</div>

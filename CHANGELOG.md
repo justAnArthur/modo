@@ -42,6 +42,47 @@ Fixes:
 - **The composer's draft is the old modo-ui `InputMessage`**, merged into `Composer` instead of a second chat item: `Composer.Draft` (also `ComposerDraft`) is the draft alone, with attachments (PDF previews through the optional peer `pdfjs-dist`), the queue while a reply streams, history and suggestions; `Composer` takes `value` / `defaultValue` / `onValueChange`, `status` / `defaultStatus` / `onStatusChange` and `onStop` (in place of `streaming`), `queue` / `defaultQueue` / `onQueueChange`, `history`, `suggestions`, `placeholderSuggestion`, `accept` and `maxFiles`, and `onSend` gets the files too. `FileThumbnail` is exported; `styles.css` carries the draft's edge states. SessionBoard's reply box is `Composer.Draft`.
 - **`Message.Working` is the old modo-ui `ThinkingIndicator`** (its goo look): the dots and the cycling word, flush with the text.
 - modo-ui 2.0 is the peer.
+- Items sit in group folders: components in `conversation/` and `prompts/`; blocks in `conversation/`, `sessions/`, `panes/`, `profiles/`, `dialogs/` and `settings/` (which takes `permission-rules` and `plugin-catalog`). Docs URLs keep the item id; the subpaths follow the folders:
+
+| Old subpath | New subpath |
+|---|---|
+| `components/agent-run` | `components/conversation/agent-run` |
+| `components/chapter-nav` | `components/conversation/chapter-nav` |
+| `components/message` | `components/conversation/message` |
+| `components/permission-request` | `components/prompts/permission-request` |
+| `components/plan-approval` | `components/prompts/plan-approval` |
+| `components/prompt-card` | `components/prompts/prompt-card` |
+| `components/question-prompt` | `components/prompts/question-prompt` |
+| `components/reasoning` | `components/conversation/reasoning` |
+| `components/recap` | `components/conversation/recap` |
+| `components/todo-list` | `components/conversation/todo-list` |
+| `components/tool-call` | `components/conversation/tool-call` |
+| `components/work-summary` | `components/conversation/work-summary` |
+| `blocks/agent-prompt` | `blocks/conversation/agent-prompt` |
+| `blocks/artifacts-pane` | `blocks/panes/artifacts-pane` |
+| `blocks/changes-pane` | `blocks/panes/changes-pane` |
+| `blocks/command-palette` | `blocks/dialogs/command-palette` |
+| `blocks/composer` | `blocks/conversation/composer` |
+| `blocks/failure-states` | `blocks/conversation/failure-states` |
+| `blocks/file-pane` | `blocks/panes/file-pane` |
+| `blocks/hook-dialog` | `blocks/dialogs/hook-dialog` |
+| `blocks/inbox` | `blocks/sessions/inbox` |
+| `blocks/mcp-server-dialog` | `blocks/dialogs/mcp-server-dialog` |
+| `blocks/permission-rules` | `blocks/settings/permission-rules` |
+| `blocks/plugin-catalog` | `blocks/settings/plugin-catalog` |
+| `blocks/pr-pane` | `blocks/panes/pr-pane` |
+| `blocks/profile-onboarding` | `blocks/profiles/profile-onboarding` |
+| `blocks/profile-switcher` | `blocks/profiles/profile-switcher` |
+| `blocks/profile-usage` | `blocks/profiles/profile-usage` |
+| `blocks/session-board` | `blocks/sessions/session-board` |
+| `blocks/session-sidebar` | `blocks/sessions/session-sidebar` |
+| `blocks/shortcuts-sheet` | `blocks/dialogs/shortcuts-sheet` |
+| `blocks/side-pane` | `blocks/panes/side-pane` |
+| `blocks/tasks-pane` | `blocks/panes/tasks-pane` |
+| `blocks/terminal-pane` | `blocks/panes/terminal-pane` |
+| `blocks/transcript` | `blocks/conversation/transcript` |
+| `blocks/transcript-search` | `blocks/conversation/transcript-search` |
+| `blocks/usage-pane` | `blocks/panes/usage-pane` |
 
 ## 1.0.0 — 2026-11-16
 

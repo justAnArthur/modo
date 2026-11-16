@@ -9,8 +9,8 @@
 import Card from '@justanarthur/modo-ui/components/card'
 import Sidebar from '@justanarthur/modo-ui/components/navigation/sidebar'
 import FluidHover from '@justanarthur/modo-ui/primitives/fluid-hover'
-import Composer from '../../blocks/composer'
-import SessionSidebar from '../../blocks/session-sidebar'
+import Composer from '../../blocks/conversation/composer'
+import SessionSidebar from '../../blocks/sessions/session-sidebar'
 import { STATUS_GLYPH } from '../../lib/status-glyph'
 import { COMPOSER, GROUPS, MODELS, PROFILES, SESSIONS, ZCODE_MODELS } from '../../mock/mock'
 

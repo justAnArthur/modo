@@ -6,7 +6,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Transcript from '../blocks/transcript'
+import Transcript from '../blocks/conversation/transcript'
 
 const REPLY = `On it. I'll read the blocks that touch this first, then change them one at a time and run the checks after each.
 

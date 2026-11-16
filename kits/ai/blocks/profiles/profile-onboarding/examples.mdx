@@ -1,0 +1,80 @@
+import ProfileOnboarding from './index'
+import Button from '@justanarthur/modo-ui/components/button'
+import { PROFILES } from '../../../mock/mock'
+import { PROVIDER_TEST_SUCCESS, SIGN_IN_FAILED, SIGN_IN_SUCCESS, SIGN_IN_WAITING } from '../../../mock/mock-extras'
+
+# Add a profile
+
+Press the button: the dialog grows out of it. Pick a kind, name it, and Continue moves to the sign-in, which here stays waiting for the browser.
+
+<ProfileOnboarding
+  trigger={<Button variant="secondary">Add profile</Button>}
+  taken={PROFILES.map(p => p.name)}
+  signIn={SIGN_IN_WAITING}
+/>
+
+# Choose the kind
+
+A Claude account in a config dir of its own, or a provider that speaks Anthropic's API.
+
+<div className="w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <ProfileOnboarding.Panel />
+</div>
+
+# A compatible provider
+
+The base URL, the env var that holds the key, and which model each Claude tier maps to.
+
+<div className="w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <ProfileOnboarding.Panel
+    defaultStep="details"
+    defaultDraft={{ kind: 'compatible', name: 'glm', baseUrl: 'https://api.z.ai/api/anthropic', apiKeyEnv: 'ZAI_API_KEY', models: { opus: 'GLM-4.6', sonnet: 'GLM-4.6', haiku: 'GLM-4.5-Air' } }}
+  />
+</div>
+
+# Waiting for the browser
+
+`claude login` runs under the new config dir; its output scrolls in the log, with the link to open again or copy.
+
+<div className="w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <ProfileOnboarding.Panel defaultStep="sign-in" defaultDraft={{ name: 'research' }} signIn={SIGN_IN_WAITING} />
+</div>
+
+# Signed in
+
+Continue lights once the sign-in succeeds.
+
+<div className="w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <ProfileOnboarding.Panel defaultStep="sign-in" defaultDraft={{ name: 'research' }} signIn={SIGN_IN_SUCCESS} />
+</div>
+
+# Sign-in failed
+
+The error, the CLI's last words and a retry.
+
+<div className="w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <ProfileOnboarding.Panel defaultStep="sign-in" defaultDraft={{ name: 'research' }} signIn={SIGN_IN_FAILED} />
+</div>
+
+# Done
+
+What the profile will be, before it is added.
+
+<div className="w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <ProfileOnboarding.Panel
+    defaultStep="done"
+    defaultDraft={{ kind: 'compatible', name: 'glm', baseUrl: 'https://api.z.ai/api/anthropic', apiKeyEnv: 'ZAI_API_KEY', models: { opus: 'GLM-4.6', sonnet: 'GLM-4.6', haiku: 'GLM-4.5-Air' } }}
+    signIn={PROVIDER_TEST_SUCCESS}
+  />
+</div>
+
+# Light and dark
+
+<div className="grid w-full gap-3 @3xl:grid-cols-2">
+  <div className="light rounded-xl border border-border bg-background p-6 text-foreground">
+    <ProfileOnboarding.Panel defaultStep="sign-in" defaultDraft={{ name: 'research' }} signIn={SIGN_IN_WAITING} />
+  </div>
+  <div className="dark rounded-xl border border-border bg-background p-6 text-foreground">
+    <ProfileOnboarding.Panel defaultStep="sign-in" defaultDraft={{ name: 'research' }} signIn={SIGN_IN_SUCCESS} />
+  </div>
+</div>

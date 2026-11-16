@@ -1,0 +1,114 @@
+import Composer from './index'
+import Button from '@justanarthur/modo-ui/components/button'
+import { Plus } from 'lucide-react'
+import { COMPOSER, ZCODE_MODELS } from '../../../mock/mock'
+
+# Composer
+
+In the draft, the + palette and the run trigger (permission mode, model, effort, context ring) that opens the run settings. On the shell, where the session runs: the project and the profile with its usage lines.
+
+<div className="flex h-[440px] w-full max-w-2xl items-end">
+  <Composer {...COMPOSER} />
+</div>
+
+# New session
+
+`target`: the project (its popover holds the worktree, setup script and base branch) and the profile can still be picked.
+
+<div className="flex h-[200px] w-full max-w-2xl items-end">
+  <Composer {...COMPOSER} target context={0} placeholder="Describe the task, or type / for commands" />
+</div>
+
+# Near compaction
+
+Past 80% the context ring in the run trigger turns amber; at 95% it compacts.
+
+<div className="flex h-[200px] w-full max-w-2xl items-end">
+  <Composer {...COMPOSER} context={0.91} defaultPermissionMode="Plan mode" defaultEffort="Max" />
+</div>
+
+# Compacting
+
+While the conversation is summarized, the run settings' context meter says so.
+
+<div className="flex h-[200px] w-full max-w-2xl items-end">
+  <Composer {...COMPOSER} compacting />
+</div>
+
+# Streaming
+
+A reply is in flight: Enter queues, and with the draft empty the button stops it. Fast mode is on: the run trigger shows its bolt.
+
+<div className="flex h-[200px] w-full max-w-2xl items-end">
+  <Composer {...COMPOSER} defaultStatus="streaming" defaultFast />
+</div>
+
+# Queued messages
+
+Typed while a reply streams, messages wait above the draft. Drag a row (or Alt+↑/↓) to reorder, double-click to pull it back into the draft, × to drop it. Stop the reply and the top one sends.
+
+<div className="flex h-[280px] w-full max-w-2xl items-end">
+  <Composer
+    {...COMPOSER}
+    defaultStatus="streaming"
+    defaultQueue={[
+      { id: 'q1', text: 'Also add a dark-mode screenshot', files: [] },
+      { id: 'q2', text: 'And link the changelog entry', files: [] },
+    ]}
+  />
+</div>
+
+# History
+
+With the caret on the first line, ↑ recalls the previous message; ↓ on the last line walks forward and, past the newest, brings back the draft.
+
+<div className="flex h-[200px] w-full max-w-2xl items-end">
+  <Composer {...COMPOSER} history={['Summarize the release notes', 'Now as a bulleted list']} />
+</div>
+
+# Suggestions
+
+An empty draft offers prompts: Tab fills the ghost one, ↓ / ↑ walk the list under the draft (the text keeps focus), Enter or a click fills the highlighted one. Typing folds the list away.
+
+<div className="flex h-[360px] w-full max-w-2xl items-end">
+  <Composer
+    {...COMPOSER}
+    placeholderSuggestion="Why does the sidebar flicker on resize?"
+    suggestions={['Review the open pull request', 'Write tests for the date mask', 'Explain the morph layer']}
+  />
+</div>
+
+# Another provider
+
+A compatible profile offers its own models.
+
+<div className="flex h-[200px] w-full max-w-2xl items-end">
+  <Composer {...COMPOSER} models={ZCODE_MODELS} defaultPermissionMode="Auto" context={0.18} />
+</div>
+
+# Draft alone
+
+`Composer.Draft` without the shell and its menus, for a reply box on a board or a card. Its slots take any controls; a render function gets `openFilePicker`. `defaultFiles` turns attachments on: drop a PNG, JPEG or PDF on it, hover a tile for its ×.
+
+<div className="w-full max-w-xl">
+  <Composer.Draft
+    defaultFiles={[
+      new File(['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect width="80" height="80" /></svg>'], 'swatch.svg', { type: 'image/svg+xml' }),
+      new File(['Quarterly notes'], 'notes.txt', { type: 'text/plain' }),
+    ]}
+    leftSlot={({ openFilePicker }) => (
+      <Button variant="ghost" size="icon-compact" aria-label="Attach" onClick={() => openFilePicker()}>
+        <Plus />
+      </Button>
+    )}
+  />
+</div>
+
+# Compact and disabled
+
+The compact step for dense surfaces; `disabled` dims the draft and takes no input or drops.
+
+<div className="flex w-full max-w-xl flex-col gap-3">
+  <Composer.Draft size="compact" placeholder="Reply to the session" />
+  <Composer.Draft defaultValue="This draft is disabled" disabled />
+</div>

@@ -6,7 +6,7 @@
 import Diff from '@justanarthur/modo-ui/components/diff'
 import Markdown from '@justanarthur/modo-ui/components/markdown'
 import Code from '@justanarthur/modo-ui/primitives/code'
-import Transcript, { type TaskItem, type TocChapter } from '../blocks/transcript'
+import Transcript, { type TaskItem, type TocChapter } from '../blocks/conversation/transcript'
 import { CHANGES, TERMINAL_LINES } from './mock'
 
 export const DEMO_CHAPTERS: TocChapter[] = [
