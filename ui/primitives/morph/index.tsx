@@ -130,65 +130,70 @@ interface MorphProps {
  *
  * @example {@include ./examples.mdx}
  */
-export default function Morph({
-  from = 'trigger',
-  effect = 'goo',
-  tier = 'slow',
-  hideSource = false,
-  open,
-  defaultOpen = false,
-  onOpenChange,
-  label = 'Open',
-  className,
-  children,
-}: MorphProps) {
-  const [shown, setShown] = useControllableState(open, defaultOpen, onOpenChange)
-  const [mounted, setMounted] = useState(shown)
-  if (shown && !mounted) setMounted(true)
-  const { origin, capture } = useMorphOrigin()
-  const morph = useMorph(shown, origin, { from, effect, tier, hideSource }, () => setMounted(false))
-  const shape = useShape()
-  const level = useLift(2)
-  const inPlace = opensInPlace({ effect, hideSource })
+const Morph = Object.assign(
+  function Morph({
+    from = 'trigger',
+    effect = 'goo',
+    tier = 'slow',
+    hideSource = false,
+    open,
+    defaultOpen = false,
+    onOpenChange,
+    label = 'Open',
+    className,
+    children,
+  }: MorphProps) {
+    const [shown, setShown] = useControllableState(open, defaultOpen, onOpenChange)
+    const [mounted, setMounted] = useState(shown)
+    if (shown && !mounted) setMounted(true)
+    const { origin, capture } = useMorphOrigin()
+    const morph = useMorph(shown, origin, { from, effect, tier, hideSource }, () => setMounted(false))
+    const shape = useShape()
+    const level = useLift(2)
+    const inPlace = opensInPlace({ effect, hideSource })
 
-  return (
-    <div className={cn('relative inline-flex flex-col items-center', className)}>
-      <Button
-        variant="secondary"
-        aria-expanded={shown}
-        onClick={event => {
-          if (!shown) capture({ trigger: event.currentTarget, event: event.nativeEvent })
-          setShown(!shown)
-        }}
-      >
-        {shown ? 'Close' : label}
-      </Button>
-      {mounted && (
-        // Opened in place, the panel covers its own trigger, so pressing the panel closes it.
-        // biome-ignore lint/a11y/useKeyWithClickEvents lint/a11y/noStaticElementInteractions: the trigger stays the keyboard path (Enter/Space on it toggles; focus stays on it)
-        <div
-          ref={morph.popupRef}
-          className={inPlace ? 'absolute top-0 left-0 z-10' : 'absolute top-full left-1/2 z-10 mt-3 -translate-x-1/2'}
-          onClick={inPlace ? () => setShown(false) : undefined}
+    return (
+      <div className={cn('relative inline-flex flex-col items-center', className)}>
+        <Button
+          variant="secondary"
+          aria-expanded={shown}
+          onClick={event => {
+            if (!shown) capture({ trigger: event.currentTarget, event: event.nativeEvent })
+            setShown(!shown)
+          }}
         >
-          <SurfaceProvider value={level}>
-            <MorphSurface
-              morph={morph}
-              bg={SURFACE_BG[level]}
-              shadow={SURFACE_SHADOW[level]}
-              radius={shape.container}
-              className="w-56 p-4"
-            >
-              {children}
-            </MorphSurface>
-          </SurfaceProvider>
-        </div>
-      )}
-    </div>
-  )
-}
+          {shown ? 'Close' : label}
+        </Button>
+        {mounted && (
+          // Opened in place, the panel covers its own trigger, so pressing the panel closes it.
+          // biome-ignore lint/a11y/useKeyWithClickEvents lint/a11y/noStaticElementInteractions: the trigger stays the keyboard path (Enter/Space on it toggles; focus stays on it)
+          <div
+            ref={morph.popupRef}
+            className={inPlace ? 'absolute top-0 left-0 z-10' : 'absolute top-full left-1/2 z-10 mt-3 -translate-x-1/2'}
+            onClick={inPlace ? () => setShown(false) : undefined}
+          >
+            <SurfaceProvider value={level}>
+              <MorphSurface
+                morph={morph}
+                bg={SURFACE_BG[level]}
+                shadow={SURFACE_SHADOW[level]}
+                radius={shape.container}
+                className="w-56 p-4"
+              >
+                {children}
+              </MorphSurface>
+            </SurfaceProvider>
+          </div>
+        )}
+      </div>
+    )
+  },
+  {
+    Part: MorphPart,
+  },
+)
 
-Morph.Part = MorphPart
+export default Morph
 
 export type { MorphProps }
 export { Morph, MorphPart }

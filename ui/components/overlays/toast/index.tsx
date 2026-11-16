@@ -369,25 +369,30 @@ interface ToastProps {
  * @source https://github.com/hiaaryan/sileo/blob/9793f844349983e140cf33cebbb8f51626d41407/src/sileo.tsx Sileo
  * @license MIT © 2026 hiaaryan
  */
-function Toast({ position = 'top-right', limit = 3, timeout = 6000, manager, children }: ToastProps) {
-  const settings = useMemo(() => ({ position, timeout }), [position, timeout])
+const Toast = Object.assign(
+  function Toast({ position = 'top-right', limit = 3, timeout = 6000, manager, children }: ToastProps) {
+    const settings = useMemo(() => ({ position, timeout }), [position, timeout])
 
-  return (
-    // The provider only subscribes to the manager, which is all a `ToastSource` promises.
-    <ToastPrimitive.Provider limit={limit} timeout={timeout} toastManager={manager as ToastManager | undefined}>
-      <ToastSettings.Provider value={settings}>
-        {children}
-        <ToastPrimitive.Portal>
-          <ToastPrimitive.Viewport className={cn('fixed z-[60] flex flex-col gap-2 outline-none', VIEWPORT[position])}>
-            <ToastList />
-          </ToastPrimitive.Viewport>
-        </ToastPrimitive.Portal>
-      </ToastSettings.Provider>
-    </ToastPrimitive.Provider>
-  )
-}
-
-Toast.Trigger = ToastTrigger
+    return (
+      // The provider only subscribes to the manager, which is all a `ToastSource` promises.
+      <ToastPrimitive.Provider limit={limit} timeout={timeout} toastManager={manager as ToastManager | undefined}>
+        <ToastSettings.Provider value={settings}>
+          {children}
+          <ToastPrimitive.Portal>
+            <ToastPrimitive.Viewport
+              className={cn('fixed z-[60] flex flex-col gap-2 outline-none', VIEWPORT[position])}
+            >
+              <ToastList />
+            </ToastPrimitive.Viewport>
+          </ToastPrimitive.Portal>
+        </ToastSettings.Provider>
+      </ToastPrimitive.Provider>
+    )
+  },
+  {
+    Trigger: ToastTrigger,
+  },
+)
 
 export type { ToastInput, ToastOptions, ToastPromiseOptions, ToastSource, ToastType } from './manager'
 export { toast } from './manager'

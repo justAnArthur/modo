@@ -228,25 +228,28 @@ interface DialogProps {
  * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/dialog.tsx Fluid Functionalism
  * @license MIT © 2026 Micka Touillaud
  */
-function Dialog({ children, open, defaultOpen, onOpenChange, modal }: DialogProps) {
-  return (
-    <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
-      {root => (
-        <DialogPrimitive.Root {...root} modal={modal}>
-          {children}
-        </DialogPrimitive.Root>
-      )}
-    </DialogState>
-  )
-}
-
-Dialog.Trigger = DialogTrigger
-Dialog.Content = DialogContent
-Dialog.Header = DialogHeader
-Dialog.Footer = DialogFooter
-Dialog.Title = DialogTitle
-Dialog.Description = DialogDescription
-Dialog.Close = DialogClose
+const Dialog = Object.assign(
+  function Dialog({ children, open, defaultOpen, onOpenChange, modal }: DialogProps) {
+    return (
+      <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
+        {root => (
+          <DialogPrimitive.Root {...root} modal={modal}>
+            {children}
+          </DialogPrimitive.Root>
+        )}
+      </DialogState>
+    )
+  },
+  {
+    Trigger: DialogTrigger,
+    Content: DialogContent,
+    Header: DialogHeader,
+    Footer: DialogFooter,
+    Title: DialogTitle,
+    Description: DialogDescription,
+    Close: DialogClose,
+  },
+)
 
 export type {
   DialogContentProps,

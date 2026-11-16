@@ -371,22 +371,25 @@ interface CommandProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Command({ open, defaultOpen, onOpenChange, hotkey = 'k', children }: CommandProps) {
-  return (
-    <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
-      {root => (
-        <CommandScope {...root} hotkey={hotkey}>
-          {children}
-        </CommandScope>
-      )}
-    </DialogState>
-  )
-}
-
-Command.Trigger = CommandTrigger
-Command.Content = CommandContent
-Command.Palette = CommandPalette
-Command.Shortcut = CommandShortcut
+const Command = Object.assign(
+  function Command({ open, defaultOpen, onOpenChange, hotkey = 'k', children }: CommandProps) {
+    return (
+      <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
+        {root => (
+          <CommandScope {...root} hotkey={hotkey}>
+            {children}
+          </CommandScope>
+        )}
+      </DialogState>
+    )
+  },
+  {
+    Trigger: CommandTrigger,
+    Content: CommandContent,
+    Palette: CommandPalette,
+    Shortcut: CommandShortcut,
+  },
+)
 
 export type { CommandContentProps, CommandGroup, CommandItem, CommandItems, CommandPaletteProps, CommandProps }
 export { Command, CommandContent, CommandList, CommandListRoot, CommandPalette, CommandShortcut, CommandTrigger }

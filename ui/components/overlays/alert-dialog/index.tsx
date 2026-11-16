@@ -238,23 +238,26 @@ interface AlertDialogProps {
  *
  * @example {@include ./examples.mdx}
  */
-function AlertDialog({ children, open, defaultOpen, onOpenChange }: AlertDialogProps) {
-  return (
-    <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
-      {root => <AlertDialogRoot {...root}>{children}</AlertDialogRoot>}
-    </DialogState>
-  )
-}
-
-AlertDialog.Trigger = DialogTrigger
-AlertDialog.Content = AlertDialogContent
-AlertDialog.Header = DialogHeader
-AlertDialog.Footer = DialogFooter
-AlertDialog.Title = DialogTitle
-AlertDialog.Description = DialogDescription
-AlertDialog.Close = DialogClose
-AlertDialog.Action = AlertDialogAction
-AlertDialog.Cancel = AlertDialogCancel
+const AlertDialog = Object.assign(
+  function AlertDialog({ children, open, defaultOpen, onOpenChange }: AlertDialogProps) {
+    return (
+      <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
+        {root => <AlertDialogRoot {...root}>{children}</AlertDialogRoot>}
+      </DialogState>
+    )
+  },
+  {
+    Trigger: DialogTrigger,
+    Content: AlertDialogContent,
+    Header: DialogHeader,
+    Footer: DialogFooter,
+    Title: DialogTitle,
+    Description: DialogDescription,
+    Close: DialogClose,
+    Action: AlertDialogAction,
+    Cancel: AlertDialogCancel,
+  },
+)
 
 export type { AlertDialogActionProps, AlertDialogCancelProps, AlertDialogProps }
 export { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent }

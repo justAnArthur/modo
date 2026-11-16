@@ -111,11 +111,16 @@ filter is applied". Sentence case, plain words, present tense. Name other items 
 Parts hang off the default export so examples can write `<Popover.Content>`:
 
 ```ts
-function Popover(…) { … }
-Popover.Trigger = PopoverTrigger
-Popover.Content = PopoverContent
+/** …the item's doc block, on the const… */
+const Popover = Object.assign(
+  function Popover(…) { … },
+  { Trigger: PopoverTrigger, Content: PopoverContent },
+)
 export default Popover
 ```
+
+Declare the parts above the root. Don't write `Popover.Trigger = …`: TypeScript types it in the
+source, but bunup's `.d.ts` bundler drops it, so consumers lose the parts (`bun run check:dist` fails).
 
 For a `forwardRef` root, type the parts on a cast (`as ForwardRefExoticComponent<…> & { Item: typeof
 Item }`) and `Object.assign(Root, { Item })`. Keep upstream's named exports as well. A part that wraps a

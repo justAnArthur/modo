@@ -128,20 +128,23 @@ interface PreviewCardProps {
  * @source https://github.com/starc007/ui-components/blob/de52f337e520e7ee37749b36eb1c32df86137bcb/components/motion/popover.tsx beUI
  * @license MIT © 2026 Saurabh Chauhan
  */
-function PreviewCard({ open, defaultOpen, onOpenChange, children }: PreviewCardProps) {
-  const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
+const PreviewCard = Object.assign(
+  function PreviewCard({ open, defaultOpen, onOpenChange, children }: PreviewCardProps) {
+    const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
 
-  return (
-    <OverlayContext.Provider value={root.state}>
-      <PreviewCardPrimitive.Root open={root.open} onOpenChange={root.onOpenChange}>
-        {children}
-      </PreviewCardPrimitive.Root>
-    </OverlayContext.Provider>
-  )
-}
-
-PreviewCard.Trigger = PreviewCardTrigger
-PreviewCard.Content = PreviewCardContent
+    return (
+      <OverlayContext.Provider value={root.state}>
+        <PreviewCardPrimitive.Root open={root.open} onOpenChange={root.onOpenChange}>
+          {children}
+        </PreviewCardPrimitive.Root>
+      </OverlayContext.Provider>
+    )
+  },
+  {
+    Trigger: PreviewCardTrigger,
+    Content: PreviewCardContent,
+  },
+)
 
 export type { PreviewCardContentProps, PreviewCardProps, PreviewCardTriggerProps }
 export { PreviewCard, PreviewCardContent, PreviewCardTrigger }

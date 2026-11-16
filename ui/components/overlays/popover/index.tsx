@@ -241,31 +241,34 @@ interface PopoverProps {
  * @license MIT © 2026 Saurabh Chauhan
  * @license MIT © 2024 ibelick
  */
-function Popover({ open, defaultOpen, onOpenChange, modal = false, children }: PopoverProps) {
-  // Reported here rather than through the root's state, so the handler gets the details and can cancel.
-  const root = useOverlayRoot({ open, defaultOpen })
+const Popover = Object.assign(
+  function Popover({ open, defaultOpen, onOpenChange, modal = false, children }: PopoverProps) {
+    // Reported here rather than through the root's state, so the handler gets the details and can cancel.
+    const root = useOverlayRoot({ open, defaultOpen })
 
-  return (
-    <OverlayContext.Provider value={root.state}>
-      <PopoverPrimitive.Root
-        open={root.open}
-        modal={modal}
-        onOpenChange={(next, details) => {
-          onOpenChange?.(next, details)
-          if (!details.isCanceled) root.onOpenChange(next, details)
-        }}
-      >
-        {children}
-      </PopoverPrimitive.Root>
-    </OverlayContext.Provider>
-  )
-}
-
-Popover.Trigger = PopoverTrigger
-Popover.Content = PopoverContent
-Popover.Title = PopoverTitle
-Popover.Description = PopoverDescription
-Popover.Close = PopoverClose
+    return (
+      <OverlayContext.Provider value={root.state}>
+        <PopoverPrimitive.Root
+          open={root.open}
+          modal={modal}
+          onOpenChange={(next, details) => {
+            onOpenChange?.(next, details)
+            if (!details.isCanceled) root.onOpenChange(next, details)
+          }}
+        >
+          {children}
+        </PopoverPrimitive.Root>
+      </OverlayContext.Provider>
+    )
+  },
+  {
+    Trigger: PopoverTrigger,
+    Content: PopoverContent,
+    Title: PopoverTitle,
+    Description: PopoverDescription,
+    Close: PopoverClose,
+  },
+)
 
 export type { PopoverAnchor, PopoverContentProps, PopoverOpenChangeDetails, PopoverProps, PopoverTriggerProps }
 export { Popover, PopoverClose, PopoverContent, PopoverDescription, PopoverTitle, PopoverTrigger }

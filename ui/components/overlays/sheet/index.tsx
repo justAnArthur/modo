@@ -171,50 +171,53 @@ interface SheetProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Sheet({
-  children,
-  open,
-  defaultOpen,
-  onOpenChange,
-  side = 'bottom',
-  snapPoints,
-  defaultSnapPoint,
-  modal = true,
-}: SheetProps) {
-  const [swiped, setSwiped] = useState(false)
+const Sheet = Object.assign(
+  function Sheet({
+    children,
+    open,
+    defaultOpen,
+    onOpenChange,
+    side = 'bottom',
+    snapPoints,
+    defaultSnapPoint,
+    modal = true,
+  }: SheetProps) {
+    const [swiped, setSwiped] = useState(false)
 
-  return (
-    <SheetContext.Provider value={{ side, swiped }}>
-      <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
-        {root => (
-          <DrawerPrimitive.Root
-            open={root.open}
-            onOpenChange={(next, details) => {
-              setSwiped(!next && details.reason === 'swipe')
-              root.onOpenChange(next, details)
-            }}
-            swipeDirection={SWIPE[side]}
-            snapPoints={snapPoints}
-            defaultSnapPoint={defaultSnapPoint}
-            modal={modal}
-          >
-            {children}
-          </DrawerPrimitive.Root>
-        )}
-      </DialogState>
-    </SheetContext.Provider>
-  )
-}
-
-Sheet.Trigger = DialogTrigger
-Sheet.Content = SheetContent
-Sheet.Header = DialogHeader
-Sheet.Footer = DialogFooter
-Sheet.Title = DialogTitle
-Sheet.Description = DialogDescription
-Sheet.Close = DialogClose
-Sheet.Provider = DrawerPrimitive.Provider
-Sheet.Indent = SheetIndent
+    return (
+      <SheetContext.Provider value={{ side, swiped }}>
+        <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
+          {root => (
+            <DrawerPrimitive.Root
+              open={root.open}
+              onOpenChange={(next, details) => {
+                setSwiped(!next && details.reason === 'swipe')
+                root.onOpenChange(next, details)
+              }}
+              swipeDirection={SWIPE[side]}
+              snapPoints={snapPoints}
+              defaultSnapPoint={defaultSnapPoint}
+              modal={modal}
+            >
+              {children}
+            </DrawerPrimitive.Root>
+          )}
+        </DialogState>
+      </SheetContext.Provider>
+    )
+  },
+  {
+    Trigger: DialogTrigger,
+    Content: SheetContent,
+    Header: DialogHeader,
+    Footer: DialogFooter,
+    Title: DialogTitle,
+    Description: DialogDescription,
+    Close: DialogClose,
+    Provider: DrawerPrimitive.Provider,
+    Indent: SheetIndent,
+  },
+)
 
 export type { SheetContentProps, SheetProps, SheetSide }
 export { Sheet, SheetContent, SheetIndent }
