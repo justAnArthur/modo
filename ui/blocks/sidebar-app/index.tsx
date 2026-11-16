@@ -227,5 +227,6 @@ export default function SidebarApp({
   )
 }
 
+export type { SidebarSearchFieldProps } from './search-field'
 export type { SidebarAppProps }
-export { SidebarApp }
+export { SidebarApp, SidebarInsetTopbar, SidebarSearchField }

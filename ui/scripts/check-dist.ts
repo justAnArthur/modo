@@ -15,7 +15,14 @@ import ts from 'typescript'
 const ROOT = join(import.meta.dirname, '..')
 const PACKAGE = '@justanarthur/modo-ui'
 const DIRECTIVE = '"use client";\n'
-const SERVER_SAFE = ['./lib/utils', './lib/springs', './lib/size-scale', './lib/shape-classes', './lib/field-classes']
+const SERVER_SAFE = [
+  './lib/utils',
+  './lib/springs',
+  './lib/size-scale',
+  './lib/shape-classes',
+  './lib/field-classes',
+  './lib/surface-classes',
+]
 
 const read = (file: string) => readFileSync(join(ROOT, file), 'utf8')
 const failures: string[] = []

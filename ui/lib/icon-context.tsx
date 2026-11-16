@@ -262,6 +262,14 @@ function useIcon(name: IconName): IconComponent {
 }
 
 /**
+ * Returns the whole icon map, for a kit that extends the set or a picker that lists it.
+ * Falls back to the default (Lucide) set if no provider is present.
+ */
+function useIcons(): Record<IconName, IconComponent> {
+  return useContext(IconContext) ?? defaultIcons
+}
+
+/**
  * Swap some or all icons for components from another library.
  * Names left out of `icons` keep their default (Lucide) component.
  */
@@ -270,4 +278,4 @@ function IconProvider({ children, icons }: { children: ReactNode; icons?: Partia
   return <IconContext.Provider value={value}>{children}</IconContext.Provider>
 }
 
-export { IconProvider, useIcon }
+export { IconProvider, useIcon, useIcons }
