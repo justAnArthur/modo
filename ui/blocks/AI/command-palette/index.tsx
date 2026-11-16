@@ -193,10 +193,17 @@ export default function CommandPalette({
     <Command open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange} hotkey={hotkey}>
       <Command.Trigger
         render={
-          <Button variant="secondary" size="compact" leadingIcon={icons.search} className={className}>
-            {label}
+          <Button
+            variant="secondary"
+            size="compact"
+            leadingIcon={icons.search}
+            aria-label={label}
+            className={className}
+          >
+            {/* A narrow window keeps the icon: the label and hotkey need the room the title wants. */}
+            <span className="hidden @lg:inline">{label}</span>
             {hotkey && (
-              <Kbd variant="plain" className="ml-3">
+              <Kbd variant="plain" className="ml-3 hidden @lg:inline-flex">
                 {`⌘${hotkey.toUpperCase()}`}
               </Kbd>
             )}

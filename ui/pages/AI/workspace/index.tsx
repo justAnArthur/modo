@@ -308,7 +308,7 @@ export default function Workspace({
             label="Session title"
             value={titles[selected] ?? session?.title}
             onValueChange={title => setTitles({ ...titles, [selected]: title })}
-            className="min-w-0 weight-medium"
+            className="min-w-24 weight-medium"
           />
           {session?.branch && (
             <span className="hidden min-w-0 items-center gap-1 text-caption text-muted-foreground @xl:flex">
@@ -337,7 +337,12 @@ export default function Workspace({
               setSearchOpen(false)
             }}
             trigger={
-              <Button variant="ghost" size="icon-compact" aria-label="Search transcripts">
+              <Button
+                variant="ghost"
+                size="icon-compact"
+                aria-label="Search transcripts"
+                className="hidden @md:inline-flex"
+              >
                 <Search />
               </Button>
             }

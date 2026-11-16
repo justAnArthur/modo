@@ -217,7 +217,10 @@ function RunSettings({
     <Popover>
       <Popover.Trigger
         render={
-          <RowTrigger aria-label={`Run settings: ${model}, ${effort} effort, ${mode}, context ${percent}%`}>
+          <RowTrigger
+            className="max-w-full"
+            aria-label={`Run settings: ${model}, ${effort} effort, ${mode}, context ${percent}%`}
+          >
             <ModeIcon size={14} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
             {fast && <Zap size={14} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />}
             <span className="min-w-0 truncate">
@@ -426,7 +429,7 @@ export default function Composer({
               onValueChange={onProfileChange}
               side="top"
             />
-            <div className="ml-auto">
+            <div className="ml-auto min-w-0">
               <RunSettings
                 models={models}
                 efforts={efforts}
