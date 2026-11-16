@@ -23,14 +23,8 @@ import {
   useMemo,
   useRef,
 } from 'react'
-import {
-  FieldStateContext,
-  type FieldVariant,
-  fieldIconClasses,
-  fieldTextInset,
-  focusControlOnPress,
-  useFieldBox,
-} from '../../../lib/field-classes'
+import { FieldStateContext, focusControlOnPress, useFieldBox } from '../../../lib/field-box'
+import { type FieldVariant, fieldIconClasses, fieldTextInset } from '../../../lib/field-classes'
 import type { IconComponent } from '../../../lib/icon-context'
 import { mergeRefs } from '../../../lib/merge-refs'
 import { IndexedRows, useRowIndex } from '../../../lib/row-index'

@@ -12,7 +12,7 @@
 // so the popups never drift apart.
 // ---------------------------------------------------------------------------
 
-import { shapeMap } from './shape-context'
+import { shapeMap } from './shape-classes'
 
 /** Popups keep the rounded radii whatever the global shape: pill corners distort their padding and break the rows' concentric fit. */
 export const POPUP_SHAPE = shapeMap.rounded

@@ -7,6 +7,8 @@
  * a plain element.
  */
 
+'use client'
+
 import {
   type ButtonHTMLAttributes,
   Children,

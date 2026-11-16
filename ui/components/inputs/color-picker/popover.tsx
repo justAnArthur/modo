@@ -8,7 +8,7 @@
 
 import { Popover } from '@base-ui/react/popover'
 import { forwardRef, useCallback, useMemo, useRef } from 'react'
-import { useFieldBox } from '../../../lib/field-classes'
+import { useFieldBox } from '../../../lib/field-box'
 import { useIcon } from '../../../lib/icon-context'
 import { mergeRefs } from '../../../lib/merge-refs'
 import { OverlayContext, PortalContainer, positionerProps, useOverlay, useOverlayRoot } from '../../../lib/overlay'

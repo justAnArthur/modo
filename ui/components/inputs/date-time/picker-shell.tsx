@@ -7,7 +7,8 @@
 
 import { Popover } from '@base-ui/react/popover'
 import { type ButtonHTMLAttributes, forwardRef, type ReactNode, type RefObject, useContext, useState } from 'react'
-import { FieldStateContext, type FieldVariant, fieldIconClasses, useFieldBox } from '../../../lib/field-classes'
+import { FieldStateContext, useFieldBox } from '../../../lib/field-box'
+import { type FieldVariant, fieldIconClasses } from '../../../lib/field-classes'
 import { type IconName, useIcon } from '../../../lib/icon-context'
 import { OverlayContext, positionerProps, useOverlay, useOverlayRoot } from '../../../lib/overlay'
 import { PopupSurface } from '../../../lib/popup-surface'
