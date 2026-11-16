@@ -198,7 +198,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
     const thumb = { left: dragX ?? thumbX, top: thumbY, width: thumbWidth, height: thumbHeight }
 
     const handlePointerDown = useCallback(
-      (e: React.PointerEvent<HTMLDivElement>) => {
+      (e: React.PointerEvent<HTMLElement>) => {
         if (disabled) return
         if (e.pointerType === 'mouse' && e.button !== 0) return
         setPressed(true)
@@ -215,7 +215,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
     )
 
     const handlePointerMove = useCallback(
-      (e: React.PointerEvent<HTMLDivElement>) => {
+      (e: React.PointerEvent<HTMLElement>) => {
         if (!pointerStart.current) return
         const delta = e.clientX - pointerStart.current.clientX
 
