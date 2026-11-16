@@ -7,7 +7,7 @@
 'use client'
 
 import { AnimatePresence, motion } from 'motion/react'
-import { forwardRef, type HTMLAttributes } from 'react'
+import { Children, forwardRef, type HTMLAttributes, type ReactNode } from 'react'
 import type { IconComponent } from './icon-context'
 import { useReduceMotion } from './reduced-motion'
 import type { ShapeClasses } from './shape-context'
@@ -44,6 +44,16 @@ export function rowClasses({ size, shape, lit, disabled = false }: RowClassesOpt
 
 /** A row label that fills the row and truncates; the padding keeps the clip off ascenders and descenders. */
 export const rowLabelClass = 'min-w-0 flex-1 truncate text-trim py-1 -my-1'
+
+/** Whether a label is plain text (strings and numbers, `{name} (you)` included) rather than a node. */
+export function isTextLabel(label: ReactNode) {
+  return Children.toArray(label).every(part => typeof part === 'string' || typeof part === 'number')
+}
+
+/** A row label's classes: text trims and truncates; a node (an avatar and a name, a badge) keeps its own box, which trimming and clipping would cut. */
+export function rowLabelBoxClass(label: ReactNode) {
+  return isTextLabel(label) ? rowLabelClass : 'flex min-w-0 flex-1 items-center'
+}
 
 /** A row's leading icon: the ladder's icon size, heavier while the row is lit. */
 export function RowIcon({ icon: Icon, lit }: { icon: IconComponent; lit: boolean }) {

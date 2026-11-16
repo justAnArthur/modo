@@ -13,6 +13,7 @@ import { useFieldBox } from '../../../lib/field-box'
 import { type FieldVariant, fieldIconClasses } from '../../../lib/field-classes'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { useOverlay } from '../../../lib/overlay'
+import { useReduceMotion } from '../../../lib/reduced-motion'
 import { useShape } from '../../../lib/shape-context'
 import type { SizeVariant } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
@@ -53,12 +54,22 @@ function useComboboxField(variant: FieldVariant, error: string | undefined, size
   return { ...field, compact: field.size.variant === 'compact' }
 }
 
+// Icon swap (motion.md): the chevron and the spinner share one cell.
+const SHOWN = { opacity: 1, scale: 1, filter: 'blur(0px)' }
+const HIDDEN = { opacity: 0, scale: 0.6, filter: 'blur(4px)' }
+const swapEnter = { type: 'tween' as const, duration: spring.fast.duration, ease: 'easeOut' as const }
+const swapLeave = { type: 'tween' as const, ...spring.fast.exit, ease: 'easeIn' as const }
+
 function FieldControls({ clearable, compact, iconSize }: { clearable: boolean; compact: boolean; iconSize: number }) {
   const XIcon = useIcon('x')
+  const LoaderIcon = useIcon('loader')
   const pill = useShape().variant === 'pill'
+  const { loading, readOnly } = useComboboxContext()
+  const reduceMotion = useReduceMotion()
+  const swap = (shown: boolean) => (reduceMotion ? { opacity: shown ? 1 : 0 } : shown ? SHOWN : HIDDEN)
   return (
     <>
-      {clearable && (
+      {clearable && !readOnly && (
         // The primitive hides the button while there is nothing to clear; the slot stays.
         <span className={cn('flex shrink-0 items-center justify-center', compact ? 'size-5' : 'size-6')}>
           <ComboboxPrimitive.Clear
@@ -75,20 +86,38 @@ function FieldControls({ clearable, compact, iconSize }: { clearable: boolean; c
         tabIndex={-1}
         className={cn(fieldButtonClass, compact ? 'size-5' : 'size-6')}
       >
-        <svg
-          aria-hidden
-          width={iconSize}
-          height={iconSize}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="transition-colors duration-fast"
-        >
-          <path d="M6 9l6 6 6-6" />
-        </svg>
+        <span className="grid" style={{ width: iconSize, height: iconSize }}>
+          <motion.span
+            className={cn('col-start-1 row-start-1 flex', readOnly && 'invisible')}
+            initial={false}
+            animate={swap(!loading)}
+            transition={loading ? swapLeave : swapEnter}
+          >
+            <svg
+              aria-hidden
+              width={iconSize}
+              height={iconSize}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="transition-colors duration-fast"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </motion.span>
+          <motion.span
+            aria-hidden
+            className="col-start-1 row-start-1 flex"
+            initial={false}
+            animate={swap(loading)}
+            transition={loading ? swapEnter : swapLeave}
+          >
+            <LoaderIcon size={iconSize} strokeWidth={1.5} className="animate-spin motion-reduce:animate-none" />
+          </motion.span>
+        </span>
       </ComboboxPrimitive.Trigger>
     </>
   )
@@ -181,7 +210,7 @@ export const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
     const XIcon = useIcon('x')
     const shape = useShape()
     const { open } = useOverlay('Combobox.Chips')
-    const { anchorRef, inputValue, values } = useComboboxContext()
+    const { anchorRef, inputValue, values, readOnly } = useComboboxContext()
     const { size: sizeClasses, props: boxProps, invalid, compact } = useComboboxField(variant, error, size)
     const rowHeight = useChipRowHeight(compact ? 8 : 12)
 
@@ -249,17 +278,19 @@ export const ComboboxChips = forwardRef<HTMLInputElement, ComboboxChipsProps>(
                               compact ? 'h-5 text-caption-compact' : 'h-6 text-caption',
                             )}
                           >
-                            <span className="truncate">{label}</span>
-                            <ComboboxPrimitive.ChipRemove
-                              aria-label={`Remove ${label}`}
-                              className={cn(
-                                chipRemoveClass,
-                                shape.variant === 'pill' && 'rounded-full',
-                                compact ? 'size-4' : 'size-5',
-                              )}
-                            >
-                              <XIcon size={compact ? 10 : 12} strokeWidth={2} />
-                            </ComboboxPrimitive.ChipRemove>
+                            <span className={cn('truncate', readOnly && 'pr-1.5')}>{label}</span>
+                            {!readOnly && (
+                              <ComboboxPrimitive.ChipRemove
+                                aria-label={`Remove ${label}`}
+                                className={cn(
+                                  chipRemoveClass,
+                                  shape.variant === 'pill' && 'rounded-full',
+                                  compact ? 'size-4' : 'size-5',
+                                )}
+                              >
+                                <XIcon size={compact ? 10 : 12} strokeWidth={2} />
+                              </ComboboxPrimitive.ChipRemove>
+                            )}
                           </ComboboxPrimitive.Chip>
                         </motion.span>
                       )

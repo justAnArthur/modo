@@ -48,6 +48,13 @@ interface ComboboxContextValue {
   createRow: ReactNode | null
   /** `hideSelected` has emptied the list with nothing typed. */
   allSelected: boolean
+  /** Items are on their way: a status row under the list, the empty message held back. */
+  loading: boolean
+  loadingLabel: ReactNode
+  /** Shows the picks but takes no input. */
+  readOnly: boolean
+  /** Closes the popup (the footer's `close`). */
+  close: () => void
 }
 
 export const ComboboxContext = createContext<ComboboxContextValue | null>(null)

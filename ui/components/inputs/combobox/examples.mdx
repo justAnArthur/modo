@@ -1,4 +1,6 @@
 import Combobox from './index'
+import RemoteDemo from './remote-demo'
+import Button from '../../button'
 import { Clock, Globe, Lock, Mail, Search, Star, Users } from 'lucide-react'
 
 # Basic
@@ -203,3 +205,56 @@ fades the whole thing and stops the popup opening.
     </Combobox.Content>
   </Combobox>
 </div>
+
+# Remote items
+
+Own the query with `query` + `onQueryChange`, pass `filter={null}` so the
+list shows exactly what you hand it, and set `loading` while the answer is
+on its way: the chevron blurs into a spinner and a status row sits under the
+rows. The footer's "Load more" asks for the next page. `RemoteDemo` is a docs
+stage: a fake server that answers after 600ms.
+
+<RemoteDemo />
+
+# Footer
+
+`Combobox.Content`'s `footer` stays pinned under the list while the rows
+scroll. A function gets `{ close, query }`.
+
+<Combobox items={['Design', 'Engineering', 'Marketing', 'Operations', 'Sales', 'Support']}>
+  <Combobox.Input placeholder="Pick a team…" />
+  <Combobox.Content
+    footer={({ close, query }) => (
+      <Button variant="tertiary" size="compact" className="w-full" onClick={close}>
+        {query ? `Invite “${query}”…` : 'Invite a team…'}
+      </Button>
+    )}
+  >
+    <Combobox.Empty>No team found.</Combobox.Empty>
+    <Combobox.List>
+      {(item) => (
+        <Combobox.Item key={item} value={item}>
+          {item}
+        </Combobox.Item>
+      )}
+    </Combobox.List>
+  </Combobox.Content>
+</Combobox>
+
+# Read-only
+
+`readOnly` shows the picks and takes no input: the popup stays shut, and the
+clear ✕ and the chips' ✕ go.
+
+<Combobox multiple readOnly defaultValue={['next', 'astro']} items={[{ value: 'next', label: 'Next.js' }, { value: 'nuxt', label: 'Nuxt' }, { value: 'astro', label: 'Astro' }]}>
+  <Combobox.Chips clearable placeholder="Frameworks" className="w-[360px] max-w-full" />
+  <Combobox.Content>
+    <Combobox.List>
+      {(item) => (
+        <Combobox.Item key={item.value} value={item.value}>
+          {item.label}
+        </Combobox.Item>
+      )}
+    </Combobox.List>
+  </Combobox.Content>
+</Combobox>
