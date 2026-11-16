@@ -1,4 +1,4 @@
-import Toast from './index'
+import Toast, { toast } from './index'
 import Button from '../../button'
 
 # States
@@ -40,6 +40,40 @@ An `action` puts a button in the body.
     action={{ label: 'Undo' }}
     render={<Button variant="secondary">Archive</Button>}
   />
+</Toast>
+
+# From anywhere
+
+Mount one `<Toast manager={toast} />` and call the global `toast` from any handler or module, React or not. It takes options or just a title and returns the toast's id; `toast.loading` stays until `toast.update` turns it into a result, which then leaves on the default timeout. `useToast()` under that `Toast` works on the same stack.
+
+<Toast manager={toast} position="bottom-right">
+  <div className="flex flex-wrap items-center justify-center gap-3">
+    <Button variant="secondary" onClick={() => toast.success({ title: 'Saved', description: 'Called from a plain handler.' })}>Success</Button>
+    <Button
+      variant="secondary"
+      onClick={() => {
+        const id = toast.loading('Syncing…')
+        setTimeout(() => toast.update(id, { type: 'success', title: 'Synced' }), 1600)
+      }}
+    >
+      Loading, then update
+    </Button>
+    <Button
+      variant="secondary"
+      onClick={() =>
+        toast
+          .promise(new Promise((resolve, reject) => setTimeout(Math.random() < 0.5 ? resolve : () => reject(new Error('Network error')), 1600)), {
+            loading: 'Publishing…',
+            success: 'Published',
+            error: error => ({ title: 'Could not publish', description: error.message }),
+          })
+          .catch(() => {})
+      }
+    >
+      Promise
+    </Button>
+    <Button variant="ghost" onClick={() => toast.close()}>Close all</Button>
+  </div>
 </Toast>
 
 # Positions
