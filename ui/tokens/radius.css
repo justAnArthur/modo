@@ -7,4 +7,12 @@
      keycaps, and the composer's stop glyph. */
   --radius-box: 5px;
   --radius-glyph: 3px;
+
+  /* shape-context's steps off wind4's scale, read by `rounded-pill|focus-ring|
+     pill-focus-ring` in preset.ts: the pill mode's item corner, and the focus
+     ring 2px outside an item in each mode (item + 2, so it stays concentric).
+     test/shape-radii.test.ts holds shape-classes' numeric radii to them. */
+  --radius-pill: 20px;
+  --radius-focus-ring: 10px;
+  --radius-pill-focus-ring: 22px;
 }

@@ -234,6 +234,7 @@ components:
     textColor: "{colors.muted-foreground}"
     rounded: "{rounded.lg}"
     height: "{spacing.control}"
+    boxShadow: "0 0 0 1px transparent"
   button-ghost-hover:
     backgroundColor: "{colors.hover}"
   button-outline:
@@ -494,8 +495,8 @@ everything renders without a provider:
 
 | Slot | Rounded | Pill |
 |---|---|---|
-| `item`, `bg`, `button`, `input` | 8px `rounded-lg` | 20px |
-| `focusRing` (2px outside the element) | 10px | 22px |
+| `item`, `bg`, `button`, `input` | 8px `rounded-lg` | 20px `rounded-pill` |
+| `focusRing` (2px outside the element) | 10px `rounded-focus-ring` | 22px `rounded-pill-focus-ring` |
 | `container` (popups, cards, dialogs, segmented tracks) | 12px `rounded-xl` | 24px |
 | `mergedBg` (merged selection runs) | 8px | 16px |
 

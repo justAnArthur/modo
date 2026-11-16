@@ -25,20 +25,16 @@ interface ShapeClasses {
   mergedRadius: number
 }
 
-// biome-ignore-start lint/plugin: upstream radii, kept in step with bgRadius / mergedRadius
 const shapeMap: Record<ShapeVariant, ShapeClasses> = {
   pill: {
     variant: 'pill',
-    item: 'rounded-[20px]',
-    bg: 'rounded-[20px]',
-    // +2px over `item` because the focus ring sits 2px outside the element
-    // (top/left -2, width/height +4); this keeps the corners concentric so a
-    // pill element gets a pill ring (matches the rounded-mode 8px→10px bump).
-    focusRing: 'rounded-[22px]',
+    item: 'rounded-pill',
+    bg: 'rounded-pill',
+    focusRing: 'rounded-pill-focus-ring',
     mergedBg: 'rounded-2xl',
     container: 'rounded-3xl',
-    button: 'rounded-[20px]',
-    input: 'rounded-[20px]',
+    button: 'rounded-pill',
+    input: 'rounded-pill',
     bgRadius: 20,
     mergedRadius: 16,
   },
@@ -46,7 +42,7 @@ const shapeMap: Record<ShapeVariant, ShapeClasses> = {
     variant: 'rounded',
     item: 'rounded-lg',
     bg: 'rounded-lg',
-    focusRing: 'rounded-[10px]',
+    focusRing: 'rounded-focus-ring',
     mergedBg: 'rounded-lg',
     container: 'rounded-xl',
     button: 'rounded-lg',
@@ -54,7 +50,6 @@ const shapeMap: Record<ShapeVariant, ShapeClasses> = {
     bgRadius: 8,
     mergedRadius: 8,
   },
-  // biome-ignore-end lint/plugin: upstream radii
 }
 
 export type { ShapeClasses, ShapeVariant }

@@ -48,7 +48,7 @@ Upstream's craft, docs and snippets assume a shadcn + Tailwind + Next app. Read 
 |---|---|
 | `npx shadcn add @fluid/<x>` | Already in the repo. Import relatively: `../../../lib/springs`, `../../button`. |
 | Radix or `base/` flavor | Base UI only, `@base-ui/react` pinned at 1.4.1 (styling relies on its `--anchor-width`, `--available-height`, `data-side`). |
-| Tailwind v4, `@theme`, `@utility` | UnoCSS `presetWind4` (`uno.config.ts`): `theme` for colors/shadows, custom `rules` for `text-<role>`, `weight-*`, `duration-<tier>`, `rounded-box\|glyph`. |
+| Tailwind v4, `@theme`, `@utility` | UnoCSS `presetWind4` (`uno.config.ts`): `theme` for colors/shadows, custom `rules` for `text-<role>`, `weight-*`, `duration-<tier>`, `rounded-box\|glyph\|pill\|focus-ring\|pill-focus-ring`. |
 | clsx + tailwind-merge | `cn` from `lib/utils.ts`; its class groups already know the local utilities, so `cn('text-body', 'text-muted-foreground')` keeps both. |
 | `framer-motion` | `motion/react` (motion 13). |
 | `typeClass(role)`, `useSize().type.<role>`, `--fs-*` / `--lh-*` | `text-<role>` / `text-<role>-compact` utilities over `--text-*` / `--leading-*`. Compact keeps the role's leading. |

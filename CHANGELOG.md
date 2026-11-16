@@ -85,7 +85,7 @@ New since 0.6:
 - ContextMenu submenus (`ContextMenu.Sub`, `.SubTrigger`, `.SubContent`), Dropdown's; `ContextMenu.Content keepMounted`.
 - Table `Footer`, `Caption`, `Empty`, sortable heads (`sort` / `defaultSort` / `onSortChange`) and `stacked` rows. Button `outline`, `destructive`, `success` and `link`, and a loading Button keeps focus; Badge `outline`; `Card.Divider` and `border`; link tabs (`Tabs.Item` `href`).
 - Server-safe helpers: `./lib/{utils,springs,size-scale,shape-classes,field-classes}` and `./components/*/variants` carry no `'use client'`; the hooks and contexts are exported per subpath too (`./lib/field-box`, `./lib/use-morph`, …). CI checks the built `dist/`.
-- Tokens: the button washes (`--destructive-strong`, `--destructive-wash*`, `--success-strong`, `--success-wash*`), `--shadow-button-outline*`, `--skeleton` and `--duration-loop`.
+- Tokens: the button washes (`--destructive-strong`, `--destructive-wash*`, `--success-strong`, `--success-wash*`), `--shadow-button-outline*`, `--shadow-button-ghost`, `--skeleton` and `--duration-loop`; shape-context's off-scale radii as `--radius-pill`, `--radius-focus-ring` and `--radius-pill-focus-ring` (`rounded-pill|focus-ring|pill-focus-ring`).
 
 Breaking:
 
