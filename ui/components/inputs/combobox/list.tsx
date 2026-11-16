@@ -24,7 +24,7 @@ import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { useMergeRefs } from '../../../lib/merge-refs'
 import { type AnchorProps, positionerProps, useOverlay, usePortalContainer } from '../../../lib/overlay'
 import { isDisabledRow, POPUP_SHAPE, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
-import { CheckMark, RowIcon, rowClasses, rowLabelClass } from '../../../lib/popup-rows'
+import { CheckMark, RowIcon, rowClasses, rowLabelBoxClass } from '../../../lib/popup-rows'
 import { PopupSurface } from '../../../lib/popup-surface'
 import { useSize } from '../../../lib/size-context'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
@@ -43,22 +43,49 @@ import {
   useComboboxContext,
 } from './context'
 
+/** What `Combobox.Content`'s `footer` gets when it is a function. */
+interface ComboboxFooterContext {
+  /** Closes the popup. */
+  close: () => void
+  /** The trimmed query. */
+  query: string
+}
+
+/** A node, or a function of the popup's state, rendered under the list. */
+type ComboboxFooter = ReactNode | ((context: ComboboxFooterContext) => ReactNode)
+
 interface ComboboxContentProps extends AnchorProps, MorphProps, Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   /** Classes for the popup surface — merged after the radius and max-height. */
   className?: string
   /** `Combobox.Empty` and `Combobox.List`. */
   children: ReactNode
+  /** Pinned under the list, past a hairline: a "Load more" or "Add new…" action. A function gets `{ close, query }`. */
+  footer?: ComboboxFooter
 }
 
 export const ComboboxContent = forwardRef<HTMLDivElement, ComboboxContentProps>(
   (
-    { side, align, sideOffset, container, from, effect, hideSource, tier = 'moderate', className, children, ...props },
+    {
+      side,
+      align,
+      sideOffset,
+      container,
+      from,
+      effect,
+      hideSource,
+      tier = 'moderate',
+      footer,
+      className,
+      children,
+      ...props
+    },
     ref,
   ) => {
     const { open, origin } = useOverlay('Combobox.Content')
-    const { anchorRef } = useComboboxContext()
+    const { anchorRef, close, inputValue } = useComboboxContext()
     const morph = useMorph(open, origin, { from, effect, hideSource, tier })
     const popupRef = useMergeRefs(ref, morph.popupRef)
+    const footerNode = typeof footer === 'function' ? footer({ close, query: inputValue.trim() }) : footer
 
     return (
       <ComboboxPrimitive.Portal container={usePortalContainer(container)}>
@@ -80,6 +107,10 @@ export const ComboboxContent = forwardRef<HTMLDivElement, ComboboxContentProps>(
               )}
             >
               {children}
+              {footerNode !== undefined && footerNode !== null && footerNode !== false && (
+                // Outside the scrolling list, so it stays put while the rows scroll.
+                <div className="shrink-0 border-t border-border p-1">{footerNode}</div>
+              )}
             </PopupSurface>
           </ComboboxPrimitive.Popup>
         </ComboboxPrimitive.Positioner>
@@ -99,9 +130,11 @@ interface ComboboxListProps {
 
 export const ComboboxList = forwardRef<HTMLDivElement, ComboboxListProps>(({ className, children }, ref) => {
   const { open } = useOverlay('Combobox.List')
-  const { multiple, inputValue, createRow } = useComboboxContext()
+  const { multiple, inputValue, createRow, loading, loadingLabel } = useComboboxContext()
   const highlight = useContext(ComboboxHighlightContext)
   const PlusIcon = useIcon('plus')
+  const LoaderIcon = useIcon('loader')
+  const size = useSize()
   const containerRef = useRef<HTMLDivElement>(null)
   const listRef = useMergeRefs(containerRef, ref)
   const hover = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
@@ -193,6 +226,26 @@ export const ComboboxList = forwardRef<HTMLDivElement, ComboboxListProps>(({ cla
             )}
           </ComboboxPrimitive.Collection>
         </ComboboxPrimitive.List>
+        {loading && (
+          // Not a row: no hover, no pick. Under the rows, so the items already here hold still while more arrive.
+          <div
+            role="status"
+            className={cn(
+              'flex shrink-0 items-center justify-center text-muted-foreground',
+              size.control,
+              size.itemPx,
+              size.gap,
+              size.text,
+            )}
+          >
+            <LoaderIcon
+              size={size.icon}
+              strokeWidth={1.5}
+              className="shrink-0 animate-spin motion-reduce:animate-none"
+            />
+            <span className="truncate text-trim">{loadingLabel}</span>
+          </div>
+        )}
       </ScrollArea>
     </ComboboxListContext.Provider>
   )
@@ -249,7 +302,7 @@ export const ComboboxItem = forwardRef<HTMLDivElement, ComboboxItemProps>(
         }
       >
         {Icon && <RowIcon icon={Icon} lit={lit} />}
-        <span className={rowLabelClass}>{children}</span>
+        <span className={rowLabelBoxClass(children)}>{children}</span>
         <CheckMark checked={isChecked} reserve />
       </ComboboxPrimitive.Item>
     )
@@ -276,7 +329,7 @@ export const ComboboxEmpty = forwardRef<HTMLDivElement, ComboboxEmptyProps>(
         className={cn('px-3 text-center text-muted-foreground [&:not(:empty)]:py-6', size.text, className)}
         {...props}
       >
-        {combobox.allSelected && allSelected !== undefined ? allSelected : children}
+        {combobox.loading ? null : combobox.allSelected && allSelected !== undefined ? allSelected : children}
       </ComboboxPrimitive.Empty>
     )
   },
@@ -284,4 +337,11 @@ export const ComboboxEmpty = forwardRef<HTMLDivElement, ComboboxEmptyProps>(
 
 ComboboxEmpty.displayName = 'ComboboxEmpty'
 
-export type { ComboboxContentProps, ComboboxEmptyProps, ComboboxItemProps, ComboboxListProps }
+export type {
+  ComboboxContentProps,
+  ComboboxEmptyProps,
+  ComboboxFooter,
+  ComboboxFooterContext,
+  ComboboxItemProps,
+  ComboboxListProps,
+}

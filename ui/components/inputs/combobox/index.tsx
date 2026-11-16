@@ -31,6 +31,8 @@ import {
   type ComboboxContentProps,
   ComboboxEmpty,
   type ComboboxEmptyProps,
+  type ComboboxFooter,
+  type ComboboxFooterContext,
   ComboboxItem,
   type ComboboxItemProps,
   ComboboxList,
@@ -70,8 +72,20 @@ interface ComboboxProps {
   defaultOpen?: boolean
   /** Called when the list opens or closes. */
   onOpenChange?: (open: boolean) => void
-  /** Match an item against the query. Defaults to a case-insensitive "contains" on the label. */
-  filter?: (item: ComboboxItemData, query: string) => boolean
+  /** Match an item against the query, or `null` to show every item as given (filtered elsewhere, e.g. on a server). Defaults to a case-insensitive "contains" on the label. */
+  filter?: ((item: ComboboxItemData, query: string) => boolean) | null
+  /** Controlled query, the field's text. Pair with `onQueryChange`. */
+  query?: string
+  /** Initial query, for an uncontrolled field. Defaults to `""`. */
+  defaultQuery?: string
+  /** Called with the field's text on every keystroke, and when a pick, a clear or a close rewrites it. */
+  onQueryChange?: (query: string) => void
+  /** Items are on their way: the chevron turns into a spinner, a status row sits under the list and the empty message waits. Defaults to `false`. */
+  loading?: boolean
+  /** The loading row's text. Defaults to `"Loading…"`. */
+  loadingLabel?: ReactNode
+  /** Shows the picks but takes no input: the popup stays shut and the clear ✕ and chip ✕ go. Defaults to `false`. */
+  readOnly?: boolean
   /** Adds a last row that creates the trimmed query whenever no label matches it exactly. Add the item to `items` and return it to select it. */
   // biome-ignore lint/suspicious/noConfusingVoidType: upstream API; a callback may return nothing.
   onCreate?: (query: string) => ComboboxItemData | void
@@ -108,11 +122,21 @@ interface ComboboxProps {
  * `defaultValue` and `defaultOpen`, or controlled with `value` plus
  * `onValueChange` and `open` plus `onOpenChange`.
  *
+ * For items that come from elsewhere (a server, a paged API), own the query
+ * with `query` + `onQueryChange`, pass `filter={null}` so the list shows
+ * exactly the items you hand it, and set `loading` while they are on their
+ * way: the chevron blurs into a spinner and a status row sits under the rows
+ * in place of the empty message. `Combobox.Content`'s `footer` pins an action
+ * under the list ("Load more", "Add new…"). `readOnly` shows the picks and
+ * takes no input. A row's label may be any node (an avatar and a name); it
+ * keeps its own box, where text is trimmed and truncated.
+ *
  * Statics:
  * - `Combobox.Input` — the single-pick field: icon, text input, clear ✕, chevron.
  * - `Combobox.Chips` — the multiple field: one chip per pick ahead of the input.
  * - `Combobox.Content` — the popup surface, holding `Combobox.Empty` and `Combobox.List`:
- *   `side`, `align`, `sideOffset`, `container` and the morph options `from`, `effect`, `hideSource`, `tier`.
+ *   `side`, `align`, `sideOffset`, `container`, a `footer` under the list, and the morph options
+ *   `from`, `effect`, `hideSource`, `tier`.
  * - `Combobox.List` — a row per match, from a `(item, index) => ReactNode` child.
  * - `Combobox.Item` — one row: `value`, optional `icon` and `disabled`.
  * - `Combobox.Empty` — what shows when nothing matches.
@@ -132,6 +156,12 @@ function Combobox({
   defaultOpen,
   onOpenChange,
   filter,
+  query: queryProp,
+  defaultQuery = '',
+  onQueryChange,
+  loading = false,
+  loadingLabel = 'Loading…',
+  readOnly = false,
   onCreate,
   createLabel = defaultCreateLabel,
   creatable = false,
@@ -145,7 +175,8 @@ function Combobox({
   // Memoized on the prop: a consumer's array is state, so everything keyed on it changes only with the selection.
   const controlledValues = useMemo(() => (value === undefined ? undefined : toValues(value)), [value])
   const [values, setValues] = useControllableState<string[]>(controlledValues, toValues(defaultValue))
-  const [inputValue, setInputValue] = useState('')
+  // Base UI owns the field's text unless the caller does; this mirrors it either way.
+  const [inputValue, setInputValue] = useControllableState(queryProp, defaultQuery, onQueryChange)
   const [highlight, setHighlight] = useState<Highlight | null>(null)
   // Items the create row made while no consumer owns the list.
   const [createdItems, setCreatedItems] = useState<ComboboxItemData[]>([])
@@ -219,6 +250,7 @@ function Combobox({
   // The create row survives the filter that hides every other miss.
   const { contains } = ComboboxPrimitive.useFilter()
   const filterFn = useMemo(() => {
+    if (filter === null) return null
     if (!filter && !createItem) return undefined
     const match = filter
       ? (item: ComboboxItemData, q: string) => filter(item, q)
@@ -227,9 +259,36 @@ function Combobox({
   }, [filter, createItem, contains])
 
   const createRow = createItem ? createLabel(query) : null
+  const { setOpen } = root
+  const close = useCallback(() => setOpen(false), [setOpen])
   const ctx = useMemo(
-    () => ({ values, multiple: isMultiple, inputValue, anchorRef, disabled, itemsByValue, createRow, allSelected }),
-    [values, isMultiple, inputValue, disabled, itemsByValue, createRow, allSelected],
+    () => ({
+      values,
+      multiple: isMultiple,
+      inputValue,
+      anchorRef,
+      disabled,
+      itemsByValue,
+      createRow,
+      allSelected,
+      loading,
+      loadingLabel,
+      readOnly,
+      close,
+    }),
+    [
+      values,
+      isMultiple,
+      inputValue,
+      disabled,
+      itemsByValue,
+      createRow,
+      allSelected,
+      loading,
+      loadingLabel,
+      readOnly,
+      close,
+    ],
   )
 
   return (
@@ -253,7 +312,9 @@ function Combobox({
               onOpenChange={(next, details) =>
                 root.onOpenChange(next, { event: details.event, trigger: anchorRef.current ?? undefined })
               }
-              onInputValueChange={setInputValue}
+              inputValue={queryProp}
+              defaultInputValue={defaultQuery}
+              onInputValueChange={next => setInputValue(next)}
               autoHighlight={ALWAYS_HIGHLIGHT}
               onItemHighlighted={(item, details) =>
                 setHighlight(
@@ -261,6 +322,7 @@ function Combobox({
                 )
               }
               disabled={disabled}
+              readOnly={readOnly}
               name={name}
               required={required}
               modal={false}
@@ -287,6 +349,8 @@ export type {
   ComboboxChipsProps,
   ComboboxContentProps,
   ComboboxEmptyProps,
+  ComboboxFooter,
+  ComboboxFooterContext,
   ComboboxInputProps,
   ComboboxItemData,
   ComboboxItemObject,
