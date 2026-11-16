@@ -37,7 +37,10 @@ export default defineConfig([
   {
     ...shared,
     name: 'components',
-    entry: ['index.ts', '{primitives,components,blocks}/**/index.tsx'],
+    // Every lib module and item `variants.ts` is an entry, so each lands in a
+    // chunk of its own: the directive then marks exactly the client modules,
+    // and one chunk holds each context for the barrel and every subpath.
+    entry: ['index.ts', '{primitives,components,blocks}/**/index.tsx', 'components/**/variants.ts', 'lib/*.{ts,tsx}'],
     target: 'browser',
     plugins: [useClient],
   },
