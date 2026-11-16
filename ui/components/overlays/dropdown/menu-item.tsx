@@ -21,6 +21,7 @@ import type { IconComponent } from '../../../lib/icon-context'
 import { useMergeRefs } from '../../../lib/merge-refs'
 import { POPUP_SHAPE } from '../../../lib/popup'
 import { CheckMark, RowIcon, rowClasses } from '../../../lib/popup-rows'
+import { useRowIndex } from '../../../lib/row-index'
 import { useSize } from '../../../lib/size-context'
 import { useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
@@ -62,6 +63,8 @@ export interface DropdownContextValue {
   selfManaged?: boolean
   /** Toggles the row at an authored index. Present with `selfManaged`. */
   toggleIndex?: (sourceIndex: number) => void
+  /** Popup only: keeps a row lit while it is `on` (a submenu's trigger while its submenu is open). */
+  pin?: (index: number, on: boolean) => void
 }
 
 export const DropdownContext = createContext<DropdownContextValue | null>(null)
@@ -77,8 +80,8 @@ interface MenuItemProps extends HTMLAttributes<HTMLDivElement> {
   icon?: IconComponent
   /** The row's label; also what a `Dropdown.Search filter` matches. */
   label: string
-  /** Position in the panel, what the fluid hover measures rows by. */
-  index: number
+  /** Position among the panel's rows, what the fluid hover and the selection key on. Omitted, the row takes its place in order (captions, rules and the search don't count). */
+  index?: number
   /** A boolean makes the row a radio option (a checkbox one in multiple selection); leave it out for a plain action, unless the panel owns the selection. */
   checked?: boolean
   /** Called when the row is activated. */
@@ -109,7 +112,7 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
     {
       icon: Icon,
       label,
-      index,
+      index: indexProp,
       checked,
       onSelect,
       disabled,
@@ -122,6 +125,7 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
     },
     ref,
   ) => {
+    const index = useRowIndex(indexProp)
     const internalRef = useRef<HTMLDivElement>(null)
     const mergedRef = useMergeRefs(internalRef, ref)
     const size = useSize()

@@ -7,7 +7,20 @@
 'use client'
 
 import { Menu } from '@base-ui/react/menu'
-import { type ComponentProps, forwardRef, type HTMLAttributes, type ReactNode, useEffect, useMemo, useRef } from 'react'
+import {
+  type ComponentProps,
+  createContext,
+  forwardRef,
+  type HTMLAttributes,
+  type ReactNode,
+  type SyntheticEvent,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { GooIndicator } from '../../../lib/goo-indicator'
 import { useMergeRefs } from '../../../lib/merge-refs'
@@ -26,9 +39,18 @@ import { NO_INDICES, type PanelSelectionProps, usePanelRows, usePanelSelection }
 
 const NO_RECTS: ItemRect[] = []
 
+/** A submenu's state lives in its parent's portal: a kept popup keeps every submenu below it. */
+const KeepMountedContext = createContext(false)
+
 const FIRST_ROW = ['menuitem', 'menuitemradio', 'menuitemcheckbox']
   .map(role => `[role="${role}"]:not([aria-disabled="true"])`)
   .join(', ')
+
+/**
+ * A submenu is a React child of the popup that holds its trigger, so its
+ * events bubble here through the portal. A popup acts only on its own.
+ */
+const ownEvent = (e: SyntheticEvent) => (e.currentTarget as Node).contains(e.target as Node)
 
 function renderMenuItem({
   radio,
@@ -64,6 +86,8 @@ interface MenuPopupProps extends PanelSelectionProps, MorphProps, Omit<HTMLAttri
   /** `Menu.Positioner` props: the anchor side and offsets, or none for a context menu at the pointer. */
   positioner: ComponentProps<typeof Menu.Positioner>
   container?: HTMLElement | null
+  /** Keep the popup mounted (hidden) while closed, so the submenus inside keep their own state across opens. Submenus inherit it. */
+  keepMounted?: boolean
   /** Focus the first enabled row on open, so the menu opens ready to act. */
   focusFirstRow: boolean
   /** Classes for the surface: width, plus the caller's. */
@@ -84,6 +108,7 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
       part,
       positioner,
       container,
+      keepMounted: keepMountedProp,
       focusFirstRow,
       checkedIndex,
       defaultCheckedIndex,
@@ -101,6 +126,7 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
     },
     ref,
   ) => {
+    const keepMounted = useContext(KeepMountedContext) || (keepMountedProp ?? false)
     const { open, origin } = useOverlay(part)
     const morph = useMorph(open, origin, { from, effect, hideSource, tier })
     const popupRef = useMergeRefs(ref, morph.popupRef)
@@ -123,6 +149,11 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
     )
     const search = useDropdownSearchHost(open, { containerRef, setActiveIndex })
     const { hasSearch } = search
+
+    const [pinned, setPinned] = useState<number | null>(null)
+    const pin = useCallback((index: number, on: boolean) => setPinned(p => (on ? index : p === index ? null : p)), [])
+    const lit = activeIndex ?? pinned
+    const shownHover = useMemo(() => ({ ...hover, activeIndex: lit }), [hover, lit])
 
     // A frame after the primitive's own open focus, which lands on the popup for a pointer open.
     useEffect(() => {
@@ -157,7 +188,7 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
     const panel = useMemo(
       () => ({
         registerItem,
-        activeIndex,
+        activeIndex: lit,
         checkedIndex: selection.checkedIndex,
         multiple,
         checkedIndices: selection.checkedIndices,
@@ -165,10 +196,12 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
         renderMenuItem,
         selfManaged: selection.selfManaged,
         toggleIndex: selection.toggleIndex,
+        pin,
       }),
       [
+        pin,
         registerItem,
-        activeIndex,
+        lit,
         selection.checkedIndex,
         multiple,
         selection.checkedIndices,
@@ -178,74 +211,78 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
     )
 
     return (
-      <Menu.Portal container={usePortalContainer(container)}>
+      <Menu.Portal container={usePortalContainer(container)} keepMounted={keepMounted}>
         <Menu.Positioner className="z-50 outline-none" {...positioner}>
-          <DropdownContext.Provider value={panel}>
-            <DropdownFilterContext.Provider value={rows.filterCtx}>
-              <DropdownSearchHostContext.Provider value={search.host}>
-                <Menu.Popup
-                  ref={popupRef}
-                  onKeyDownCapture={search.onKeyDownCapture}
-                  onMouseEnter={handlers.onMouseEnter}
-                  onMouseMove={handlers.onMouseMove}
-                  onClick={handlers.onClick}
-                  onMouseLeave={() => {
-                    handlers.onMouseLeave()
-                    if (search.isSearchField(document.activeElement)) search.highlightFirst()
-                  }}
-                  // No ring: in a menu the highlighted row is the focus indicator.
-                  onFocus={e => {
-                    const index = rowIndexOf(e.target)
-                    if (index !== null) setActiveIndex(index)
-                    else if (search.isSearchField(e.target)) search.highlightFirst()
-                    // The popup focusing itself (the pointer left a row) keeps the highlight.
-                    else if (e.target !== e.currentTarget) setActiveIndex(null)
-                  }}
-                  onBlur={e => {
-                    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setActiveIndex(null)
-                  }}
-                  className="relative select-none outline-none"
-                  {...props}
-                >
-                  <PopupSurface
-                    morph={morph}
-                    radius={POPUP_SHAPE.container}
-                    className={cn(
-                      'flex max-h-[min(480px,var(--available-height))] flex-col overflow-hidden',
-                      POPUP_SHAPE.container,
-                      className,
-                    )}
+          <KeepMountedContext.Provider value={keepMounted}>
+            <DropdownContext.Provider value={panel}>
+              <DropdownFilterContext.Provider value={rows.filterCtx}>
+                <DropdownSearchHostContext.Provider value={search.host}>
+                  <Menu.Popup
+                    ref={popupRef}
+                    onKeyDownCapture={e => ownEvent(e) && search.onKeyDownCapture(e)}
+                    onMouseEnter={handlers.onMouseEnter}
+                    onMouseMove={e => ownEvent(e) && handlers.onMouseMove(e)}
+                    onClick={e => ownEvent(e) && handlers.onClick(e)}
+                    onMouseLeave={() => {
+                      handlers.onMouseLeave()
+                      if (search.isSearchField(document.activeElement)) search.highlightFirst()
+                    }}
+                    // No ring: in a menu the highlighted row is the focus indicator.
+                    onFocus={e => {
+                      if (!ownEvent(e)) return
+                      const index = rowIndexOf(e.target)
+                      if (index !== null) setActiveIndex(index)
+                      else if (search.isSearchField(e.target)) search.highlightFirst()
+                      // The popup focusing itself (the pointer left a row) keeps the highlight.
+                      else if (e.target !== e.currentTarget) setActiveIndex(null)
+                    }}
+                    onBlur={e => {
+                      if (!ownEvent(e)) return
+                      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setActiveIndex(null)
+                    }}
+                    className="relative select-none outline-none"
+                    {...props}
                   >
-                    <ScrollArea
-                      className={popupScrollAreaClass}
-                      viewportClassName={cn(popupViewportClass, !search.searchMounted && 'scroll-fade')}
+                    <PopupSurface
+                      morph={morph}
+                      radius={POPUP_SHAPE.container}
+                      className={cn(
+                        'flex max-h-[min(480px,var(--available-height))] flex-col overflow-hidden',
+                        POPUP_SHAPE.container,
+                        className,
+                      )}
                     >
-                      <div ref={containerRef} className="relative flex flex-col p-1">
-                        {multiple && <SelectionBackgrounds blocks={blocks} />}
-                        {checkedRect && (
-                          <GooIndicator
-                            rect={checkedRect}
-                            opacity={open ? 1 : 0}
-                            className={cn('bg-active', POPUP_SHAPE.bg)}
+                      <ScrollArea
+                        className={popupScrollAreaClass}
+                        viewportClassName={cn(popupViewportClass, !search.searchMounted && 'scroll-fade')}
+                      >
+                        <div ref={containerRef} className="relative flex flex-col p-1">
+                          {multiple && <SelectionBackgrounds blocks={blocks} />}
+                          {checkedRect && (
+                            <GooIndicator
+                              rect={checkedRect}
+                              opacity={open ? 1 : 0}
+                              className={cn('bg-active', POPUP_SHAPE.bg)}
+                            />
+                          )}
+                          <FluidHoverHighlight
+                            hover={shownHover}
+                            hidden={!open}
+                            from={checkedRect}
+                            className={POPUP_SHAPE.bg}
                           />
-                        )}
-                        <FluidHoverHighlight
-                          hover={hover}
-                          hidden={!open}
-                          from={checkedRect}
-                          className={POPUP_SHAPE.bg}
-                        />
-                        {/* display: contents keeps the rows direct flex children for the fluid hover. */}
-                        <Menu.RadioGroup value={selection.checkedIndex ?? null} className="contents">
-                          {rows.content}
-                        </Menu.RadioGroup>
-                      </div>
-                    </ScrollArea>
-                  </PopupSurface>
-                </Menu.Popup>
-              </DropdownSearchHostContext.Provider>
-            </DropdownFilterContext.Provider>
-          </DropdownContext.Provider>
+                          {/* display: contents keeps the rows direct flex children for the fluid hover. */}
+                          <Menu.RadioGroup value={selection.checkedIndex ?? null} className="contents">
+                            {rows.content}
+                          </Menu.RadioGroup>
+                        </div>
+                      </ScrollArea>
+                    </PopupSurface>
+                  </Menu.Popup>
+                </DropdownSearchHostContext.Provider>
+              </DropdownFilterContext.Provider>
+            </DropdownContext.Provider>
+          </KeepMountedContext.Provider>
         </Menu.Positioner>
       </Menu.Portal>
     )

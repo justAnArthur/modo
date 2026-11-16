@@ -1,6 +1,6 @@
 import Dropdown from './index'
 import Button from '../../button'
-import { Bell, ChevronDown, Clock, Lock, Mail, Monitor, Palette, Settings, Shield, SquareLibrary, Star, Users } from 'lucide-react'
+import { Bell, ChevronDown, Copy, FileText, Folder, Image, Link, Share, Clock, Lock, Mail, Monitor, Palette, Settings, Shield, SquareLibrary, Star, Users } from 'lucide-react'
 
 # Basic
 
@@ -8,29 +8,29 @@ The inline panel, running its own selection: `defaultCheckedIndex` makes
 the rows radio options and the panel moves the marker itself.
 
 <Dropdown defaultCheckedIndex={0}>
-  <Dropdown.Item index={0} icon={SquareLibrary} label="Teamspaces" />
-  <Dropdown.Item index={1} icon={Clock} label="Recents" />
-  <Dropdown.Item index={2} icon={Star} label="Favorites" />
-  <Dropdown.Item index={3} icon={Users} label="Shared" />
-  <Dropdown.Item index={4} icon={Lock} label="Private" />
+  <Dropdown.Item icon={SquareLibrary} label="Teamspaces" />
+  <Dropdown.Item icon={Clock} label="Recents" />
+  <Dropdown.Item icon={Star} label="Favorites" />
+  <Dropdown.Item icon={Users} label="Shared" />
+  <Dropdown.Item icon={Lock} label="Private" />
 </Dropdown>
 
 # Groups
 
 Without any checked state the rows are plain actions. Dropdown.Label
-captions a run of them, Dropdown.Separator rules between the runs, and the
-indices keep counting across both.
+captions a run of them, Dropdown.Separator rules between the runs. Rows
+number themselves in order; captions and rules don't count.
 
 <Dropdown>
   <Dropdown.Label>Account</Dropdown.Label>
-  <Dropdown.Item index={0} icon={Mail} label="Email" />
-  <Dropdown.Item index={1} icon={Bell} label="Notifications" />
-  <Dropdown.Item index={2} icon={Shield} label="Privacy" />
+  <Dropdown.Item icon={Mail} label="Email" />
+  <Dropdown.Item icon={Bell} label="Notifications" />
+  <Dropdown.Item icon={Shield} label="Privacy" />
   <Dropdown.Separator />
   <Dropdown.Label>Appearance</Dropdown.Label>
-  <Dropdown.Item index={3} icon={Settings} label="General" />
-  <Dropdown.Item index={4} icon={Palette} label="Theme" />
-  <Dropdown.Item index={5} icon={Monitor} label="Display" />
+  <Dropdown.Item icon={Settings} label="General" />
+  <Dropdown.Item icon={Palette} label="Theme" />
+  <Dropdown.Item icon={Monitor} label="Display" />
 </Dropdown>
 
 # Triggered menu
@@ -41,11 +41,11 @@ goes in `render`, and picking a row closes the menu.
 <Dropdown.Menu>
   <Dropdown.Trigger render={<Button variant="ghost">Open menu</Button>} />
   <Dropdown.Content defaultCheckedIndex={0}>
-    <Dropdown.Item index={0} icon={SquareLibrary} label="Teamspaces" />
-    <Dropdown.Item index={1} icon={Clock} label="Recents" />
-    <Dropdown.Item index={2} icon={Star} label="Favorites" />
-    <Dropdown.Item index={3} icon={Users} label="Shared" />
-    <Dropdown.Item index={4} icon={Lock} label="Private" />
+    <Dropdown.Item icon={SquareLibrary} label="Teamspaces" />
+    <Dropdown.Item icon={Clock} label="Recents" />
+    <Dropdown.Item icon={Star} label="Favorites" />
+    <Dropdown.Item icon={Users} label="Shared" />
+    <Dropdown.Item icon={Lock} label="Private" />
   </Dropdown.Content>
 </Dropdown.Menu>
 
@@ -57,17 +57,17 @@ The menu oozes out of its trigger by default. `effect="morph"` with `hideSource`
   <Dropdown.Menu>
     <Dropdown.Trigger render={<Button variant="secondary">Goo</Button>} />
     <Dropdown.Content defaultCheckedIndex={0}>
-      <Dropdown.Item index={0} icon={Mail} label="Email" />
-      <Dropdown.Item index={1} icon={Bell} label="Notifications" />
-      <Dropdown.Item index={2} icon={Shield} label="Privacy" />
+      <Dropdown.Item icon={Mail} label="Email" />
+      <Dropdown.Item icon={Bell} label="Notifications" />
+      <Dropdown.Item icon={Shield} label="Privacy" />
     </Dropdown.Content>
   </Dropdown.Menu>
   <Dropdown.Menu>
     <Dropdown.Trigger render={<Button variant="secondary">Morph</Button>} />
     <Dropdown.Content effect="morph" hideSource defaultCheckedIndex={0}>
-      <Dropdown.Item index={0} icon={Settings} label="General" />
-      <Dropdown.Item index={1} icon={Palette} label="Theme" />
-      <Dropdown.Item index={2} icon={Monitor} label="Display" />
+      <Dropdown.Item icon={Settings} label="General" />
+      <Dropdown.Item icon={Palette} label="Theme" />
+      <Dropdown.Item icon={Monitor} label="Display" />
     </Dropdown.Content>
   </Dropdown.Menu>
 </div>
@@ -80,8 +80,8 @@ menu stays open as you toggle, and touching picks share one background.
 <Dropdown.Menu>
   <Dropdown.Trigger render={<Button variant="ghost">Status</Button>} />
   <Dropdown.Content defaultCheckedIndices={[0, 1, 2]}>
-    {['Open', 'In progress', 'In review', 'Blocked', 'Done', 'Archived'].map((status, i) => (
-      <Dropdown.Item key={status} index={i} label={status} />
+    {['Open', 'In progress', 'In review', 'Blocked', 'Done', 'Archived'].map(status => (
+      <Dropdown.Item key={status} label={status} />
     ))}
   </Dropdown.Content>
 </Dropdown.Menu>
@@ -95,8 +95,8 @@ rows by `label`. Type to filter, press Enter to pick the first match.
   <Dropdown.Trigger render={<Button variant="ghost" trailingIcon={ChevronDown}>Language</Button>} />
   <Dropdown.Content defaultCheckedIndex={0}>
     <Dropdown.Search filter placeholder="Search languages" />
-    {['Auto detect', 'Arabic', 'Bengali', 'Chinese (Simplified)', 'Czech', 'Danish', 'Dutch', 'English (UK)', 'English (US)', 'Finnish', 'French', 'German', 'Greek', 'Hebrew', 'Hindi', 'Hungarian', 'Indonesian', 'Italian', 'Japanese', 'Korean', 'Norwegian', 'Polish', 'Portuguese (Brazil)', 'Romanian', 'Russian', 'Spanish', 'Swedish', 'Thai', 'Turkish', 'Ukrainian', 'Vietnamese'].map((language, i) => (
-      <Dropdown.Item key={language} index={i} label={language} />
+    {['Auto detect', 'Arabic', 'Bengali', 'Chinese (Simplified)', 'Czech', 'Danish', 'Dutch', 'English (UK)', 'English (US)', 'Finnish', 'French', 'German', 'Greek', 'Hebrew', 'Hindi', 'Hungarian', 'Indonesian', 'Italian', 'Japanese', 'Korean', 'Norwegian', 'Polish', 'Portuguese (Brazil)', 'Romanian', 'Russian', 'Spanish', 'Swedish', 'Thai', 'Turkish', 'Ukrainian', 'Vietnamese'].map(language => (
+      <Dropdown.Item key={language} label={language} />
     ))}
     <Dropdown.Empty>No languages found</Dropdown.Empty>
   </Dropdown.Content>
@@ -111,9 +111,48 @@ themselves, so a filtered-away pick is still checked when it comes back.
   <Dropdown.Trigger render={<Button variant="ghost">Labels</Button>} />
   <Dropdown.Content defaultCheckedIndices={[0, 3]}>
     <Dropdown.Search filter placeholder="Search labels" />
-    {['Bug', 'Feature', 'Docs', 'Design', 'Performance', 'Accessibility', 'Refactor', 'Testing', 'Infrastructure', 'Security', 'Good first issue', 'Help wanted'].map((label, i) => (
-      <Dropdown.Item key={label} index={i} label={label} />
+    {['Bug', 'Feature', 'Docs', 'Design', 'Performance', 'Accessibility', 'Refactor', 'Testing', 'Infrastructure', 'Security', 'Good first issue', 'Help wanted'].map(label => (
+      <Dropdown.Item key={label} label={label} />
     ))}
     <Dropdown.Empty>No labels found</Dropdown.Empty>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Submenus
+
+Dropdown.Sub nests a menu: its Dropdown.SubTrigger row opens a
+Dropdown.SubContent beside it when the pointer rests on it, on a press or on
+ArrowRight; ArrowLeft and Escape close it. Submenus nest, and each one runs
+its own selection; `keepMounted` keeps it across opens.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="ghost" trailingIcon={ChevronDown}>File</Button>} />
+  <Dropdown.Content keepMounted>
+    <Dropdown.Item icon={FileText} label="New document" shortcut="⌘N" />
+    <Dropdown.Item icon={Folder} label="New folder" shortcut="⇧⌘N" />
+    <Dropdown.Separator />
+    <Dropdown.Sub>
+      <Dropdown.SubTrigger icon={Share} label="Share" />
+      <Dropdown.SubContent>
+        <Dropdown.Item icon={Link} label="Copy link" />
+        <Dropdown.Item icon={Mail} label="Email" />
+        <Dropdown.Sub>
+          <Dropdown.SubTrigger icon={Image} label="Export as" />
+          <Dropdown.SubContent defaultCheckedIndex={0}>
+            <Dropdown.Item label="PDF" />
+            <Dropdown.Item label="PNG" />
+            <Dropdown.Item label="Markdown" />
+          </Dropdown.SubContent>
+        </Dropdown.Sub>
+      </Dropdown.SubContent>
+    </Dropdown.Sub>
+    <Dropdown.Sub disabled>
+      <Dropdown.SubTrigger icon={Users} label="Move to team" disabled />
+      <Dropdown.SubContent>
+        <Dropdown.Item label="Design" />
+      </Dropdown.SubContent>
+    </Dropdown.Sub>
+    <Dropdown.Separator />
+    <Dropdown.Item icon={Copy} label="Duplicate" shortcut="⌘D" />
   </Dropdown.Content>
 </Dropdown.Menu>
