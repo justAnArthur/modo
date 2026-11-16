@@ -9,6 +9,8 @@ import { cssModule, reload, virtualModules } from './virtual'
 
 interface Options {
   userRoot: string
+  /** The config's `root`: the tiers' folder, which may sit outside the project. */
+  itemsRoot: string
   bundler: Bundler
 }
 
@@ -83,13 +85,15 @@ export function itemsPlugin(options: Options): Plugin {
     },
     configureServer(s) {
       // Watch the whole project (Vite already ignores node_modules / .git):
-      // items import shared code outside the tier dirs.
-      s.watcher.add(options.userRoot)
+      // items import shared code outside the tier dirs. And the items' own
+      // folder, which may sit outside it.
+      const roots = [options.userRoot, options.itemsRoot].map(dir => dir + sep)
+      s.watcher.add([options.userRoot, options.itemsRoot])
       const tmp = resolve(options.userRoot, '.modo-tmp') + sep
       const extractUno = unoExtractor(s)
       let timer: ReturnType<typeof setTimeout> | null = null
       s.watcher.on('all', (event, file) => {
-        if (!file.startsWith(options.userRoot + sep) || file.startsWith(tmp)) return
+        if (!roots.some(root => file.startsWith(root)) || file.startsWith(tmp)) return
         // A css edit is Vite's HMR; a css file appearing or going changes
         // which files an item injects.
         const cssMoved = file.endsWith('.css') && (event === 'add' || event === 'unlink')

@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { relative, resolve, sep } from 'node:path'
+import type { SiteConfig } from '../lib/schema'
 import { TIERS, type Tier } from '../lib/tiers'
 import { type ParsedItem, parseItemSource } from '../lib/tsdoc'
 
@@ -55,13 +56,24 @@ export interface SourceItem extends Omit<ParsedItem, 'errors'> {
   path: string
 }
 
-/** Every item of the project, parsed. A repeated id is an error; a parse problem or missing include, a warning. */
-export function parseItems(userRoot: string): { items: SourceItem[]; errors: string[]; warnings: string[] } {
+/** The folder the item tiers and `tokens/` live in: the config's `root` from the project root, else the project root. */
+export function itemsRootOf(userRoot: string, config: Pick<SiteConfig, 'root'> | null): string {
+  return resolve(userRoot, config?.root ?? '.')
+}
+
+/**
+ * Every item under `root` (the tiers' folder), parsed; paths stay relative to the project root.
+ * A repeated id is an error; a parse problem or missing include, a warning.
+ */
+export function parseItems(
+  userRoot: string,
+  root: string,
+): { items: SourceItem[]; errors: string[]; warnings: string[] } {
   const items: SourceItem[] = []
   const errors: string[] = []
   const warnings: string[] = []
   for (const tier of TIERS) {
-    const tierDir = resolve(userRoot, tier)
+    const tierDir = resolve(root, tier)
     if (!existsSync(tierDir)) continue
     const seen = new Set<string>()
     for (const { id, group, dir } of discoverItems(tierDir)) {
@@ -101,13 +113,4 @@ export function parseItems(userRoot: string): { items: SourceItem[]; errors: str
     }
   }
   return { items, errors, warnings }
-}
-
-/** A module reference: `./x` → x (a file), x/index.{tsx,ts,jsx,js} (a folder) or x.{tsx,ts,jsx,js}. */
-export function resolveUserFile(userRoot: string, ref: string): string | null {
-  const abs = resolve(userRoot, ref)
-  const exts = ['.tsx', '.ts', '.jsx', '.js']
-  if (!existsSync(abs)) return exts.map(ext => abs + ext).find(f => existsSync(f)) ?? null
-  if (statSync(abs).isFile()) return abs
-  return exts.map(ext => resolve(abs, `index${ext}`)).find(f => existsSync(f)) ?? null
 }

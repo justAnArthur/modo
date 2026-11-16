@@ -2,7 +2,9 @@ import { z } from 'zod'
 
 /**
  * Pins docs-chrome slots to components. A value is a path relative to the
- * project root, optionally naming an export (`./modo.components.tsx#Select`).
+ * project root or a package specifier resolved through the package's `exports`
+ * (`@scope/ds/docs`), optionally naming an export (`./modo.components.tsx#Select`,
+ * `@scope/ds/docs#Select`).
  * An unpinned slot uses the item in its tier whose name and props match, else
  * a plain HTML fallback. The props each slot gets are in the `*SlotProps` types.
  */
@@ -49,7 +51,7 @@ export interface RepoConfig {
 export interface PanelItem {
   /** The section title it renders under. */
   label: string
-  /** A module path (`./modo.components.tsx#ThemeSwitch`) whose component gets `shell` (`PanelItemProps`). */
+  /** A module path or package specifier (`./modo.components.tsx#ThemeSwitch`, `@scope/ds/docs#ThemeSwitch`) whose component gets `shell` (`PanelItemProps`). */
   component: string
 }
 
@@ -88,8 +90,14 @@ export interface SiteConfig {
   css?: string
   /** A module default-exporting `(config: UserConfig) => UserConfig | Promise<UserConfig>`, applied to modo's Vite config (e.g. to add @tailwindcss/vite). */
   vite?: string
-  /** A module whose named exports are in scope in every example (icons, helpers). Item names win on collision. */
+  /** A module (a path or package specifier) whose named exports are in scope in every example (icons, helpers). Item names win on collision. */
   examples?: string
+  /**
+   * The folder holding the item tiers (`primitives/`, `components/`, `blocks/`, `pages/`) and `tokens/`, relative
+   * to the project root: `root: 'src'` reads `src/components/…` and `src/tokens/…`. Every other path the config
+   * names stays relative to the project root. @default '.'
+   */
+  root?: string
   /** Group folder titles by folder name, for names that don't capitalize well (`{ ui: 'UI' }`). Others read `form-controls` → `Form controls`. */
   groups?: Record<string, string>
 }
@@ -131,6 +139,7 @@ export const siteConfigSchema = z
     css: z.string().optional(),
     vite: z.string().optional(),
     examples: z.string().optional(),
+    root: z.string().optional(),
     groups: z.record(z.string(), z.string()).optional(),
   })
   .strict() satisfies z.ZodType<SiteConfig>

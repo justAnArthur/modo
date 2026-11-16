@@ -5,6 +5,7 @@ import { buildGroup, GROUPS, type Group, parseTokenFile } from '../lib/css'
 import { tokenPath } from '../lib/paths'
 import { cap } from '../lib/text'
 import { loadModoConfig } from '../node/config-loader'
+import { itemsRootOf } from '../node/discover'
 import { emitRoutes } from './static-routes'
 import { cssModule, reload, virtualModules } from './virtual'
 
@@ -18,8 +19,13 @@ interface Tokens {
   cssFiles: string[]
 }
 
-function readTokens(userRoot: string): Tokens {
-  const dir = resolve(userRoot, 'tokens')
+// configPlugin reports a broken config; tokens then fall back to the project root.
+async function tokensDirOf({ userRoot, configPath }: Options): Promise<string> {
+  const config = await loadModoConfig(configPath).catch(() => null)
+  return resolve(itemsRootOf(userRoot, config), 'tokens')
+}
+
+function readTokens(dir: string): Tokens {
   if (!existsSync(dir)) return { groups: [], cssFiles: [] }
   // Sorted: the files' import order is the cascade order.
   const cssFiles = readdirSync(dir)
@@ -39,16 +45,16 @@ function readTokens(userRoot: string): Tokens {
 
 export function tokensPlugin(options: Options): Plugin {
   const modules = virtualModules('tokens')
-  let cache: Tokens | null = null
-  const tokens = () => (cache ??= readTokens(options.userRoot))
+  let cache: Promise<Tokens> | null = null
+  const tokens = () => (cache ??= tokensDirOf(options).then(readTokens))
 
   return {
     name: 'modo:tokens',
     enforce: 'pre',
     resolveId: modules.resolveId,
-    load(id) {
-      if (id === modules.id) return `export const tokens = ${JSON.stringify(tokens().groups)};`
-      if (id === modules.css) return cssModule(tokens().cssFiles)
+    async load(id) {
+      if (id === modules.id) return `export const tokens = ${JSON.stringify((await tokens()).groups)};`
+      if (id === modules.css) return cssModule((await tokens()).cssFiles)
       return null
     },
     generateBundle: {
@@ -57,16 +63,15 @@ export function tokensPlugin(options: Options): Plugin {
       async handler(_, bundle) {
         emitRoutes(this, bundle, await loadModoConfig(options.configPath), [
           { path: tokenPath().slice(1), title: 'Foundations' },
-          ...tokens().groups.map(g => ({ path: tokenPath(g.name).slice(1), title: cap(g.name) })),
+          ...(await tokens()).groups.map(g => ({ path: tokenPath(g.name).slice(1), title: cap(g.name) })),
         ])
       },
     },
     configureServer(server) {
-      const dir = resolve(options.userRoot, 'tokens') + sep
       // The pages read parsed values, so a token edit reloads them; Vite's
       // css HMR alone would leave the numbers stale.
-      server.watcher.on('all', (_event, file) => {
-        if (!file.startsWith(dir) || !file.endsWith('.css')) return
+      server.watcher.on('all', async (_event, file) => {
+        if (!file.endsWith('.css') || !file.startsWith((await tokensDirOf(options)) + sep)) return
         cache = null
         reload(server, id => id === modules.id || id === modules.css)
       })

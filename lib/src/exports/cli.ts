@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import type { InlineConfig } from 'vite'
 import { TIERS } from '../lib/tiers'
 import { loadModoConfig } from '../node/config-loader'
+import { itemsRootOf } from '../node/discover'
 import { createViteConfig } from '../node/vite-config'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -28,7 +29,7 @@ Usage:
   modo check               Validate modo.config.ts
 
 Options (--flag value or --flag=value):
-  --config <file>          dev, build, preview, check: the config file (default modo.config.ts)
+  --config <file>          dev, build, preview, add, check: the config file (default modo.config.ts)
   --port <port>            dev, preview: the port (default 5173 for dev, 4173 for preview)
   --host [<host>]          dev, preview: the address to listen on (default localhost; a bare --host listens on all)
   --base <path>            build, preview: public path the site is served under (default /)
@@ -42,7 +43,7 @@ const FLAGS = new Map<string, string[]>([
   ['dev', ['--config', '--port', '--host']],
   ['build', ['--config', '--base', '--out']],
   ['preview', ['--config', '--port', '--host', '--base', '--out']],
-  ['add', []],
+  ['add', ['--config']],
   ['check', ['--config']],
 ])
 
@@ -248,11 +249,14 @@ async function runPreview(args: Args) {
 // `modo add primitive x` → primitives/x.
 const KIND_DIRS = new Map(TIERS.map(tier => [tier.slice(0, -1), tier]))
 
-function runAdd(args: Args) {
+async function runAdd(args: Args) {
   const [kind, name] = args.positionals
   if (!kind || !name || !(KIND_DIRS.has(kind) || kind === 'token')) {
     throw new UsageError('add requires `<kind> <name>`, kind one of primitive, component, block, page, token')
   }
+  // Under the config's `root`, when there is a config.
+  const configPath = configOf(args)
+  const root = itemsRootOf(process.cwd(), existsSync(configPath) ? await loadModoConfig(configPath) : null)
   // `overlays/dialog` puts the item in a group folder, `inputs/date-time/calendar` in a nested one.
   const path = name.split('/').map(kebab)
   const id = path.at(-1)!
@@ -270,7 +274,7 @@ function runAdd(args: Args) {
         }
 
   for (const [rel, text] of Object.entries(files)) {
-    const file = resolve(process.cwd(), rel)
+    const file = resolve(root, rel)
     if (existsSync(file)) throw new Error(`Already exists: ${file}`)
     mkdirSync(dirname(file), { recursive: true })
     writeFileSync(file, text)
@@ -281,6 +285,8 @@ function runAdd(args: Args) {
 async function runCheck(args: Args) {
   const configPath = configOf(args)
   const cfg = await loadModoConfig(configPath)
+  const root = itemsRootOf(process.cwd(), cfg)
+  if (!existsSync(root)) throw new Error(`root "${cfg.root}" not found (resolved to ${root})`)
   process.stdout.write(`OK — ${configPath} is valid (name="${cfg.name}")\n`)
 }
 
