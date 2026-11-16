@@ -34,6 +34,7 @@ export const badgeVariants = cva('inline-flex items-center weight-medium whitesp
     variant: {
       solid: '',
       dot: 'border border-border text-foreground',
+      outline: 'border border-border text-foreground',
     },
     size: {
       default: 'h-6 px-2.5 text-caption gap-1.5',

@@ -115,6 +115,31 @@
   --control-border: light-dark(oklch(0.708 0 0), oklch(0.556 0 0));
   --scrim: light-dark(oklch(0 0 0 / 0.4), oklch(0 0 0 / 0.8));
 
+  /* ── Button status washes (local) ──
+     Button's destructive and success variants: the hue as text on a wash of
+     itself, never a solid fill behind text (DESIGN.md › Status). The washes
+     mix toward transparent like --hover, so they read on any surface level,
+     and deepen on hover and press (16 → 20 → 24%). The -strong text steps
+     are the hue darkened in light and lightened in dark, so a 13px label
+     holds WCAG AA (≥ 4.5:1) on its wash at rest, hover and press over
+     surfaces 1–5 in both schemes. */
+  --destructive-strong: light-dark(oklch(0.47 0.175 27), oklch(0.81 0.105 22));
+  --destructive-wash: color-mix(in oklab, var(--destructive) 16%, transparent);
+  --destructive-wash-hover: color-mix(in oklab, var(--destructive) 20%, transparent);
+  --destructive-wash-active: color-mix(in oklab, var(--destructive) 24%, transparent);
+  --success-strong: light-dark(oklch(0.46 0.12 151), oklch(0.83 0.15 152));
+  --success-wash: color-mix(in oklab, var(--status-success) 16%, transparent);
+  --success-wash-hover: color-mix(in oklab, var(--status-success) 20%, transparent);
+  --success-wash-active: color-mix(in oklab, var(--status-success) 24%, transparent);
+
+  /* ── Button outline (local) ──
+     The outline variant's frame on --control-border, which holds 3:1
+     against the surfaces (WCAG 1.4.11) where --border is a hairline. At
+     rest it is a 1px ring outside the fill; pressed it hands off to an inset
+     ring, so the frame moves in with the fill. */
+  --shadow-button-outline: 0 0 0 1px var(--control-border), inset 0 0 0 0 var(--control-border);
+  --shadow-button-outline-pressed: 0 0 0 0 var(--control-border), inset 0 0 0 1px var(--control-border);
+
   /* ── Surface-relative interactive overlays (work on any elevation) ──
      --overlay is the tint-direction triplet — black for light surfaces,
      white for dark. Components consume it as rgb(var(--overlay) / α), so it

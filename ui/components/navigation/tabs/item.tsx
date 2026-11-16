@@ -35,10 +35,12 @@ interface TabItemProps extends ComponentPropsWithoutRef<typeof TabsPrimitive.Tab
   icon?: IconComponent
   /** The tab's text. Collapsed under `activeLabel`, it is the tab's accessible name. */
   label: string
+  /** Renders the tab as a link to this URL (link tabs, for route-based navigation): a press follows the link and selects the tab. For a router's link component, pass it as `render` instead. */
+  href?: string
 }
 
 const TabItem = forwardRef<HTMLButtonElement, TabItemProps>(
-  ({ value, icon: Icon, label, className, onClick, ...props }, ref) => {
+  ({ value, icon: Icon, label, href, render, className, onClick, ...props }, ref) => {
     const own = useRef<HTMLButtonElement>(null)
     const mergedRef = useMergeRefs<HTMLButtonElement>(own, ref)
     const index = useRowIndex()
@@ -56,6 +58,9 @@ const TabItem = forwardRef<HTMLButtonElement, TabItemProps>(
     const lit = hoveredIndex === index || selected
     const collapse = activeLabel && !!Icon
     const showLabel = !collapse || selected
+    // Base UI keeps the tab's role and keys on an anchor; it just mustn't expect a <button>.
+    // biome-ignore lint/a11y/useAnchorContent: Base UI renders the tab's label into the anchor
+    const link = render ?? (href === undefined ? undefined : <a href={href} />)
     const text = (
       <WeightLabel emphasized={selected} lit={lit} trim className={cn('whitespace-nowrap', size.text)}>
         {label}
@@ -70,6 +75,8 @@ const TabItem = forwardRef<HTMLButtonElement, TabItemProps>(
         }}
         ref={mergedRef}
         value={value}
+        render={link}
+        nativeButton={link === undefined}
         data-fluid-hover-index={index}
         aria-label={showLabel ? undefined : label}
         className={cn(

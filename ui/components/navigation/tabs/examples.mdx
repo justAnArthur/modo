@@ -105,3 +105,31 @@ spells itself out.
     <Tabs.Item value="shared" icon={Users} label="Shared" />
   </Tabs.List>
 </Tabs>
+
+# Link tabs
+
+An `href` renders the tab as a link, for navigation between routes: the
+page behind each tab is its own URL, so drive `value` from the current
+route and leave out `Tabs.Panel`. The indicator still melts between them;
+arrows move focus and Enter follows the link.
+
+<Tabs variant="subtle" defaultValue="overview">
+  <Tabs.List>
+    <Tabs.Item value="overview" href="#tab-overview" label="Overview" />
+    <Tabs.Item value="activity" href="#tab-activity" label="Activity" />
+    <Tabs.Item value="settings" href="#tab-settings" icon={Settings} label="Settings" />
+  </Tabs.List>
+</Tabs>
+
+# Link tabs with a router
+
+A router's own link goes in `render`; the tab keeps its look and keys.
+
+```tsx
+<Tabs value={pathname}>
+  <Tabs.List>
+    <Tabs.Item value="/settings" label="General" render={<Link href="/settings" />} />
+    <Tabs.Item value="/settings/team" label="Team" render={<Link href="/settings/team" />} />
+  </Tabs.List>
+</Tabs>
+```

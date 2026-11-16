@@ -65,9 +65,14 @@ type TabsComponent = ForwardRefExoticComponent<TabsProps & RefAttributes<HTMLDiv
  * the tabs collapse to their icons and the selected one opens its label to a
  * measured width.
  *
+ * Link tabs navigate between routes: give each `Tabs.Item` an `href` (or a
+ * router link as `render`) and drive `value` from the current route. They
+ * keep the liquid indicator and the tab keys; arrows move focus and Enter
+ * follows the link.
+ *
  * Statics:
  * - `Tabs.List` — the strip holding the tabs.
- * - `Tabs.Item` — one tab: `value`, `label`, optional `icon`.
+ * - `Tabs.Item` — one tab: `value`, `label`, optional `icon`, `href` for a link tab.
  * - `Tabs.Panel` — content shown while the tab with the same `value` is active.
  *
  * @example {@include ./examples.mdx}

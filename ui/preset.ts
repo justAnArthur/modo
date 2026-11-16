@@ -71,7 +71,24 @@ export const theme = {
     border: 'var(--border)',
     ring: 'var(--ring)',
     input: 'var(--input)',
-    destructive: { DEFAULT: 'var(--destructive)', light: 'var(--destructive-light)' },
+    destructive: {
+      DEFAULT: 'var(--destructive)',
+      light: 'var(--destructive-light)',
+      strong: 'var(--destructive-strong)',
+      wash: {
+        DEFAULT: 'var(--destructive-wash)',
+        hover: 'var(--destructive-wash-hover)',
+        active: 'var(--destructive-wash-active)',
+      },
+    },
+    success: {
+      strong: 'var(--success-strong)',
+      wash: {
+        DEFAULT: 'var(--success-wash)',
+        hover: 'var(--success-wash-hover)',
+        active: 'var(--success-wash-active)',
+      },
+    },
     hover: 'var(--hover)',
     active: 'var(--active)',
     syntax: {
@@ -112,6 +129,8 @@ export const theme = {
     'surface-7': 'var(--shadow-7)',
     'surface-8': 'var(--shadow-8)',
     thumb: 'var(--shadow-thumb)',
+    'button-outline': 'var(--shadow-button-outline)',
+    'button-outline-pressed': 'var(--shadow-button-outline-pressed)',
     'picker-thumb': 'var(--shadow-picker-thumb)',
     'picker-cursor': 'var(--shadow-picker-cursor)',
     swatch: 'var(--shadow-swatch)',

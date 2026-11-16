@@ -77,8 +77,8 @@ function useWidthMorph(change: string) {
 interface BadgeProps
   extends Omit<HTMLAttributes<HTMLSpanElement>, 'color'>,
     Omit<VariantProps<typeof badgeVariants>, 'size'> {
-  /** Visual style. Solid uses a tinted background; dot shows a colored indicator. Defaults to `"solid"`. */
-  variant?: 'solid' | 'dot'
+  /** Visual style. Solid uses a tinted background; dot shows a colored indicator; outline is the dot badge's neutral frame without the dot (it ignores `color`). Defaults to `"solid"`. */
+  variant?: 'solid' | 'dot' | 'outline'
   /** Step on the size ladder (see Sizes). Defaults to the surrounding SizeProvider, else `"default"`. */
   size?: BadgeSize
   /** Color from the Tailwind palette: gray, red, orange, amber, yellow, lime, green, emerald, teal, cyan, blue, indigo, violet, purple, fuchsia, pink, rose. Defaults to `"gray"`. */
@@ -86,12 +86,13 @@ interface BadgeProps
 }
 
 /**
- * Compact label for status, category, or metadata. Supports solid and dot
- * variants with Tailwind colors.
+ * Compact label for status, category, or metadata. Supports solid, dot and
+ * outline variants with Tailwind colors.
  *
  * Solid badges tint their background with the chosen color mixed into the
  * page background (gray uses the accent token); dot badges keep a neutral
- * border and show the color as a small indicator. The badge rides the size
+ * border and show the color as a small indicator; outline badges are that
+ * neutral frame alone, for a label that carries no status. The badge rides the size
  * ladder — `size` pins it, otherwise it follows the surrounding SizeProvider
  * — and takes its corner radius from the shape context. Changes animate: a
  * new label or variant springs the width while the label crossfades, and a
@@ -108,6 +109,7 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
     const size = useSizeVariant(sizeProp)
     const colorValue = badgeColors[color]
     const isSolid = variant === 'solid'
+    const hasDot = variant === 'dot'
     const dotSize = size === 'compact' ? 6 : 7
 
     const colorStyle = isSolid
@@ -139,7 +141,7 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
             clipping sideways only. */}
         <span ref={content} className="relative inline-flex min-w-0 items-center gap-[inherit] overflow-x-clip">
           <AnimatePresence mode="popLayout" initial={false}>
-            {!isSolid && (
+            {hasDot && (
               <motion.span
                 key="dot"
                 className="shrink-0 rounded-full transition-[background-color] duration-moderate"

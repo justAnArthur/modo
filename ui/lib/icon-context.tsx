@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  ArrowUpDown,
   Bell,
   Brain,
   Calendar,
@@ -106,6 +107,7 @@ export type IconName =
   | 'arrow-right'
   | 'arrow-up'
   | 'arrow-down'
+  | 'arrow-up-down'
   | 'search'
   | 'loader'
   | 'users'
@@ -170,6 +172,7 @@ const defaultIcons: Record<IconName, IconComponent> = {
   'arrow-right': ArrowRight,
   'arrow-up': ArrowUp,
   'arrow-down': ArrowDown,
+  'arrow-up-down': ArrowUpDown,
   search: Search,
   loader: Loader,
   users: Users,
