@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Lists what `npm publish` would ship for @justanarthur/modo-ui and fails when
-# the entry, the stylesheet or a licence is missing. Run after `bun run build`.
+# the entry, the stylesheet or a licence is missing, then runs ui's dist check
+# (every exports entry has its JS and .d.ts and loads in Node; "use client"
+# only on client chunks; one instance per context). Run after `bun run build`.
 set -euo pipefail
 
 cd "$(dirname "$0")/../../ui"
@@ -13,4 +15,5 @@ done
 # The package root must load: a tree-shaking slip once left the barrel exporting names it never bound.
 node --input-type=module -e "await import('./dist/index.js')" || { echo "dist/index.js does not load" >&2; exit 1; }
 echo "ok dist/index.js loads"
+bun scripts/check-dist.ts
 echo "ui tarball ok ($(wc -l <<<"$files" | tr -d ' ') files)"
