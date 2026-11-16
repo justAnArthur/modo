@@ -40,3 +40,23 @@ With `onValueChange` and no `defaultValue`, the group starts empty and reports e
   <Radio value="pro" label="Pro" />
   <Radio value="team" label="Team" disabled />
 </Radio.Group>
+
+# Bare
+
+A `Radio` without a `label` is just the circle, picked by its `value`. Lay bare radios out however you like: when none of the group's direct children is a labelled row, the group draws no rows of its own, and Base UI moves focus and selection with the arrow keys. Name each one with a `<label htmlFor>` pointing at its `id`, or `aria-label`.
+
+<Radio.Group defaultValue="standard" name="shipping" className="w-72 max-w-full">
+  {[
+    ['standard', 'Standard', '4–6 business days'],
+    ['express', 'Express', '1–2 business days'],
+    ['pickup', 'Pickup', 'Ready tomorrow'],
+  ].map(([value, title, note]) => (
+    <div key={value} className="flex items-start gap-2.5">
+      <Radio id={`ship-${value}`} value={value} className="mt-0.5" />
+      <label htmlFor={`ship-${value}`} className="flex flex-col gap-1 cursor-pointer">
+        <span className="text-body text-foreground text-trim">{title}</span>
+        <span className="text-caption text-muted-foreground">{note}</span>
+      </label>
+    </div>
+  ))}
+</Radio.Group>
