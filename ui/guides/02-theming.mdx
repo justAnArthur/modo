@@ -1,0 +1,31 @@
+---
+title: Theming
+description: Dark mode follows the OS until you pin it; re-brand by overriding tokens.
+---
+
+## Dark mode
+
+Every color is a `light-dark()` token, so `color-scheme` picks the side. It follows the OS until `<html>` (or any subtree) carries the `light` or `dark` class. The `dark:` utilities match inside a `.dark` ancestor, so set the class whenever you pin a scheme:
+
+```ts
+document.documentElement.classList.toggle('dark', dark)
+document.documentElement.classList.toggle('light', !dark)
+```
+
+A subtree with its own class keeps that scheme: a dark preview card on a light page.
+
+## Re-branding
+
+Override tokens after the package's stylesheet, on the same selectors the tokens use, and give a color both sides with `light-dark()`:
+
+```css
+:root,
+.light,
+.dark {
+  --brand: oklch(0.65 0.19 150);
+  --background: light-dark(oklch(0.99 0.005 150), oklch(0.2 0.01 150));
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+}
+```
+
+The tokens come in five groups (colors, typography, motion, radius, spacing); the surface ladder (`--surface-1…8`, `--shadow-1…8`) re-points per scheme. The [Foundations](/docs/tokens) pages list every one with its value.
