@@ -27,6 +27,8 @@ jobs:
         run: .github/scripts/check-ui-pack.sh
       - name: ai kit tarball contents
         run: .github/scripts/check-kit-pack.sh ai
+      - name: notch kit tarball contents
+        run: .github/scripts/check-kit-pack.sh notch
 
   # pages.yml builds it on main; this catches a broken site before the merge.
   site:
