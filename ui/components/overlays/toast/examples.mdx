@@ -18,7 +18,7 @@ Each state sets the icon and its color. A toast with a description melts from th
 
 `promise` runs a task: the pill spins while it is pending, then crossfades into the `success` or `error` toast.
 
-<Toast position="bottom-right">
+<Toast position="bottom-left">
   <Toast.Trigger
     title="Publishing…"
     promise={() => new Promise(resolve => setTimeout(resolve, 1800))}
@@ -32,7 +32,7 @@ Each state sets the icon and its color. A toast with a description melts from th
 
 An `action` puts a button in the body.
 
-<Toast position="bottom-right">
+<Toast position="top-right">
   <Toast.Trigger
     type="action"
     title="Message archived"

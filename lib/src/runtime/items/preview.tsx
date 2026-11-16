@@ -7,7 +7,8 @@ import { bindings, ExampleBoundary, useExample } from './examples'
 /**
  * The item's first example (its first `@example`, else the first live block of
  * its examples.mdx) rendered bare: the code the item page runs, so an overview
- * shows the real component.
+ * shows the real component. An examples.mdx with only fenced code shows its
+ * first block.
  */
 export function ExamplePreview({ entry }: { entry: ItemEntry }): ReactElement {
   const inline = entry.examples[0]
@@ -41,7 +42,11 @@ function firstLiveBlock(entry: ItemEntry): ReactNode {
         components: { ...mdxComponents, ModoExample: Live },
       },
     )
-    return Children.toArray(content.props.children).find(c => isValidElement(c) && c.type === Live)
+    const blocks = Children.toArray(content.props.children)
+    return (
+      blocks.find(c => isValidElement(c) && c.type === Live) ??
+      blocks.find(c => isValidElement(c) && c.type === mdxComponents.pre)
+    )
   } catch {
     return undefined
   }
