@@ -1,9 +1,12 @@
 import { byName, exampleScope } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
-import { Component, type ReactNode, useEffect, useState } from 'react'
+import { Component, createContext, type MouseEvent, type ReactNode, useEffect, useState } from 'react'
+import { EXAMPLE_PARAM, exampleKey } from '../../lib/paths'
+import { slug } from '../../lib/text'
 import type { ParsedExample } from '../../lib/tsdoc'
-import { Heading, slug } from '../anchor'
+import { Heading } from '../anchor'
 import { CopyButton } from '../code-block'
+import { navigate } from '../location'
 import { Markdown } from '../markdown'
 import { babelReady, compileExampleBody, type ExampleRenderer, loadBabel } from './compile'
 
@@ -48,13 +51,16 @@ export function ExampleTitle({
   )
 }
 
+/** Which of the item's .mdx files a ModoExample sits in, for its positional full-screen key. */
+export const ExampleDocContext = createContext(0)
+
 /** `@example` cards, then the item's included .mdx examples (`children`). */
 export function ItemExamples({ examples, children }: { examples: ParsedExample[]; children?: ReactNode }) {
   return (
     <section data-modo="section">
       <Heading level={2} label="Examples" modo="section-title" />
       {examples.map((ex, i) => (
-        <ExampleCard key={i} example={ex} />
+        <ExampleCard key={i} example={ex} index={i} />
       ))}
       {children}
     </section>
@@ -75,7 +81,7 @@ export class ExampleBoundary extends Component<{ children: ReactNode }, { failed
   }
 }
 
-function ExampleCard({ example: { title, description, code } }: { example: ParsedExample }) {
+function ExampleCard({ example: { title, description, code }, index }: { example: ParsedExample; index: number }) {
   const example = useExample(code)
   return (
     <div data-modo="example-card">
@@ -85,13 +91,38 @@ function ExampleCard({ example: { title, description, code } }: { example: Parse
           <Markdown source={description} />
         </div>
       ) : null}
-      <ExampleFrame code={code}>{example ? example(bindings) : null}</ExampleFrame>
+      <ExampleFrame code={code} fullScreen={exampleKey(title, index)}>
+        {example ? example(bindings) : null}
+      </ExampleFrame>
     </div>
   )
 }
 
-/** The live stage, its hover-revealed Copy / Code corner and the code panel. */
-export function ExampleFrame({ code, children }: { code: string; children: ReactNode }) {
+/**
+ * Opens the example alone on the item's own route. The slot's Button is no
+ * anchor: a modified or middle click opens a new tab when the host forwards the event.
+ */
+function openFullScreen(key: string, e?: MouseEvent) {
+  const url = new URL(window.location.href)
+  url.search = new URLSearchParams({ [EXAMPLE_PARAM]: key }).toString()
+  url.hash = ''
+  if (e && (e.button === 1 || e.metaKey || e.ctrlKey || e.shiftKey)) window.open(url, '_blank', 'noopener')
+  else navigate(url, { modoFrom: window.location.href })
+}
+
+/**
+ * The live stage, its hover-revealed Copy / Code / Full screen corner and the
+ * code panel. `fullScreen` is the example's `?example=` key.
+ */
+export function ExampleFrame({
+  code,
+  fullScreen,
+  children,
+}: {
+  code: string
+  fullScreen: string
+  children: ReactNode
+}) {
   const { Code, Button, Icon } = shell
   const [open, setOpen] = useState(false)
   return (
@@ -109,6 +140,15 @@ export function ExampleFrame({ code, children }: { code: string; children: React
           onClick={() => setOpen(o => !o)}
         >
           <Icon name="code" label="Code" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Open full screen"
+          onClick={(e?: MouseEvent) => openFullScreen(fullScreen, e)}
+          onAuxClick={(e: MouseEvent) => e.button === 1 && openFullScreen(fullScreen, e)}
+        >
+          <Icon name="maximize" label="Full screen" />
         </Button>
       </div>
       {open && (

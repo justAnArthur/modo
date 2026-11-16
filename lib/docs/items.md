@@ -284,6 +284,14 @@ Inline examples compile in the browser with Babel standalone, loaded only on pag
 
 Inline examples render before the `examples.mdx` ones.
 
+## Full screen
+
+Every example card, inline or from `examples.mdx`, has Open full screen beside Copy and Show code. It shows the example alone on its item's route, `/docs/<tier>/<id>?example=<key>`, across the whole viewport and without the chrome, so a screen-sized demo (a page, a dashboard block) renders at 1:1. A modified or middle click opens it in a new tab.
+
+The key is the example's title as a slug (`# With icons` → `with-icons`). An untitled example takes its position: `3` for the item's third inline `@example`, `2.1` for the first live block of its second `.mdx`. In an `examples.mdx` the title is the example heading right above the block; a group title names none.
+
+Escape, Back or the close button returns to the item page, at the example's card. An example that handles Escape itself (an open dialog calling `preventDefault`) keeps it. The URL is shareable, and works on a static build: it's the item's own page.
+
 ## Includes
 
 Includes are TypeDoc inline tags, usable anywhere in the block. Paths are relative to the file the block is in (`index.tsx`, or a re-exported item's source). They are not recursive, and they stay inside the package the block belongs to (and your project, for your own files): a block read from `node_modules` can't include a file outside its package.

@@ -1,7 +1,7 @@
 import type { ItemEntry } from 'virtual:modo-items'
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react'
 import type { ParsedExample } from '../../lib/tsdoc'
-import { mdxComponents } from '../mdx'
+import { type ModoExampleProps, mdxComponents } from '../mdx'
 import { bindings, ExampleBoundary, useExample } from './examples'
 
 /**
@@ -33,25 +33,31 @@ export function hasPreview(entry: ItemEntry): boolean {
 function firstLiveBlock(entry: ItemEntry): ReactNode {
   const Doc = entry.mdxExamples[0]
   if (!Doc) return undefined
-  // Compiled without a provider, MDX content is hook-free: calling it yields
-  // the document's top-level blocks, and every live one is a ModoExample.
-  // Called during render, outside any boundary: a broken doc means no preview.
+  const blocks = mdxBlocks(Doc)
+  return blocks.find(isLive) ?? blocks.find(c => isValidElement(c) && c.type === mdxComponents.pre)
+}
+
+/**
+ * An .mdx file's top-level blocks, each live one a bare `Live` element.
+ * Compiled without a provider, MDX content is hook-free: calling it yields the
+ * document's top-level blocks, and every live one is a ModoExample. Called
+ * during render, outside any boundary: a broken doc has no blocks.
+ */
+export function mdxBlocks(Doc: ItemEntry['mdxExamples'][number]): ReactNode[] {
   try {
     const content = (Doc as (props: { components: Record<string, unknown> }) => ReactElement<{ children?: ReactNode }>)(
-      {
-        components: { ...mdxComponents, ModoExample: Live },
-      },
+      { components: { ...mdxComponents, ModoExample: Live } },
     )
-    const blocks = Children.toArray(content.props.children)
-    return (
-      blocks.find(c => isValidElement(c) && c.type === Live) ??
-      blocks.find(c => isValidElement(c) && c.type === mdxComponents.pre)
-    )
+    return Children.toArray(content.props.children)
   } catch {
-    return undefined
+    return []
   }
 }
 
-function Live({ children }: { children: ReactNode }) {
+export function isLive(node: ReactNode): node is ReactElement<ModoExampleProps> {
+  return isValidElement(node) && node.type === Live
+}
+
+function Live({ children }: ModoExampleProps) {
   return <>{children}</>
 }

@@ -6,13 +6,14 @@
  */
 
 import type { IconSlotProps } from '@justanarthur/modo'
-import { Check, CodeXml, Copy, Link2, type LucideIcon, Menu, Moon, Package, Sun, X } from 'lucide-react'
+import { Check, CodeXml, Copy, Link2, type LucideIcon, Maximize2, Menu, Moon, Package, Sun, X } from 'lucide-react'
 
 const icons: Record<string, LucideIcon> = {
   code: CodeXml,
   copy: Copy,
   check: Check,
   link: Link2,
+  maximize: Maximize2,
   menu: Menu,
   close: X,
   sun: Sun,

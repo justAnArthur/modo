@@ -6,6 +6,7 @@ import mdx from '@mdx-js/esbuild'
 import { build } from 'esbuild'
 import remarkGfm from 'remark-gfm'
 import { headingRoles } from '../src/lib/example-groups'
+import { exampleKey } from '../src/lib/paths'
 import { remarkModoExamples } from '../src/plugins/mdx-examples'
 
 const group = { kind: 'group', level: 3 }
@@ -61,5 +62,23 @@ describe('remarkModoExamples headings', () => {
 
   test('the examples stay live blocks next to the headings', async () => {
     expect(await compileMdx('# Group\n\n## One\n\n<div />\n')).toContain('ModoExample')
+  })
+})
+
+describe('full-screen keys', () => {
+  test('each live block carries its position and the example heading above it', async () => {
+    const js = await compileMdx('# Group\n\n<div />\n\n## With `icons`\n\n### Sub\n\n<div />\n\n<div />\n')
+    const blocks = [...js.matchAll(/index: "(\d+)"(?:,\s*title: "([^"]*)")?/g)].map(m => [m[1], m[2]])
+    expect(blocks).toEqual([
+      ['0', undefined],
+      ['1', 'With icons'],
+      ['2', undefined],
+    ])
+  })
+
+  test('a titled example keys by its slug, an untitled one by its position', () => {
+    expect(exampleKey('With icons', 4)).toBe('with-icons')
+    expect(exampleKey(undefined, 2)).toBe('3')
+    expect(exampleKey(undefined, 0, 1)).toBe('2.1')
   })
 })

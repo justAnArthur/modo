@@ -1,12 +1,6 @@
 import { shell } from 'virtual:modo-shell'
 import { createContext, type ReactNode, useContext, useLayoutEffect, useMemo, useState } from 'react'
-
-export function slug(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, '-')
-    .replace(/^-|-$/g, '')
-}
+import { slug } from '../lib/text'
 
 const PageIdsContext = createContext(new Set<string>())
 

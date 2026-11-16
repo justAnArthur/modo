@@ -1,17 +1,30 @@
-import type { ComponentType, ReactNode } from 'react'
+import type { ComponentType, MouseEvent, ReactNode } from 'react'
 import type { Tier } from './tiers'
 
 /** The icons the chrome asks for, plus any `socials` key (`github`, `npm`, …). */
-export type IconName = 'code' | 'copy' | 'check' | 'link' | 'menu' | 'close' | 'sun' | 'moon' | (string & {})
+export type IconName =
+  | 'code'
+  | 'copy'
+  | 'check'
+  | 'link'
+  | 'maximize'
+  | 'menu'
+  | 'close'
+  | 'sun'
+  | 'moon'
+  | (string & {})
 
-/** The chrome's icon buttons: copy code, show code, theme toggle, menu, canvas zoom. */
+/** The chrome's icon buttons: copy code, show code, open full screen, theme toggle, menu, canvas zoom. */
 export interface ButtonSlotProps {
   variant: 'ghost'
   size: 'icon-sm'
   'aria-label': string
   /** Set on toggles (show code, menu). */
   'aria-pressed'?: boolean
-  onClick: () => void
+  /** Forward the event: Open full screen opens a new tab on a modified click. */
+  onClick: (event?: MouseEvent<HTMLElement>) => void
+  /** Set on Open full screen: a middle click opens a new tab. */
+  onAuxClick?: (event: MouseEvent<HTMLElement>) => void
   /** An `Icon`, or a short text glyph. */
   children: ReactNode
 }
