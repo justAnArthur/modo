@@ -1,0 +1,93 @@
+import Resizable from './index'
+
+# Two columns
+
+Drag the line, or focus it and use the arrow keys. A double-click puts both columns back.
+
+<div className="h-48 w-full max-w-2xl overflow-hidden rounded-xl border border-border">
+  <Resizable>
+    <Resizable.Panel defaultSize={35} minSize={20}>
+      <div className="flex h-full items-center justify-center text-caption text-muted-foreground">Sidebar</div>
+    </Resizable.Panel>
+    <Resizable.Handle />
+    <Resizable.Panel minSize={30}>
+      <div className="flex h-full items-center justify-center text-caption text-muted-foreground">Content</div>
+    </Resizable.Panel>
+  </Resizable>
+</div>
+
+# Three panes
+
+Each handle moves space between its two neighbours only.
+
+<div className="h-48 w-full max-w-2xl overflow-hidden rounded-xl border border-border">
+  <Resizable>
+    <Resizable.Panel defaultSize={20} minSize={10}>
+      <div className="flex h-full items-center justify-center text-caption text-muted-foreground">Files</div>
+    </Resizable.Panel>
+    <Resizable.Handle />
+    <Resizable.Panel defaultSize={50} minSize={20}>
+      <div className="flex h-full items-center justify-center text-caption text-muted-foreground">Editor</div>
+    </Resizable.Panel>
+    <Resizable.Handle />
+    <Resizable.Panel minSize={15} maxSize={40}>
+      <div className="flex h-full items-center justify-center text-caption text-muted-foreground">Preview</div>
+    </Resizable.Panel>
+  </Resizable>
+</div>
+
+# Vertical
+
+Stacked panes take the up and down arrows.
+
+<div className="h-64 w-full max-w-md overflow-hidden rounded-xl border border-border">
+  <Resizable direction="vertical">
+    <Resizable.Panel defaultSize={60} minSize={25}>
+      <div className="flex h-full items-center justify-center text-caption text-muted-foreground">Editor</div>
+    </Resizable.Panel>
+    <Resizable.Handle />
+    <Resizable.Panel minSize={15}>
+      <div className="flex h-full items-center justify-center text-caption text-muted-foreground">Terminal</div>
+    </Resizable.Panel>
+  </Resizable>
+</div>
+
+# Nested
+
+A Resizable inside a panel splits it the other way.
+
+<div className="h-72 w-full max-w-2xl overflow-hidden rounded-xl border border-border">
+  <Resizable>
+    <Resizable.Panel defaultSize={30} minSize={15}>
+      <div className="flex h-full items-center justify-center text-caption text-muted-foreground">Sidebar</div>
+    </Resizable.Panel>
+    <Resizable.Handle />
+    <Resizable.Panel>
+      <Resizable direction="vertical">
+        <Resizable.Panel defaultSize={65} minSize={20}>
+          <div className="flex h-full items-center justify-center text-caption text-muted-foreground">Editor</div>
+        </Resizable.Panel>
+        <Resizable.Handle />
+        <Resizable.Panel minSize={15}>
+          <div className="flex h-full items-center justify-center text-caption text-muted-foreground">Output</div>
+        </Resizable.Panel>
+      </Resizable>
+    </Resizable.Panel>
+  </Resizable>
+</div>
+
+# Collapsible
+
+Drag the sidebar below half its minimum and it snaps shut; drag it back out, or press the right arrow, to open it. Home closes it from the keyboard.
+
+<div className="h-48 w-full max-w-2xl overflow-hidden rounded-xl border border-border">
+  <Resizable>
+    <Resizable.Panel defaultSize={30} minSize={20} collapsible>
+      <div className="flex h-full items-center justify-center text-caption text-muted-foreground">Sidebar</div>
+    </Resizable.Panel>
+    <Resizable.Handle />
+    <Resizable.Panel minSize={40}>
+      <div className="flex h-full items-center justify-center text-caption text-muted-foreground">Content</div>
+    </Resizable.Panel>
+  </Resizable>
+</div>
