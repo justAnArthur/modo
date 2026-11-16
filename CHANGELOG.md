@@ -85,6 +85,7 @@ New since 0.6:
 - ContextMenu submenus (`ContextMenu.Sub`, `.SubTrigger`, `.SubContent`), Dropdown's; `ContextMenu.Content keepMounted`.
 - Table `Footer`, `Caption`, `Empty`, sortable heads (`sort` / `defaultSort` / `onSortChange`) and `stacked` rows. Button `outline`, `destructive`, `success` and `link`, and a loading Button keeps focus; Badge `outline`; `Card.Divider` and `border`; link tabs (`Tabs.Item` `href`).
 - Server-safe helpers: `./lib/{utils,springs,size-scale,shape-classes,field-classes}` and `./components/*/variants` carry no `'use client'`; the hooks and contexts are exported per subpath too (`./lib/field-box`, `./lib/use-morph`, …). CI checks the built `dist/`.
+- The item sources ship under a `source` export condition (the package root, `/primitives/*`, `/components/*`, `/blocks/*`, the `./lib/*` and `variants` subpaths), with each item's `examples.mdx`: a modo site that re-exports a ui item documents it with its prose, props and live examples. The tarball grows from 415 kB to 791 kB.
 - Tokens: the button washes (`--destructive-strong`, `--destructive-wash*`, `--success-strong`, `--success-wash*`), `--shadow-button-outline*`, `--shadow-button-ghost`, `--skeleton` and `--duration-loop`; shape-context's off-scale radii as `--radius-pill`, `--radius-focus-ring` and `--radius-pill-focus-ring` (`rounded-pill|focus-ring|pill-focus-ring`).
 
 Breaking:

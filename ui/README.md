@@ -218,6 +218,25 @@ show them):
 | `useToast()`, `toast` | Show toasts: `useToast()` inside a `Toast`, or the global `toast` anywhere once `<Toast manager={toast} />` is mounted (one per app). Both have `show`, `success`, `error`, `warning`, `info`, `loading`, `promise`, `update` and `close`. |
 | `cn` | Class merging that knows the token utilities (`cn('text-body', 'text-muted-foreground')` keeps both). |
 
+## Documenting ui items in your own modo site
+
+A [modo](https://github.com/justAnArthur/modo/tree/main/lib) site can list ui
+items next to its own. Re-export one as an item:
+
+```tsx
+// components/button/index.tsx
+export { default } from '@justanarthur/modo-ui/components/button'
+```
+
+The package ships its TypeScript sources and each item's `examples.mdx` under
+a `source` export condition, which modo reads and bundlers and Node skip
+(they take `dist/`): the page gets the item's description, prop table and live examples,
+bundled from those sources so they share one copy of each context. Load ui's
+styles in the site's `css` (`@import "@justanarthur/modo-ui/styles.css";`);
+the prebuilt sheet holds the components' utilities, so for the layout
+utilities the examples add, point your Tailwind `@source` or UnoCSS `content`
+at `node_modules/@justanarthur/modo-ui/{primitives,components,blocks}`.
+
 ## Credits
 
 modo-ui is a port of [Fluid Functionalism](https://github.com/mickadesign/fluid-functionalism)
