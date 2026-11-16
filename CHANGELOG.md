@@ -27,6 +27,10 @@ Fixes:
 - `VirtualList` and `LogView` measure in the element's own pixels, so a list inside a preview scaled with CSS `zoom` keeps its rows apart.
 - Barrel exports `GooFilter`, `useAutosizeTextarea` and `useTouchPrimary`, for a kit and components of your own.
 
+Breaking:
+
+- **The AI items left modo-ui for `@justanarthur/modo-ui-ai`.** `InputMessage` (with `FileThumbnail` and the types `InputMessageProps`, `InputMessageSlotContext`, `InputMessageStatus`, `QueuedMessage`) is the ai kit's `Composer.Draft` (`ComposerDraft`), and the Composer block takes its draft props; `ThinkingIndicator` (`ThinkingIndicatorProps`) is the ai kit's `Message.Working`, its goo look only. The subpaths `components/AI/input-message` and `components/AI/thinking-indicator`, the `.shimmer-text` utility and the optional peer `pdfjs-dist` (now the kit's) are gone.
+
 Fixes:
 
 - The compound parts of the function roots (`Popover.Trigger`, `Dialog.Content`, `Select.Item`, `Tooltip.Provider`, `Morph.Part`, …) are typed in the published `.d.ts`; CI type-checks every part from `dist`.

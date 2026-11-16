@@ -22,7 +22,7 @@ controlled + uncontrolled.
 | A file upload | `FileDropzone` + `FileDropzone.Row` (drag verdicts, rejections, upload progress) |
 | A multi-line text field | `Textarea` (in a `Field`, or with `Label`) |
 | A read-only value to copy | `Copy` |
-| A chat or prompt composer | `InputMessage` (attachments, queue, send/stop) |
+| A chat or prompt composer | Not in ui: the ai kit's `Composer` / `Composer.Draft` (attachments, queue, send/stop) |
 | One of a few options, all visible | `Radio.Group`, or `Tabs variant="subtle"` for a view switch |
 | One of a few options, each row rich (two lines, meters, row actions) | `ChoiceList` |
 | Several of a few options | `Checkbox.Group` |
@@ -59,7 +59,7 @@ controlled + uncontrolled.
 | "Nothing here yet" | `EmptyState` |
 | A loading placeholder | `Skeleton` (a block, or `rows`) |
 | A divider between groups | `Separator` |
-| "Working…" | `ThinkingIndicator` (`shimmer` or `goo`) |
+| "Working…" | `Progress.Spinner`; an assistant's in-flight state is the ai kit's `Message.Working` |
 | A scroll region | `ScrollArea` (+ `scroll-fade`) |
 | A list of thousands of rows | `VirtualList` (fixed or measured rows, `scrollToIndex`) |
 | Drag to reorder | `Sortable` (`handle`, keyboard, `as="none"` in a host list; `useSortableHandle`) |
@@ -116,8 +116,6 @@ controlled + uncontrolled.
 | `Card` | `components/card` | `.Group .Header .Title .Description .Action .Content .Footer .Divider .Media .Image .Eyebrow .Feature .Button` | L H W C | Transparent and borderless (`border="outlined"` frames one on its own; `.Divider` a hairline inside); only clickable cards join the group's hover; stretched link. A card with a `value` selects itself in `Card.Group` (`value` / `defaultValue` / `onValueChange`). `Card.Button` is a compact `Button`. |
 | `Table` | `components/table` | `.Header .Body .Footer .Row .Head .Cell .Caption .Empty` | L H C | Row hover, semantic markup; a `Table.Head` with a `value` sorts (`sort` / `defaultSort` / `onSortChange` on the root); `stacked` turns rows into cards in a narrow container (each Cell's `label` captions it). |
 | `Copy` | `components/copy` | — | L M | Click anywhere to copy; the glyph melts into a status disc behind the check. |
-| `ThinkingIndicator` | `components/AI/thinking-indicator` | — | — | `variant` `shimmer` (default) \| `goo` (three dots melting). |
-| `InputMessage` | `components/AI/input-message` | — | L S C | Composer: auto-resize, actions, attachments, queue, status, history. |
 
 ## components/inputs
 
@@ -227,4 +225,4 @@ The rest (refs, rects, dates and the date mask, the autosizing textarea) is list
 | Multi-select with merged runs | `components/inputs/checkbox/index.tsx` |
 | A state morph inside a control | `components/button/index.tsx` (`useLoadingMorph`), `copy/index.tsx` (glyph goo) |
 | A hook-free docs stage for an interactive example | `components/badge/change-demo.tsx`, `components/button/loading-demo.tsx` |
-| A goo composition of opaque shapes | `components/overlays/toast/index.tsx`, `thinking-indicator` (`variant="goo"`) |
+| A goo composition of opaque shapes | `components/overlays/toast/index.tsx`, `copy/index.tsx` (glyph goo) |

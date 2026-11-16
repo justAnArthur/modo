@@ -86,7 +86,7 @@ interface ShellCardProps extends HTMLAttributes<HTMLDivElement> {
  * two read as a card resting in its holder in both schemes. The inset is
  * one spacing step (`--space-2`) and the corners nest: the shell's is the
  * inner card's plus that inset, in rounded and pill shapes alike. Any
- * card-like element (an InputMessage) can take `ShellCard.Inner`'s place.
+ * card-like element (the ai kit's composer draft) can take `ShellCard.Inner`'s place.
  * For a flat list of cards, see Card.
  *
  * Statics:

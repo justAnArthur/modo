@@ -106,7 +106,7 @@
   --shadow-picker-cursor: 0 0 0 1px oklch(0 0 0 / 0.2);
   --drop-shadow-picker-cursor: 0 1px 1px oklch(0 0 0 / 0.4);
 
-  /* ── Composer (InputMessage) ──
+  /* ── Composer (the ai kit's Composer.Draft) ──
      The focused edge recolors surface-2's 1px ring; the drop keeps the
      composer's lift under every edge state. */
   --composer-edge-focus: color-mix(in oklab, var(--foreground) 20%, transparent);

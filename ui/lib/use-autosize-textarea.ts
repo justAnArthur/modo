@@ -1,6 +1,6 @@
 /*
  * Local addition (not part of Fluid Functionalism): a textarea that grows
- * with its text (Textarea, InputMessage's composer).
+ * with its text (Textarea, the ai kit's composer).
  */
 
 'use client'

@@ -19,15 +19,15 @@
  *   `utilities`.
  * - §4–6 → below: html/body base, `@layer base` (text wrap, inline code chip,
  *   :focus-visible fallback), html.transitioning, native scrollbars,
- *   .scrollbar-hide, shimmer + spinner keyframes, .scroll-fade(-x).
+ *   .scrollbar-hide, spinner keyframes, .scroll-fade(-x). The shimmer
+ *   keyframes and `.shimmer-text` left with ThinkingIndicator (the ai kit's
+ *   Message.Working keeps its goo look only).
  *
  * Local addition: the `.spinner-glyph` / `.spinner-breathe` classes over the
  * spinner keyframes, on `--duration-loop`, with a reduced-motion breathe.
  *
- * Local value changes: the inline code chip and the shimmer stops read color
- * tokens instead of upstream's hex (light code chip `--muted`, dark
- * `--surface-4`; shimmer dim → bright runs `--muted-foreground` →
- * `--foreground` in light and `--accent` → `--muted-foreground` in dark).
+ * Local value changes: the inline code chip reads color tokens instead of
+ * upstream's hex (light `--muted`, dark `--surface-4`).
  *
  * Dropped: the Tailwind directives (`@import "tailwindcss"`,
  * `@custom-variant`), the self-hosted Inter @font-face (replaced by
@@ -230,33 +230,6 @@ html.transitioning *::after {
 }
 
 /* ── Utilities (upstream §6) ── */
-
-/* shimmer-text (thinking-indicator) */
-
-@keyframes shimmer {
-  0% {
-    background-position: 0% 0;
-  }
-  100% {
-    background-position: 100% 0;
-  }
-}
-
-.shimmer-text {
-  color: transparent;
-  background: linear-gradient(
-    90deg,
-    light-dark(var(--muted-foreground), var(--accent)) 0%,
-    light-dark(var(--muted-foreground), var(--accent)) 35%,
-    light-dark(var(--foreground), var(--muted-foreground)) 50%,
-    light-dark(var(--muted-foreground), var(--accent)) 65%,
-    light-dark(var(--muted-foreground), var(--accent)) 100%
-  );
-  background-size: 300% 100%;
-  background-clip: text;
-  -webkit-background-clip: text;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
 
 /* The spinner glyph (lib/spinner-glyph.tsx: Button's loading state,
    Progress.Spinner): the figure-eight stroke travels on --duration-loop. Under

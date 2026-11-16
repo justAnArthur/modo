@@ -169,7 +169,6 @@
         "@types/react-dom": "^18.3.0",
         "bunup": "^0.16.0",
         "esbuild": "^0.28.2",
-        "pdfjs-dist": "^5.7.284",
         "react": "^18.3.0",
         "react-dom": "^18.3.0",
         "typescript": "^5.4.0",
@@ -177,13 +176,9 @@
         "vite": "^8.3.8",
       },
       "peerDependencies": {
-        "pdfjs-dist": "^5.7.284",
         "react": ">=18",
         "react-dom": ">=18",
       },
-      "optionalPeers": [
-        "pdfjs-dist",
-      ],
     },
   },
   "packages": {

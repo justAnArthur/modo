@@ -190,13 +190,6 @@ The same conventions run through every component:
   (`Card.Header`): React can't read a property off a client module from the
   server. Both are exported; the dotted form works in client components.
 
-- `pdfjs-dist` is an optional peer, used only for PDF thumbnails in
-  `InputMessage` (`npm install pdfjs-dist`). It loads lazily on the first PDF
-  attachment, and fetches its worker from `cdn.jsdelivr.net`. Without it, a
-  PDF attachment shows the file icon and a console warning. Webpack-based
-  builds (Next.js) resolve the dynamic import at build time, so there install
-  `pdfjs-dist` or alias it to `false`.
-
 ## Hooks for your own components
 
 The motion and layout systems are exported, so components of your own move

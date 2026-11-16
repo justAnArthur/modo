@@ -25,8 +25,8 @@ import { useControllableState } from '../../lib/use-controllable-state'
  * since React context crosses portals. Precedence is explicit `size` prop on
  * the component > nearest `SizeProvider` > `'default'`. Button, Badge,
  * Select, Tabs, Dropdown, Checkbox, Radio, Input,
- * InputGroup, Copy, InputMessage, Table, Switch, Slider, Accordion, Card,
- * ColorPicker, ThinkingIndicator, Calendar and the date and time pickers all
+ * InputGroup, Copy, Table, Switch, Slider, Accordion, Card, ColorPicker,
+ * Calendar and the date and time pickers all
  * take that per-component `size`. Type follows the ladder too: compact drops
  * each type role one notch.
  *
