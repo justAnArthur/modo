@@ -152,4 +152,28 @@ const CardEyebrow = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>
 
 CardEyebrow.displayName = 'CardEyebrow'
 
-export { CardAction, CardContent, CardDescription, CardEyebrow, CardFooter, CardHeader, CardTitle }
+/** A hairline across the card between its parts, spaced like them; vertical in an inline card. */
+const CardDivider = forwardRef<HTMLHRElement, HTMLAttributes<HTMLHRElement>>(({ className, ...props }, ref) => {
+  const { orientation } = useContext(CardContext)
+  const compact = useSize().variant === 'compact'
+  const vertical = orientation === 'inline'
+  return (
+    <hr
+      ref={ref}
+      aria-orientation={vertical ? 'vertical' : 'horizontal'}
+      data-slot="card-divider"
+      className={cn(
+        'shrink-0 border-0 bg-border/60',
+        vertical
+          ? cn('h-auto w-px self-stretch', compact ? 'my-2.5' : 'my-3.5')
+          : cn('h-px w-full', compact ? 'mt-2.5' : 'mt-3'),
+        className,
+      )}
+      {...props}
+    />
+  )
+})
+
+CardDivider.displayName = 'CardDivider'
+
+export { CardAction, CardContent, CardDescription, CardDivider, CardEyebrow, CardFooter, CardHeader, CardTitle }

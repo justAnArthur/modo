@@ -159,3 +159,41 @@ the group holds the selection (`defaultValue` here, or `value` and
     ))}
   </Card.Group>
 </div>
+
+# Outlined card and dividers
+
+`border="outlined"` frames a standalone card in the hairline an outlined
+group gives its tiles. `Card.Divider` runs a hairline across the card
+between its parts, full-bleed and spaced like them; in an inline card it
+stands vertical.
+
+<div className="flex w-full max-w-[520px] flex-col gap-4">
+  <Card border="outlined">
+    <Card.Header>
+      <Card.Title>Team plan</Card.Title>
+      <Card.Description>Everything in Pro, for up to ten seats.</Card.Description>
+    </Card.Header>
+    <Card.Divider />
+    <Card.Content>
+      <Card.Feature icon={Shield} title="SSO" description="Sign in with your identity provider" />
+    </Card.Content>
+    <Card.Divider />
+    <Card.Footer>
+      <Card.Button variant="primary">Upgrade</Card.Button>
+      <Card.Button variant="ghost">Compare plans</Card.Button>
+    </Card.Footer>
+  </Card>
+  <Card.Group orientation="inline" border="outlined">
+    <Card>
+      <Card.Media icon={Paintbrush} />
+      <Card.Header>
+        <Card.Title>Brand kit</Card.Title>
+        <Card.Description>Logos, colors and type</Card.Description>
+      </Card.Header>
+      <Card.Divider />
+      <Card.Footer>
+        <Card.Button>Open</Card.Button>
+      </Card.Footer>
+    </Card>
+  </Card.Group>
+</div>

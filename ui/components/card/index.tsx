@@ -28,9 +28,18 @@ import { useRegisterFluidHoverItem } from '../../lib/use-fluid-hover'
 import { useIsoLayoutEffect } from '../../lib/use-iso-layout-effect'
 import { cn } from '../../lib/utils'
 import { SizeScope } from '../../primitives/sizes'
-import { CardContext, type CardContextValue, CardGroup, CardGroupContext } from './card-group'
+import { type CardBorder, CardContext, type CardContextValue, CardGroup, CardGroupContext } from './card-group'
 import { CardButton, CardFeature, CardImage, CardMedia } from './card-media'
-import { CardAction, CardContent, CardDescription, CardEyebrow, CardFooter, CardHeader, CardTitle } from './card-parts'
+import {
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardDivider,
+  CardEyebrow,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from './card-parts'
 
 interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'> {
   /** Compositional parts: Card.Image, Card.Media, Card.Header, Card.Content, Card.Footer. */
@@ -59,6 +68,8 @@ interface CardProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onClick'> {
   size?: SizeVariant
   /** Position in its Card.Group. Defaults to the card's place among the group's children. */
   index?: number
+  /** Frame of a standalone card: `"outlined"` draws the hairline an outlined Card.Group gives its tiles. In a Card.Group the group's `border` decides. Defaults to `"none"`. */
+  border?: CardBorder
 }
 
 type CardComponent = ForwardRefExoticComponent<CardProps & RefAttributes<HTMLDivElement>> & {
@@ -69,6 +80,7 @@ type CardComponent = ForwardRefExoticComponent<CardProps & RefAttributes<HTMLDiv
   Action: typeof CardAction
   Content: typeof CardContent
   Footer: typeof CardFooter
+  Divider: typeof CardDivider
   Media: typeof CardMedia
   Image: typeof CardImage
   Eyebrow: typeof CardEyebrow
@@ -100,6 +112,7 @@ const isCardImage = (child: ReactNode) =>
  * - `Card.Header` — the title and description grid; pins Card.Action top-right.
  * - `Card.Title` — weight-animates while the card is selected.
  * - `Card.Description`, `Card.Action`, `Card.Content`, `Card.Footer` (the actions row).
+ * - `Card.Divider` — a hairline between parts, full-bleed; vertical in an inline card.
  * - `Card.Media` — an icon tile, a logo or a `[logoA, logoB]` pair.
  * - `Card.Image` — a full-bleed banner, or a leading image when inline.
  * - `Card.Eyebrow` — a small muted label above the title.
@@ -125,6 +138,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       onDismiss,
       size,
       index: indexProp,
+      border = 'none',
       className,
       children,
       ...props
@@ -186,7 +200,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
     // only when it draws a frame (a borderless one has no surface to hug);
     // a card in a continuous block leans on the group's frame.
     const tileShape = !group
-      ? cn(shape.container, 'overflow-hidden')
+      ? cn(shape.container, 'overflow-hidden', border === 'outlined' && 'border border-border/60')
       : separated && outlined
         ? cn(shape.container, 'overflow-hidden border border-border/60')
         : ''
@@ -335,6 +349,7 @@ Object.assign(Card, {
   Action: CardAction,
   Content: CardContent,
   Footer: CardFooter,
+  Divider: CardDivider,
   Media: CardMedia,
   Image: CardImage,
   Eyebrow: CardEyebrow,
@@ -351,6 +366,7 @@ export {
   CardButton,
   CardContent,
   CardDescription,
+  CardDivider,
   CardEyebrow,
   CardFeature,
   CardFooter,
