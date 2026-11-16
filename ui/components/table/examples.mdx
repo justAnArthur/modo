@@ -1,4 +1,5 @@
 import Table from './index'
+import SortDemo from './sort-demo'
 
 # Basic
 
@@ -54,6 +55,100 @@ dense data.
           {row.map((cell) => (
             <Table.Cell key={cell}>{cell}</Table.Cell>
           ))}
+        </Table.Row>
+      ))}
+    </Table.Body>
+  </Table>
+</div>
+
+# Footer and caption
+
+`Table.Footer` holds totals: its rows render semibold in the foreground
+and stay out of the hover. `Table.Caption` is a muted line below the table.
+
+<div className="w-full">
+  <Table>
+    <Table.Caption>Invoices for the last quarter.</Table.Caption>
+    <Table.Header>
+      <Table.Row>
+        <Table.Head>Invoice</Table.Head>
+        <Table.Head>Status</Table.Head>
+        <Table.Head className="text-right">Amount</Table.Head>
+      </Table.Row>
+    </Table.Header>
+    <Table.Body>
+      {[['INV-001', 'Paid', '$250.00'], ['INV-002', 'Pending', '$150.00'], ['INV-003', 'Paid', '$350.00']].map((row) => (
+        <Table.Row key={row[0]}>
+          <Table.Cell>{row[0]}</Table.Cell>
+          <Table.Cell>{row[1]}</Table.Cell>
+          <Table.Cell className="text-right">{row[2]}</Table.Cell>
+        </Table.Row>
+      ))}
+    </Table.Body>
+    <Table.Footer>
+      <Table.Row>
+        <Table.Cell colSpan={2}>Total</Table.Cell>
+        <Table.Cell className="text-right">$750.00</Table.Cell>
+      </Table.Row>
+    </Table.Footer>
+  </Table>
+</div>
+
+# Empty
+
+`Table.Empty` spans every column with one message, for a table with no
+rows yet or one still loading.
+
+<div className="w-full">
+  <Table>
+    <Table.Header>
+      <Table.Row>
+        <Table.Head>Name</Table.Head>
+        <Table.Head>Role</Table.Head>
+        <Table.Head>Status</Table.Head>
+      </Table.Row>
+    </Table.Header>
+    <Table.Body>
+      <Table.Empty colSpan={3}>No members yet.</Table.Empty>
+    </Table.Body>
+  </Table>
+</div>
+
+# Sortable
+
+A head with a `value` is a sort button: a press sorts by its column
+ascending, then descending, then not at all, and `aria-sort` follows. The
+table reports the sort through `sort` / `onSortChange` (or keeps its own
+from `defaultSort`); ordering the rows is yours. `SortDemo` is a docs
+stage: a Table that orders its rows by the sort it reports.
+
+<div className="w-full">
+  <SortDemo />
+</div>
+
+# Stacked
+
+With `stacked`, a table whose container is narrower than 32rem hides its
+header and lays each row out as a two-column card, every cell led by its
+`label`. From 32rem up it is a plain table again.
+
+<div className="w-full max-w-[360px]">
+  <Table stacked>
+    <Table.Header>
+      <Table.Row>
+        <Table.Head>Name</Table.Head>
+        <Table.Head>Role</Table.Head>
+        <Table.Head>Team</Table.Head>
+        <Table.Head>Status</Table.Head>
+      </Table.Row>
+    </Table.Header>
+    <Table.Body>
+      {[['Alice', 'Engineer', 'Platform', 'Active'], ['Bob', 'Designer', 'Brand', 'Away'], ['Carol', 'Manager', 'Platform', 'Active']].map((row) => (
+        <Table.Row key={row[0]}>
+          <Table.Cell label="Name">{row[0]}</Table.Cell>
+          <Table.Cell label="Role">{row[1]}</Table.Cell>
+          <Table.Cell label="Team">{row[2]}</Table.Cell>
+          <Table.Cell label="Status">{row[3]}</Table.Cell>
         </Table.Row>
       ))}
     </Table.Body>
