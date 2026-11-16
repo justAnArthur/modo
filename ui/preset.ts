@@ -60,6 +60,7 @@ export const theme = {
     picker: { edge: 'var(--picker-edge)', ring: 'var(--picker-ring)' },
     control: 'var(--control-border)',
     scrim: 'var(--scrim)',
+    skeleton: 'var(--skeleton)',
     status: {
       success: 'var(--status-success)',
       loading: 'var(--status-loading)',

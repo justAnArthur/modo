@@ -140,6 +140,11 @@
   --shadow-button-outline: 0 0 0 1px var(--control-border), inset 0 0 0 0 var(--control-border);
   --shadow-button-outline-pressed: 0 0 0 0 var(--control-border), inset 0 0 0 1px var(--control-border);
 
+  /* ── Placeholders ──
+     The Skeleton's fill: a foreground mix like --border, so it tracks the
+     scheme and reads on any surface level. */
+  --skeleton: color-mix(in oklab, var(--foreground) 8%, transparent);
+
   /* ── Surface-relative interactive overlays (work on any elevation) ──
      --overlay is the tint-direction triplet — black for light surfaces,
      white for dark. Components consume it as rgb(var(--overlay) / α), so it

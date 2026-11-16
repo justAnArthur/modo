@@ -16,7 +16,6 @@ import {
   forwardRef,
   type HTMLAttributes,
   type InputHTMLAttributes,
-  type LabelHTMLAttributes,
   type ReactNode,
   type Ref,
   type RefAttributes,
@@ -46,6 +45,7 @@ import { useControllableState } from '../../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
 import { SizeScope } from '../../../primitives/sizes'
+import { Label, type LabelProps } from '../label'
 
 interface InputGroupContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void
@@ -115,8 +115,8 @@ interface InputProps
  *   A press keeps the caret in the field.
  * - `InputAdornment` — the wrapper the adornments render in, for a field of
  *   your own built on `useFieldBox`: `size`.
- * - `Label` — the field label, inset to line up with the input's text:
- *   `htmlFor`, `invalid`, `size`.
+ * - `Label` — the field label, inset to line up with the input's text
+ *   (its own item, re-exported here): `htmlFor`, `invalid`, `size`.
  * - `InputGroup` — stacks labelled fields and tracks the pointer across them,
  *   so the hover glides from field to field: `size` pins every field to one
  *   step of the ladder.
@@ -305,39 +305,6 @@ const InputAction = forwardRef<HTMLButtonElement, InputActionProps>(
 )
 
 InputAction.displayName = 'InputAction'
-
-interface LabelProps extends LabelHTMLAttributes<HTMLLabelElement> {
-  /** Label text. */
-  children: ReactNode
-  /** Turns the label destructive, matching an invalid Input. Defaults to `false`. */
-  invalid?: boolean
-  /** Pins the label to one step of the size ladder. Defaults to the surrounding SizeProvider. */
-  size?: SizeVariant
-}
-
-const Label = forwardRef<HTMLLabelElement, LabelProps>(({ children, invalid, size, className, ...props }, ref) => {
-  const sizeClasses = useSize(size)
-
-  return (
-    <label
-      ref={ref}
-      className={cn(
-        sizeClasses.text,
-        'weight-normal',
-        invalid ? 'text-destructive' : 'text-muted-foreground',
-        // Inside a disabled field, Field.Label stamps `data-disabled`.
-        'data-[disabled]:opacity-50',
-        fieldTextInset[sizeClasses.variant],
-        className,
-      )}
-      {...props}
-    >
-      {children}
-    </label>
-  )
-})
-
-Label.displayName = 'Label'
 
 interface InputGroupProps extends HTMLAttributes<HTMLDivElement> {
   /** One or more InputGroup.Field children. */
