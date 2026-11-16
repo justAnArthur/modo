@@ -23,6 +23,11 @@ Fixes:
 Fixes:
 
 - The compound parts of the function roots (`Popover.Trigger`, `Dialog.Content`, `Select.Item`, `Tooltip.Provider`, `Morph.Part`, …) are typed in the published `.d.ts`; CI type-checks every part from `dist`.
+### @justanarthur/modo-ui
+
+- New primitives: `Sortable` (drag or keyboard reorder, `Sortable.Handle`, `useSortableHandle`, `as="none"` inside a host list), `VirtualList` (windowed rows, fixed or measured, `scrollToIndex`) and `Resizable` (split panes with keyboard separators, collapsible panels, nesting).
+- New components: `List` (settings rows), `ChoiceList` (Radio's rows over rich content), `KeyValue`, `Breadcrumb` (folds into a menu), `Meter` (bar, line, ring; `marker`, `tone`), `StatusDot` (+ `statusGlyph`), `Kbd` and `EmptyState`.
+- Icons `eye`, `eye-off` and `grip-vertical`.
 
 ## 1.0.0 — 2026-11-16
 

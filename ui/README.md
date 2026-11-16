@@ -138,7 +138,7 @@ The same conventions run through every component:
   `SizeProvider`, so one `<SizeProvider size="compact">` makes a whole
   region dense, menus included.
 - **Forms.** Checkbox, `Radio.Group`, Switch, Select, Combobox, Slider,
-  NumberInput, ColorPicker and the date and time pickers take `name` and
+  NumberInput, ColorPicker, ChoiceList and the date and time pickers take `name` and
   submit their value with the surrounding form; Input and Textarea are native
   fields. Text fields, Select and Combobox take `readOnly` and `required`.
 - **Fields.** Wrap a control in `Field` for a label, a description and an
@@ -216,6 +216,7 @@ show them):
 | `IconProvider`, `ShapeProvider` | Swap the icon set, or switch every radius between rounded and pill. |
 | `useFieldBox`, `useFieldState` (`lib/field-box`) | The field ladder's box around a control of your own, and an enclosing `Field`'s state resolved against a control's own props. |
 | `useToast()`, `toast` | Show toasts: `useToast()` inside a `Toast`, or the global `toast` anywhere once `<Toast manager={toast} />` is mounted (one per app). Both have `show`, `success`, `error`, `warning`, `info`, `loading`, `promise`, `update` and `close`. |
+| `Sortable`, `useSortableHandle`, `VirtualList`, `Resizable` | Building blocks for lists and layouts: reorder by pointer or keyboard (the handle props for a button of your own), render only the rows in view (a ref's `scrollToIndex`), and split a region into panes that resize. |
 | `cn` | Class merging that knows the token utilities (`cn('text-body', 'text-muted-foreground')` keeps both). |
 
 ## Documenting ui items in your own modo site

@@ -34,9 +34,12 @@ import {
   Dot,
   Ellipsis,
   EllipsisVertical,
+  Eye,
+  EyeOff,
   File as FileIcon,
   Folder,
   Globe,
+  GripVertical,
   Heart,
   Home,
   ImageIcon,
@@ -161,6 +164,9 @@ export type IconName =
   | 'circle-check'
   | 'file'
   | 'upload'
+  | 'eye'
+  | 'eye-off'
+  | 'grip-vertical'
 
 const defaultIcons: Record<IconName, IconComponent> = {
   'chevron-right': ChevronRight,
@@ -233,6 +239,9 @@ const defaultIcons: Record<IconName, IconComponent> = {
   'circle-check': CircleCheck,
   file: FileIcon,
   upload: Upload,
+  eye: Eye,
+  'eye-off': EyeOff,
+  'grip-vertical': GripVertical,
 }
 
 const IconContext = createContext<Record<IconName, IconComponent> | null>(null)

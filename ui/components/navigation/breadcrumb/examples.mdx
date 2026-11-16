@@ -1,0 +1,45 @@
+import Breadcrumb from './index'
+
+# File path
+
+Each folder links back up; the file is the current page. The hover glides along the crumbs.
+
+<Breadcrumb
+  items={[
+    { label: 'modo', href: '#' },
+    { label: 'ui', href: '#' },
+    { label: 'components', href: '#' },
+    { label: 'tree.tsx' },
+  ]}
+/>
+
+# A long path that collapses
+
+When the trail runs out of room, the middle folders fold into the ellipsis; open it to jump to one. Drag the frame narrower and more of them fold.
+
+<div className="w-80 max-w-full resize-x overflow-hidden">
+  <Breadcrumb>
+    <Breadcrumb.Item label="Users" href="#" />
+    <Breadcrumb.Item label="kozubov" href="#" />
+    <Breadcrumb.Item label="Projects" href="#" />
+    <Breadcrumb.Item label="justanarthur" href="#" />
+    <Breadcrumb.Item label="modo" href="#" />
+    <Breadcrumb.Item label="ui" href="#" />
+    <Breadcrumb.Item label="components" href="#" />
+    <Breadcrumb.Item label="navigation" href="#" />
+    <Breadcrumb.Item label="breadcrumb" />
+  </Breadcrumb>
+</div>
+
+# Compact
+
+The crumbs step down the size ladder for a toolbar or a pane header.
+
+<Breadcrumb
+  size="compact"
+  items={[
+    { label: 'Settings', href: '#' },
+    { label: 'Workspace', href: '#' },
+    { label: 'Members' },
+  ]}
+/>

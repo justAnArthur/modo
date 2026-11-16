@@ -24,15 +24,19 @@ controlled + uncontrolled.
 | A read-only value to copy | `Copy` |
 | A chat or prompt composer | `InputMessage` (attachments, queue, send/stop) |
 | One of a few options, all visible | `Radio.Group`, or `Tabs variant="subtle"` for a view switch |
+| One of a few options, each row rich (two lines, meters, row actions) | `ChoiceList` |
 | Several of a few options | `Checkbox.Group` |
 | One of many options | `Select`; typed filtering → `Combobox` (`multiple`, `creatable`) |
 | An on/off setting | `Switch` |
+| A settings panel (label left, control right) | `List` (`.Section`, `.Row`; `LIST_POPOVER`, `LIST_SWITCH`) |
+| Key / value pairs (env vars, headers) | `KeyValue` (secret reveal, duplicate keys) |
 | A number in a range | `Slider` (pips by default, compact = dense fill + range) |
 | A color | `ColorPicker` (inline) or `ColorPicker.Popover` |
 | A date, range, time, duration or month | `DatePicker`, `DateRangePicker`, `TimePicker`, `DurationPicker`, `MonthPicker`; `Calendar` inline |
 | Switching views | `Tabs` (`variant="segmented"`: elevated indicator; `"subtle"`: pills; `href` for link tabs) |
 | A site header menu | `NavigationMenu` (one panel morphing between triggers) |
 | Page navigation | `Pagination` (`count`; `variant="input"` for tables) |
+| Where you are in a hierarchy | `Breadcrumb` (folds the middle into a menu) |
 | Collapsible sections | `Accordion` / `Accordion.Group` |
 | App navigation | `Sidebar` (+ the `SidebarApp` block for a full shell) |
 | A menu of actions or choices | `Dropdown` (inline panel or popup; search, filter, single/multi check; submenus) |
@@ -49,10 +53,17 @@ controlled + uncontrolled.
 | Grouped content, clickable tiles | `Card` / `Card.Group` (`columns` grid with xy hover; selection both ways) |
 | Tabular data | `Table` (sortable heads, footer, caption, empty row, `stacked` cards when narrow) |
 | Progress or a spinner | `Progress` (`value={null}` sweeps), `Progress.Spinner` |
+| A share of a budget (usage, a context window) | `Meter` (`bar` / `line` / `ring`, `marker`, `tone`) |
+| A run state (running, waiting, failed…) | `StatusDot`, `statusGlyph(status)` for an icon slot |
+| A keyboard shortcut | `Kbd` (`outline` chip or `plain`) |
+| "Nothing here yet" | `EmptyState` |
 | A loading placeholder | `Skeleton` (a block, or `rows`) |
 | A divider between groups | `Separator` |
 | "Working…" | `ThinkingIndicator` (`shimmer` or `goo`) |
 | A scroll region | `ScrollArea` (+ `scroll-fade`) |
+| A list of thousands of rows | `VirtualList` (fixed or measured rows, `scrollToIndex`) |
+| Drag to reorder | `Sortable` (`handle`, keyboard, `as="none"` in a host list; `useSortableHandle`) |
+| Split panes | `Resizable` (`.Panel`, `.Handle`; nests) |
 | A raised container | `Elevated` (`offset`) |
 | A dense region | `SizeProvider size="compact"` |
 | A custom hover list | `FluidHover` (+ the re-exported hook for custom lists) |
@@ -71,6 +82,9 @@ controlled + uncontrolled.
 | `ScrollArea` | `primitives/scroll-area` | `.Bar` | Hover-revealed thin thumb, native physics on touch, `viewportClassName` (pair with `scroll-fade`). |
 | `Separator` | `primitives/separator` | — | The one hairline on Base UI's Separator; `orientation`. |
 | `Skeleton` | `primitives/skeleton` | — | A `bg-skeleton` block pulsing on `--duration-loop`, or `rows` on the control height (`bordered` frames them); `aria-hidden`. |
+| `Sortable` | `primitives/sortable` | `.Handle`; `useSortableHandle` | motion's `Reorder` by pointer or keyboard (Space, arrows, Escape), announced; `items`, `order` / `defaultOrder` / `onOrderChange`, `orientation`, `handle`, `as` (`ul` \| `ol` \| `none`). The held item lifts +2. |
+| `VirtualList` | `primitives/virtual-list` | ref: `scrollToIndex(index, align)` | Mounts only the rows in view; `count`, `renderItem`, `itemHeight` or measured (`estimateHeight`), `overscan`; scrolls itself or a surrounding ScrollArea. |
+| `Resizable` | `primitives/resizable` | `.Panel .Handle` | Split panes in percent; `direction`, `sizes` / `onSizesChange`, `step`; panels take `defaultSize`, `minSize`, `maxSize`, `collapsible`; the handle is a keyboard separator. |
 | `Code` | `primitives/code` | — | sugar-high tokens in `--syntax-*`, one surface step up. Also the docs chrome's Code slot. |
 | `Craft` | `primitives/craft` | `demos.tsx` (the bad sides) | Docs stage: a bad and a good version side by side (`bad`, `good`, `badNote`, `goodNote`). One rule per pair. |
 
@@ -82,6 +96,11 @@ controlled + uncontrolled.
 | `Badge` | `components/badge` | — | L | `variant` `solid` \| `dot` \| `outline`, `color`, `size`; a new label springs width and blur-crossfades. |
 | `Avatar` | `components/avatar` | `.Image .Fallback` | L | Base UI Avatar; the image fades in, the fallback shows while it loads or fails; `shape` `circle` \| `square`. |
 | `Progress` | `components/progress` | `.Spinner` | L | Base UI Progress; the fill slides on `spring.moderate`; `value={null}` sweeps on `--duration-loop`; `label`, `showValue`, `format`. `.Spinner` is Button's loading glyph. |
+| `Meter` | `components/meter` | — | L | Base UI Meter; `variant` `bar` \| `line` \| `ring`; the fill slides; `warnAt` / `errorAt` or `tone`; `marker`. |
+| `StatusDot` | `components/status-dot` | `.glyph` (= `statusGlyph`) | L | `running` (the loading glyph), `waiting`, `unread`, `idle`, `success`, `error`; `label` for screen readers. |
+| `Kbd` | `components/kbd` | — | L | `variant` `outline` (keycap, `micro`) \| `plain` (Dropdown's shortcut text). |
+| `EmptyState` | `components/empty-state` | — | L | `icon`, `title`, `description`, `actions`; `size` steps the actions too. |
+| `List` | `components/list` | `.Section .Row` | L | A settings list on one control height; controls end on the caption edge; `LIST_POPOVER`, `LIST_SWITCH` (a bare Switch). |
 | `Card` | `components/card` | `.Group .Header .Title .Description .Action .Content .Footer .Divider .Media .Image .Eyebrow .Feature .Button` | L H W C | Transparent and borderless (`border="outlined"` frames one on its own; `.Divider` a hairline inside); only clickable cards join the group's hover; stretched link. A card with a `value` selects itself in `Card.Group` (`value` / `defaultValue` / `onValueChange`). `Card.Button` is a compact `Button`. |
 | `Table` | `components/table` | `.Header .Body .Footer .Row .Head .Cell .Caption .Empty` | L H C | Row hover, semantic markup; a `Table.Head` with a `value` sorts (`sort` / `defaultSort` / `onSortChange` on the root); `stacked` turns rows into cards in a narrow container (each Cell's `label` captions it). |
 | `Copy` | `components/copy` | — | L M | Click anywhere to copy; the glyph melts into a status disc behind the check. |
@@ -94,6 +113,7 @@ controlled + uncontrolled.
 |---|---|---|---|
 | `Checkbox` | `.Group` | L H G C | Contiguous checks melt into one run (`useSelectionRuns` + merge/split blocks). Rows take `disabled`, `name`, `value`, `indeterminate`; without a `label`, the bare box. |
 | `Radio` | `.Group` | L H G C | Selected background is a `GooIndicator`; index or value mode; `name` / `disabled` on the group; without a `label`, a bare radio for a layout of your own. |
+| `ChoiceList` | — | L H G C | Radio.Group's rows over any `content` (no circle); `options` with `disabled` / `actions`; `value` / `defaultValue` / `onValueChange`, `name`. |
 | `Select` | `.Trigger .Value .Content .Item .Group .Label .Separator` | L S H M C | Popup morphs out of the trigger; the check draws itself as the pick lands; a pick holds the popup 300ms; keyboard ring in the list; rows number themselves (`index` optional); node labels with `textValue`; `readOnly`, `required`, `name`. |
 | `Combobox` | `.Input .Chips .Content .List .Item .Empty` | L S H M C | `multiple`, chips, `creatable`; `query` / `defaultQuery` / `onQueryChange`, `filter={null}` for remote results, `loading` (status row pinned under the rows), `Content footer` (a press keeps focus in the input, Tab steps into it); node row labels; `readOnly`, `name`; no ring in the list (the input keeps focus). |
 | `Switch` | `.Group` | L G C | Thumb is a `GooIndicator` that stretches as it travels; on = `bg-brand`; `description`, `trackSide`; `name` / `value`; without a `label`, the bare track. |
@@ -101,6 +121,7 @@ controlled + uncontrolled.
 | `Input`, `InputGroup` | `.Field` | L H W C | `Input` stands alone (`onValueChange`, `invalid`, `variant`, `readOnly`, `startAdornment` / `endAdornment`; `InputAction`, `InputAdornment`); a `type` swap keeps the caret; fields share one hover; error state on Base UI Field; a field takes a Textarea or picker as children. |
 | `Label` | — | L | A plain `<label>` lined up with the field's text (`fieldTextInset`); `invalid`, `size`. Also exported from `inputs/input`. |
 | `Field` | `.Label .Description .Error .Control` | L | Base UI Field: label, description and error on the text inset; hands `invalid` / `disabled` / `readOnly` / `required` to the control inside (own prop wins, via `useFieldState`); `validationMode`. |
+| `KeyValue` | — | L C | Rows of two monospace Inputs; `secret` values behind an `InputAction` reveal; duplicate keys go invalid; the whole array through `onValueChange`. |
 | `NumberInput` | — | L C | Base UI NumberField on the field ladder; steppers are field actions; `format`, `min` / `max` / `step`, `scrub`, `wheel`, adornments; `value` is `number \| null`. |
 | `FileDropzone` | `.Row` | L | A dashed drop zone around a hidden file input; `accept`, `maxSize`, `maxFiles`, `onFilesChange` / `onFilesRejected` (announced); drag verdicts restyle it; `FileDropzone.Row` (`FileRow`) shows a file with `status` / `progress`. Pure helpers in `variants.ts`. |
 | `Textarea` | — | L C | Multi-line Input on the field ladder; grows from `minRows` to `maxRows`, then scrolls; `onValueChange`, `readOnly`, `required`. |
@@ -116,6 +137,7 @@ controlled + uncontrolled.
 | `Tabs` | `.List .Item .Panel` | L S H G W C | `variant="segmented"`: a well (`bg-muted`), +3 elevated indicator, hover pill that drips back into it. `"subtle"`: a borderless strip with a `bg-active` pill, manual activation, `activeLabel`. `Tabs.Item` `href` (or a router link as `render`) makes link tabs. |
 | `NavigationMenu` | `.List .Item .Trigger .Content .Link` | L S H G M W C | Site header menu: one shared panel morphs out of its trigger and springs to each panel's size; liquid marker under the open item or the active link; `value` / `defaultValue` / `onValueChange` (the open item); `Link` takes `icon` / `description` in a panel, `render` for router links. |
 | `Pagination` | — | L H G C | The current page is a `GooIndicator`; `count`, `value` / `defaultValue` / `onValueChange`, `siblings`, `edges`, `variant="input"` (a jump-to-page field); every label a prop. |
+| `Breadcrumb` | `.Item` | L H | `items` or children; one fluid hover; the middle folds into a Dropdown when the trail doesn't fit. |
 | `Accordion` | `.Group .Item .Trigger .Content` | L H M W C | Panel morphs out of its row; `highlight` `item` \| `trigger`. |
 | `Sidebar` | `.Provider .Trigger .Rail .Inset .Input .Header .Content .Footer .Separator .Group .GroupLabel .GroupAction .GroupActions .GroupContent .Menu .MenuItem .MenuButton .MenuAction .MenuActions .MenuBadge .MenuSkeleton .MenuSub .MenuSubItem .MenuSubButton` | L S H G C | Liquid active rows and hover; `openOnHover`; collapsible rows; `[` / `]` toggles (`shortcutScope`); rows on the ladder; mobile `Sheet`. |
 
