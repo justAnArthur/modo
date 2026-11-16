@@ -9,22 +9,37 @@
 
 import { format, type Locale } from 'date-fns'
 import { type RefObject, useRef, useState } from 'react'
-import type { DateRange, Matcher } from 'react-day-picker'
+import type { Matcher } from 'react-day-picker'
 import { defaultLocale, parseDateText } from '../../../../lib/date-locale'
 import type { FieldVariant } from '../../../../lib/field-classes'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
 import Calendar from '../calendar'
+import { type DateRangeOf, type DateValueType, readDateValue, writeDateValue } from '../date-value'
 import { isDayAllowed } from '../day-rules'
 import { PickerInput, PickerShell } from '../picker-shell'
 
-interface DateRangePickerProps {
-  /** The picked range, react-day-picker's `{ from, to }`; `null` when empty. */
-  value?: DateRange | null
-  /** Initial range, for an uncontrolled picker. Defaults to `null`. */
-  defaultValue?: DateRange | null
-  /** Called with the new range: `{ from }` alone after the first click, `null` when cleared. */
-  onValueChange?: (value: DateRange | null) => void
+/** Every word the picker announces, for translating it. */
+interface DateRangePickerLabels {
+  /** Names the panel's start input. Defaults to `"Start date"`. */
+  start?: string
+  /** Names the panel's end input. Defaults to `"End date"`. */
+  end?: string
+  /** Names the panel's close button. Defaults to `"Close"`. */
+  close?: string
+}
+
+interface DateRangePickerProps<T extends DateValueType = 'date'> {
+  /** The picked range, react-day-picker's `{ from, to }`; `null` when empty. Its ends are `Date`s, or with `valueType="string"` ISO days (`"2026-10-09"`) read as local midnight. */
+  value?: DateRangeOf<T> | null
+  /** Initial range, for an uncontrolled picker, in the same type as `value`. Defaults to `null`. */
+  defaultValue?: DateRangeOf<T> | null
+  /** Called with the new range in the type `valueType` picks: `{ from }` alone after the first click, `null` when cleared. */
+  onValueChange?: (value: DateRangeOf<T> | null) => void
+  /** What the range's ends are: `Date`s, or `"string"`s in ISO form (`"yyyy-MM-dd"`, as `name` submits them). Types `value`, `defaultValue` and `onValueChange` to match. Defaults to `'date'`. */
+  valueType?: T
+  /** Every word the picker announces (`start`, `end`, `close`), for translating it. Defaults to English. */
+  labels?: DateRangePickerLabels
   /** A react-day-picker / date-fns locale (`import { de } from 'react-day-picker/locale'`). Defaults to `enUS`. */
   locale?: Locale
   /** Shown while empty. */
@@ -79,14 +94,17 @@ interface DateRangePickerProps {
  * holds both ends as text, each read in the locale's formats as you type, and
  * the field shows the range the way the locale writes one ("9 – 15 Oct
  * 2026"). Everything else — the month and year columns, the bottom sheet on a
- * phone, the locale — works as in DatePicker.
+ * phone, the locale — works as in DatePicker, and so does `valueType`:
+ * `"string"` takes and reports both ends as ISO days (`"2026-10-09"`).
  *
  * @example {@include ./examples.mdx}
  */
-function DateRangePicker({
+function DateRangePicker<T extends DateValueType = 'date'>({
   value: valueProp,
   defaultValue = null,
   onValueChange,
+  valueType,
+  labels,
   locale = defaultLocale,
   disabledDays,
   startMonth,
@@ -97,15 +115,22 @@ function DateRangePicker({
   onOpenChange,
   dir,
   columnsSide,
+  invalid,
   ...shell
-}: DateRangePickerProps) {
-  const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
+}: DateRangePickerProps<T>) {
+  const [raw, setRaw] = useControllableState(valueProp, defaultValue, onValueChange)
   const [open, setOpenState] = useControllableState(openProp, defaultOpen, onOpenChange)
   // After the first click, the next one ends the range.
   const [picking, setPicking] = useState(false)
   const fromInput = useRef<HTMLInputElement>(null)
-  const from = value?.from
-  const to = value?.to
+  const ends = [readDateValue(raw?.from), readDateValue(raw?.to)]
+  // An end that reads as no date: shown as empty, marked invalid.
+  const unreadable = ends.some(end => end !== null && Number.isNaN(end.getTime()))
+  const [from, to] = unreadable ? [undefined, undefined] : ends.map(end => end ?? undefined)
+  const value = from ? { from, to } : null
+  const write = (date: Date | undefined) => date && writeDateValue(date, (valueType ?? 'date') as T)
+  const setValue = (range: { from: Date | undefined; to?: Date } | null) =>
+    setRaw(range && { from: write(range.from), to: write(range.to) })
 
   const setOpen = (next: boolean) => {
     setPicking(false)
@@ -141,7 +166,7 @@ function DateRangePicker({
     <>
       <PickerInput
         ref={fromInput}
-        aria-label="Start date"
+        aria-label={labels?.start ?? 'Start date'}
         placeholder={shell.placeholder}
         formatted={from ? format(from, 'PP', { locale }) : ''}
         onText={readEnd('from')}
@@ -153,7 +178,7 @@ function DateRangePicker({
         –
       </span>
       <PickerInput
-        aria-label="End date"
+        aria-label={labels?.end ?? 'End date'}
         formatted={to ? format(to, 'PP', { locale }) : ''}
         onText={readEnd('to')}
         onClear={() => setValue(from ? { from, to: undefined } : null)}
@@ -166,11 +191,13 @@ function DateRangePicker({
   return (
     <PickerShell
       {...shell}
+      invalid={invalid || unreadable || undefined}
+      closeLabel={labels?.close}
       open={open}
       onOpenChange={setOpen}
       icon="calendar"
       display={display}
-      formValue={from && to ? [format(from, 'yyyy-MM-dd'), format(to, 'yyyy-MM-dd')] : undefined}
+      formValue={from && to ? [writeDateValue(from, 'string'), writeDateValue(to, 'string')] : undefined}
       header={header}
       initialFocus={fromInput}
       dir={dir}
@@ -193,7 +220,7 @@ function DateRangePicker({
   )
 }
 
-export type { DateRangePickerProps }
+export type { DateRangePickerLabels, DateRangePickerProps }
 export { DateRangePicker }
 
 export default DateRangePicker
