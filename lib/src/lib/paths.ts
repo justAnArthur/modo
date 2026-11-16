@@ -20,6 +20,26 @@ export function tokenPath(group?: string): string {
   return group ? `/docs/tokens/${group}` : '/docs/tokens'
 }
 
+/** The guides' root as an app path: `guides/index.mdx` renders here. */
+export const GUIDES_PATH = '/guides'
+
+/** A guide as an app path (`/guides/theming/tokens`); the empty slug is the guides' root. */
+export function guidePath(slug: string): string {
+  return slug ? `${GUIDES_PATH}/${slug}` : GUIDES_PATH
+}
+
+/**
+ * A URL pathname as app paths spell it: decoded (`/guides/n%C3%A1vod` → `/guides/návod`) and NFC,
+ * the form guide slugs take. A malformed escape leaves it as is.
+ */
+export function decodePath(pathname: string): string {
+  try {
+    return decodeURIComponent(pathname).normalize('NFC')
+  } catch {
+    return pathname
+  }
+}
+
 /** The overview, as an app path. */
 export const HOME_PATH = '/'
 

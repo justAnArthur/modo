@@ -245,17 +245,17 @@ If an export has the same name as an item, the item wins and the build warns. Al
 
 ## root
 
-The folder holding the item tiers (`primitives/`, `components/`, `blocks/`, `pages/`) and `tokens/`, relative to the project root. Use it when a library keeps its sources in a subfolder:
+The folder holding the item tiers (`primitives/`, `components/`, `blocks/`, `pages/`), `tokens/` and [`guides/`](./guides.md), relative to the project root. Use it when a library keeps its sources in a subfolder:
 
 ```ts
 root: './src', // reads src/components/…, src/tokens/…
 ```
 
-It moves only the tiers and tokens: `css`, `vite`, `examples`, `logo`, `favicon` and the `shell` and `panel` modules stay relative to the project root, as does `.modo-tmp`. Item pages' Source links and paths are relative to the project root too (`src/components/button/index.tsx`), so [`repo.dir`](#repo) still names the project root's folder. `modo add` creates items and tokens under it, and `modo check` and the build fail when it doesn't exist. Restart `modo dev` after changing it.
+It moves only the tiers, tokens and guides: `css`, `vite`, `examples`, `logo`, `favicon` and the `shell` and `panel` modules stay relative to the project root, as does `.modo-tmp`. Item pages' Source links and paths are relative to the project root too (`src/components/button/index.tsx`), so [`repo.dir`](#repo) still names the project root's folder. `modo add` creates items and tokens under it, and `modo check` and the build fail when it doesn't exist. Restart `modo dev` after changing it.
 
 ## groups
 
-Titles for group folders whose name doesn't capitalize well, by folder name. They apply to the sidebar and the tier overviews. Other folders read as their name, capitalized: `form-controls` becomes "Form controls".
+Titles for group folders whose name doesn't capitalize well, by folder name without its ordering prefix (`03-ui` is `ui`). They apply to the sidebar, the tier overviews and the guides' folders. Other folders read as their name, capitalized, with a leading `01-` dropped: `02-form-controls` becomes "Form controls".
 
 ```ts
 groups: { ui: 'UI', 'date-time': 'Dates and times' },

@@ -1,12 +1,13 @@
 import { config } from 'virtual:modo-config'
 import { type ReactNode, useEffect } from 'react'
 import { pageTitle } from '../lib/head'
-import { CANVAS_PAGE, HOME_PATH, tierPath, tokenPath } from '../lib/paths'
+import { CANVAS_PAGE, decodePath, GUIDES_PATH, HOME_PATH, tierPath, tokenPath } from '../lib/paths'
 import { TIERS } from '../lib/tiers'
 import { PageIdScope } from './anchor'
 import { ItemPage } from './items/item-page'
 import { appPath, BASE, NAVIGATE, usePath } from './location'
 import { CanvasPage } from './pages/canvas'
+import { GuidePage } from './pages/guide'
 import { HomePage } from './pages/home'
 import { NotFoundPage } from './pages/not-found'
 import { TierPage } from './pages/tier'
@@ -22,6 +23,8 @@ function child(path: string, parent: string): string | undefined {
 function page(path: string): ReactNode {
   if (path === HOME_PATH) return <HomePage />
   if (path === CANVAS_PAGE.path) return <CanvasPage />
+  if (path === GUIDES_PATH) return <GuidePage slug="" />
+  if (path.startsWith(`${GUIDES_PATH}/`)) return <GuidePage slug={path.slice(GUIDES_PATH.length + 1)} />
   if (path === tokenPath()) return <TokensPage />
   const group = child(path, tokenPath())
   if (group) return <TokenGroupView group={group} />
@@ -46,7 +49,7 @@ export function Router(): ReactNode {
       const a = (e.target as HTMLElement | null)?.closest('a')
       if (!a || (a.target && a.target !== '_self')) return
       const url = new URL(a.href)
-      if (url.origin !== window.location.origin || !url.pathname.startsWith(`${BASE}/`)) return
+      if (url.origin !== window.location.origin || !decodePath(url.pathname).startsWith(`${BASE}/`)) return
       e.preventDefault()
       const samePage = appPath(url.pathname) === appPath(window.location.pathname)
       window.history.pushState({}, '', url)

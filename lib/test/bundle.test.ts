@@ -82,4 +82,36 @@ describe('createBundler', () => {
     expect(result.scope?.exports).toEqual(['Button', 'Plus'])
     expect(stderr).toContain('[modo:bundle] warning: examples export "Button" collides with the item "Button"')
   })
+
+  test('guides under root build in the shared build: frontmatter stripped, top-level JSX a live example', async () => {
+    const root = project({
+      'modo.config.ts': `export default { name: 'T', root: 'src' }`,
+      'src/primitives/badge/index.tsx': `export default function Badge() { return <b data-badge /> }`,
+      'src/guides/01-start.mdx': [
+        '---',
+        'title: Start here',
+        'description: First steps.',
+        '---',
+        `import Badge from '../primitives/badge'`,
+        '',
+        '## Install',
+        '',
+        '<Badge />',
+      ].join('\n'),
+      'src/guides/02-theming/index.mdx': '# Theming',
+    })
+    const { result } = await build(root)
+    expect(result.errorCount).toBe(0)
+    expect(result.guides.map(({ slug, group, title, description }) => [slug, group, title, description])).toEqual([
+      ['start', undefined, 'Start here', 'First steps.'],
+      ['theming', '02-theming', 'Theming', undefined],
+    ])
+    const out = await Bun.file(result.guides[0]!.bundlePath).text()
+    // The item itself lands in a chunk it shares with its own entry.
+    expect([out.includes('ModoExample'), out.includes('First steps.'), out.includes('./chunks/')]).toEqual([
+      true,
+      false,
+      true,
+    ])
+  })
 })

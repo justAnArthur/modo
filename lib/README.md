@@ -131,6 +131,7 @@ modo check                        # validate modo.config.ts
 
 - [Configuration](https://github.com/justAnArthur/modo/blob/main/lib/docs/config.md): every `modo.config.ts` field.
 - [Items](https://github.com/justAnArthur/modo/blob/main/lib/docs/items.md): tiers, groups, TSDoc, props, examples, block tags.
+- [Guides](https://github.com/justAnArthur/modo/blob/main/lib/docs/guides.md): free-form `.mdx` pages from `guides/`: order, folders, frontmatter.
 - [Tokens](https://github.com/justAnArthur/modo/blob/main/lib/docs/tokens.md): `tokens/*.css` and the token contract the chrome reads.
 - [Shell inheritance](https://github.com/justAnArthur/modo/blob/main/lib/docs/shell.md): the chrome's slots and how your components fill them.
 - [Theming](https://github.com/justAnArthur/modo/blob/main/lib/docs/theming.md): restyling the chrome through `data-modo` hooks, dark mode.

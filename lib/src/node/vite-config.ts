@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 import { searchForWorkspaceRoot, type UserConfig } from 'vite'
 import { createBundler } from '../plugins/bundle'
 import { configPlugin } from '../plugins/config'
+import { guidesPlugin } from '../plugins/guides'
 import { itemsPlugin } from '../plugins/items'
 import { shellPlugin } from '../plugins/shell'
 import { tokensPlugin } from '../plugins/tokens'
@@ -34,6 +35,7 @@ export async function createViteConfig({ libDir, userRoot, configPath }: ViteCon
       configPlugin({ userRoot, configPath }),
       tokensPlugin({ userRoot, configPath }),
       itemsPlugin({ userRoot, itemsRoot, bundler }),
+      guidesPlugin({ bundler }),
       shellPlugin({ libDir, bundler }),
       react(),
     ],

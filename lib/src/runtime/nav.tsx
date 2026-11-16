@@ -1,9 +1,10 @@
 import { config } from 'virtual:modo-config'
+import { guides } from 'virtual:modo-guides'
 import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import type { ReactNode } from 'react'
-import { CANVAS_PAGE, HOME_PATH, itemPath, tierPath, tokenPath } from '../lib/paths'
+import { CANVAS_PAGE, guidePath, HOME_PATH, itemPath, tierPath, tokenPath } from '../lib/paths'
 import { cap } from '../lib/text'
 import { TIERS } from '../lib/tiers'
 import { groupTree } from './groups'
@@ -23,6 +24,14 @@ export function SidebarNav() {
         ]}
         isActive={isActive}
       />
+      {guides.length > 0 ? (
+        <NavSection
+          title="Guides"
+          items={guides.map(g => ({ id: guidePath(g.slug), name: g.title, group: g.group }))}
+          // Exact: a folder's landing guide stays inactive on the guides under it.
+          isActive={href => path === href}
+        />
+      ) : null}
       <NavSection
         title="Foundations"
         overview={tokenPath()}
