@@ -14,6 +14,26 @@
   margin: 0 0 var(--space-2, 8px);
 }
 
+h4[data-modo="example-card-title"] {
+  font-size: var(--modo-font-size-h4);
+  line-height: var(--modo-line-height-h4);
+  font-weight: var(--modo-font-weight-h4);
+  color: var(--modo-color-h4);
+}
+
+/* An examples.mdx group (a `#` over `##` examples): set off from what comes
+   before it by a rule. */
+[data-modo="example-group-title"] {
+  font-size: var(--modo-font-size-h3);
+  line-height: var(--modo-line-height-h3);
+  font-weight: var(--modo-font-weight-h3);
+  color: var(--modo-color-h3);
+  margin: var(--space-6, 32px) 0 var(--space-4, 16px);
+  padding-bottom: var(--space-2, 8px);
+  border-bottom: 1px solid var(--modo-border);
+  text-wrap: balance;
+}
+
 [data-modo="example-card"] [data-modo="prose"] {
   margin: 0 0 var(--space-3, 12px);
 }

@@ -89,7 +89,7 @@ State attributes are listed in parentheses.
 
 **Examples and code**
 
-- `example-card`, `example-card-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`.
+- `example-card`, `example-card-title`, `example-group-title`, `example-card-frame`, `example-card-stage`, `example-actions`, `example-code`.
 - `code-block`, `code-actions`.
 - `icon-label`: the Plain Icon's text.
 

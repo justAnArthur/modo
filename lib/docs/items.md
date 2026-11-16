@@ -163,15 +163,43 @@ A quieter action next to a primary one.
 The rules:
 
 - The whole `@example` line must be the include. Then the file is compiled into live examples instead of being inlined.
-- Each example is a `#` (or `##`) title, an optional caption, and a JSX block. Every top-level JSX block becomes a live example card with Show code and Copy.
+- Each example is a `#` title, an optional caption, and a JSX block. Every top-level JSX block becomes a live example card with Show code and Copy.
 - A fenced code block renders as code to read, through your shell `Code`. Don't wrap code in a component; fence it.
-- `###` is a sub-heading. Every heading gets an anchor and an entry in the page's table of contents. Example titles get `example-<slug>` ids.
+- `###` is a sub-heading. Every heading gets an anchor; example and group titles get `example-<slug>` ids.
 - The file goes through the same esbuild build as your items, with `remark-gfm`. Imports are real: the item is `./index`, another item is `../../<tier>/<id>` (one more `../` per group folder), packages by name. Contexts and providers are shared with the chrome.
 - Items and the [`examples`](./config.md#examples) exports also resolve as JSX tags without an import. An identifier used in an expression (`icon={Plus}`) needs a real import.
 - Expressions are plain JavaScript: no TypeScript syntax such as `as const`. MDX isn't type-checked.
 - If you use a scanning CSS tool, its content globs must include `.mdx`.
 
 A missing `.mdx` file is a `[modo:bundle] warning:`; the item still renders.
+
+### Groups
+
+A long list can be grouped. A `#` with `##` headings under it (before the next `#`) is a group, and each `##` an example in it. A group may hold its own example straight under its `#`, before its first `##`. Every other `#` stays a plain example, so one file can mix both:
+
+```mdx
+# Basic
+
+<Tabs />
+
+# Subtle
+
+The borderless strip.
+
+<Tabs variant="subtle" />
+
+## With icons
+
+<Tabs variant="subtle" icons />
+```
+
+| Heading | Plain | In a group |
+| --- | --- | --- |
+| `#` | example title, h3 | group title, h3 (`data-modo="example-group-title"`) |
+| `##` | example title, h3 (no `#` above it) | example title, h4 |
+| `###` | sub-heading, h4 | sub-heading, h5 (not in the table of contents) |
+
+"On this page" lists h2–h4, so it reads Examples › Subtle › With icons. The roles are decided at build time from the whole file, so a page never re-renders into its groups.
 
 ## Inline @example
 

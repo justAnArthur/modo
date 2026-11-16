@@ -21,10 +21,28 @@ export function useExample(code: string): ExampleRenderer | null | undefined {
   return ready ? compileExampleBody(code) : undefined
 }
 
-/** An example's title: an anchored h3 with an `example-<slug>` id. */
-export function ExampleTitle({ label, children }: { label: string; children?: ReactNode }) {
+/**
+ * An example's title, or an examples.mdx group's (`group`): an anchored
+ * heading with an `example-<slug>` id, h3 unless it sits in a group.
+ */
+export function ExampleTitle({
+  label,
+  level = 3,
+  group = false,
+  children,
+}: {
+  label: string
+  level?: 3 | 4
+  group?: boolean
+  children?: ReactNode
+}) {
   return (
-    <Heading level={3} label={label} id={`example-${slug(label)}`} modo="example-card-title">
+    <Heading
+      level={level}
+      label={label}
+      id={`example-${slug(label)}`}
+      modo={group ? 'example-group-title' : 'example-card-title'}
+    >
       {children}
     </Heading>
   )

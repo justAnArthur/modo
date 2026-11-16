@@ -1,5 +1,6 @@
 import { shell } from 'virtual:modo-shell'
 import { isValidElement, type ReactNode } from 'react'
+import { type HeadingRole, headingRoles } from '../lib/example-groups'
 import { Heading } from './anchor'
 import { CodeBlock } from './code-block'
 import { bindings, ExampleFrame, ExampleTitle } from './items/examples'
@@ -12,17 +13,35 @@ function textOf(node: ReactNode): string {
   return ''
 }
 
-// `# Title` names the example below it, like `@example # Title`.
-function MdxExampleTitle({ children }: { children?: ReactNode }) {
-  return <ExampleTitle label={textOf(children)}>{children}</ExampleTitle>
+interface MdxHeadingProps {
+  children?: ReactNode
+  'data-kind'?: HeadingRole['kind']
+  /** A string by the time it reaches React. */
+  'data-level'?: `${HeadingRole['level']}`
 }
 
-function SubHeading({ children }: { children?: ReactNode }) {
-  return (
-    <Heading level={4} label={textOf(children)}>
-      {children}
-    </Heading>
-  )
+// `# Title` names the example below it, like `@example # Title`; a `#` over
+// `##` examples is their group. The build marks every top-level heading with
+// its role (lib/src/plugins/mdx-examples.ts); one nested in JSX takes the
+// flat file's role for its depth.
+function mdxHeading(depth: 1 | 2 | 3) {
+  const [fallback] = headingRoles([depth])
+  return function MdxHeading({ children, 'data-kind': kind, 'data-level': level }: MdxHeadingProps) {
+    const label = textOf(children)
+    const role: HeadingRole = kind ? { kind, level: Number(level) as HeadingRole['level'] } : fallback!
+    if (role.kind === 'sub') {
+      return (
+        <Heading level={role.level} label={label}>
+          {children}
+        </Heading>
+      )
+    }
+    return (
+      <ExampleTitle label={label} level={role.level === 4 ? 4 : 3} group={role.kind === 'group'}>
+        {children}
+      </ExampleTitle>
+    )
+  }
 }
 
 // A fence arrives as <pre><code className="language-x">…</code></pre>.
@@ -45,9 +64,9 @@ export const mdxComponents: Record<string, unknown> = {
     <shell.Link href={contentHref(href)}>{children}</shell.Link>
   ),
   pre: Pre,
-  h1: MdxExampleTitle,
-  h2: MdxExampleTitle,
-  h3: SubHeading,
+  h1: mdxHeading(1),
+  h2: mdxHeading(2),
+  h3: mdxHeading(3),
   ModoExample: ({ code, children }: { code: string; children: ReactNode }) => (
     <div data-modo="example-card">
       <ExampleFrame code={code}>{children}</ExampleFrame>
