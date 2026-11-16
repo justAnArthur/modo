@@ -60,7 +60,7 @@ Upstream's craft, docs and snippets assume a shadcn + Tailwind + Next app. Read 
 | Popups enter with `scaleY`, tooltips slide + fade, indicators slide | The morph layer (`lib/use-morph.ts` + `lib/morph-layers.tsx`) and the liquid indicators (`lib/goo-indicator.tsx`). |
 | `<MotionConfig reducedMotion="user">` at the root | No root wrapper here. Read `useReduceMotion()` (`lib/reduced-motion.ts`): the OS setting or a MotionConfig asking for it. |
 | React 19 (`ref` as a prop, 1-arg `useRef(null)`) | React 18.3: `forwardRef`, `useRef<T \| null>(null)`, `MutableRefObject` casts where a forwarded ref is written. |
-| `next/link`, `"use client"`, RSC | Plain anchors. A module with hooks, context, handlers or browser APIs keeps `'use client'` as its first statement (after the `/*!` header); the build hoists it per output chunk. The docs site itself has no server components. |
+| `next/link`, `"use client"`, RSC | Plain anchors. A module with hooks, context, handlers or browser APIs keeps `'use client'` as its first statement (after the `/*!` header); the build hoists it per output chunk. Pure class tables live in a module without it (`lib/size-scale.ts`, `lib/shape-classes.ts`, `lib/field-classes.ts`, a component's `variants.ts`), so a Server Component can import them; `bun run check:dist` checks the built chunks. The docs site itself has no server components. |
 | `nestedRadius()`, `useSize().field` / `fieldTouchClass`, `.typeset`, Banner, ChatMessage, AskUserQuestions, ThinkingSteps, CommandMenu, CarouselDots | Not in this port (pinned at `b3587bd`). Don't import them. Port one as its own item if you need it (authoring.md). |
 | `CheckboxItem` / `CheckboxGroup`, `RadioItem` / `RadioGroup`, `InputCopy`, `InputField` | `Checkbox` / `Checkbox.Group`, `Radio` / `Radio.Group`, `Copy`, `Input` (+ `Label`, `InputGroup.Field`). |
 | `TabsSubtle` | `Tabs variant="subtle"` (same `Tabs.List` / `Tabs.Item` / `Tabs.Panel`). |
@@ -114,7 +114,7 @@ mapping in `uno.config.ts` (`theme` for a color or shadow, a `rule` for a new ut
 class group in `lib/utils.ts` when the utility's prefix could be mistaken for another group by `cn`.
 Biome already rejects arbitrary token values and literal colors (`biome/*.grit`).
 
-### Size ladder (`lib/size-context.tsx`, `primitives/sizes`)
+### Size ladder (`lib/size-context.tsx` + `lib/size-scale.ts`, `primitives/sizes`)
 
 ```tsx
 const size = useSize(sizeProp) // explicit prop > surrounding SizeProvider > 'default'
@@ -128,7 +128,7 @@ A compound that takes `size` wraps its subtree in `<SizeScope size={size}>` (`pr
 provider only when `size` is set) so its parts and the menus it opens follow (see `Tabs`). `size` is
 always `SizeVariant`; never invent a third height or a size alias.
 
-### Shape (`lib/shape-context.tsx`)
+### Shape (`lib/shape-context.tsx` + `lib/shape-classes.ts`)
 
 `const shape = useShape()` → `shape.item`, `shape.bg`, `shape.button`, `shape.input` (8px rounded / 20px
 pill), `shape.container` (12 / 24), `shape.focusRing` (10 / 22, for a ring drawn 2px outside),
