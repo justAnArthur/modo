@@ -1,6 +1,6 @@
 # Changelog
 
-The packages are released from this repo by conventional commits (see [CONTRIBUTING.md](CONTRIBUTING.md)): `@justanarthur/modo` (`lib/`), `@justanarthur/modo-ui` (`ui/`) and `@justanarthur/modo-ui-ai` (`kits/ai/`). Each release also gets GitHub release notes generated from its commits.
+The packages are released from this repo by conventional commits (see [CONTRIBUTING.md](CONTRIBUTING.md)): `@justanarthur/modo` (`lib/`), `@justanarthur/modo-ui` (`ui/`) `@justanarthur/modo-ui-ai` (`kits/ai/`) and `@justanarthur/modo-ui-notch` (`kits/notch/`). Each release also gets GitHub release notes generated from its commits.
 
 ## Unreleased
 
@@ -138,6 +138,10 @@ Fixes:
 | `blocks/transcript` | `blocks/conversation/transcript` |
 | `blocks/transcript-search` | `blocks/conversation/transcript-search` |
 | `blocks/usage-pane` | `blocks/panes/usage-pane` |
+
+### @justanarthur/modo-ui-notch
+
+- New kit (0.1.0): the UI of a macOS notch app on modo-ui. `Island` (idle, compact, split, expanded and flash, on modo-ui's springs and goo), `IslandTabs`, `IslandFlash`, `Equalizer`, `BatteryGlyph`, `MediaScrubber` and `Countdown`, the island geometry and `useIsland()`. Docs at https://justanarthur.github.io/modo/notch/.
 
 ## 1.0.0 — 2026-11-16
 
