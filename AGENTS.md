@@ -126,6 +126,7 @@ Rules:
   - Inline example code can't contain `*/` (no JSX `{/* … */}`). Move it to `examples.mdx` instead.
 - **Inline `@example` code compiles in-browser** (babel standalone) as `return (<>…</>)` inside `new Function`; `examples.mdx` goes through the build instead (above).
   - One JSX expression or several siblings; no hooks.
+  - The code is a fenced block, else bare JSX: from the first line starting with `<` (`@example <X />` counts) up to the next tag. A `# Title` and caption may sit above either. An `@example` with neither warns.
   - Leading imports and a trailing `;` are stripped.
   - An identifier binds only if it is an item name or an `examples` scope export (items win on collision). Nothing touches globals.
   - Each stage has an error boundary.

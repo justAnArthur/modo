@@ -11,6 +11,9 @@ Both packages are released from this repo by conventional commits (see [CONTRIBU
 ### @justanarthur/modo-ui
 
 - The docs Icon draws `maximize` (lucide `Maximize2`).
+Fixes:
+
+- An inline `@example` written as bare JSX (`@example <X />`, or JSX lines after `@example`) is an example instead of being dropped; one with no code at all is a warning.
 
 ## 1.0.0 — 2026-11-16
 

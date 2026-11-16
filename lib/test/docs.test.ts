@@ -315,6 +315,10 @@ describe('parity with the plain parser', () => {
       'block tags',
       `/**\n * Lead.\n * @deprecated Use Y.\n * @example {@include ./examples.mdx}\n * @since 1.2\n */\nexport default function X() {}`,
     ],
+    [
+      'bare JSX examples',
+      `/**\n * Lead.\n * @example <X name="Ada" />\n * @example\n * # Stacked\n * <X />\n * <X />\n */\nexport default function X() {}`,
+    ],
     ['an unknown @word', `/**\n * Built over the\n * @fluid sidebar.\n */\nexport default function X() {}`],
     [
       '@default and @values',
