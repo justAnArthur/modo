@@ -69,6 +69,18 @@ export const FIELD_ACTION: Record<SizeVariant, string> = {
   compact: 'size-5 -mx-1 [&_svg]:size-3.5',
 }
 
+/** A field action's box alone, without `FIELD_ACTION`'s margins, for actions set side by side (a stepper pair). */
+export const FIELD_ACTION_BOX: Record<SizeVariant, string> = {
+  default: 'size-7 [&_svg]:size-4',
+  compact: 'size-5 [&_svg]:size-3.5',
+}
+
+/** The margin that pulls the last of several side-by-side actions to 4px inside the ring. */
+export const FIELD_ACTION_END: Record<SizeVariant, string> = {
+  default: '-mr-1.5',
+  compact: '-mr-1',
+}
+
 /** A field action's corners: concentric with the box's 8px (4px inside it), or round in pill mode. */
 export const FIELD_ACTION_RADIUS: Record<ShapeVariant, string> = {
   rounded: 'rounded-sm',
@@ -77,7 +89,7 @@ export const FIELD_ACTION_RADIUS: Record<ShapeVariant, string> = {
 
 /** What every field action shares, beside its `FIELD_ACTION` size and radius. */
 export const fieldActionClasses =
-  'relative inline-flex shrink-0 cursor-pointer items-center justify-center text-muted-foreground outline-none transition-[color,background-color,opacity] duration-fast hover:bg-hover hover:text-foreground active:bg-active focus-visible:ring-1 focus-visible:ring-focus-ring disabled:pointer-events-none disabled:opacity-50'
+  'relative inline-flex shrink-0 cursor-pointer items-center justify-center text-muted-foreground outline-none transition-[color,background-color,opacity] duration-fast hover:bg-hover hover:text-foreground active:bg-active focus-visible:ring-1 focus-visible:ring-focus-ring disabled:pointer-events-none disabled:opacity-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50'
 
 /**
  * Framed at rest (`bordered`), or invisible until hovered or focused
