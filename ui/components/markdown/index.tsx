@@ -272,17 +272,18 @@ interface MarkdownProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Markdown({ children, streaming = false, className }: MarkdownProps) {
-  const tokens = useMemo(() => Lexer.lex(streaming ? settle(children) : children), [children, streaming])
+const Markdown = Object.assign(
+  function Markdown({ children, streaming = false, className }: MarkdownProps) {
+    const tokens = useMemo(() => Lexer.lex(streaming ? settle(children) : children), [children, streaming])
 
-  return (
-    <MarkdownProse className={className}>
-      <Blocks tokens={tokens} />
-    </MarkdownProse>
-  )
-}
-
-Markdown.Prose = MarkdownProse
+    return (
+      <MarkdownProse className={className}>
+        <Blocks tokens={tokens} />
+      </MarkdownProse>
+    )
+  },
+  { Prose: MarkdownProse },
+)
 
 export type { MarkdownProps, MarkdownProseProps }
 export { Markdown, MarkdownProse }

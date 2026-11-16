@@ -95,31 +95,31 @@ interface ShellCardProps extends HTMLAttributes<HTMLDivElement> {
  *
  * @example {@include ./examples.mdx}
  */
-function ShellCard({ children, footer, variant = 'sunken', className, ...props }: ShellCardProps) {
-  const shape = useShape()
-  const level = useLift(variant === 'elevated' ? 2 : 0)
-  return (
-    <SurfaceProvider value={level}>
-      <div
-        className={cn(
-          'flex min-w-0 flex-col p-[var(--space-2)]',
-          variant === 'elevated' && SURFACE_BG[level],
-          variant === 'elevated' && SURFACE_SHADOW[3],
-          variant === 'sunken' && 'bg-sunken ring-1 ring-inset ring-border',
-          SHELL_RADIUS[shape.variant],
-          className,
-        )}
-        {...props}
-      >
-        {children}
-        {footer}
-      </div>
-    </SurfaceProvider>
-  )
-}
-
-ShellCard.Inner = ShellCardInner
-ShellCard.Footer = ShellCardFooter
+const ShellCard = Object.assign(
+  function ShellCard({ children, footer, variant = 'sunken', className, ...props }: ShellCardProps) {
+    const shape = useShape()
+    const level = useLift(variant === 'elevated' ? 2 : 0)
+    return (
+      <SurfaceProvider value={level}>
+        <div
+          className={cn(
+            'flex min-w-0 flex-col p-[var(--space-2)]',
+            variant === 'elevated' && SURFACE_BG[level],
+            variant === 'elevated' && SURFACE_SHADOW[3],
+            variant === 'sunken' && 'bg-sunken ring-1 ring-inset ring-border',
+            SHELL_RADIUS[shape.variant],
+            className,
+          )}
+          {...props}
+        >
+          {children}
+          {footer}
+        </div>
+      </SurfaceProvider>
+    )
+  },
+  { Inner: ShellCardInner, Footer: ShellCardFooter },
+)
 
 export type { ShellCardFooterProps, ShellCardInnerProps, ShellCardProps }
 export { ShellCard }

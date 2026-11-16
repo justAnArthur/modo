@@ -331,62 +331,63 @@ interface LightboxProps {
  *
  * @example {@include ./examples.mdx}
  */
-function Lightbox({ items, value, defaultValue = null, onValueChange, zoom = true, children }: LightboxProps) {
-  const [current, setCurrent] = useControllableState<number | null>(value, defaultValue, onValueChange)
-  const { origin, capture } = useMorphOrigin()
-  const triggers = useRef(new Map<number, HTMLElement>())
-  // A thumbnail this hid when stepping to its item, shown again once the close lands.
-  const swapped = useRef<HTMLElement | null>(null)
+const Lightbox = Object.assign(
+  function Lightbox({ items, value, defaultValue = null, onValueChange, zoom = true, children }: LightboxProps) {
+    const [current, setCurrent] = useControllableState<number | null>(value, defaultValue, onValueChange)
+    const { origin, capture } = useMorphOrigin()
+    const triggers = useRef(new Map<number, HTMLElement>())
+    // A thumbnail this hid when stepping to its item, shown again once the close lands.
+    const swapped = useRef<HTMLElement | null>(null)
 
-  // Stepping to another item makes its thumbnail the one to close into.
-  useLayoutEffect(() => {
-    if (current === null) return
-    const el = triggers.current.get(current)
-    const previous = origin.current.trigger
-    if (!el || el === previous) return
-    if (previous) previous.style.opacity = ''
-    el.style.opacity = '0'
-    swapped.current = el
-    origin.current.trigger = el
-  }, [current, origin])
+    // Stepping to another item makes its thumbnail the one to close into.
+    useLayoutEffect(() => {
+      if (current === null) return
+      const el = triggers.current.get(current)
+      const previous = origin.current.trigger
+      if (!el || el === previous) return
+      if (previous) previous.style.opacity = ''
+      el.style.opacity = '0'
+      swapped.current = el
+      origin.current.trigger = el
+    }, [current, origin])
 
-  const ctx = useMemo<LightboxState>(
-    () => ({
-      items,
-      current,
-      open: (at, trigger, event) => {
-        capture({ trigger, event })
-        setCurrent(at)
-      },
-      register: (at, el) => {
-        if (el) triggers.current.set(at, el)
-        else triggers.current.delete(at)
-      },
-    }),
-    [items, current, capture, setCurrent],
-  )
+    const ctx = useMemo<LightboxState>(
+      () => ({
+        items,
+        current,
+        open: (at, trigger, event) => {
+          capture({ trigger, event })
+          setCurrent(at)
+        },
+        register: (at, el) => {
+          if (el) triggers.current.set(at, el)
+          else triggers.current.delete(at)
+        },
+      }),
+      [items, current, capture, setCurrent],
+    )
 
-  return (
-    <LightboxContext.Provider value={ctx}>
-      <DialogPrimitive.Root open={current !== null} onOpenChange={next => next || setCurrent(null)}>
-        {children}
-        <Viewer
-          items={items}
-          current={current}
-          origin={origin}
-          zoom={zoom}
-          onValueChange={setCurrent}
-          onExited={() => {
-            if (swapped.current) swapped.current.style.opacity = ''
-            swapped.current = null
-          }}
-        />
-      </DialogPrimitive.Root>
-    </LightboxContext.Provider>
-  )
-}
-
-Lightbox.Trigger = LightboxTrigger
+    return (
+      <LightboxContext.Provider value={ctx}>
+        <DialogPrimitive.Root open={current !== null} onOpenChange={next => next || setCurrent(null)}>
+          {children}
+          <Viewer
+            items={items}
+            current={current}
+            origin={origin}
+            zoom={zoom}
+            onValueChange={setCurrent}
+            onExited={() => {
+              if (swapped.current) swapped.current.style.opacity = ''
+              swapped.current = null
+            }}
+          />
+        </DialogPrimitive.Root>
+      </LightboxContext.Provider>
+    )
+  },
+  { Trigger: LightboxTrigger },
+)
 
 export type { LightboxImage, LightboxProps, LightboxTriggerProps }
 export { Lightbox, LightboxTrigger }
