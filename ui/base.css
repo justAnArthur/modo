@@ -21,6 +21,9 @@
  *   :focus-visible fallback), html.transitioning, native scrollbars,
  *   .scrollbar-hide, shimmer + spinner keyframes, .scroll-fade(-x).
  *
+ * Local addition: the `.spinner-glyph` / `.spinner-breathe` classes over the
+ * spinner keyframes, on `--duration-loop`, with a reduced-motion breathe.
+ *
  * Local value changes: the inline code chip and the shimmer stops read color
  * tokens instead of upstream's hex (light code chip `--muted`, dark
  * `--surface-4`; shimmer dim → bright runs `--muted-foreground` →
@@ -255,7 +258,34 @@ html.transitioning *::after {
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
-/* Spinner keyframes (Button's loading state). */
+/* The spinner glyph (lib/spinner-glyph.tsx: Button's loading state,
+   Progress.Spinner): the figure-eight stroke travels on --duration-loop. Under
+   reduced motion it breathes in place instead (the glyph also swaps the class
+   through useReduceMotion, for a MotionConfig that asks for it). */
+
+.spinner-glyph {
+  stroke-dasharray: 15 85;
+  animation:
+    spinner-move var(--duration-loop) linear infinite,
+    spinner-dash calc(var(--duration-loop) * 2) ease-in-out infinite;
+}
+
+.spinner-breathe {
+  animation: spinner-breathe var(--duration-loop) ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner-glyph {
+    stroke-dasharray: none;
+    animation: spinner-breathe var(--duration-loop) ease-in-out infinite;
+  }
+}
+
+@keyframes spinner-breathe {
+  50% {
+    opacity: 0.4;
+  }
+}
 
 @keyframes spinner-move {
   to {

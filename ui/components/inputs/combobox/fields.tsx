@@ -49,8 +49,8 @@ type ComboboxChipsProps = ComboboxFieldProps
 
 /** The field box both fields build on, with the root's disabled state. */
 function useComboboxField(variant: FieldVariant, error: string | undefined, size: SizeVariant | undefined) {
-  const { disabled } = useComboboxContext()
-  const field = useFieldBox({ variant, invalid: error ? true : undefined, disabled: disabled || undefined, size })
+  const { disabled, readOnly } = useComboboxContext()
+  const field = useFieldBox({ variant, invalid: error ? true : undefined, disabled, readOnly, size })
   return { ...field, compact: field.size.variant === 'compact' }
 }
 

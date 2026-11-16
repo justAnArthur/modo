@@ -21,7 +21,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { useFieldBox } from '../../../lib/field-box'
+import { useFieldBox, useFieldState } from '../../../lib/field-box'
 import { type FieldVariant, fieldIconClasses } from '../../../lib/field-classes'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { FocusRing } from '../../../lib/focus-ring'
@@ -66,6 +66,7 @@ const selectionAckMs = 300
 interface SelectContextValue {
   value: string
   disabled: boolean
+  readOnly: boolean
   /** Each `Select.Item`'s place in document order, by value: a row's index when it sets none. */
   indexByValue: Map<string, number>
   /** Whether the picked row's label is plain text (trimmed and truncated in the trigger) or a node (laid out as is). */
@@ -180,12 +181,17 @@ function Select({
   open,
   defaultOpen,
   onOpenChange,
-  disabled = false,
-  readOnly = false,
+  disabled: disabledProp,
+  readOnly: readOnlyProp,
   name,
-  required,
+  required: requiredProp,
   size,
 }: SelectProps) {
+  const { disabled, readOnly, required } = useFieldState({
+    disabled: disabledProp,
+    readOnly: readOnlyProp,
+    required: requiredProp,
+  })
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
   const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
   const items = useMemo(() => collectSelectItems(children), [children])
@@ -206,7 +212,10 @@ function Select({
   const indexByValue = useMemo(() => new Map(items.map((item, index) => [item.value, index])), [items])
   const picked = items.find(item => item.value === value)
   const textLabel = picked === undefined || isTextLabel(picked.label)
-  const ctx = useMemo(() => ({ value, disabled, indexByValue, textLabel }), [value, disabled, indexByValue, textLabel])
+  const ctx = useMemo(
+    () => ({ value, disabled, readOnly, indexByValue, textLabel }),
+    [value, disabled, readOnly, indexByValue, textLabel],
+  )
 
   return (
     <SizeScope size={size}>
@@ -278,8 +287,8 @@ interface SelectTriggerProps extends Omit<HTMLAttributes<HTMLButtonElement>, 'ch
 
 const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
   ({ className, variant = 'bordered', icon: Icon, placeholder = 'Select…', error, size, children, ...props }, ref) => {
-    const { disabled } = useSelectContext()
-    const field = useFieldBox({ variant, invalid: error ? true : undefined, disabled: disabled || undefined, size })
+    const { disabled, readOnly } = useSelectContext()
+    const field = useFieldBox({ variant, invalid: error ? true : undefined, disabled, readOnly, size })
     const sizeClasses = field.size
     const compact = sizeClasses.variant === 'compact'
 

@@ -23,8 +23,8 @@
  * to land (bounce 0.15), a 200ms spring back — so the liquid neck reads.
  *
  * Local addition: `loop`, the period of ambient animations that run while
- * something is pending (the skeleton's pulse). They never land, so they are
- * not a spring tier.
+ * something is pending (the skeleton's pulse, the spinner, the indeterminate
+ * progress bar). They never land, so they are not a spring tier.
  */
 
 :root {

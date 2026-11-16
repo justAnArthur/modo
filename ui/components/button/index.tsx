@@ -24,6 +24,7 @@ import { useReduceMotion } from '../../lib/reduced-motion'
 import { useShape } from '../../lib/shape-context'
 import { useSizeVariant } from '../../lib/size-context'
 import { resolveSlotTemplate, slotElement } from '../../lib/slot'
+import { SpinnerGlyph } from '../../lib/spinner-glyph'
 import { spring, springEnter } from '../../lib/springs'
 import { cn } from '../../lib/utils'
 import { buttonVariants } from './variants'
@@ -269,19 +270,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
               exit={{ opacity: 0, scale: 0.6, transition: spring.fast.exit }}
               transition={enter}
             >
-              <svg aria-hidden className={spinnerSizeClass} viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M 12 12 C 14 8.5 19 8.5 19 12 C 19 15.5 14 15.5 12 12 C 10 8.5 5 8.5 5 12 C 5 15.5 10 15.5 12 12 Z"
-                  stroke="currentColor"
-                  strokeWidth="1.125"
-                  strokeLinecap="round"
-                  pathLength="100"
-                  style={{
-                    strokeDasharray: '15 85',
-                    animation: 'spinner-move 2s linear infinite, spinner-dash 4s ease-in-out infinite',
-                  }}
-                />
-              </svg>
+              <SpinnerGlyph className={spinnerSizeClass} />
             </motion.span>
           )}
         </AnimatePresence>

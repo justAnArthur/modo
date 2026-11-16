@@ -1,0 +1,27 @@
+/*
+ * Local addition (not part of Fluid Functionalism): the indeterminate
+ * Progress bar's sweep, a segment travelling across the track (transform
+ * only) on `--duration-loop`. Under reduced motion it fills the track and
+ * breathes instead (Progress swaps the class through useReduceMotion; the
+ * media query covers the first paint).
+ */
+
+@keyframes progress-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+.progress-sweep {
+  animation: progress-sweep var(--duration-loop) ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-sweep {
+    width: 100%;
+    animation: spinner-breathe var(--duration-loop) ease-in-out infinite;
+  }
+}
