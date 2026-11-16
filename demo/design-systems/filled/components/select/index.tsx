@@ -19,12 +19,18 @@ export default function Select({
   defaultValue?: string
   /** Called with the newly selected value. */
   onValueChange?: (value: string) => void
-  /** The options to pick from. */
-  options: { value: string; label: string }[]
+  /** The options to pick from; a `group` lists an option under an `<optgroup>` of that label, after the ungrouped ones. */
+  options: { value: string; label: string; group?: string }[]
   /** Whether the select is disabled. @default false */
   disabled?: boolean
   'aria-label'?: string
 }) {
+  const option = (o: { value: string; label: string }) => (
+    <option key={o.value} value={o.value}>
+      {o.label}
+    </option>
+  )
+  const groups = [...new Set(options.flatMap(o => o.group ?? []))]
   return (
     <select
       className="my-select"
@@ -34,10 +40,11 @@ export default function Select({
       disabled={disabled}
       aria-label={ariaLabel}
     >
-      {options.map(option => (
-        <option key={option.value} value={option.value}>
-          {option.label}
-        </option>
+      {options.filter(o => o.group === undefined).map(option)}
+      {groups.map(group => (
+        <optgroup key={group} label={group}>
+          {options.filter(o => o.group === group).map(option)}
+        </optgroup>
       ))}
     </select>
   )

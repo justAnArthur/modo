@@ -8,7 +8,8 @@
     "lib",
     "demo",
     "demo/design-systems/*",
-    "ui"
+    "ui",
+    "kits/*"
   ],
   "scripts": {
     "build": "bun --filter '@justanarthur/modo' build && bun --filter '@justanarthur/modo-ui' build",

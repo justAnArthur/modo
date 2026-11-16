@@ -1,3 +1,4 @@
+import ListSubheader from '@mui/material/ListSubheader'
 import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import { MuiProvider } from '../../theme'
@@ -26,8 +27,8 @@ export default function Select({
   defaultValue?: string
   /** Called with the newly selected option value. */
   onValueChange?: (value: string) => void
-  /** Options to pick from. */
-  options: { value: string; label: string }[]
+  /** Options to pick from; a `group` lists an option under a subheader of that label, after the ungrouped ones. */
+  options: { value: string; label: string; group?: string }[]
   /** Floating label shown above the field. */
   label?: string
   /** Size of the field. */
@@ -35,6 +36,12 @@ export default function Select({
   /** Whether the select is disabled. @default false */
   disabled?: boolean
 }) {
+  const item = (option: { value: string; label: string }) => (
+    <MenuItem key={option.value} value={option.value}>
+      {option.label}
+    </MenuItem>
+  )
+  const groups = [...new Set(options.flatMap(option => option.group ?? []))]
   return (
     <MuiProvider>
       <TextField
@@ -47,11 +54,12 @@ export default function Select({
         disabled={disabled}
         sx={{ minWidth: 160 }}
       >
-        {options.map(option => (
-          <MenuItem key={option.value} value={option.value}>
-            {option.label}
-          </MenuItem>
-        ))}
+        {options.filter(option => option.group === undefined).map(item)}
+        {/* MUI's Select reads its direct children: subheaders and rows in one flat list, no wrappers. */}
+        {groups.flatMap(group => [
+          <ListSubheader key={`group:${group}`}>{group}</ListSubheader>,
+          ...options.filter(option => option.group === group).map(item),
+        ])}
       </TextField>
     </MuiProvider>
   )

@@ -26,6 +26,7 @@
         --font-weight-semibold: 600;
         --radius-md: 10px;
         --radius-lg: 16px;
+        --radius-full: 999px;
         --measure: 64rem;
       }
 
@@ -182,10 +183,21 @@
         gap: 16px;
       }
 
+      .section-head {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
       h2 {
         margin: 0;
+        font-size: var(--font-size-lead);
+        font-weight: var(--font-weight-semibold);
+      }
+
+      .section-head p {
+        margin: 0;
         font-size: var(--font-size-sm);
-        font-weight: var(--font-weight-medium);
         color: var(--muted-foreground);
       }
 
@@ -208,6 +220,22 @@
 
       .card:hover {
         border-color: var(--ring);
+      }
+
+      /* A kit is a package, not a design system: an outlined card with a tag, beside the filled ones. */
+      .card[data-group="kits"] {
+        background: transparent;
+        border-style: dashed;
+      }
+
+      .tag {
+        align-self: flex-start;
+        padding: 2px 8px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-full);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        color: var(--muted-foreground);
       }
 
       .card-title {
@@ -304,9 +332,20 @@
           </svg>
         </div>
 
-        <section aria-labelledby="demos">
-          <h2 id="demos">Design systems documented by modo</h2>
-          <div class="cards">{{cards}}</div>
+        <section aria-labelledby="design-systems">
+          <div class="section-head">
+            <h2 id="design-systems">Design systems</h2>
+            <p>Each one documented by modo, its chrome built from its own components.</p>
+          </div>
+          <div class="cards">{{systems}}</div>
+        </section>
+
+        <section aria-labelledby="kits">
+          <div class="section-head">
+            <h2 id="kits">Kits</h2>
+            <p>Packages built on modo ui, each with its own docs site.</p>
+          </div>
+          <div class="cards">{{kits}}</div>
         </section>
       </main>
 

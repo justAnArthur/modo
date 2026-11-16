@@ -12,7 +12,11 @@ modo turns a design system (DS) into its own docs site. The lib brings no conten
   - `src/runtime` — the renderer, a plain Vite SPA: its structural CSS in `shell/css/*.css` (imported in order from `main.tsx`, `contract.css` first), the virtual modules' types in `virtual/*.d.ts`.
   - `templates/` — the scaffold and the `modo add` stubs.
 - `ui/` — the npm package `@justanarthur/modo-ui`: Fluid Functionalism (Base UI) on UnoCSS (springs, fluid hover, size ladder, surface elevation), a DS that is also published. `bun run build` writes the components, types and stylesheets to `dist/` (`index.ts` barrel, `bunup.config.ts`, `scripts/build-css.ts`); the item and `lib/` sources ship too, under a `source` export condition, so a modo host that re-exports an item gets its docs and examples; its docs build with `--out`, so they never touch `dist/`. `preset.ts` is the single source of the theme and token utilities: `uno.config.ts`, the shipped UnoCSS preset and the generated `tailwind.css` all read it. `base.css` holds the theme and base styles shipped to consumers; `global.css` imports it and adds the docs chrome. Its own guide is `ui/AGENTS.md`, its design language `ui/DESIGN.md`, its rules shown as bad / good pairs on the `primitives/craft` page; `guides/` holds the docs' Getting started and Theming pages (not shipped); building in it follows the `modo-ui` skill (`.claude/skills/modo-ui`).
-- `demo/` — the harness. `scripts/run-design-systems.ts` runs the lib's CLI once per DS (one dev server per port, or one static build each) and splices in the demo-switcher. `components/demo-switcher/` renders `shell.Select` to navigate between peers.
+- `kits/<name>/` — kits: packages built on modo-ui (depending on `@justanarthur/modo-ui`), each a workspace package with its own docs site (a `modo.config.ts`). A kit wears ui's docs look by reference:
+  - `css: './global.css'`, which imports `@justanarthur/modo-ui/base.css` (ui's tokens, base styles and item CSS, from the package build) and then `../../ui/global.css` (the chrome's look);
+  - `logo`, `shell` and `panel` refs into ui: `Button: '../../ui/components/button'`, `Code: '../../ui/primitives/code'`, `Select` / `Icon` / `Sidebar` (`DocsNav`) / `Logo` / the `ThemeSwitcher` panel item from `../../ui/modo.components.tsx#…`;
+  - `vite: './vite.ts'`: `withUno(<the kit's uno.config.ts>)` from `../../ui/vite.ts`; that uno config spreads `../../ui/uno.config` and adds the kit's sources to `content.filesystem` and `content.pipeline.include`, so the kit's own utilities are generated.
+- `demo/` — the harness. `scripts/run-design-systems.ts` runs the lib's CLI once per site (one dev server per port, or one static build each) and splices in the demo-switcher. Sites come in two groups by where they live: design systems (`demo/design-systems/*`, `ui/`) and kits (`kits/*`), design systems first. `components/demo-switcher/` renders `shell.Select` to navigate between peers, the two groups as option `group`s; the landing page (`landing/index.html`) lists them as two sections, leaving out Kits while there are none.
 - `demo/design-systems/<name>/` — one workspace package per DS, each with its own deps (the runner also picks up `ui/`):
   - `filled/` — the minimal reference, with a `guides/` folder.
   - `shadcn/` — shadcn/ui pulled with the real CLI (Tailwind v4).
@@ -133,7 +137,7 @@ Rules:
 
 ## lib conventions
 
-- **Workspaces:** bun. The root `package.json` `workspaces` lists `lib`, `demo`, `demo/design-systems/*` and `ui`.
+- **Workspaces:** bun. The root `package.json` `workspaces` lists `lib`, `demo`, `demo/design-systems/*`, `ui` and `kits/*`.
 - **Lib package:**
   - ESM, `react-jsx`, `jsxImportSource: 'react'`.
   - bunup builds `dist/` from `src/exports/*`; the runtime and plugins ship as source, unbundled.
@@ -153,7 +157,7 @@ Rules:
     - Link gets `aria-label` on icon-only anchors and `title` from Markdown links; forward them.
     - Code gets `language` and a string child.
     - Icon gets `name` (`code` | `copy` | `check` | `link` | `maximize` | `menu` | `close` | `sun` | `moon`, or a `socials` key) and `label`. The host draws its own glyph; `PlainIcon` shows the label as text.
-    - Select (handed only to panel items, as `shell.Select`) gets `value`, `onValueChange(value)` (the value, not an event) and `options: { value, label }[]`.
+    - Select (handed only to panel items, as `shell.Select`) gets `value`, `onValueChange(value)` (the value, not an event) and `options: { value, label, group? }[]`; options with a `group` list under that heading, after the ungrouped ones.
   - A host Link needn't forward data attributes: the chrome puts its hooks on wrappers.
   - One Sidebar drives both sides: each `panel.items` entry is a `Sidebar.Section`.
 - **`modo.config.ts` hooks:**
@@ -186,8 +190,8 @@ Rules:
 ## running
 
 - All DSs: `bun dev` at the root or in `demo/` (ports 5173+i). The runner builds the lib's CLI first when it's missing or older than `lib/src`.
-- One DS: `bun dev <name>` in `demo/`.
-- The site: `bun run build` in `demo/` builds every DS into `demo/dist/<name>/` (`SITE_BASE` sets the public path). `.github/workflows/pages.yml` deploys it to GitHub Pages on push to `main`.
+- One DS or kit: `bun dev <name>` in `demo/` (a kit's name is its folder; it can't share one with a DS).
+- The site: `bun run build` in `demo/` builds every DS and kit into `demo/dist/<name>/` (`SITE_BASE` sets the public path). `.github/workflows/pages.yml` deploys it to GitHub Pages on push to `main`.
 - Checks (CI runs them on every push and pull request): `bun run lint`, `bun run build && bun run check` (typechecks every workspace), `bun run test` (the lib's parser tests and ui's `test/`), `.github/scripts/check-ui-pack.sh` (the ui tarball holds its entry, styles and licence, and `bun run check:dist` passes) and `.github/scripts/smoke-init.sh` (packs the lib, `modo init`s a project with it and builds it). Pull requests also build the demo site.
 
 ## commits
