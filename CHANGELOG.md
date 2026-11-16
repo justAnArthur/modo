@@ -32,6 +32,7 @@ Fixes:
 - `VirtualList` takes `follow` / `onFollowChange` (stay at the end of a growing list), `contentWidth` and a `scrollToEnd()` handle; `Resizable` panels glide to sizes set by key, reset or controlled `sizes`.
 - Tokens `--sunken` (`bg-sunken`) and `--radius-shell` / `--radius-pill-shell` (`rounded-shell|pill-shell`); icons `file-diff` and `square`.
 - A standalone `Accordion` nested in an `Accordion.Group`'s panel keeps its own open state.
+- **Grouped Select options.** `SelectOption` takes an optional `group`: a Select lists the ungrouped options first, then each group under its heading, in first-seen order. Plain Select renders `<optgroup>`s; a host Select that ignores `group` keeps showing a flat list. The demo switcher uses it to list design systems and kits apart.
 
 ## 1.0.0 — 2026-11-16
 

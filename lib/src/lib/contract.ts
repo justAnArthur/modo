@@ -57,6 +57,8 @@ export interface IconSlotProps {
 export interface SelectOption {
   value: string
   label: string
+  /** The heading this option sits under: ungrouped options first, then each group in first-seen order. A Select that ignores it shows a flat list. */
+  group?: string
 }
 
 /** Handed to panel items as `shell.Select`; the chrome renders none. */

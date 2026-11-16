@@ -8,6 +8,8 @@ const DS_DIR = join(ROOT, 'design-systems')
 const LIB_DIR = join(ROOT, '..', 'lib')
 // Published design systems live at the repo root, beside the lib.
 const ROOT_DS = [join(ROOT, '..', 'ui')]
+// Kits: packages built on a design system (modo-ui), each with its own docs site.
+const KITS_DIR = join(ROOT, '..', 'kits')
 const SWITCHER = join(ROOT, 'components', 'demo-switcher')
 const PEERS_FILE = join(ROOT, 'components', 'demo-switcher', '.peers.json')
 const TEMP_CONFIG = '.modo.config.ts'
@@ -26,16 +28,31 @@ const SITE_BASE = process.env.SITE_BASE ?? '/'
 
 const build = process.argv.includes('--build')
 const wanted = process.argv.slice(2).filter(a => a !== '--build')
+type Group = 'design-systems' | 'kits'
+const GROUP_LABELS: Record<Group, string> = { 'design-systems': 'Design systems', kits: 'Kits' }
+const subdirs = (parent: string) => (existsSync(parent) ? readdirSync(parent).map(name => join(parent, name)) : [])
+const sites: [string, Group][] = [
+  ...[...subdirs(DS_DIR), ...ROOT_DS].map(dir => [dir, 'design-systems'] as [string, Group]),
+  ...subdirs(KITS_DIR).map(dir => [dir, 'kits'] as [string, Group]),
+]
 // Dir husks can outlive their tracked files (a merge-deleted DS leaves .modo-tmp/ behind).
-const dirs = new Map(
-  [...readdirSync(DS_DIR).map(name => join(DS_DIR, name)), ...ROOT_DS]
-    .filter(dir => existsSync(join(dir, 'modo.config.ts')))
-    .map(dir => [basename(dir), dir]),
+const dirs = new Map<string, { dir: string; group: Group }>()
+for (const [dir, group] of sites) {
+  if (!existsSync(join(dir, 'modo.config.ts'))) continue
+  const name = basename(dir)
+  // Names are the url segment and the CLI argument, so a kit can't share one with a design system.
+  if (dirs.has(name)) throw new Error(`two sites named "${name}": ${dirs.get(name)!.dir} and ${dir}`)
+  dirs.set(name, { dir, group })
+}
+const dirOf = (name: string) => dirs.get(name)!.dir
+const groupOf = (name: string) => dirs.get(name)!.group
+// Design systems first, then kits: the order of the ports, the switcher and the landing page.
+const all = [...dirs.keys()].sort(
+  (a, b) => Number(groupOf(a) === 'kits') - Number(groupOf(b) === 'kits') || a.localeCompare(b),
 )
-const all = [...dirs.keys()].sort()
 const targets = wanted.length > 0 ? all.filter(n => wanted.includes(n)) : all
 if (targets.length === 0) {
-  process.stderr.write(`no design systems found${wanted.length > 0 ? ` matching: ${wanted.join(', ')}` : ''}\n`)
+  process.stderr.write(`no design systems or kits found${wanted.length > 0 ? ` matching: ${wanted.join(', ')}` : ''}\n`)
   process.stderr.write('usage: bun scripts/run-design-systems.ts [--build] [name ...]\n')
   process.exit(1)
 }
@@ -59,7 +76,6 @@ function withSwitcher(dir: string) {
     '',
   ].join('\n')
 }
-const dirOf = (name: string) => dirs.get(name)!
 
 function removeTemp(names: string[]) {
   for (const name of names) rmSync(join(dirOf(name), TEMP_CONFIG), { force: true })
@@ -80,7 +96,7 @@ const peerUrl = (name: string, i: number) => (build ? `${SITE_BASE}${name}/` : `
 writeFileSync(
   PEERS_FILE,
   JSON.stringify(
-    targets.map((name, i) => ({ name, url: peerUrl(name, i) })),
+    targets.map((name, i) => ({ name, url: peerUrl(name, i), group: GROUP_LABELS[groupOf(name)] })),
     null,
     2,
   ),
@@ -106,8 +122,16 @@ async function card(name: string) {
   const config = (await import(join(dir, 'modo.config.ts'))).default
   const description = config.description ?? JSON.parse(read(join(dir, 'package.json'))).description ?? ''
   const href = `${SITE_BASE}${name}/`
-  return `<a class="card" href="${esc(href)}"><div class="card-title">${esc(config.name ?? name)}<span aria-hidden="true">→</span></div><p>${esc(description)}</p><code>${esc(href)}</code></a>`
+  const tag = groupOf(name) === 'kits' ? '<span class="tag">Kit</span>' : ''
+  return `<a class="card" data-group="${groupOf(name)}" href="${esc(href)}">${tag}<div class="card-title">${esc(config.name ?? name)}<span aria-hidden="true">→</span></div><p>${esc(description)}</p><code>${esc(href)}</code></a>`
 }
+
+async function cards(group: Group) {
+  return (await Promise.all(targets.filter(name => groupOf(name) === group).map(card))).join('')
+}
+
+// A group with no sites (no kits yet) drops its whole section.
+const EMPTY_SECTION = /\s*<section\b(?:(?!<\/section>)[\s\S])*<div class="cards"><\/div>\s*<\/section>/g
 
 // The template links its colors so it previews on its own; the build inlines them.
 const COLORS_LINK = '<link rel="stylesheet" href="./tokens/colors.css" />'
@@ -122,11 +146,13 @@ async function landing() {
     logo: read(join(BRAND_DIR, 'logo.svg')).trim(),
     favicon: `data:image/svg+xml,${encodeURIComponent(read(join(BRAND_DIR, 'favicon.svg')).trim())}`,
     og: OG_IMAGE,
-    cards: (await Promise.all(targets.map(card))).join(''),
+    systems: await cards('design-systems'),
+    kits: await cards('kits'),
   }
   return read(join(LANDING_DIR, 'index.html'))
     .replace(COLORS_LINK, `<style>\n${read(join(LANDING_DIR, 'tokens', 'colors.css'))}</style>`)
     .replace(/\{\{(\w+)\}\}/g, (_, key: string) => fills[key]!)
+    .replace(EMPTY_SECTION, '')
 }
 
 // Each server takes its port strictly, so a stale one from another run fails

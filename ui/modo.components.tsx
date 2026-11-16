@@ -5,6 +5,7 @@
 
 import type {
   IconSlotProps,
+  SelectOption,
   SelectSlotProps,
   SidebarItemProps,
   SidebarSectionProps,
@@ -61,17 +62,26 @@ function GithubMark() {
 
 /**
  * Select slot: the chrome passes a flat `value` / `onValueChange` / `options`
- * contract; FF's Select is compositional, so this maps one onto the other.
+ * contract; FF's Select is compositional, so this maps one onto the other,
+ * an option's `group` onto a `Select.Group` under its `Select.Label`.
  */
 export function Select({ value, onValueChange, options }: SelectSlotProps) {
+  const item = (option: SelectOption) => (
+    <FluidSelect.Item key={option.value} value={option.value}>
+      {option.label}
+    </FluidSelect.Item>
+  )
+  const groups = [...new Set(options.flatMap(option => option.group ?? []))]
   return (
     <FluidSelect value={value} onValueChange={onValueChange}>
       <FluidSelect.Trigger />
       <FluidSelect.Content>
-        {options.map((option, index) => (
-          <FluidSelect.Item key={option.value} value={option.value} index={index}>
-            {option.label}
-          </FluidSelect.Item>
+        {options.filter(option => option.group === undefined).map(item)}
+        {groups.map(group => (
+          <FluidSelect.Group key={group}>
+            <FluidSelect.Label>{group}</FluidSelect.Label>
+            {options.filter(option => option.group === group).map(item)}
+          </FluidSelect.Group>
         ))}
       </FluidSelect.Content>
     </FluidSelect>

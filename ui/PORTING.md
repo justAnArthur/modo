@@ -277,7 +277,8 @@ only what is specific to it:
 `Select` in `modo.components.tsx` is not an item: modo's docs chrome hands its
 Select slot a flat `value` / `onValueChange` / `options` contract
 (`SelectSlotProps` from `@justanarthur/modo`), and this adapter maps it onto
-`Select.Trigger` / `Select.Content` / `Select.Item` so the chrome runs on the
+`Select.Trigger` / `Select.Content` / `Select.Item` (an option's `group` onto
+`Select.Group` + `Select.Label`) so the chrome runs on the
 design system's own Select. The `components/inputs/select` item keeps its
 compound API. The file's other adapters take their props types from the same
 package (`IconSlotProps`, `SidebarSlotProps`, `SidebarItemProps`, `SidebarSectionProps`).

@@ -2,7 +2,10 @@ import './demo-switcher.css'
 import type { PanelItemProps } from '@justanarthur/modo'
 import peers from './.peers.json'
 
-// Cross-kit navigation: one option per peer in the host's Select; hidden with fewer than two.
+// Cross-site navigation: one option per peer in the host's Select, under its
+// group once there is more than one (design systems, kits); hidden with fewer than two peers.
+const grouped = new Set(peers.map(p => p.group)).size > 1
+
 export default function DemoSwitcher({ shell }: PanelItemProps) {
   if (peers.length < 2) return null
   // A peer is an origin in dev (one server per port) and a path when built.
@@ -11,6 +14,7 @@ export default function DemoSwitcher({ shell }: PanelItemProps) {
   const options = peers.map(p => ({
     value: p.url,
     label: `${p.name}${p === current ? ' (current)' : ''}`,
+    group: grouped ? p.group : undefined,
   }))
   return (
     <div data-modo="demo-switcher">

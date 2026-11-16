@@ -1,4 +1,12 @@
-import { SelectContent, SelectItem, SelectTrigger, SelectValue, Select as ShadcnSelect } from './select'
+import {
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+  Select as ShadcnSelect,
+} from './select'
 
 /**
  * shadcn/ui Select — single-choice dropdown backed by Radix.
@@ -22,23 +30,31 @@ export default function Select({
   defaultValue?: string
   /** Called with the newly selected value. */
   onValueChange?: (value: string) => void
-  /** Options to choose from. */
-  options: { value: string; label: string }[]
+  /** Options to choose from; a `group` lists an option under that label, after the ungrouped ones. */
+  options: { value: string; label: string; group?: string }[]
   /** Placeholder shown while no value is selected. @default 'Select an option' */
   placeholder?: string
   /** Trigger height. @values default, sm */
   size?: 'default' | 'sm'
 }) {
+  const item = (option: { value: string; label: string }) => (
+    <SelectItem key={option.value} value={option.value}>
+      {option.label}
+    </SelectItem>
+  )
+  const groups = [...new Set(options.flatMap(option => option.group ?? []))]
   return (
     <ShadcnSelect value={value} defaultValue={defaultValue} onValueChange={onValueChange}>
       <SelectTrigger size={size}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        {options.map(option => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.label}
-          </SelectItem>
+        {options.filter(option => option.group === undefined).map(item)}
+        {groups.map(group => (
+          <SelectGroup key={group}>
+            <SelectLabel>{group}</SelectLabel>
+            {options.filter(option => option.group === group).map(item)}
+          </SelectGroup>
         ))}
       </SelectContent>
     </ShadcnSelect>

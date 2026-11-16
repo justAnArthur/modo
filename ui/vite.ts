@@ -71,11 +71,15 @@ function uiGlue(): Plugin {
   }
 }
 
-export default (config: UserConfig): UserConfig => {
-  config.plugins = [
-    ...(config.plugins ?? []),
-    UnoCSS({ configFile: resolve(import.meta.dirname, 'uno.config.ts') }),
-    uiGlue(),
-  ]
-  return config
-}
+/**
+ * The extension over a given uno config. A kit (`kits/<name>/vite.ts`) passes
+ * its own, which spreads this package's and adds the kit's sources to `content`.
+ */
+export const withUno =
+  (configFile: string) =>
+  (config: UserConfig): UserConfig => {
+    config.plugins = [...(config.plugins ?? []), UnoCSS({ configFile }), uiGlue()]
+    return config
+  }
+
+export default withUno(resolve(import.meta.dirname, 'uno.config.ts'))
