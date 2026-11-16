@@ -82,6 +82,7 @@ New since 0.6:
 - DatePicker `editable` (type over the locale's numeric mask; an invalid entry marks the field, Escape restores it); DatePicker and DateRangePicker take `valueType="string"` for ISO-string values and `labels`.
 - Popover takes `anchor`, `alignOffset`, the `collision*` props and `initialFocus` / `finalFocus`, and `onOpenChange` gets Base UI's details. Tooltip takes `.Trigger` / `.Content`. `AlertDialog.Action` waits on a returned promise or `pending`; `AlertDialog.Cancel`. A global `toast()` next to `useToast()`, once `<Toast manager={toast} />` is mounted.
 - Dropdown submenus (`Dropdown.Sub`, `.SubTrigger`, `.SubContent`); rows number themselves (`index` optional); `Dropdown.Content keepMounted`.
+- ContextMenu submenus (`ContextMenu.Sub`, `.SubTrigger`, `.SubContent`), Dropdown's; `ContextMenu.Content keepMounted`.
 - Table `Footer`, `Caption`, `Empty`, sortable heads (`sort` / `defaultSort` / `onSortChange`) and `stacked` rows. Button `outline`, `destructive`, `success` and `link`, and a loading Button keeps focus; Badge `outline`; `Card.Divider` and `border`; link tabs (`Tabs.Item` `href`).
 - Server-safe helpers: `./lib/{utils,springs,size-scale,shape-classes,field-classes}` and `./components/*/variants` carry no `'use client'`; the hooks and contexts are exported per subpath too (`./lib/field-box`, `./lib/use-morph`, …). CI checks the built `dist/`.
 - Tokens: the button washes (`--destructive-strong`, `--destructive-wash*`, `--success-strong`, `--success-wash*`), `--shadow-button-outline*`, `--skeleton` and `--duration-loop`.

@@ -1,7 +1,8 @@
 /*
  * Local addition (not part of Fluid Functionalism): a context menu that grows
- * out of the press point. Behavior is Base UI's ContextMenu; the popup body
- * and rows are Dropdown's (`dropdown/menu-popup.tsx`, `dropdown/menu-item.tsx`).
+ * out of the press point. Behavior is Base UI's ContextMenu; the popup body,
+ * rows and submenus are Dropdown's (`dropdown/menu-popup.tsx`,
+ * `dropdown/menu-item.tsx`, `dropdown/submenu.tsx`).
  */
 
 'use client'
@@ -17,6 +18,7 @@ import { DropdownLabel, DropdownSeparator } from '../dropdown'
 import { MenuItem } from '../dropdown/menu-item'
 import { MenuPopup } from '../dropdown/menu-popup'
 import type { PanelSelectionProps } from '../dropdown/panel-state'
+import { DropdownSub, DropdownSubContent, DropdownSubTrigger } from '../dropdown/submenu'
 
 interface ContextMenuContentProps
   extends PanelSelectionProps,
@@ -28,8 +30,10 @@ interface ContextMenuContentProps
   container?: HTMLElement | null
   /** Extra classes for the menu surface — it is 14rem wide by default. */
   className?: string
-  /** `ContextMenu.Item` rows, plus `ContextMenu.Label` and `ContextMenu.Separator`. */
+  /** `ContextMenu.Item` rows, plus `ContextMenu.Label`, `ContextMenu.Separator` and `ContextMenu.Sub`. */
   children?: ReactNode
+  /** Keep the menu mounted (hidden) while closed, so the submenus inside, which inherit it, keep their own selection across opens. Defaults to `false`. */
+  keepMounted?: boolean
 }
 
 const ContextMenuContent = forwardRef<HTMLDivElement, ContextMenuContentProps>(
@@ -76,7 +80,10 @@ interface ContextMenuProps {
  * firm up under it, dimmed disabled rows the pointer skips, a keyboard
  * shortcut at the end of a row, and the same selection: rows with a boolean
  * `checked` are radio options (checkbox options under `checkedIndices`). The
- * menu lifts 2 surface levels off its substrate. Built on Base UI's
+ * menu lifts 2 surface levels off its substrate. `ContextMenu.Sub` nests a
+ * menu, exactly as Dropdown's does: its row opens the panel beside it on
+ * hover, a press, Enter or ArrowRight, the panel grows out of that row, and
+ * ArrowLeft or Escape closes one level. Built on Base UI's
  * ContextMenu: it opens at the pointer and flips or shifts to stay on screen,
  * arrow keys and typeahead move between rows, and picking a row, Escape or
  * an outside press closes it.
@@ -85,12 +92,17 @@ interface ContextMenuProps {
  * - `ContextMenu.Trigger` — the area that opens it (a `div`).
  * - `ContextMenu.Content` — the menu: Dropdown's selection props
  *   (`checkedIndex`, `defaultCheckedIndex`, `checkedIndices`, …),
- *   `container`, and the morph options `from`, `effect`, `hideSource`,
+ *   `container`, `keepMounted`, and the morph options `from`, `effect`, `hideSource`,
  *   `tier`.
  * - `ContextMenu.Item` — a row: `index`, `label`, `icon`, `shortcut`,
  *   `checked`, `onSelect`, `disabled`.
  * - `ContextMenu.Label` / `ContextMenu.Separator` — a caption over a run of
  *   rows and a rule between runs.
+ * - `ContextMenu.Sub` — a submenu (`open`, `defaultOpen`, `onOpenChange`,
+ *   `disabled`): a `ContextMenu.SubTrigger` row (`label`, `icon`, `index`,
+ *   `disabled`, `openOnHover`, `delay`, `closeDelay`) and a
+ *   `ContextMenu.SubContent` panel (the Content's selection and morph props,
+ *   plus `side`, `align`, `sideOffset`). Submenus nest.
  *
  * @example {@include ./examples.mdx}
  */
@@ -113,6 +125,9 @@ ContextMenu.Content = ContextMenuContent
 ContextMenu.Item = MenuItem
 ContextMenu.Label = DropdownLabel
 ContextMenu.Separator = DropdownSeparator
+ContextMenu.Sub = DropdownSub
+ContextMenu.SubTrigger = DropdownSubTrigger
+ContextMenu.SubContent = DropdownSubContent
 
 export type { ContextMenuContentProps, ContextMenuProps }
 export { ContextMenu, ContextMenuContent }

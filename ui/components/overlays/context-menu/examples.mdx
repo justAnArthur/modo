@@ -1,5 +1,5 @@
 import ContextMenu from './index'
-import { ArrowLeft, ArrowRight, Code, Copy, Link, Printer, RotateCw, Save, Scissors, Clipboard, Trash2 } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Code, Copy, Link, Printer, RotateCw, Save, Scissors, Clipboard, Trash2, Share, Mail, Image, Users } from 'lucide-react'
 
 # Right click
 
@@ -20,6 +20,44 @@ Right-click anywhere in the area (long-press on touch): the menu swells out of t
     <ContextMenu.Separator />
     <ContextMenu.Label>Developer</ContextMenu.Label>
     <ContextMenu.Item index={6} icon={Code} label="Inspect" shortcut="⌥⌘I" />
+  </ContextMenu.Content>
+</ContextMenu>
+
+# Submenus
+
+`ContextMenu.Sub` nests a menu, as Dropdown's does: its `ContextMenu.SubTrigger` row opens a `ContextMenu.SubContent` beside it when the pointer rests on it, on a press or on ArrowRight, grown out of that row; ArrowLeft and Escape close one level. Submenus nest, and each runs its own selection; `keepMounted` keeps it across opens.
+
+<ContextMenu>
+  <ContextMenu.Trigger className="flex flex-wrap h-56 w-full max-w-lg items-center justify-center rounded-xl border border-dashed border-border text-caption text-muted-foreground">
+    Right-click to share
+  </ContextMenu.Trigger>
+  <ContextMenu.Content keepMounted>
+    <ContextMenu.Item icon={Copy} label="Copy" shortcut="⌘C" />
+    <ContextMenu.Item icon={Scissors} label="Cut" shortcut="⌘X" />
+    <ContextMenu.Separator />
+    <ContextMenu.Sub>
+      <ContextMenu.SubTrigger icon={Share} label="Share" />
+      <ContextMenu.SubContent>
+        <ContextMenu.Item icon={Link} label="Copy link" />
+        <ContextMenu.Item icon={Mail} label="Email" />
+        <ContextMenu.Sub>
+          <ContextMenu.SubTrigger icon={Image} label="Export as" />
+          <ContextMenu.SubContent defaultCheckedIndex={0}>
+            <ContextMenu.Item label="PDF" />
+            <ContextMenu.Item label="PNG" />
+            <ContextMenu.Item label="Markdown" />
+          </ContextMenu.SubContent>
+        </ContextMenu.Sub>
+      </ContextMenu.SubContent>
+    </ContextMenu.Sub>
+    <ContextMenu.Sub disabled>
+      <ContextMenu.SubTrigger icon={Users} label="Move to team" disabled />
+      <ContextMenu.SubContent>
+        <ContextMenu.Item label="Design" />
+      </ContextMenu.SubContent>
+    </ContextMenu.Sub>
+    <ContextMenu.Separator />
+    <ContextMenu.Item icon={Trash2} label="Delete" shortcut="⌫" />
   </ContextMenu.Content>
 </ContextMenu>
 
