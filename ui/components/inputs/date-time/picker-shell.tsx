@@ -1,16 +1,36 @@
 /*
  * Local addition (not part of Fluid Functionalism): the field and panel every
  * date and time picker shares. A file in a group folder, not an item.
+ *
+ * With an `editor` (DatePicker's `editable`) the field is a box around that
+ * text control instead of a button, and only its leading icon, an
+ * `InputAction`, opens the panel; the panel still anchors to, and grows out
+ * of, the whole field.
  */
 
 'use client'
 
 import { Popover } from '@base-ui/react/popover'
-import { type ButtonHTMLAttributes, forwardRef, type ReactNode, type RefObject, useContext, useState } from 'react'
-import { FieldStateContext, useFieldBox } from '../../../lib/field-box'
+import {
+  type ButtonHTMLAttributes,
+  forwardRef,
+  type ReactElement,
+  type ReactNode,
+  type RefObject,
+  useContext,
+  useRef,
+  useState,
+} from 'react'
+import { FieldStateContext, focusControlOnPress, useFieldBox } from '../../../lib/field-box'
 import { type FieldVariant, fieldIconClasses } from '../../../lib/field-classes'
 import { type IconName, useIcon } from '../../../lib/icon-context'
-import { OverlayContext, positionerProps, useOverlay, useOverlayRoot } from '../../../lib/overlay'
+import {
+  type OpenChangeDetails,
+  OverlayContext,
+  positionerProps,
+  useOverlay,
+  useOverlayRoot,
+} from '../../../lib/overlay'
 import { PopupSurface } from '../../../lib/popup-surface'
 import { dividedColumns } from '../../../lib/scroll-column'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
@@ -20,7 +40,7 @@ import { cn } from '../../../lib/utils'
 import { SizeScope } from '../../../primitives/sizes'
 import Button from '../../button'
 import Sheet from '../../overlays/sheet'
-import Input, { type InputProps } from '../input'
+import Input, { InputAction, InputAdornment, type InputProps } from '../input'
 
 /** What every picker hands its shell unchanged. */
 interface PickerFieldOptions extends MorphProps {
@@ -54,6 +74,12 @@ interface PickerShellProps extends PickerFieldOptions {
   dir?: string
   /** Classes for the panel on a desktop: its width. */
   popupClassName?: string
+  /** The field's own text control: the field becomes a box around it, and its icon the button that opens the panel. */
+  editor?: ReactNode
+  /** That control, focused by a press in the box's padding. */
+  editorRef?: RefObject<HTMLElement | null>
+  /** Accessible name of the icon button that opens the panel of an `editor` field. Defaults to `"Open calendar"`. */
+  triggerLabel?: string
   /** The panel body under the header. */
   children: ReactNode
 }
@@ -121,6 +147,76 @@ const PickerField = forwardRef<HTMLButtonElement, PickerFieldProps>(
 )
 PickerField.displayName = 'PickerField'
 
+type EditableFieldProps = Pick<
+  PanelProps,
+  'icon' | 'variant' | 'invalid' | 'disabled' | 'className' | 'editor' | 'editorRef' | 'triggerLabel'
+> & {
+  /** Wraps the icon button in the panel's trigger. */
+  trigger: (button: ReactElement) => ReactNode
+}
+
+/** An editable picker's field: its text control, led by the icon button that opens the panel. */
+const EditableField = forwardRef<HTMLDivElement, EditableFieldProps>(
+  (
+    {
+      icon,
+      variant = 'bordered',
+      invalid,
+      disabled,
+      className,
+      editor,
+      editorRef,
+      triggerLabel = 'Open calendar',
+      trigger,
+    },
+    ref,
+  ) => {
+    const Icon = useIcon(icon)
+    const box = useFieldBox({ variant, invalid, disabled })
+
+    return (
+      // biome-ignore lint/a11y/noStaticElementInteractions: the text input is the focusable control; the box only forwards pointer focus from its padding.
+      <div
+        ref={ref}
+        onMouseDown={editorRef && focusControlOnPress(editorRef)}
+        {...box.props}
+        className={cn(
+          box.props.className,
+          'flex w-full min-w-0 items-center cursor-text',
+          box.size.gap,
+          box.size.control,
+          className,
+        )}
+      >
+        <InputAdornment>
+          {trigger(<InputAction label={triggerLabel} icon={Icon} disabled={box.disabled} />)}
+        </InputAdornment>
+        {editor}
+      </div>
+    )
+  },
+)
+EditableField.displayName = 'EditableField'
+
+/**
+ * Base UI's open change for an editable field: a press or focus on the
+ * field's own text is no reason to close (the panel belongs to it), and the
+ * panel grows out of the whole field rather than its icon.
+ */
+function editableOpenChange(
+  field: RefObject<HTMLElement | null>,
+  onOpenChange: (open: boolean, details: OpenChangeDetails) => void,
+) {
+  return (next: boolean, details: OpenChangeDetails & { reason?: string }) => {
+    if (!next && (details.reason === 'outside-press' || details.reason === 'focus-out')) {
+      const event = details.event as (Event & { relatedTarget?: EventTarget | null }) | undefined
+      const target = (event?.relatedTarget ?? event?.target) as Node | null | undefined
+      if (target && field.current?.contains(target)) return
+    }
+    onOpenChange(next, { event: details.event, trigger: field.current ?? undefined })
+  }
+}
+
 function PanelHeader({
   header,
   closeLabel = 'Close',
@@ -155,16 +251,36 @@ function PickerPopover({
   hideSource,
   tier = 'moderate',
   children,
+  editor,
+  editorRef,
+  triggerLabel,
   ...field
 }: PanelProps) {
   const root = useOverlayRoot({ open, onOpenChange })
+  const fieldRef = useRef<HTMLDivElement>(null)
 
   return (
     <OverlayContext.Provider value={root.state}>
       {/* Non-modal: the page keeps scrolling and the panel follows its field. */}
-      <Popover.Root open={root.open} onOpenChange={root.onOpenChange} modal={false}>
-        <Popover.Trigger disabled={field.disabled} render={<PickerField {...field} />} />
+      <Popover.Root
+        open={root.open}
+        onOpenChange={editor ? editableOpenChange(fieldRef, root.onOpenChange) : root.onOpenChange}
+        modal={false}
+      >
+        {editor ? (
+          <EditableField
+            ref={fieldRef}
+            {...field}
+            editor={editor}
+            editorRef={editorRef}
+            triggerLabel={triggerLabel}
+            trigger={button => <Popover.Trigger disabled={field.disabled} render={button} />}
+          />
+        ) : (
+          <Popover.Trigger disabled={field.disabled} render={<PickerField {...field} />} />
+        )}
         <PickerPanel
+          anchor={editor ? fieldRef : undefined}
           morphProps={{ from, effect, hideSource, tier }}
           initialFocus={initialFocus}
           popupClassName={popupClassName}
@@ -180,11 +296,14 @@ function PickerPopover({
 }
 
 function PickerPanel({
+  anchor,
   morphProps,
   initialFocus,
   popupClassName,
   children,
 }: {
+  /** What the panel anchors to, when not its trigger. */
+  anchor?: RefObject<HTMLElement | null>
   morphProps: MorphProps
   initialFocus?: RefObject<HTMLElement | null>
   popupClassName?: string
@@ -195,7 +314,10 @@ function PickerPanel({
 
   return (
     <Popover.Portal>
-      <Popover.Positioner {...positionerProps(morphProps, { side: 'bottom', align: 'start', sideOffset: 6 })}>
+      <Popover.Positioner
+        anchor={anchor}
+        {...positionerProps(morphProps, { side: 'bottom', align: 'start', sideOffset: 6 })}
+      >
         <Popover.Popup ref={morph.popupRef} initialFocus={initialFocus} className="relative outline-none">
           <PopupSurface
             morph={morph}
@@ -222,11 +344,24 @@ function PickerSheet({
   hideSource: _hide,
   tier: _tier,
   children,
+  editor,
+  editorRef,
+  triggerLabel,
   ...field
 }: PanelProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <Sheet.Trigger disabled={field.disabled} render={<PickerField {...field} />} />
+      {editor ? (
+        <EditableField
+          {...field}
+          editor={editor}
+          editorRef={editorRef}
+          triggerLabel={triggerLabel}
+          trigger={button => <Sheet.Trigger disabled={field.disabled} render={button} />}
+        />
+      ) : (
+        <Sheet.Trigger disabled={field.disabled} render={<PickerField {...field} />} />
+      )}
       <Sheet.Content className="gap-2 p-3 pt-3">
         <div dir={dir} className="flex min-h-0 flex-col gap-2">
           <PanelHeader header={header} closeLabel={closeLabel} close={() => onOpenChange(false)} />

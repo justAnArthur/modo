@@ -27,3 +27,11 @@ The field writes the range the way the locale does.
     defaultValue={{ from: new Date(2026, 9, 9), to: new Date(2026, 9, 15) }}
   />
 </div>
+
+# String values
+
+`valueType="string"` takes and reports both ends as ISO days (`"2026-10-09"`), the format `name` submits.
+
+<div className="w-80 max-w-full">
+  <DateRangePicker valueType="string" defaultValue={{ from: '2026-10-09', to: '2026-10-15' }} />
+</div>

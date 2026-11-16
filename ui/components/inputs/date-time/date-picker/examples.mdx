@@ -18,6 +18,38 @@ Press the field: the date is selected to type over, and the calendar scrolls ben
   <DatePicker withTime defaultValue={new Date(2026, 9, 9, 15, 33)} />
 </div>
 
+# Editable
+
+`editable` makes the field a text input: type the digits and the separators fall into place, the rest of the mask muted after the caret. A date that can't exist (31.02), or a weekend here, marks the field invalid; Escape brings back the last real date. The calendar icon opens the panel.
+
+<div className="w-72 max-w-full">
+  <DatePicker editable disabledDays={{ dayOfWeek: [0, 6] }} defaultValue={new Date(2026, 9, 9)} />
+</div>
+
+# Editable, German, with time
+
+The mask follows the locale's order and separators ("DD.MM.YYYY, HH:mm"); a time is typed on a 24-hour clock.
+
+<div className="w-72 max-w-full">
+  <DatePicker editable withTime locale={de} defaultValue={new Date(2026, 9, 9, 15, 33)} />
+</div>
+
+# String values
+
+`valueType="string"` takes and reports ISO strings, the format `name` submits: `"2026-10-09"`, or `"2026-10-09T15:33"` with `withTime`, read as local time. A string that reads as no date marks the field invalid.
+
+<div className="flex w-72 max-w-full flex-col gap-2">
+  <DatePicker valueType="string" defaultValue="2026-10-09" />
+  <DatePicker valueType="string" withTime editable defaultValue="2026-10-09T15:33" />
+  <DatePicker valueType="string" defaultValue="not a date" placeholder="Unreadable value" />
+</div>
+
+```tsx
+const [due, setDue] = useState<string | null>('2026-10-09')
+
+<DatePicker valueType="string" value={due} onValueChange={setDue} />
+```
+
 # German
 
 The locale sets the names, the formats shown and read ("12.10.2026"), and the week's first day.

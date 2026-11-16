@@ -223,10 +223,11 @@ function extractProps(src: string, fnStart: number): ExtractPropsResult {
 
   let litText = extractTopObjectLiteral(typeLiteral)
   if (!litText) {
-    // A bare identifier (e.g. `props: ButtonProps`) resolves to an interface
-    // or object type alias declared in the same file, if any.
-    const ident = typeLiteral.match(/^[A-Za-z_$][\w$]*$/)
-    if (ident) litText = resolveLocalTypeLiteral(src, ident[0])
+    // A bare identifier (e.g. `props: ButtonProps`, or a generic
+    // `DatePickerProps<T>`) resolves to an interface or object type alias
+    // declared in the same file, if any.
+    const ident = typeLiteral.match(/^([A-Za-z_$][\w$]*)\s*(?:<[^{}]*>)?$/)
+    if (ident) litText = resolveLocalTypeLiteral(src, ident[1]!)
   }
   if (!litText) return { props, errors: ['Could not find object type literal'] }
 
@@ -317,11 +318,14 @@ function extractTopObjectLiteral(text: string): string | null {
   return s.slice(objStart, objEnd + 1)
 }
 
+// Type parameters on the declaration (`interface P<T extends K = 'a'>`), no braces inside.
+const TYPE_PARAMS = String.raw`(?:\s*<[^{}]*>)?`
+
 function resolveLocalTypeLiteral(src: string, name: string): string | null {
   for (const re of [
-    new RegExp(`interface\\s+${name}\\s*\\{`),
-    new RegExp(`interface\\s+${name}\\s+extends\\s+[^{;]+\\{`),
-    new RegExp(`type\\s+${name}\\s*=\\s*\\{`),
+    new RegExp(`interface\\s+${name}${TYPE_PARAMS}\\s*\\{`),
+    new RegExp(`interface\\s+${name}${TYPE_PARAMS}\\s+extends\\s+[^{;]+\\{`),
+    new RegExp(`type\\s+${name}${TYPE_PARAMS}\\s*=\\s*\\{`),
   ]) {
     const m = src.match(re)
     if (!m) continue

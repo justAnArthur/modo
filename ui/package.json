@@ -128,7 +128,8 @@
     "build:docs": "modo build --out docs-dist",
     "dev": "modo dev",
     "check": "tsc --noEmit",
-    "check:dist": "bun scripts/check-dist.ts"
+    "check:dist": "bun scripts/check-dist.ts",
+    "test": "bun test"
   },
   "dependencies": {
     "@base-ui/react": "1.4.1",
