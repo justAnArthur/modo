@@ -1,5 +1,6 @@
 import NumberInput from './index'
 import { InputGroup, Label } from '../input'
+import Field from '../field'
 
 # Number input
 
@@ -62,6 +63,23 @@ Invalid turns the field destructive, disabled dims it and its steppers, read-onl
   <NumberInput variant="bordered" defaultValue={12} max={10} invalid aria-label="Invalid count" />
   <NumberInput variant="bordered" defaultValue={3} disabled aria-label="Disabled count" />
   <NumberInput variant="bordered" defaultValue={3} readOnly aria-label="Read-only count" />
+</div>
+
+# In a Field
+
+Inside a Field it is labelled and takes the field's state: here required, with help text, and invalid with its message.
+
+<div className="flex flex-col gap-4 w-56 max-w-full">
+  <Field required>
+    <Field.Label>Seats</Field.Label>
+    <NumberInput variant="bordered" defaultValue={2} min={1} name="seats" />
+    <Field.Description>One to twelve per booking.</Field.Description>
+  </Field>
+  <Field invalid>
+    <Field.Label>Guests</Field.Label>
+    <NumberInput variant="bordered" defaultValue={12} max={10} name="guests" />
+    <Field.Error>The room seats ten.</Field.Error>
+  </Field>
 </div>
 
 # In a group

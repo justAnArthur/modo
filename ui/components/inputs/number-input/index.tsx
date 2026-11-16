@@ -69,17 +69,17 @@ interface NumberInputProps extends NativeInputProps {
   incrementLabel?: string
   /** Names the value when the form is submitted; the number posts, not the formatted text. */
   name?: string
-  /** Id of the input, for a `Label`'s `htmlFor`. */
+  /** Id of the input, for a `Label`'s `htmlFor`. Inside a Field it is wired for you. */
   id?: string
-  /** Marks the value required. Defaults to `false`. */
+  /** Marks the value required: the browser's validation (and an enclosing Field's) reports it missing while empty. Defaults to the enclosing Field's, else `false`. */
   required?: boolean
   /** Framed at rest, or invisible until hovered or focused. Defaults to `"borderless"`. */
   variant?: FieldVariant
-  /** Marks the value invalid: the field turns destructive and sets `aria-invalid`. Defaults to `false`. */
+  /** Marks the value invalid: the field turns destructive and sets `aria-invalid`. Defaults to the enclosing Field's, else `false`. */
   invalid?: boolean
-  /** Disables the field and its steppers. Defaults to `false`. */
+  /** Disables the field and its steppers. Defaults to the enclosing Field's, else `false`. */
   disabled?: boolean
-  /** Shows the value without letting it change; the steppers hide. Defaults to `false`. */
+  /** Shows the value without letting it change; the steppers hide. Defaults to the enclosing Field's, else `false`. */
   readOnly?: boolean
   /** Pins the field to one step of the size ladder (36px default, 28px compact). Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
@@ -104,8 +104,9 @@ interface NumberInputProps extends NativeInputProps {
  * `defaultValue`, controlled with `value` + `onValueChange`. `name` posts the
  * number with a form. Behavior comes from Base UI's NumberField; the other
  * props of an `<input>` (`aria-label`, `autoFocus`, handlers) reach the input.
- * Inside `InputGroup.Field` it takes the field's hover, error and disabled
- * state.
+ * Inside a Field it is labelled and takes the field's invalid, disabled,
+ * read-only and required state (its own props win); inside
+ * `InputGroup.Field` it also joins the group's hover.
  *
  * @example {@include ./examples.mdx}
  */
@@ -132,11 +133,11 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
       incrementLabel = 'Increase',
       name,
       id,
-      required = false,
+      required,
       variant = 'borderless',
       invalid,
       disabled,
-      readOnly = false,
+      readOnly,
       size,
       className,
       ...props
@@ -144,7 +145,7 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     ref,
   ) => {
     const inputRef = useRef<HTMLInputElement | null>(null)
-    const box = useFieldBox({ variant, invalid, disabled, readOnly, size })
+    const box = useFieldBox({ variant, invalid, disabled, readOnly, required, size })
     const shape = useShape()
     const Minus = useIcon('minus')
     const Plus = useIcon('plus')
@@ -168,8 +169,8 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         locale={locale}
         allowWheelScrub={wheel}
         disabled={box.disabled}
-        readOnly={readOnly}
-        required={required}
+        readOnly={box.readOnly}
+        required={box.required}
       >
         <NumberField.Group
           onMouseDown={focusControlOnPress(inputRef)}
@@ -199,7 +200,7 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
             )}
           />
           <InputAdornment size={size}>{endAdornment}</InputAdornment>
-          {stepper && !readOnly && (
+          {stepper && !box.readOnly && (
             <span className="flex shrink-0 items-center">
               <NumberField.Decrement aria-label={decrementLabel} className={stepClasses}>
                 <Minus size={box.size.icon} strokeWidth={1.5} />
