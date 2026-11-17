@@ -8,7 +8,7 @@
 
 'use client'
 
-import { forwardRef } from 'react'
+import { forwardRef, useRef } from 'react'
 import { type SizeVariant, useSizeVariant } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { ComfortableSlider } from './comfortable'
@@ -30,7 +30,7 @@ const COMPACT_ONLY = [
   'thumbBorderColor',
 ] as const satisfies readonly (keyof SliderEngineProps)[]
 
-interface SliderProps extends Omit<SliderEngineProps, 'value' | 'onValueChange'> {
+interface SliderProps extends Omit<SliderEngineProps, 'value' | 'onValueChange' | 'onCommit'> {
   /** Step on the size ladder (see Sizes). Default renders the pip/scrubber design; compact renders the dense design. Defaults to the surrounding SizeProvider, else `"default"`. */
   size?: SizeVariant
   /** Default-step layout. "pips" shows discrete dot indicators; "scrubber" drags anywhere in the row for a continuous value. Ignored when the compact design renders. Defaults to `"pips"`. */
@@ -41,6 +41,10 @@ interface SliderProps extends Omit<SliderEngineProps, 'value' | 'onValueChange'>
   defaultValue?: SliderValue
   /** Called when the value changes via drag, click, or keyboard. */
   onValueChange?: (value: SliderValue) => void
+  /** Called once when an interaction ends, with the value it settled on: the pointer lifting after a drag or click, a keyboard step, or a committed edit of the value label. `onValueChange` reports every value on the way, so save from here and preview from there. */
+  onValueCommit?: (value: SliderValue) => void
+  /** Layout axis. `"vertical"` stands the track upright (min at the bottom; ArrowUp / ArrowRight raise it, ArrowDown / ArrowLeft lower it) and always renders the compact design, which is the only one with a vertical layout. Give it a height with `className` (`h-48`); `valuePosition` then defaults to `"top"`. Defaults to `"horizontal"`. */
+  orientation?: 'horizontal' | 'vertical'
   /** Minimum value. Defaults to `0`. */
   min?: number
   /** Maximum value. Defaults to `100`. */
@@ -53,7 +57,7 @@ interface SliderProps extends Omit<SliderEngineProps, 'value' | 'onValueChange'>
   showSteps?: boolean
   /** Whether to display the current value label. Defaults to `true`. */
   showValue?: boolean
-  /** Position of the value label. "tooltip" shows above the thumb during interaction. Defaults to `"left"`. */
+  /** Position of the value label. "tooltip" shows above the thumb during interaction (beside it when vertical). Defaults to `"left"`, or `"top"` when vertical. */
   valuePosition?: ValuePosition
   /** Custom formatter for the value label. Defaults to `String`. */
   formatValue?: (v: number) => string
@@ -79,7 +83,9 @@ interface SliderProps extends Omit<SliderEngineProps, 'value' | 'onValueChange'>
  * value label is click-to-edit.
  *
  * Works controlled (`value` + `onValueChange`) or uncontrolled
- * (`defaultValue`, with `onValueChange` reporting each change). Track
+ * (`defaultValue`, with `onValueChange` reporting each change);
+ * `onValueCommit` reports the value once an interaction ends.
+ * `orientation="vertical"` stands the dense design upright. Track
  * styling props come from the compact engine: `trackClassName`,
  * `trackStyle`, `fillClassName`, `fillStyle`, `hideFill`, `thumbColor` and
  * `thumbBorderColor` — each one also forces the dense design.
@@ -89,7 +95,7 @@ interface SliderProps extends Omit<SliderEngineProps, 'value' | 'onValueChange'>
  * @license MIT © 2026 Micka Touillaud
  */
 const Slider = forwardRef<HTMLDivElement, SliderProps>(
-  ({ size, variant = 'pips', value: valueProp, defaultValue, onValueChange, ...rest }, ref) => {
+  ({ size, variant = 'pips', value: valueProp, defaultValue, onValueChange, onValueCommit, ...rest }, ref) => {
     const [value, setValue] = useControllableState<SliderValue>(
       valueProp,
       defaultValue ?? (rest.steps && rest.steps.length > 0 ? Math.min(...rest.steps) : (rest.min ?? 0)),
@@ -97,8 +103,22 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
     )
     const resolved = useSizeVariant(size)
 
-    if (resolved === 'compact' || Array.isArray(value) || COMPACT_ONLY.some(key => rest[key] !== undefined)) {
-      return <CompactSlider ref={ref} {...rest} value={value} onValueChange={setValue} />
+    // A pointer can lift before the render that carries its last value, so the commit reads what was last set.
+    const latest = useRef(value)
+    latest.current = value
+    const change = (next: SliderValue) => {
+      latest.current = next
+      setValue(next)
+    }
+    const onCommit = onValueCommit && (() => onValueCommit(latest.current))
+
+    if (
+      resolved === 'compact' ||
+      Array.isArray(value) ||
+      rest.orientation === 'vertical' ||
+      COMPACT_ONLY.some(key => rest[key] !== undefined)
+    ) {
+      return <CompactSlider ref={ref} {...rest} value={value} onValueChange={change} onCommit={onCommit} />
     }
 
     const {
@@ -113,6 +133,7 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
       hideFill,
       thumbColor,
       thumbBorderColor,
+      orientation,
       ...comfortable
     } = rest
 
@@ -121,7 +142,8 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
         ref={ref}
         {...comfortable}
         value={value as number}
-        onValueChange={setValue}
+        onValueChange={change}
+        onCommit={onCommit}
         variant={variant}
       />
     )

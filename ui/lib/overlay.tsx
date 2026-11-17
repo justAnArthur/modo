@@ -10,9 +10,19 @@
 
 'use client'
 
-import { createContext, type ReactNode, type RefObject, useCallback, useContext, useMemo } from 'react'
+import type { Popover } from '@base-ui/react/popover'
+import {
+  type ComponentProps,
+  createContext,
+  type ReactNode,
+  type RefObject,
+  useCallback,
+  useContext,
+  useMemo,
+} from 'react'
 import { useControllableState } from './use-controllable-state'
 import { inPlaceOffset, type MorphOrigin, type MorphProps, opensInPlace, useMorphOrigin } from './use-morph'
+import { cn } from './utils'
 
 type Side = 'top' | 'right' | 'bottom' | 'left'
 type Align = 'start' | 'center' | 'end'
@@ -30,6 +40,23 @@ interface AnchorProps {
   sideOffset?: number
   /** Portal target. Defaults to the nearest `PortalContainer`, else the document body. */
   container?: HTMLElement | null
+}
+
+type Positioner = ComponentProps<typeof Popover.Positioner>
+
+/**
+ * The finer positioning props a content may add to `AnchorProps`, forwarded
+ * to Base UI's `Positioner` by `positionerProps`. Documented once.
+ */
+interface CollisionProps {
+  /** Shift along the aligned edge in px, after `align`, or Base UI's function of side, align and sizes. Defaults to `0`. */
+  alignOffset?: Positioner['alignOffset']
+  /** Space kept between the panel and the edge of its collision boundary, in px or per side. Defaults to `5`. */
+  collisionPadding?: Positioner['collisionPadding']
+  /** The area the panel stays inside: an element, several, or a rect. Defaults to `'clipping-ancestors'`. */
+  collisionBoundary?: Positioner['collisionBoundary']
+  /** Classes for the positioner, the element that carries the panel's place and stacking (a `z-index` over a host's own layers). */
+  positionerClassName?: string
 }
 
 /** What an overlay's parts read from its root. */
@@ -89,15 +116,32 @@ function useOverlay(part: string): OverlayState {
  * when the panel opens in place. Spread them on the `Positioner`.
  */
 function positionerProps(
-  { side, align, sideOffset, effect, hideSource }: AnchorProps & MorphProps,
+  {
+    side,
+    align,
+    sideOffset,
+    effect,
+    hideSource,
+    alignOffset,
+    collisionPadding,
+    collisionBoundary,
+    positionerClassName,
+  }: AnchorProps & MorphProps & CollisionProps,
   defaults: { side: Side; align: Align; sideOffset: number },
-) {
+): Pick<Positioner, 'sideOffset' | 'alignOffset' | 'collisionPadding' | 'collisionBoundary'> & {
+  side: Side
+  align: Align
+  className: string
+} {
   const inPlace = opensInPlace({ effect, hideSource })
   return {
     side: side ?? defaults.side,
     align: align ?? (inPlace ? 'start' : defaults.align),
     sideOffset: inPlace ? inPlaceOffset : (sideOffset ?? defaults.sideOffset),
-    className: 'z-50 outline-none',
+    alignOffset,
+    collisionPadding,
+    collisionBoundary,
+    className: cn('z-50 outline-none', positionerClassName),
   }
 }
 
@@ -114,5 +158,5 @@ function usePortalContainer(container?: HTMLElement | null) {
   return container ?? scoped ?? undefined
 }
 
-export type { Align, AnchorProps, OpenChangeDetails, OverlayRootProps, OverlayState, Side }
+export type { Align, AnchorProps, CollisionProps, OpenChangeDetails, OverlayRootProps, OverlayState, Side }
 export { OverlayContext, PortalContainer, positionerProps, useOverlay, useOverlayRoot, usePortalContainer }

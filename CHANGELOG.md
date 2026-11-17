@@ -2,6 +2,22 @@
 
 The packages are released from this repo by conventional commits (see [CONTRIBUTING.md](CONTRIBUTING.md)): `@justanarthur/modo` (`lib/`), `@justanarthur/modo-ui` (`ui/`), `@justanarthur/modo-ui-ai` (`kits/ai/`) and `@justanarthur/modo-ui-notch` (`kits/notch/`). Each release also gets GitHub release notes generated from its commits.
 
+## Unreleased
+
+### @justanarthur/modo-ui
+
+- `Slider` takes `onValueCommit` (once when an interaction ends: a pointer lifting, a keyboard step, a committed edit) and `orientation="vertical"` (the dense design stood upright).
+- `Textarea` with neither `value` nor `onValueChange` keeps its text in the DOM: `ref.current.value = ''`, a native form reset and ref-reading form libraries work, and the box re-fits after each.
+- `Dropdown.Content`, `Dropdown.SubContent`, `Select.Content` and `Tooltip` (root and content) take `alignOffset`, `collisionPadding`, `collisionBoundary` and `positionerClassName` (`CollisionProps` in `lib/overlay`); `Dropdown.Menu` takes `modal`; `Tooltip` and `Tooltip.Provider` take `closeDelay`, the provider also `timeout` (Base UI's name for `skipDelayDuration`).
+- `required` on `Checkbox`, `Switch` and `Radio.Group`.
+- `inertProps(on)` (`lib/inert`): an `inert` that holds on React 18 and 19.
+
+Fixes:
+
+- A `Combobox` with a picked value and no `defaultQuery` shows the item's label in its field instead of an empty one.
+- A slot part's `children` fill a childless `render` element (`<Popover.Trigger render={<button/>}>Open</Popover.Trigger>`), on Popover, Dialog, Dropdown, Tooltip, Toast and AlertDialog parts, instead of rendering it empty.
+- Folded `Sidebar` groups and subs, the collapsed sidebar, `Tree` branches and `DesktopShell`'s closed pane are inert on React 19 too (it read `inert=""` as false and warned), so their rows leave the tab order.
+
 ## 2026-11-17 — modo-ui 2.1.0, modo-ui-notch 0.2.0
 
 ### @justanarthur/modo-ui 2.1.0
@@ -9,7 +25,6 @@ The packages are released from this repo by conventional commits (see [CONTRIBUT
 - Token `--ink` (`bg-ink`, `fill-ink`, `text-ink`, `border-ink`): true black in both schemes, for surfaces that match hardware.
 - `Meter`'s ring scales with a size class, centres its `children` (a countdown's time) and takes `animate={false}` for a value that ticks on a clock.
 - New component `Sparkline` (an inline trend line: `values`, `secondary`, `max`, `area`, `tone`).
-
 ### @justanarthur/modo-ui-notch 0.2.0
 
 - New kit (0.1.0): the UI of a macOS notch app on modo-ui (a peer, `^2.1.0`: it draws on Sparkline, the ring Meter's centre content and the ink token). Components `Island` (idle, compact, split, expanded and flash, on modo-ui's springs and goo), `IslandTabs` and `IslandFlash` under `components/island/`; `Equalizer`, `BatteryGlyph`, `MediaScrubber` and `Countdown` under `components/indicators/`; blocks `NowPlaying`, `Timer`, `Shelf` and `Agenda` (`blocks/activities/`), `PowerAlert`, `Controls`, `Devices` and `SystemStats` (`blocks/system/`), `ExpandedIsland` and `SettingsWindow` (`blocks/app/`); the island geometry and `useIsland()`. Docs at https://justanarthur.github.io/modo/notch/.

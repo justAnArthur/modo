@@ -25,6 +25,7 @@ import {
   useState,
 } from 'react'
 import { useIcon } from '../../../lib/icon-context'
+import { inertProps } from '../../../lib/inert'
 import { useShape } from '../../../lib/shape-context'
 import { useSize } from '../../../lib/size-context'
 import { resolveSlotTemplate, slotElement } from '../../../lib/slot'
@@ -103,7 +104,7 @@ const SidebarGroup = forwardRef<HTMLDivElement, SidebarGroupProps>(
               if (open) setSettled(true)
             }}
           >
-            <div ref={fold.contentRef} className="flex w-full min-w-0 flex-col" {...(open ? {} : { inert: '' })}>
+            <div ref={fold.contentRef} className="flex w-full min-w-0 flex-col" {...inertProps(!open)}>
               {tail.filter(k => !isHeaderAction(k))}
             </div>
           </motion.div>

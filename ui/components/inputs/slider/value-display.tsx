@@ -162,20 +162,27 @@ interface TooltipValueProps {
   value: number
   formatValue: (v: number) => string
   motionX: MotionValue<number>
+  vertical?: boolean
 }
 
-export function TooltipValue({ value, formatValue, motionX }: TooltipValueProps) {
+export function TooltipValue({ value, formatValue, motionX, vertical = false }: TooltipValueProps) {
   const tooltipX = useTransform(motionX, x => x + THUMB_SIZE / 2)
+  const tooltipY = useTransform(motionX, x => -x)
   return (
     <motion.div
-      className="absolute -translate-x-1/2 pointer-events-none z-20"
-      style={{
-        x: tooltipX,
-        top: -16,
-      }}
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 4, transition: spring.fast.exit }}
+      className={cn('absolute pointer-events-none z-20', vertical ? 'translate-y-1/2' : '-translate-x-1/2')}
+      style={
+        vertical
+          ? { y: tooltipY, bottom: THUMB_SIZE / 2, left: `calc(50% + ${THUMB_SIZE}px)` }
+          : { x: tooltipX, top: -16 }
+      }
+      initial={vertical ? { opacity: 0, x: -4 } : { opacity: 0, y: 4 }}
+      animate={vertical ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
+      exit={
+        vertical
+          ? { opacity: 0, x: -4, transition: spring.fast.exit }
+          : { opacity: 0, y: 4, transition: spring.fast.exit }
+      }
       transition={spring.fast}
     >
       <ValueBubble>{formatValue(value)}</ValueBubble>

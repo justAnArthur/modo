@@ -13,7 +13,7 @@ import { mergeRefs } from '../../../lib/merge-refs'
 import { useShape } from '../../../lib/shape-context'
 import { spring } from '../../../lib/springs'
 import { cn } from '../../../lib/utils'
-import { layoutX, PIP_SIZE, snapValue, useDelayedFlag } from './geometry'
+import { layoutPos, PIP_SIZE, snapValue, useDelayedFlag } from './geometry'
 import { ValueBubble } from './value-display'
 
 /** The comfortable engine's props: the pips / scrubber design. */
@@ -32,6 +32,8 @@ interface ComfortableSliderProps
   formatValue?: (v: number) => string
   disabled?: boolean
   name?: string
+  /** Called once an interaction ends (a pointer lifting, a keyboard step). */
+  onCommit?: () => void
 }
 
 const ComfortableSlider = forwardRef<HTMLDivElement, ComfortableSliderProps>(
@@ -47,6 +49,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, ComfortableSliderProps>(
       formatValue = String,
       disabled = false,
       name,
+      onCommit,
       className,
       ...props
     },
@@ -104,7 +107,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, ComfortableSliderProps>(
         if (!el) return
         // The padding box: CSS % and absolute left / width resolve against it.
         const w = el.clientWidth
-        const x = layoutX(clientX, el)
+        const x = layoutPos({ clientX, clientY: 0 }, el)
         if (w <= 0 || x === null) return
         const borderLeft = (el.offsetWidth - w) / 2
         const clamped = Math.max(0, Math.min(w, x - borderLeft))
@@ -196,10 +199,11 @@ const ComfortableSlider = forwardRef<HTMLDivElement, ComfortableSliderProps>(
     )
 
     const handlePointerUp = useCallback(() => {
+      if (dragging.current) onCommit?.()
       dragging.current = false
       setIsPressed(false)
       setHoverPreview(null)
-    }, [])
+    }, [onCommit])
 
     const handleResizePointerDown = useCallback(
       (e: React.PointerEvent<HTMLDivElement>) => {
@@ -230,10 +234,11 @@ const ComfortableSlider = forwardRef<HTMLDivElement, ComfortableSliderProps>(
     )
 
     const handleResizePointerUp = useCallback(() => {
+      if (handleDragging.current) onCommit?.()
       handleDragging.current = false
       setIsPressed(false)
       setHoverPreview(null)
-    }, [])
+    }, [onCommit])
 
     const handleRadixChange = useCallback(
       (newValues: number[]) => {
@@ -314,6 +319,7 @@ const ComfortableSlider = forwardRef<HTMLDivElement, ComfortableSliderProps>(
           <SliderPrimitive.Root
             value={[value]}
             onValueChange={v => handleRadixChange(v as number[])}
+            onValueCommitted={() => onCommit?.()}
             name={name}
             min={min}
             max={max}
