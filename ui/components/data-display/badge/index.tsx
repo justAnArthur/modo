@@ -12,12 +12,10 @@ import { AnimatePresence, animate, motion } from 'motion/react'
 import { forwardRef, type HTMLAttributes, type ReactNode, useLayoutEffect, useRef } from 'react'
 import { useReduceMotion } from '../../../lib/reduced-motion'
 import { useShape } from '../../../lib/shape-context'
-import { type SizeVariant, useSizeVariant } from '../../../lib/size-context'
+import { useSizeVariant } from '../../../lib/size-context'
 import { spring, springEnter } from '../../../lib/springs'
 import { cn } from '../../../lib/utils'
-import { type BadgeColor, badgeColors, badgeVariants } from './variants'
-
-type BadgeSize = SizeVariant
+import { type BadgeColor, type BadgeSize, type BadgeVariant, badgeColors, badgeVariants } from './variants'
 
 const enter = springEnter(spring.moderate)
 
@@ -78,7 +76,7 @@ interface BadgeProps
   extends Omit<HTMLAttributes<HTMLSpanElement>, 'color'>,
     Omit<VariantProps<typeof badgeVariants>, 'size'> {
   /** Visual style. Solid uses a tinted background; dot shows a colored indicator; outline is the dot badge's neutral frame without the dot (it ignores `color`). Defaults to `"solid"`. */
-  variant?: 'solid' | 'dot' | 'outline'
+  variant?: BadgeVariant
   /** Step on the size ladder (see Sizes). Defaults to the surrounding SizeProvider, else `"default"`. */
   size?: BadgeSize
   /** Color from the Tailwind palette: gray, red, orange, amber, yellow, lime, green, emerald, teal, cyan, blue, indigo, violet, purple, fuchsia, pink, rose. Defaults to `"gray"`. */
@@ -179,7 +177,7 @@ const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
 
 Badge.displayName = 'Badge'
 
-export type { BadgeColor } from './variants'
+export type { BadgeColor, BadgeVariant } from './variants'
 export { badgeColors, badgeVariants } from './variants'
 export type { BadgeProps, BadgeSize }
 export { Badge }

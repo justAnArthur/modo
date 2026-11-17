@@ -6,6 +6,7 @@
  */
 
 import { cva } from 'class-variance-authority'
+import type { SizeVariant } from '../../../lib/size-scale'
 
 export const badgeColors = {
   gray: 'var(--badge-gray)',
@@ -28,6 +29,12 @@ export const badgeColors = {
 } as const
 
 export type BadgeColor = keyof typeof badgeColors
+
+/** Solid, dot, or the dot badge's neutral frame without the dot. */
+export type BadgeVariant = 'solid' | 'dot' | 'outline'
+
+/** A step on the size ladder. */
+export type BadgeSize = SizeVariant
 
 export const badgeVariants = cva('inline-flex items-center weight-medium whitespace-nowrap', {
   variants: {

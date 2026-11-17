@@ -8,7 +8,6 @@
 'use client'
 
 import { Button as ButtonPrimitive } from '@base-ui/react/button'
-import type { VariantProps } from 'class-variance-authority'
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
 import {
   type ButtonHTMLAttributes,
@@ -27,18 +26,9 @@ import { resolveSlotTemplate, slotElement } from '../../../lib/slot'
 import { SpinnerGlyph } from '../../../lib/spinner-glyph'
 import { spring, springEnter } from '../../../lib/springs'
 import { cn } from '../../../lib/utils'
-import { buttonVariants } from './variants'
+import { type ButtonSize, type ButtonSizeCanonical, type ButtonVariant, buttonVariants } from './variants'
 
-type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'outline' | 'ghost' | 'destructive' | 'success' | 'link'
-
-type ButtonSizeCanonical = 'default' | 'compact' | 'icon' | 'icon-compact'
-
-/** `icon-sm` is the modo chrome's name for `icon-compact` (its shell Button contract). */
-type ButtonSize = ButtonSizeCanonical | 'icon-sm'
-
-interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
-    Omit<VariantProps<typeof buttonVariants>, 'size'> {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Visual style of the button. `outline` frames it in the control border; `destructive` and `success` tint the label and a wash of their hue; `link` is underlined-on-hover text at the control height. Defaults to `"primary"`. */
   variant?: ButtonVariant
   /** Step on the size ladder (36px default, 28px compact — see Sizes), or its square icon-only step. `"icon-sm"` is `"icon-compact"` (the modo chrome's name). Omitted, the button follows the surrounding SizeProvider. */
@@ -327,6 +317,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button'
 
+export type { ButtonSizeCanonical, ButtonVariantsOptions } from './variants'
 export { buttonVariants } from './variants'
 export type { ButtonProps, ButtonSize, ButtonVariant }
 export { Button }
