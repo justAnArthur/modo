@@ -50,6 +50,42 @@ const [due, setDue] = useState<string | null>('2026-10-09')
 <DatePicker valueType="string" value={due} onValueChange={setDue} />
 ```
 
+# Your own text
+
+`formatDate` writes the field's text; `labels` translates every word, the caption under a date that can't exist (`labels.invalid`) included.
+
+<div className="flex w-72 max-w-full flex-col gap-2">
+  <DatePicker
+    formatDate={date => date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+    defaultValue={new Date(2026, 9, 9)}
+  />
+  <DatePicker editable labels={{ date: 'Datum', calendar: 'Kalender öffnen', invalid: 'Kein gültiges Datum' }} locale="de" />
+</div>
+
+# Gaps, required, unselectable
+
+`hidden` days leave gaps and can't be typed; `required` and `unselectable` keep the picked day when it is pressed again.
+
+<div className="w-72 max-w-full">
+  <DatePicker hidden={{ dayOfWeek: [0, 6] }} unselectable defaultValue={new Date(2026, 9, 9)} />
+</div>
+
+# Form wiring
+
+`id`, the `aria-*` props and `onBlur` reach the field's control (its button, or an `editable` field's input), and `controlProps` adds a `ref` and any other attribute. `required` stops an empty native submit.
+
+```tsx
+<DatePicker
+  id={id}
+  name="due"
+  required
+  aria-describedby={hintId}
+  aria-invalid={!!error}
+  onBlur={field.onBlur}
+  controlProps={{ ref: field.ref, 'data-testid': 'due' }}
+/>
+```
+
 # German
 
 The locale sets the names, the formats shown and read ("12.10.2026"), and the week's first day.

@@ -17,6 +17,42 @@ The field writes the range the way the locale does.
   <DateRangePicker defaultValue={{ from: new Date(2026, 9, 9), to: new Date(2026, 9, 15) }} />
 </div>
 
+# Editable, with times
+
+`editable` makes the field two masked inputs, one per end; `withTime` adds the times, set by the hour and minute columns for the end being picked.
+
+<div className="flex w-96 max-w-full flex-col gap-2">
+  <DateRangePicker editable placeholder="Pick the dates" />
+  <DateRangePicker withTime hourCycle="h23" defaultValue={{ from: new Date(2026, 9, 9, 9, 0), to: new Date(2026, 9, 15, 17, 30) }} />
+</div>
+
+# Your own text
+
+`formatDate` writes each end in the field; `hidden` days leave gaps.
+
+<div className="w-80 max-w-full">
+  <DateRangePicker
+    formatDate={date => date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+    hidden={{ dayOfWeek: [0, 6] }}
+    defaultValue={{ from: new Date(2026, 9, 12), to: new Date(2026, 9, 16) }}
+  />
+</div>
+
+# In a form
+
+`name` submits both ends under one name; `startName` / `endName` name each on its own. `startInputProps` and `endInputProps` reach an `editable` field's inputs.
+
+```tsx
+<DateRangePicker
+  editable
+  startName="checkIn"
+  endName="checkOut"
+  required
+  startInputProps={{ ref: checkInRef, 'aria-describedby': hintId }}
+  endInputProps={{ id: 'check-out' }}
+/>
+```
+
 # German, this year only
 
 <div className="w-80 max-w-full">

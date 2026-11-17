@@ -14,3 +14,19 @@ import { de } from 'react-day-picker/locale'
 <div className="w-60 max-w-full">
   <DurationPicker locale={de} maxHours={8} minuteStep={15} placeholder="Dauer" />
 </div>
+
+# Shifts
+
+`minHours`, `maxHours` and `hourStep` shape the hour column; `formatValue` writes the field's text and `labels` names the columns.
+
+<div className="w-60 max-w-full">
+  <DurationPicker
+    minHours={4}
+    maxHours={12}
+    hourStep={2}
+    minuteStep={30}
+    formatValue={({ hours, minutes }) => `${hours}h ${minutes}m`}
+    labels={{ hour: 'Shift hours', minute: 'Extra minutes' }}
+    defaultValue={{ hours: 8, minutes: 0 }}
+  />
+</div>

@@ -1,21 +1,40 @@
 /*
  * Local addition (not part of Fluid Functionalism): a duration field with
  * scrolling hour and minute columns. Props after utegsk/ui's DurationPicker
- * (`maxHours`, `minuteStep`), its value a date-fns `Duration` instead of
- * decimal hours.
+ * (`minHours`, `maxHours`, `hourStep`, `minuteStep`, `formatValue`,
+ * `labels`, the form props, a BCP 47 `locale`), its value a date-fns
+ * `Duration` instead of decimal hours.
  */
 
 'use client'
 
 import { type Duration, formatDuration, type Locale } from 'date-fns'
-import { type RefObject, useMemo, useRef } from 'react'
-import { defaultLocale, fieldLabel } from '../../../../lib/date-locale'
+import { type AriaAttributes, type FocusEvent, type ReactNode, type RefObject, useMemo, useRef } from 'react'
+import { defaultLocale, fieldLabel, resolveLocale } from '../../../../lib/date-locale'
 import type { FieldVariant } from '../../../../lib/field-classes'
 import { ScrollColumn } from '../../../../lib/scroll-column'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
-import { ColumnsPanel, columnsPopupClass, PickerInput, PickerShell } from '../picker-shell'
+import {
+  ColumnsPanel,
+  columnsPopupClass,
+  type PickerControlAttributes,
+  PickerInput,
+  PickerShell,
+} from '../picker-shell'
 import { minuteOptions, pad } from '../time-columns'
+
+/** Every word the picker announces, for translating it. */
+interface DurationPickerLabels {
+  /** Names the panel's duration input. Defaults to the `placeholder`, else `"Duration"`. */
+  duration?: string
+  /** Names the hour column. Defaults to the locale's name for it. */
+  hour?: string
+  /** Names the minute column. Defaults to the locale's name for it. */
+  minute?: string
+  /** Names the panel's close button. Defaults to `"Close"`. */
+  close?: string
+}
 
 interface DurationPickerProps {
   /** The picked duration, a date-fns `Duration` (`{ hours, minutes }`); `null` when empty. */
@@ -24,14 +43,38 @@ interface DurationPickerProps {
   defaultValue?: Duration | null
   /** Called with the new duration, or `null` when the field is cleared. */
   onValueChange?: (value: Duration | null) => void
-  /** The longest duration's hours: the hour column runs from 0 to it. Defaults to `99`. */
+  /** The shortest duration's hours: the hour column starts at it, and a minute picked on an empty field takes it. Defaults to `0`. */
+  minHours?: number
+  /** Steps between the hour column's options, from `minHours`. Defaults to `1`. */
+  hourStep?: number
+  /** The longest duration's hours: the hour column runs up to it. Defaults to `99`. */
   maxHours?: number
   /** Steps between the minute column's options. Defaults to `1`. */
   minuteStep?: number
-  /** A react-day-picker / date-fns locale: the field spells the duration out in it ("1 Stunde 30 Minuten"). Defaults to `enUS`. */
-  locale?: Locale
+  /** A react-day-picker / date-fns locale, or a BCP 47 tag (`"sk"`) read through Intl: the field spells the duration out in it ("1 Stunde 30 Minuten"; a tag spells it in English). Defaults to `enUS`. */
+  locale?: Locale | string
+  /** The field's text for a duration, in place of the locale's words: `(value) => …`, given `{ hours, minutes }`. */
+  formatValue?: (value: Duration) => ReactNode
+  /** Every word the picker announces (`duration`, `hour`, `minute`, `close`), for translating it. Defaults to English and the locale's field names. */
+  labels?: DurationPickerLabels
   /** Shown while empty. */
   placeholder?: string
+  /** Shows the value but never opens. Defaults to the surrounding Field's `readOnly`. */
+  readOnly?: boolean
+  /** A native form won't submit while the value is empty. Defaults to the surrounding Field's `required`. */
+  required?: boolean
+  /** Names the field's button in place of its label. */
+  'aria-label'?: string
+  /** Ids of the elements naming the field's button, in place of its own label. */
+  'aria-labelledby'?: string
+  /** Ids of the elements describing the field's button (a hint, an error message). */
+  'aria-describedby'?: string
+  /** Marks the value invalid, as `invalid` does. */
+  'aria-invalid'?: AriaAttributes['aria-invalid']
+  /** Called when the field's button loses focus. */
+  onBlur?: (event: FocusEvent<HTMLElement>) => void
+  /** Attributes for the field's button: a `ref`, `data-*`, `autoFocus`, `tabIndex`, handlers (they run before the picker's own). */
+  controlProps?: PickerControlAttributes
   /** Disables the field. Defaults to `false`. */
   disabled?: boolean
   /** Framed at rest, or invisible until hovered or focused. Defaults to `"bordered"`. */
@@ -79,9 +122,13 @@ function DurationPicker({
   value: valueProp,
   defaultValue = null,
   onValueChange,
+  minHours = 0,
   maxHours = 99,
+  hourStep = 1,
   minuteStep = 1,
-  locale = defaultLocale,
+  locale: localeProp = defaultLocale,
+  formatValue,
+  labels,
   open: openProp,
   defaultOpen = false,
   onOpenChange,
@@ -90,28 +137,32 @@ function DurationPicker({
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
   const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
   const input = useRef<HTMLInputElement>(null)
-  const hours = value?.hours ?? 0
+  const locale = resolveLocale(localeProp)
+  const hours = value?.hours ?? minHours
   const minutes = value?.minutes ?? 0
 
-  const display = value
-    ? hours || minutes
+  const spelled = () =>
+    hours || minutes
       ? formatDuration({ hours, minutes }, { locale, format: ['hours', 'minutes'] })
       : formatDuration({ minutes: 0 }, { locale, format: ['minutes'], zero: true })
-    : ''
+  const display = value ? (formatValue?.({ hours, minutes }) ?? spelled()) : ''
 
   const readDuration = (text: string) => {
     const match = TYPED.exec(text)
     const h = Number(match?.[1])
     const m = Number(match?.[2] ?? 0)
-    if (!match || h > maxHours || m > 59) return false
+    if (!match || h < minHours || h > maxHours || m > 59) return false
     setValue({ hours: h, minutes: m })
     return true
   }
 
-  const hourOptions = useMemo(
-    () => Array.from({ length: maxHours + 1 }, (_, h) => ({ value: h, label: String(h) })),
-    [maxHours],
-  )
+  const hourOptions = useMemo(() => {
+    const step = Math.max(1, hourStep)
+    return Array.from({ length: Math.floor((maxHours - minHours) / step) + 1 }, (_, i) => {
+      const h = minHours + i * step
+      return { value: h, label: String(h) }
+    })
+  }, [minHours, maxHours, hourStep])
   const minutesList = useMemo(() => minuteOptions(minuteStep), [minuteStep])
 
   return (
@@ -121,11 +172,12 @@ function DurationPicker({
       onOpenChange={setOpen}
       icon="clock"
       display={display}
+      closeLabel={labels?.close}
       formValue={value ? `PT${hours}H${minutes}M` : undefined}
       header={
         <PickerInput
           ref={input}
-          aria-label={shell.placeholder ?? 'Duration'}
+          aria-label={labels?.duration ?? shell.placeholder ?? 'Duration'}
           placeholder="0:00"
           formatted={value ? `${hours}:${pad(minutes)}` : ''}
           onText={readDuration}
@@ -139,14 +191,14 @@ function DurationPicker({
     >
       <ColumnsPanel>
         <ScrollColumn
-          label={fieldLabel(locale, 'hour')}
+          label={labels?.hour ?? fieldLabel(locale, 'hour')}
           options={hourOptions}
           value={value ? hours : null}
           onValueChange={h => setValue({ hours: h, minutes })}
           className="min-w-0 flex-1"
         />
         <ScrollColumn
-          label={fieldLabel(locale, 'minute')}
+          label={labels?.minute ?? fieldLabel(locale, 'minute')}
           options={minutesList}
           value={value ? minutes : null}
           onValueChange={m => setValue({ hours, minutes: m })}
@@ -157,7 +209,7 @@ function DurationPicker({
   )
 }
 
-export type { DurationPickerProps }
+export type { DurationPickerLabels, DurationPickerProps }
 export { DurationPicker }
 
 export default DurationPicker

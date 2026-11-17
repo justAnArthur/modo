@@ -116,6 +116,7 @@ function Calendar({
   columnsSide = 'end',
   extraColumns,
   extraColumnsSide = 'end',
+  columnLabels,
   className,
   ...props
 }: DayPickerProps & {
@@ -129,6 +130,8 @@ function Calendar({
   extraColumns?: (orientation: 'vertical' | 'horizontal') => ReactNode
   /** Which side of the days the extra columns stand on, outside the month and year columns when they share it. Defaults to `'end'`. */
   extraColumnsSide?: 'start' | 'end'
+  /** Accessible names of the month and year columns, for translating them. Default to the locale's names for the fields. */
+  columnLabels?: { month?: string; year?: string }
   /** Classes for the calendar's box. */
   className?: string
 }) {
@@ -220,7 +223,7 @@ function Calendar({
   const monthColumn = (
     <ScrollColumn
       key="month"
-      label={fieldLabel(locale, 'month')}
+      label={columnLabels?.month ?? fieldLabel(locale, 'month')}
       options={months}
       value={picked && isSameYear(picked, new Date(yearInView, 0, 1)) ? picked.getMonth() : null}
       follow={monthInView}
@@ -233,7 +236,7 @@ function Calendar({
   const yearColumn = (
     <ScrollColumn
       key="year"
-      label={fieldLabel(locale, 'year')}
+      label={columnLabels?.year ?? fieldLabel(locale, 'year')}
       options={years}
       value={picked?.getFullYear() ?? null}
       follow={yearInView}

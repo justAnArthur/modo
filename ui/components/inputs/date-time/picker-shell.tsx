@@ -6,16 +6,27 @@
  * text control instead of a button, and only its leading icon, an
  * `InputAction`, opens the panel; the panel still anchors to, and grows out
  * of, the whole field.
+ *
+ * Form wiring: `controlProps` and the `aria-*` / `onBlur` props reach the
+ * field's button (an editable picker puts them on its own input through
+ * `controlAttributes`). `required` on an empty field renders a visually
+ * hidden required input, so a native form won't submit; the browser's report
+ * hands focus to the field.
  */
 
 'use client'
 
 import { Popover } from '@base-ui/react/popover'
 import {
+  type AriaAttributes,
   type ButtonHTMLAttributes,
+  type FocusEvent,
   forwardRef,
+  type HTMLAttributes,
   type ReactElement,
   type ReactNode,
+  type Ref,
+  type RefCallback,
   type RefObject,
   useId,
   useRef,
@@ -24,6 +35,7 @@ import {
 import { focusControlOnPress, useFieldBox, useFieldState } from '../../../lib/field-box'
 import { type FieldVariant, fieldIconClasses } from '../../../lib/field-classes'
 import { type IconName, useIcon } from '../../../lib/icon-context'
+import { useMergeRefs } from '../../../lib/merge-refs'
 import {
   type OpenChangeDetails,
   OverlayContext,
@@ -42,6 +54,17 @@ import Button from '../../actions/button'
 import Sheet from '../../overlays/sheet'
 import Input, { InputAction, InputAdornment, type InputProps } from '../input'
 
+/** Attributes for a picker's field control (its button, or an editable field's input), `ref` and `data-*` included. */
+type PickerControlAttributes = Omit<
+  HTMLAttributes<HTMLElement>,
+  'children' | 'dangerouslySetInnerHTML' | 'defaultValue' | 'defaultChecked'
+> & {
+  ref?: Ref<HTMLElement>
+  /** An editable field's input: the browser's autofill hint. */
+  autoComplete?: string
+  [data: `data-${string}`]: string | number | boolean | undefined
+}
+
 /** What every picker hands its shell unchanged. */
 interface PickerFieldOptions extends MorphProps {
   size?: SizeVariant
@@ -56,7 +79,48 @@ interface PickerFieldOptions extends MorphProps {
   id?: string
   /** Classes for the field. */
   className?: string
+  /** A native form won't submit while the value is empty. */
+  required?: boolean
+  /** Called when the field's control loses focus. */
+  onBlur?: (event: FocusEvent<HTMLElement>) => void
+  'aria-label'?: string
+  'aria-labelledby'?: string
+  'aria-describedby'?: string
+  /** Marks the value invalid, as `invalid` does. */
+  'aria-invalid'?: AriaAttributes['aria-invalid']
+  /** Attributes (and a `ref`) for the field's control. */
+  controlProps?: PickerControlAttributes
 }
+
+type PickerControlOptions = Pick<
+  PickerFieldOptions,
+  'controlProps' | 'onBlur' | 'aria-label' | 'aria-labelledby' | 'aria-describedby'
+>
+
+/** The control's attributes from a picker's props: `controlProps` under the named ones, its `onBlur` before the picker's. */
+function controlAttributes({
+  controlProps,
+  onBlur,
+  'aria-label': label,
+  'aria-labelledby': labelledBy,
+  'aria-describedby': describedBy,
+}: PickerControlOptions): PickerControlAttributes {
+  const named = { 'aria-label': label, 'aria-labelledby': labelledBy, 'aria-describedby': describedBy }
+  return {
+    ...controlProps,
+    ...Object.fromEntries(Object.entries(named).filter(([, value]) => value !== undefined)),
+    ...(onBlur && {
+      onBlur: (event: FocusEvent<HTMLElement>) => {
+        controlProps?.onBlur?.(event)
+        onBlur(event)
+      },
+    }),
+  }
+}
+
+/** `invalid`, or `true` when `aria-invalid` marks the value invalid; unset stays unset, for an enclosing Field. */
+const invalidOf = (invalid: boolean | undefined, ariaInvalid: AriaAttributes['aria-invalid']) =>
+  ariaInvalid !== undefined && ariaInvalid !== false && ariaInvalid !== 'false' ? true : invalid
 
 interface PickerShellProps extends PickerFieldOptions {
   open: boolean
@@ -64,9 +128,11 @@ interface PickerShellProps extends PickerFieldOptions {
   /** The field's leading icon. */
   icon: IconName
   /** The formatted value; empty shows the placeholder. */
-  display: string
+  display: ReactNode
   /** What a form receives under `name`: one entry per string, none while empty. */
   formValue?: string | string[]
+  /** A name per `formValue` entry, in place of `name` (a range's `startName` / `endName`). */
+  formNames?: (string | undefined)[]
   /** The panel header's inputs; the shell adds the close button after them. */
   header: ReactNode
   /** What the panel focuses when it opens on a desktop (its header input). */
@@ -95,31 +161,88 @@ function PickerShell({
   size,
   name,
   formValue,
+  formNames,
   disabled: disabledProp,
   readOnly: readOnlyProp,
+  required: requiredProp,
+  invalid,
   onOpenChange,
+  controlProps,
+  onBlur,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
   ...props
 }: PickerShellProps) {
   const mobile = useIsMobile(640)
   // Resolved here as well as in the box: the trigger, not only the field, must turn off.
-  const { disabled, readOnly } = useFieldState({ disabled: disabledProp, readOnly: readOnlyProp })
+  const { disabled, readOnly, required } = useFieldState({
+    disabled: disabledProp,
+    readOnly: readOnlyProp,
+    required: requiredProp,
+  })
   const values = formValue === undefined ? [] : [formValue].flat()
+  const button = useRef<HTMLElement>(null)
+  const attributes = controlAttributes({
+    controlProps,
+    onBlur,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledBy,
+    'aria-describedby': ariaDescribedBy,
+  })
+  const ref = useMergeRefs(button, attributes.ref)
   const panelProps = {
     ...props,
     disabled,
     readOnly,
+    invalid: invalidOf(invalid, ariaInvalid),
+    // An editable picker puts the attributes on its own input.
+    control: props.editor ? undefined : { ...attributes, ref },
     onOpenChange: (next: boolean) => (next && readOnly ? undefined : onOpenChange(next)),
   }
 
   return (
     <SizeScope size={size}>
       {mobile ? <PickerSheet {...panelProps} /> : <PickerPopover {...panelProps} />}
-      {name && values.map((value, i) => <input key={i} type="hidden" name={name} value={value} disabled={disabled} />)}
+      {values.map((value, i) => {
+        const entry = formNames?.[i] ?? name
+        return entry && <input key={i} type="hidden" name={entry} value={value} disabled={disabled} />
+      })}
+      {required && !values.length && !props.editor && (
+        // A hidden input can't be required: this one is a text input out of sight, handing focus to the field.
+        <input
+          aria-hidden
+          tabIndex={-1}
+          required
+          value=""
+          onChange={() => {}}
+          onFocus={() => button.current?.focus()}
+          disabled={disabled}
+          className="sr-only"
+        />
+      )}
     </SizeScope>
   )
 }
 
-type PanelProps = Omit<PickerShellProps, 'size' | 'name' | 'formValue'>
+type PanelProps = Omit<
+  PickerShellProps,
+  | 'size'
+  | 'name'
+  | 'formValue'
+  | 'formNames'
+  | 'required'
+  | 'controlProps'
+  | 'onBlur'
+  | 'aria-label'
+  | 'aria-labelledby'
+  | 'aria-describedby'
+  | 'aria-invalid'
+> & {
+  /** The field button's attributes, from `controlAttributes`; unset for an editable field. */
+  control?: Omit<PickerControlAttributes, 'ref'> & { ref?: RefCallback<HTMLElement> }
+}
 
 type PickerFieldProps = Pick<
   PanelProps,
@@ -144,7 +267,7 @@ const PickerField = forwardRef<HTMLButtonElement, PickerFieldProps>(
         type="button"
         id={id}
         // Inside a Field, its label names the button, followed by the value it shows.
-        aria-labelledby={box.labelId ? `${box.labelId} ${id}` : undefined}
+        aria-labelledby={box.labelId && !props['aria-label'] ? `${box.labelId} ${id}` : undefined}
         {...box.props}
         // Base UI's trigger props (open state, handlers, aria) arrive here.
         {...props}
@@ -276,6 +399,7 @@ function PickerPopover({
   editor,
   editorRef,
   triggerLabel,
+  control,
   ...field
 }: PanelProps) {
   const root = useOverlayRoot({ open, onOpenChange })
@@ -299,7 +423,10 @@ function PickerPopover({
             trigger={button => <Popover.Trigger disabled={field.disabled} render={button} />}
           />
         ) : (
-          <Popover.Trigger disabled={field.disabled} render={<PickerField {...field} />} />
+          <Popover.Trigger
+            disabled={field.disabled}
+            render={<PickerField {...field} {...control} className={cn(field.className, control?.className)} />}
+          />
         )}
         <PickerPanel
           anchor={editor ? fieldRef : undefined}
@@ -369,6 +496,7 @@ function PickerSheet({
   editor,
   editorRef,
   triggerLabel,
+  control,
   ...field
 }: PanelProps) {
   return (
@@ -382,7 +510,10 @@ function PickerSheet({
           trigger={button => <Sheet.Trigger disabled={field.disabled} render={button} />}
         />
       ) : (
-        <Sheet.Trigger disabled={field.disabled} render={<PickerField {...field} />} />
+        <Sheet.Trigger
+          disabled={field.disabled}
+          render={<PickerField {...field} {...control} className={cn(field.className, control?.className)} />}
+        />
       )}
       <Sheet.Content className="gap-2 p-3 pt-3">
         <div dir={dir} className="flex min-h-0 flex-col gap-2">
@@ -456,5 +587,5 @@ const PickerInput = forwardRef<HTMLInputElement, PickerInputProps>(
 )
 PickerInput.displayName = 'PickerInput'
 
-export type { PickerFieldOptions }
-export { ColumnsPanel, columnsPopupClass, PickerInput, PickerShell }
+export type { PickerControlAttributes, PickerFieldOptions }
+export { ColumnsPanel, columnsPopupClass, controlAttributes, invalidOf, PickerInput, PickerShell }

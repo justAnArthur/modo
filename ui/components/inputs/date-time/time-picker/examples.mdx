@@ -24,3 +24,16 @@ A German locale writes 24-hour times.
 <div className="w-48 max-w-full">
   <TimePicker hourCycle="h23" minuteStep={15} placeholder="Start time" />
 </div>
+
+# Your own text
+
+`formatTime` writes the field's text from `"HH:mm"`; `labels` names the input and the columns.
+
+<div className="w-48 max-w-full">
+  <TimePicker
+    formatTime={value => `${value} h`}
+    labels={{ time: 'Čas', hour: 'Hodina', minute: 'Minúta', close: 'Zavrieť' }}
+    locale="sk"
+    defaultValue="09:30"
+  />
+</div>
