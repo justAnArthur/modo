@@ -9,8 +9,8 @@
 
 import Sidebar from '@justanarthur/modo-ui/components/navigation/sidebar'
 import { useState } from 'react'
-import SessionBoard, { type BoardView, type SessionFilter } from '../../blocks/session-board'
-import SessionSidebar from '../../blocks/session-sidebar'
+import SessionBoard, { type BoardView, type SessionFilter } from '../../blocks/sessions/session-board'
+import SessionSidebar from '../../blocks/sessions/session-sidebar'
 import type { Session } from '../../lib/types'
 import { ARCHIVED, GROUPS, PINNED, PROFILES, SESSIONS } from '../../mock/mock'
 

@@ -32,7 +32,7 @@ import { useControllableState } from '../../../lib/use-controllable-state'
 import { type UseFluidHoverReturn, useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
 import { WeightLabel } from '../../../lib/weight-label'
-import { SizeScope } from '../../../primitives/sizes'
+import { SizeScope } from '../../../primitives/systems/sizes'
 
 /** One node of the tree. */
 interface TreeItem {

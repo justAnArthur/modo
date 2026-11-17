@@ -8,9 +8,9 @@
 'use client'
 
 import DesktopShell from '@justanarthur/modo-ui/blocks/desktop-shell'
-import Badge from '@justanarthur/modo-ui/components/badge'
-import Button from '@justanarthur/modo-ui/components/button'
-import Diff from '@justanarthur/modo-ui/components/diff'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import Badge from '@justanarthur/modo-ui/components/data-display/badge'
+import Diff from '@justanarthur/modo-ui/components/data-display/diff'
 import EditableText from '@justanarthur/modo-ui/components/inputs/editable-text'
 import {
   DropdownContent,
@@ -19,17 +19,17 @@ import {
   MenuItem,
 } from '@justanarthur/modo-ui/components/overlays/dropdown'
 import Tooltip from '@justanarthur/modo-ui/components/overlays/tooltip'
-import Resizable from '@justanarthur/modo-ui/primitives/resizable'
+import Resizable from '@justanarthur/modo-ui/primitives/layout/resizable'
 import { Fragment, useState } from 'react'
-import AgentPrompt from '../../blocks/agent-prompt'
-import CommandPalette from '../../blocks/command-palette'
-import Composer from '../../blocks/composer'
-import FailureState, { type FailureKind } from '../../blocks/failure-states'
-import SessionSidebar from '../../blocks/session-sidebar'
-import ShortcutsSheet from '../../blocks/shortcuts-sheet'
-import SidePane from '../../blocks/side-pane'
-import Transcript from '../../blocks/transcript'
-import TranscriptSearch from '../../blocks/transcript-search'
+import AgentPrompt from '../../blocks/conversation/agent-prompt'
+import Composer from '../../blocks/conversation/composer'
+import FailureState, { type FailureKind } from '../../blocks/conversation/failure-states'
+import Transcript from '../../blocks/conversation/transcript'
+import TranscriptSearch from '../../blocks/conversation/transcript-search'
+import CommandPalette from '../../blocks/dialogs/command-palette'
+import ShortcutsSheet from '../../blocks/dialogs/shortcuts-sheet'
+import SidePane from '../../blocks/panes/side-pane'
+import SessionSidebar from '../../blocks/sessions/session-sidebar'
 import { useIcon } from '../../lib/icons'
 import type { PaletteItem, PaneId, Session } from '../../lib/types'
 import { DemoReply } from '../../mock/demo-reply'
@@ -307,7 +307,7 @@ export default function Workspace({
         <Composer
           {...COMPOSER}
           branch={session?.branch}
-          streaming={pending === 'none' && !nextStep}
+          status={pending === 'none' && !nextStep ? 'streaming' : 'idle'}
           onSend={text => setSent([...sent, text])}
         />
       </div>

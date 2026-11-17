@@ -27,10 +27,11 @@ components/<group>/<name>/
   <name>.css         optional, auto-injected; structure only (visuals through tokens)
 ```
 
-Groups are `inputs`, `navigation`, `overlays`; ungrouped items are core display pieces. The id stays
-`<name>`, so moving between groups changes no URL. Imports: `lib/*` relatively (`../../../lib/…` from a
-grouped item), other items by folder (`../../button`, `../../overlays/popover`), primitives as
-`../../../primitives/sizes`.
+Every item sits in a group: components in `actions`, `inputs`, `navigation`, `overlays`,
+`data-display`, `feedback`, `containers`; primitives in `systems`, `layout`, `content`. The id stays
+`<name>`, so moving between groups changes no docs URL (the package subpath does follow the folder).
+Imports: `lib/*` relatively (`../../../lib/…` from a grouped item), other items by folder
+(`../../actions/button`, `../../overlays/popover`), primitives as `../../../primitives/systems/sizes`.
 
 ## Header comment
 
@@ -187,7 +188,7 @@ import {
 } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
 import { WeightLabel } from '../../../lib/weight-label'
-import { SizeScope } from '../../../primitives/sizes'
+import { SizeScope } from '../../../primitives/systems/sizes'
 import Button from '../../button'
 
 // Literal tables: UnoCSS only generates the classes it can read whole.
@@ -413,7 +414,7 @@ The mechanical pass every ported item went through (PORTING › Items):
    the commit. Components newer than the port's pin (`b3587bd`) may lean on upstream libs this port
    lacks (`typeClass`, `nestedRadius`, `useSize().field`); port those pieces or translate them.
 2. Keep `"use client"` (below the header); rewrite `@/lib/*` and `@/hooks/*` to `../../../lib/*`, `SizeProvider` to
-   `primitives/sizes`, `Elevated` to `primitives/surface`, `@/registry/radix/*` to the Base sibling,
+   `primitives/systems/sizes`, `Elevated` to `primitives/systems/surface`, `@/registry/radix/*` to the Base sibling,
    `framer-motion` to `motion/react`, `next/link` to an anchor.
 3. Translate styling to tokens: `text-[Npx]` → `text-<role>[-compact]`, `fontVariationSettings` →
    `weight-*`, `duration-80|160|240` → `duration-<tier>`, hex rings → `ring-focus-ring`. Sizes go on
@@ -435,7 +436,7 @@ The mechanical pass every ported item went through (PORTING › Items):
 ## Adding a token
 
 1. The var in `tokens/<group>.css` (colors as one `light-dark(light, dark)` value on `:root, .light,
-   .dark`; a shadow that differs per scheme goes in `primitives/surface/surface.css` with the per-scheme
+   .dark`; a shadow that differs per scheme goes in `primitives/systems/surface/surface.css` with the per-scheme
    re-pointing).
 2. Its utility in `uno.config.ts`: `theme.colors` / `theme.shadow` for a color or shadow (pointing at the
    var), a `rules` entry for a new utility family.

@@ -7,7 +7,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import Button from '../../button'
+import Button from '../../actions/button'
 import Combobox from './index'
 
 const PEOPLE = [

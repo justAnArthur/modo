@@ -24,8 +24,8 @@ import {
 } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
 import { WeightLabel } from '../../../lib/weight-label'
-import { SizeScope } from '../../../primitives/sizes'
-import Button from '../../button'
+import { SizeScope } from '../../../primitives/systems/sizes'
+import Button from '../../actions/button'
 import { Input } from '../../inputs/input'
 
 // Literal tables: UnoCSS only generates the classes it can read whole.

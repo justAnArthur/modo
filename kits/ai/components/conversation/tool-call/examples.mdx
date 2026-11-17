@@ -1,0 +1,48 @@
+import ToolCall from './index'
+import Diff from '@justanarthur/modo-ui/components/data-display/diff'
+import Code from '@justanarthur/modo-ui/primitives/content/code'
+
+# Run of calls
+
+One hover highlight runs down the run; each call with output opens in place. An Edit shows its diff, a shell call its output.
+
+<div className="w-full max-w-2xl">
+  <ToolCall.Group defaultValue={['edit']}>
+    <ToolCall index={0} value="read" tool="Read" summary="ui/components/data-display/badge/index.tsx" meta="214 lines" />
+    <ToolCall index={1} value="edit" tool="Edit" summary="ui/components/data-display/badge/index.tsx" meta="+1 −1">
+      <Diff lineNumbers={false} patch={`@@ -56,3 +56,3 @@
+-const badgeVariants = cva('inline-flex items-center', {
++const badgeVariants = cva('inline-flex items-center weight-medium', {
+   variants: {`} />
+    </ToolCall>
+    <ToolCall index={2} value="lint" tool="Bash" summary="bun run lint" meta="exit 0">
+      <Code language="sh">{'Checked 412 files in 180ms. No fixes applied.'}</Code>
+    </ToolCall>
+  </ToolCall.Group>
+</div>
+
+# States
+
+Running turns the Spinner, waiting shows the warning dot, a failed or denied call its mark.
+
+<div className="w-full max-w-2xl">
+  <ToolCall.Group>
+    <ToolCall index={0} value="test" tool="Bash" summary="bun run test" status="error" meta="exit 1">
+      <Code language="sh">{'✗ parser › keeps @values\n  Expected: "a, b"\n  Received: undefined'}</Code>
+    </ToolCall>
+    <ToolCall index={1} value="write" tool="Write" summary="ui/components/data-display/badge/badge.test.ts" status="waiting" />
+    <ToolCall index={2} value="grep" tool="Grep" summary={'"@values" lib/src'} status="running" />
+    <ToolCall index={3} value="push" tool="Bash" summary="git push --force" status="denied" />
+  </ToolCall.Group>
+</div>
+
+# Any tool
+
+A name it doesn't know takes the `icon` you pass, else the wrench.
+
+<div className="w-full max-w-2xl">
+  <ToolCall.Group>
+    <ToolCall index={0} value="calendar" tool="calendar.list_events" icon="calendar" summary="this week" meta="12 events" />
+    <ToolCall index={1} value="deploy" tool="deploy" summary="preview" meta="38s" />
+  </ToolCall.Group>
+</div>

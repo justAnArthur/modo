@@ -10,7 +10,7 @@
 
 import { History } from 'lucide-react'
 import { useRef, useState } from 'react'
-import Button from '../../button'
+import Button from '../../actions/button'
 import Input from '../../inputs/input'
 import Popover from './index'
 

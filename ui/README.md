@@ -24,13 +24,13 @@ import Dialog from '@justanarthur/modo-ui/components/overlays/dialog'
 ```
 
 Subpaths follow the docs' tiers and groups: `primitives/*`, `components/*`
-(`components/button`, `components/inputs/select`, …) and `blocks/*`
+(`components/actions/button`, `components/inputs/select`, …) and `blocks/*`
 (`blocks/sidebar-app`). The shared systems are subpaths too, for components of
 your own: `lib/utils`, `lib/springs`, `lib/size-scale`, `lib/shape-classes`,
 `lib/field-classes`, `lib/field-box`, `lib/size-context`, `lib/shape-context`,
 `lib/icon-context` (`useIcon`, `useIcons`, `IconProvider`), `lib/use-controllable-state`, `lib/use-morph`, `lib/surface-classes` and
 `lib/goo-indicator`; Button's, Badge's and FileDropzone's pure tables are
-`components/button/variants`, `components/badge/variants` and
+`components/actions/button/variants`, `components/data-display/badge/variants` and
 `components/inputs/file-dropzone/variants`.
 
 ## Styles
@@ -189,12 +189,6 @@ The same conventions run through every component:
   `TabsList`, `SidebarMenuButton`, …) rather than the dotted form
   (`Card.Header`): React can't read a property off a client module from the
   server. Both are exported; the dotted form works in client components.
-- `pdfjs-dist` is an optional peer, used only for PDF thumbnails in
-  `InputMessage` (`npm install pdfjs-dist`). It loads lazily on the first PDF
-  attachment, and fetches its worker from `cdn.jsdelivr.net`. Without it, a
-  PDF attachment shows the file icon and a console warning. Webpack-based
-  builds (Next.js) resolve the dynamic import at build time, so there install
-  `pdfjs-dist` or alias it to `false`.
 
 ## Hooks for your own components
 
@@ -206,6 +200,7 @@ show them):
 |---|---|
 | `useMorph(open, origin, options)` | The morph engine: grows an overlay's surface from its source (the trigger, the press point, an edge) to its own box on a spring tier, with a liquid goo neck by default, and holds it through the exit. |
 | `MorphSurface` | Renders a `useMorph` state: the goo-filtered shape, the surface's background and shadow, the content clipped by it. |
+| `GooFilter` | The SVG goo filter behind the morph and the indicators, for shapes of your own that melt together (`filter: url(#id)` on their parent). |
 | `GooIndicator` | An indicator (a selection, a thumb) that travels between items' rects and melts like a drop of liquid on the way. |
 | `useReduceMotion()` | The one reduced-motion read: the OS setting, or a `<MotionConfig reducedMotion>` asking for it. |
 | `useControllableState(value, defaultValue, onChange)` | Controlled and uncontrolled state in one, Base UI style: controlled while `value` isn't `undefined`, reporting every change either way. |
@@ -218,6 +213,7 @@ show them):
 | `useToast()`, `toast` | Show toasts: `useToast()` inside a `Toast`, or the global `toast` anywhere once `<Toast manager={toast} />` is mounted (one per app). Both have `show`, `success`, `error`, `warning`, `info`, `loading`, `promise`, `update` and `close`. |
 | `Sortable`, `useSortableHandle`, `VirtualList`, `Resizable` | Building blocks for lists and layouts: reorder by pointer or keyboard (the handle props for a button of your own), render only the rows in view (a ref's `scrollToIndex`), and split a region into panes that resize. |
 | `Diff`, `Markdown`, `LogView`, `parsePatch`, `parseAnsi` | Text on the page: a unified patch, a markdown string (on `marked`, raw HTML stays text, `streaming` for text that is still arriving) and terminal output with ANSI colors that follows its tail; the parsers for your own rendering. |
+| `useAutosizeTextarea(ref, { minRows, maxRows }, deps)`, `useTouchPrimary()` | A textarea that grows with its text and then scrolls; whether the primary pointer is touch, to skip pointer-only machinery. |
 | `cn` | Class merging that knows the token utilities (`cn('text-body', 'text-muted-foreground')` keeps both). |
 
 ## Documenting ui items in your own modo site
@@ -226,7 +222,7 @@ A [modo](https://github.com/justAnArthur/modo/tree/main/lib) site can list ui
 items next to its own. Re-export one as an item:
 
 ```tsx
-// components/button/index.tsx
+// components/actions/button/index.tsx
 export { default } from '@justanarthur/modo-ui/components/button'
 ```
 

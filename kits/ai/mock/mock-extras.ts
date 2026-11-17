@@ -4,10 +4,10 @@
  * talks to a backend.
  */
 
-import type { InboxItem } from '../blocks/inbox'
-import type { SignInStatus } from '../blocks/profile-onboarding'
-import type { ShortcutGroup } from '../blocks/shortcuts-sheet'
-import type { TranscriptSession } from '../blocks/transcript-search'
+import type { TranscriptSession } from '../blocks/conversation/transcript-search'
+import type { ShortcutGroup } from '../blocks/dialogs/shortcuts-sheet'
+import type { SignInStatus } from '../blocks/profiles/profile-onboarding'
+import type { InboxItem } from '../blocks/sessions/inbox'
 
 const ESC = String.fromCharCode(27)
 const dim = (s: string) => `${ESC}[2m${s}${ESC}[0m`

@@ -16,7 +16,7 @@
 'use client'
 
 import { type ReactNode, useState } from 'react'
-import Button from '../../components/button'
+import Button from '../../components/actions/button'
 import Sidebar from '../../components/navigation/sidebar'
 import { DropdownContent, DropdownMenu, DropdownTrigger, MenuItem } from '../../components/overlays/dropdown'
 import Tooltip from '../../components/overlays/tooltip'

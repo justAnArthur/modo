@@ -1,0 +1,23 @@
+import { SizeProvider } from '@justanarthur/modo-ui/primitives/systems/sizes'
+import { PANE_CHANGES } from '../../../mock/mock-panes'
+import ChangesPane from './index'
+
+# Changes
+
+Staged and unstaged files under a commit field; hover a row to stage, unstage or revert it. The picked file's diff wraps its long lines; the toggle above it scrolls them instead.
+
+<div className="w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background p-2">
+  <SizeProvider size="compact">
+    <ChangesPane changes={PANE_CHANGES} />
+  </SizeProvider>
+</div>
+
+# Clean tree
+
+With nothing changed, the pane says the tree matches the last commit.
+
+<div className="w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background p-2">
+  <SizeProvider size="compact">
+    <ChangesPane changes={[]} />
+  </SizeProvider>
+</div>

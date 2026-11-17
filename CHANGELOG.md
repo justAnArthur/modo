@@ -25,6 +25,44 @@ Fixes:
 - Tokens `--sunken` (`bg-sunken`) and `--radius-shell` / `--radius-pill-shell` (`rounded-shell|pill-shell`); icons `file-diff` and `square`.
 - `useIcons()` (`lib/icon-context`) returns the whole icon map, for a kit that extends the set; `lib/surface-classes` (`SURFACE_BG`, `SURFACE_SHADOW`) is a subpath; the `SidebarApp` block exports its `SidebarSearchField` and `SidebarInsetTopbar`.
 - `VirtualList` and `LogView` measure in the element's own pixels, so a list inside a preview scaled with CSS `zoom` keeps its rows apart.
+- Barrel exports `GooFilter`, `useAutosizeTextarea` and `useTouchPrimary`, for a kit and components of your own.
+
+Breaking:
+
+- **The AI items left modo-ui for `@justanarthur/modo-ui-ai`.** `InputMessage` (with `FileThumbnail` and the types `InputMessageProps`, `InputMessageSlotContext`, `InputMessageStatus`, `QueuedMessage`) is the ai kit's `Composer.Draft` (`ComposerDraft`), and the Composer block takes its draft props; `ThinkingIndicator` (`ThinkingIndicatorProps`) is the ai kit's `Message.Working`, its goo look only. The subpaths `components/AI/input-message` and `components/AI/thinking-indicator`, the `.shimmer-text` utility and the optional peer `pdfjs-dist` (now the kit's) are gone.
+- **Every primitive and component sits in a group folder**, so the sidebar and the tier overviews read as a few sections: primitives in `systems/` (Craft, Sizes, Surface, Motion, Morph, FluidHover), `layout/` (ScrollArea, Separator, Resizable, VirtualList, Sortable) and `content/` (Code, Skeleton); components in `actions/`, `data-display/`, `feedback/` and `containers/` beside `inputs/`, `navigation/` and `overlays/`. Docs URLs keep the item id; the package subpaths follow the folders, with no aliases for the old ones (the barrel is unchanged; `variants` moves with its item, e.g. `components/actions/button/variants`):
+
+| Old subpath | New subpath |
+|---|---|
+| `primitives/code` | `primitives/content/code` |
+| `primitives/craft` | `primitives/systems/craft` |
+| `primitives/fluid-hover` | `primitives/systems/fluid-hover` |
+| `primitives/morph` | `primitives/systems/morph` |
+| `primitives/motion` | `primitives/systems/motion` |
+| `primitives/resizable` | `primitives/layout/resizable` |
+| `primitives/scroll-area` | `primitives/layout/scroll-area` |
+| `primitives/separator` | `primitives/layout/separator` |
+| `primitives/sizes` | `primitives/systems/sizes` |
+| `primitives/skeleton` | `primitives/content/skeleton` |
+| `primitives/sortable` | `primitives/layout/sortable` |
+| `primitives/surface` | `primitives/systems/surface` |
+| `primitives/virtual-list` | `primitives/layout/virtual-list` |
+| `components/accordion` | `components/containers/accordion` |
+| `components/avatar` | `components/data-display/avatar` |
+| `components/badge` | `components/data-display/badge` |
+| `components/button` | `components/actions/button` |
+| `components/card` | `components/containers/card` |
+| `components/copy` | `components/actions/copy` |
+| `components/diff` | `components/data-display/diff` |
+| `components/empty-state` | `components/feedback/empty-state` |
+| `components/kbd` | `components/data-display/kbd` |
+| `components/list` | `components/data-display/list` |
+| `components/log-view` | `components/data-display/log-view` |
+| `components/markdown` | `components/data-display/markdown` |
+| `components/meter` | `components/feedback/meter` |
+| `components/progress` | `components/feedback/progress` |
+| `components/status-dot` | `components/feedback/status-dot` |
+| `components/table` | `components/data-display/table` |
 
 Fixes:
 
@@ -34,6 +72,50 @@ Fixes:
 ### @justanarthur/modo-ui-ai
 
 - **New package (0.1.0): an AI agent app kit on modo-ui**, moved out of the AI desktop prototype (#44) and rebuilt on modo-ui's items: components `Message` (+ `Message.Working`), `ToolCall`, `AgentRun`, `Reasoning`, `WorkSummary`, `TodoList`, `Recap`, `ChapterNav`, `PromptCard`, `PermissionRequest`, `QuestionPrompt`, `PlanApproval`; blocks for the session (`Transcript`, which follows a streaming reply, `Composer`, `AgentPrompt`, `TranscriptSearch`, `CommandPalette`, `ShortcutsSheet`, `FailureState`), the sidebars and boards, the side pane and its panes, and settings; docs-only screens on mock data. modo-ui is a peer; the kit's glyphs extend its icon set through `AiIconProvider`; `styles.css` holds the kit's utilities for a host on modo-ui's prebuilt CSS. Docs at `/ai/`.
+- **The composer's draft is the old modo-ui `InputMessage`**, merged into `Composer` instead of a second chat item: `Composer.Draft` (also `ComposerDraft`) is the draft alone, with attachments (PDF previews through the optional peer `pdfjs-dist`), the queue while a reply streams, history and suggestions; `Composer` takes `value` / `defaultValue` / `onValueChange`, `status` / `defaultStatus` / `onStatusChange` and `onStop` (in place of `streaming`), `queue` / `defaultQueue` / `onQueueChange`, `history`, `suggestions`, `placeholderSuggestion`, `accept` and `maxFiles`, and `onSend` gets the files too. `FileThumbnail` is exported; `styles.css` carries the draft's edge states. SessionBoard's reply box is `Composer.Draft`.
+- **`Message.Working` is the old modo-ui `ThinkingIndicator`** (its goo look): the dots and the cycling word, flush with the text.
+- modo-ui 2.0 is the peer.
+- Items sit in group folders: components in `conversation/` and `prompts/`; blocks in `conversation/`, `sessions/`, `panes/`, `profiles/`, `dialogs/` and `settings/` (which takes `permission-rules` and `plugin-catalog`). Docs URLs keep the item id; the subpaths follow the folders:
+
+| Old subpath | New subpath |
+|---|---|
+| `components/agent-run` | `components/conversation/agent-run` |
+| `components/chapter-nav` | `components/conversation/chapter-nav` |
+| `components/message` | `components/conversation/message` |
+| `components/permission-request` | `components/prompts/permission-request` |
+| `components/plan-approval` | `components/prompts/plan-approval` |
+| `components/prompt-card` | `components/prompts/prompt-card` |
+| `components/question-prompt` | `components/prompts/question-prompt` |
+| `components/reasoning` | `components/conversation/reasoning` |
+| `components/recap` | `components/conversation/recap` |
+| `components/todo-list` | `components/conversation/todo-list` |
+| `components/tool-call` | `components/conversation/tool-call` |
+| `components/work-summary` | `components/conversation/work-summary` |
+| `blocks/agent-prompt` | `blocks/conversation/agent-prompt` |
+| `blocks/artifacts-pane` | `blocks/panes/artifacts-pane` |
+| `blocks/changes-pane` | `blocks/panes/changes-pane` |
+| `blocks/command-palette` | `blocks/dialogs/command-palette` |
+| `blocks/composer` | `blocks/conversation/composer` |
+| `blocks/failure-states` | `blocks/conversation/failure-states` |
+| `blocks/file-pane` | `blocks/panes/file-pane` |
+| `blocks/hook-dialog` | `blocks/dialogs/hook-dialog` |
+| `blocks/inbox` | `blocks/sessions/inbox` |
+| `blocks/mcp-server-dialog` | `blocks/dialogs/mcp-server-dialog` |
+| `blocks/permission-rules` | `blocks/settings/permission-rules` |
+| `blocks/plugin-catalog` | `blocks/settings/plugin-catalog` |
+| `blocks/pr-pane` | `blocks/panes/pr-pane` |
+| `blocks/profile-onboarding` | `blocks/profiles/profile-onboarding` |
+| `blocks/profile-switcher` | `blocks/profiles/profile-switcher` |
+| `blocks/profile-usage` | `blocks/profiles/profile-usage` |
+| `blocks/session-board` | `blocks/sessions/session-board` |
+| `blocks/session-sidebar` | `blocks/sessions/session-sidebar` |
+| `blocks/shortcuts-sheet` | `blocks/dialogs/shortcuts-sheet` |
+| `blocks/side-pane` | `blocks/panes/side-pane` |
+| `blocks/tasks-pane` | `blocks/panes/tasks-pane` |
+| `blocks/terminal-pane` | `blocks/panes/terminal-pane` |
+| `blocks/transcript` | `blocks/conversation/transcript` |
+| `blocks/transcript-search` | `blocks/conversation/transcript-search` |
+| `blocks/usage-pane` | `blocks/panes/usage-pane` |
 
 ## 1.0.0 — 2026-11-16
 

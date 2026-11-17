@@ -39,7 +39,7 @@ import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../../lib/use-merge-split'
 import { cn } from '../../../lib/utils'
 import { WeightLabel } from '../../../lib/weight-label'
-import { SizeScope } from '../../../primitives/sizes'
+import { SizeScope } from '../../../primitives/systems/sizes'
 
 interface CheckboxGroupContextValue {
   registerItem: (index: number, element: HTMLElement | null) => void

@@ -1,0 +1,52 @@
+import PluginCatalog from './index'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import { CATALOG } from '../../../mock/mock-config'
+
+# Browse the catalog
+
+Press the button: the catalog grows out of it. Search, pick a category, pick a plugin for its README.
+
+<PluginCatalog trigger={<Button variant="secondary">Browse catalog</Button>} plugins={CATALOG} />
+
+# A plugin's detail
+
+The README and the contents (beside the list in the wider dialog); an installed plugin with a newer version offers Update.
+
+<div className="flex h-[600px] w-full rounded-xl border border-border bg-background p-6">
+  <PluginCatalog.Panel plugins={CATALOG} defaultSelected="pr-review-toolkit" className="flex-1" />
+</div>
+
+# Installing
+
+`pending` spins a plugin's button while the app installs it.
+
+<div className="flex h-[480px] w-full rounded-xl border border-border bg-background p-6">
+  <PluginCatalog.Panel plugins={CATALOG} defaultSelected="playwright" pending={['playwright']} className="flex-1" />
+</div>
+
+# No results
+
+Nothing matches: the empty state clears the filters.
+
+<div className="flex h-[360px] w-full rounded-xl border border-border bg-background p-6">
+  <PluginCatalog.Panel plugins={CATALOG} defaultQuery="kubernetes" className="flex-1" />
+</div>
+
+# Narrow
+
+In a narrow window the detail takes the list's place, with a way back.
+
+<div className="flex h-[560px] w-[420px] max-w-full rounded-xl border border-border bg-background p-6">
+  <PluginCatalog.Panel plugins={CATALOG} defaultSelected="commit-commands" className="flex-1" />
+</div>
+
+# Light and dark
+
+<div className="grid w-full gap-3 @5xl:grid-cols-2">
+  <div className="light flex h-[480px] rounded-xl border border-border bg-background p-6 text-foreground">
+    <PluginCatalog.Panel plugins={CATALOG} defaultSelected="sentry" className="flex-1" />
+  </div>
+  <div className="dark flex h-[480px] rounded-xl border border-border bg-background p-6 text-foreground">
+    <PluginCatalog.Panel plugins={CATALOG} defaultSelected="sentry" className="flex-1" />
+  </div>
+</div>

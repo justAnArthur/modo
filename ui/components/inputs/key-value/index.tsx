@@ -13,8 +13,8 @@ import { useIcon } from '../../../lib/icon-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
-import { SizeScope } from '../../../primitives/sizes'
-import Button from '../../button'
+import { SizeScope } from '../../../primitives/systems/sizes'
+import Button from '../../actions/button'
 import Input, { InputAction } from '../input'
 
 /** One row: its key, its value, and whether the value is masked. */

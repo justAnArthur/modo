@@ -1,0 +1,13 @@
+import { SizeProvider } from '@justanarthur/modo-ui/primitives/systems/sizes'
+import { PROFILES } from '../../../mock/mock'
+import UsagePane from './index'
+
+# Usage
+
+Every profile's limits as pace bars, each with its verdict; the tick is where an even spend would be by now.
+
+<div className="w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background p-2">
+  <SizeProvider size="compact">
+    <UsagePane profiles={PROFILES} />
+  </SizeProvider>
+</div>

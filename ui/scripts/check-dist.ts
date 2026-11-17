@@ -99,7 +99,7 @@ for (const { file, name } of contexts) {
 // console.error muted: React warns about useLayoutEffect on the server.
 const { SizeContext } = await import(`${PACKAGE}/lib/size-context`)
 const { sizeMap } = await import(`${PACKAGE}/lib/size-scale`)
-const { default: Button } = await import(`${PACKAGE}/components/button`)
+const { default: Button } = await import(`${PACKAGE}/components/actions/button`)
 const { error } = console
 console.error = () => {}
 const plain = renderToStaticMarkup(createElement(Button, null, 'x'))
@@ -112,7 +112,7 @@ const compact = renderToStaticMarkup(
 )
 console.error = error
 if (plain === compact)
-  failures.push(`${PACKAGE}/components/button ignores the SizeContext of ${PACKAGE}/lib/size-context`)
+  failures.push(`${PACKAGE}/components/actions/button ignores the SizeContext of ${PACKAGE}/lib/size-context`)
 
 // What `npm publish` ships. A `*` entry expands over the shipped files; bunup
 // drops a .d.ts silently (a declaration cycle), so each JS needs its own.

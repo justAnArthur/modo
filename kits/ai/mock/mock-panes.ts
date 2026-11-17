@@ -4,7 +4,7 @@
  * reviews, artifacts, background tasks and the profiles the usage pane reads.
  */
 
-import type { SidePaneData } from '../blocks/side-pane'
+import type { SidePaneData } from '../blocks/panes/side-pane'
 import type { PaneArtifact, PaneChange, PaneFile, PanePullRequest, PaneShell, PaneTask } from '../lib/side-pane-types'
 import { PROFILES } from './mock'
 

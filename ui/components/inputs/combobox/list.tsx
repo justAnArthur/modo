@@ -32,7 +32,7 @@ import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../../lib/use-merge-split'
 import { type MorphProps, useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import { ScrollArea } from '../../../primitives/scroll-area'
+import { ScrollArea } from '../../../primitives/layout/scroll-area'
 import {
   ComboboxHighlightContext,
   type ComboboxItemData,

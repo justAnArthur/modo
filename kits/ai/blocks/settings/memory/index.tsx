@@ -5,7 +5,7 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
+import Button from '@justanarthur/modo-ui/components/actions/button'
 import Switch from '@justanarthur/modo-ui/components/inputs/switch'
 import { CardCode, Details, Footer, Group, Row, Section, Toggles } from '../../../lib/settings-parts'
 import type { MemoryFile } from '../../../lib/types'

@@ -23,7 +23,7 @@ import {
 } from 'react'
 import type { OpenChangeDetails } from '../../../lib/overlay'
 import { type SlotProps, slotRender } from '../../../lib/slot'
-import Button, { type ButtonProps } from '../../button'
+import Button, { type ButtonProps } from '../../actions/button'
 import {
   DialogClose,
   DialogContent,

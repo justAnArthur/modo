@@ -30,7 +30,7 @@ import { useLift } from '../../../lib/surface-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { type MorphEffect, type MorphOrigin, type MorphTier, useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import { SizeScope } from '../../../primitives/sizes'
+import { SizeScope } from '../../../primitives/systems/sizes'
 import { type CommandItem, CommandList, CommandListRoot, CommandShortcut } from '../../overlays/command'
 
 // The icon sits where the square button centers it, in both states and both

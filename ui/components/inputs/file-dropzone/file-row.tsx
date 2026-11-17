@@ -14,8 +14,8 @@ import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { spring } from '../../../lib/springs'
 import { cn } from '../../../lib/utils'
-import Button from '../../button'
-import Progress, { Spinner } from '../../progress'
+import Button from '../../actions/button'
+import Progress, { Spinner } from '../../feedback/progress'
 import { formatFileSize } from './variants'
 
 /** Where a file is in its upload: `idle` (picked), `uploading`, `done` or `error`. */

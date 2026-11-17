@@ -2,7 +2,7 @@
  * Local addition (not part of Fluid Functionalism): the morph engine every
  * overlay shares. One 0→1 progress value on a spring tier grows the overlay's
  * surface from where it was opened (the source rect) to its own box; the
- * renderer is `lib/morph-layers.tsx`, the docs page `primitives/morph`.
+ * renderer is `lib/morph-layers.tsx`, the docs page `primitives/systems/morph`.
  *
  * The rect interpolation and the rounded-rect path follow beUI's gooey popover
  * (github.com/starc007/ui-components `components/motion/popover.tsx` @

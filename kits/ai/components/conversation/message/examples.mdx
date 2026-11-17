@@ -1,0 +1,53 @@
+import Message from './index'
+import Code from '@justanarthur/modo-ui/primitives/content/code'
+
+# Conversation
+
+Your turn is a bubble on the right; the reply is text on the page.
+
+<div className="flex w-full max-w-2xl flex-col gap-5">
+  <Message role="user">Which overlays skip the morph layer?</Message>
+  <Message role="assistant">
+    <p className="m-0">None of them. Every overlay grows through <code>useMorph</code>:</p>
+    <ul className="m-0">
+      <li><strong>Popover</strong>, Menu and Select morph out of their trigger.</li>
+      <li><strong>Dialog</strong> morphs out of the button that opened it.</li>
+    </ul>
+    <Code language="sh">rg -l useMorph components/overlays</Code>
+  </Message>
+</div>
+
+# Attachments and mentions
+
+Files, images and pasted text sit above the bubble; an @-mention is a chip inside the text.
+
+<div className="w-full max-w-2xl">
+  <Message
+    role="user"
+    attachments={
+      <>
+        <Message.Attachment kind="image" name="screenshot.png" detail="1.2 MB" />
+        <Message.Attachment kind="pasted" name="Pasted text" detail="38 lines" />
+        <Message.Attachment name="brief.pdf" detail="4 pages" />
+      </>
+    }
+  >
+    Build it to the rules in <Message.Mention path="ui/DESIGN.md" /> and match the screenshot.
+  </Message>
+</div>
+
+# Streaming
+
+While the reply arrives, the working dots follow its last block.
+
+<div className="w-full max-w-2xl">
+  <Message role="assistant" streaming>
+    <p className="m-0">Reading the design rules first, then the craft page.</p>
+  </Message>
+</div>
+
+# Working
+
+The dots on their own, with a line saying what is happening.
+
+<Message.Working label="Reading 4 files" />

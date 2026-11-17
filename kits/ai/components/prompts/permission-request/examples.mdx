@@ -1,0 +1,32 @@
+import PermissionRequest from './index'
+import Diff from '@justanarthur/modo-ui/components/data-display/diff'
+
+# Command
+
+A tool wants to run. The command reads first; Always allow names the rule it would add.
+
+<div className="w-full max-w-2xl">
+  <PermissionRequest tool="Bash" command="rm -rf .worktrees/old-toast && git worktree prune" rule="git worktree *" />
+</div>
+
+# With a diff
+
+An edit asks with the change it would make, as a `detail` under the path.
+
+<div className="w-full max-w-2xl">
+  <PermissionRequest
+    tool="Edit"
+    command="ui/uno.config.ts"
+    detail={<Diff lineNumbers={false} patch={`@@ -25,1 +25,1 @@
+-const sources = resolve(root, '{lib,primitives,components,blocks}/**/*.{ts,tsx,mdx}')
++const sources = resolve(root, '{lib,primitives,components,blocks,pages}/**/*.{ts,tsx,mdx}')`} />}
+  />
+</div>
+
+# Custom hint
+
+`hint` says who asks and which keys answer.
+
+<div className="w-full max-w-2xl">
+  <PermissionRequest tool="WebFetch" command="https://registry.npmjs.org/@base-ui/react" hint="Asked by the sandbox · Esc denies" />
+</div>

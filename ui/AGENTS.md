@@ -11,14 +11,14 @@ is specific to this package.
 |---|---|
 | `DESIGN.md` | The design language: every token (front matter) and the rules (prose), in Google's DESIGN.md format. |
 | `.claude/skills/modo-ui/` (repo root) | The `modo-ui` skill: the systems as code, a new-item workflow, recipes, the catalog, upstream's craft notes. Load it before writing UI here. |
-| `primitives/craft` | The rules made visible: bad / good pairs (weight shift, blinking hover, warping press, copy target, overlay origin, snapping indicator, flat surfaces, click ring). Open it in the dev server. |
+| `primitives/systems/craft` | The rules made visible: bad / good pairs (weight shift, blinking hover, warping press, copy target, overlay origin, snapping indicator, flat surfaces, click ring). Open it in the dev server. |
 | `README.md` | The consumer docs: install, the three CSS setups, theming, the component API conventions, Server Components, the exported hooks, credits. |
 | `PORTING.md` | The port: upstream → local file map, every local modification per file, the UnoCSS translation. |
 
 ## where things live
 
 - `tokens/*.css` — colors (`light-dark()`), typography (`--text-*`, `--leading-*`, `--weight-*`), motion
-  (`--duration-*`), radius, spacing. The surface ladder and shadows are in `primitives/surface/surface.css`.
+  (`--duration-*`), radius, spacing. The surface ladder and shadows are in `primitives/systems/surface/surface.css`.
 - `uno.config.ts` — the utilities over the tokens (`text-<role>`, `weight-*`, `duration-<tier>`,
   `bg-surface-N`, `shadow-surface-N`, `rounded-box|glyph|pill|focus-ring|pill-focus-ring|shell|pill-shell`). `lib/utils.ts` — `cn`, which knows them.
 - `lib/` — the shared systems: `springs` (+ `springEnter`), `size-context` (+ the pure `size-scale`),
@@ -29,10 +29,14 @@ is specific to this package.
   `date-mask`, `popup` (`POPUP_SHAPE`), and the helpers listed in `lib/README.md` (refs, rects, focus
   ring, `WeightLabel`, row groups that skip `aria-disabled` rows, overlay roots and surfaces, popup
   rows). Use them before writing the pattern by hand.
-- `primitives/` — the systems as documented items (Surface, Sizes, FluidHover, Motion, Morph,
-  ScrollArea, Separator, Skeleton, Code, Craft) and the list and layout pieces (Sortable, VirtualList,
-  Resizable). `components/[inputs|navigation|overlays]/` —
-  controls. `blocks/` — compositions (SidebarApp, ShellCard, DesktopShell).
+- `primitives/` — in group folders (the docs' sidebar sections): `systems/` (the systems as
+  documented items: Craft, Sizes, Surface, Motion, Morph, FluidHover), `layout/` (ScrollArea,
+  Separator, Resizable, VirtualList, Sortable) and `content/` (Code, Skeleton).
+  `components/` — `actions/` (Button, Copy), `inputs/`, `navigation/`, `overlays/`, `data-display/`
+  (Avatar, Badge, Kbd, List, Table, Diff, LogView, Markdown), `feedback/` (Progress, Meter,
+  StatusDot, EmptyState) and `containers/` (Accordion, Card). `blocks/` — compositions (SidebarApp,
+  ShellCard, DesktopShell), ungrouped. Package subpaths follow the folders
+  (`@justanarthur/modo-ui/components/actions/button`).
 - `modo.components.tsx` — docs-only adapters for the chrome's slots (`Select`, `Icon`, `DocsNav`) and the
   Theme panel item. `global.css` — base styles and the chrome's look through `data-modo` attributes.
   `vite.ts` — the docs site's Vite extension (UnoCSS, theme script); `withUno(configFile)` gives a kit

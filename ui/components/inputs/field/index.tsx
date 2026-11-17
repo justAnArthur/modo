@@ -26,7 +26,7 @@ import { fieldTextInset } from '../../../lib/field-classes'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { slotRender } from '../../../lib/slot'
 import { cn } from '../../../lib/utils'
-import { SizeScope } from '../../../primitives/sizes'
+import { SizeScope } from '../../../primitives/systems/sizes'
 import Label from '../label'
 
 // Literal table: UnoCSS only generates the classes it can read whole.

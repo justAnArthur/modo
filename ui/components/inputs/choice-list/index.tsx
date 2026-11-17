@@ -20,7 +20,7 @@ import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
-import { SizeScope } from '../../../primitives/sizes'
+import { SizeScope } from '../../../primitives/systems/sizes'
 
 // Literal table: UnoCSS only generates the classes it can read whole.
 const ROW_PY: Record<SizeVariant, string> = { default: 'py-2', compact: 'py-1.5' }

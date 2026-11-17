@@ -3,10 +3,10 @@
  * turns. The transcript's examples and the workspace pages render it.
  */
 
-import Diff from '@justanarthur/modo-ui/components/diff'
-import Markdown from '@justanarthur/modo-ui/components/markdown'
-import Code from '@justanarthur/modo-ui/primitives/code'
-import Transcript, { type TaskItem, type TocChapter } from '../blocks/transcript'
+import Diff from '@justanarthur/modo-ui/components/data-display/diff'
+import Markdown from '@justanarthur/modo-ui/components/data-display/markdown'
+import Code from '@justanarthur/modo-ui/primitives/content/code'
+import Transcript, { type TaskItem, type TocChapter } from '../blocks/conversation/transcript'
 import { CHANGES, TERMINAL_LINES } from './mock'
 
 export const DEMO_CHAPTERS: TocChapter[] = [

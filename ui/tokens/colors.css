@@ -19,7 +19,7 @@
  * resolution point.
  *
  * The surface ladder and its shadow recipes live with their primitive in
- * primitives/surface/surface.css. The one token that cannot ride
+ * primitives/systems/surface/surface.css. The one token that cannot ride
  * light-dark() here — the --overlay RGB triplet (consumed as
  * rgb(var(--overlay) / α), an alpha contract) — is re-pointed per scheme in
  * base.css.
@@ -29,7 +29,7 @@
 .light,
 .dark {
   /* The surface ladder (--surface-1..8) and the shadow recipes pair with it
-     in primitives/surface/surface.css. */
+     in primitives/systems/surface/surface.css. */
 
   /* ── Semantic tokens ── */
   /* Same color as --surface-1, inlined so the global token set never
@@ -106,7 +106,7 @@
   --shadow-picker-cursor: 0 0 0 1px oklch(0 0 0 / 0.2);
   --drop-shadow-picker-cursor: 0 1px 1px oklch(0 0 0 / 0.4);
 
-  /* ── Composer (InputMessage) ──
+  /* ── Composer (the ai kit's Composer.Draft) ──
      The focused edge recolors surface-2's 1px ring; the drop keeps the
      composer's lift under every edge state. */
   --composer-edge-focus: color-mix(in oklab, var(--foreground) 20%, transparent);
@@ -160,7 +160,7 @@
   --hover: light-dark(rgb(0 0 0 / 0.04), rgb(255 255 255 / 0.06));
   --active: light-dark(rgb(0 0 0 / 0.07), rgb(255 255 255 / 0.1));
 
-  /* ── Syntax (primitives/code) ──
+  /* ── Syntax (primitives/content/code) ──
      Low-chroma hues so code reads as text first; identifiers, JSX text and
      punctuation ride the existing foreground pair. */
   --syntax-keyword: light-dark(oklch(0.52 0.16 300), oklch(0.76 0.12 300));

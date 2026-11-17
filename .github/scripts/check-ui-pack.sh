@@ -10,7 +10,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../../ui"
 files="$(npm pack --dry-run --json | node -e 'for (const f of JSON.parse(require("fs").readFileSync(0, "utf8"))[0].files) console.log(f.path)')"
 
-for file in dist/index.js dist/index.d.ts dist/styles.css LICENSE components/button/index.tsx components/button/examples.mdx; do
+for file in dist/index.js dist/index.d.ts dist/styles.css LICENSE components/actions/button/index.tsx components/actions/button/examples.mdx; do
   grep -qx "$file" <<<"$files" || { echo "missing $file in the ui tarball" >&2; exit 1; }
   echo "ok $file"
 done

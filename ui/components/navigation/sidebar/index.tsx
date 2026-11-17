@@ -19,7 +19,7 @@ import {
 } from 'react'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
-import { ScrollArea } from '../../../primitives/scroll-area'
+import { ScrollArea } from '../../../primitives/layout/scroll-area'
 import { Sheet } from '../../overlays/sheet'
 import { SidebarSelection } from './menu-scope'
 import { type SidebarSide, useSidebar } from './sidebar-context'

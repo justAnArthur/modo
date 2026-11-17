@@ -1,0 +1,144 @@
+/*!
+ * Ported from Fluid Functionalism — github.com/mickadesign/fluid-functionalism
+ * `registry/default/lib/springs.ts` + docs `app/docs/motion/page.tsx` @ b3587bdbd83fc66c2a6aae3817ffb856cb09260b
+ * MIT License © 2026 Micka Touillaud — fluidfunctionalism.com (notice: LICENSE.fluid-functionalism)
+ * Local changes: see PORTING.md.
+ */
+
+'use client'
+
+import { MotionConfig, motion } from 'motion/react'
+import type { ReactNode } from 'react'
+import Button from '../../../components/actions/button'
+import { spring } from '../../../lib/springs'
+import { useControllableState } from '../../../lib/use-controllable-state'
+import { cn } from '../../../lib/utils'
+
+type SpringTier = keyof typeof spring
+
+interface MotionProps {
+  /** Spring tier the children enter on (`spring.<tier>`); they leave on its `.exit` tween. `fast` for hover, fades and small toggles, `moderate` for dropdowns and tabs, `slow` for dialogs and large surfaces. Defaults to `'moderate'`. */
+  tier?: 'fast' | 'moderate' | 'slow'
+  /** Controlled visibility — `true` animates the children in, `false` animates them out. Pair with `onShowChange`. */
+  show?: boolean
+  /** Uncontrolled initial visibility, toggled by the built-in trigger. Defaults to `true`. */
+  defaultShow?: boolean
+  /** Called with the next visibility when the built-in trigger is pressed. */
+  onShowChange?: (show: boolean) => void
+  /** Leave on the tier's enter spring instead of its faster `.exit` tween — the drag FF's motion rules avoid; only for side-by-side comparisons. Defaults to `false`. */
+  sameExit?: boolean
+  /** Forwarded to motion's `<MotionConfig reducedMotion>`: `'user'` follows the OS setting, `'always'` previews it (transforms drop out, opacity fades stay), `'never'` ignores it. Defaults to `'user'`. */
+  reducedMotion?: 'user' | 'always' | 'never'
+  /** Extra classes for the wrapper (stage + trigger column). */
+  className?: string
+  /** The content that animates in and out. */
+  children: ReactNode
+}
+
+/**
+ * Three spring speeds, exits a little faster than entrances, and one fluid
+ * hover shared by every list. Pick a speed, wire it in — every component
+ * follows the same pattern.
+ *
+ * All animation comes from one of three springs in `lib/springs`
+ * (re-exported here as `spring`). Hover states and small toggles use `fast`,
+ * dropdowns and tabs use `moderate`, dialogs and drawers use `slow`. No
+ * component invents its own timing, so things you've never thought about
+ * together move at the same pace.
+ *
+ * Each tier's value is the **enter** transition; its `.exit` is the matching
+ * **exit** — a plain tween, no bounce, one tier quicker — so a dismissal reads
+ * as crisp and final rather than replaying the entrance in reverse. The bigger
+ * the thing that moves, the slower the tier. `moderate` is critically damped: it
+ * lands exactly with no overshoot, so it also carries panels that must settle
+ * precisely.
+ *
+ * A fourth tier, `goo`, belongs to the morph engine alone (see Morph): the goo
+ * effect lands in about 200ms with a little bounce and springs back rather
+ * than tweening, so its liquid neck has time to stretch and pinch off.
+ *
+ * ## Usage
+ *
+ * Enter with `transition={spring.fast}` and leave with `exit={{ opacity: 0,
+ * transition: spring.fast.exit }}`. Never hand-write a duration: the values
+ * belong in `springs`, not in component code.
+ *
+ * - `exitFallbackMs(tier)` (also exported) is the tier's exit in ms plus a 100ms
+ *   buffer, for deferred-unmount timers that guard an exit tween.
+ * - CSS consumers get the same tiers from `tokens/motion.css`
+ *   (`--duration-<tier>` and `--duration-<tier>-exit`).
+ *
+ * ## Reduced motion
+ *
+ * Every spring respects the OS setting once the app tree is wrapped in
+ * `<MotionConfig reducedMotion="user">`. With reduced motion on, position and
+ * scale changes drop out and only the opacity fades remain.
+ *
+ * ## The `Motion` demo
+ *
+ * `Motion` itself is a docs demo, not a building block: it shows or hides its
+ * children with one tier's enter spring and exit tween (fade + scale + a short
+ * rise), with a built-in Show/Hide trigger and a readout of the token it plays.
+ * Hidden children keep their space and leave the accessibility tree.
+ *
+ * @example {@include ./examples.mdx}
+ * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/default/lib/springs.ts Fluid Functionalism
+ * @license MIT © 2026 Micka Touillaud
+ */
+export default function Motion({
+  tier = 'moderate',
+  show,
+  defaultShow = true,
+  onShowChange,
+  sameExit = false,
+  reducedMotion = 'user',
+  className,
+  children,
+}: MotionProps) {
+  const [shown, setShown] = useControllableState(show, defaultShow, onShowChange)
+  const enter = spring[tier]
+  const leave = sameExit ? enter : enter.exit
+
+  return (
+    <MotionConfig reducedMotion={reducedMotion}>
+      <div className={cn('flex flex-col items-center gap-3', className)}>
+        <motion.div
+          initial={false}
+          aria-hidden={shown ? undefined : true}
+          animate={
+            shown
+              ? { opacity: 1, scale: 1, y: 0, visibility: 'visible', transition: enter }
+              : {
+                  opacity: 0,
+                  scale: 0.95,
+                  y: 6,
+                  visibility: 'visible',
+                  transition: leave,
+                  transitionEnd: { visibility: 'hidden' },
+                }
+          }
+        >
+          {children}
+        </motion.div>
+        <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+          <Button
+            variant="tertiary"
+            size="compact"
+            aria-pressed={shown}
+            aria-label={`${shown ? 'Hide' : 'Show'} (spring.${tier})`}
+            onClick={() => setShown(v => !v)}
+          >
+            {shown ? 'Hide' : 'Show'}
+          </Button>
+          <span className="font-mono text-caption-compact text-muted-foreground">
+            spring.{tier} {enter.duration}s{enter.bounce ? ` bounce ${enter.bounce}` : ''} · exit {leave.duration}s
+          </span>
+        </div>
+      </div>
+    </MotionConfig>
+  )
+}
+
+export { exitFallbackMs, spring } from '../../../lib/springs'
+export type { MotionProps, SpringTier }
+export { Motion }

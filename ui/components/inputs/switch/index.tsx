@@ -35,7 +35,7 @@ import { spring } from '../../../lib/springs'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
-import { SizeScope } from '../../../primitives/sizes'
+import { SizeScope } from '../../../primitives/systems/sizes'
 
 interface SwitchProps extends HTMLAttributes<HTMLDivElement> {
   /** Text label displayed next to the switch. Omit it, outside a group, for the bare track (see Bare): name it with `aria-label`, `aria-labelledby` or a `<label htmlFor>` pointing at its `id`. */

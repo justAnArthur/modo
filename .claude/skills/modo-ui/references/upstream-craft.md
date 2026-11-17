@@ -357,6 +357,8 @@ Systems first — their craft applies across every component below.
 <a id="input-message"></a>
 ## InputMessage
 
+Here: not in ui. The ai kit's `Composer.Draft` (`kits/ai`, the composer block's `draft.tsx`).
+
 - Auto-resize clamps the textarea between minRows and maxRows × the parsed line-height (cached per element to avoid getComputedStyle on every keystroke); overflow-y only turns on past maxRows. A width-gated ResizeObserver re-runs the measure because a near-zero-width mount wraps the placeholder into many lines and pins the height at maxRows.
 - Enter sends, Shift+Enter newlines, and IME composition keydowns are ignored (`e.nativeEvent.isComposing`) so committing Japanese/Chinese input never fires a send.
 - The composer's edge is the box-shadow's 1px hairline ring recolored in place — drag-over #6B97FF > focus (20% foreground) > hover (border) — so state changes bump contrast "without ever appearing to thicken" the stroke; the 0 1px 1px drop layer is kept so the lift never flickers. Applied inline because Tailwind shadow utilities mangle multi-layer arbitrary values.
@@ -466,6 +468,8 @@ Systems first — their craft applies across every component below.
 
 <a id="thinking-indicator"></a>
 ## ThinkingIndicator
+
+Here: not in ui. Its goo look is the ai kit's `Message.Working` (`kits/ai`, the message component's `working.tsx`); the shimmer look was dropped.
 
 - The glyph is one SVG path morphing circle → infinity → reversed circle → infinity → circle in equal quarters (`times: [0,.25,.5,.75, 1]`) over 6s easeInOut, repeating forever; the two circle paths trace opposite winding directions so the loop keeps flowing.
 - The label cycles "Thinking / Moonwalking / Planning / Refining" every 4000ms; the incoming word slides up from y 80% (0.24s), the outgoing word exits to y -80% slightly faster (0.16s), both on cubic-bezier(0.4, 0, 0.2, 1) with popLayout so they overlap.

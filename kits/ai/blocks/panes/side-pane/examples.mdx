@@ -1,0 +1,58 @@
+import SidePane from './index'
+import { SIDE_PANE_DATA } from '../../../mock/mock-panes'
+
+# Changes
+
+Staged and unstaged files under a commit field; hover a row to stage, unstage or revert it. The picked file's diff wraps its long lines; the toggle above it scrolls them instead.
+
+<div className="flex h-[640px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
+  <SidePane data={SIDE_PANE_DATA} className="flex-1" />
+</div>
+
+# File
+
+The open file under its path crumb, with copy and open in editor.
+
+<div className="flex h-[420px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
+  <SidePane data={SIDE_PANE_DATA} className="flex-1" defaultPane="file" />
+</div>
+
+# Pull request
+
+CI checks as they run; the failed one is open on the tail of its log with Ask Claude to fix, and the merge waits for it. Auto-fix lets the session watch CI and answer reviews.
+
+<div className="flex h-[640px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
+  <SidePane data={SIDE_PANE_DATA} className="flex-1" defaultPane="pr" />
+</div>
+
+# Terminal
+
+The session's shell in its folder: type at the prompt and press Enter.
+
+<div className="flex h-[420px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
+  <SidePane data={SIDE_PANE_DATA} className="flex-1" defaultPane="terminal" />
+</div>
+
+# Artifacts
+
+What Claude made in this session, newest first; a press opens one.
+
+<div className="flex h-[320px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
+  <SidePane data={SIDE_PANE_DATA} className="flex-1" defaultPane="artifacts" />
+</div>
+
+# Tasks
+
+Background agents, shells and child sessions: stop a running one, retry one that failed or stopped.
+
+<div className="flex h-[360px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
+  <SidePane data={SIDE_PANE_DATA} className="flex-1" defaultPane="tasks" />
+</div>
+
+# Extensions slot
+
+The last tab is yours: a pane from your own MCP server or plugin, here every profile's limits as pace bars. The + menu adds optional plugin panes.
+
+<div className="flex h-[640px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
+  <SidePane data={SIDE_PANE_DATA} className="flex-1" defaultPane="extension" />
+</div>

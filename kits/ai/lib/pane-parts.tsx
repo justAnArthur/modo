@@ -8,8 +8,8 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
-import EmptyState from '@justanarthur/modo-ui/components/empty-state'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import EmptyState from '@justanarthur/modo-ui/components/feedback/empty-state'
 import Tooltip from '@justanarthur/modo-ui/components/overlays/tooltip'
 import { type ReactNode, useId } from 'react'
 import { type IconComponent, type IconName, useIcon } from './icons'

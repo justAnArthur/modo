@@ -22,7 +22,7 @@ controlled + uncontrolled.
 | A file upload | `FileDropzone` + `FileDropzone.Row` (drag verdicts, rejections, upload progress) |
 | A multi-line text field | `Textarea` (in a `Field`, or with `Label`) |
 | A read-only value to copy | `Copy` |
-| A chat or prompt composer | `InputMessage` (attachments, queue, send/stop) |
+| A chat or prompt composer | Not in ui: the ai kit's `Composer` / `Composer.Draft` (attachments, queue, send/stop) |
 | One of a few options, all visible | `Radio.Group`, or `Tabs variant="subtle"` for a view switch |
 | One of a few options, each row rich (two lines, meters, row actions) | `ChoiceList` |
 | Several of a few options | `Checkbox.Group` |
@@ -59,7 +59,7 @@ controlled + uncontrolled.
 | "Nothing here yet" | `EmptyState` |
 | A loading placeholder | `Skeleton` (a block, or `rows`) |
 | A divider between groups | `Separator` |
-| "Working…" | `ThinkingIndicator` (`shimmer` or `goo`) |
+| "Working…" | `Progress.Spinner`; an assistant's in-flight state is the ai kit's `Message.Working` |
 | A scroll region | `ScrollArea` (+ `scroll-fade`) |
 | A list of thousands of rows | `VirtualList` (fixed or measured rows, `scrollToIndex`) |
 | Drag to reorder | `Sortable` (`handle`, keyboard, `as="none"` in a host list; `useSortableHandle`) |
@@ -83,41 +83,39 @@ controlled + uncontrolled.
 
 | Item | Path | Statics / exports | What it is |
 |---|---|---|---|
-| `Elevated` | `primitives/surface` | `.Provider` (= `SurfaceProvider`); `useSurface`, `surfaceClasses` | The 8-level surface ladder: `min(substrate + offset, 8)`, re-provided. `surface.css` holds the levels and shadows. |
-| `SizeProvider` | `primitives/sizes` | re-exports `useSize`, `useSizeVariant`, `useTypeScale`, `sizeMap`, `typeScale` | The 36 / 28 ladder for a region. |
-| `FluidHover` | `primitives/fluid-hover` | `.Item`; re-exports `useFluidHover`, `useRegisterFluidHoverItem`, `FluidHoverHighlight` | One highlight per list on the nearest item; `axis`, `columns`, `items`, `disabledIndices`, `gapClick`. |
-| `Motion` | `primitives/motion` | re-exports `spring`, `exitFallbackMs` | Docs stage for the spring tiers (plays one tier's enter and exit). |
-| `Morph` | `primitives/morph` | `.Part` (= `MorphPart`) | Docs stage for the morph engine: `from` × `effect`, `hideSource`, `tier`; also documents the liquid indicators. |
-| `ScrollArea` | `primitives/scroll-area` | `.Bar` | Hover-revealed thin thumb, native physics on touch, `viewportClassName` (pair with `scroll-fade`). |
-| `Separator` | `primitives/separator` | — | The one hairline on Base UI's Separator; `orientation`. |
-| `Skeleton` | `primitives/skeleton` | — | A `bg-skeleton` block pulsing on `--duration-loop`, or `rows` on the control height (`bordered` frames them); `aria-hidden`. |
-| `Sortable` | `primitives/sortable` | `.Handle`; `useSortableHandle` | motion's `Reorder` by pointer or keyboard (Space, arrows, Escape), announced; `items`, `order` / `defaultOrder` / `onOrderChange`, `orientation`, `handle`, `as` (`ul` \| `ol` \| `none`). The held item lifts +2. |
-| `VirtualList` | `primitives/virtual-list` | ref: `scrollToIndex(index, align)`, `scrollToEnd()` | Mounts only the rows in view; `count`, `renderItem`, `itemHeight` or measured (`estimateHeight`), `overscan`; scrolls itself or a surrounding ScrollArea; `follow` (+ `onFollowChange`) stays at the end of a growing list; `contentWidth` for rows wider than the viewport. |
-| `Resizable` | `primitives/resizable` | `.Panel .Handle` | Split panes in percent; `direction`, `sizes` / `onSizesChange`, `step`; panels take `defaultSize`, `minSize`, `maxSize`, `collapsible`; the handle is a keyboard separator; a size set other than by dragging glides (`duration-moderate`). |
-| `Code` | `primitives/code` | — | sugar-high tokens in `--syntax-*`, one surface step up. Also the docs chrome's Code slot. |
-| `Craft` | `primitives/craft` | `demos.tsx` (the bad sides) | Docs stage: a bad and a good version side by side (`bad`, `good`, `badNote`, `goodNote`). One rule per pair. |
+| `Elevated` | `primitives/systems/surface` | `.Provider` (= `SurfaceProvider`); `useSurface`, `surfaceClasses` | The 8-level surface ladder: `min(substrate + offset, 8)`, re-provided. `surface.css` holds the levels and shadows. |
+| `SizeProvider` | `primitives/systems/sizes` | re-exports `useSize`, `useSizeVariant`, `useTypeScale`, `sizeMap`, `typeScale` | The 36 / 28 ladder for a region. |
+| `FluidHover` | `primitives/systems/fluid-hover` | `.Item`; re-exports `useFluidHover`, `useRegisterFluidHoverItem`, `FluidHoverHighlight` | One highlight per list on the nearest item; `axis`, `columns`, `items`, `disabledIndices`, `gapClick`. |
+| `Motion` | `primitives/systems/motion` | re-exports `spring`, `exitFallbackMs` | Docs stage for the spring tiers (plays one tier's enter and exit). |
+| `Morph` | `primitives/systems/morph` | `.Part` (= `MorphPart`) | Docs stage for the morph engine: `from` × `effect`, `hideSource`, `tier`; also documents the liquid indicators. |
+| `ScrollArea` | `primitives/layout/scroll-area` | `.Bar` | Hover-revealed thin thumb, native physics on touch, `viewportClassName` (pair with `scroll-fade`). |
+| `Separator` | `primitives/layout/separator` | — | The one hairline on Base UI's Separator; `orientation`. |
+| `Skeleton` | `primitives/content/skeleton` | — | A `bg-skeleton` block pulsing on `--duration-loop`, or `rows` on the control height (`bordered` frames them); `aria-hidden`. |
+| `Sortable` | `primitives/layout/sortable` | `.Handle`; `useSortableHandle` | motion's `Reorder` by pointer or keyboard (Space, arrows, Escape), announced; `items`, `order` / `defaultOrder` / `onOrderChange`, `orientation`, `handle`, `as` (`ul` \| `ol` \| `none`). The held item lifts +2. |
+| `VirtualList` | `primitives/layout/virtual-list` | ref: `scrollToIndex(index, align)`, `scrollToEnd()` | Mounts only the rows in view; `count`, `renderItem`, `itemHeight` or measured (`estimateHeight`), `overscan`; scrolls itself or a surrounding ScrollArea; `follow` (+ `onFollowChange`) stays at the end of a growing list; `contentWidth` for rows wider than the viewport. |
+| `Resizable` | `primitives/layout/resizable` | `.Panel .Handle` | Split panes in percent; `direction`, `sizes` / `onSizesChange`, `step`; panels take `defaultSize`, `minSize`, `maxSize`, `collapsible`; the handle is a keyboard separator; a size set other than by dragging glides (`duration-moderate`). |
+| `Code` | `primitives/content/code` | — | sugar-high tokens in `--syntax-*`, one surface step up. Also the docs chrome's Code slot. |
+| `Craft` | `primitives/systems/craft` | `demos.tsx` (the bad sides) | Docs stage: a bad and a good version side by side (`bad`, `good`, `badNote`, `goodNote`). One rule per pair. |
 
-## components (ungrouped)
+## components/actions, data-display, feedback, containers
 
 | Item | Path | Statics | Systems | Notes |
 |---|---|---|---|---|
-| `Button` | `components/button` | — | L C | 8 variants: `primary`, `secondary`, `tertiary`, `outline` (control-border frame), `ghost`, `destructive` / `success` (`-strong` text on a wash), `link`. Press shrinks the fill 1px/side; icons thicken; `loading` folds into a circle (box unchanged) and keeps focus; `active` forces pressed. `buttonVariants` in `variants.ts` is server-safe. Serves the chrome's Button slot. |
-| `Badge` | `components/badge` | — | L | `variant` `solid` \| `dot` \| `outline`, `color`, `size`; a new label springs width and blur-crossfades. |
-| `Avatar` | `components/avatar` | `.Image .Fallback` | L | Base UI Avatar; the image fades in, the fallback shows while it loads or fails; `shape` `circle` \| `square`. |
-| `Progress` | `components/progress` | `.Spinner` | L | Base UI Progress; the fill slides on `spring.moderate`; `value={null}` sweeps on `--duration-loop`; `label`, `showValue`, `format`. `.Spinner` is Button's loading glyph. |
-| `Meter` | `components/meter` | — | L | Base UI Meter; `variant` `bar` \| `line` \| `ring`; the fill slides; `warnAt` / `errorAt` or `tone`; `marker`. |
-| `StatusDot` | `components/status-dot` | `.glyph` (= `statusGlyph`) | L | `running` (the loading glyph), `waiting`, `unread`, `idle`, `success`, `error`; `label` for screen readers. |
-| `Kbd` | `components/kbd` | — | L | `variant` `outline` (keycap, `micro`) \| `plain` (Dropdown's shortcut text). |
-| `EmptyState` | `components/empty-state` | — | L | `icon`, `title`, `description`, `actions`; `size` steps the actions too. |
-| `List` | `components/list` | `.Section .Row` | L | A settings list on one control height; controls end on the caption edge; `LIST_POPOVER`, `LIST_SWITCH` (a bare Switch). |
-| `Diff` | `components/diff` | `parsePatch` | — | A unified patch; added / removed lines on the success / error hues over a 16% wash, hunks on `bg-hover`; `path` heads it with `+n −n`, `actions`; `lineNumbers`, `wrap`; lifts +1 like Code. |
-| `Markdown` | `components/markdown` | `.Prose` | — | marked's lexer → elements (raw HTML stays text); fences on Code, tables on Table, task lists; `streaming` settles an open fence or a half-typed marker. |
-| `LogView` | `components/log-view` | `parseAnsi` | — | ANSI SGR on the syntax / status hues, prompt lines, `lineNumbers` (sticky gutter), `wrap`, `follow` with a jump-to-latest button, `maxHeight`; rows are a `VirtualList`; lifts +1. |
-| `Card` | `components/card` | `.Group .Header .Title .Description .Action .Content .Footer .Divider .Media .Image .Eyebrow .Feature .Button` | L H W C | Transparent and borderless (`border="outlined"` frames one on its own; `.Divider` a hairline inside); only clickable cards join the group's hover; stretched link. A card with a `value` selects itself in `Card.Group` (`value` / `defaultValue` / `onValueChange`). `Card.Button` is a compact `Button`. |
-| `Table` | `components/table` | `.Header .Body .Footer .Row .Head .Cell .Caption .Empty` | L H C | Row hover, semantic markup; a `Table.Head` with a `value` sorts (`sort` / `defaultSort` / `onSortChange` on the root); `stacked` turns rows into cards in a narrow container (each Cell's `label` captions it). |
-| `Copy` | `components/copy` | — | L M | Click anywhere to copy; the glyph melts into a status disc behind the check. |
-| `ThinkingIndicator` | `components/AI/thinking-indicator` | — | — | `variant` `shimmer` (default) \| `goo` (three dots melting). |
-| `InputMessage` | `components/AI/input-message` | — | L S C | Composer: auto-resize, actions, attachments, queue, status, history. |
+| `Button` | `components/actions/button` | — | L C | 8 variants: `primary`, `secondary`, `tertiary`, `outline` (control-border frame), `ghost`, `destructive` / `success` (`-strong` text on a wash), `link`. Press shrinks the fill 1px/side; icons thicken; `loading` folds into a circle (box unchanged) and keeps focus; `active` forces pressed. `buttonVariants` in `variants.ts` is server-safe. Serves the chrome's Button slot. |
+| `Badge` | `components/data-display/badge` | — | L | `variant` `solid` \| `dot` \| `outline`, `color`, `size`; a new label springs width and blur-crossfades. |
+| `Avatar` | `components/data-display/avatar` | `.Image .Fallback` | L | Base UI Avatar; the image fades in, the fallback shows while it loads or fails; `shape` `circle` \| `square`. |
+| `Progress` | `components/feedback/progress` | `.Spinner` | L | Base UI Progress; the fill slides on `spring.moderate`; `value={null}` sweeps on `--duration-loop`; `label`, `showValue`, `format`. `.Spinner` is Button's loading glyph. |
+| `Meter` | `components/feedback/meter` | — | L | Base UI Meter; `variant` `bar` \| `line` \| `ring`; the fill slides; `warnAt` / `errorAt` or `tone`; `marker`. |
+| `StatusDot` | `components/feedback/status-dot` | `.glyph` (= `statusGlyph`) | L | `running` (the loading glyph), `waiting`, `unread`, `idle`, `success`, `error`; `label` for screen readers. |
+| `Kbd` | `components/data-display/kbd` | — | L | `variant` `outline` (keycap, `micro`) \| `plain` (Dropdown's shortcut text). |
+| `EmptyState` | `components/feedback/empty-state` | — | L | `icon`, `title`, `description`, `actions`; `size` steps the actions too. |
+| `List` | `components/data-display/list` | `.Section .Row` | L | A settings list on one control height; controls end on the caption edge; `LIST_POPOVER`, `LIST_SWITCH` (a bare Switch). |
+| `Diff` | `components/data-display/diff` | `parsePatch` | — | A unified patch; added / removed lines on the success / error hues over a 16% wash, hunks on `bg-hover`; `path` heads it with `+n −n`, `actions`; `lineNumbers`, `wrap`; lifts +1 like Code. |
+| `Markdown` | `components/data-display/markdown` | `.Prose` | — | marked's lexer → elements (raw HTML stays text); fences on Code, tables on Table, task lists; `streaming` settles an open fence or a half-typed marker. |
+| `LogView` | `components/data-display/log-view` | `parseAnsi` | — | ANSI SGR on the syntax / status hues, prompt lines, `lineNumbers` (sticky gutter), `wrap`, `follow` with a jump-to-latest button, `maxHeight`; rows are a `VirtualList`; lifts +1. |
+| `Card` | `components/containers/card` | `.Group .Header .Title .Description .Action .Content .Footer .Divider .Media .Image .Eyebrow .Feature .Button` | L H W C | Transparent and borderless (`border="outlined"` frames one on its own; `.Divider` a hairline inside); only clickable cards join the group's hover; stretched link. A card with a `value` selects itself in `Card.Group` (`value` / `defaultValue` / `onValueChange`). `Card.Button` is a compact `Button`. |
+| `Table` | `components/data-display/table` | `.Header .Body .Footer .Row .Head .Cell .Caption .Empty` | L H C | Row hover, semantic markup; a `Table.Head` with a `value` sorts (`sort` / `defaultSort` / `onSortChange` on the root); `stacked` turns rows into cards in a narrow container (each Cell's `label` captions it). |
+| `Copy` | `components/actions/copy` | — | L M | Click anywhere to copy; the glyph melts into a status disc behind the check. |
 
 ## components/inputs
 
@@ -225,6 +223,6 @@ The rest (refs, rects, dates and the date mask, the autosizing textarea) is list
 | A strip with a traveling indicator | `components/navigation/tabs/` (`list.tsx`, `item.tsx`), `navigation/pagination/index.tsx`, or the template in [authoring.md](authoring.md) |
 | A field with actions inside | `components/inputs/number-input/index.tsx` (`useFieldBox` + side-by-side field actions) |
 | Multi-select with merged runs | `components/inputs/checkbox/index.tsx` |
-| A state morph inside a control | `components/button/index.tsx` (`useLoadingMorph`), `copy/index.tsx` (glyph goo) |
-| A hook-free docs stage for an interactive example | `components/badge/change-demo.tsx`, `components/button/loading-demo.tsx` |
-| A goo composition of opaque shapes | `components/overlays/toast/index.tsx`, `thinking-indicator` (`variant="goo"`) |
+| A state morph inside a control | `components/actions/button/index.tsx` (`useLoadingMorph`), `copy/index.tsx` (glyph goo) |
+| A hook-free docs stage for an interactive example | `components/data-display/badge/change-demo.tsx`, `components/actions/button/loading-demo.tsx` |
+| A goo composition of opaque shapes | `components/overlays/toast/index.tsx`, `copy/index.tsx` (glyph goo) |

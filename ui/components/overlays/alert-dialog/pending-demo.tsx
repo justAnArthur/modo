@@ -8,7 +8,7 @@
 'use client'
 
 import { useState } from 'react'
-import Button from '../../button'
+import Button from '../../actions/button'
 import AlertDialog from './index'
 
 export default function PendingDemo() {

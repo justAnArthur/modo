@@ -10,12 +10,12 @@
 'use client'
 
 import { SurfaceProvider, useSurface } from '@justanarthur/modo-ui'
-import Accordion from '@justanarthur/modo-ui/components/accordion'
+import Accordion from '@justanarthur/modo-ui/components/containers/accordion'
 import Switch from '@justanarthur/modo-ui/components/inputs/switch'
 import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import { SURFACE_BG, SURFACE_SHADOW } from '@justanarthur/modo-ui/lib/surface-classes'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import Code from '@justanarthur/modo-ui/primitives/code'
+import Code from '@justanarthur/modo-ui/primitives/content/code'
 import { createContext, type ReactNode, useContext, useState } from 'react'
 
 export function Section({

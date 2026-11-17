@@ -321,7 +321,7 @@ The lifecycle tags show in a row under the page lead (`data-modo="page-meta"`). 
 With [`repo`](./config.md#repo) set, the row also links the item's `index.tsx` in the repository.
 
 ```tsx
-// ui/components/button/index.tsx
+// ui/components/actions/button/index.tsx
 /**
  * …
  * @example {@include ./examples.mdx}

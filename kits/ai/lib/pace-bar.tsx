@@ -4,7 +4,7 @@
  * is where an even spend would be by now.
  */
 
-import Meter, { type MeterTone } from '@justanarthur/modo-ui/components/meter'
+import Meter, { type MeterTone } from '@justanarthur/modo-ui/components/feedback/meter'
 import type { LimitPace, Verdict } from './pace'
 
 const TONE: Record<Verdict, MeterTone> = { free: 'default', watch: 'warning', tight: 'error' }
