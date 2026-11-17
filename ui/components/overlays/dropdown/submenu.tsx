@@ -10,7 +10,14 @@
 import { Menu, type MenuRootChangeEventDetails } from '@base-ui/react/menu'
 import { forwardRef, type HTMLAttributes, type ReactNode, useMemo } from 'react'
 import { useIcon } from '../../../lib/icon-context'
-import { type AnchorProps, OverlayContext, positionerProps, useOverlay, useOverlayRoot } from '../../../lib/overlay'
+import {
+  type AnchorProps,
+  type CollisionProps,
+  OverlayContext,
+  positionerProps,
+  useOverlay,
+  useOverlayRoot,
+} from '../../../lib/overlay'
 import { useSize } from '../../../lib/size-context'
 import type { MorphProps } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
@@ -124,6 +131,7 @@ interface DropdownSubContentProps
   extends PanelSelectionProps,
     MenuFocusProps,
     AnchorProps,
+    CollisionProps,
     MorphProps,
     Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   /** The submenu's rows: the same parts as `Dropdown.Content`, another `Dropdown.Sub` included. */
@@ -134,6 +142,8 @@ interface DropdownSubContentProps
   align?: AnchorProps['align']
   /** Gap to the parent menu in px, the length of the goo neck. Defaults to `8`. */
   sideOffset?: number
+  /** Shift along the aligned edge in px. Defaults to `-4`: the panel's padding, so its first row lines up with the trigger row. */
+  alignOffset?: CollisionProps['alignOffset']
   /** Extra classes for the submenu surface: it is 14rem wide by default. */
   className?: string
   /** Keep the submenu mounted (hidden) while closed, so its rows keep their own state across opens. A kept parent keeps it too. Defaults to `false`. */
@@ -142,18 +152,39 @@ interface DropdownSubContentProps
 
 /** The submenu's panel, lifted above the menu it came from and grown out of its trigger row. */
 const DropdownSubContent = forwardRef<HTMLDivElement, DropdownSubContentProps>(
-  ({ side, align, sideOffset, effect, hideSource, className, ...props }, ref) => (
+  (
+    {
+      side,
+      align,
+      sideOffset,
+      alignOffset = -4,
+      collisionPadding,
+      collisionBoundary,
+      positionerClassName,
+      effect,
+      hideSource,
+      className,
+      ...props
+    },
+    ref,
+  ) => (
     <MenuPopup
       ref={ref}
       part="Dropdown.SubContent"
-      positioner={{
-        ...positionerProps(
-          { side, align, sideOffset, effect, hideSource },
-          { side: 'right', align: 'start', sideOffset: 8 },
-        ),
-        // The panel's padding: its first row lines up with the trigger row.
-        alignOffset: -4,
-      }}
+      positioner={positionerProps(
+        {
+          side,
+          align,
+          sideOffset,
+          alignOffset,
+          collisionPadding,
+          collisionBoundary,
+          positionerClassName,
+          effect,
+          hideSource,
+        },
+        { side: 'right', align: 'start', sideOffset: 8 },
+      )}
       focusFirstRow={false}
       effect={effect}
       hideSource={hideSource}

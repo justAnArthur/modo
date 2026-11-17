@@ -78,6 +78,8 @@ interface RadioGroupProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect
   onValueChange?: (value: string) => void
   /** Submits the selected row's `value` under this name in a form (value mode). */
   name?: string
+  /** A row must be picked before the form submits: the browser's validation (and an enclosing Field's) reports it missing. Defaults to `false`. */
+  required?: boolean
   /** Disables every row. Defaults to `false`. */
   disabled?: boolean
   /** Pins the group's rows to one step of the size ladder (default 36px, compact 28px). Defaults to the surrounding SizeProvider. */
@@ -96,6 +98,7 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
       defaultValue,
       onValueChange: onValueChangeProp,
       name,
+      required,
       disabled = false,
       size,
       className,
@@ -164,6 +167,7 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
               value={value ?? null}
               onValueChange={v => setValue(v as string)}
               name={name}
+              required={required}
               disabled={disabled}
               className={cn('flex flex-col gap-2', className)}
               {...props}
@@ -207,6 +211,7 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
               value={value ?? null}
               onValueChange={v => setValue(v as string)}
               name={name}
+              required={required}
               disabled={disabled}
               render={content}
             />

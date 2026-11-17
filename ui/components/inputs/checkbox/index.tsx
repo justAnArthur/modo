@@ -164,6 +164,8 @@ interface CheckboxProps extends HTMLAttributes<HTMLDivElement> {
   disabled?: boolean
   /** Submits the checkbox under this name in a form, while checked. */
   name?: string
+  /** Must be checked before its form submits: the browser's validation (and an enclosing Field's) reports it missing. Defaults to `false`. */
+  required?: boolean
   /** The value submitted while checked. Defaults to `"on"`. */
   value?: string
   /** Pins the checkbox to one step of the size ladder (see Sizes). Defaults to the surrounding SizeProvider (a group's `size`). */
@@ -317,6 +319,7 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
       index: indexProp,
       disabled: disabledProp,
       name,
+      required,
       value,
       size,
       className,
@@ -385,6 +388,7 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
           onCheckedChange={onToggle}
           disabled={disabled}
           name={name}
+          required={required}
           value={value}
           {...hover}
           className={cn(
@@ -435,6 +439,7 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
           indeterminate={indeterminate}
           disabled={disabled}
           name={name}
+          required={required}
           value={value}
           onCheckedChange={onToggle}
           tabIndex={-1}

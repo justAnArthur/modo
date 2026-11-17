@@ -21,7 +21,13 @@ import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { FocusRing } from '../../../lib/focus-ring'
 import { GooIndicator } from '../../../lib/goo-indicator'
 import { useMergeRefs } from '../../../lib/merge-refs'
-import { type AnchorProps, OverlayContext, positionerProps, useOverlayRoot } from '../../../lib/overlay'
+import {
+  type AnchorProps,
+  type CollisionProps,
+  OverlayContext,
+  positionerProps,
+  useOverlayRoot,
+} from '../../../lib/overlay'
 import { isDisabledRow, POPUP_SHAPE } from '../../../lib/popup'
 import { PopupSeparator } from '../../../lib/popup-rows'
 import { useRowGroup } from '../../../lib/row-group'
@@ -156,10 +162,11 @@ type DropdownComponent = ForwardRefExoticComponent<DropdownProps & RefAttributes
  *
  * Statics:
  * - `Dropdown.Menu` — the popup root: `open`, `defaultOpen`, `onOpenChange`
- *   (with Base UI's details: `reason`, `cancel()`), `disabled`, `size`.
+ *   (with Base UI's details: `reason`, `cancel()`), `disabled`, `modal`, `size`.
  * - `Dropdown.Trigger` — `render` or `asChild`.
  * - `Dropdown.Content` — the popup panel: the selection props above, `side`,
- *   `align`, `sideOffset`, `container`, `keepMounted`, `initialFocus`,
+ *   `align`, `sideOffset`, `alignOffset`, `collisionPadding`,
+ *   `collisionBoundary`, `positionerClassName`, `container`, `keepMounted`, `initialFocus`,
  *   `finalFocus` and the morph options `from`, `effect`, `hideSource`, `tier`.
  * - `Dropdown.Item` — a row: `label` or `children`, `textValue`, `icon`,
  *   `index`, `inset`, `checked`, `onSelect(event)` (`preventDefault()` keeps
@@ -294,18 +301,27 @@ interface DropdownMenuProps {
   onOpenChange?: (open: boolean, details: DropdownOpenChangeDetails) => void
   /** Disables the menu. Defaults to `false`. */
   disabled?: boolean
+  /** Locks the page scroll while the menu is open and keeps the pointer off everything outside it. Non-modal, the page keeps scrolling and the popup follows its trigger. Defaults to `false`. */
+  modal?: boolean
   /** Pins trigger-side content and the portalled popup rows to one step of the size ladder (default 36px, compact 28px — see Sizes). Omitted, they follow the surrounding SizeProvider. */
   size?: SizeVariant
 }
 
-function DropdownMenu({ children, open, defaultOpen, onOpenChange, disabled = false, size }: DropdownMenuProps) {
+function DropdownMenu({
+  children,
+  open,
+  defaultOpen,
+  onOpenChange,
+  disabled = false,
+  modal = false,
+  size,
+}: DropdownMenuProps) {
   // Reported here rather than through the root's state, so the handler gets the details and can cancel.
   const root = useOverlayRoot({ open, defaultOpen })
 
   return (
     <SizeScope size={size}>
       <OverlayContext.Provider value={root.state}>
-        {/* Non-modal: the page keeps scrolling and the popup follows its trigger. */}
         <Menu.Root
           open={root.open}
           onOpenChange={(next, details) => {
@@ -313,7 +329,7 @@ function DropdownMenu({ children, open, defaultOpen, onOpenChange, disabled = fa
             if (!details.isCanceled) root.onOpenChange(next, details)
           }}
           disabled={disabled}
-          modal={false}
+          modal={modal}
         >
           {children}
         </Menu.Root>
@@ -339,6 +355,7 @@ interface DropdownContentProps
   extends PanelSelectionProps,
     MenuFocusProps,
     AnchorProps,
+    CollisionProps,
     MorphProps,
     Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   /** `Dropdown.Item` rows, plus `Dropdown.Label`, `Dropdown.Separator`, `Dropdown.Search`, `Dropdown.Empty`. */
@@ -350,12 +367,37 @@ interface DropdownContentProps
 }
 
 const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
-  ({ side, align, sideOffset, effect, hideSource, className, ...props }, ref) => (
+  (
+    {
+      side,
+      align,
+      sideOffset,
+      alignOffset,
+      collisionPadding,
+      collisionBoundary,
+      positionerClassName,
+      effect,
+      hideSource,
+      className,
+      ...props
+    },
+    ref,
+  ) => (
     <MenuPopup
       ref={ref}
       part="Dropdown.Content"
       positioner={positionerProps(
-        { side, align, sideOffset, effect, hideSource },
+        {
+          side,
+          align,
+          sideOffset,
+          alignOffset,
+          collisionPadding,
+          collisionBoundary,
+          positionerClassName,
+          effect,
+          hideSource,
+        },
         { side: 'bottom', align: 'start', sideOffset: 6 },
       )}
       focusFirstRow

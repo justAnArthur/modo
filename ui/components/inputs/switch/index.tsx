@@ -56,6 +56,8 @@ interface SwitchProps extends HTMLAttributes<HTMLDivElement> {
   disabled?: boolean
   /** Submits the switch under this name in a form, while on. */
   name?: string
+  /** Must be on before its form submits: the browser's validation (and an enclosing Field's) reports it missing. Defaults to `false`. */
+  required?: boolean
   /** The value submitted while on. Defaults to `"on"`. */
   value?: string
   /** Transition for the thumb's slide and hover/press stretch. Defaults to the `spring.moderate` motion token. */
@@ -147,6 +149,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
       onCheckedChange,
       disabled = false,
       name,
+      required,
       value,
       thumbTransition,
       size,
@@ -305,6 +308,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
             toggle()
           }}
           name={name}
+          required={required}
           value={value}
           disabled={disabled}
           onPointerEnter={e => {
@@ -354,6 +358,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
         <SwitchPrimitive.Root
           checked={isChecked}
           name={name}
+          required={required}
           value={value}
           aria-labelledby={labelId}
           aria-describedby={description ? descriptionId : undefined}

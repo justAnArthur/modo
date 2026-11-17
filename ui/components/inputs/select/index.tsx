@@ -32,6 +32,7 @@ import type { IconComponent } from '../../../lib/icon-context'
 import { useMergeRefs } from '../../../lib/merge-refs'
 import {
   type AnchorProps,
+  type CollisionProps,
   OverlayContext,
   positionerProps,
   useOverlay,
@@ -269,7 +270,11 @@ SelectTrigger.displayName = 'SelectTrigger'
 
 type SelectPopupProps = ComponentProps<typeof SelectPrimitive.Popup>
 
-interface SelectContentProps extends AnchorProps, MorphProps, Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
+interface SelectContentProps
+  extends AnchorProps,
+    CollisionProps,
+    MorphProps,
+    Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   /** Where focus goes when the popup closes: a ref, `false` to leave it, `true` for the default, or a function of how it closed. Defaults to the trigger. */
   finalFocus?: SelectPopupProps['finalFocus']
   /** Additional classes for the menu container. */
@@ -284,6 +289,10 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
       side,
       align,
       sideOffset,
+      alignOffset,
+      collisionPadding,
+      collisionBoundary,
+      positionerClassName,
       container,
       finalFocus,
       from,
@@ -335,7 +344,17 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
       <SelectPrimitive.Portal container={usePortalContainer(container)}>
         <SelectPrimitive.Positioner
           {...positionerProps(
-            { side, align, sideOffset, effect, hideSource },
+            {
+              side,
+              align,
+              sideOffset,
+              alignOffset,
+              collisionPadding,
+              collisionBoundary,
+              positionerClassName,
+              effect,
+              hideSource,
+            },
             { side: 'bottom', align: 'start', sideOffset: 6 },
           )}
           alignItemWithTrigger={false}
@@ -492,7 +511,8 @@ const SelectSeparator = PopupSeparator
  *   look included: childless it keeps the value slot and chevron, with
  *   children those are its whole body.
  * - `Select.Value` — the value slot: the picked row's label, else the muted `placeholder`.
- * - `Select.Content` — the popup: `side`, `align`, `sideOffset`, `container`, `finalFocus` and the
+ * - `Select.Content` — the popup: `side`, `align`, `sideOffset`, `alignOffset`, `collisionPadding`,
+ *   `collisionBoundary`, `positionerClassName`, `container`, `finalFocus` and the
  *   morph options `from`, `effect`, `hideSource`, `tier`.
  * - `Select.Item` — one row: `value`, optional `index`, `textValue`, `icon`, `disabled`;
  *   its children are the label.
