@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"],
+    // modo-ui's sources, as the docs build reads them, whether or not ui/dist exists
+    "paths": {
+      "@justanarthur/modo-ui": ["../../ui/index.ts"],
+      "@justanarthur/modo-ui/*": ["../../ui/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", ".modo-tmp", "dist"]
+}

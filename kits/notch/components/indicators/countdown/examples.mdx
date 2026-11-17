@@ -1,0 +1,25 @@
+import Countdown from './index'
+
+# Clock
+
+`4:05`, a digit at a time on the second's edge.
+
+<div className="flex items-center gap-6 text-subtitle weight-semibold">
+  <Countdown duration={245000} />
+  <Countdown duration={3725000} />
+</div>
+
+# Short
+
+The largest unit, for a compact wing: minutes, then seconds in the last minute.
+
+<div className="dark flex items-center gap-6 rounded-box bg-ink px-5 py-3 text-caption weight-medium text-status-warning">
+  <Countdown duration={240000} format="short" />
+  <Countdown duration={45000} format="short" />
+</div>
+
+# Paused
+
+It holds the time left.
+
+<Countdown paused remaining={754000} className="text-subtitle weight-semibold text-muted-foreground" />

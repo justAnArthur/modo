@@ -1,6 +1,6 @@
 # Changelog
 
-The packages are released from this repo by conventional commits (see [CONTRIBUTING.md](CONTRIBUTING.md)): `@justanarthur/modo` (`lib/`), `@justanarthur/modo-ui` (`ui/`) and `@justanarthur/modo-ui-ai` (`kits/ai/`). Each release also gets GitHub release notes generated from its commits.
+The packages are released from this repo by conventional commits (see [CONTRIBUTING.md](CONTRIBUTING.md)): `@justanarthur/modo` (`lib/`), `@justanarthur/modo-ui` (`ui/`), `@justanarthur/modo-ui-ai` (`kits/ai/`) and `@justanarthur/modo-ui-notch` (`kits/notch/`). Each release also gets GitHub release notes generated from its commits.
 
 ## Unreleased
 
@@ -9,6 +9,10 @@ The packages are released from this repo by conventional commits (see [CONTRIBUT
 - Token `--ink` (`bg-ink`, `fill-ink`, `text-ink`, `border-ink`): true black in both schemes, for surfaces that match hardware.
 - `Meter`'s ring scales with a size class, centres its `children` (a countdown's time) and takes `animate={false}` for a value that ticks on a clock.
 - New component `Sparkline` (an inline trend line: `values`, `secondary`, `max`, `area`, `tone`).
+
+### @justanarthur/modo-ui-notch
+
+- New kit (0.1.0): the UI of a macOS notch app on modo-ui (a peer, `^2.1.0`: it draws on Sparkline, the ring Meter's centre content and the ink token). Components `Island` (idle, compact, split, expanded and flash, on modo-ui's springs and goo), `IslandTabs` and `IslandFlash` under `components/island/`; `Equalizer`, `BatteryGlyph`, `MediaScrubber` and `Countdown` under `components/indicators/`; blocks `NowPlaying`, `Timer`, `Shelf` and `Agenda` (`blocks/activities/`), `PowerAlert`, `Controls`, `Devices` and `SystemStats` (`blocks/system/`), `ExpandedIsland` and `SettingsWindow` (`blocks/app/`); the island geometry and `useIsland()`. Docs at https://justanarthur.github.io/modo/notch/.
 
 ## 2026-11-17
 

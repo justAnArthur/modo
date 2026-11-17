@@ -1,0 +1,20 @@
+import Equalizer from './index'
+
+# Playing and paused
+
+Playing, each bar loops at its own pace; paused, they settle low.
+
+<div className="dark flex items-center gap-6 rounded-box bg-ink px-5 py-3 text-foreground">
+  <Equalizer label="Playing" />
+  <Equalizer playing={false} label="Paused" />
+</div>
+
+# Tinted
+
+Any fill through `barClassName`, such as the artwork's tint, and fewer or more bars.
+
+<div className="flex items-center gap-6">
+  <Equalizer barClassName="bg-status-success" bars={3} />
+  <Equalizer barClassName="bg-brand" bars={5} className="h-5" />
+  <Equalizer barClassName="bg-muted-foreground" />
+</div>

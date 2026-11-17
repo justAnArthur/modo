@@ -1,0 +1,21 @@
+import Overview from './index'
+import { MockDesktop } from '../../mock/desktop'
+import { DemoIsland } from '../../mock/island-content'
+
+# Desktop
+
+The island over the menu bar: press it, hover it, or pick a state below.
+
+<Overview />
+
+# Every state
+
+The same island in each of its five states.
+
+<div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
+  <MockDesktop height={400} island={<DemoIsland defaultState="idle" />} />
+  <MockDesktop height={400} island={<DemoIsland defaultState="compact" />} />
+  <MockDesktop height={400} island={<DemoIsland defaultState="split" />} />
+  <MockDesktop height={400} island={<DemoIsland defaultState="flash" />} />
+  <MockDesktop height={400} island={<DemoIsland defaultState="expanded" collapsedState="compact" />} />
+</div>

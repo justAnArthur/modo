@@ -1,0 +1,57 @@
+import Island from './index'
+import { ArtworkTile, ChargingFlash, DemoIsland, ExpandedPanel, IslandPlayground, ScreenEdge, TimerBubble } from '../../../mock/island-content'
+import Equalizer from '../../indicators/equalizer'
+
+# States
+
+Pick a state, or press the island: a press opens it, a hover keeps it open, and leaving or Escape closes it back to where it was.
+
+<IslandPlayground />
+
+# Idle
+
+The bare notch, hanging from the top edge through its concave shoulders.
+
+<ScreenEdge height={64}>
+  <Island />
+</ScreenEdge>
+
+# Compact
+
+An activity in the wings: its glyph on the left, its live value on the right.
+
+<ScreenEdge height={64}>
+  <Island defaultState="compact" leading={<ArtworkTile />} trailing={<Equalizer />} />
+</ScreenEdge>
+
+# Split
+
+A second activity in a bubble off the right end; it melts off and back through the goo.
+
+<ScreenEdge height={64}>
+  <Island defaultState="split" leading={<ArtworkTile />} trailing={<Equalizer />} minimal={<TimerBubble />} />
+</ScreenEdge>
+
+# Flash
+
+A moment's alert below the notch.
+
+<ScreenEdge height={112}>
+  <Island defaultState="flash" flash={<ChargingFlash />} />
+</ScreenEdge>
+
+# Expanded
+
+The open panel: tabs in the wings around the notch, the tab's title and its widget.
+
+<ScreenEdge height={340}>
+  <Island defaultState="expanded" collapsedState="compact" leading={<ArtworkTile />} trailing={<Equalizer />} expanded={<ExpandedPanel />} />
+</ScreenEdge>
+
+# Geometry
+
+A wider notch and a smaller panel; the panel also shrinks to the room it has.
+
+<ScreenEdge height={240}>
+  <DemoIsland defaultState="expanded" notchWidth={220} notchHeight={38} panelWidth={560} panelHeight={220} />
+</ScreenEdge>

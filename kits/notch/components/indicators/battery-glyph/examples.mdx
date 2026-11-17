@@ -1,0 +1,22 @@
+import BatteryGlyph from './index'
+
+# Levels
+
+The fill takes the warning hue from 20% down and the error hue from 10%.
+
+<div className="flex items-center gap-6">
+  <BatteryGlyph level={82} />
+  <BatteryGlyph level={46} />
+  <BatteryGlyph level={18} />
+  <BatteryGlyph level={6} />
+</div>
+
+# Charging
+
+A bolt, and the success hue.
+
+<div className="dark flex items-center gap-6 rounded-box bg-ink px-5 py-3 text-foreground">
+  <BatteryGlyph level={82} charging />
+  <BatteryGlyph level={12} charging />
+  <BatteryGlyph level={100} tone="default" />
+</div>
