@@ -39,6 +39,19 @@ import { CRASH_STDERR, INBOX, SHORTCUTS, TRANSCRIPTS } from '../../mock/mock-ext
 import { SIDE_PANE_DATA } from '../../mock/mock-panes'
 import { SETTINGS_SECTIONS } from '../../mock/mock-settings'
 
+/** The sidebar's row, group and footer actions, inert in this demo but shown. */
+const SIDEBAR_ACTIONS = {
+  onPin: () => {},
+  onArchive: () => {},
+  onOpenSplit: () => {},
+  onRename: () => {},
+  onMarkUnread: () => {},
+  onFork: () => {},
+  onNewSessionIn: () => {},
+  onFilterSection: () => {},
+  onOpenSettings: () => {},
+}
+
 type PromptKind = 'none' | 'permission' | 'edit' | 'question' | 'multi' | 'preview' | 'plan' | 'offer' | 'task'
 
 const ALL_SESSIONS: Session[] = [
@@ -396,6 +409,7 @@ export default function Workspace({
       left={
         <SessionSidebar
           {...SESSIONS}
+          {...SIDEBAR_ACTIONS}
           value={selected}
           onValueChange={setSelected}
           onOpenSplit={setSplitId}

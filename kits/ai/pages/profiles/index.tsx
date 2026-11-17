@@ -21,6 +21,19 @@ import type { Profile } from '../../lib/types'
 import { PROFILES, SESSIONS } from '../../mock/mock'
 import { SIGN_IN_WAITING } from '../../mock/mock-extras'
 
+/** The sidebar's row, group and footer actions, inert in this demo but shown. */
+const SIDEBAR_ACTIONS = {
+  onPin: () => {},
+  onArchive: () => {},
+  onOpenSplit: () => {},
+  onRename: () => {},
+  onMarkUnread: () => {},
+  onFork: () => {},
+  onNewSessionIn: () => {},
+  onFilterSection: () => {},
+  onOpenSettings: () => {},
+}
+
 function ProfileCard({ profile, isDefault }: { profile: Profile; isDefault: boolean }) {
   const shape = useShape()
   return (
@@ -119,7 +132,7 @@ export default function Profiles({ sidebar = true }: ProfilesProps) {
   return (
     <div className="flex h-full min-h-[640px] w-full bg-background">
       <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0} defaultOpen={sidebar}>
-        <SessionSidebar {...SESSIONS} className="h-full" defaultValue="" />
+        <SessionSidebar {...SESSIONS} {...SIDEBAR_ACTIONS} className="h-full" defaultValue="" />
         <Sidebar.Inset className="@container min-h-0 min-w-0 overflow-auto">
           <header className="flex h-12 shrink-0 items-center gap-2 px-1.5">
             <Sidebar.Trigger />

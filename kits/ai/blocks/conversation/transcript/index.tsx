@@ -16,7 +16,7 @@ import ScrollArea from '@justanarthur/modo-ui/primitives/layout/scroll-area'
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import AgentRun from '../../../components/conversation/agent-run'
 import ChapterNav, { type ChapterNavItem } from '../../../components/conversation/chapter-nav'
-import Message, { type MessageProps, Working } from '../../../components/conversation/message'
+import Message, { type MessageProps } from '../../../components/conversation/message'
 import Reasoning from '../../../components/conversation/reasoning'
 import Recap from '../../../components/conversation/recap'
 import TodoList, { type TodoItem } from '../../../components/conversation/todo-list'
@@ -26,18 +26,20 @@ import { useIcon } from '../../../lib/icons'
 
 type TurnProps = Omit<MessageProps, 'role'>
 
-function User(props: TurnProps) {
+// No static's key names a binding of this file: the declaration bundler renames
+// a clashing binding to Name2, and a key spelled like it goes along (`Transcript.Working2`).
+function UserTurn(props: TurnProps) {
   // biome-ignore lint/a11y/useValidAriaRole: Message's `role` is who speaks, not an ARIA role
   return <Message role="user" {...props} />
 }
 
 /** The agent's turn. A string is markdown, rendered as it streams in; JSX (work, tool runs, prose) renders as is. */
-function Assistant({ children, streaming, ...props }: TurnProps) {
+function AssistantTurn({ children, streaming, ...props }: TurnProps) {
   if (typeof children === 'string')
     return (
       <div className="flex flex-col gap-3">
         <Markdown streaming={streaming}>{children}</Markdown>
-        {streaming && <Working />}
+        {streaming && <Message.Working />}
       </div>
     )
   return (
@@ -176,8 +178,8 @@ const Transcript = Object.assign(
     )
   },
   {
-    User: User,
-    Assistant: Assistant,
+    User: UserTurn,
+    Assistant: AssistantTurn,
     Work: WorkSummary,
     Thinking: Reasoning,
     Tools: ToolCall.Group,

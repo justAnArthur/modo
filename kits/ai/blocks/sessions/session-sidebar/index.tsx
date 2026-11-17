@@ -59,14 +59,23 @@ function ReorderAction() {
   )
 }
 
+/** What a row's hover actions and menu call. An action whose callback is absent is left out. */
+type RowActions = Pick<
+  SessionSidebarProps,
+  'onOpenSplit' | 'onPin' | 'onArchive' | 'onRename' | 'onMarkUnread' | 'onFork'
+>
+
 interface SessionRowProps {
   session: Session
   /** Inside the pinned Sortable: the actions lead with a grip. */
   reorder?: boolean
-  onOpenSplit?: (id: string) => void
+  /** Inside the archive: Archive becomes Unarchive. */
+  archived?: boolean
+  actions: RowActions
 }
 
-function SessionRow({ session, reorder, onOpenSplit }: SessionRowProps) {
+function SessionRow({ session, reorder, archived = false, actions }: SessionRowProps) {
+  const { onOpenSplit, onPin, onArchive, onRename, onMarkUnread, onFork } = actions
   const Pin = useIcon('pin')
   const Archive = useIcon('archive')
   const More = useIcon('more-vertical')
@@ -76,6 +85,55 @@ function SessionRow({ session, reorder, onOpenSplit }: SessionRowProps) {
   const Branch = useIcon('git-branch')
   const glyph = STATUS_GLYPH[session.status]
   const children = session.children ?? []
+  const pinLabel = session.pinned ? 'Unpin' : 'Pin'
+  const archiveLabel = archived ? 'Unarchive' : 'Archive'
+
+  const menu = [
+    onOpenSplit && (
+      <MenuItem key="split" icon={Columns} label="Open in split view" onSelect={() => onOpenSplit(session.id)} />
+    ),
+    onRename && <MenuItem key="rename" icon={Pencil} label="Rename" onSelect={() => onRename(session.id)} />,
+    onMarkUnread && session.status !== 'unread' && (
+      <MenuItem key="unread" icon={Dot} label="Mark as unread" onSelect={() => onMarkUnread(session.id)} />
+    ),
+    onFork && <MenuItem key="fork" icon={Branch} label="Fork into a new session" onSelect={() => onFork(session.id)} />,
+    reorder && onArchive && (
+      <MenuItem key="archive" icon={Archive} label={archiveLabel} onSelect={() => onArchive(session.id, !archived)} />
+    ),
+  ].filter(Boolean)
+
+  // Filtered: the cluster sizes the row's gutter by its child count, nulls included. A pinned row trades Archive (in its menu) for the grip.
+  const cluster = [
+    reorder && <ReorderAction key="reorder" />,
+    onPin && (
+      <Tooltip key="pin" content={pinLabel} side="top">
+        <Sidebar.MenuAction aria-label={pinLabel} onClick={() => onPin(session.id, !session.pinned)}>
+          <Pin />
+        </Sidebar.MenuAction>
+      </Tooltip>
+    ),
+    !reorder && onArchive && (
+      <Tooltip key="archive" content={archiveLabel} side="top">
+        <Sidebar.MenuAction aria-label={archiveLabel} onClick={() => onArchive(session.id, !archived)}>
+          <Archive />
+        </Sidebar.MenuAction>
+      </Tooltip>
+    ),
+    menu.length > 0 && (
+      <DropdownMenu key="more">
+        <DropdownTrigger
+          render={
+            <Sidebar.MenuAction aria-label="More options">
+              <More />
+            </Sidebar.MenuAction>
+          }
+        />
+        <DropdownContent className="w-[240px] min-w-0" align="start" sideOffset={4}>
+          {menu}
+        </DropdownContent>
+      </DropdownMenu>
+    ),
+  ].filter(Boolean)
 
   return (
     <Sidebar.MenuItem
@@ -91,45 +149,7 @@ function SessionRow({ session, reorder, onOpenSplit }: SessionRowProps) {
         <span className="truncate">{session.title}</span>
       </Sidebar.MenuButton>
       <Sidebar.MenuBadge>{session.updated}</Sidebar.MenuBadge>
-      <Sidebar.MenuActions showOnHover>
-        {/* Filtered: the cluster sizes the row's gutter by its child count, nulls included. A pinned row trades Archive (in its menu) for the grip. */}
-        {[
-          reorder && <ReorderAction key="reorder" />,
-          <Tooltip key="pin" content={session.pinned ? 'Unpin' : 'Pin'} side="top">
-            <Sidebar.MenuAction aria-label={session.pinned ? 'Unpin' : 'Pin'}>
-              <Pin />
-            </Sidebar.MenuAction>
-          </Tooltip>,
-          !reorder && (
-            <Tooltip key="archive" content="Archive" side="top">
-              <Sidebar.MenuAction aria-label="Archive">
-                <Archive />
-              </Sidebar.MenuAction>
-            </Tooltip>
-          ),
-          <DropdownMenu key="more">
-            <DropdownTrigger
-              render={
-                <Sidebar.MenuAction aria-label="More options">
-                  <More />
-                </Sidebar.MenuAction>
-              }
-            />
-            <DropdownContent className="w-[240px] min-w-0" align="start" sideOffset={4}>
-              <MenuItem
-                index={0}
-                icon={Columns}
-                label="Open in split view"
-                onSelect={() => onOpenSplit?.(session.id)}
-              />
-              <MenuItem index={1} icon={Pencil} label="Rename" />
-              <MenuItem index={2} icon={Dot} label="Mark as unread" />
-              <MenuItem index={3} icon={Branch} label="Fork into a new session" />
-              {reorder && <MenuItem index={4} icon={Archive} label="Archive" />}
-            </DropdownContent>
-          </DropdownMenu>,
-        ].filter(Boolean)}
-      </Sidebar.MenuActions>
+      {cluster.length > 0 && <Sidebar.MenuActions showOnHover>{cluster}</Sidebar.MenuActions>}
       {children.length > 0 && (
         <Sidebar.MenuSub>
           {children.map(child => (
@@ -237,17 +257,31 @@ interface SessionSidebarProps {
   value?: string
   /** Initial selected session id, for an uncontrolled sidebar. */
   defaultValue?: string
-  /** Called with the session id when a row is picked. */
+  /** Called with the session id when a row is picked; the header's Overview row picks `'overview'` and its New session row `'new'`. */
   onValueChange?: (value: string) => void
-  /** Called when a row's menu asks to open its session in split view. */
+  /** Called when a row's menu asks to open its session in split view. Omit to leave the menu item out. */
   onOpenSplit?: (id: string) => void
+  /** Called by a row's pin action with the session id and whether it should now be pinned. Omit to leave the action out. */
+  onPin?: (id: string, pinned: boolean) => void
+  /** Called by a row's archive action (in a pinned row's menu, Unarchive in the archive) with the session id and whether it should now be archived. Omit to leave the action out. */
+  onArchive?: (id: string, archived: boolean) => void
+  /** Called by a row's Rename menu item with the session id: open your rename field (the title bar's, say). Omit to leave the item out. */
+  onRename?: (id: string) => void
+  /** Called by a row's Mark as unread menu item, shown on rows not already unread. Omit to leave the item out. */
+  onMarkUnread?: (id: string) => void
+  /** Called by a row's Fork into a new session menu item with the session id. Omit to leave the item out. */
+  onFork?: (id: string) => void
+  /** Called by a project group's New session action with that group. Omit to leave the action out. */
+  onNewSessionIn?: (group: SessionGroup) => void
+  /** Called by a section's Filter action with that section. Omit to leave the action out. */
+  onFilterSection?: (group: SessionGroup) => void
   /** What needs you across sessions: a header row opens them, with the unread count. Omit for no inbox row. */
   inbox?: InboxItem[]
   /** Called when an inbox row is answered or opened. */
   onInboxAction?: (item: InboxItem, action: InboxAction) => void
   /** Called when the search field is clicked or Enter is pressed in it: open your ⌘K palette. Omit to keep it a plain field. */
   onSearch?: () => void
-  /** Called by the footer's settings row. */
+  /** Called by the footer's Settings row and the usage's manage action. Omit to leave the Settings row out. */
   onOpenSettings?: () => void
   /** The sidebar's layout (see Sidebar). Defaults to `'inset'`. */
   variant?: 'sidebar' | 'floating' | 'inset'
@@ -269,9 +303,15 @@ interface SessionSidebarProps {
  * A row's leading glyph is its state: an arc turning while it runs, an
  * amber dot while it waits for you, a filled dot for an unread reply and a
  * ring when idle; its badge is the last activity. Hover a row for pin,
- * archive and a menu that opens the session in split view, renames it or
- * forks it. Sessions started from another one fold under it as linked
- * children. Pick a row and the active background melts over to it.
+ * archive and a menu that opens the session in split view, renames it,
+ * marks it unread or forks it. Each of those actions, a group's New session
+ * or Filter action and the footer's Settings row shows only when you pass
+ * its callback (`onPin`, `onArchive`, `onOpenSplit`, `onRename`,
+ * `onMarkUnread`, `onFork`, `onNewSessionIn`, `onFilterSection`,
+ * `onOpenSettings`), so the sidebar offers only what your app does. The
+ * Overview and New session rows are picks like a session's: `onValueChange`
+ * gets `'overview'` or `'new'`. Sessions started from another one fold
+ * under it as linked children. Pick a row and the active background melts over to it.
  *
  * On the overview, whose board is the session list widened, `list="filters"`
  * trades the list for filters: by state, project and profile, each with its
@@ -294,6 +334,13 @@ export default function SessionSidebar({
   defaultValue,
   onValueChange,
   onOpenSplit,
+  onPin,
+  onArchive,
+  onRename,
+  onMarkUnread,
+  onFork,
+  onNewSessionIn,
+  onFilterSection,
   onOpenSettings,
   inbox,
   onInboxAction,
@@ -308,6 +355,7 @@ export default function SessionSidebar({
   const Bell = useIcon('bell')
   const unread = inbox?.filter(item => !item.read).length ?? 0
   const waiting = everySession(pinned, groups).filter(s => s.status === 'waiting').length
+  const actions = { onOpenSplit, onPin, onArchive, onRename, onMarkUnread, onFork }
 
   return (
     <Sidebar
@@ -378,38 +426,43 @@ export default function SessionSidebar({
                   items={pinned.map(session => ({
                     id: session.id,
                     label: session.title,
-                    content: <SessionRow session={session} reorder onOpenSplit={onOpenSplit} />,
+                    content: <SessionRow session={session} reorder actions={actions} />,
                   }))}
                   onOrderChange={onPinnedOrderChange}
                 />
               </Sidebar.Menu>
             </Sidebar.Group>
 
-            {groups.map(group => (
-              <Sidebar.Group key={group.label} collapsible>
-                <Sidebar.GroupLabel>{group.label}</Sidebar.GroupLabel>
-                <Sidebar.GroupActions>
-                  <Tooltip content={group.kind === 'project' ? `New session in ${group.label}` : 'Filter'} side="top">
-                    <Sidebar.GroupAction
-                      aria-label={group.kind === 'project' ? `New session in ${group.label}` : 'Filter'}
-                    >
-                      {group.kind === 'project' ? <Plus /> : <Filter />}
-                    </Sidebar.GroupAction>
-                  </Tooltip>
-                </Sidebar.GroupActions>
-                <Sidebar.Menu>
-                  {group.sessions.map(session => (
-                    <SessionRow key={session.id} session={session} onOpenSplit={onOpenSplit} />
-                  ))}
-                </Sidebar.Menu>
-              </Sidebar.Group>
-            ))}
+            {groups.map(group => {
+              const isProject = group.kind === 'project'
+              const onAction = isProject ? onNewSessionIn : onFilterSection
+              const label = isProject ? `New session in ${group.label}` : 'Filter'
+              return (
+                <Sidebar.Group key={group.label} collapsible>
+                  <Sidebar.GroupLabel>{group.label}</Sidebar.GroupLabel>
+                  {onAction && (
+                    <Sidebar.GroupActions>
+                      <Tooltip content={label} side="top">
+                        <Sidebar.GroupAction aria-label={label} onClick={() => onAction(group)}>
+                          {isProject ? <Plus /> : <Filter />}
+                        </Sidebar.GroupAction>
+                      </Tooltip>
+                    </Sidebar.GroupActions>
+                  )}
+                  <Sidebar.Menu>
+                    {group.sessions.map(session => (
+                      <SessionRow key={session.id} session={session} actions={actions} />
+                    ))}
+                  </Sidebar.Menu>
+                </Sidebar.Group>
+              )
+            })}
 
             <Sidebar.Group collapsible defaultOpen={false}>
               <Sidebar.GroupLabel>Archived</Sidebar.GroupLabel>
               <Sidebar.Menu>
                 {archived.map(session => (
-                  <SessionRow key={session.id} session={session} onOpenSplit={onOpenSplit} />
+                  <SessionRow key={session.id} session={session} archived actions={actions} />
                 ))}
               </Sidebar.Menu>
             </Sidebar.Group>
@@ -422,16 +475,18 @@ export default function SessionSidebar({
           <Sidebar.GroupLabel>Usage</Sidebar.GroupLabel>
           <ProfileUsage profiles={profiles} onManage={onOpenSettings} />
         </Sidebar.Group>
-        <Sidebar.Menu>
-          <Sidebar.MenuItem>
-            <Sidebar.MenuButton icon={Settings} onClick={onOpenSettings}>
-              Settings
-              <Kbd variant="plain" className="ml-auto">
-                ⌘,
-              </Kbd>
-            </Sidebar.MenuButton>
-          </Sidebar.MenuItem>
-        </Sidebar.Menu>
+        {onOpenSettings && (
+          <Sidebar.Menu>
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton icon={Settings} onClick={onOpenSettings}>
+                Settings
+                <Kbd variant="plain" className="ml-auto">
+                  ⌘,
+                </Kbd>
+              </Sidebar.MenuButton>
+            </Sidebar.MenuItem>
+          </Sidebar.Menu>
+        )}
       </Sidebar.Footer>
     </Sidebar>
   )

@@ -15,7 +15,7 @@ import Popover from '@justanarthur/modo-ui/components/overlays/popover'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { SizeProvider } from '@justanarthur/modo-ui/primitives/systems/sizes'
 import { useIcon } from '../../../lib/icons'
-import { duration, type LimitPace, paceOf, percent, VERDICT_TEXT } from '../../../lib/pace'
+import { duration, type LimitPace, NO_USAGE, paceOf, percent, VERDICT_TEXT } from '../../../lib/pace'
 import { PaceBar } from '../../../lib/pace-bar'
 import type { Profile } from '../../../lib/types'
 
@@ -47,6 +47,8 @@ interface ProfileUsageProps {
  * fill past the tick is spending faster than the window refills. The row
  * lists every profile by name with its session limit over its tightest
  * weekly one; press it for every limit with its share and time to reset.
+ * A profile with no limits yet (`limits: []`, as before its first turn
+ * reports usage) reads "No usage yet" instead of a bar.
  *
  * Put it in a Sidebar (the session sidebar puts it in its footer).
  *
@@ -72,16 +74,22 @@ export default function ProfileUsage({ profiles, onManage }: ProfileUsageProps) 
                       <span
                         className={cn(
                           'truncate text-caption',
-                          binding.verdict === 'free' ? 'text-foreground' : VERDICT_TEXT[binding.verdict],
+                          binding === undefined || binding.verdict === 'free'
+                            ? 'text-foreground'
+                            : VERDICT_TEXT[binding.verdict],
                         )}
                       >
                         {profile.name}
                       </span>
-                      <span className="flex flex-col gap-1">
-                        {glanceLimits(limits).map(pace => (
-                          <PaceBar key={pace.limit.label} pace={pace} />
-                        ))}
-                      </span>
+                      {binding ? (
+                        <span className="flex flex-col gap-1">
+                          {glanceLimits(limits).map(pace => (
+                            <PaceBar key={pace.limit.label} pace={pace} />
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="truncate text-caption text-muted-foreground">{NO_USAGE}</span>
+                      )}
                     </span>
                   ))}
                 </span>
@@ -97,7 +105,13 @@ export default function ProfileUsage({ profiles, onManage }: ProfileUsageProps) 
                 <List.Section
                   key={profile.id}
                   title={`${profile.name} · ${profile.plan}`}
-                  aside={<span className={VERDICT_TEXT[binding.verdict]}>{VERDICT_WORD[binding.verdict]}</span>}
+                  aside={
+                    binding ? (
+                      <span className={VERDICT_TEXT[binding.verdict]}>{VERDICT_WORD[binding.verdict]}</span>
+                    ) : (
+                      <span className="text-muted-foreground">{NO_USAGE}</span>
+                    )
+                  }
                 >
                   {limits.map(pace => (
                     <List.Row key={pace.limit.label} label={pace.limit.label}>

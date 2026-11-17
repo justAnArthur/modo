@@ -64,6 +64,7 @@ export default function Overview({
           groups={GROUPS.map(g => ({ ...g, sessions: g.sessions.map(live) }))}
           archived={ARCHIVED}
           profiles={PROFILES}
+          onOpenSettings={() => {}}
           value={shown === 'all' ? 'overview' : shown}
           onValueChange={v => {
             if (v === 'overview') setShown('all')

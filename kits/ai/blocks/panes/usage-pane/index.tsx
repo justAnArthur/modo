@@ -9,7 +9,7 @@
 import Badge from '@justanarthur/modo-ui/components/data-display/badge'
 import { useSize } from '@justanarthur/modo-ui/lib/size-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import { duration, paceOf, percent, VERDICT_TEXT } from '../../../lib/pace'
+import { duration, NO_USAGE, paceOf, percent, VERDICT_TEXT } from '../../../lib/pace'
 import { PaceBar } from '../../../lib/pace-bar'
 import { PaneSection } from '../../../lib/pane-parts'
 import type { Profile } from '../../../lib/types'
@@ -17,7 +17,7 @@ import type { Profile } from '../../../lib/types'
 const VERDICT_WORD = { free: 'on pace', watch: 'only just', tight: 'too fast' } as const
 
 interface UsagePaneProps {
-  /** The profiles to read, each with its limits. */
+  /** The profiles to read, each with its limits (empty until the profile reports usage). */
   profiles: Profile[]
 }
 
@@ -28,7 +28,8 @@ interface UsagePaneProps {
  * Each profile is a section with its plan and a verdict on its tightest
  * limit (on pace, only just, too fast); each limit is a pace bar whose tick
  * is where an even spend would be by now, with its share and the time
- * until it resets.
+ * until it resets. A profile with no limits yet (`limits: []`, before its
+ * first turn reports usage) reads "No usage yet".
  *
  * @example {@include ./examples.mdx}
  */
@@ -50,8 +51,10 @@ export default function UsagePane({ profiles }: UsagePaneProps) {
           title={profile.name}
           meta={profile.plan}
           actions={
-            <span className={cn('pr-1 text-caption', VERDICT_TEXT[binding.verdict])}>
-              {VERDICT_WORD[binding.verdict]}
+            <span
+              className={cn('pr-1 text-caption', binding ? VERDICT_TEXT[binding.verdict] : 'text-muted-foreground')}
+            >
+              {binding ? VERDICT_WORD[binding.verdict] : NO_USAGE}
             </span>
           }
         >

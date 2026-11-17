@@ -24,9 +24,9 @@ import Switch from '@justanarthur/modo-ui/components/inputs/switch'
 import Dropdown from '@justanarthur/modo-ui/components/overlays/dropdown'
 import Popover from '@justanarthur/modo-ui/components/overlays/popover'
 import { SURFACE_BG } from '@justanarthur/modo-ui/lib/surface-classes'
+import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { SizeProvider } from '@justanarthur/modo-ui/primitives/systems/sizes'
-import { useState } from 'react'
 import { useIcon } from '../../../lib/icons'
 import { RowTrigger } from '../../../lib/row-trigger'
 import type { Command, Model, PermissionMode, Profile, Project } from '../../../lib/types'
@@ -83,29 +83,47 @@ function AddPalette({ files, commands, onAttach }: { files: string[]; commands: 
   )
 }
 
+/** `value` while `options` holds it, else `fallback`: a pick never outlives its list. */
+function inList(value: string, options: string[], fallback = options[0] ?? '') {
+  return options.includes(value) ? value : fallback
+}
+
+interface ProjectPickerProps {
+  projects: Project[]
+  branches: string[]
+  branch?: string
+  locked: boolean
+  project: string
+  onProjectChange: (path: string) => void
+  worktree: boolean
+  onWorktreeChange: (worktree: boolean) => void
+  baseBranch: string
+  onBaseBranchChange: (branch: string) => void
+}
+
 /** Where a session runs: the project, a worktree of its own and how it is set up. */
 function ProjectPicker({
   projects,
   branches,
   branch,
   locked,
-}: {
-  projects: Project[]
-  branches: string[]
-  branch?: string
-  locked: boolean
-}) {
-  const [project, setProject] = useState(projects[0]?.label ?? '')
-  const [worktree, setWorktree] = useState(true)
+  project,
+  onProjectChange,
+  worktree,
+  onWorktreeChange,
+  baseBranch,
+  onBaseBranchChange,
+}: ProjectPickerProps) {
+  const label = projects.find(p => p.path === project)?.label ?? ''
   const Folder = useIcon('folder')
   const Branch = useIcon('git-branch')
   return (
     <Popover>
       <Popover.Trigger
         render={
-          <RowTrigger aria-label={`Project: ${project}${worktree ? ', new worktree' : ''}`}>
+          <RowTrigger aria-label={`Project: ${label}${worktree ? ', new worktree' : ''}`}>
             <Folder size={14} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
-            <span className="min-w-0 truncate">{project}</span>
+            <span className="min-w-0 truncate">{label}</span>
             {worktree && <Branch size={14} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />}
           </RowTrigger>
         }
@@ -116,11 +134,11 @@ function ProjectPicker({
             <ChoiceList
               label="Project"
               value={project}
-              onValueChange={setProject}
+              onValueChange={onProjectChange}
               options={projects.map(g => ({
-                value: g.label,
+                value: g.path,
                 label: g.label,
-                disabled: locked && g.label !== project,
+                disabled: locked && g.path !== project,
                 content: (
                   <span className="flex min-w-0 flex-1 items-baseline justify-between gap-2">
                     <span className="text-body text-foreground">{g.label}</span>
@@ -140,7 +158,7 @@ function ProjectPicker({
               <Switch
                 label="New worktree"
                 checked={worktree}
-                onCheckedChange={setWorktree}
+                onCheckedChange={onWorktreeChange}
                 disabled={locked}
                 className={LIST_SWITCH}
               />
@@ -149,7 +167,7 @@ function ProjectPicker({
               <Switch label="Run setup script" defaultChecked disabled={locked} className={LIST_SWITCH} />
             </List.Row>
             <List.Row label="Base branch">
-              <Select defaultValue={branches[0]} disabled={locked}>
+              <Select value={baseBranch} onValueChange={onBaseBranchChange} disabled={locked}>
                 <Select.Trigger variant="borderless" className="min-w-0" />
                 <Select.Content>
                   {branches.map((b, i) => (
@@ -174,10 +192,16 @@ interface RunSettingsProps {
   outputStyles: string[]
   context: number
   compacting: boolean
-  defaultModel: string
-  defaultEffort: string
-  defaultMode: string
-  defaultFast: boolean
+  model: string
+  onModelChange: (model: string) => void
+  effort: string
+  onEffortChange: (effort: string) => void
+  mode: string
+  onModeChange: (mode: string) => void
+  fast: boolean
+  onFastChange: (fast: boolean) => void
+  style: string
+  onStyleChange: (style: string) => void
 }
 
 /** How the agent runs, behind one trigger: "Opus 5.5 · High ◔". */
@@ -188,16 +212,17 @@ function RunSettings({
   outputStyles,
   context,
   compacting,
-  defaultModel,
-  defaultEffort,
-  defaultMode,
-  defaultFast,
+  model,
+  onModelChange,
+  effort,
+  onEffortChange,
+  mode,
+  onModeChange,
+  fast,
+  onFastChange,
+  style,
+  onStyleChange,
 }: RunSettingsProps) {
-  const [model, setModel] = useState(defaultModel)
-  const [effort, setEffort] = useState(defaultEffort)
-  const [mode, setMode] = useState(defaultMode)
-  const [fast, setFast] = useState(defaultFast)
-  const [style, setStyle] = useState(outputStyles[0] ?? '')
   const activeMode = permissionModes.find(m => m.label === mode)
   const ModeIcon = useIcon(activeMode?.icon ?? 'shield-check')
   const Zap = useIcon('zap')
@@ -226,7 +251,7 @@ function RunSettings({
             <ChoiceList
               label="Model"
               value={model}
-              onValueChange={setModel}
+              onValueChange={onModelChange}
               options={models.map(m => ({
                 value: m.name,
                 label: m.name,
@@ -247,13 +272,13 @@ function RunSettings({
               max={efforts.length - 1}
               step={1}
               value={Math.max(efforts.indexOf(effort), 0)}
-              onValueChange={v => setEffort(efforts[typeof v === 'number' ? v : v[0]] ?? effort)}
+              onValueChange={v => onEffortChange(efforts[typeof v === 'number' ? v : v[0]] ?? effort)}
               formatValue={v => efforts[v] ?? ''}
             />
           </div>
           <List.Section title="Behaviour">
             <List.Row label="Permissions">
-              <Select value={mode} onValueChange={setMode}>
+              <Select value={mode} onValueChange={onModeChange}>
                 <Select.Trigger variant="borderless" icon={ModeIcon} className="min-w-0" title={activeMode?.note} />
                 <Select.Content>
                   {permissionModes.map((m, i) => (
@@ -265,10 +290,10 @@ function RunSettings({
               </Select>
             </List.Row>
             <List.Row label="Fast mode">
-              <Switch label="Fast mode" checked={fast} onCheckedChange={setFast} className={LIST_SWITCH} />
+              <Switch label="Fast mode" checked={fast} onCheckedChange={onFastChange} className={LIST_SWITCH} />
             </List.Row>
             <List.Row label="Output style">
-              <Select value={style} onValueChange={setStyle}>
+              <Select value={style} onValueChange={onStyleChange}>
                 <Select.Trigger variant="borderless" className="min-w-0" />
                 <Select.Content>
                   {outputStyles.map((o, i) => (
@@ -333,16 +358,56 @@ interface ComposerProps {
   branches: string[]
   /** The session's own branch, shown in the project menu. Omit before the session has one. */
   branch?: string
+  /** The project the session runs in, by `Project.path`, controlled. Pair with `onProjectChange`. A path not in `projects` shows, and stands for, the first project. */
+  project?: string
+  /** The initial project, by `Project.path`, when uncontrolled. Defaults to the first project. */
+  defaultProject?: string
+  /** Called with the picked project's `path`. Only a new session (`target`) can pick one. */
+  onProjectChange?: (path: string) => void
+  /** Whether the session gets a new git worktree, controlled. Pair with `onWorktreeChange`. */
+  worktree?: boolean
+  /** Start with a new worktree when uncontrolled. Defaults to `true`. */
+  defaultWorktree?: boolean
+  /** Called when the new-worktree switch flips. Only a new session (`target`) can flip it. */
+  onWorktreeChange?: (worktree: boolean) => void
+  /** The branch a new worktree starts from, controlled. Pair with `onBaseBranchChange`. A branch not in `branches` stands for the first one. */
+  baseBranch?: string
+  /** The initial base branch when uncontrolled. Defaults to the first branch. */
+  defaultBaseBranch?: string
+  /** Called with the base branch picked. Only a new session (`target`) can pick one. */
+  onBaseBranchChange?: (branch: string) => void
   /** The profiles a session can run under. */
   profiles: Profile[]
-  /** Initial model, by name. Defaults to the first model. */
+  /** The model, by name, controlled. Pair with `onModelChange`. A name not in `models` (say, after a switch to another provider) stands for the first model. */
+  model?: string
+  /** Initial model, by name, when uncontrolled. Defaults to the first model. */
   defaultModel?: string
-  /** Initial permission mode, by label. Defaults to the first mode. */
-  defaultPermissionMode?: string
-  /** Initial effort. Defaults to the middle step. */
+  /** Called with the model's name when another one is picked. */
+  onModelChange?: (model: string) => void
+  /** The effort step, controlled. Pair with `onEffortChange`. A step not in `efforts` stands for the middle one. */
+  effort?: string
+  /** Initial effort when uncontrolled. Defaults to the middle step. */
   defaultEffort?: string
-  /** Start with fast mode on. Defaults to `false`. */
+  /** Called with the effort step the slider lands on. */
+  onEffortChange?: (effort: string) => void
+  /** The permission mode, by label, controlled. Pair with `onPermissionModeChange`. A label not in `permissionModes` stands for the first mode. */
+  permissionMode?: string
+  /** Initial permission mode, by label, when uncontrolled. Defaults to the first mode. */
+  defaultPermissionMode?: string
+  /** Called with the permission mode's label when another one is picked. */
+  onPermissionModeChange?: (mode: string) => void
+  /** Whether fast mode is on, controlled. Pair with `onFastChange`. */
+  fast?: boolean
+  /** Start with fast mode on when uncontrolled. Defaults to `false`. */
   defaultFast?: boolean
+  /** Called when the fast mode switch flips. */
+  onFastChange?: (fast: boolean) => void
+  /** The output style, controlled. Pair with `onOutputStyleChange`. A style not in `outputStyles` stands for the first one. */
+  outputStyle?: string
+  /** Initial output style when uncontrolled. Defaults to the first style. */
+  defaultOutputStyle?: string
+  /** Called with the output style picked. */
+  onOutputStyleChange?: (style: string) => void
   /** Used share of the context window, 0–1. Defaults to `0.62`. */
   context?: number
   /** The conversation is being compacted: the context meter says so. Defaults to `false`. */
@@ -379,9 +444,11 @@ interface ComposerProps {
   maxFiles?: number
   /** A new session: the project and profile can still be picked. Otherwise they show where this session runs. Defaults to `false`. */
   target?: boolean
-  /** The profile the session runs under, by id. Defaults to the first profile. */
+  /** The profile the session runs under, by id, controlled. Pair with `onProfileChange`. An id not in `profiles` shows the first profile. */
+  profile?: string
+  /** The profile the session runs under, by id, when uncontrolled. Defaults to the first profile. */
   defaultProfile?: string
-  /** Called with the profile picked. */
+  /** Called with the profile picked, by id. */
   onProfileChange?: (profile: string) => void
   /** The draft's placeholder. Defaults to `'Ask, or type / for commands'`. */
   placeholder?: string
@@ -421,7 +488,14 @@ interface ComposerProps {
  *
  * Every draft prop has its uncontrolled twin (`defaultValue`,
  * `defaultQueue`, `defaultStatus`), so a composer runs with no state in the
- * caller.
+ * caller. So does every choice on the row: the project (by its `path`), the
+ * worktree switch, the base branch, the profile, the model, the effort, the
+ * permission mode, fast mode and the output style each take a controlled
+ * prop, a `default…` and an `on…Change`, so an app can pass them on to the
+ * agent (`--model`, `--effort`, `--permission-mode`). A choice its list no
+ * longer holds (a model after a switch to another provider, a project that
+ * was removed) stands for the list's first entry (the middle one for effort)
+ * instead of lingering.
  *
  * Statics:
  * - `Composer.Draft` — the draft alone, without the shell and its menus:
@@ -448,21 +522,63 @@ const Composer = Object.assign(
     projects,
     branches,
     branch,
+    project: projectProp,
+    defaultProject,
+    onProjectChange,
+    worktree: worktreeProp,
+    defaultWorktree = true,
+    onWorktreeChange,
+    baseBranch: baseBranchProp,
+    defaultBaseBranch,
+    onBaseBranchChange,
     profiles,
+    model: modelProp,
     defaultModel,
-    defaultPermissionMode,
+    onModelChange,
+    effort: effortProp,
     defaultEffort,
+    onEffortChange,
+    permissionMode: permissionModeProp,
+    defaultPermissionMode,
+    onPermissionModeChange,
+    fast: fastProp,
     defaultFast = false,
+    onFastChange,
+    outputStyle: outputStyleProp,
+    defaultOutputStyle,
+    onOutputStyleChange,
     context = 0.62,
     compacting = false,
     defaultStatus = 'idle',
     target = false,
+    profile,
     defaultProfile,
     onProfileChange,
     placeholder = 'Ask, or type / for commands',
     className,
     ...draft
   }: ComposerProps) {
+    const projectPaths = projects.map(p => p.path)
+    const modelNames = models.map(m => m.name)
+    const modeLabels = permissionModes.map(m => m.label)
+    const middleEffort = efforts[Math.floor(efforts.length / 2)] ?? ''
+    const [project, setProject] = useControllableState(projectProp, defaultProject ?? '', onProjectChange)
+    const [worktree, setWorktree] = useControllableState(worktreeProp, defaultWorktree, onWorktreeChange)
+    const [baseBranch, setBaseBranch] = useControllableState(
+      baseBranchProp,
+      defaultBaseBranch ?? '',
+      onBaseBranchChange,
+    )
+    const [model, setModel] = useControllableState(modelProp, defaultModel ?? '', onModelChange)
+    const [effort, setEffort] = useControllableState(effortProp, defaultEffort ?? middleEffort, onEffortChange)
+    const [mode, setMode] = useControllableState(
+      permissionModeProp,
+      defaultPermissionMode ?? '',
+      onPermissionModeChange,
+    )
+    const [fast, setFast] = useControllableState(fastProp, defaultFast, onFastChange)
+    const [style, setStyle] = useControllableState(outputStyleProp, defaultOutputStyle ?? '', onOutputStyleChange)
+
     return (
       <ShellCard
         variant="elevated"
@@ -470,9 +586,21 @@ const Composer = Object.assign(
         footer={
           <SizeProvider size="compact">
             <ShellCard.Footer className="justify-start gap-[var(--space-1)] pt-[var(--space-1)]">
-              <ProjectPicker projects={projects} branches={branches} branch={branch} locked={!target} />
+              <ProjectPicker
+                projects={projects}
+                branches={branches}
+                branch={branch}
+                locked={!target}
+                project={inList(project, projectPaths)}
+                onProjectChange={setProject}
+                worktree={worktree}
+                onWorktreeChange={setWorktree}
+                baseBranch={inList(baseBranch, branches)}
+                onBaseBranchChange={setBaseBranch}
+              />
               <ProfileSwitcher
                 profiles={profiles}
+                value={profile}
                 defaultValue={defaultProfile}
                 onValueChange={onProfileChange}
                 side="top"
@@ -485,10 +613,16 @@ const Composer = Object.assign(
                   outputStyles={outputStyles}
                   context={context}
                   compacting={compacting}
-                  defaultModel={defaultModel ?? models[0]?.name ?? ''}
-                  defaultEffort={defaultEffort ?? efforts[Math.floor(efforts.length / 2)] ?? ''}
-                  defaultMode={defaultPermissionMode ?? permissionModes[0]?.label ?? ''}
-                  defaultFast={defaultFast}
+                  model={inList(model, modelNames)}
+                  onModelChange={setModel}
+                  effort={inList(effort, efforts, middleEffort)}
+                  onEffortChange={setEffort}
+                  mode={inList(mode, modeLabels)}
+                  onModeChange={setMode}
+                  fast={fast}
+                  onFastChange={setFast}
+                  style={inList(style, outputStyles)}
+                  onStyleChange={setStyle}
                 />
               </div>
             </ShellCard.Footer>

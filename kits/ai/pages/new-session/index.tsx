@@ -14,6 +14,19 @@ import SessionSidebar from '../../blocks/sessions/session-sidebar'
 import { STATUS_GLYPH } from '../../lib/status-glyph'
 import { COMPOSER, GROUPS, MODELS, PROFILES, SESSIONS, ZCODE_MODELS } from '../../mock/mock'
 
+/** The sidebar's row, group and footer actions, inert in this demo but shown. */
+const SIDEBAR_ACTIONS = {
+  onPin: () => {},
+  onArchive: () => {},
+  onOpenSplit: () => {},
+  onRename: () => {},
+  onMarkUnread: () => {},
+  onFork: () => {},
+  onNewSessionIn: () => {},
+  onFilterSection: () => {},
+  onOpenSettings: () => {},
+}
+
 const STARTERS = [
   { title: 'Review the current diff', description: 'Runs /review on what changed since main' },
   { title: 'Fix the failing CI on #23', description: 'Reads the logs, fixes, pushes, watches' },
@@ -47,7 +60,7 @@ export default function NewSession({ profile = 'jobiflow', sidebar = true }: New
   return (
     <div className="flex h-full min-h-[640px] w-full bg-background">
       <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0} defaultOpen={sidebar}>
-        <SessionSidebar {...SESSIONS} className="h-full" defaultValue="new" />
+        <SessionSidebar {...SESSIONS} {...SIDEBAR_ACTIONS} className="h-full" defaultValue="new" />
         <Sidebar.Inset className="@container min-h-0 min-w-0 overflow-auto">
           <header className="flex h-12 shrink-0 items-center gap-2 px-1.5">
             <Sidebar.Trigger />

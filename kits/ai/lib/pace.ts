@@ -24,8 +24,8 @@ export interface LimitPace {
 export interface ProfilePace {
   profile: Profile
   limits: LimitPace[]
-  /** The limit that runs out first, or lands highest at its reset. */
-  binding: LimitPace
+  /** The limit that runs out first, or lands highest at its reset; undefined while the profile has no limits yet (none reported before its first turn). */
+  binding?: LimitPace
 }
 
 /** Projected share from which a limit counts as only just lasting. */
@@ -44,9 +44,10 @@ function paceOfLimit(limit: UsageLimit): LimitPace {
   return { limit, elapsed: elapsedHours / limit.windowHours, projected, runsOutInHours, verdict }
 }
 
+/** Each limit's pace and the binding one. A profile with no limits yet gets `limits: []` and no `binding`. */
 export function paceOf(profile: Profile): ProfilePace {
   const limits = profile.limits.map(paceOfLimit)
-  const binding = [...limits].sort((a, b) => b.projected - a.projected)[0] ?? paceOfLimit(profile.limits[0]!)
+  const binding = [...limits].sort((a, b) => b.projected - a.projected)[0]
   return { profile, limits, binding }
 }
 
@@ -61,6 +62,9 @@ export function duration(hours: number) {
   if (hours < 48) return `${Math.round(hours)}h`
   return `${Math.round(hours / 24)}d`
 }
+
+/** What a profile with no limits yet shows in place of a share or a verdict. */
+export const NO_USAGE = 'No usage yet'
 
 export function percent(share: number) {
   return `${Math.round(share * 100)}%`
