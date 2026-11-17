@@ -118,6 +118,11 @@
       "source": "./lib/icon-context.tsx",
       "default": "./dist/lib/icon-context.js"
     },
+    "./lib/inert": {
+      "types": "./dist/lib/inert.d.ts",
+      "source": "./lib/inert.ts",
+      "default": "./dist/lib/inert.js"
+    },
     "./lib/merge-refs": {
       "types": "./dist/lib/merge-refs.d.ts",
       "source": "./lib/merge-refs.ts",
