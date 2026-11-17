@@ -2,9 +2,9 @@
 
 The packages are released from this repo by conventional commits (see [CONTRIBUTING.md](CONTRIBUTING.md)): `@justanarthur/modo` (`lib/`), `@justanarthur/modo-ui` (`ui/`), `@justanarthur/modo-ui-ai` (`kits/ai/`) and `@justanarthur/modo-ui-notch` (`kits/notch/`). Each release also gets GitHub release notes generated from its commits.
 
-## Unreleased
+## 2026-11-17 — modo-ui 2.2.0
 
-### @justanarthur/modo-ui
+### @justanarthur/modo-ui 2.2.0
 
 - `Slider` takes `onValueCommit` (once when an interaction ends: a pointer lifting, a keyboard step, a committed edit) and `orientation="vertical"` (the dense design stood upright).
 - `Textarea` with neither `value` nor `onValueChange` keeps its text in the DOM: `ref.current.value = ''`, a native form reset and ref-reading form libraries work, and the box re-fits after each.
