@@ -1,0 +1,76 @@
+import Widget from './index'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import { WidgetIsland } from '../../../mock/island-content'
+import { BatteryCharging, Bell, CalendarDays, Clock, MapPin, Pause, Play, Plug, Sparkles, Zap } from 'lucide-react'
+
+# Anatomy
+
+A context line, the hero (a number on the display role, a name on the title role), its supporting facts, quiet actions, and a supporting column past the hairline.
+
+<WidgetIsland tab="stats">
+  <Widget
+    aside={
+      <Widget.Section label="Recent">
+        <Widget.Row leading="9:12" color="var(--badge-green)">Plugged in at 41%</Widget.Row>
+        <Widget.Row leading="8:03" color="var(--badge-amber)" trailing="Low power">Dropped to 20%</Widget.Row>
+        <Widget.Row leading="Yesterday">Fully charged</Widget.Row>
+      </Widget.Section>
+    }
+  >
+    <Widget.Header icon={BatteryCharging} trailing={<Widget.Action icon={Bell} label="Notify when full" pressed />}>
+      MacBook Pro
+    </Widget.Header>
+    <Widget.Figure value="82" unit="%" color="var(--badge-green)" />
+    <Widget.Title>Charging</Widget.Title>
+    <Widget.Meta>
+      <Widget.MetaItem icon={Clock}>38 min until full</Widget.MetaItem>
+      <Widget.MetaItem icon={Plug}>96 W adapter</Widget.MetaItem>
+    </Widget.Meta>
+  </Widget>
+</WidgetIsland>
+
+# Figure
+
+`Widget.Figure` sets a number on the display role with its unit (or a word before it) on the title role, digits tabular; `color` takes a data color.
+
+<div className="dark flex flex-wrap items-baseline gap-8 rounded-xl bg-ink p-5 text-foreground">
+  <Widget.Figure prefix="in" value="12" unit="min" />
+  <Widget.Figure value="Now" unit="35 min left" />
+  <Widget.Figure value="4:00" unit="PM" />
+  <Widget.Figure value="82" unit="%" color="var(--badge-green)" />
+</div>
+
+# Actions
+
+`Widget.Action` is a ghost icon button with a tooltip; `pressed` lights a toggle (in a data `color` if given), `emphasis="primary"` is the widget's main action.
+
+<div className="dark flex items-center gap-1 rounded-xl bg-ink p-4 text-foreground">
+  <Widget.Action icon={Play} label="Play" emphasis="primary" filled />
+  <Widget.Action icon={Pause} label="Pause" />
+  <Widget.Action icon={Sparkles} label="Enhance" pressed color="var(--badge-violet)" />
+  <Widget.Action icon={Zap} label="Low power" disabled />
+</div>
+
+# Rows and chips
+
+`Widget.Row` is the island's list row: a muted figure, a color mark, the title and a muted end; `Widget.Chip` a small label one surface up.
+
+<div className="dark flex w-full max-w-90 flex-col rounded-xl bg-ink p-4 text-foreground">
+  <Widget.Section label="Later today" trailing={<Widget.Chip color="var(--badge-green)">Team offsite</Widget.Chip>}>
+    <Widget.Row leading="12:45" color="var(--badge-orange)">Lunch with Ana</Widget.Row>
+    <Widget.Row leading="16:00" color="var(--badge-violet)" trailing={<MapPin size={12} strokeWidth={1.5} />}>Ship the island kit</Widget.Row>
+  </Widget.Section>
+</div>
+
+# Message
+
+The empty, permission and error state, across the wide, short island.
+
+<WidgetIsland tab="calendar">
+  <Widget.Message
+    icon={CalendarDays}
+    title="See what's next"
+    description="Your next event with a countdown, and the rest of today and tomorrow."
+    actions={<Button size="compact">Connect calendar</Button>}
+  />
+</WidgetIsland>

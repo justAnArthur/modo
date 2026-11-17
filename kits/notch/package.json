@@ -75,6 +75,11 @@
       "source": "./lib/island-context.tsx",
       "default": "./dist/lib/island-context.js"
     },
+    "./lib/artwork": {
+      "types": "./dist/lib/artwork.d.ts",
+      "source": "./lib/artwork.ts",
+      "default": "./dist/lib/artwork.js"
+    },
     "./lib/clock": {
       "types": "./dist/lib/clock.d.ts",
       "source": "./lib/clock.ts",
