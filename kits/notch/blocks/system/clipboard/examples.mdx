@@ -81,3 +81,11 @@ The domain with its favicon, the page's title, the path.
 <FlashIsland>
   <ClipboardHistory.Copied clip={CLIPS[3]} onPin={() => {}} />
 </FlashIsland>
+
+# Tall
+
+`layout="tall"` at the island's tall snap: the search across the top, every clip as a row with its picture, and the selected clip in full beside them, held in view as the list scrolls.
+
+<WidgetIsland tab="clipboard" tall>
+  <ClipboardHistory clips={CLIPS} defaultPinned={PINNED} now={CLIP_NOW} onDelete={() => {}} layout="tall" />
+</WidgetIsland>

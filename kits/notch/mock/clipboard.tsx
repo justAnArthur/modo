@@ -73,6 +73,40 @@ export const CLIPS: ClipboardClip[] = [
     app: 'Messages',
     copiedAt: ago(26 * 60),
   },
+  {
+    id: 'issue',
+    kind: 'link',
+    content: 'https://github.com/justAnArthur/modo/issues/58',
+    detail: 'The island should keep its tab when it closes · Issue #58',
+    preview: <MockArtwork variant="aurora" />,
+    app: 'Safari',
+    copiedAt: ago(27 * 60),
+  },
+  {
+    id: 'accent',
+    kind: 'color',
+    content: '--badge-amber',
+    color: 'var(--badge-amber)',
+    detail: 'modo-ui badge amber',
+    app: 'Figma',
+    copiedAt: ago(29 * 60),
+  },
+  {
+    id: 'reply',
+    kind: 'text',
+    content: 'Sounds good. I will send the build over tonight and we can go through it tomorrow morning.',
+    app: 'Mail',
+    copiedAt: ago(31 * 60),
+  },
+  {
+    id: 'mock',
+    kind: 'image',
+    content: 'Island mock, tall.png',
+    detail: '2048 × 1280 · PNG',
+    preview: <MockArtwork variant="night" />,
+    app: 'Figma',
+    copiedAt: ago(2 * 24 * 60),
+  },
 ]
 
 /** Kept on top: the build command and the color. */

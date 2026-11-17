@@ -32,3 +32,11 @@ Grouped rows: a label, what it does, the control at the end.
 <MockWindow title="Settings">
   <SettingsWindow name="Just Notch" defaultValue="plugin:clock" plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />
 </MockWindow>
+
+# Flush
+
+`flush` drops the sidebar's left inset, for a host frame that sets its own edge, such as the open island.
+
+<MockWindow title="Settings">
+  <SettingsWindow name="Just Notch" flush plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />
+</MockWindow>

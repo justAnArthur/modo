@@ -64,3 +64,17 @@ Each folder says when it is empty; the switch stays.
 <FlashIsland>
   <RecentFiles.Saved file={SCREENSHOTS[0]} onOpen={() => {}} />
 </FlashIsland>
+
+# Tall
+
+`layout="tall"` at the island's tall snap: the newest file large with its actions, and every earlier one as a grid of named tiles.
+
+<WidgetIsland tab="files" tall>
+  <RecentFiles files={RECENT_FILES} now={FILES_NOW} onReveal={() => {}} onCopy={() => {}} onDelete={() => {}} onClear={() => {}} onDragStart={() => {}} layout="tall" />
+</WidgetIsland>
+
+# Tall, screenshots
+
+<WidgetIsland tab="files" tall>
+  <RecentFiles files={RECENT_FILES} defaultValue="screenshots" now={FILES_NOW} onReveal={() => {}} onCopy={() => {}} onDelete={() => {}} onClear={() => {}} layout="tall" />
+</WidgetIsland>

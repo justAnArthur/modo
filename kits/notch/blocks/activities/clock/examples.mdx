@@ -71,3 +71,19 @@ A paused phase keeps the time it had left and says so.
 # Break over
 
 <PhaseDoneFlash ended={{ phase: 'short-break', round: 2 }} />
+
+# Tall
+
+`layout="tall"` at the island's tall snap: the time large, every world clock as a column, the Pomodoro's whole cycle as a strip over its three lengths, and today's finished rounds (`completedToday`).
+
+<WidgetIsland tab="clock" tall>
+  <Clock zones={ZONES} now={CLOCK_NOW} completedToday={3} layout="tall" />
+</WidgetIsland>
+
+# Tall, in focus
+
+A run at the tall snap: the ring large beside the time left, then every phase of the cycle, done, now and when each starts.
+
+<WidgetIsland tab="clock" tall>
+  <FocusClock completedToday={5} layout="tall" />
+</WidgetIsland>

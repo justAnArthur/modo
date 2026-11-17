@@ -12,6 +12,7 @@ import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import {
   CalendarDays,
+  Check,
   Clock3,
   Coffee,
   Moon,
@@ -27,7 +28,7 @@ import {
 } from 'lucide-react'
 import { useEffect } from 'react'
 import IslandFlash from '../../../components/island/island-flash'
-import Widget from '../../../components/island/widget'
+import Widget, { type WidgetLayout } from '../../../components/island/widget'
 import { formatClock, MINUTE, SECOND, useEdgeClock } from '../../../lib/clock'
 
 type PomodoroPhase = 'focus' | 'short-break' | 'long-break'
@@ -83,6 +84,10 @@ interface ClockProps {
   onValueChange?: (run: PomodoroRun | null) => void
   /** Called when a phase reaches zero, with the next one, which waits paused to be started: show `Clock.PhaseDone`. */
   onPhaseEnd?: (ended: PomodoroRun, next: PomodoroRun) => void
+  /** The focus rounds finished today, shown at the tall snap as a row of dots and the time focused. Left out, the tall view leaves the line out. */
+  completedToday?: number
+  /** `tall` is the open island's tall snap: the time larger, every world clock as a column, the Pomodoro's whole cycle as a strip and its lengths, today's finished rounds; a run lists every phase of its cycle. Defaults to `'fit'`. */
+  layout?: WidgetLayout
   /** Classes for the root, which fills its container. */
   className?: string
 }
@@ -110,7 +115,13 @@ const MARK: Record<PomodoroPhase, string> = {
   'short-break': 'var(--status-success)',
   'long-break': 'var(--status-success)',
 }
+const WASH: Record<PomodoroPhase, string> = {
+  focus: 'bg-status-warning/16',
+  'short-break': 'bg-status-success/16',
+  'long-break': 'bg-status-success/16',
+}
 const GLYPH = { focus: Target, 'short-break': Coffee, 'long-break': Coffee }
+const PHASES: PomodoroPhase[] = ['focus', 'short-break', 'long-break']
 
 const settingsOf = (pomodoro?: Partial<PomodoroSettings> | false): PomodoroSettings => ({
   ...DEFAULTS,
@@ -163,6 +174,26 @@ function useLeft(run: PomodoroRun) {
   const end = run.endsAt ?? 0
   const now = useEdgeClock(end, run.endsAt !== undefined && Date.now() < end + SECOND)
   return run.endsAt === undefined ? (run.remaining ?? run.total) : Math.max(0, end - now)
+}
+
+/** Every phase of one cycle, in order: each focus round and the break after it, the last one long. */
+function cycleOf(settings: PomodoroSettings) {
+  return Array.from({ length: settings.rounds }, (_, i) => [
+    { phase: 'focus' as const, round: i + 1 },
+    { phase: i + 1 === settings.rounds ? ('long-break' as const) : ('short-break' as const), round: i + 1 },
+  ]).flat()
+}
+
+/** Where `run` sits in its cycle. */
+const indexIn = (run: Pick<PomodoroRun, 'phase' | 'round'>, settings: PomodoroSettings) =>
+  Math.min(settings.rounds * 2 - 1, (run.round - 1) * 2 + (run.phase === 'focus' ? 0 : 1))
+
+/** Minutes as `2 h 10 min`, `1 h` or `50 min`. */
+function minutesLabel(minutes: number) {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  if (!h) return `${m} min`
+  return m ? `${h} h ${m} min` : `${h} h`
 }
 
 function phaseName(run: Pick<PomodoroRun, 'phase' | 'round'>, rounds: number) {
@@ -231,25 +262,127 @@ interface ZoneRowProps extends Pick<ClockProps, 'locale' | 'hour12' | 'timeZone'
   now: number
 }
 
-function ZoneRow({ zone, now, locale, hour12, timeZone }: ZoneRowProps) {
+/** How a zone differs from here at `now`: its day if not today, its offset, and whether it's day there. */
+function zoneFacts(zone: ClockZone, now: number, timeZone?: string) {
   const there = dayKey(now, zone.timeZone)
   const here = dayKey(now, timeZone)
-  const day = there > here ? 'Tomorrow' : there < here ? 'Yesterday' : undefined
   const hour = hourIn(now, zone.timeZone)
-  const DayGlyph = hour >= 6 && hour < 18 ? Sun : Moon
+  return {
+    day: there > here ? 'Tomorrow' : there < here ? 'Yesterday' : undefined,
+    offset: offsetLabel(offsetOf(now, zone.timeZone) - offsetOf(now, timeZone)),
+    DayGlyph: hour >= 6 && hour < 18 ? Sun : Moon,
+  }
+}
+
+function ZoneRow({ zone, now, locale, hour12, timeZone }: ZoneRowProps) {
+  const { day, offset, DayGlyph } = zoneFacts(zone, now, timeZone)
   return (
     <Widget.Row
       leading={shortTime(now, { locale, hour12, timeZone: zone.timeZone })}
       trailing={
         <>
           {day && <span>{day} ·</span>}
-          <span className="tabular-nums">{offsetLabel(offsetOf(now, zone.timeZone) - offsetOf(now, timeZone))}</span>
+          <span className="tabular-nums">{offset}</span>
           <DayGlyph size={12} strokeWidth={1.5} aria-label={DayGlyph === Sun ? 'Day' : 'Night'} className="ml-1" />
         </>
       }
     >
       {zone.city}
     </Widget.Row>
+  )
+}
+
+/** A world clock at the tall snap, a column: the city, the time large, its day and offset. */
+function ZoneTile({ zone, now, locale, hour12, timeZone }: ZoneRowProps) {
+  const { day, offset, DayGlyph } = zoneFacts(zone, now, timeZone)
+  const time = timeParts(now, { locale, hour12, timeZone: zone.timeZone })
+  return (
+    <div className="flex min-w-0 flex-col gap-0.5 px-5 first:pl-0 last:pr-0">
+      <span className="truncate text-body text-foreground">{zone.city}</span>
+      <span className="flex items-baseline gap-1 whitespace-nowrap tabular-nums">
+        <span className="text-title weight-semibold text-foreground">{time.text}</span>
+        {time.period && <span className="text-caption text-muted-foreground">{time.period}</span>}
+      </span>
+      <span className="flex min-w-0 items-center gap-1.5 text-caption text-muted-foreground">
+        <DayGlyph size={12} strokeWidth={1.5} aria-label={DayGlyph === Sun ? 'Day' : 'Night'} className="shrink-0" />
+        <span className="truncate tabular-nums">
+          {day ?? 'Today'}, {offset}
+        </span>
+      </span>
+    </div>
+  )
+}
+
+interface WorldClocksProps extends Pick<ClockProps, 'locale' | 'hour12' | 'timeZone'> {
+  zones: ClockZone[]
+  now: number
+}
+
+/** The tall snap's world clocks: every zone, a column each, split by hairlines. */
+function WorldClocks({ zones, ...rest }: WorldClocksProps) {
+  return (
+    <Widget.Section label="World clock">
+      <div className="grid auto-cols-fr grid-flow-col divide-x divide-border pt-1">
+        {zones.map(zone => (
+          <ZoneTile key={zone.timeZone + zone.city} zone={zone} {...rest} />
+        ))}
+      </div>
+    </Widget.Section>
+  )
+}
+
+interface CycleStripProps {
+  settings: PomodoroSettings
+  /** The phase running, by its place in the cycle: those before it fill, it fills to `progress`. Left out, nothing has run. */
+  at?: number
+  /** How far the phase at `at` has run, from 0 to 1. */
+  progress?: number
+}
+
+/** One cycle as a strip, each phase as long as its minutes, in its hue. */
+function CycleStrip({ settings, at = -1, progress = 0 }: CycleStripProps) {
+  return (
+    <div aria-hidden className="flex h-1.5 w-full gap-1">
+      {cycleOf(settings).map((step, i) => (
+        <span
+          key={`${step.phase}-${step.round}`}
+          className={cn('relative basis-0 overflow-hidden rounded-full', i < at ? DOT[step.phase] : WASH[step.phase])}
+          style={{ flexGrow: lengthOf(step.phase, settings) }}
+        >
+          {i === at && (
+            <span
+              className={cn('absolute inset-y-0 left-0', DOT[step.phase])}
+              style={{ width: `${progress * 100}%` }}
+            />
+          )}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+/** Today's finished focus rounds: a dot for each, the cycle's open ones washed, and the time focused. */
+function Today({ completed, settings }: { completed: number; settings: PomodoroSettings }) {
+  const slots = Math.min(24, Math.max(1, Math.ceil(completed / settings.rounds)) * settings.rounds)
+  return (
+    <Widget.Section
+      label="Today"
+      trailing={
+        <span className="tabular-nums">
+          {completed} {completed === 1 ? 'round' : 'rounds'} · {minutesLabel(completed * settings.focus)} focused
+        </span>
+      }
+    >
+      <div className="flex flex-wrap items-center gap-1.5 py-1">
+        {Array.from({ length: slots }, (_, slot) => slot).map(slot => (
+          <span
+            key={slot}
+            aria-hidden
+            className={cn('size-2.5 rounded-full', slot < completed ? DOT.focus : WASH.focus)}
+          />
+        ))}
+      </div>
+    </Widget.Section>
   )
 }
 
@@ -357,7 +490,11 @@ function ClockPhaseDone({ ended, pomodoro, onStart }: ClockPhaseDoneProps) {
   )
 }
 
-interface RunningProps extends Pick<ClockProps, 'locale' | 'hour12' | 'timeZone' | 'onPhaseEnd' | 'className'> {
+interface RunningProps
+  extends Pick<
+    ClockProps,
+    'zones' | 'locale' | 'hour12' | 'timeZone' | 'onPhaseEnd' | 'completedToday' | 'layout' | 'className'
+  > {
   run: PomodoroRun
   settings: PomodoroSettings
   onChange: (run: PomodoroRun | null) => void
@@ -377,7 +514,19 @@ function schedule(run: PomodoroRun, start: number, settings: PomodoroSettings, c
   return phases
 }
 
-function Running({ run, settings, onChange, onPhaseEnd, locale, hour12, timeZone, className }: RunningProps) {
+function Running({
+  run,
+  settings,
+  onChange,
+  onPhaseEnd,
+  zones = [],
+  locale,
+  hour12,
+  timeZone,
+  completedToday,
+  layout = 'fit',
+  className,
+}: RunningProps) {
   const left = useLeft(run)
   const running = run.endsAt !== undefined
   const now = running ? (run.endsAt ?? 0) - left : Date.now()
@@ -402,6 +551,104 @@ function Running({ run, settings, onChange, onPhaseEnd, locale, hour12, timeZone
     next.phase === 'focus'
       ? `${phaseName(next, settings.rounds)} next`
       : `${lengthOf(next.phase, settings) / MINUTE} min ${next.phase === 'long-break' ? 'long break' : 'break'} next`
+  const figure = <Widget.Figure value={formatClock(Math.ceil(left / SECOND))} />
+  const controls = (
+    <div className="-mr-1 flex shrink-0 items-center gap-1">
+      <Widget.Action icon={Plus} label="Add a minute" onClick={() => onChange(addMinute(run))} />
+      <Widget.Action
+        icon={running ? Pause : Play}
+        label={running ? 'Pause' : ready ? 'Start' : 'Resume'}
+        emphasis="primary"
+        filled
+        onClick={() => onChange(running ? pause(run, left) : resumePomodoro(run))}
+      />
+      <Widget.Action
+        icon={SkipForward}
+        label={next.phase === 'focus' ? 'Skip to focus' : 'Skip to break'}
+        filled
+        onClick={() => onChange(resumePomodoro(advancePomodoro(run, settings)))}
+      />
+    </div>
+  )
+  const header = (
+    <Widget.Header
+      icon={Timer}
+      trailing={<Widget.Action icon={RotateCcw} label="Reset" onClick={() => onChange(null)} />}
+    >
+      Pomodoro
+    </Widget.Header>
+  )
+  const phase = (
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <Widget.Title leading={<span aria-hidden className={cn('size-2.5 shrink-0 rounded-full', DOT[run.phase])} />}>
+        {phaseName(run, settings.rounds)}
+      </Widget.Title>
+      <Widget.Meta className="pl-4.5">
+        <Widget.MetaItem icon={running ? Clock3 : Pause}>{status}</Widget.MetaItem>
+        <Widget.MetaItem icon={GLYPH[next.phase]}>{nextLabel}</Widget.MetaItem>
+      </Widget.Meta>
+    </div>
+  )
+
+  if (layout === 'tall') {
+    const cycle = cycleOf(settings)
+    const at = indexIn(run, settings)
+    const starts: number[] = []
+    let when = ends
+    for (const step of cycle.slice(at + 1)) {
+      starts.push(when)
+      when += lengthOf(step.phase, settings)
+    }
+    return (
+      <Widget.Sheet className={className}>
+        <div className="flex min-w-0 items-center gap-8">
+          <PhaseRing run={run} rounds={settings.rounds} className="size-36 shrink-0" />
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            {header}
+            <div className="flex min-w-0 items-center justify-between gap-3">
+              {figure}
+              {controls}
+            </div>
+            {phase}
+          </div>
+        </div>
+
+        <Widget.Section
+          label="This cycle"
+          trailing={<span className="tabular-nums">Ends at {shortTime(when, options)}</span>}
+        >
+          <div className="pt-1 pb-2">
+            <CycleStrip settings={settings} at={at} progress={run.total ? 1 - left / run.total : 0} />
+          </div>
+          <div className="grid grid-cols-2 gap-x-8">
+            {cycle.map((step, i) => (
+              <Widget.Row
+                key={`${step.phase}-${step.round}`}
+                leading={i < at ? 'Done' : i === at ? 'Now' : shortTime(starts[i - at - 1] ?? when, options)}
+                color={MARK[step.phase]}
+                trailing={
+                  i < at ? (
+                    <Check size={14} strokeWidth={1.5} aria-label="Done" />
+                  ) : i === at ? (
+                    `${formatClock(Math.ceil(left / SECOND))} left`
+                  ) : (
+                    `${lengthOf(step.phase, settings) / MINUTE} min`
+                  )
+                }
+              >
+                {phaseName(step, settings.rounds)}
+              </Widget.Row>
+            ))}
+          </div>
+        </Widget.Section>
+
+        {completedToday !== undefined && <Today completed={completedToday} settings={settings} />}
+        {zones.length > 0 && (
+          <WorldClocks zones={zones} now={now} locale={locale} hour12={hour12} timeZone={timeZone} />
+        )}
+      </Widget.Sheet>
+    )
+  }
 
   return (
     <Widget
@@ -425,40 +672,12 @@ function Running({ run, settings, onChange, onPhaseEnd, locale, hour12, timeZone
         </Widget.Section>
       }
     >
-      <Widget.Header
-        icon={Timer}
-        trailing={<Widget.Action icon={RotateCcw} label="Reset" onClick={() => onChange(null)} />}
-      >
-        Pomodoro
-      </Widget.Header>
+      {header}
       <div className="flex min-w-0 items-center justify-between gap-3">
-        <Widget.Figure value={formatClock(Math.ceil(left / SECOND))} />
-        <div className="-mr-1 flex shrink-0 items-center gap-1">
-          <Widget.Action icon={Plus} label="Add a minute" onClick={() => onChange(addMinute(run))} />
-          <Widget.Action
-            icon={running ? Pause : Play}
-            label={running ? 'Pause' : ready ? 'Start' : 'Resume'}
-            emphasis="primary"
-            filled
-            onClick={() => onChange(running ? pause(run, left) : resumePomodoro(run))}
-          />
-          <Widget.Action
-            icon={SkipForward}
-            label={next.phase === 'focus' ? 'Skip to focus' : 'Skip to break'}
-            filled
-            onClick={() => onChange(resumePomodoro(advancePomodoro(run, settings)))}
-          />
-        </div>
+        {figure}
+        {controls}
       </div>
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <Widget.Title leading={<span aria-hidden className={cn('size-2.5 shrink-0 rounded-full', DOT[run.phase])} />}>
-          {phaseName(run, settings.rounds)}
-        </Widget.Title>
-        <Widget.Meta className="pl-4.5">
-          <Widget.MetaItem icon={running ? Clock3 : Pause}>{status}</Widget.MetaItem>
-          <Widget.MetaItem icon={GLYPH[next.phase]}>{nextLabel}</Widget.MetaItem>
-        </Widget.Meta>
-      </div>
+      {phase}
     </Widget>
   )
 }
@@ -491,6 +710,16 @@ function Running({ run, settings, onChange, onPhaseEnd, locale, hour12, timeZone
  * `advancePomodoro` and `resumePomodoro` build the same runs for a host
  * that keeps time itself.
  *
+ * At the open island's tall snap (`layout="tall"`) it becomes a sheet: the
+ * time and the date as the hero with Start focus beside them; every world
+ * clock as a column, the city, the time large, and its day, offset and
+ * whether it's day or night there; the Pomodoro's whole cycle as a strip, each phase
+ * as long as its minutes in its hue, over its three lengths in columns;
+ * and today's finished rounds (`completedToday`) as dots with the time
+ * focused. A run puts its ring large beside the time left and the
+ * controls, then lists every phase of its cycle, done, now and when each
+ * starts, under the strip filling as it goes.
+ *
  * The other forms are parts: `Clock.Leading` and `Clock.Trailing` for the
  * compact island's wings (the ring and `mm:ss`, nothing without a run),
  * `Clock.Minimal`, the ring, for the split island's bubble, and
@@ -512,6 +741,8 @@ const Clock = Object.assign(
     defaultValue = null,
     onValueChange,
     onPhaseEnd,
+    completedToday,
+    layout = 'fit',
     className,
   }: ClockProps) {
     const [run, setRun] = useControllableState(value, defaultValue, onValueChange)
@@ -525,6 +756,9 @@ const Clock = Object.assign(
           settings={settings}
           onChange={setRun}
           onPhaseEnd={onPhaseEnd}
+          zones={zones}
+          completedToday={completedToday}
+          layout={layout}
           locale={locale}
           hour12={hour12}
           timeZone={timeZone}
@@ -539,6 +773,88 @@ const Clock = Object.assign(
     const zoneName = new Intl.DateTimeFormat(locale, { timeZone, timeZoneName: 'long' })
       .formatToParts(now)
       .find(part => part.type === 'timeZoneName')?.value
+    const figure = (
+      <Widget.Figure
+        value={
+          <>
+            {time.text}
+            {second && <span className="text-muted-foreground">:{second.padStart(2, '0')}</span>}
+          </>
+        }
+        unit={time.period}
+      />
+    )
+    const start = pomodoro !== false && (
+      <Button
+        variant="secondary"
+        size="compact"
+        leadingIcon={Play}
+        className="mb-1"
+        onClick={() => setRun(startPomodoro(settings))}
+      >
+        Start focus
+      </Button>
+    )
+
+    if (layout === 'tall')
+      return (
+        <Widget.Sheet className={className}>
+          <div className="flex min-w-0 items-end justify-between gap-6">
+            <div className="flex min-w-0 flex-col gap-1">
+              <Widget.Header icon={CalendarDays}>{date}</Widget.Header>
+              {figure}
+              {zoneName && <Widget.Subtitle>{zoneName}</Widget.Subtitle>}
+            </div>
+            {start}
+          </div>
+
+          {zones.length > 0 && (
+            <WorldClocks zones={zones} now={now} locale={locale} hour12={hour12} timeZone={timeZone} />
+          )}
+
+          {pomodoro !== false && (
+            <Widget.Section
+              label="Pomodoro"
+              trailing={
+                <span className="tabular-nums">
+                  {minutesLabel(
+                    cycleOf(settings).reduce((sum, step) => sum + lengthOf(step.phase, settings), 0) / MINUTE,
+                  )}{' '}
+                  a cycle
+                </span>
+              }
+            >
+              <div className="pt-1 pb-3">
+                <CycleStrip settings={settings} />
+              </div>
+              <div className="grid grid-cols-3 divide-x divide-border">
+                {PHASES.map(phase => (
+                  <div key={phase} className="flex min-w-0 flex-col gap-0.5 px-5 first:pl-0">
+                    <span className="flex items-center gap-2 text-caption text-muted-foreground">
+                      <span aria-hidden className={cn('size-2 shrink-0 rounded-full', DOT[phase])} />
+                      {phase === 'focus' ? 'Focus' : phase === 'long-break' ? 'Long break' : 'Short break'}
+                    </span>
+                    <span className="text-title weight-semibold tabular-nums text-foreground">
+                      {lengthOf(phase, settings) / MINUTE} min
+                    </span>
+                    <span className="truncate text-caption text-muted-foreground">
+                      {phase === 'focus'
+                        ? `${settings.rounds} rounds`
+                        : phase === 'long-break'
+                          ? `After round ${settings.rounds}`
+                          : `Between rounds`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Widget.Section>
+          )}
+
+          {pomodoro !== false && completedToday !== undefined && (
+            <Today completed={completedToday} settings={settings} />
+          )}
+        </Widget.Sheet>
+      )
 
     return (
       <Widget
@@ -562,26 +878,8 @@ const Clock = Object.assign(
       >
         <Widget.Header icon={CalendarDays}>{date}</Widget.Header>
         <div className="flex min-w-0 items-end justify-between gap-3">
-          <Widget.Figure
-            value={
-              <>
-                {time.text}
-                {second && <span className="text-muted-foreground">:{second.padStart(2, '0')}</span>}
-              </>
-            }
-            unit={time.period}
-          />
-          {pomodoro !== false && (
-            <Button
-              variant="secondary"
-              size="compact"
-              leadingIcon={Play}
-              className="mb-1"
-              onClick={() => setRun(startPomodoro(settings))}
-            >
-              Start focus
-            </Button>
-          )}
+          {figure}
+          {start}
         </div>
         {zoneName && <Widget.Subtitle>{zoneName}</Widget.Subtitle>}
         {pomodoro !== false && (

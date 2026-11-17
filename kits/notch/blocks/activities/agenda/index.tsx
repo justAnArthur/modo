@@ -14,7 +14,7 @@ import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { CalendarCheck, CalendarDays, ChevronDown, ChevronUp, Clock, Lock, MapPin, Video } from 'lucide-react'
 import IslandFlash from '../../../components/island/island-flash'
-import Widget from '../../../components/island/widget'
+import Widget, { type WidgetLayout } from '../../../components/island/widget'
 import { formatShort, MINUTE, SECOND, useEdgeClock } from '../../../lib/clock'
 
 type AgendaAccess = 'granted' | 'undetermined' | 'denied'
@@ -53,14 +53,27 @@ interface AgendaProps {
   onRequestAccess?: () => void
   /** Called by Open System Settings while access is denied. */
   onOpenSettings?: () => void
-  /** Called by the next event's Join button. */
+  /** Called by the next event's Join button, and at the tall snap by every call's. */
   onJoin?: (event: AgendaEvent) => void
+  /** `tall` is the open island's tall snap: the next event as the hero, then today and tomorrow listed in full, each event with its times, place or call and Join, then the rest of the week by day. Defaults to `'fit'`. */
+  layout?: WidgetLayout
   /** Classes for the root, which fills its container. */
   className?: string
 }
 
 /** Rows the timeline lists per day before it says how many more. */
 const ROWS = 3
+/** Days the tall layout lists, today included. */
+const WEEK = 7
+
+const addDays = (ms: number, days: number) => {
+  const date = new Date(ms)
+  date.setDate(date.getDate() + days)
+  return date.getTime()
+}
+
+/** Whether an event covers any of the day from `start` to `end`. */
+const covers = (event: AgendaEvent, start: number, end: number) => event.start < end && event.end > start
 
 const time = (ms: number, locale?: Intl.LocalesArgument) =>
   new Date(ms).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })
@@ -129,7 +142,13 @@ function When({ event, now, midnight, locale }: Omit<HeroProps, 'onJoin'>) {
   if (event.start - now < 60 * MINUTE)
     return <Widget.Figure prefix="in" value={Math.max(1, Math.ceil((event.start - now) / MINUTE))} unit="min" />
   const { value, period } = timeParts(event.start, locale)
-  return <Widget.Figure prefix={event.start >= midnight ? 'Tomorrow' : 'at'} value={value} unit={period} />
+  const prefix =
+    event.start >= addDays(midnight, 1)
+      ? new Date(event.start).toLocaleDateString(locale, { weekday: 'long' })
+      : event.start >= midnight
+        ? 'Tomorrow'
+        : 'at'
+  return <Widget.Figure prefix={prefix} value={value} unit={period} />
 }
 
 /** The next event, set as the widget's hero: how soon, its title in its calendar's color, when and where, and Join. */
@@ -169,6 +188,75 @@ function Rows({ events, locale }: { events: AgendaEvent[]; locale?: Intl.Locales
       {event.title}
     </Widget.Row>
   ))
+}
+
+interface EntryProps {
+  event: AgendaEvent
+  locale?: Intl.LocalesArgument
+  onJoin?: (event: AgendaEvent) => void
+}
+
+/** An event in the tall layout's list: its start over its end, its calendar's mark, the title over how long and where, and Join for a call. */
+function Entry({ event, locale, onJoin }: EntryProps) {
+  return (
+    <div className="flex min-w-0 items-center gap-2.5 py-1.5">
+      <span className="flex w-15 shrink-0 flex-col whitespace-nowrap text-caption tabular-nums">
+        <span className="text-foreground">{time(event.start, locale)}</span>
+        <span className="text-muted-foreground">{time(event.end, locale)}</span>
+      </span>
+      <span
+        aria-hidden
+        className="w-0.75 shrink-0 self-stretch rounded-full"
+        style={{ backgroundColor: event.color }}
+      />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate text-body text-foreground">{event.title}</span>
+        <Widget.Meta>
+          <Widget.MetaItem icon={Clock}>{length(event.end - event.start)}</Widget.MetaItem>
+          {event.meetingUrl && <Widget.MetaItem icon={Video}>Video call</Widget.MetaItem>}
+          {event.location && <Widget.MetaItem icon={MapPin}>{event.location}</Widget.MetaItem>}
+        </Widget.Meta>
+      </span>
+      {event.meetingUrl && (
+        <Button variant="secondary" size="compact" leadingIcon={Video} onClick={() => onJoin?.(event)}>
+          Join
+        </Button>
+      )}
+    </div>
+  )
+}
+
+interface DayProps {
+  label: string
+  /** The day's timed events, in order. */
+  events: AgendaEvent[]
+  /** The day's all-day events: chips on the label's line. */
+  allDay?: AgendaEvent[]
+  /** What to say when the day has no timed events. */
+  empty?: string
+  locale?: Intl.LocalesArgument
+  onJoin?: (event: AgendaEvent) => void
+}
+
+/** A day of the tall layout's list: its name with its all-day chips, then its events. */
+function Day({ label, events, allDay = [], empty, locale, onJoin }: DayProps) {
+  return (
+    <Widget.Section
+      label={label}
+      trailing={allDay.map(event => (
+        <Widget.Chip key={event.id} color={event.color}>
+          {event.title}
+        </Widget.Chip>
+      ))}
+    >
+      {events.map(event => (
+        <Entry key={event.id} event={event} locale={locale} onJoin={onJoin} />
+      ))}
+      {!events.length && empty && (
+        <span className="flex h-7 items-center text-body text-muted-foreground">{empty}</span>
+      )}
+    </Widget.Section>
+  )
 }
 
 function More({ count }: { count: number }) {
@@ -283,6 +371,14 @@ function AgendaStarting({ event, onJoin }: Omit<ActivityProps, 'locale'>) {
  * (`tomorrowOpen` / `onTomorrowOpenChange`, or kept here). Ended events drop
  * off; `now` follows the clock on each minute unless you pin it.
  *
+ * At the open island's tall snap (`layout="tall"`) it becomes a sheet: the
+ * date and the hero as above, then the rest of today and all of tomorrow
+ * listed in full, each event with its start over its end, its calendar's
+ * mark, the title over how long it runs and where (or that it's a call),
+ * and Join for every call; then the rest of the week, a section per day
+ * with events, named by its weekday and date, its all-day events as chips
+ * on the name's line.
+ *
  * Before the calendar may be read it asks to connect
  * (`access="undetermined"`), and when access is off it says where to turn it
  * on (`"denied"`).
@@ -309,6 +405,7 @@ const Agenda = Object.assign(
     onRequestAccess,
     onOpenSettings,
     onJoin,
+    layout = 'fit',
     className,
   }: AgendaProps) {
     const ticking = useEdgeClock(0, nowProp === undefined, MINUTE)
@@ -351,7 +448,8 @@ const Agenda = Object.assign(
 
     const midnight = new Date(now).setHours(24, 0, 0, 0)
     const next = new Date(midnight).setHours(24, 0, 0, 0)
-    const live = events.filter(event => event.end > now && event.start < next).sort((a, b) => a.start - b.start)
+    const until = layout === 'tall' ? addDays(midnight, WEEK - 1) : next
+    const live = events.filter(event => event.end > now && event.start < until).sort((a, b) => a.start - b.start)
     const allDay = live.filter(event => event.allDay && event.start < midnight)
     const timed = live.filter(event => !event.allDay)
     const [hero] = timed
@@ -369,9 +467,68 @@ const Agenda = Object.assign(
       )
 
     const today = timed.filter(event => event !== hero && event.start < midnight)
-    const tomorrow = timed.filter(event => event !== hero && event.start >= midnight)
+    const tomorrow = timed.filter(event => event !== hero && event.start >= midnight && event.start < next)
     const tomorrowShown = tomorrowOpen ? tomorrow.slice(0, ROWS) : tomorrow.slice(0, 1)
     const date = new Date(now).toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })
+    const header = (
+      <Widget.Header
+        icon={CalendarDays}
+        trailing={allDay.map(event => (
+          <Widget.Chip key={event.id} color={event.color}>
+            {event.title}
+          </Widget.Chip>
+        ))}
+      >
+        {date}
+      </Widget.Header>
+    )
+    const heroBlock = <Hero event={hero} now={now} midnight={midnight} locale={locale} onJoin={onJoin} />
+
+    if (layout === 'tall') {
+      const later = Array.from({ length: WEEK - 2 }, (_, i) => {
+        const start = addDays(next, i)
+        const end = addDays(next, i + 1)
+        return {
+          start,
+          events: timed.filter(event => event !== hero && event.start >= start && event.start < end),
+          allDay: live.filter(event => event.allDay && covers(event, start, end)),
+        }
+      }).filter(day => day.events.length || day.allDay.length)
+      return (
+        <Widget.Sheet className={className}>
+          <div className="flex min-w-0 flex-col gap-2">
+            {header}
+            {heroBlock}
+          </div>
+
+          <div className="flex min-w-0 flex-col gap-3">
+            <Day label="Later today" events={today} empty="Nothing else today" locale={locale} onJoin={onJoin} />
+            <Day
+              label="Tomorrow"
+              events={tomorrow}
+              allDay={live.filter(event => event.allDay && covers(event, midnight, next))}
+              empty="Nothing planned"
+              locale={locale}
+              onJoin={onJoin}
+            />
+            {later.map(day => (
+              <Day
+                key={day.start}
+                label={new Date(day.start).toLocaleDateString(locale, {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+                events={day.events}
+                allDay={day.allDay}
+                locale={locale}
+                onJoin={onJoin}
+              />
+            ))}
+          </div>
+        </Widget.Sheet>
+      )
+    }
 
     return (
       <Widget
@@ -412,17 +569,8 @@ const Agenda = Object.assign(
           </>
         }
       >
-        <Widget.Header
-          icon={CalendarDays}
-          trailing={allDay.map(event => (
-            <Widget.Chip key={event.id} color={event.color}>
-              {event.title}
-            </Widget.Chip>
-          ))}
-        >
-          {date}
-        </Widget.Header>
-        <Hero event={hero} now={now} midnight={midnight} locale={locale} onJoin={onJoin} />
+        {header}
+        {heroBlock}
       </Widget>
     )
   },

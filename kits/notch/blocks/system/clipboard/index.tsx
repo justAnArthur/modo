@@ -18,7 +18,7 @@ import FluidHover from '@justanarthur/modo-ui/primitives/systems/fluid-hover'
 import { ClipboardList, Copy, File, Image, Link2, Palette, Pause, Pin, Play, Search, Trash2, Type } from 'lucide-react'
 import type { KeyboardEvent, ReactNode } from 'react'
 import IslandFlash from '../../../components/island/island-flash'
-import Widget from '../../../components/island/widget'
+import Widget, { type WidgetLayout } from '../../../components/island/widget'
 import { MINUTE, useEdgeClock } from '../../../lib/clock'
 
 type ClipboardClipKind = 'text' | 'link' | 'image' | 'color' | 'file'
@@ -77,6 +77,8 @@ interface ClipboardHistoryProps {
   onDelete?: (clip: ClipboardClip) => void
   /** The moment the times are read at, in epoch ms. Defaults to now, re-read on each minute. */
   now?: number
+  /** `tall` is the open island's tall snap: the search across the top, every clip as a two-line row with its picture, and the selected clip in full beside them with its actions. Defaults to `'fit'`. */
+  layout?: WidgetLayout
   /** Step on the size ladder. Omitted, it follows the surrounding SizeProvider. */
   size?: SizeVariant
   /** Classes for the root, which fills its container. */
@@ -230,20 +232,28 @@ interface HeroProps {
   onDelete?: (clip: ClipboardClip) => void
 }
 
-function Hero({ clip, pinned, onPin, onCopy, onDelete }: HeroProps) {
+/** Pin, Delete and Copy for the selected clip. */
+function Actions({ clip, pinned, onPin, onCopy, onDelete }: HeroProps) {
+  return (
+    <div className="-mr-1 flex shrink-0 items-center gap-0.5">
+      <Widget.Action icon={Pin} label={pinned ? 'Unpin' : 'Pin'} pressed={pinned} onClick={onPin} />
+      {onDelete && <Widget.Action icon={Trash2} label="Delete" onClick={() => onDelete(clip)} />}
+      <Button variant="primary" size="compact" leadingIcon={Copy} className="ml-1.5" onClick={() => onCopy?.(clip)}>
+        Copy
+      </Button>
+    </div>
+  )
+}
+
+function Hero(props: HeroProps) {
+  const { clip } = props
   const line = fact(clip)
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <Body clip={clip} />
       <div className="flex min-w-0 items-center justify-between gap-3">
         <Widget.Meta>{line && <Widget.MetaItem icon={KIND_ICON[clip.kind]}>{line}</Widget.MetaItem>}</Widget.Meta>
-        <div className="-mr-1 flex shrink-0 items-center gap-0.5">
-          <Widget.Action icon={Pin} label={pinned ? 'Unpin' : 'Pin'} pressed={pinned} onClick={onPin} />
-          {onDelete && <Widget.Action icon={Trash2} label="Delete" onClick={() => onDelete(clip)} />}
-          <Button variant="primary" size="compact" leadingIcon={Copy} className="ml-1.5" onClick={() => onCopy?.(clip)}>
-            Copy
-          </Button>
-        </div>
+        <Actions {...props} />
       </div>
     </div>
   )
@@ -317,6 +327,182 @@ function List({ order, selected, pinned, now, searching, onPick, onCopy }: ListP
         </div>
       ))}
     </FluidHover>
+  )
+}
+
+/** A tall row's picture: a swatch, a thumbnail or favicon, else its kind's glyph, on a tile one surface up. */
+function Tile({ clip }: { clip: ClipboardClip }) {
+  const level = useLift(1)
+  if (clip.kind === 'color')
+    return (
+      <span
+        aria-hidden
+        className="size-8 shrink-0 rounded-lg ring-1 ring-border ring-inset"
+        style={{ backgroundColor: paint(clip) }}
+      />
+    )
+  if (clip.kind === 'image' && clip.preview != null)
+    return <Picture preview={clip.preview} className="size-8 rounded-lg" />
+  const Icon = KIND_ICON[clip.kind]
+  return (
+    <span
+      className={cn(
+        'flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground',
+        SURFACE_BG[level],
+      )}
+    >
+      {clip.kind === 'link' && clip.preview != null ? (
+        <Picture preview={clip.preview} className="size-4 rounded-sm" />
+      ) : (
+        <Icon size={15} strokeWidth={1.5} />
+      )}
+    </span>
+  )
+}
+
+/** Every clip as a two-line row: its picture, its text, where and when; pinned first, the selected one lit one surface up. */
+function SheetList({ order, selected, pinned, now, searching, onPick, onCopy }: ListProps) {
+  const level = useLift(1)
+  if (!order.length)
+    return <span className="flex h-12 items-center text-body text-muted-foreground">No clips match</span>
+
+  const groups = [
+    { label: 'Pinned', clips: order.filter(clip => pinned.includes(clip.id)) },
+    { label: searching ? 'Matches' : 'Recent', clips: order.filter(clip => !pinned.includes(clip.id)) },
+  ].filter(group => group.clips.length)
+
+  return (
+    <FluidHover className="-mx-2 flex flex-col gap-0" role="listbox" aria-label="Clipboard history">
+      {groups.map(group => (
+        <div key={group.label} role="presentation" className="flex min-w-0 flex-col">
+          <div className="flex h-7 items-end justify-between px-2 pb-1 text-caption text-muted-foreground">
+            <span>{group.label}</span>
+            <span className="tabular-nums">{group.clips.length}</span>
+          </div>
+          {group.clips.map(clip => {
+            const index = order.indexOf(clip)
+            const current = index === selected
+            return (
+              <FluidHover.Item
+                key={clip.id}
+                index={index}
+                role="option"
+                aria-selected={current}
+                tabIndex={-1}
+                className={cn('h-12 px-2', current && SURFACE_BG[level])}
+                onClick={() => onPick(clip.id)}
+                onDoubleClick={() => onCopy?.(clip)}
+              >
+                <span className="flex w-full min-w-0 items-center gap-3">
+                  <Tile clip={clip} />
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="truncate text-body text-foreground">
+                      {clip.kind === 'link' ? (clip.detail ?? domain(clip.content)) : clip.content}
+                    </span>
+                    <span className="truncate text-caption text-muted-foreground">
+                      {[
+                        clip.kind === 'link' ? domain(clip.content) : (clip.app ?? KIND_LABEL[clip.kind]),
+                        short(now - clip.copiedAt),
+                      ].join(' · ')}
+                    </span>
+                  </span>
+                  {pinned.includes(clip.id) && (
+                    <Pin size={12} strokeWidth={1.5} aria-label="Pinned" className="shrink-0 text-muted-foreground" />
+                  )}
+                </span>
+              </FluidHover.Item>
+            )
+          })}
+        </div>
+      ))}
+    </FluidHover>
+  )
+}
+
+/** The selected clip in full: the whole text, the link with its title and address, the image or the color large, the file on a tile. */
+function Full({ clip }: { clip: ClipboardClip }) {
+  const level = useLift(1)
+  if (clip.kind === 'text')
+    return (
+      <p className="line-clamp-8 min-w-0 whitespace-pre-wrap text-title weight-medium break-words text-foreground">
+        {clip.content}
+      </p>
+    )
+  if (clip.kind === 'link')
+    return (
+      <div className="flex min-w-0 flex-col gap-1">
+        <Widget.Title
+          leading={clip.preview != null && <Picture preview={clip.preview} className="size-5 rounded-md" />}
+        >
+          {clip.detail ?? domain(clip.content)}
+        </Widget.Title>
+        <span className="min-w-0 text-body break-all text-muted-foreground">{clip.content}</span>
+      </div>
+    )
+
+  const picture =
+    clip.kind === 'color' ? (
+      <span
+        aria-hidden
+        className="block h-36 w-full rounded-2xl ring-1 ring-border ring-inset"
+        style={{ backgroundColor: paint(clip) }}
+      />
+    ) : clip.kind === 'image' && clip.preview != null ? (
+      <Picture preview={clip.preview} className="aspect-[16/10] w-full rounded-2xl" />
+    ) : (
+      <span
+        className={cn(
+          'flex h-36 w-full items-center justify-center rounded-2xl text-muted-foreground',
+          SURFACE_BG[level],
+        )}
+      >
+        {clip.kind === 'file' ? <File size={40} strokeWidth={1.25} /> : <Image size={40} strokeWidth={1.25} />}
+      </span>
+    )
+  return (
+    <div className="flex min-w-0 flex-col gap-3">
+      {picture}
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <Widget.Title className={cn(clip.kind === 'color' && 'font-mono')}>{clip.content}</Widget.Title>
+        {clip.detail && <Widget.Subtitle>{clip.detail}</Widget.Subtitle>}
+      </div>
+    </div>
+  )
+}
+
+/** The facts under the full clip: its kind, its length or a link's domain, the time it was copied. */
+function Facts({ clip }: { clip: ClipboardClip }) {
+  const words = clip.content.trim().split(/\s+/).length
+  return (
+    <Widget.Meta>
+      <Widget.MetaItem icon={KIND_ICON[clip.kind]}>{KIND_LABEL[clip.kind]}</Widget.MetaItem>
+      {clip.kind === 'text' && (
+        <Widget.MetaItem>
+          {words} {words === 1 ? 'word' : 'words'} · {clip.content.length} characters
+        </Widget.MetaItem>
+      )}
+      {clip.kind === 'link' && <Widget.MetaItem>{domain(clip.content)}</Widget.MetaItem>}
+      <Widget.MetaItem>
+        Copied {new Date(clip.copiedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+      </Widget.MetaItem>
+    </Widget.Meta>
+  )
+}
+
+/** The selected clip beside the list, held in view as the list scrolls: where it came from, the clip in full, its facts and actions. */
+function Detail(props: HeroProps & { now: number }) {
+  const { clip, now } = props
+  return (
+    <div className="sticky top-0 flex min-w-0 flex-col gap-3">
+      <Widget.Header icon={KIND_ICON[clip.kind]}>
+        {[clip.app ?? KIND_LABEL[clip.kind], ago(now - clip.copiedAt)].join(' · ')}
+      </Widget.Header>
+      <Full clip={clip} />
+      <Facts clip={clip} />
+      <div className="flex justify-end pt-1">
+        <Actions {...props} />
+      </div>
+    </div>
   )
 }
 
@@ -403,6 +589,18 @@ function ClipboardHistoryCopied({ clip, onPin }: CopiedProps) {
  * (`ignoredApp`). With no clips it says what will show up here, or that
  * the history is paused.
  *
+ * At the open island's tall snap (`layout="tall"`) it becomes a sheet: the
+ * search across the top with the pause and the chips beside it, then a
+ * master and detail split. On the left every clip, not three, as a row of
+ * two lines: its swatch, thumbnail or glyph on a tile, its text (a link's
+ * page title), and where and when it was copied, pinned ones first. On the
+ * right, past a hairline and held in view as the list scrolls, the
+ * selected clip in full: the whole text over up to eight lines, a link's
+ * title with its whole address, an image or a color large, a file on a
+ * tile; under it its kind, its length in words and characters, the time
+ * it was copied, and Pin, Delete and Copy. The keys work as in the fit
+ * layout.
+ *
  * `ClipboardHistory.Leading` and `ClipboardHistory.Trailing` show the
  * glyph and the count of new clips in the compact island's wings, and
  * `ClipboardHistory.Copied` is the flash when something is copied.
@@ -428,6 +626,7 @@ const ClipboardHistory = Object.assign(
     onCopy,
     onDelete,
     now: nowProp,
+    layout = 'fit',
     size,
     className,
   }: ClipboardHistoryProps) {
@@ -438,12 +637,15 @@ const ClipboardHistory = Object.assign(
     const [query, setQuery] = useControllableState(queryProp, defaultQuery, onQueryChange)
     const [paused, setPaused] = useControllableState(pausedProp, defaultPaused, onPausedChange)
 
-    const resume = (
-      <Widget.Action
-        icon={paused ? Play : Pause}
-        label={paused ? 'Resume history' : 'Pause history'}
-        onClick={() => setPaused(!paused)}
-      />
+    const status = (
+      <>
+        {paused ? <Widget.Chip>Paused</Widget.Chip> : ignoredApp && <Widget.Chip>Ignoring {ignoredApp}</Widget.Chip>}
+        <Widget.Action
+          icon={paused ? Play : Pause}
+          label={paused ? 'Resume history' : 'Pause history'}
+          onClick={() => setPaused(!paused)}
+        />
+      </>
     )
 
     if (!clips.length)
@@ -480,6 +682,7 @@ const ClipboardHistory = Object.assign(
     const selected = found < 0 ? Math.max(0, order.indexOf(newest[0]!)) : found
     const hero = order[selected] ?? clips[0]!
     const heroPinned = pinned.includes(hero.id)
+    const togglePin = () => setPinned(heroPinned ? pinned.filter(id => id !== hero.id) : [...pinned, hero.id])
 
     const onKeyDown = (event: KeyboardEvent) => {
       const step = event.key === 'ArrowDown' ? 1 : event.key === 'ArrowUp' ? -1 : 0
@@ -495,6 +698,46 @@ const ClipboardHistory = Object.assign(
       }
     }
 
+    const search = (
+      <Input
+        size="compact"
+        icon={Search}
+        placeholder="Search clips"
+        aria-label="Search clips"
+        value={query}
+        onValueChange={setQuery}
+      />
+    )
+    const listProps = { order, selected, pinned, now, searching: !!needle, onPick: setValue, onCopy }
+
+    if (layout === 'tall')
+      return (
+        // biome-ignore lint/a11y/noStaticElementInteractions: the keys bubble up from the search and the rows
+        <div className={cn('flex min-w-0 flex-col', className)} onKeyDown={onKeyDown}>
+          <Widget.Sheet size={size} className="gap-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="min-w-0 flex-1">{search}</div>
+              <span className="-mr-1 flex shrink-0 items-center gap-1.5">{status}</span>
+            </div>
+            <div className="flex min-w-0 items-stretch gap-5">
+              <div className="w-[46%] min-w-0 shrink-0">
+                <SheetList {...listProps} />
+              </div>
+              <div className="min-w-0 flex-1 border-l border-border pl-5">
+                <Detail
+                  clip={hero}
+                  pinned={heroPinned}
+                  onPin={togglePin}
+                  onCopy={onCopy}
+                  onDelete={onDelete}
+                  now={now}
+                />
+              </div>
+            </div>
+          </Widget.Sheet>
+        </div>
+      )
+
     return (
       // biome-ignore lint/a11y/noStaticElementInteractions: the keys bubble up from the search and the rows
       <div className={cn('flex min-h-0 flex-col', className)} onKeyDown={onKeyDown}>
@@ -503,49 +746,16 @@ const ClipboardHistory = Object.assign(
           className="flex-1"
           aside={
             <div className="flex min-w-0 flex-col gap-1">
-              <Input
-                size="compact"
-                icon={Search}
-                placeholder="Search clips"
-                aria-label="Search clips"
-                value={query}
-                onValueChange={setQuery}
-              />
-              <List
-                order={order}
-                selected={selected}
-                pinned={pinned}
-                now={now}
-                searching={!!needle}
-                onPick={setValue}
-                onCopy={onCopy}
-              />
+              {search}
+              <List {...listProps} />
             </div>
           }
           media={hasMedia(hero) && <Media clip={hero} />}
         >
-          <Widget.Header
-            icon={KIND_ICON[hero.kind]}
-            trailing={
-              <>
-                {paused ? (
-                  <Widget.Chip>Paused</Widget.Chip>
-                ) : (
-                  ignoredApp && <Widget.Chip>Ignoring {ignoredApp}</Widget.Chip>
-                )}
-                {resume}
-              </>
-            }
-          >
+          <Widget.Header icon={KIND_ICON[hero.kind]} trailing={status}>
             {[hero.app ?? KIND_LABEL[hero.kind], ago(now - hero.copiedAt)].join(' · ')}
           </Widget.Header>
-          <Hero
-            clip={hero}
-            pinned={heroPinned}
-            onPin={() => setPinned(heroPinned ? pinned.filter(id => id !== hero.id) : [...pinned, hero.id])}
-            onCopy={onCopy}
-            onDelete={onDelete}
-          />
+          <Hero clip={hero} pinned={heroPinned} onPin={togglePin} onCopy={onCopy} onDelete={onDelete} />
         </Widget>
       </div>
     )

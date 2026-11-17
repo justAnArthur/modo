@@ -63,6 +63,8 @@ interface ExpandedIslandProps {
  * at 720 × 240): build each one on the kit's Widget frame, so every tab has
  * one hero set large, a muted line, its facts and quiet actions in the same
  * places.
+ * Pulled down to a 560 px sheet the area is about 692 × 476: pass each
+ * block `layout="tall"` there, for its fuller view.
  *
  * Pass it as the Island's `expanded`; it reads the notch from the Island.
  * Selection runs through `value` / `onValueChange`, or is kept here from
@@ -118,7 +120,7 @@ export default function ExpandedIsland({
         <ScrollArea
           key={tab?.value}
           className="min-h-0 flex-1"
-          viewportClassName="scroll-fade [&>div]:flex [&>div]:min-h-full [&>div]:flex-col"
+          viewportClassName="scroll-fade [&>div]:flex [&>div]:min-h-full [&>div]:flex-col [&>div]:!min-w-0"
         >
           <motion.div
             className="flex flex-1 flex-col py-1 [&>*]:flex-1"

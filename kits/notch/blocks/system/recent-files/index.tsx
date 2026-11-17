@@ -35,7 +35,7 @@ import {
 } from 'lucide-react'
 import type { DragEvent, ReactNode } from 'react'
 import IslandFlash from '../../../components/island/island-flash'
-import Widget from '../../../components/island/widget'
+import Widget, { type WidgetLayout } from '../../../components/island/widget'
 import { MINUTE, useEdgeClock } from '../../../lib/clock'
 
 type RecentFilesSource = 'downloads' | 'screenshots'
@@ -99,6 +99,8 @@ interface RecentFilesProps {
   onCancelDownload?: (download: RecentDownload) => void
   /** The moment the times are read at, in epoch ms. Defaults to now, re-read on each minute. */
   now?: number
+  /** `tall` is the open island's tall snap: the switch across the top, the newest file large with its actions, and every earlier file of the folder as a grid of named tiles. Defaults to `'fit'`. */
+  layout?: WidgetLayout
   /** Step on the size ladder. Omitted, it follows the surrounding SizeProvider. */
   size?: SizeVariant
   /** Classes for the root, which fills its container. */
@@ -169,6 +171,7 @@ const dragOf = (file: RecentFile, onDragStart?: RecentFilesProps['onDragStart'])
 
 // Literal tables: UnoCSS only generates the classes it can read whole.
 const TILE = { default: 'size-24 rounded-xl', compact: 'size-20 rounded-xl' }
+const SHEET_TILE = { default: 'h-32 w-48 rounded-2xl', compact: 'h-28 w-42 rounded-2xl' }
 
 function Thumbnail({
   file,
@@ -336,6 +339,32 @@ function Tiles({ files, onOpen, onDragStart }: Omit<ListProps, 'now'>) {
   )
 }
 
+/** Every earlier file as a grid of tiles, five across: its thumbnail or glyph, its name, its size and age. */
+function Grid({ files, now, onOpen, onDragStart }: ListProps) {
+  return (
+    <FluidHover columns={5} className="-m-1.5 grid-cols-5 gap-0" highlightClassName="rounded-xl">
+      {files.map((file, index) => (
+        <FluidHover.Item
+          key={file.id}
+          index={index}
+          title={file.name}
+          className="min-h-0 flex-col items-stretch gap-1.5 p-1.5 text-left"
+          onClick={() => onOpen?.(file)}
+          {...dragOf(file, onDragStart)}
+        >
+          <Thumbnail file={file} glyph={24} className="aspect-[4/3] w-full rounded-lg" />
+          <span className="flex min-w-0 flex-col px-0.5">
+            <span className="truncate text-caption text-foreground">{file.name}</span>
+            <span className="truncate text-micro tabular-nums text-muted-foreground">
+              {bytes(file.size)} · {short(now - file.addedAt)}
+            </span>
+          </span>
+        </FluidHover.Item>
+      ))}
+    </FluidHover>
+  )
+}
+
 /** The compact island's left wing: the download glyph, or the camera for a screenshot. */
 function RecentFilesLeading({ source = 'downloads' }: { source?: RecentFilesSource }) {
   const Icon = SOURCE_ICON[source]
@@ -417,6 +446,15 @@ function RecentFilesSaved({ file, onOpen }: SavedProps) {
  * in, the speed and the time left, and Cancel. An empty folder says what
  * will land in it, the switch still beside it.
  *
+ * At the open island's tall snap (`layout="tall"`) it becomes a sheet:
+ * the switch and Clear across the top; the newest file (or the download
+ * under way) large beside its name, its facts and its actions; then every
+ * earlier file of the folder, not three, as a grid five across, each tile
+ * its thumbnail or its type's glyph over its name, its size and how long
+ * ago it landed. Downloads and screenshots read alike there, since a tile
+ * has room for both the look and the name; the grid scrolls with the
+ * island, and every tile opens on a press and drags out like the rows.
+ *
  * `RecentFiles.Leading` and `RecentFiles.Trailing` show the glyph and the
  * download's progress (or the count of new files) in the compact island's
  * wings, `RecentFiles.Minimal` the progress as a ring in the split
@@ -437,6 +475,7 @@ const RecentFiles = Object.assign(
       onClear,
       onCancelDownload,
       now: nowProp,
+      layout = 'fit',
       size,
       className,
     } = props
@@ -472,6 +511,73 @@ const RecentFiles = Object.assign(
       <Empty source={source} className={TILE[step]} />
     )
 
+    const tabs = (
+      <Tabs variant="subtle" size="compact" value={source} onValueChange={v => setSource(v as RecentFilesSource)}>
+        <Tabs.List className="-ml-2">
+          <Tabs.Item value="downloads" label="Downloads" />
+          <Tabs.Item value="screenshots" label="Screenshots" />
+        </Tabs.List>
+      </Tabs>
+    )
+    const clear = onClear && !empty && (
+      <Button variant="ghost" size="compact" className="-mr-2 h-6 px-2" onClick={() => onClear(source)}>
+        Clear
+      </Button>
+    )
+    const nothing = (
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <Widget.Title>{source === 'downloads' ? 'No downloads yet' : 'No screenshots yet'}</Widget.Title>
+        <span className="text-pretty text-caption text-muted-foreground">
+          {source === 'downloads'
+            ? 'Files you download land here, ready to open or drag out.'
+            : 'Take one with ⇧⌘4 and it shows up here, ready to drag into a message.'}
+        </span>
+      </div>
+    )
+
+    if (layout === 'tall')
+      return (
+        <Widget.Sheet size={size} className={className}>
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            {tabs}
+            {clear}
+          </div>
+
+          <div className="flex min-w-0 items-center gap-6">
+            {active ? (
+              <Thumbnail file={active} glyph={40} className={SHEET_TILE[step]} />
+            ) : newest ? (
+              <span {...dragOf(newest, onDragStart)} className={cn('shrink-0', onDragStart && 'cursor-grab')}>
+                <Thumbnail file={newest} glyph={40} className={SHEET_TILE[step]} />
+              </span>
+            ) : (
+              <Empty source={source} className={SHEET_TILE[step]} />
+            )}
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              {header}
+              {active ? (
+                <Downloading download={active} onCancel={onCancelDownload} />
+              ) : newest ? (
+                <Hero file={newest} now={now} props={props} />
+              ) : (
+                nothing
+              )}
+            </div>
+          </div>
+
+          {earlier.length > 0 && (
+            <Widget.Section
+              label={active ? 'Latest' : 'Earlier'}
+              trailing={<span className="tabular-nums">{earlier.length}</span>}
+            >
+              <div className="pt-1.5">
+                <Grid files={earlier} now={now} onOpen={onOpen} onDragStart={onDragStart} />
+              </div>
+            </Widget.Section>
+          )}
+        </Widget.Sheet>
+      )
+
     return (
       <Widget
         size={size}
@@ -480,24 +586,10 @@ const RecentFiles = Object.assign(
         aside={
           <div className="flex min-w-0 flex-col gap-1.5">
             <div className="flex min-w-0 items-center justify-between gap-2">
-              <Tabs
-                variant="subtle"
-                size="compact"
-                value={source}
-                onValueChange={v => setSource(v as RecentFilesSource)}
-              >
-                <Tabs.List className="-ml-2">
-                  <Tabs.Item value="downloads" label="Downloads" />
-                  <Tabs.Item value="screenshots" label="Screenshots" />
-                </Tabs.List>
-              </Tabs>
+              {tabs}
               <span className="flex shrink-0 items-center gap-1.5 text-caption tabular-nums text-muted-foreground">
                 {earlier.length > limit && <span>{earlier.length - limit} more</span>}
-                {onClear && !empty && (
-                  <Button variant="ghost" size="compact" className="-mr-2 h-6 px-2" onClick={() => onClear(source)}>
-                    Clear
-                  </Button>
-                )}
+                {clear}
               </span>
             </div>
             {empty ? null : earlier.length === 0 ? (
@@ -516,14 +608,7 @@ const RecentFiles = Object.assign(
         ) : newest ? (
           <Hero file={newest} now={now} props={props} />
         ) : (
-          <div className="flex min-w-0 flex-col gap-0.5">
-            <Widget.Title>{source === 'downloads' ? 'No downloads yet' : 'No screenshots yet'}</Widget.Title>
-            <span className="text-pretty text-caption text-muted-foreground">
-              {source === 'downloads'
-                ? 'Files you download land here, ready to open or drag out.'
-                : 'Take one with ⇧⌘4 and it shows up here, ready to drag into a message.'}
-            </span>
-          </div>
+          nothing
         )}
       </Widget>
     )

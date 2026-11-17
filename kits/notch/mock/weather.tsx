@@ -31,8 +31,9 @@ export const CURRENT: WeatherNow = {
   uv: 4,
 }
 
-// Temperature, condition and chance of rain from 14:00 on: a dry afternoon that turns wet by evening.
-const AFTERNOON: [number, WeatherHour['condition'], number][] = [
+// Temperature, condition and chance of rain for a day from 14:00 on: a dry afternoon that turns wet by
+// evening, clears overnight and comes up bright.
+const DAY_AHEAD: [number, WeatherHour['condition'], number][] = [
   [18.4, 'partly-cloudy', 5],
   [19.1, 'partly-cloudy', 10],
   [18.6, 'cloudy', 20],
@@ -41,15 +42,28 @@ const AFTERNOON: [number, WeatherHour['condition'], number][] = [
   [14.9, 'rain', 80],
   [14.1, 'drizzle', 40],
   [13.5, 'cloudy', 20],
+  [13.0, 'cloudy', 15],
+  [12.6, 'partly-cloudy', 10],
+  [12.1, 'partly-cloudy', 5],
+  [11.7, 'clear', 0],
+  [11.4, 'clear', 0],
+  [11.0, 'clear', 0],
+  [10.6, 'clear', 0],
+  [10.3, 'clear', 0],
+  [10.1, 'partly-cloudy', 0],
+  [10.4, 'partly-cloudy', 5],
+  [11.6, 'partly-cloudy', 5],
+  [13.0, 'clear', 0],
+  [14.3, 'clear', 0],
+  [15.2, 'partly-cloudy', 5],
+  [15.9, 'partly-cloudy', 10],
+  [16.1, 'cloudy', 20],
 ]
 
-export const HOURS: WeatherHour[] = AFTERNOON.map(([temperature, condition, precipitation], i) => ({
-  time: today(14) + i * HOUR,
-  temperature,
-  condition,
-  isDay: 14 + i < 17,
-  precipitation,
-}))
+export const HOURS: WeatherHour[] = DAY_AHEAD.map(([temperature, condition, precipitation], i) => {
+  const hour = (14 + i) % 24
+  return { time: today(14) + i * HOUR, temperature, condition, isDay: hour >= 7 && hour < 17, precipitation }
+})
 
 /** A clear night: the same strip, read at 22:00. */
 export const NIGHT: { current: WeatherNow; hours: WeatherHour[] } = {
@@ -63,10 +77,26 @@ export const NIGHT: { current: WeatherNow; hours: WeatherHour[] } = {
   })),
 }
 
-export const DAYS: WeatherDay[] = [
-  { date: today(0), condition: 'rain', high: 19.6, low: 11.2, precipitation: 80 },
-  { date: today(24), condition: 'drizzle', high: 16.1, low: 9.4, precipitation: 40 },
+// The week ahead, today first.
+const WEEK: [WeatherDay['condition'], number, number, number][] = [
+  ['rain', 19.6, 11.2, 80],
+  ['drizzle', 16.1, 9.4, 40],
+  ['partly-cloudy', 17.3, 8.1, 10],
+  ['clear', 19.8, 7.6, 0],
+  ['cloudy', 15.4, 9.9, 25],
+  ['heavy-rain', 12.2, 8.4, 90],
+  ['partly-cloudy', 14.6, 6.3, 15],
 ]
+
+export const DAYS: WeatherDay[] = WEEK.map(([condition, high, low, precipitation], i) => ({
+  date: today(i * 24),
+  condition,
+  high,
+  low,
+  precipitation,
+  sunrise: today(i * 24 + 6, 58 + i),
+  sunset: today(i * 24 + 16, 12 - i),
+}))
 
 /** The forecast for `Weather`'s props. */
 export const FORECAST = { location: WEATHER_LOCATION, current: CURRENT, hours: HOURS, days: DAYS, now: WEATHER_NOW }

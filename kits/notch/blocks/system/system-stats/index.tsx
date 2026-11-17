@@ -9,7 +9,8 @@
 'use client'
 
 import Sparkline, { type SparklineTone } from '@justanarthur/modo-ui/components/data-display/sparkline'
-import Meter from '@justanarthur/modo-ui/components/feedback/meter'
+import Table from '@justanarthur/modo-ui/components/data-display/table'
+import Meter, { type MeterTone } from '@justanarthur/modo-ui/components/feedback/meter'
 import type { SizeVariant } from '@justanarthur/modo-ui/lib/size-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import {
@@ -22,9 +23,12 @@ import {
   BatteryMedium,
   Cpu,
   HardDrive,
+  type LucideIcon,
   MemoryStick,
+  Network,
 } from 'lucide-react'
-import Widget from '../../../components/island/widget'
+import type { ReactNode } from 'react'
+import Widget, { type WidgetLayout } from '../../../components/island/widget'
 
 /** One reading of the system. */
 interface StatsSample {
@@ -82,16 +86,20 @@ interface SystemStatsProps {
   disk?: StatsDisk
   /** Seconds since the last boot. */
   uptime?: number
-  /** The busiest processes, in any order: the top three list beside the hero, by CPU. */
+  /** The busiest processes, in any order: the top three list beside the hero, by CPU; the top eight at the tall snap. */
   processes?: StatsProcess[]
   /** Step on the size ladder. Omitted, it follows the surrounding SizeProvider. */
   size?: SizeVariant
+  /** `tall` is the open island's tall snap: CPU and memory side by side, each with its trend; the network's in and out as one graph beside the battery and the disk as gauges; and the top eight processes as a table. Defaults to `'fit'`. */
+  layout?: WidgetLayout
   /** Classes for the root, which fills its container. */
   className?: string
 }
 
 /** Processes listed before the count of the rest. */
 const ROWS = 3
+/** Processes in the tall snap's table. */
+const SHEET_ROWS = 8
 
 const percent = (v: number) => `${Math.round(v * 100)}%`
 const share = (v: number) => (v < 0.1 ? `${(v * 100).toFixed(1)}%` : percent(v))
@@ -209,6 +217,174 @@ function Processes({ processes }: { processes: StatsProcess[] }) {
   )
 }
 
+interface TrendProps {
+  label: string
+  icon: LucideIcon
+  /** The latest share, from 0 to 1; left out while measuring. */
+  value?: number
+  unit?: string
+  series: number[]
+  /** The line under the trend. */
+  caption: ReactNode
+  className?: string
+}
+
+/** One figure at the tall snap: its share large, every reading as a trend under it, one line on what it means. */
+function Trend({ label, icon: Icon, value, unit, series, caption, className }: TrendProps) {
+  return (
+    <div className={cn('flex min-w-0 flex-col gap-1', className)} aria-busy={value === undefined}>
+      <Widget.Header icon={Icon}>{label}</Widget.Header>
+      <Widget.Figure value={value === undefined ? '–' : percent(value)} unit={unit} />
+      <Sparkline
+        values={series}
+        max={1}
+        area
+        tone={toneOf(value ?? 0)}
+        label={value === undefined ? `${label}, measuring` : `${label}, ${percent(value)}`}
+        className={cn('my-1 h-14 w-full', value === undefined && 'text-muted-foreground')}
+      />
+      <Widget.Subtitle>{caption}</Widget.Subtitle>
+    </div>
+  )
+}
+
+/** A battery's tone: the warning hue from 20% left, the error hue from 10%, unless it charges. */
+function batteryTone({ level, charging }: StatsBattery): MeterTone {
+  if (charging) return 'default'
+  if (level <= 10) return 'error'
+  if (level <= 20) return 'warning'
+  return 'default'
+}
+
+function ProcessTable({ processes }: { processes: StatsProcess[] }) {
+  const top = [...processes].sort((a, b) => b.cpu - a.cpu).slice(0, SHEET_ROWS)
+  const head = 'text-caption weight-normal text-muted-foreground'
+  return (
+    <Widget.Section label="Top processes" trailing={<span>by CPU</span>}>
+      <Table>
+        <Table.Header>
+          <Table.Row>
+            <Table.Head className={head}>Name</Table.Head>
+            <Table.Head className={cn(head, 'text-right')}>CPU</Table.Head>
+            <Table.Head className={cn(head, 'w-24 text-right')}>Memory</Table.Head>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          {top.map(process => (
+            <Table.Row key={process.id}>
+              <Table.Cell className="text-foreground">{process.name}</Table.Cell>
+              <Table.Cell>
+                <span className="flex items-center justify-end gap-3">
+                  <Meter variant="line" value={process.cpu} label={`${process.name}, CPU`} className="w-24" />
+                  <span className="w-12 text-right tabular-nums">{share(process.cpu)}</span>
+                </span>
+              </Table.Cell>
+              <Table.Cell className="text-right tabular-nums">
+                {process.memory === undefined ? '–' : bytes(process.memory)}
+              </Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table>
+    </Widget.Section>
+  )
+}
+
+interface SheetProps extends Omit<SystemStatsProps, 'samples' | 'hero' | 'layout'> {
+  samples: StatsSample[]
+  hero: StatsHero
+}
+
+/** The tall snap's sheet. */
+function Sheet({ samples, hero, battery, disk, uptime, processes, size, className }: SheetProps) {
+  const last = samples.at(-1)
+  const busiest = processes?.length ? processes.reduce((a, b) => (b.cpu > a.cpu ? b : a)).name : undefined
+  const cpu = (
+    <Trend
+      key="cpu"
+      label="CPU"
+      icon={Cpu}
+      value={last?.cpu}
+      unit="load"
+      series={samples.map(s => s.cpu)}
+      caption={
+        last ? [verdict(last.cpu), busiest && `${busiest} is busiest`].filter(Boolean).join(' · ') : 'Measuring…'
+      }
+    />
+  )
+  const memory = (
+    <Trend
+      key="memory"
+      label="Memory"
+      icon={MemoryStick}
+      value={last && pressureOf(last)}
+      unit="pressure"
+      series={samples.map(pressureOf)}
+      caption={last ? `${bytes(last.memoryUsed)} of ${bytes(last.memoryTotal)} in use` : 'Measuring…'}
+    />
+  )
+  const [first, second] = hero === 'cpu' ? [cpu, memory] : [memory, cpu]
+  const left = battery?.minutesLeft === undefined ? undefined : clock(battery.minutesLeft)
+
+  return (
+    <Widget.Sheet size={size} className={className}>
+      <div className="flex min-w-0 flex-col gap-2">
+        <Widget.Header icon={Activity}>{uptime === undefined ? 'System' : `System · up ${span(uptime)}`}</Widget.Header>
+        <div className="grid grid-cols-2 divide-x divide-border [&>*]:px-6 [&>*:first-child]:pl-0 [&>*:last-child]:pr-0">
+          {first}
+          {second}
+        </div>
+      </div>
+
+      <div className="grid auto-cols-fr grid-flow-col divide-x divide-border [&>*]:px-6 [&>*:first-child]:pl-0 [&>*:last-child]:pr-0">
+        <div className="flex min-w-0 flex-col gap-1" aria-busy={!last}>
+          <Widget.Header icon={Network}>Network</Widget.Header>
+          <div className="flex min-w-0 items-baseline gap-5">
+            <span className="flex items-center gap-1.5 whitespace-nowrap text-title weight-semibold tabular-nums text-foreground">
+              <ArrowDown size={16} strokeWidth={1.5} aria-label="In" className="text-muted-foreground" />
+              {last ? rate(last.netIn) : '–'}
+            </span>
+            <span className="flex items-center gap-1.5 whitespace-nowrap text-title weight-semibold tabular-nums text-muted-foreground">
+              <ArrowUp size={16} strokeWidth={1.5} aria-label="Out" />
+              {last ? rate(last.netOut) : '–'}
+            </span>
+          </div>
+          <Sparkline
+            values={samples.map(s => s.netIn)}
+            secondary={samples.map(s => s.netOut)}
+            area
+            label={last ? `Network, ${rate(last.netIn)} in, ${rate(last.netOut)} out` : 'Network, measuring'}
+            className={cn('my-1 h-12 w-full', !last && 'text-muted-foreground')}
+          />
+        </div>
+        {(battery || disk) && (
+          <div className="flex min-w-0 flex-col justify-center gap-4">
+            {battery && (
+              <Meter
+                label={battery.charging ? 'Battery, charging' : 'Battery'}
+                value={battery.level}
+                max={100}
+                tone={batteryTone(battery)}
+                detail={`${battery.level}%${left ? ` · ${left} ${battery.charging ? 'to full' : 'left'}` : ''}`}
+              />
+            )}
+            {disk && (
+              <Meter
+                label="Startup disk"
+                value={disk.total - disk.free}
+                max={disk.total}
+                detail={`${bytes(disk.free)} free of ${bytes(disk.total)}`}
+              />
+            )}
+          </div>
+        )}
+      </div>
+
+      {processes?.length ? <ProcessTable processes={processes} /> : null}
+    </Widget.Sheet>
+  )
+}
+
 /** The compact island's left wing: the CPU glyph. */
 function SystemStatsLeading() {
   return <Cpu size={16} strokeWidth={1.5} className="text-muted-foreground" />
@@ -256,6 +432,13 @@ function SystemStatsMinimal({ sample }: { sample?: StatsSample }) {
  * lands (about a second after opening) the figures are dashes over the
  * Sparkline's baseline.
  *
+ * At the open island's tall snap (`layout="tall"`) it becomes a sheet: CPU
+ * and memory pressure side by side, each its figure large over its trend
+ * and a line on what it means (the hero's column first); then the
+ * network's in and out as one graph, its rates over it, beside the battery
+ * and the startup disk as Meter bars; then the top eight processes as a
+ * table, each with its share of the CPU as a line and the memory it holds.
+ *
  * `SystemStats.Leading` and `SystemStats.Trailing` show the CPU load in the
  * compact island's wings, `SystemStats.Minimal` as a ring in the split
  * island's bubble.
@@ -263,7 +446,31 @@ function SystemStatsMinimal({ sample }: { sample?: StatsSample }) {
  * @example {@include ./examples.mdx}
  */
 const SystemStats = Object.assign(
-  function SystemStats({ samples, hero = 'cpu', battery, disk, uptime, processes, size, className }: SystemStatsProps) {
+  function SystemStats({
+    samples,
+    hero = 'cpu',
+    battery,
+    disk,
+    uptime,
+    processes,
+    size,
+    layout = 'fit',
+    className,
+  }: SystemStatsProps) {
+    if (layout === 'tall')
+      return (
+        <Sheet
+          size={size}
+          samples={samples}
+          hero={hero}
+          battery={battery}
+          disk={disk}
+          uptime={uptime}
+          processes={processes}
+          className={className}
+        />
+      )
+
     const last = samples.at(-1)
     const series = hero === 'cpu' ? samples.map(s => s.cpu) : samples.map(pressureOf)
     const load = last ? (hero === 'cpu' ? last.cpu : pressureOf(last)) : 0

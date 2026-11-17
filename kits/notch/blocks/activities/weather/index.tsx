@@ -9,11 +9,13 @@
 'use client'
 
 import Button from '@justanarthur/modo-ui/components/actions/button'
+import Sparkline from '@justanarthur/modo-ui/components/data-display/sparkline'
 import { type SizeVariant, useSize } from '@justanarthur/modo-ui/lib/size-context'
 import { SURFACE_BG } from '@justanarthur/modo-ui/lib/surface-classes'
 import { useLift } from '@justanarthur/modo-ui/lib/surface-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import Skeleton from '@justanarthur/modo-ui/primitives/content/skeleton'
+import ScrollArea from '@justanarthur/modo-ui/primitives/layout/scroll-area'
 import {
   ArrowDown,
   ArrowUp,
@@ -35,12 +37,16 @@ import {
   Moon,
   RotateCw,
   Sun,
+  Sunrise,
+  Sunset,
+  Thermometer,
   Umbrella,
   WifiOff,
   Wind,
 } from 'lucide-react'
+import type { ReactNode } from 'react'
 import IslandFlash from '../../../components/island/island-flash'
-import Widget from '../../../components/island/widget'
+import Widget, { type WidgetLayout } from '../../../components/island/widget'
 import { MINUTE, useEdgeClock } from '../../../lib/clock'
 
 type WeatherCondition =
@@ -98,6 +104,10 @@ interface WeatherDay {
   low: number
   /** The day's highest chance of rain or snow, 0–100: `precipitation_probability_max`. */
   precipitation?: number
+  /** When the sun rises, in epoch ms: `sunrise`. The tall layout lists today's. */
+  sunrise?: number
+  /** When the sun sets, in epoch ms: `sunset`. The tall layout lists today's. */
+  sunset?: number
 }
 
 interface WeatherProps {
@@ -125,6 +135,8 @@ interface WeatherProps {
   onRequestAccess?: () => void
   /** Called by Open System Settings while access is denied. */
   onOpenSettings?: () => void
+  /** `tall` is the open island's tall snap: the hero larger, the next 24 hours as a scrolling strip with a temperature curve and the chance of rain, the week as rows with a range bar, and the wind, humidity, UV and the sun's times as details. Defaults to `'fit'`. */
+  layout?: WidgetLayout
   /** Classes for the root, which fills its container. */
   className?: string
 }
@@ -172,10 +184,16 @@ const HUE: Record<WeatherCondition, string> = {
 const HERO_GLYPH: Record<SizeVariant, number> = { default: 30, compact: 24 }
 const STRIP_GLYPH: Record<SizeVariant, number> = { default: 16, compact: 14 }
 
+const SHEET_GLYPH: Record<SizeVariant, number> = { default: 44, compact: 36 }
+
 /** A chance of rain worth showing, in %. */
 const WET = 30
 /** Hours the strip shows. */
 const HOURS = 6
+/** Hours the tall layout's strip scrolls through. */
+const DAY_HOURS = 24
+/** Days the tall layout lists. */
+const WEEK = 7
 
 /**
  * Open-Meteo's `weather_code` (WMO 4677) as a condition.
@@ -219,6 +237,18 @@ const speed = (kmh: number, unit: WeatherUnit) =>
 
 const hourOf = (ms: number, locale?: Intl.LocalesArgument) =>
   new Date(ms).toLocaleTimeString(locale, { hour: 'numeric' })
+
+const clockOf = (ms: number, locale?: Intl.LocalesArgument) =>
+  new Date(ms).toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' })
+
+/** The UV index in the WHO's words. */
+function uvLevel(uv: number) {
+  if (uv < 3) return 'Low'
+  if (uv < 6) return 'Moderate'
+  if (uv < 8) return 'High'
+  if (uv < 11) return 'Very high'
+  return 'Extreme'
+}
 
 function ago(ms: number) {
   const minutes = Math.floor(ms / MINUTE)
@@ -290,6 +320,110 @@ function Tomorrow({ day, unit }: { day: WeatherDay; unit: WeatherUnit }) {
         <span className="truncate">{LABEL[day.condition]}</span>
       </span>
     </Widget.Row>
+  )
+}
+
+interface StripProps {
+  hours: WeatherHour[]
+  unit: WeatherUnit
+  locale?: Intl.LocalesArgument
+}
+
+/** The tall layout's day ahead: a column per hour (hour, glyph, temperature, chance of rain) with the temperature's curve through them, scrolling sideways. */
+function HourStrip({ hours, unit, locale }: StripProps) {
+  const size = useSize()
+  const temperatures = hours.map(hour => hour.temperature)
+  const low = Math.min(...temperatures)
+  const wet = hours.some(hour => (hour.precipitation ?? 0) >= WET)
+  return (
+    <ScrollArea orientation="horizontal" viewportClassName="scroll-fade-x">
+      <div className="flex w-max flex-col gap-1.5 pb-3 tabular-nums">
+        <div className="flex">
+          {hours.map((hour, i) => (
+            <div key={hour.time} className="flex w-12 shrink-0 flex-col items-center gap-1.5">
+              <span className="whitespace-nowrap text-caption text-muted-foreground">
+                {i === 0 ? 'Now' : hourOf(hour.time, locale)}
+              </span>
+              <Glyph
+                condition={hour.condition}
+                isDay={hour.isDay}
+                size={STRIP_GLYPH[size.variant]}
+                className={hueFor(hour.condition, hour.isDay)}
+              />
+            </div>
+          ))}
+        </div>
+        {/* Inset half a column, so each point sits over its hour. */}
+        <div className="px-6">
+          <Sparkline
+            values={temperatures.map(value => value - low)}
+            max={Math.max(...temperatures) - low}
+            label={`Temperature over the next ${hours.length} hours`}
+            tone="muted"
+          />
+        </div>
+        <div className="flex">
+          {hours.map(hour => (
+            <div key={hour.time} className="flex w-12 shrink-0 flex-col items-center gap-0.5">
+              <span className="text-body text-foreground">{temp(hour.temperature, unit)}</span>
+              {wet && (
+                <span className="h-4 text-caption text-status-info">
+                  {(hour.precipitation ?? 0) >= WET && `${hour.precipitation}%`}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </ScrollArea>
+  )
+}
+
+interface WeekProps {
+  days: WeatherDay[]
+  unit: WeatherUnit
+  locale?: Intl.LocalesArgument
+}
+
+/** The tall layout's week: a row per day, its low and high on a bar spanning the week's range. */
+function Week({ days, unit, locale }: WeekProps) {
+  const low = Math.min(...days.map(day => day.low))
+  const span = Math.max(...days.map(day => day.high)) - low || 1
+  return days.map((day, i) => (
+    <div key={day.date} className="flex h-8 min-w-0 items-center gap-3 text-body tabular-nums">
+      <span className="w-12 shrink-0 truncate text-foreground">
+        {i === 0 ? 'Today' : new Date(day.date).toLocaleDateString(locale, { weekday: 'short' })}
+      </span>
+      <Glyph condition={day.condition} size={16} className={hueFor(day.condition)} />
+      <span className="w-9 shrink-0 text-caption text-status-info">
+        {(day.precipitation ?? 0) >= WET && `${day.precipitation}%`}
+      </span>
+      <span className="w-8 shrink-0 text-right text-muted-foreground">{temp(day.low, unit)}</span>
+      <span className="relative h-1 min-w-12 flex-1 rounded-full bg-active">
+        <span
+          className="absolute inset-y-0 rounded-full bg-foreground"
+          style={{ left: `${((day.low - low) / span) * 100}%`, width: `${((day.high - day.low) / span) * 100}%` }}
+        />
+      </span>
+      <span className="w-8 shrink-0 text-foreground">{temp(day.high, unit)}</span>
+    </div>
+  ))
+}
+
+interface DetailProps {
+  icon: LucideIcon
+  label: string
+  children: ReactNode
+}
+
+/** One fact of the tall layout's details: a glyph, what it is, muted, and its value. */
+function Detail({ icon: Icon, label, children }: DetailProps) {
+  return (
+    <div className="flex h-8 min-w-0 items-center gap-2 text-body">
+      <Icon aria-hidden size={14} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
+      <span className="min-w-0 flex-1 truncate text-muted-foreground">{label}</span>
+      <span className="shrink-0 whitespace-nowrap tabular-nums text-foreground">{children}</span>
+    </div>
   )
 }
 
@@ -448,6 +582,16 @@ function WeatherAlert({
  * (`"offline"`). Once there is a forecast, those keep it up and say so in
  * the header instead.
  *
+ * At the open island's tall snap (`layout="tall"`) it becomes a sheet: the
+ * hero larger, the condition, how warm it feels and today's high and low
+ * beside it; then the next 24 hours as a strip that scrolls sideways, each
+ * hour's glyph and temperature with the temperature's curve running through
+ * them and the chance of rain under each once any hour is wet; then, split
+ * by a hairline, the week as rows of day, glyph, chance of rain and the low
+ * and high on a bar spanning the week's range, and beside it the details:
+ * how warm it feels, the wind, the humidity, the UV index in words and
+ * today's sunrise and sunset (`sunrise` / `sunset` on the day).
+ *
  * The other forms are parts: `Weather.Leading` and `Weather.Trailing` for
  * the compact island's wings (the glyph and the temperature),
  * `Weather.Minimal`, the glyph on a disc, for the split island's bubble,
@@ -470,6 +614,7 @@ const Weather = Object.assign(
     onRefresh,
     onRequestAccess,
     onOpenSettings,
+    layout = 'fit',
     className,
   }: WeatherProps) {
     const size = useSize()
@@ -544,6 +689,100 @@ const Weather = Object.assign(
       status === 'offline' ? `Offline · ${fresh}` : status === 'error' ? `Not updated · ${fresh}` : fresh
     const feels = current.apparent !== undefined && `Feels like ${temp(current.apparent, unit)}`
     const soon = rain && `${LABEL[rain.condition]} around ${hourOf(rain.time, locale)}`
+    const header = (
+      <Widget.Header
+        icon={MapPin}
+        trailing={
+          <>
+            <span className="whitespace-nowrap pr-1 text-caption">{freshness}</span>
+            {onRefresh && <Widget.Action icon={RotateCw} label="Refresh" onClick={onRefresh} />}
+          </>
+        }
+      >
+        {location ?? 'Current location'}
+      </Widget.Header>
+    )
+
+    if (layout === 'tall') {
+      const week = days.slice(0, WEEK)
+      return (
+        <Widget.Sheet className={className}>
+          <div className="flex min-w-0 flex-col gap-2">
+            {header}
+            <div className="flex min-w-0 items-center gap-5">
+              <div className="flex shrink-0 items-center gap-3">
+                <Glyph
+                  condition={current.condition}
+                  isDay={current.isDay}
+                  size={SHEET_GLYPH[size.variant]}
+                  className={hueFor(current.condition, current.isDay)}
+                />
+                <Widget.Figure value={degrees(current.temperature, unit)} unit={unit === 'fahrenheit' ? '°F' : '°C'} />
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <Widget.Title>{LABEL[current.condition]}</Widget.Title>
+                {today && (
+                  <Widget.Subtitle>
+                    {[`H ${temp(today.high, unit)}`, `L ${temp(today.low, unit)}`, soon].filter(Boolean).join(' · ')}
+                  </Widget.Subtitle>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {ahead.length > 1 && (
+            <Widget.Section label="Next 24 hours">
+              <HourStrip hours={ahead.slice(0, DAY_HOURS)} unit={unit} locale={locale} />
+            </Widget.Section>
+          )}
+
+          <div className="flex min-w-0 items-start gap-5">
+            {week.length > 0 && (
+              <Widget.Section label={`${week.length}-day forecast`} className="flex-1">
+                <Week days={week} unit={unit} locale={locale} />
+              </Widget.Section>
+            )}
+            <Widget.Section label="Details" className="w-[38%] shrink-0 border-l border-border pl-5">
+              {current.apparent !== undefined && (
+                <Detail icon={Thermometer} label="Feels like">
+                  {temp(current.apparent, unit)}
+                </Detail>
+              )}
+              {today?.precipitation !== undefined && (
+                <Detail icon={Umbrella} label="Chance of rain">
+                  {today.precipitation}%
+                </Detail>
+              )}
+              {current.wind !== undefined && (
+                <Detail icon={Wind} label="Wind">
+                  {speed(current.wind, unit)}
+                </Detail>
+              )}
+              {current.humidity !== undefined && (
+                <Detail icon={Droplets} label="Humidity">
+                  {Math.round(current.humidity)}%
+                </Detail>
+              )}
+              {current.uv !== undefined && (
+                <Detail icon={Sun} label="UV index">
+                  {Math.round(current.uv)} · {uvLevel(current.uv)}
+                </Detail>
+              )}
+              {today?.sunrise !== undefined && (
+                <Detail icon={Sunrise} label="Sunrise">
+                  {clockOf(today.sunrise, locale)}
+                </Detail>
+              )}
+              {today?.sunset !== undefined && (
+                <Detail icon={Sunset} label="Sunset">
+                  {clockOf(today.sunset, locale)}
+                </Detail>
+              )}
+            </Widget.Section>
+          </div>
+        </Widget.Sheet>
+      )
+    }
 
     return (
       <Widget
@@ -563,17 +802,7 @@ const Weather = Object.assign(
           )
         }
       >
-        <Widget.Header
-          icon={MapPin}
-          trailing={
-            <>
-              <span className="whitespace-nowrap pr-1 text-caption">{freshness}</span>
-              {onRefresh && <Widget.Action icon={RotateCw} label="Refresh" onClick={onRefresh} />}
-            </>
-          }
-        >
-          {location ?? 'Current location'}
-        </Widget.Header>
+        {header}
 
         <div className="flex min-w-0 items-center gap-2.5">
           <Glyph
