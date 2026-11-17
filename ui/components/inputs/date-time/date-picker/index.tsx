@@ -337,6 +337,7 @@ function DatePicker<T extends DateValueType = 'date'>({
           withTime
             ? orientation => (
                 <TimeColumns
+                  key="time"
                   value={value && { hours: value.getHours(), minutes: value.getMinutes() }}
                   onValueChange={time => setValue(set(value ?? new Date(), { ...time, seconds: 0, milliseconds: 0 }))}
                   hourCycle={hourCycle ?? hourCycleOf(locale)}

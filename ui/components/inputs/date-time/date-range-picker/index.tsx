@@ -461,6 +461,7 @@ function DateRangePicker<T extends DateValueType = 'date'>({
                 const end = activeEnd === 'from' ? from : to
                 return (
                   <TimeColumns
+                    key="time"
                     value={end ? timeOf(end, START_TIME) : null}
                     onValueChange={setTime}
                     hourCycle={hourCycle ?? hourCycleOf(locale)}
