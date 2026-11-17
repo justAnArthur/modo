@@ -62,15 +62,27 @@ export function toRadixValue(value: SliderValue): number[] {
   return Array.isArray(value) ? value : [value]
 }
 
+/** The element's length along the slider's axis, in layout pixels. */
+export function axisLength(el: HTMLElement, vertical = false): number {
+  return vertical ? el.offsetHeight : el.offsetWidth
+}
+
 /**
- * The pointer's x inside `el` in layout pixels (offsetWidth space), so the
- * geometry holds under an ancestor's CSS scale (the canvas). `null` while
- * `el` has no width.
+ * The pointer's distance from the min end of `el` (its left edge, or its
+ * bottom edge when `vertical`) in layout pixels (offsetWidth / offsetHeight
+ * space), so the geometry holds under an ancestor's CSS scale (the canvas).
+ * `null` while `el` has no length.
  */
-export function layoutX(clientX: number, el: HTMLElement): number | null {
+export function layoutPos(
+  { clientX, clientY }: { clientX: number; clientY: number },
+  el: HTMLElement,
+  vertical = false,
+): number | null {
   const rect = el.getBoundingClientRect()
-  if (el.offsetWidth <= 0 || rect.width <= 0) return null
-  return (clientX - rect.left) * (el.offsetWidth / rect.width)
+  const length = axisLength(el, vertical)
+  const visual = vertical ? rect.height : rect.width
+  if (length <= 0 || visual <= 0) return null
+  return (vertical ? rect.bottom - clientY : clientX - rect.left) * (length / visual)
 }
 
 /** `flag`, turning on only after it has held for `delay` ms (off at once). */

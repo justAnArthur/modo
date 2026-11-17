@@ -22,8 +22,9 @@ import {
 import { spring } from '../../../lib/springs'
 import { cn } from '../../../lib/utils'
 import {
+  axisLength,
   DOT_SIZE,
-  layoutX,
+  layoutPos,
   nearestStepIndex,
   pixelToValue,
   type SliderValue,
@@ -68,6 +69,9 @@ interface SliderEngineProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChan
   hideFill?: boolean
   thumbColor?: string
   thumbBorderColor?: string
+  orientation?: 'horizontal' | 'vertical'
+  /** Called once an interaction ends (a pointer lifting, a keyboard step, a committed edit). */
+  onCommit?: () => void
 }
 
 const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
@@ -81,7 +85,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
       steps,
       showSteps = false,
       showValue = true,
-      valuePosition = 'left',
+      valuePosition: valuePositionProp,
       formatValue = String,
       label,
       disabled = false,
@@ -93,11 +97,15 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
       hideFill = false,
       thumbColor,
       thumbBorderColor,
+      orientation = 'horizontal',
+      onCommit,
       className,
       ...props
     },
     ref,
   ) => {
+    const vertical = orientation === 'vertical'
+    const valuePosition = valuePositionProp ?? (vertical ? 'top' : 'left')
     const isRange = Array.isArray(value)
     const values = toRadixValue(value)
 
@@ -146,15 +154,20 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
     )
     const fillWidth = isRange ? fillWidthRange : fillWidthSingle
 
+    // Vertical: the axis position grows upward from the bottom edge.
+    const thumbY0 = useTransform(motionX0, x => -x)
+    const thumbY1 = useTransform(motionX1, x => -x)
+
     // Hides the dots on the filled side, like the comfortable design's pips.
+    const maskDir = vertical ? 'to top' : 'to right'
     const stepDotsMaskSingle = useTransform(motionX0, x => {
       const edge = x + THUMB_SIZE / 2
-      return `linear-gradient(to right, transparent ${edge}px, black ${edge + 2}px)`
+      return `linear-gradient(${maskDir}, transparent ${edge}px, black ${edge + 2}px)`
     })
     const stepDotsMaskRange = useTransform([motionX0, motionX1] as MotionValue<number>[], ([x0, x1]) => {
       const left = (x0 as number) + THUMB_SIZE / 2
       const right = (x1 as number) + THUMB_SIZE / 2
-      return `linear-gradient(to right, black ${left - 2}px, transparent ${left}px, transparent ${right}px, black ${right + 2}px)`
+      return `linear-gradient(${maskDir}, black ${left - 2}px, transparent ${left}px, transparent ${right}px, black ${right + 2}px)`
     })
     const stepDotsMask = isRange ? stepDotsMaskRange : stepDotsMaskSingle
 
@@ -187,7 +200,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
     useLayoutEffect(() => {
       const el = trackRef.current
       if (!el || initialSyncDone.current) return
-      const w = el.offsetWidth
+      const w = axisLength(el, vertical)
       trackWidthRef.current = w
       const px0 = valueToPixel(values[0]!, min, max, w)
       motionX0.set(px0)
@@ -203,7 +216,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
       const el = trackRef.current
       if (!el) return
       const ro = new ResizeObserver(([entry]) => {
-        const w = entry!.contentRect.width
+        const w = vertical ? entry!.contentRect.height : entry!.contentRect.width
         trackWidthRef.current = w
         if (!dragging.current && initialSyncDone.current) {
           const v = valuesRef.current
@@ -219,7 +232,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
       })
       ro.observe(el)
       return () => ro.disconnect()
-    }, [isRange, motionX0, motionX1])
+    }, [isRange, vertical, motionX0, motionX1])
 
     // Depend on a primitive key rather than the `values` array — its identity
     // changes every render (toRadixValue allocates), which would restart the
@@ -272,9 +285,9 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
 
         const trackEl = trackRef.current
         if (!trackEl) return
-        const x = layoutX(e.clientX, trackEl)
+        const x = layoutPos(e, trackEl, vertical)
         if (x === null) return
-        const layoutWidth = trackEl.offsetWidth
+        const layoutWidth = axisLength(trackEl, vertical)
         const clamped = Math.max(0, Math.min(layoutWidth - THUMB_SIZE, x - THUMB_SIZE / 2))
 
         if (isRange) {
@@ -301,7 +314,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
 
         ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
       },
-      [disabled, isRange, min, max, step, stepValues, motionX0, motionX1, clampForRange, emitChange],
+      [disabled, vertical, isRange, min, max, step, stepValues, motionX0, motionX1, clampForRange, emitChange],
     )
 
     const handlePointerMove = useCallback(
@@ -310,9 +323,9 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
         e.stopPropagation()
         const trackEl = trackRef.current
         if (!trackEl) return
-        const x = layoutX(e.clientX, trackEl)
+        const x = layoutPos(e, trackEl, vertical)
         if (x === null) return
-        const layoutWidth = trackEl.offsetWidth
+        const layoutWidth = axisLength(trackEl, vertical)
         const clamped = Math.max(0, Math.min(layoutWidth - THUMB_SIZE, x - THUMB_SIZE / 2))
 
         const motionX = activeDragThumb.current === 0 ? motionX0 : motionX1
@@ -325,12 +338,13 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
         const finalValue = pixelToValue(finalPx, min, max, step, layoutWidth, stepValues)
         emitChange(activeDragThumb.current, finalValue)
       },
-      [min, max, step, stepValues, motionX0, motionX1, clampForRange, emitChange],
+      [vertical, min, max, step, stepValues, motionX0, motionX1, clampForRange, emitChange],
     )
 
     const handlePointerUp = useCallback(() => {
       if (!dragging.current) return
       dragging.current = false
+      onCommit?.()
       setIsPressed(false)
       setHoverPreview(null)
 
@@ -340,7 +354,7 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
       const snapped = pixelToValue(currentPx, min, max, step, tw, stepValues)
       const snappedPx = valueToPixel(snapped, min, max, tw)
       animate(motionX, snappedPx, spring.moderate)
-    }, [min, max, step, stepValues, motionX0, motionX1])
+    }, [min, max, step, stepValues, motionX0, motionX1, onCommit])
 
     // In steps mode the primitive runs on indices (0..len-1, step 1) so arrow
     // keys walk the list; map indices back to actual values on the way out.
@@ -364,9 +378,10 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
     const handleCommitEdit = useCallback(
       (index: number, v: number) => {
         emitChange(index, v)
+        onCommit?.()
         setEditingIndex(null)
       },
-      [emitChange],
+      [emitChange, onCommit],
     )
 
     const handleCancelEdit = useCallback(() => {
@@ -424,16 +439,29 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
         <motion.span
           key={`visual-thumb-${index}`}
           className="flex items-center justify-center pointer-events-none"
-          style={{
-            width: THUMB_SIZE,
-            height: THUMB_SIZE,
-            marginTop: -THUMB_SIZE / 2,
-            x: motionX,
-            position: 'absolute',
-            top: '50%',
-            left: 0,
-            zIndex: 10,
-          }}
+          style={
+            vertical
+              ? {
+                  width: THUMB_SIZE,
+                  height: THUMB_SIZE,
+                  marginLeft: -THUMB_SIZE / 2,
+                  y: index === 0 ? thumbY0 : thumbY1,
+                  position: 'absolute',
+                  left: '50%',
+                  bottom: 0,
+                  zIndex: 10,
+                }
+              : {
+                  width: THUMB_SIZE,
+                  height: THUMB_SIZE,
+                  marginTop: -THUMB_SIZE / 2,
+                  x: motionX,
+                  position: 'absolute',
+                  top: '50%',
+                  left: 0,
+                  zIndex: 10,
+                }
+          }
           initial={false}
         >
           <motion.span
@@ -467,8 +495,14 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
       <div
         ref={ref}
         className={cn(
-          'flex flex-col gap-0 w-full select-none touch-none overflow-visible',
-          valuePosition === 'left' || valuePosition === 'right' ? 'flex-row items-center gap-2 mb-2' : 'flex-col',
+          'flex gap-0 select-none touch-none overflow-visible',
+          vertical ? 'h-40 w-fit items-center' : 'flex-col w-full',
+          valuePosition === 'left' || valuePosition === 'right'
+            ? vertical
+              ? 'flex-row gap-2'
+              : 'flex-row items-center gap-2 mb-2'
+            : 'flex-col',
+          vertical && (valuePosition === 'top' || valuePosition === 'bottom' || valuePosition === 'tooltip') && 'gap-2',
           disabled && 'opacity-50 pointer-events-none',
           className,
         )}
@@ -477,14 +511,22 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
         {(valuePosition === 'top' || valuePosition === 'left') && valueDisplay}
 
         <div
-          className="relative flex-1 overflow-visible"
-          style={{
-            height:
-              valuePosition === 'left' || valuePosition === 'right'
-                ? THUMB_SIZE + 16
-                : THUMB_SIZE + (valuePosition === 'tooltip' ? 16 : 0),
-            paddingTop: valuePosition === 'tooltip' ? 16 : 0,
-          }}
+          className={cn(
+            'relative overflow-visible',
+            vertical ? 'min-h-0 min-w-0' : 'flex-1',
+            vertical && (valuePosition === 'left' || valuePosition === 'right' ? 'h-full' : 'flex-1'),
+          )}
+          style={
+            vertical
+              ? { width: THUMB_SIZE + 16 }
+              : {
+                  height:
+                    valuePosition === 'left' || valuePosition === 'right'
+                      ? THUMB_SIZE + 16
+                      : THUMB_SIZE + (valuePosition === 'tooltip' ? 16 : 0),
+                  paddingTop: valuePosition === 'tooltip' ? 16 : 0,
+                }
+          }
           onPointerEnter={() => setIsHovered(true)}
           onPointerLeave={() => {
             setIsHovered(false)
@@ -494,18 +536,31 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
             if (dragging.current) return
             const trackEl = trackRef.current
             if (!trackEl) return
-            const x = layoutX(e.clientX, trackEl)
+            const x = layoutPos(e, trackEl, vertical)
             if (x === null) return
-            computeHoverPreview(Math.max(0, Math.min(trackEl.offsetWidth, x)), trackEl.offsetWidth)
+            const length = axisLength(trackEl, vertical)
+            computeHoverPreview(Math.max(0, Math.min(length, x)), length)
           }}
         >
           {showValue && valuePosition === 'tooltip' && (
             <AnimatePresence>
               {isInteracting && (
-                <TooltipValue key="tooltip-0" value={values[0]!} formatValue={formatValue} motionX={motionX0} />
+                <TooltipValue
+                  key="tooltip-0"
+                  value={values[0]!}
+                  formatValue={formatValue}
+                  motionX={motionX0}
+                  vertical={vertical}
+                />
               )}
               {isInteracting && isRange && values[1] !== undefined && (
-                <TooltipValue key="tooltip-1" value={values[1]} formatValue={formatValue} motionX={motionX1} />
+                <TooltipValue
+                  key="tooltip-1"
+                  value={values[1]}
+                  formatValue={formatValue}
+                  motionX={motionX1}
+                  vertical={vertical}
+                />
               )}
             </AnimatePresence>
           )}
@@ -514,13 +569,15 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
           <SliderPrimitive.Root
             value={stepValues ? values.map(v => nearestStepIndex(v, stepValues)) : values}
             onValueChange={v => handleRadixChange(v as number[])}
+            onValueCommitted={() => onCommit?.()}
             name={name}
             min={stepValues ? 0 : min}
             max={stepValues ? stepValues.length - 1 : max}
             step={stepValues ? 1 : step}
+            orientation={orientation}
             disabled={disabled}
             className="absolute inset-0 opacity-0 pointer-events-none"
-            style={{ height: THUMB_SIZE }}
+            style={vertical ? { width: THUMB_SIZE } : { height: THUMB_SIZE }}
           >
             <SliderPrimitive.Control className="w-full h-full">
               <SliderPrimitive.Track className="w-full h-full">
@@ -555,8 +612,12 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
 
           <div
             ref={trackRef}
-            className="relative w-full cursor-ew-resize py-2"
-            style={{ height: THUMB_SIZE + 16, opacity: ready ? 1 : 0 }}
+            className={cn('relative', vertical ? 'h-full cursor-ns-resize px-2' : 'w-full cursor-ew-resize py-2')}
+            style={
+              vertical
+                ? { width: THUMB_SIZE + 16, opacity: ready ? 1 : 0 }
+                : { height: THUMB_SIZE + 16, opacity: ready ? 1 : 0 }
+            }
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
@@ -564,8 +625,8 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
           >
             {/* The hit area reaches 8px past each end. */}
             <div
-              className="absolute cursor-ew-resize"
-              style={{ left: -8, right: -8, top: 0, bottom: 0 }}
+              className={cn('absolute', vertical ? 'cursor-ns-resize' : 'cursor-ew-resize')}
+              style={vertical ? { left: 0, right: 0, top: -8, bottom: -8 } : { left: -8, right: -8, top: 0, bottom: 0 }}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
@@ -575,15 +636,20 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
               {hoverPreview && showHoverTooltip && !isPressed && valuePosition !== 'tooltip' && (
                 <motion.div
                   key="hover-tooltip"
-                  className="absolute -translate-x-1/2 pointer-events-none z-20"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 4, transition: spring.fast.exit }}
+                  className={cn('absolute pointer-events-none z-20', vertical ? 'translate-y-1/2' : '-translate-x-1/2')}
+                  initial={vertical ? { opacity: 0, x: -4 } : { opacity: 0, y: 4 }}
+                  animate={vertical ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
+                  exit={
+                    vertical
+                      ? { opacity: 0, x: -4, transition: spring.fast.exit }
+                      : { opacity: 0, y: 4, transition: spring.fast.exit }
+                  }
                   transition={spring.fast}
-                  style={{
-                    left: hoverPreview.cursorX,
-                    top: -20,
-                  }}
+                  style={
+                    vertical
+                      ? { bottom: hoverPreview.cursorX, left: 'calc(100% + 4px)' }
+                      : { left: hoverPreview.cursorX, top: -20 }
+                  }
                 >
                   <ValueBubble>{formatValue(hoverPreview.snappedValue)}</ValueBubble>
                 </motion.div>
@@ -596,30 +662,33 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
                 trackClassName,
               )}
               initial={false}
-              animate={{
-                height: TRACK_BG_HEIGHT,
-                top: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2,
-              }}
+              animate={
+                vertical
+                  ? { width: TRACK_BG_HEIGHT, left: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2 }
+                  : { height: TRACK_BG_HEIGHT, top: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2 }
+              }
               transition={spring.fast}
               style={{
-                left: TRACK_INSET,
-                right: TRACK_INSET,
+                ...(vertical ? { top: TRACK_INSET, bottom: TRACK_INSET } : { left: TRACK_INSET, right: TRACK_INSET }),
                 ...trackStyle,
               }}
             >
               {!hideFill && (
                 <motion.div
-                  className={cn('absolute h-full bg-selected/50 dark:bg-accent/40', fillClassName)}
+                  className={cn(
+                    'absolute bg-selected/50 dark:bg-accent/40',
+                    vertical ? 'w-full' : 'h-full',
+                    fillClassName,
+                  )}
                   style={{
-                    left: fillLeft,
-                    width: fillWidth,
+                    ...(vertical ? { bottom: fillLeft, height: fillWidth } : { left: fillLeft, width: fillWidth }),
                     ...fillStyle,
                   }}
                 />
               )}
 
               <motion.div
-                className="absolute h-full bg-accent/40 pointer-events-none z-[2]"
+                className={cn('absolute bg-accent/40 pointer-events-none z-[2]', vertical ? 'w-full' : 'h-full')}
                 initial={false}
                 animate={{
                   opacity: hoverPreview && !isPressed ? 1 : 0,
@@ -628,22 +697,34 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
                   opacity: { duration: 0.15 },
                 }}
                 style={{
-                  left: hoverPreview ? hoverPreview.left - TRACK_INSET : 0,
-                  width: hoverPreview ? hoverPreview.width : 0,
+                  ...(vertical
+                    ? {
+                        bottom: hoverPreview ? hoverPreview.left - TRACK_INSET : 0,
+                        height: hoverPreview ? hoverPreview.width : 0,
+                      }
+                    : {
+                        left: hoverPreview ? hoverPreview.left - TRACK_INSET : 0,
+                        width: hoverPreview ? hoverPreview.width : 0,
+                      }),
                   borderRadius:
                     hoverPreview && hoverPreview.cursorX > hoverPreview.left
-                      ? '0 9999px 9999px 0'
-                      : '9999px 0 0 9999px',
+                      ? vertical
+                        ? '9999px 9999px 0 0'
+                        : '0 9999px 9999px 0'
+                      : vertical
+                        ? '0 0 9999px 9999px'
+                        : '9999px 0 0 9999px',
                 }}
               />
             </motion.div>
 
             {stepDots.length > 0 && (
               <motion.div
-                className="absolute left-0 right-0 pointer-events-none"
+                className={cn('absolute pointer-events-none', vertical ? 'top-0 bottom-0' : 'left-0 right-0')}
                 style={{
-                  top: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2,
-                  height: TRACK_BG_HEIGHT,
+                  ...(vertical
+                    ? { left: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2, width: TRACK_BG_HEIGHT }
+                    : { top: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2, height: TRACK_BG_HEIGHT }),
                   WebkitMaskImage: stepDotsMask,
                   maskImage: stepDotsMask,
                 }}
@@ -653,8 +734,9 @@ const CompactSlider = forwardRef<HTMLDivElement, SliderEngineProps>(
                     key={v}
                     className="absolute pointer-events-none flex items-center justify-center"
                     style={{
-                      left: `calc(${THUMB_SIZE / 2}px + ${percent} * (100% - ${THUMB_SIZE}px))`,
-                      top: '50%',
+                      ...(vertical
+                        ? { bottom: `calc(${THUMB_SIZE / 2}px + ${percent} * (100% - ${THUMB_SIZE}px))`, left: '50%' }
+                        : { left: `calc(${THUMB_SIZE / 2}px + ${percent} * (100% - ${THUMB_SIZE}px))`, top: '50%' }),
                       width: 0,
                       height: 0,
                     }}
