@@ -19,6 +19,7 @@ import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { SizeProvider } from '@justanarthur/modo-ui/primitives/systems/sizes'
 import { useIcon } from '../../../lib/icons'
+import { NO_USAGE, percent } from '../../../lib/pace'
 import { RowTrigger } from '../../../lib/row-trigger'
 import type { Profile } from '../../../lib/types'
 
@@ -52,7 +53,7 @@ export function ProfileTile({ profile, size = 'md', className }: ProfileTileProp
 }
 
 function ProfileRow({ profile }: { profile: Profile }) {
-  const top = Math.max(...profile.limits.map(l => l.value))
+  const top = profile.limits.length > 0 ? Math.max(...profile.limits.map(l => l.value)) : undefined
   return (
     <span className="flex min-w-0 flex-1 items-center gap-2">
       <ProfileTile profile={profile} />
@@ -64,7 +65,14 @@ function ProfileRow({ profile }: { profile: Profile }) {
         ))}
       </span>
       <span className="w-8 shrink-0 text-right text-caption tabular-nums text-muted-foreground">
-        {Math.round(top * 100)}%
+        {top === undefined ? (
+          <>
+            <span aria-hidden="true">–</span>
+            <span className="sr-only">{NO_USAGE}</span>
+          </>
+        ) : (
+          percent(top)
+        )}
       </span>
     </span>
   )
@@ -98,7 +106,9 @@ interface ProfileSwitcherProps {
  * (its sign-in, settings, memory and limits), so the switcher shows what
  * the switch costs before you make it: the plan, the config dir or base
  * URL, how many sessions run there, and the session and weekly meters,
- * which turn amber and red as a limit runs out. The panel grows out of the
+ * which turn amber and red as a limit runs out. A profile with no limits yet
+ * (`limits: []`, before its first turn reports usage) shows a dash for its
+ * share and "No usage yet" under Limits. The panel grows out of the
  * trigger; the active profile's background melts to the row you pick, and
  * the arrow keys move the pick.
  *
@@ -162,6 +172,11 @@ export default function ProfileSwitcher({
             title={`Limits · ${active.name}`}
             aside={active.provider === 'compatible' ? active.baseUrl : active.configDir}
           >
+            {active.limits.length === 0 && (
+              <p className="m-0 px-[var(--space-2)] text-caption text-muted-foreground">
+                {NO_USAGE}: limits show once a session under this profile reports usage.
+              </p>
+            )}
             {active.limits.map(limit => (
               <List.Row key={limit.label} label={limit.label}>
                 <Meter variant="line" className="w-16" label={limit.label} value={limit.value} />

@@ -31,3 +31,20 @@ With `work` active, new sessions start under it and its own row is disabled. Wit
     commands={COMMANDS}
   />
 </div>
+
+# Fewer groups
+
+An app without side panes or a settings window leaves those groups out: `panes={false}` drops Panes and `settings={[]}` drops Settings. `panes={['changes', 'terminal']}` would offer just those two.
+
+<div className="flex h-[520px] w-full items-start justify-center pt-6">
+  <CommandPalette
+    hotkey={false}
+    label="Search lean"
+    sessions={PINNED}
+    projects={PROJECTS}
+    profiles={PROFILES}
+    commands={COMMANDS}
+    panes={false}
+    settings={[]}
+  />
+</div>

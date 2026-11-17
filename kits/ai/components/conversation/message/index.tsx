@@ -13,7 +13,7 @@ import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import type { ReactNode } from 'react'
 import { useIcon } from '../../../lib/icons'
-import { Working, type WorkingProps } from './working'
+import { Working as WorkingDots, type WorkingProps } from './working'
 
 type MessageRole = 'user' | 'assistant'
 
@@ -25,7 +25,7 @@ interface MentionProps {
 }
 
 /** An @-mention of a file inside a message. */
-function Mention({ path }: MentionProps) {
+function MentionChip({ path }: MentionProps) {
   const At = useIcon('at-sign')
   return (
     <span className="inline-flex translate-y-px items-center gap-0.5 rounded-glyph bg-active px-1 align-baseline font-mono text-caption text-foreground">
@@ -45,7 +45,7 @@ interface AttachmentProps {
 }
 
 /** A file, image or pasted text that came with a message. */
-function Attachment({ name, detail, kind = 'file' }: AttachmentProps) {
+function AttachmentChip({ name, detail, kind = 'file' }: AttachmentProps) {
   const shape = useShape()
   const Icon = useIcon(kind === 'pasted' ? 'clipboard' : kind === 'image' ? 'image' : 'file-text')
   return (
@@ -101,7 +101,7 @@ const Message = Object.assign(
       return (
         <MarkdownProse className={className}>
           {children}
-          {streaming && <Working />}
+          {streaming && <WorkingDots />}
         </MarkdownProse>
       )
 
@@ -119,10 +119,12 @@ const Message = Object.assign(
       </div>
     )
   },
-  { Mention: Mention, Attachment: Attachment, Working: Working },
+  // No key names a binding of this file: the declaration bundler renames a clashing
+  // binding to Name2, and a key spelled like it goes along (`Message.Working2`).
+  { Mention: MentionChip, Attachment: AttachmentChip, Working: WorkingDots },
 )
 
 export type { AttachmentKind, AttachmentProps, MentionProps, MessageProps, MessageRole, WorkingProps }
-export { Attachment, Mention, Message, Working }
+export { AttachmentChip as Attachment, MentionChip as Mention, Message, WorkingDots as Working }
 
 export default Message

@@ -16,3 +16,14 @@ Press the trigger: the panel grows out of it. Pick a profile and its background 
 <div className="flex h-[560px] w-full items-start justify-center pt-6">
   <ProfileSwitcher profiles={PROFILES} defaultValue="work" />
 </div>
+
+# No usage yet
+
+A profile has no limits until its first turn reports usage (`limits: []`): its row shows a dash instead of a share, and Limits says so.
+
+<div className="flex h-[560px] w-full items-start justify-center pt-6">
+  <ProfileSwitcher
+    profiles={[...PROFILES, { ...PROFILES[2], id: 'fresh', name: 'fresh', configDir: '~/.claude-fresh', limits: [] }]}
+    defaultValue="fresh"
+  />
+</div>

@@ -12,7 +12,7 @@ import Command, { type CommandGroup } from '@justanarthur/modo-ui/components/ove
 import type { ReactElement } from 'react'
 import { useIcons } from '../../../lib/icons'
 import { STATUS_GLYPH } from '../../../lib/status-glyph'
-import type { Command as AgentCommand, PaletteItem, Profile, Project, Session } from '../../../lib/types'
+import type { Command as AgentCommand, PaletteItem, PaneId, Profile, Project, Session } from '../../../lib/types'
 import { PANES } from '../../panes/side-pane'
 import type { SettingsWindowSection } from '../../settings/settings-window'
 
@@ -25,8 +25,10 @@ interface CommandPaletteProps {
   profiles: Profile[]
   /** Slash commands, skills and plugins. */
   commands: AgentCommand[]
-  /** Settings sections to open; without them, one row opens the settings. */
+  /** Settings sections to open; omitted, one row opens the settings; `[]` drops the Settings group. */
   settings?: SettingsWindowSection[]
+  /** The side panes to offer, in the side pane's order; `false` (or `[]`) drops the Panes group. Defaults to every pane. */
+  panes?: PaneId[] | false
   /** The active profile's id: new sessions start under it. Defaults to the first profile. */
   profile?: string
   /** The current project's path: "New session as …" starts there. Defaults to the first project. */
@@ -59,7 +61,9 @@ interface CommandPaletteProps {
  * on you). New sessions start in each project under the active profile, or
  * under each other profile in the current project. Picking a row hands it to
  * `onSelect` and closes the panel. The panel is Command's: it grows out of
- * the trigger, and ⌘K (Ctrl+K elsewhere) toggles it from anywhere.
+ * the trigger, and ⌘K (Ctrl+K elsewhere) toggles it from anywhere. A group
+ * with no rows is left out: an app without side panes passes `panes={false}`,
+ * one without a settings window `settings={[]}`.
  *
  * @example {@include ./examples.mdx}
  */
@@ -69,6 +73,7 @@ export default function CommandPalette({
   profiles,
   commands,
   settings,
+  panes,
   profile,
   project,
   onSelect,
@@ -158,7 +163,7 @@ export default function CommandPalette({
     },
     {
       label: 'Panes',
-      items: PANES.map(p => ({
+      items: (panes === false ? [] : panes ? PANES.filter(p => panes.includes(p.id)) : PANES).map(p => ({
         label: `Open ${p.label.toLowerCase()}`,
         icon: icons[p.icon],
         keywords: ['pane', 'side'],
@@ -168,7 +173,9 @@ export default function CommandPalette({
     {
       label: 'Settings',
       items: [
-        { label: 'Open settings', icon: icons.settings, shortcut: '⌘,', onSelect: pick({ kind: 'settings' }) },
+        ...(settings?.length === 0
+          ? []
+          : [{ label: 'Open settings', icon: icons.settings, shortcut: '⌘,', onSelect: pick({ kind: 'settings' }) }]),
         ...(settings ?? []).map(s => ({
           label: `Settings: ${s.label}`,
           icon: icons[s.icon],

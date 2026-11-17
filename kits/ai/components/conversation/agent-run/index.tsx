@@ -13,14 +13,14 @@ import type { ReactNode } from 'react'
 import { type IconName, useIcon } from '../../../lib/icons'
 import { ToolStatusMark } from '../tool-call'
 
-type AgentRunStatus = 'running' | 'done' | 'error'
+type AgentRunStatus = 'running' | 'waiting' | 'done' | 'error'
 
 interface AgentRunProps {
   /** The agent's name or type: `Explore`, `researcher`, a custom agent. */
   agent: string
   /** What it was asked to do, in a few words. */
   description: string
-  /** Where it stands. Defaults to `'done'`. */
+  /** Where it stands: `'waiting'` while it is held on you (a permission, a question). Defaults to `'done'`. */
   status?: AgentRunStatus
   /** Ran detached: the conversation went on without waiting. Defaults to `false`. */
   background?: boolean
@@ -37,7 +37,8 @@ interface AgentRunProps {
  * its calls and its report.
  *
  * The header names the agent and its task, with the tally and the run's
- * state on the right (the Spinner while it runs, the failed mark on error).
+ * state on the right (the Spinner while it runs, the warning dot while it
+ * waits on you, the failed mark on error).
  * A background run carries a badge: the conversation went on without
  * waiting for it. Inside, a `ToolCall.Group` lists its calls and a line of
  * text its report.

@@ -20,3 +20,13 @@ Starts unfolded.
     <p className="m-0">The hover fill already reaches into the margin, so the label stays flush with the text.</p>
   </Reasoning>
 </div>
+
+# No timing
+
+Without a `duration` (a source that doesn't report how long it thought), the row reads "Thought".
+
+<div className="w-full max-w-2xl">
+  <Reasoning>
+    <p className="m-0">The CLI streams the thinking but not its timing, so the row leaves the duration out.</p>
+  </Reasoning>
+</div>

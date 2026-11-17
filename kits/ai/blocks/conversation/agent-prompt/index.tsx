@@ -25,7 +25,7 @@ interface OfferProps {
   onChoose?: (where: 'new-session' | 'here') => void
 }
 
-function Offer({ title, brief, onChoose }: OfferProps) {
+function OfferPrompt({ title, brief, onChoose }: OfferProps) {
   return (
     <PromptCard
       icon="split"
@@ -58,7 +58,7 @@ interface TaskProps {
   onDecide?: (decision: 'start' | 'dismiss') => void
 }
 
-function Task({ title, brief, where, onDecide }: TaskProps) {
+function TaskPrompt({ title, brief, where, onDecide }: TaskProps) {
   return (
     <PromptCard
       icon="git-fork"
@@ -104,7 +104,7 @@ const AgentPrompt = Object.assign(
   function AgentPrompt(props: AgentPromptProps) {
     return <PromptCard {...props} />
   },
-  { Permission: PermissionRequest, Question: QuestionPrompt, Plan: PlanApproval, Offer: Offer, Task: Task },
+  { Permission: PermissionRequest, Question: QuestionPrompt, Plan: PlanApproval, Offer: OfferPrompt, Task: TaskPrompt },
 )
 
 export type { AgentPromptProps, OfferProps, TaskProps }
