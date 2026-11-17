@@ -9,7 +9,6 @@
 import {
   Children,
   cloneElement,
-  createElement,
   isValidElement,
   type ReactElement,
   type ReactNode,
@@ -17,10 +16,10 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { PopupLabel, PopupSeparator } from '../../../lib/popup-rows'
-import { IndexedRows } from '../../../lib/row-index'
+import { PopupSeparator } from '../../../lib/popup-rows'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { DropdownEmpty, type DropdownFilterContextValue, DropdownSearch } from './dropdown-search'
+import { DropdownGroup, DropdownLabel, DropdownRadioGroup } from './menu-parts'
 
 // `useControllableState` reads `undefined` as uncontrolled, so "nothing checked" needs a value of its own.
 const NONE = -1
@@ -98,9 +97,37 @@ export function usePanelSelection(
   return { checkedIndex: renderedIndex, checkedIndices: renderedIndices, multiple, selfManaged, toggleIndex }
 }
 
-const NOT_ROWS = new Set<unknown>([PopupLabel, PopupSeparator, DropdownSearch, DropdownEmpty])
+/** The rows a `Dropdown.CheckboxItem` / `Dropdown.RadioItem` reports checked, for the merged selection background. */
+export function useValueChecked() {
+  const [valueChecked, setValueChecked] = useState(NO_INDICES)
+  const reportChecked = useCallback(
+    (index: number, on: boolean) =>
+      setValueChecked(prev =>
+        on === prev.includes(index) ? prev : on ? [...prev, index] : prev.filter(i => i !== index),
+      ),
+    [],
+  )
+  return { valueChecked, reportChecked }
+}
 
-/** Every element child but the panel's captions, rules, search and empty state takes a row index. */
+/** The rows checked by index and by value: what the merged selection backgrounds cover. */
+export function useCheckedRows(checkedIndices: number[] | undefined, valueChecked: number[]) {
+  return useMemo(
+    () => (valueChecked.length === 0 ? (checkedIndices ?? NO_INDICES) : [...(checkedIndices ?? []), ...valueChecked]),
+    [checkedIndices, valueChecked],
+  )
+}
+
+const NOT_ROWS = new Set<unknown>([
+  DropdownLabel,
+  PopupSeparator,
+  DropdownSearch,
+  DropdownEmpty,
+  DropdownGroup,
+  DropdownRadioGroup,
+])
+
+/** Every element child but the panel's captions, rules, groups, search and empty state takes a row index. */
 const isPanelRow = (child: ReactElement) => !NOT_ROWS.has(child.type)
 
 interface PanelRows {
@@ -114,13 +141,14 @@ interface PanelRows {
 }
 
 /**
- * Numbers the rows that bring no `index` by their order (`IndexedRows`).
+ * Rows that bring no `index` number themselves in document order
+ * (`lib/row-order.tsx`, provided by the panel).
  *
  * Uncontrolled search: a `Dropdown.Search filter` among the panel's direct
- * children hands it the query. The panel keeps the rows (a string `label`)
- * whose label contains it, re-indexes them from 0 for the fluid hover and
- * stamps each with its authored index (its `index`, else its position) as
- * `sourceIndex`.
+ * children hands it the query. The panel keeps the direct rows with a text
+ * (`textValue`, else `label`, else string `children`) that contains it,
+ * re-indexes them from 0 for the fluid hover and stamps each with its
+ * authored index (its `index`, else its position) as `sourceIndex`.
  */
 export function usePanelRows(children: ReactNode): PanelRows {
   const [query, setQuery] = useState('')
@@ -136,8 +164,7 @@ export function usePanelRows(children: ReactNode): PanelRows {
   const filterCtx = useMemo(() => ({ query, setQuery }), [query])
 
   const { content, sourceOf } = useMemo(() => {
-    if (!filtering)
-      return { content: createElement(IndexedRows, { isRow: isPanelRow, children }), sourceOf: NO_INDICES }
+    if (!filtering) return { content: children, sourceOf: NO_INDICES }
     const needle = query.trim().toLowerCase()
     const rendered: ReactNode[] = []
     const empties: ReactNode[] = []
@@ -154,15 +181,21 @@ export function usePanelRows(children: ReactNode): PanelRows {
         continue
       }
 
-      const row = child.props as { label?: unknown; index?: unknown }
+      const row = child.props as { textValue?: unknown; label?: unknown; children?: unknown; index?: unknown }
       const authored = typeof row.index === 'number' ? row.index : position
-      if (isPanelRow(child)) position++
-      if (typeof row.label !== 'string') {
+      if (!isPanelRow(child)) {
         rendered.push(child)
         continue
       }
 
-      if (needle && !row.label.toLowerCase().includes(needle)) continue
+      position++
+      const text = [row.textValue, row.label, row.children].find(t => typeof t === 'string') as string | undefined
+      if (text === undefined) {
+        rendered.push(child)
+        continue
+      }
+
+      if (needle && !text.toLowerCase().includes(needle)) continue
       rendered.push(
         cloneElement(child as ReactElement<Record<string, unknown>>, { index: sources.length, sourceIndex: authored }),
       )
