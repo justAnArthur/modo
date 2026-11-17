@@ -1,0 +1,85 @@
+import ClipboardHistory from './index'
+import { ClipboardList } from 'lucide-react'
+import { FlashIsland, WingsIsland } from '../../../mock/island-content'
+import { TabIsland } from '../../../mock/widget-tab'
+import { CLIP_NOW, CLIPS, PINNED } from '../../../mock/clipboard'
+
+# Latest clip
+
+The newest clip as the hero, with where it came from and Copy; the history beside it, pinned clips on top. Arrow keys move the selection, Enter copies.
+
+<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+  <ClipboardHistory clips={CLIPS} defaultPinned={PINNED} now={CLIP_NOW} onDelete={() => {}} />
+</TabIsland>
+
+# Kinds
+
+Each kind previews as what it is.
+
+## Link
+
+The domain with its favicon, the page's title, the path.
+
+<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+  <ClipboardHistory clips={CLIPS} defaultValue="docs" now={CLIP_NOW} onDelete={() => {}} />
+</TabIsland>
+
+## Image
+
+<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+  <ClipboardHistory clips={CLIPS} defaultValue="shot" now={CLIP_NOW} onDelete={() => {}} />
+</TabIsland>
+
+## Color
+
+<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+  <ClipboardHistory clips={CLIPS} defaultValue="brand" defaultPinned={PINNED} now={CLIP_NOW} onDelete={() => {}} />
+</TabIsland>
+
+## File
+
+<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+  <ClipboardHistory clips={CLIPS} defaultValue="brief" now={CLIP_NOW} onDelete={() => {}} />
+</TabIsland>
+
+# Searching
+
+`defaultQuery` (or `query`) narrows the list; the hero follows the first match.
+
+<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+  <ClipboardHistory clips={CLIPS} defaultQuery="main" now={CLIP_NOW} />
+</TabIsland>
+
+# Paused, an app ignored
+
+`paused` stops recording, with a chip and Resume on the context line; `ignoredApp` says whose copies are never kept.
+
+<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+  <ClipboardHistory clips={CLIPS} defaultPaused ignoredApp="1Password" now={CLIP_NOW} />
+</TabIsland>
+
+# Empty
+
+<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+  <ClipboardHistory clips={[]} />
+</TabIsland>
+
+# Empty and paused
+
+<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+  <ClipboardHistory clips={[]} defaultPaused />
+</TabIsland>
+
+# Compact
+
+`ClipboardHistory.Leading` and `ClipboardHistory.Trailing`: the glyph and the clips that came in since the island was open.
+
+<WingsIsland leading={<ClipboardHistory.Leading />} trailing={<ClipboardHistory.Trailing count={3} />} />
+
+# Copied
+
+`ClipboardHistory.Copied`, the flash when something is copied, with Pin.
+
+<FlashIsland>
+  <ClipboardHistory.Copied clip={CLIPS[3]} onPin={() => {}} />
+</FlashIsland>
