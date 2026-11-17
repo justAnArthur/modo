@@ -140,7 +140,14 @@ function ResizableHandle({ label = 'Resize', className }: ResizableHandleProps) 
   const index = useContext(ResizableIndexContext)
   const reduced = useReduceMotion()
   const [hovered, setHovered] = useState(false)
-  const drag = useRef<{ start: number; sizes: number[]; pxPerPercent: number } | null>(null)
+  const drag = useRef<{
+    start: number
+    sizes: number[]
+    next: number[]
+    panels: HTMLElement[]
+    flex: string[]
+    pxPerPercent: number
+  } | null>(null)
   const [dragging, setOwnDragging] = useState(false)
   const setDragging = (next: boolean) => {
     setOwnDragging(next)
@@ -152,15 +159,22 @@ function ResizableHandle({ label = 'Resize', className }: ResizableHandleProps) 
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (e.button !== 0) return
-    const panels = [...(e.currentTarget.parentElement?.children ?? [])].filter(el =>
-      el.hasAttribute('data-resizable-panel'),
+    const panels = [...(e.currentTarget.parentElement?.children ?? [])].filter(
+      (el): el is HTMLElement => el instanceof HTMLElement && el.hasAttribute('data-resizable-panel'),
     )
     const px = panels.reduce((sum, el) => {
       const rect = el.getBoundingClientRect()
       return sum + (horizontal ? rect.width : rect.height)
     }, 0)
     e.currentTarget.setPointerCapture(e.pointerId)
-    drag.current = { start: horizontal ? e.clientX : e.clientY, sizes: group.sizes, pxPerPercent: px / 100 }
+    drag.current = {
+      start: horizontal ? e.clientX : e.clientY,
+      sizes: group.sizes,
+      next: group.sizes,
+      panels,
+      flex: panels.map(el => el.style.flex),
+      pxPerPercent: px / 100,
+    }
     setDragging(true)
     e.preventDefault()
   }
@@ -169,12 +183,24 @@ function ResizableHandle({ label = 'Resize', className }: ResizableHandleProps) 
     const d = drag.current
     if (!d?.pxPerPercent) return
     const delta = ((horizontal ? e.clientX : e.clientY) - d.start) / d.pxPerPercent
-    group.setSizes(resize(d.sizes, index, delta, group.limits))
+    d.next = resize(d.sizes, index, delta, group.limits)
+    // A drag step re-renders nothing: it writes the panels' flex, and the sizes commit on release.
+    d.panels.forEach((el, i) => {
+      el.style.flex = `${d.next[i] ?? 0} 1 0px`
+    })
+    e.currentTarget.setAttribute('aria-valuenow', String(Math.round(d.next[index] ?? 0)))
   }
 
   const onPointerUp = () => {
+    const d = drag.current
     drag.current = null
     setDragging(false)
+    if (!d) return
+    // Back to what React rendered, so sizes a controlled parent turns down don't stick.
+    d.panels.forEach((el, i) => {
+      el.style.flex = d.flex[i] ?? ''
+    })
+    group.setSizes(d.next)
   }
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -245,7 +271,7 @@ interface ResizableProps {
   direction?: ResizableDirection
   /** Controlled panel sizes in percent, one per panel in order. Pair with `onSizesChange`. */
   sizes?: number[]
-  /** Called with every panel's size whenever a handle moves. */
+  /** Called with every panel's size when a handle moves: on a drag's release, on each key and on a double-click. */
   onSizesChange?: (sizes: number[]) => void
   /** Percent a handle moves per arrow key. Defaults to `5`. */
   step?: number
@@ -267,7 +293,9 @@ interface ResizableProps {
  * its starting size. A collapsible panel snaps shut when dragged below half
  * its minimum. A drag follows the pointer; every other change of size (a
  * key, a reset, new controlled `sizes`, such as a toggle folding a pane)
- * glides there. Sizes work uncontrolled (each panel's `defaultSize`) or
+ * glides there. A drag writes the panels' sizes to the DOM and commits them
+ * (`onSizesChange`) on release, so it re-renders nothing on the way. Sizes
+ * work uncontrolled (each panel's `defaultSize`) or
  * controlled (`sizes` + `onSizesChange`). Groups nest: put a Resizable inside
  * a panel to split it the other way.
  *
