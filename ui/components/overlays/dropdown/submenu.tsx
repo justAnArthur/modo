@@ -7,7 +7,7 @@
 
 'use client'
 
-import { Menu } from '@base-ui/react/menu'
+import { Menu, type MenuRootChangeEventDetails } from '@base-ui/react/menu'
 import { forwardRef, type HTMLAttributes, type ReactNode, useMemo } from 'react'
 import { useIcon } from '../../../lib/icon-context'
 import { type AnchorProps, OverlayContext, positionerProps, useOverlay, useOverlayRoot } from '../../../lib/overlay'
@@ -26,7 +26,7 @@ interface DropdownSubProps {
   /** Initial open state, uncontrolled. Defaults to `false`. */
   defaultOpen?: boolean
   /** Called when the submenu opens or closes, with Base UI's change details: `reason`, the `event`, and `cancel()` to keep it as it is. */
-  onOpenChange?: (open: boolean, details: Menu.Root.ChangeEventDetails) => void
+  onOpenChange?: (open: boolean, details: MenuRootChangeEventDetails) => void
   /** Disables the submenu: its trigger row dims and never opens it. Defaults to `false`. */
   disabled?: boolean
 }

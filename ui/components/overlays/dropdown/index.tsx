@@ -7,7 +7,7 @@
 
 'use client'
 
-import { Menu } from '@base-ui/react/menu'
+import { Menu, type MenuRootChangeEventDetails } from '@base-ui/react/menu'
 import {
   type ForwardRefExoticComponent,
   forwardRef,
@@ -74,8 +74,9 @@ import {
   type DropdownSubTriggerProps,
 } from './submenu'
 
+// Not `Menu.Root.ChangeEventDetails`: bunup's .d.ts renames the `Menu` import, and the `.Menu` static's key with it.
 /** What `onOpenChange` receives besides the open state: Base UI's Menu change details (`reason`, `event`, `cancel()`, `isCanceled`). */
-type DropdownOpenChangeDetails = Menu.Root.ChangeEventDetails
+type DropdownOpenChangeDetails = MenuRootChangeEventDetails
 
 interface DropdownProps extends HTMLAttributes<HTMLDivElement> {
   /** `Dropdown.Item` rows, plus `Dropdown.Label` and `Dropdown.Separator`. */
