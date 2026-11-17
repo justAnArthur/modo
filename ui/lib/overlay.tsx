@@ -128,7 +128,11 @@ function positionerProps(
     positionerClassName,
   }: AnchorProps & MorphProps & CollisionProps,
   defaults: { side: Side; align: Align; sideOffset: number },
-) {
+): Pick<Positioner, 'sideOffset' | 'alignOffset' | 'collisionPadding' | 'collisionBoundary'> & {
+  side: Side
+  align: Align
+  className: string
+} {
   const inPlace = opensInPlace({ effect, hideSource })
   return {
     side: side ?? defaults.side,
