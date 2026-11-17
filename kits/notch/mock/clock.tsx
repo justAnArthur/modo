@@ -7,7 +7,7 @@
 'use client'
 
 import { useState } from 'react'
-import Clock, { type ClockZone, type PomodoroRun } from '../blocks/activities/clock'
+import Clock, { type ClockProps, type ClockZone, type PomodoroRun } from '../blocks/activities/clock'
 import NowPlaying from '../blocks/activities/now-playing'
 import { PLAYING } from './artwork'
 import { FlashIsland, WingsIsland } from './screen'
@@ -40,8 +40,8 @@ export function useRun(...args: Parameters<typeof pomodoroRun>) {
 }
 
 /** The clock in focus, round 2 of 4, 62% to go. */
-export function FocusClock() {
-  return <Clock zones={ZONES} defaultValue={useRun()} />
+export function FocusClock(props: Pick<ClockProps, 'layout' | 'completedToday'>) {
+  return <Clock zones={ZONES} defaultValue={useRun()} {...props} />
 }
 
 /** A short break, paused with half of it left. */

@@ -43,4 +43,7 @@ export const PROCESSES: StatsProcess[] = [
   { id: '1043', name: 'WindowServer', cpu: 0.052, memory: 0.6e9 },
   { id: '97', name: 'Figma', cpu: 0.031, memory: 1.1e9 },
   { id: '1520', name: 'Music', cpu: 0.012, memory: 0.3e9 },
+  { id: '644', name: 'Slack', cpu: 0.019, memory: 0.8e9 },
+  { id: '388', name: 'mds_stores', cpu: 0.024, memory: 0.2e9 },
+  { id: '0', name: 'kernel_task', cpu: 0.041, memory: 2.1e9 },
 ]

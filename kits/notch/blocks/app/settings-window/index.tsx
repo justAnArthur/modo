@@ -82,6 +82,8 @@ interface SettingsWindowProps {
   onOpenPermission?: (id: string) => void
   /** The About page's rows: version, mode, screen. Defaults to `[]`. */
   about?: AboutRow[]
+  /** Drops the sidebar's inset on the left: its rows run to the window's edge and their text sits only the row's own padding in, so a host can line it up with an edge of its own (the open island's inset). Defaults to `false`. */
+  flush?: boolean
   /** Classes for the window's content, which fills its container. */
   className?: string
 }
@@ -280,7 +282,9 @@ const PAGES: { value: string; label: string; icon: IconComponent }[] = [
  * The page, the preferences and the plugins' states each run both ways
  * (`value`, `preferences`, `enabled` with their `default*` and `on*Change`),
  * so the window works on its own or on a host's store. It fills its
- * container; the window's frame and title bar are the host's.
+ * container; the window's frame and title bar are the host's. In a frame
+ * of the host's own, such as the open island, `flush` drops the sidebar's
+ * left inset, so the rows' text sits just the row's padding from the edge.
  *
  * @example {@include ./examples.mdx}
  */
@@ -299,6 +303,7 @@ export default function SettingsWindow({
   permissions = [],
   onOpenPermission,
   about = [],
+  flush = false,
   className,
 }: SettingsWindowProps) {
   const [page, setPage] = useControllableState(value, defaultValue, onValueChange)
@@ -317,7 +322,7 @@ export default function SettingsWindow({
     >
       <Sidebar className="h-full" collapsible="none" value={page} onValueChange={setPage}>
         <Sidebar.Content>
-          <Sidebar.Group>
+          <Sidebar.Group className={cn(flush && 'pl-0')}>
             <Sidebar.GroupLabel>{name}</Sidebar.GroupLabel>
             <Sidebar.Menu>
               {PAGES.map(item => (
@@ -330,7 +335,7 @@ export default function SettingsWindow({
             </Sidebar.Menu>
           </Sidebar.Group>
           {withSettings.length > 0 && (
-            <Sidebar.Group>
+            <Sidebar.Group className={cn(flush && 'pl-0')}>
               <Sidebar.GroupLabel>Plugin settings</Sidebar.GroupLabel>
               <Sidebar.Menu>
                 {withSettings.map(p => (

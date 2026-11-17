@@ -35,7 +35,7 @@ import { type ReactNode, useState } from 'react'
 import Equalizer from '../../../components/indicators/equalizer'
 import MediaScrubber from '../../../components/indicators/media-scrubber'
 import IslandFlash from '../../../components/island/island-flash'
-import Widget from '../../../components/island/widget'
+import Widget, { type WidgetLayout } from '../../../components/island/widget'
 import { type Artwork, type ShownArtwork, useArtworkTint, useStableArtwork } from '../../../lib/artwork'
 
 type NowPlayingOutput = 'built-in' | 'headphones' | 'speaker' | 'airplay'
@@ -104,8 +104,17 @@ interface NowPlayingProps {
   emptyDescription?: ReactNode
   /** The empty state's way forward, such as a Button that opens a player. */
   emptyActions?: ReactNode
+  /** `tall` is the open island's tall snap: the artwork large, the title on the display role, a full-width scrubber and the transport under it, and where it plays from and to as rows. Defaults to `'fit'`. */
+  layout?: WidgetLayout
   /** Classes for the root, which fills its container. */
   className?: string
+}
+
+const OUTPUT_LABEL: Record<NowPlayingOutput, string> = {
+  'built-in': 'Built-in speakers',
+  headphones: 'Headphones',
+  speaker: 'Speaker',
+  airplay: 'AirPlay',
 }
 
 const OUTPUT_ICON = { 'built-in': Laptop, headphones: Headphones, speaker: Speaker, airplay: Airplay }
@@ -233,6 +242,23 @@ function NowPlayingFlash({ track, playing = true }: { track: NowPlayingTrack; pl
 
 // Literal tables: UnoCSS only generates the classes it can read whole.
 const ART = { default: 'size-36 rounded-2xl', compact: 'size-28 rounded-xl' }
+const SHEET_ART = { default: 'size-52 rounded-3xl', compact: 'size-44 rounded-2xl' }
+const SHEET_TITLE = { default: 'text-display', compact: 'text-display-compact' }
+
+function Glow({ tint, children }: { tint?: string; children: ReactNode }) {
+  return (
+    <span className="relative flex">
+      {tint && (
+        <span
+          aria-hidden
+          className="absolute -inset-x-8 -inset-y-4 -z-1 opacity-70"
+          style={{ backgroundImage: `radial-gradient(closest-side, ${tint}, transparent)` }}
+        />
+      )}
+      {children}
+    </span>
+  )
+}
 
 /**
  * What's playing, as a notch app's open island shows it: the artwork, the
@@ -254,6 +280,12 @@ const ART = { default: 'size-36 rounded-2xl', compact: 'size-28 rounded-xl' }
  * runs through `playing` / `onPlayingChange`, or is kept here from
  * `defaultPlaying`; the toggles are the same. Without a track it says
  * nothing is playing and how to change that.
+ *
+ * At the open island's tall snap (`layout="tall"`) it becomes a sheet: the
+ * artwork large beside the source, the title on the display role, the
+ * artist and the album on lines of their own; then the scrubber across the
+ * whole width with the transport and the toggles in one row under it; then
+ * where it plays from and to, the app and the output device, as rows.
  *
  * The other forms are parts: `NowPlaying.Leading` and `NowPlaying.Trailing`
  * for the compact island's wings (the artwork, and the tinted Equalizer that
@@ -283,6 +315,7 @@ const NowPlaying = Object.assign(
     onLikedChange,
     emptyDescription = 'Play something in Music, Spotify or a browser and it shows up here.',
     emptyActions,
+    layout = 'fit',
     className,
   }: NowPlayingProps) {
     const size = useSize()
@@ -307,21 +340,115 @@ const NowPlaying = Object.assign(
     const showRepeat = repeatProp !== undefined || defaultRepeat !== undefined || onRepeatChange !== undefined
     const showLiked = likedProp !== undefined || defaultLiked !== undefined || onLikedChange !== undefined
     const byline = [track.artist, track.album].filter(Boolean).join(' — ')
+    const toggles = (
+      <>
+        {showShuffle && (
+          <Widget.Action
+            icon={Shuffle}
+            label="Shuffle"
+            pressed={shuffle}
+            color={tint}
+            onClick={() => setShuffle(!shuffle)}
+          />
+        )}
+        {showRepeat && (
+          <Widget.Action
+            icon={repeat === 'one' ? Repeat1 : Repeat}
+            label={REPEAT_LABEL[repeat]}
+            pressed={repeat !== 'off'}
+            color={tint}
+            onClick={() => setRepeat(NEXT_REPEAT[repeat])}
+          />
+        )}
+        {showLiked && (
+          <Widget.Action
+            icon={Heart}
+            label={liked ? 'Remove from library' : 'Add to library'}
+            pressed={liked}
+            filled={liked}
+            color={tint}
+            onClick={() => setLiked(!liked)}
+          />
+        )}
+      </>
+    )
+    const transport = (
+      <div className="flex items-center gap-1">
+        <Widget.Action icon={SkipBack} label="Previous" filled onClick={onPrevious} />
+        <Widget.Action
+          icon={playing ? Pause : Play}
+          label={playing ? 'Pause' : 'Play'}
+          emphasis="primary"
+          filled
+          onClick={() => setPlaying(!playing)}
+        />
+        <Widget.Action icon={SkipForward} label="Next" filled onClick={onNext} />
+      </div>
+    )
+    const OutputIcon = OUTPUT_ICON[track.outputKind ?? 'built-in']
+
+    if (layout === 'tall')
+      return (
+        <Widget.Sheet className={cn('relative isolate', className)}>
+          <div className="flex min-w-0 items-center gap-6">
+            <Glow tint={tint}>
+              <NowPlayingArtwork track={track} glyph={40} className={SHEET_ART[size.variant]} />
+            </Glow>
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <Widget.Header icon={Disc3} trailing={<TintedBars track={track} playing={playing} />}>
+                {track.source ?? 'Now playing'}
+              </Widget.Header>
+              <span className={cn('line-clamp-2 weight-bold text-foreground text-balance', SHEET_TITLE[size.variant])}>
+                {track.title || 'Unknown title'}
+              </span>
+              {track.artist && <span className="truncate text-title text-foreground">{track.artist}</span>}
+              {track.album && <Widget.Subtitle>{track.album}</Widget.Subtitle>}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            {track.duration > 0 && (
+              <MediaScrubber position={track.position} duration={track.duration} playing={playing} onSeek={onSeek} />
+            )}
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+              <span />
+              {transport}
+              <div className="flex items-center justify-end">{toggles}</div>
+            </div>
+          </div>
+
+          {(track.source || track.output) && (
+            <Widget.Section label="Playing">
+              {track.source && (
+                <Widget.Row trailing={<Disc3 size={14} strokeWidth={1.5} />} leading="From">
+                  {track.source}
+                </Widget.Row>
+              )}
+              {track.output && (
+                <Widget.Row
+                  leading="On"
+                  trailing={
+                    <>
+                      <OutputIcon size={14} strokeWidth={1.5} />
+                      {OUTPUT_LABEL[track.outputKind ?? 'built-in']}
+                    </>
+                  }
+                >
+                  {track.output}
+                </Widget.Row>
+              )}
+            </Widget.Section>
+          )}
+        </Widget.Sheet>
+      )
 
     return (
       <div className={cn('relative isolate flex w-full flex-col justify-center', className)}>
         <Widget
           media={
-            <span className="relative flex">
-              {tint && (
-                <span
-                  aria-hidden
-                  className="absolute -inset-x-8 -inset-y-4 -z-1 opacity-70"
-                  style={{ backgroundImage: `radial-gradient(closest-side, ${tint}, transparent)` }}
-                />
-              )}
+            <Glow tint={tint}>
               <NowPlayingArtwork track={track} glyph={28} className={ART[size.variant]} />
-            </span>
+            </Glow>
           }
         >
           <div className="flex min-w-0 items-start gap-3">
@@ -346,51 +473,10 @@ const NowPlaying = Object.assign(
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
             <Widget.Meta>
               {track.source && <Widget.MetaItem icon={Disc3}>{track.source}</Widget.MetaItem>}
-              {track.output && (
-                <Widget.MetaItem icon={OUTPUT_ICON[track.outputKind ?? 'built-in']}>{track.output}</Widget.MetaItem>
-              )}
+              {track.output && <Widget.MetaItem icon={OutputIcon}>{track.output}</Widget.MetaItem>}
             </Widget.Meta>
-            <div className="flex items-center gap-1">
-              <Widget.Action icon={SkipBack} label="Previous" filled onClick={onPrevious} />
-              <Widget.Action
-                icon={playing ? Pause : Play}
-                label={playing ? 'Pause' : 'Play'}
-                emphasis="primary"
-                filled
-                onClick={() => setPlaying(!playing)}
-              />
-              <Widget.Action icon={SkipForward} label="Next" filled onClick={onNext} />
-            </div>
-            <div className="flex items-center justify-end">
-              {showShuffle && (
-                <Widget.Action
-                  icon={Shuffle}
-                  label="Shuffle"
-                  pressed={shuffle}
-                  color={tint}
-                  onClick={() => setShuffle(!shuffle)}
-                />
-              )}
-              {showRepeat && (
-                <Widget.Action
-                  icon={repeat === 'one' ? Repeat1 : Repeat}
-                  label={REPEAT_LABEL[repeat]}
-                  pressed={repeat !== 'off'}
-                  color={tint}
-                  onClick={() => setRepeat(NEXT_REPEAT[repeat])}
-                />
-              )}
-              {showLiked && (
-                <Widget.Action
-                  icon={Heart}
-                  label={liked ? 'Remove from library' : 'Add to library'}
-                  pressed={liked}
-                  filled={liked}
-                  color={tint}
-                  onClick={() => setLiked(!liked)}
-                />
-              )}
-            </div>
+            {transport}
+            <div className="flex items-center justify-end">{toggles}</div>
           </div>
         </Widget>
       </div>

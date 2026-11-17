@@ -35,6 +35,19 @@ export const DOWNLOADS: RecentFile[] = [
   },
   { id: 'assets', name: 'Assets.zip', size: 36e6, addedAt: ago(26 * 60), source: 'downloads' },
   { id: 'inter', name: 'Inter-4.1.zip', size: 18e6, addedAt: ago(3 * 24 * 60), source: 'downloads' },
+  {
+    id: 'poster',
+    name: 'Poster draft.jpg',
+    size: 3.2e6,
+    addedAt: ago(4 * 24 * 60),
+    source: 'downloads',
+    thumbnail: <MockArtwork variant="aurora" />,
+    from: 'dribbble.com',
+  },
+  { id: 'invoice', name: 'Invoice 2026-11.pdf', size: 210e3, addedAt: ago(5 * 24 * 60), source: 'downloads' },
+  { id: 'track', name: 'Interview take 2.m4a', size: 14e6, addedAt: ago(6 * 24 * 60), source: 'downloads' },
+  { id: 'xcode', name: 'Xcode_17.xip', size: 3.4e9, addedAt: ago(8 * 24 * 60), source: 'downloads' },
+  { id: 'config', name: 'island.config.json', size: 2e3, addedAt: ago(9 * 24 * 60), source: 'downloads' },
 ]
 
 const pad = (n: number) => String(n).padStart(2, '0')
@@ -47,7 +60,7 @@ function shotName(ms: number) {
 
 const VARIANTS = ['aurora', 'dusk', 'night'] as const
 
-export const SCREENSHOTS: RecentFile[] = [3, 15, 22, 64, 140, 300, 1500].map((minutes, i) => ({
+export const SCREENSHOTS: RecentFile[] = [3, 15, 22, 64, 140, 300, 1500, 1620, 2900, 4400, 7300].map((minutes, i) => ({
   id: `shot-${i}`,
   name: shotName(ago(minutes)),
   size: (1.2 + i * 0.35) * 1e6,

@@ -20,3 +20,16 @@ Each widget at full size, on the same frame: one hero, a muted line, the support
     </div>
   ))}
 </div>
+
+# Tall
+
+Pulled down to the 560 px sheet, each widget shows more: `layout="tall"` on every block.
+
+<div className="flex w-full flex-col gap-5">
+  {TABS.map(tab => (
+    <div key={tab.value} className="flex min-w-0 flex-col gap-1">
+      <span className="text-caption text-muted-foreground">{tab.label}</span>
+      <WidgetIsland tab={tab.value} tall />
+    </div>
+  ))}
+</div>

@@ -101,7 +101,7 @@ const res = await fetch(
   `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&timeformat=unixtime&timezone=auto` +
     '&current=temperature_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,relative_humidity_2m,uv_index' +
     '&hourly=temperature_2m,weather_code,is_day,precipitation_probability' +
-    '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&forecast_days=2',
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset&forecast_days=7',
 )
 const { current, hourly, daily } = await res.json()
 
@@ -113,3 +113,11 @@ const hours: WeatherHour[] = hourly.time.map((time: number, i: number) => ({
   precipitation: hourly.precipitation_probability[i],
 }))
 ```
+
+# Tall
+
+`layout="tall"` at the island's tall snap: the hero larger, the next 24 hours as a strip with the temperature's curve and the chance of rain, the week on range bars, and the details beside it.
+
+<WidgetIsland tab="weather" tall>
+  <Weather {...FORECAST} onRefresh={() => {}} layout="tall" />
+</WidgetIsland>

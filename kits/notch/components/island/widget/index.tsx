@@ -328,6 +328,31 @@ function WidgetChip({ color, children }: WidgetChipProps) {
   )
 }
 
+type WidgetLayout = 'fit' | 'tall'
+
+interface WidgetSheetProps {
+  /** The bands, top to bottom: the hero first, then the lists and details. */
+  children: ReactNode
+  /** Step on the size ladder for every part inside. Omitted, the widget follows the surrounding SizeProvider. */
+  size?: SizeVariant
+  /** Classes for the column. */
+  className?: string
+}
+
+/**
+ * The frame of a widget at the open island's tall snap (a sheet about
+ * 692 × 476): bands stacked top to bottom, the hero first, set larger, then
+ * the lists and details the short island has no room for. Bands sit apart
+ * on space alone; a band of columns splits them with hairlines.
+ */
+function WidgetSheet({ children, size, className }: WidgetSheetProps) {
+  return (
+    <SizeScope size={size}>
+      <div className={cn('flex w-full min-w-0 flex-col gap-6', className)}>{children}</div>
+    </SizeScope>
+  )
+}
+
 interface WidgetProps {
   /** The hero's picture at the start, as tall as the widget: artwork, a ring. */
   media?: ReactNode
@@ -356,6 +381,11 @@ interface WidgetProps {
  * surface step (`Widget.Chip`, `Widget.Message`'s tile), never from boxes.
  * Empty and permission states are a `Widget.Message`, laid out across the
  * wide, short island.
+ *
+ * At the island's tall snap a widget shows more, not the same layout
+ * stretched: each block takes `layout="tall"` and builds a `Widget.Sheet`,
+ * bands of fuller lists, larger pictures and the details the short island
+ * leaves out.
  *
  * The frame fills the island's content area. The aside folds away under
  * 30rem of width, so a narrower panel keeps the hero.
@@ -398,6 +428,7 @@ const Widget = Object.assign(
     Section: WidgetSection,
     Row: WidgetRow,
     Chip: WidgetChip,
+    Sheet: WidgetSheet,
   },
 )
 
@@ -408,11 +439,13 @@ export type {
   WidgetChipProps,
   WidgetFigureProps,
   WidgetHeaderProps,
+  WidgetLayout,
   WidgetMessageProps,
   WidgetMetaItemProps,
   WidgetProps,
   WidgetRowProps,
   WidgetSectionProps,
+  WidgetSheetProps,
   WidgetTitleProps,
 }
 export {
@@ -426,6 +459,7 @@ export {
   WidgetMetaItem,
   WidgetRow,
   WidgetSection,
+  WidgetSheet,
   WidgetSubtitle,
   WidgetTitle,
 }

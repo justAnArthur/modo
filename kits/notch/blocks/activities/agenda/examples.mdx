@@ -72,3 +72,11 @@ The next event a few minutes out: `Agenda.Leading` and `Agenda.Trailing` count d
 `Agenda.Starting`, the flash a minute before.
 
 <AgendaFlash />
+
+# Tall
+
+`layout="tall"` at the island's tall snap: the hero, then today and tomorrow in full, each event with its times, place and Join, then the rest of the week by day.
+
+<WidgetIsland tab="calendar" tall>
+  <Agenda events={EVENTS} now={AGENDA_NOW} layout="tall" />
+</WidgetIsland>

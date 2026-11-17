@@ -19,6 +19,7 @@ import ClipboardHistory from '../blocks/system/clipboard'
 import RecentFiles from '../blocks/system/recent-files'
 import SystemStats from '../blocks/system/system-stats'
 import Island from '../components/island/island'
+import type { WidgetLayout } from '../components/island/widget'
 import { ISLAND_STATES, type IslandState } from '../lib/geometry'
 import { PLAYING } from './artwork'
 import { CLIP_NOW, CLIPS, PINNED } from './clipboard'
@@ -50,28 +51,48 @@ export function DownloadedFlash() {
 const noop = () => {}
 
 /** Every widget of the open island, by tab value. */
-export function widgetFor(tab: string): ReactNode {
+export function widgetFor(tab: string, layout: WidgetLayout = 'fit'): ReactNode {
   if (tab === 'now-playing')
-    return <NowPlaying track={PLAYING} defaultShuffle={false} defaultRepeat="all" defaultLiked />
-  if (tab === 'calendar') return <Agenda events={EVENTS} now={AGENDA_NOW} />
-  if (tab === 'weather') return <Weather {...FORECAST} onRefresh={noop} />
-  if (tab === 'clock') return <Clock zones={ZONES} />
+    return <NowPlaying track={PLAYING} defaultShuffle={false} defaultRepeat="all" defaultLiked layout={layout} />
+  if (tab === 'calendar') return <Agenda events={EVENTS} now={AGENDA_NOW} layout={layout} />
+  if (tab === 'weather') return <Weather {...FORECAST} onRefresh={noop} layout={layout} />
+  if (tab === 'clock') return <Clock zones={ZONES} completedToday={3} layout={layout} />
   if (tab === 'system')
-    return <SystemStats samples={READINGS} battery={BATTERY} disk={DISK} uptime={UPTIME} processes={PROCESSES} />
+    return (
+      <SystemStats
+        samples={READINGS}
+        battery={BATTERY}
+        disk={DISK}
+        uptime={UPTIME}
+        processes={PROCESSES}
+        layout={layout}
+      />
+    )
   if (tab === 'clipboard')
-    return <ClipboardHistory clips={CLIPS} defaultPinned={PINNED} now={CLIP_NOW} onDelete={noop} />
+    return <ClipboardHistory clips={CLIPS} defaultPinned={PINNED} now={CLIP_NOW} onDelete={noop} layout={layout} />
   if (tab === 'files')
     return (
-      <RecentFiles files={RECENT_FILES} now={FILES_NOW} onReveal={noop} onCopy={noop} onDelete={noop} onClear={noop} />
+      <RecentFiles
+        files={RECENT_FILES}
+        now={FILES_NOW}
+        onReveal={noop}
+        onCopy={noop}
+        onDelete={noop}
+        onClear={noop}
+        layout={layout}
+      />
     )
   return null
 }
 
 const WIDGET_TABS: ExpandedIslandTab[] = TABS.map(tab => ({ ...tab, content: widgetFor(tab.value) }))
+const TALL_TABS: ExpandedIslandTab[] = TABS.map(tab => ({ ...tab, content: widgetFor(tab.value, 'tall') }))
 
-/** The open island's tabs, a view per widget, with `views` in place of the mock ones. */
-export function panelTabs(views: Record<string, ReactNode> = {}): ExpandedIslandTab[] {
-  return WIDGET_TABS.map(tab => (tab.value in views ? { ...tab, content: views[tab.value] } : tab))
+/** The open island's tabs, a view per widget at `layout`, with `views` in place of the mock ones. */
+export function panelTabs(views: Record<string, ReactNode> = {}, layout: WidgetLayout = 'fit'): ExpandedIslandTab[] {
+  return (layout === 'tall' ? TALL_TABS : WIDGET_TABS).map(tab =>
+    tab.value in views ? { ...tab, content: views[tab.value] } : tab,
+  )
 }
 
 /** The open island: a tab per widget in the wings, settings at the far right. */
@@ -127,14 +148,25 @@ export function IslandPlayground({ defaultState = 'compact' }: { defaultState?: 
   )
 }
 
-/** The open island on a strip of screen, on `tab`, its view replaced by `children` when given. */
-export function WidgetIsland({ tab, children, height = 260 }: { tab: string; children?: ReactNode; height?: number }) {
-  const tabs = panelTabs(children ? { [tab]: children } : {})
+/** The open island on a strip of screen, on `tab`, its view replaced by `children` when given; `tall` pulls it down to the 560 px sheet. */
+export function WidgetIsland({
+  tab,
+  children,
+  height,
+  tall = false,
+}: {
+  tab: string
+  children?: ReactNode
+  height?: number
+  tall?: boolean
+}) {
+  const tabs = panelTabs(children ? { [tab]: children } : {}, tall ? 'tall' : 'fit')
   return (
-    <ScreenEdge height={height}>
+    <ScreenEdge height={height ?? (tall ? 580 : 260)}>
       <Island
         defaultState="expanded"
         collapsedState="idle"
+        panelHeight={tall ? 560 : undefined}
         expanded={<ExpandedIsland tabs={tabs} defaultValue={tab} onSettings={() => {}} />}
       />
     </ScreenEdge>

@@ -66,3 +66,11 @@ A `duration` of `0` hides the scrubber.
 <FlashIsland>
   <NowPlaying.Flash track={{ ...PLAYING, title: 'Teardrop', artist: 'Massive Attack', album: 'Mezzanine', artwork: <MockArtwork variant="night" />, tint: ARTWORK_TINT.night }} />
 </FlashIsland>
+
+# Tall
+
+`layout="tall"` at the island's tall snap: the artwork large, the title on the display role, the scrubber across the width with the transport under it, and where it plays from and to.
+
+<WidgetIsland tab="now-playing" tall>
+  <NowPlaying track={PLAYING} defaultShuffle={false} defaultRepeat="all" defaultLiked layout="tall" />
+</WidgetIsland>
