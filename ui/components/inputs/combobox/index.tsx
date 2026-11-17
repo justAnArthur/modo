@@ -80,7 +80,7 @@ interface ComboboxProps {
   filter?: ((item: ComboboxItemData, query: string) => boolean) | null
   /** Controlled query, the field's text. Pair with `onQueryChange`. */
   query?: string
-  /** Initial query, for an uncontrolled field. Defaults to `""`. */
+  /** Initial query, for an uncontrolled field. Defaults to the picked item's label in a single field, else `""`. */
   defaultQuery?: string
   /** Called with the field's text on every keystroke, and when a pick, a clear or a close rewrites it; Base UI's details tell them apart (`details.reason === 'input-change'` for typing). */
   onQueryChange?: (query: string, details: ComboboxRootChangeEventDetails) => void
@@ -168,7 +168,7 @@ const Combobox = Object.assign(
     onOpenChange,
     filter,
     query: queryProp,
-    defaultQuery = '',
+    defaultQuery,
     onQueryChange,
     loading = false,
     loadingLabel = 'Loading…',
@@ -194,8 +194,13 @@ const Combobox = Object.assign(
     const [values, setValues] = useControllableState<string[]>(controlledValues, toValues(defaultValue))
     // Base UI owns the field's text unless the caller does; this mirrors it either way.
     const queryDetails = useRef<ComboboxRootChangeEventDetails | null>(null)
-    const [inputValue, setInputValue] = useControllableState(queryProp, defaultQuery, next =>
-      onQueryChange?.(next, queryDetails.current as ComboboxRootChangeEventDetails),
+    // Left unset, Base UI fills a single field with the picked item's label; the mirror starts there too.
+    const picked =
+      isMultiple || defaultQuery !== undefined ? undefined : items.find(item => itemValue(item) === values[0])
+    const [inputValue, setInputValue] = useControllableState(
+      queryProp,
+      defaultQuery ?? (picked ? itemLabel(picked) : ''),
+      next => onQueryChange?.(next, queryDetails.current as ComboboxRootChangeEventDetails),
     )
     const [highlight, setHighlight] = useState<Highlight | null>(null)
     // Items the create row made while no consumer owns the list.
