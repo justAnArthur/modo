@@ -25,7 +25,7 @@ import { mergeRefs } from './merge-refs'
 import { cn } from './utils'
 
 interface SlotProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  /** The element that becomes the control, e.g. a Button. */
+  /** The element that becomes the control, e.g. a Button. `children` fill it when it has none of its own. */
   render?: ReactElement
   /** Compose onto the single child instead. Defaults to `false`. */
   asChild?: boolean
@@ -33,9 +33,15 @@ interface SlotProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children?: ReactNode
 }
 
-/** The element a Base UI part renders as: `render`, else `asChild`'s child, else none. */
+/**
+ * The element a Base UI part renders as: `render`, else `asChild`'s child, else none. `children` fill
+ * a `render` element that has none of its own (`render={<button/>}` + children); its own children win.
+ */
 function slotRender(render: ReactElement | undefined, asChild: boolean | undefined, children: ReactNode) {
-  if (render) return render
+  if (render) {
+    const own = (render.props as { children?: ReactNode }).children
+    return children === undefined || own !== undefined ? render : cloneElement(render, undefined, children)
+  }
   return asChild && isValidElement(children) ? children : undefined
 }
 
