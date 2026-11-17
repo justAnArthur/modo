@@ -121,24 +121,24 @@ interface WidgetMetaItemProps {
   children: ReactNode
 }
 
-/** One fact of a meta row: a glyph and a few words. */
+/** One fact of a meta row: a glyph and a few words. Only the last one truncates; the others keep their words whole. */
 function WidgetMetaItem({ icon: Icon, children }: WidgetMetaItemProps) {
   const size = useSize()
   return (
-    <span className="flex min-w-0 items-center gap-1 last:shrink-[100]">
+    <span className="flex min-w-0 shrink-0 items-center gap-1 last:shrink">
       {Icon && <Icon size={META_ICON[size.variant]} strokeWidth={1.5} className="shrink-0" />}
       <span className="min-w-0 truncate">{children}</span>
     </span>
   )
 }
 
-/** Supporting facts in a row, each a glyph and a few words, muted; the last one gives way first. */
+/** Supporting facts in a row, each a glyph and a few words, muted; the last one gives way, the others stay whole. */
 function WidgetMeta({ children, className }: { children: ReactNode; className?: string }) {
   const size = useSize()
   return (
     <div
       className={cn(
-        'flex min-w-0 items-center gap-3 whitespace-nowrap text-muted-foreground tabular-nums',
+        'flex min-w-0 items-center gap-3 overflow-hidden whitespace-nowrap text-muted-foreground tabular-nums',
         CAPTION[size.variant],
         className,
       )}
