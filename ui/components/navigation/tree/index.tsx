@@ -24,6 +24,7 @@ import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { FocusRing } from '../../../lib/focus-ring'
 import { GooIndicator } from '../../../lib/goo-indicator'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
+import { inertProps } from '../../../lib/inert'
 import { useReduceMotion } from '../../../lib/reduced-motion'
 import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
@@ -127,7 +128,7 @@ function TreeGroup({ open, items, depth }: { open: boolean; items: TreeItem[]; d
         ref={ref}
         role="group"
         data-tree-group={open ? 'open' : 'closed'}
-        {...(open ? {} : { inert: '' })}
+        {...inertProps(!open)}
         className={cn('flex flex-col border-l border-border pl-[var(--space-1)]', GUIDE[size.variant])}
       >
         {items.map(item => (

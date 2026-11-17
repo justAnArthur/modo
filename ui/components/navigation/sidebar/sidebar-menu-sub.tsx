@@ -19,6 +19,7 @@ import {
   useRef,
 } from 'react'
 import type { IconComponent } from '../../../lib/icon-context'
+import { inertProps } from '../../../lib/inert'
 import { mergeRefs, useMergeRefs } from '../../../lib/merge-refs'
 import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
@@ -61,7 +62,7 @@ const SidebarMenuSub = forwardRef<HTMLUListElement, SidebarMenuSubProps>(
           data-sidebar="menu-sub"
           data-state={open ? 'open' : 'closed'}
           aria-hidden={open ? undefined : true}
-          {...(open ? {} : { inert: '' })}
+          {...inertProps(!open)}
           className={cn(
             // A margin, not a translate, so the measured rects include it:
             // 15px + the 1px border + pl-2 + the row's pl-2 lands the label on

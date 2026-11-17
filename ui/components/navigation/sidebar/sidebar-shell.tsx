@@ -9,6 +9,7 @@
 
 import { motion } from 'motion/react'
 import { type CSSProperties, forwardRef, type HTMLAttributes, useEffect, useRef, useState } from 'react'
+import { inertProps } from '../../../lib/inert'
 import { useMergeRefs } from '../../../lib/merge-refs'
 import { useReduceMotion } from '../../../lib/reduced-motion'
 import { useShape } from '../../../lib/shape-context'
@@ -130,7 +131,7 @@ const SidebarShell = forwardRef<HTMLDivElement, SidebarShellProps>(
           animate={{ x: open ? '0%' : side === 'left' ? '-100%' : '100%' }}
           transition={transition}
           // Mid-drag the rail inside holds the pointer through a collapse preview.
-          {...(open || isResizing ? {} : { inert: '' })}
+          {...inertProps(!open && !isResizing)}
         >
           {variant === 'floating' ? (
             <div

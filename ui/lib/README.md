@@ -42,7 +42,8 @@ Reach for these before writing the pattern by hand. One line each: what it is, w
 - `popup-surface.tsx` — `<PopupSurface morph lift="popup|panel" radius? className>`: the lift, the re-provided level, the background, the shadow (fixed 3 for popups, the level's for panels) and `MorphSurface`.
 - `popup.ts` — `POPUP_SHAPE`: the shape every popup list reads (`shapeMap.rounded`, whatever the global shape: pill corners break the rows' concentric fit). Never `shapeMap.rounded` inline. Also `popupScrollAreaClass` / `popupViewportClass`, `POPUP_NAV_KEYS`, `isDisabledRow`.
 - `popup-rows.tsx` — `rowClasses({ size, shape, lit, disabled })`, `rowLabelClass`, `rowLabelBoxClass(label)` (text trims and truncates; a node label keeps its own box) over `isTextLabel(label)`, `<RowIcon icon lit />`, `<CheckMark checked reserve? />` (reduced-motion aware), `PopupLabel`, `PopupSeparator`. A checked row's background is a `<GooIndicator rect className={cn('bg-active', shape.bg)} />`.
-- `slot.tsx` — `slotPart<Props>(Primitive.Trigger, 'Name')`: a Base UI trigger or close part that takes `render` / `asChild`. `slotRender`: the same for a part you write by hand. `resolveSlotTemplate` + `slotElement`: `render` / `asChild` on a plain element, merging classes, styles, handlers and refs (Button, Sidebar).
+- `slot.tsx` — `slotPart<Props>(Primitive.Trigger, 'Name')`: a Base UI trigger or close part that takes `render` / `asChild`. `slotRender`: the same for a part you write by hand. `resolveSlotTemplate` + `slotElement`: `render` / `asChild` on a plain element, merging classes, styles, handlers and refs (Button, Sidebar). Children fill a childless `render` element.
+- `inert.ts` — `inertProps(on)`: spread it for an `inert` that holds on React 18 (`''`) and 19 (`true`); never write `inert: ''` by hand.
 
 ## Text fields and dates
 

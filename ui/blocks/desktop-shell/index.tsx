@@ -12,6 +12,7 @@ import Sidebar from '../../components/navigation/sidebar'
 import { useSidebarShortcut } from '../../components/navigation/sidebar/sidebar-shortcut'
 import Tooltip from '../../components/overlays/tooltip'
 import { useIcon } from '../../lib/icon-context'
+import { inertProps } from '../../lib/inert'
 import { useShape } from '../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../lib/size-context'
 import { SURFACE_BG, SURFACE_SHADOW } from '../../lib/surface-classes'
@@ -336,7 +337,7 @@ export default function DesktopShell({
                 )}
               />
               <Resizable.Panel defaultSize={defaultPaneSize} minSize={minPaneSize} maxSize={maxPaneSize} collapsible>
-                <div {...(paneOpen ? {} : { inert: '' })} className="flex h-full min-w-0 flex-col">
+                <div {...inertProps(!paneOpen)} className="flex h-full min-w-0 flex-col">
                   {right}
                 </div>
               </Resizable.Panel>
