@@ -1,7 +1,7 @@
 /*!
- * Mock: activities that count down for real in the docs, a running timer and
- * an event a few minutes out, made once on mount so a re-render never resets
- * them. Nothing here ships in the barrel.
+ * Mock: activities that count down for real in the docs, an event a few
+ * minutes out, made once on mount so a re-render never resets it. Nothing
+ * here ships in the barrel.
  */
 
 'use client'
@@ -9,35 +9,12 @@
 import { CalendarDays } from 'lucide-react'
 import { useState } from 'react'
 import Agenda from '../blocks/activities/agenda'
-import NowPlaying from '../blocks/activities/now-playing'
-import Timer from '../blocks/activities/timer'
+import Clock from '../blocks/activities/clock'
 import ExpandedIsland from '../blocks/app/expanded-island'
 import Island from '../components/island/island'
+import { useRun } from './clock'
 import { soonEvent } from './data'
-import { FlashIsland, PLAYING, ScreenEdge, useRun, WingsIsland } from './island-content'
-
-/** The timer, running from a focus run with 62% to go. */
-export function RunningTimer() {
-  return <Timer defaultValue={useRun()} pomodoro />
-}
-
-/** The timer in the compact island's wings. */
-export function TimerWings() {
-  const run = useRun()
-  return <WingsIsland leading={<Timer.Leading />} trailing={<Timer.Trailing run={run} />} />
-}
-
-/** Music in the wings, the timer's ring in the bubble. */
-export function TimerSplit() {
-  const run = useRun()
-  return (
-    <WingsIsland
-      leading={<NowPlaying.Leading track={PLAYING} />}
-      trailing={<NowPlaying.Trailing />}
-      minimal={<Timer.Minimal run={run} />}
-    />
-  )
-}
+import { FlashIsland, ScreenEdge, WingsIsland } from './screen'
 
 /** An event `minutes` out, made once. */
 export function useSoon(minutes = 4) {
@@ -50,14 +27,14 @@ export function AgendaWings() {
   return <WingsIsland leading={<Agenda.Leading event={event} />} trailing={<Agenda.Trailing event={event} />} />
 }
 
-/** The timer in the wings, the next event's ring in the bubble. */
+/** A focus round in the wings, the next event's ring in the bubble. */
 export function AgendaSplit() {
   const run = useRun()
   const event = useSoon()
   return (
     <WingsIsland
-      leading={<Timer.Leading />}
-      trailing={<Timer.Trailing run={run} />}
+      leading={<Clock.Leading run={run} />}
+      trailing={<Clock.Trailing run={run} />}
       minimal={<Agenda.Minimal event={event} />}
     />
   )

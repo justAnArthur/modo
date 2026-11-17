@@ -1,8 +1,8 @@
 /*!
  * Mock: what the docs put in the island, on the kit's blocks and mock data:
- * the now-playing wings, a timer bubble, a charging flash and the open
- * island with a tab per widget. Pages and examples start from these; nothing
- * here ships in the barrel.
+ * the now-playing wings, a Pomodoro ring in the bubble, a download's flash
+ * and the open island with a tab per widget. Pages and examples start from
+ * these; nothing here ships in the barrel.
  */
 
 'use client'
@@ -11,69 +11,59 @@ import Tabs from '@justanarthur/modo-ui/components/navigation/tabs'
 import { useSize } from '@justanarthur/modo-ui/lib/size-context'
 import { type ReactNode, useState } from 'react'
 import Agenda from '../blocks/activities/agenda'
-import NowPlaying, { type NowPlayingTrack } from '../blocks/activities/now-playing'
-import Shelf, { type ShelfFile } from '../blocks/activities/shelf'
-import Timer, { type TimerRun } from '../blocks/activities/timer'
+import Clock from '../blocks/activities/clock'
+import NowPlaying from '../blocks/activities/now-playing'
+import Weather from '../blocks/activities/weather'
 import ExpandedIsland, { type ExpandedIslandTab } from '../blocks/app/expanded-island'
-import Controls from '../blocks/system/controls'
-import Devices from '../blocks/system/devices'
-import PowerAlert from '../blocks/system/power-alert'
+import ClipboardHistory from '../blocks/system/clipboard'
+import RecentFiles from '../blocks/system/recent-files'
 import SystemStats from '../blocks/system/system-stats'
 import Island from '../components/island/island'
 import { ISLAND_STATES, type IslandState } from '../lib/geometry'
-import { MockArtwork } from './artwork'
-import { AGENDA_NOW, DEVICES, EVENTS, FILES, POWER, SAMPLES, TABS, TIMER, TRACK } from './data'
-import { useFitScale } from './fit'
+import { PLAYING } from './artwork'
+import { CLIP_NOW, CLIPS, PINNED } from './clipboard'
+import { useRun, ZONES } from './clock'
+import { AGENDA_NOW, EVENTS, TABS } from './data'
+import { DOWNLOADS, FILES_NOW, RECENT_FILES } from './files'
+import { ScreenEdge } from './screen'
+import { BATTERY, DISK, PROCESSES, READINGS, UPTIME } from './system'
+import { FORECAST } from './weather'
 
-const MINUTE = 60_000
-
-/** The mock track, with generated artwork. */
-export const PLAYING: NowPlayingTrack = { ...TRACK, artwork: <MockArtwork /> }
-
-/** The mock shelf, two files with previews. */
-export const SHELF: ShelfFile[] = FILES.map(file =>
-  file.id === 'cover'
-    ? { ...file, thumbnail: <MockArtwork variant="dusk" /> }
-    : file.id === 'demo'
-      ? { ...file, thumbnail: <MockArtwork variant="night" /> }
-      : file,
-)
-
-/** A focus run with `left` of its length to go, from now. */
-export function focusRun(left = 0.62, minutes = TIMER.minutes): TimerRun {
-  return { kind: 'focus', total: minutes * MINUTE, endsAt: Date.now() + left * minutes * MINUTE }
-}
-
-/** A run made once, when the component mounts, so it keeps counting down across renders. */
-export function useRun(left?: number) {
-  return useState(() => focusRun(left))[0]
-}
+export { PLAYING } from './artwork'
+export { Fit, FlashIsland, ScreenEdge, WingsIsland } from './screen'
 
 /** The now-playing glyph for the compact island's left wing. */
 export function ArtworkTile() {
   return <NowPlaying.Leading track={PLAYING} />
 }
 
-/** The timer's ring for the split bubble. */
-export function TimerBubble() {
-  return <Timer.Minimal run={useRun()} />
+/** A focus round's ring for the split bubble, 62% to go. */
+export function PomodoroBubble() {
+  return <Clock.Minimal run={useRun()} />
 }
 
-/** The charging alert, for the island's `flash`. */
-export function ChargingFlash() {
-  return <PowerAlert kind="charging" level={POWER.level} minutes={POWER.untilFull} />
+/** A download landing, for the island's `flash`. */
+export function DownloadedFlash() {
+  return <RecentFiles.Saved file={DOWNLOADS[0]!} onOpen={() => {}} />
 }
+
+const noop = () => {}
 
 /** Every widget of the open island, by tab value. */
 export function widgetFor(tab: string): ReactNode {
-  if (tab === 'now-playing') return <NowPlaying track={PLAYING} />
-  if (tab === 'timer') return <Timer />
+  if (tab === 'now-playing')
+    return <NowPlaying track={PLAYING} defaultShuffle={false} defaultRepeat="all" defaultLiked />
   if (tab === 'calendar') return <Agenda events={EVENTS} now={AGENDA_NOW} />
-  if (tab === 'shelf') return <Shelf defaultValue={SHELF} onAirDrop={() => {}} />
-  if (tab === 'controls')
-    return <Controls defaultValue={{ volume: 0.6, brightness: 0.8, keyboard: 0.35 }} output="MacBook Pro Speakers" />
-  if (tab === 'devices') return <Devices devices={DEVICES} />
-  if (tab === 'stats') return <SystemStats samples={SAMPLES} />
+  if (tab === 'weather') return <Weather {...FORECAST} onRefresh={noop} />
+  if (tab === 'clock') return <Clock zones={ZONES} />
+  if (tab === 'system')
+    return <SystemStats samples={READINGS} battery={BATTERY} disk={DISK} uptime={UPTIME} processes={PROCESSES} />
+  if (tab === 'clipboard')
+    return <ClipboardHistory clips={CLIPS} defaultPinned={PINNED} now={CLIP_NOW} onDelete={noop} />
+  if (tab === 'files')
+    return (
+      <RecentFiles files={RECENT_FILES} now={FILES_NOW} onReveal={noop} onCopy={noop} onDelete={noop} onClear={noop} />
+    )
   return null
 }
 
@@ -99,9 +89,9 @@ export function DemoIsland({ defaultTab, ...props }: DemoIslandProps) {
   return (
     <Island
       leading={<ArtworkTile />}
-      trailing={<NowPlaying.Trailing />}
-      minimal={<TimerBubble />}
-      flash={<ChargingFlash />}
+      trailing={<NowPlaying.Trailing track={PLAYING} />}
+      minimal={<PomodoroBubble />}
+      flash={<DownloadedFlash />}
       expanded={<ExpandedPanel defaultTab={defaultTab} />}
       activity="now-playing"
       {...props}
@@ -137,35 +127,8 @@ export function IslandPlayground({ defaultState = 'compact' }: { defaultState?: 
   )
 }
 
-/**
- * The top of a screen: a band the island hangs from, tall enough for what it
- * shows. Narrower than `width`, it scales down whole, so the island keeps the
- * proportions it has on a Mac.
- */
-export function ScreenEdge({
-  children,
-  height = 360,
-  width = 760,
-}: {
-  children: ReactNode
-  height?: number
-  width?: number
-}) {
-  const { outer, scale } = useFitScale(width)
-  return (
-    <div ref={outer} className="w-full" style={{ height: height * scale }}>
-      <div
-        className="relative mx-auto overflow-hidden rounded-box bg-sunken"
-        style={{ width: scale < 1 ? width : '100%', maxWidth: width, height, zoom: scale }}
-      >
-        {children}
-      </div>
-    </div>
-  )
-}
-
 /** The open island on a strip of screen, on `tab`, its view replaced by `children` when given. */
-export function WidgetIsland({ tab, children, height = 340 }: { tab: string; children?: ReactNode; height?: number }) {
+export function WidgetIsland({ tab, children, height = 260 }: { tab: string; children?: ReactNode; height?: number }) {
   const tabs = panelTabs(children ? { [tab]: children } : {})
   return (
     <ScreenEdge height={height}>
@@ -175,43 +138,5 @@ export function WidgetIsland({ tab, children, height = 340 }: { tab: string; chi
         expanded={<ExpandedIsland tabs={tabs} defaultValue={tab} onSettings={() => {}} />}
       />
     </ScreenEdge>
-  )
-}
-
-/** A flash below the notch, on a strip of screen. */
-export function FlashIsland({ children, activity }: { children: ReactNode; activity?: string }) {
-  return (
-    <ScreenEdge height={112}>
-      <Island defaultState="flash" collapsedState="idle" flash={children} activity={activity} />
-    </ScreenEdge>
-  )
-}
-
-/** An activity in the compact island's wings, with a second one's bubble when `minimal` is given. */
-export function WingsIsland({
-  leading,
-  trailing,
-  minimal,
-}: {
-  leading: ReactNode
-  trailing: ReactNode
-  minimal?: ReactNode
-}) {
-  return (
-    <ScreenEdge height={64}>
-      <Island defaultState={minimal ? 'split' : 'compact'} leading={leading} trailing={trailing} minimal={minimal} />
-    </ScreenEdge>
-  )
-}
-
-/** Lays `children` out at `width` and scales them down whole when the column is narrower. */
-export function Fit({ width, children }: { width: number; children: ReactNode }) {
-  const { outer, scale } = useFitScale(width)
-  return (
-    <div ref={outer} className="flex w-full justify-center">
-      <div className="shrink-0" style={{ width: scale < 1 ? width : '100%', maxWidth: width, zoom: scale }}>
-        {children}
-      </div>
-    </div>
   )
 }

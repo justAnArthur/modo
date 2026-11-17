@@ -1,0 +1,73 @@
+import Clock from './index'
+import { WidgetIsland } from '../../../mock/island-content'
+import { CLOCK_NOW, ClockSplit, ClockWings, FocusClock, PausedBreak, PhaseDoneFlash, ZONES } from '../../../mock/clock'
+
+# Clock
+
+The time as the hero, the date above it and the time zone under it, the Pomodoro waiting with its lengths; beside it the world clocks, each with how far it is, day or night, and Tomorrow when its date differs.
+
+<WidgetIsland tab="clock">
+  <Clock zones={ZONES} now={CLOCK_NOW} />
+</WidgetIsland>
+
+# 24 hours, with seconds
+
+`hour12={false}` and `seconds`: the seconds tick muted, on each second's edge.
+
+<WidgetIsland tab="clock">
+  <Clock zones={ZONES} hour12={false} seconds pomodoro={{ focus: 50, shortBreak: 10, longBreak: 30, rounds: 3 }} />
+</WidgetIsland>
+
+# Focus
+
+A run takes the widget over: the ring in the phase's hue, the time left, the round, when it ends and what's next, and the next phases with their start times. Pause, skip, +1 min or reset it.
+
+<WidgetIsland tab="clock">
+  <FocusClock />
+</WidgetIsland>
+
+# A break, paused
+
+A paused phase keeps the time it had left and says so.
+
+<WidgetIsland tab="clock">
+  <PausedBreak />
+</WidgetIsland>
+
+# Ready to start
+
+`Start focus` begins the first round; at a phase's end the next one waits here, paused at its whole length.
+
+<WidgetIsland tab="clock">
+  <Clock zones={ZONES} now={CLOCK_NOW} defaultValue={{ phase: 'long-break', round: 4, total: 15 * 60_000, remaining: 15 * 60_000 }} />
+</WidgetIsland>
+
+# Clock only
+
+`pomodoro={false}` leaves the Pomodoro out.
+
+<WidgetIsland tab="clock">
+  <Clock zones={ZONES.slice(0, 2)} now={CLOCK_NOW} pomodoro={false} />
+</WidgetIsland>
+
+# Compact
+
+`Clock.Leading` and `Clock.Trailing` in the wings while a phase runs: the ring and the time left. Without a run they show nothing.
+
+<ClockWings />
+
+# Minimal
+
+`Clock.Minimal`, the ring, in the split island's bubble.
+
+<ClockSplit />
+
+# Focus done
+
+`Clock.PhaseDone` at the end of a focus round, with a button to start the break.
+
+<PhaseDoneFlash ended={{ phase: 'focus', round: 2 }} />
+
+# Break over
+
+<PhaseDoneFlash ended={{ phase: 'short-break', round: 2 }} />

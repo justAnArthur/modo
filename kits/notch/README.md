@@ -40,7 +40,7 @@ export function NotchPanel({ state, onStateChange }) {
       expandOnHover
       leading={<Artwork />}
       trailing={<Equalizer playing />}
-      flash={<IslandFlash title="Charging" caption="38 min until full" value="82%" tone="success" />}
+      flash={<IslandFlash title="Focus done" caption="A short break next" value="5 min" tone="success" />}
       expanded={<Panel />}
     />
   )
@@ -52,20 +52,20 @@ export function NotchPanel({ state, onStateChange }) {
 | `Island` | The black outline hanging from the top edge, its five states, the compact wings, the split bubble that melts off through modo-ui's goo, the content swap. `state` / `defaultState` / `onStateChange`; geometry from `notchWidth`, `notchHeight`, `panelWidth`, `panelHeight`. |
 | `IslandTabs` | Icon tabs in both wings around the notch, modo-ui's liquid indicator crossing the gap; overflow scrolls behind the notch. `value` / `defaultValue` / `onValueChange`, `onHoverChange` for a title preview. |
 | `IslandFlash` | The transient alert's layout: icon, title, caption, value, trailing glyph, action. |
+| `Widget` | The frame every open-island widget is built in (picture, main column, aside past a hairline) and its parts: `.Header`, `.Title`, `.Subtitle`, `.Figure`, `.Meta` / `.MetaItem`, `.Action`, `.Section`, `.Row`, `.Chip`, `.Message`. |
 | `Equalizer` | Now-playing level bars on a compositor-only Web Animations loop. |
-| `BatteryGlyph` | A battery that fills to its level, with a charging bolt and status tones. |
-| `MediaScrubber` | Elapsed / scrubber / remaining on modo-ui's Slider; seeks once on commit. |
+| `MediaScrubber` | Elapsed / scrubber / remaining on modo-ui's Slider; seeks once on commit; `quiet` is a thin line until hovered. |
 | `Countdown` | Time left as `4:05` or `4m`, re-rendering only on the shown unit's edge. |
-| `NowPlaying` | The player for the open island, with `.Leading` / `.Trailing` (compact wings), `.Minimal` (split bubble), `.Flash` (track change) and `.Artwork`. |
-| `PowerAlert` | Charging, on battery, low and critical flashes. |
-| `Shelf` | Files dropped on the notch: tiles with a context menu, AirDrop and Clear; `.Drop` (the drop target flash), `.Leading`, `.Trailing`. |
-| `Timer` | Picker, running ring and countdown, Pomodoro cycles; `.Leading`, `.Trailing`, `.Minimal`, `.Done` (time's up). |
-| `Agenda` | Today and tomorrow, access states; `.Leading`, `.Trailing`, `.Minimal`, `.UpNext`, `.Starting` (the countdown to the next event). |
-| `Controls` | Volume, brightness and keyboard backlight sliders; `.Level` is the HUD flash. |
-| `Devices` | Bluetooth devices and their batteries; `.Connected` flash. |
-| `SystemStats` | CPU, memory and network tiles with sparklines; `.Leading`, `.Trailing`. |
+| `NowPlaying` | The player for the open island (artwork that never blinks, tinted glow, scrubber, transport, source and output, shuffle / repeat / like), with `.Leading` / `.Trailing` (compact wings), `.Minimal` (split bubble), `.Flash` (track change) and `.Artwork`. |
+| `Agenda` | The next event as the hero (countdown, Join), the rest of today and tomorrow beside it, access states; `.Leading`, `.Trailing`, `.Minimal`, `.UpNext`, `.Starting` (the countdown to the next event). |
+| `Weather` | The temperature now as the hero, the next hours and tomorrow beside it, °C / °F, loading, offline, error and location-access states; `.Leading`, `.Trailing`, `.Minimal`, `.Alert` (rain soon, a warning); `conditionFromCode` reads a WMO code. |
+| `Clock` | The time, the date and world clocks, and a Pomodoro cycle that takes the widget over while it runs (pause, skip, +1 min, reset); `.Leading`, `.Trailing`, `.Minimal`, `.PhaseDone` (focus done, break over); `startPomodoro`, `advancePomodoro`, `resumePomodoro`. |
+| `SystemStats` | The CPU load (or memory pressure) as the hero with its trend, battery, disk and uptime under it, the busiest processes beside it; `.Leading`, `.Trailing`, `.Minimal`. |
+| `ClipboardHistory` | The latest clip as the hero (text, link, image, color, file), the searchable history beside it with pins, pause and ignored apps; `.Leading`, `.Trailing`, `.Copied`. |
+| `RecentFiles` | The newest download or screenshot as the hero, ready to open, reveal, copy or drag out, the ones before it beside it, a download under way; `.Leading`, `.Trailing`, `.Minimal`, `.Saved`. |
 | `ExpandedIsland` | The open island's layout: tabs in the wings, the tab's title, a fixed-height scrolling view. |
 | `SettingsWindow` | The app's settings: General, Plugins, Permissions, About and each plugin's page. |
+| `useStableArtwork`, `useArtworkTint` | Artwork held across updates and the tint read from an image (`@justanarthur/modo-ui-notch/lib/artwork`). |
 | `useIsland()` | The enclosing Island's state, notch and panel geometry and current outline. |
 | `shapeFor`, `islandPath`, `stripLayout`, … | The pure geometry (`@justanarthur/modo-ui-notch/lib/geometry`). |
 

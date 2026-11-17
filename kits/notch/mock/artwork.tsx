@@ -4,14 +4,23 @@
  */
 
 import { cn } from '@justanarthur/modo-ui/lib/utils'
+import type { NowPlayingTrack } from '../blocks/activities/now-playing'
+import { TRACK } from './data'
 
-type ArtworkVariant = 'aurora' | 'dusk' | 'night'
+export type ArtworkVariant = 'aurora' | 'dusk' | 'night'
 
 // Literal table: UnoCSS only generates the classes it can read whole.
 const FILL: Record<ArtworkVariant, string> = {
   aurora: 'bg-linear-to-br from-status-info via-brand to-status-success',
   dusk: 'bg-linear-to-br from-status-warning via-status-error to-brand',
   night: 'bg-linear-to-tr from-ink via-brand to-status-info',
+}
+
+/** The color each variant leans to: the artwork's tint, data a player would read from the image. */
+export const ARTWORK_TINT: Record<ArtworkVariant, string> = {
+  aurora: 'var(--badge-cyan)',
+  dusk: 'var(--badge-orange)',
+  night: 'var(--badge-violet)',
 }
 
 /** A square of generated art that fills its tile. */
@@ -23,3 +32,6 @@ export function MockArtwork({ variant = 'aurora', className }: { variant?: Artwo
     </span>
   )
 }
+
+/** The mock track, with generated artwork. */
+export const PLAYING: NowPlayingTrack = { ...TRACK, artwork: <MockArtwork />, tint: ARTWORK_TINT.aurora }

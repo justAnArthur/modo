@@ -1,0 +1,83 @@
+import ClipboardHistory from './index'
+import { FlashIsland, WidgetIsland, WingsIsland } from '../../../mock/island-content'
+import { CLIP_NOW, CLIPS, PINNED } from '../../../mock/clipboard'
+
+# Latest clip
+
+The newest clip as the hero, with where it came from and Copy; the history beside it, pinned clips on top. Arrow keys move the selection, Enter copies.
+
+<WidgetIsland tab="clipboard">
+  <ClipboardHistory clips={CLIPS} defaultPinned={PINNED} now={CLIP_NOW} onDelete={() => {}} />
+</WidgetIsland>
+
+# Kinds
+
+Each kind previews as what it is.
+
+## Link
+
+The domain with its favicon, the page's title, the path.
+
+<WidgetIsland tab="clipboard">
+  <ClipboardHistory clips={CLIPS} defaultValue="docs" now={CLIP_NOW} onDelete={() => {}} />
+</WidgetIsland>
+
+## Image
+
+<WidgetIsland tab="clipboard">
+  <ClipboardHistory clips={CLIPS} defaultValue="shot" now={CLIP_NOW} onDelete={() => {}} />
+</WidgetIsland>
+
+## Color
+
+<WidgetIsland tab="clipboard">
+  <ClipboardHistory clips={CLIPS} defaultValue="brand" defaultPinned={PINNED} now={CLIP_NOW} onDelete={() => {}} />
+</WidgetIsland>
+
+## File
+
+<WidgetIsland tab="clipboard">
+  <ClipboardHistory clips={CLIPS} defaultValue="brief" now={CLIP_NOW} onDelete={() => {}} />
+</WidgetIsland>
+
+# Searching
+
+`defaultQuery` (or `query`) narrows the list; the hero follows the first match.
+
+<WidgetIsland tab="clipboard">
+  <ClipboardHistory clips={CLIPS} defaultQuery="main" now={CLIP_NOW} />
+</WidgetIsland>
+
+# Paused, an app ignored
+
+`paused` stops recording, with a chip and Resume on the context line; `ignoredApp` says whose copies are never kept.
+
+<WidgetIsland tab="clipboard">
+  <ClipboardHistory clips={CLIPS} defaultPaused ignoredApp="1Password" now={CLIP_NOW} />
+</WidgetIsland>
+
+# Empty
+
+<WidgetIsland tab="clipboard">
+  <ClipboardHistory clips={[]} />
+</WidgetIsland>
+
+# Empty and paused
+
+<WidgetIsland tab="clipboard">
+  <ClipboardHistory clips={[]} defaultPaused />
+</WidgetIsland>
+
+# Compact
+
+`ClipboardHistory.Leading` and `ClipboardHistory.Trailing`: the glyph and the clips that came in since the island was open.
+
+<WingsIsland leading={<ClipboardHistory.Leading />} trailing={<ClipboardHistory.Trailing count={3} />} />
+
+# Copied
+
+`ClipboardHistory.Copied`, the flash when something is copied, with Pin.
+
+<FlashIsland>
+  <ClipboardHistory.Copied clip={CLIPS[3]} onPin={() => {}} />
+</FlashIsland>

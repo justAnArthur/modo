@@ -1,5 +1,5 @@
 import Island from './index'
-import { ArtworkTile, ChargingFlash, DemoIsland, ExpandedPanel, IslandPlayground, ScreenEdge, TimerBubble } from '../../../mock/island-content'
+import { ArtworkTile, DemoIsland, DownloadedFlash, ExpandedPanel, IslandPlayground, PomodoroBubble, ScreenEdge } from '../../../mock/island-content'
 import Equalizer from '../../indicators/equalizer'
 
 # States
@@ -29,7 +29,7 @@ An activity in the wings: its glyph on the left, its live value on the right.
 A second activity in a bubble off the right end; it melts off and back through the goo.
 
 <ScreenEdge height={64}>
-  <Island defaultState="split" leading={<ArtworkTile />} trailing={<Equalizer />} minimal={<TimerBubble />} />
+  <Island defaultState="split" leading={<ArtworkTile />} trailing={<Equalizer />} minimal={<PomodoroBubble />} />
 </ScreenEdge>
 
 # Flash
@@ -37,14 +37,14 @@ A second activity in a bubble off the right end; it melts off and back through t
 A moment's alert below the notch.
 
 <ScreenEdge height={112}>
-  <Island defaultState="flash" flash={<ChargingFlash />} />
+  <Island defaultState="flash" flash={<DownloadedFlash />} />
 </ScreenEdge>
 
 # Expanded
 
 The open panel: tabs in the wings around the notch, the tab's title and its widget.
 
-<ScreenEdge height={340}>
+<ScreenEdge height={260}>
   <Island defaultState="expanded" collapsedState="compact" leading={<ArtworkTile />} trailing={<Equalizer />} expanded={<ExpandedPanel />} />
 </ScreenEdge>
 

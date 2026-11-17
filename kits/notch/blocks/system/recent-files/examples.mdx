@@ -1,0 +1,66 @@
+import RecentFiles from './index'
+import { FlashIsland, PLAYING, WidgetIsland, WingsIsland } from '../../../mock/island-content'
+import { DOWNLOAD, DOWNLOADS, FILES_NOW, RECENT_FILES, SCREENSHOTS } from '../../../mock/files'
+import NowPlaying from '../../activities/now-playing'
+
+# Downloads
+
+The newest download as the hero, ready to open, reveal, copy or drag out; the ones before it as rows beside it.
+
+<WidgetIsland tab="files">
+  <RecentFiles files={RECENT_FILES} now={FILES_NOW} onReveal={() => {}} onCopy={() => {}} onDelete={() => {}} onClear={() => {}} onDragStart={() => {}} />
+</WidgetIsland>
+
+# Screenshots
+
+On Screenshots the ones before the newest are image tiles: a screenshot is found by its look.
+
+<WidgetIsland tab="files">
+  <RecentFiles files={RECENT_FILES} defaultValue="screenshots" now={FILES_NOW} onReveal={() => {}} onCopy={() => {}} onDelete={() => {}} onClear={() => {}} />
+</WidgetIsland>
+
+# Downloading
+
+A `download` under way takes the hero: its progress, how much is in, the speed and the time left.
+
+<WidgetIsland tab="files">
+  <RecentFiles files={RECENT_FILES} download={DOWNLOAD} now={FILES_NOW} onCancelDownload={() => {}} />
+</WidgetIsland>
+
+# Nothing yet
+
+Each folder says when it is empty; the switch stays.
+
+<WidgetIsland tab="files">
+  <RecentFiles files={SCREENSHOTS} />
+</WidgetIsland>
+
+# Compact
+
+`RecentFiles.Leading` and `RecentFiles.Trailing`: the download's progress in the wings.
+
+<WingsIsland leading={<RecentFiles.Leading />} trailing={<RecentFiles.Trailing download={DOWNLOAD} />} />
+
+# Minimal
+
+`RecentFiles.Minimal`, the progress as a ring in the split island's bubble, music in the wings.
+
+<WingsIsland
+  leading={<NowPlaying.Leading track={PLAYING} />}
+  trailing={<NowPlaying.Trailing track={PLAYING} />}
+  minimal={<RecentFiles.Minimal download={DOWNLOAD} />}
+/>
+
+# Downloaded
+
+`RecentFiles.Saved`, the flash when a download lands, with Open.
+
+<FlashIsland>
+  <RecentFiles.Saved file={DOWNLOADS[0]} onOpen={() => {}} />
+</FlashIsland>
+
+# Screenshot saved
+
+<FlashIsland>
+  <RecentFiles.Saved file={SCREENSHOTS[0]} onOpen={() => {}} />
+</FlashIsland>

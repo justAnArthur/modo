@@ -1,23 +1,52 @@
 import SystemStats from './index'
-import { WidgetIsland, WingsIsland } from '../../../mock/island-content'
-import { SAMPLES } from '../../../mock/data'
+import { PLAYING, WidgetIsland, WingsIsland } from '../../../mock/island-content'
+import { BATTERY, CHARGING, DISK, PRESSURE_READINGS, PROCESSES, READINGS, UPTIME } from '../../../mock/system'
+import NowPlaying from '../../activities/now-playing'
 
 # System
 
-The latest reading as the figure, every reading so far as the trend.
+The CPU load as the hero with its trend, the facts under it, the busiest processes beside it.
 
-<WidgetIsland tab="stats">
-  <SystemStats samples={SAMPLES} />
+<WidgetIsland tab="system">
+  <SystemStats samples={READINGS} battery={BATTERY} disk={DISK} uptime={UPTIME} processes={PROCESSES} />
+</WidgetIsland>
+
+# Memory pressure
+
+When memory is what's tight, `hero="memory"` makes its pressure the figure; the line takes the warning hue.
+
+<WidgetIsland tab="system">
+  <SystemStats samples={PRESSURE_READINGS} hero="memory" battery={CHARGING} disk={DISK} uptime={UPTIME} processes={PROCESSES} />
+</WidgetIsland>
+
+# Without processes
+
+No `processes`, no aside: the hero takes the width.
+
+<WidgetIsland tab="system">
+  <SystemStats samples={READINGS} disk={DISK} uptime={UPTIME} />
 </WidgetIsland>
 
 # Measuring
 
-Before the first reading.
+Before the first reading the figures are dashes over the Sparkline's baseline; the battery and the disk need no second reading.
 
-<WidgetIsland tab="stats">
-  <SystemStats samples={[]} />
+<WidgetIsland tab="system">
+  <SystemStats samples={[]} battery={BATTERY} disk={DISK} uptime={UPTIME} />
 </WidgetIsland>
 
 # Compact
 
-<WingsIsland leading={<SystemStats.Leading />} trailing={<SystemStats.Trailing sample={SAMPLES[SAMPLES.length - 1]} />} />
+`SystemStats.Leading` and `SystemStats.Trailing`: the CPU glyph and its load in the wings.
+
+<WingsIsland leading={<SystemStats.Leading />} trailing={<SystemStats.Trailing sample={READINGS[READINGS.length - 1]} />} />
+
+# Minimal
+
+`SystemStats.Minimal`, the load as a ring in the split island's bubble, music in the wings.
+
+<WingsIsland
+  leading={<NowPlaying.Leading track={PLAYING} />}
+  trailing={<NowPlaying.Trailing track={PLAYING} />}
+  minimal={<SystemStats.Minimal sample={READINGS[READINGS.length - 1]} />}
+/>

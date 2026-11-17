@@ -19,3 +19,11 @@ Elapsed, the scrubber and the time remaining, running on a second at a time. Dra
 <div className="w-full max-w-md">
   <MediaScrubber position={12} duration={330} size="default" />
 </div>
+
+# Quiet
+
+`quiet` shows a thin line of progress at rest; hover or focus it and the scrubber fades in to seek. Touch always gets the scrubber.
+
+<div className="dark w-full max-w-md rounded-box bg-ink px-5 py-4 text-foreground">
+  <MediaScrubber position={71} duration={243} playing quiet />
+</div>

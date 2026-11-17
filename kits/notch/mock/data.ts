@@ -3,11 +3,8 @@
  * and examples read it; nothing here ships in the barrel.
  */
 
-import { Activity, CalendarDays, Files, Headphones, Music, SlidersHorizontal, Timer } from 'lucide-react'
+import { Activity, CalendarDays, ClipboardList, Clock3, CloudSun, FolderDown, Music } from 'lucide-react'
 import type { AgendaEvent } from '../blocks/activities/agenda'
-import type { ShelfFile } from '../blocks/activities/shelf'
-import type { DeviceInfo } from '../blocks/system/devices'
-import type { StatsSample } from '../blocks/system/system-stats'
 import type { IslandTab } from '../components/island/island-tabs'
 
 export interface Track {
@@ -15,6 +12,8 @@ export interface Track {
   artist: string
   album: string
   source: string
+  output: string
+  outputKind: 'built-in' | 'headphones' | 'speaker' | 'airplay'
   /** Seconds. */
   duration: number
   /** Seconds. */
@@ -26,19 +25,35 @@ export const TRACK: Track = {
   artist: 'M83',
   album: "Hurry Up, We're Dreaming",
   source: 'Music',
+  output: 'AirPods Pro',
+  outputKind: 'headphones',
   duration: 243,
   position: 71,
 }
 
 export const TRACKS: Track[] = [
   TRACK,
-  { title: 'Teardrop', artist: 'Massive Attack', album: 'Mezzanine', source: 'Spotify', duration: 330, position: 12 },
-  { title: 'Nightcall', artist: 'Kavinsky', album: 'OutRun', source: 'Safari', duration: 258, position: 190 },
+  {
+    title: 'Teardrop',
+    artist: 'Massive Attack',
+    album: 'Mezzanine',
+    source: 'Spotify',
+    output: 'Living room',
+    outputKind: 'airplay',
+    duration: 330,
+    position: 12,
+  },
+  {
+    title: 'Nightcall',
+    artist: 'Kavinsky',
+    album: 'OutRun',
+    source: 'Safari',
+    output: 'MacBook Pro Speakers',
+    outputKind: 'built-in',
+    duration: 258,
+    position: 190,
+  },
 ]
-
-export const POWER = { level: 82, charging: true, untilFull: 38, remaining: 252 }
-
-export const TIMER = { label: 'Focus', minutes: 25 }
 
 const MINUTE = 60_000
 const at = (day: number, hours: number, minutes: number) => {
@@ -110,44 +125,15 @@ export function soonEvent(minutes = 4): AgendaEvent {
   }
 }
 
-export const DEVICES: DeviceInfo[] = [
-  { id: 'airpods', name: 'AirPods Pro', kind: 'headphones', connected: true, battery: 74 },
-  { id: 'keyboard', name: 'Magic Keyboard', kind: 'keyboard', connected: true, battery: 18 },
-  { id: 'mouse', name: 'Magic Mouse', kind: 'mouse', connected: false },
-  { id: 'controller', name: 'DualSense', kind: 'gamepad', connected: true, battery: 56, charging: true },
-  { id: 'speaker', name: 'Living room', kind: 'speaker', connected: false },
-]
-
-export const FILES: ShelfFile[] = [
-  { id: 'brief', name: 'Island brief.pdf' },
-  { id: 'cover', name: 'Cover.png' },
-  { id: 'notes', name: 'Notes.md' },
-  { id: 'demo', name: 'Demo.mov' },
-  { id: 'archive', name: 'Assets.zip' },
-  { id: 'theme', name: 'theme.ts' },
-]
-
-const wave = (i: number, base: number, swing: number) =>
-  base + swing * Math.sin(i / 2.4) + swing * 0.4 * Math.sin(i * 1.7)
-
-/** Thirty seconds of samples, oldest first. */
-export const SAMPLES: StatsSample[] = Array.from({ length: 30 }, (_, i) => ({
-  cpu: Math.min(1, Math.max(0.02, wave(i, 0.32, 0.14))),
-  memoryUsed: wave(i, 11.2e9, 0.25e9),
-  memoryTotal: 16e9,
-  netIn: Math.max(0, wave(i, 2.4e6, 1.6e6)),
-  netOut: Math.max(0, wave(i + 5, 0.4e6, 0.3e6)),
-}))
-
 /** The open island's tabs: one per widget. */
 export const TABS: IslandTab[] = [
   { value: 'now-playing', label: 'Now Playing', icon: Music },
-  { value: 'timer', label: 'Timer', icon: Timer },
   { value: 'calendar', label: 'Calendar', icon: CalendarDays },
-  { value: 'shelf', label: 'Shelf', icon: Files },
-  { value: 'controls', label: 'Controls', icon: SlidersHorizontal },
-  { value: 'devices', label: 'Devices', icon: Headphones },
-  { value: 'stats', label: 'System', icon: Activity },
+  { value: 'weather', label: 'Weather', icon: CloudSun },
+  { value: 'clock', label: 'Clock', icon: Clock3 },
+  { value: 'system', label: 'System', icon: Activity },
+  { value: 'clipboard', label: 'Clipboard', icon: ClipboardList },
+  { value: 'files', label: 'Recent files', icon: FolderDown },
 ]
 
 export const MENUS = ['Finder', 'File', 'Edit', 'View', 'Go', 'Window', 'Help']

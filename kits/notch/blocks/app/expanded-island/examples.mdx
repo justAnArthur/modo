@@ -1,17 +1,18 @@
 import ExpandedIsland from './index'
 import Island from '../../../components/island/island'
 import NowPlaying from '../../activities/now-playing'
-import Timer from '../../activities/timer'
+import Weather from '../../activities/weather'
 import Agenda from '../../activities/agenda'
 import { ExpandedPanel, PLAYING, ScreenEdge } from '../../../mock/island-content'
 import { AGENDA_NOW, EVENTS } from '../../../mock/data'
-import { CalendarDays, Music, Timer as TimerIcon } from 'lucide-react'
+import { FORECAST } from '../../../mock/weather'
+import { CalendarDays, CloudSun, Music } from 'lucide-react'
 
 # Every widget
 
 Tabs in the wings around the notch, settings at the far right; hover a tab to preview its title.
 
-<ScreenEdge height={340}>
+<ScreenEdge height={260}>
   <Island defaultState="expanded" collapsedState="idle" expanded={<ExpandedPanel />} />
 </ScreenEdge>
 
@@ -19,7 +20,7 @@ Tabs in the wings around the notch, settings at the far right; hover a tab to pr
 
 `tabs` takes each tab's icon, label and view.
 
-<ScreenEdge height={340}>
+<ScreenEdge height={260}>
   <Island
     defaultState="expanded"
     collapsedState="idle"
@@ -28,8 +29,8 @@ Tabs in the wings around the notch, settings at the far right; hover a tab to pr
         defaultValue="calendar"
         tabs={[
           { value: 'music', label: 'Now Playing', icon: Music, content: <NowPlaying track={PLAYING} /> },
-          { value: 'timer', label: 'Timer', icon: TimerIcon, content: <Timer /> },
           { value: 'calendar', label: 'Calendar', icon: CalendarDays, content: <Agenda events={EVENTS} now={AGENDA_NOW} /> },
+          { value: 'weather', label: 'Weather', icon: CloudSun, content: <Weather {...FORECAST} /> },
         ]}
       />
     }
@@ -40,6 +41,6 @@ Tabs in the wings around the notch, settings at the far right; hover a tab to pr
 
 The content area keeps its height and scrolls a taller view, its edges fading.
 
-<ScreenEdge height={260}>
-  <Island defaultState="expanded" collapsedState="idle" panelHeight={240} expanded={<ExpandedPanel defaultTab="calendar" />} />
+<ScreenEdge height={220}>
+  <Island defaultState="expanded" collapsedState="idle" panelHeight={196} expanded={<ExpandedPanel defaultTab="calendar" />} />
 </ScreenEdge>

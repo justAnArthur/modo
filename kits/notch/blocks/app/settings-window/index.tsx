@@ -16,7 +16,7 @@ import type { IconComponent } from '@justanarthur/modo-ui/lib/icon-context'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import ScrollArea from '@justanarthur/modo-ui/primitives/layout/scroll-area'
-import { Info, Puzzle, Settings2, ShieldCheck } from 'lucide-react'
+import { ChevronRight, Info, Puzzle, Settings2, ShieldCheck } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 type ScreensPreference = 'notched' | 'all'
@@ -149,9 +149,10 @@ interface PluginsProps {
   plugins: SettingsPlugin[]
   enabled: Record<string, boolean>
   onChange: (enabled: Record<string, boolean>) => void
+  onOpen: (id: string) => void
 }
 
-function Plugins({ plugins, enabled, onChange }: PluginsProps) {
+function Plugins({ plugins, enabled, onChange, onOpen }: PluginsProps) {
   return (
     <Page title="Plugins" lead="Each plugin adds activities and widgets to the island.">
       {plugins.length === 0 ? (
@@ -172,6 +173,16 @@ function Plugins({ plugins, enabled, onChange }: PluginsProps) {
                   }
                   description={plugin.description}
                 >
+                  {plugin.settings !== undefined && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`${plugin.name} settings`}
+                      onClick={() => onOpen(plugin.id)}
+                    >
+                      <ChevronRight />
+                    </Button>
+                  )}
                   <Switch
                     aria-label={plugin.name}
                     className={LIST_SWITCH}
@@ -260,10 +271,10 @@ const PAGES: { value: string; label: string; icon: IconComponent }[] = [
  * it never folds into a drawer) lists the pages under the app's `name`, then
  * the plugins that bring settings. General holds the launch at login Switch
  * and a ChoiceList of the screens the island shows on. Plugins lists each
- * installed plugin with its glyph, its line and a Switch that turns it on or
- * off. Permissions shows what macOS granted as a StatusDot per row, with
- * Open Settings beside one that isn't granted, and a spinner while it's
- * being read. About lists the `about` rows. A plugin's page shows its
+ * installed plugin with its glyph, its line, a Switch that turns it on or
+ * off and, for one that brings settings, a chevron to its page. Permissions
+ * shows what macOS granted as a StatusDot per row, with Open Settings beside
+ * one that isn't granted, and a spinner while it's being read. About lists the `about` rows. A plugin's page shows its
  * `settings` node under its name.
  *
  * The page, the preferences and the plugins' states each run both ways
@@ -338,7 +349,14 @@ export default function SettingsWindow({
         <ScrollArea key={page} className="h-full" viewportClassName="scroll-fade">
           <div className="mx-auto flex w-full max-w-160 flex-col gap-8 p-8">
             {page === 'general' && <General preferences={preferences} onChange={setPreferences} />}
-            {page === 'plugins' && <Plugins plugins={plugins} enabled={enabled} onChange={setEnabled} />}
+            {page === 'plugins' && (
+              <Plugins
+                plugins={plugins}
+                enabled={enabled}
+                onChange={setEnabled}
+                onOpen={id => setPage(`plugin:${id}`)}
+              />
+            )}
             {page === 'permissions' && <Permissions permissions={permissions} onOpen={onOpenPermission} />}
             {page === 'about' && <About rows={about} />}
             {plugin && (

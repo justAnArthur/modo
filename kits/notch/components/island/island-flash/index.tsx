@@ -1,7 +1,7 @@
 /*!
  * Local addition: the layout of a notch app's transient alert, the island's
  * `flash` content. Generalised from Just Notch's power, HUD and now-playing
- * flashes.
+ * flashes; the kit's blocks build their own on it.
  */
 
 import { cn } from '@justanarthur/modo-ui/lib/utils'
@@ -27,9 +27,9 @@ interface IslandFlashProps {
   icon?: ReactNode
   /** The hue of the icon and the `value`. Defaults to `'default'`. */
   tone?: IslandFlashTone
-  /** A figure at the end, in the tone's hue: `82%`, a level. */
+  /** A figure at the end, in the tone's hue: `15 min`, a level. */
   value?: ReactNode
-  /** Content after it, such as a BatteryGlyph or an Equalizer. */
+  /** Content after it, such as an Equalizer. */
   trailing?: ReactNode
   /** One control at the far end, such as a ghost Button. */
   action?: ReactNode
@@ -44,7 +44,7 @@ interface IslandFlashProps {
  * It lays out one row the height of the island's flash: the icon in a fixed
  * square, the title and caption truncating beside it, then the `value`, any
  * `trailing` glyph and an `action`. The icon and the value take the tone's
- * status hue (a charge in success, a low battery in warning); everything else
+ * status hue (a focus round done in success, rain coming in warning); everything else
  * keeps the two text colors. Pass it as the Island's `flash`.
  *
  * @example {@include ./examples.mdx}

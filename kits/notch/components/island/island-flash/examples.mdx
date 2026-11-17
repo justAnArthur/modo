@@ -1,34 +1,31 @@
 import IslandFlash from './index'
-import BatteryGlyph from '../../indicators/battery-glyph'
 import Equalizer from '../../indicators/equalizer'
 import Button from '@justanarthur/modo-ui/components/actions/button'
-import { BatteryLow, Headphones, Music, Zap } from 'lucide-react'
+import { ClipboardCheck, CloudRain, Music, Target } from 'lucide-react'
 
-# Charging
+# Focus done
 
 The icon and the figure take the tone's hue.
 
 <div className="dark w-full max-w-md rounded-box bg-ink px-5 py-4 text-foreground">
   <IslandFlash
-    icon={<Zap size={18} strokeWidth={1.5} fill="currentColor" />}
+    icon={<Target size={18} strokeWidth={1.5} />}
     tone="success"
-    title="Charging"
-    caption="38 min until full"
-    value="82%"
-    trailing={<BatteryGlyph level={82} charging />}
+    title="Focus done"
+    caption="Round 2 of 4 · a short break next"
+    value="5 min"
   />
 </div>
 
-# Low battery
+# Rain soon
 
 <div className="dark w-full max-w-md rounded-box bg-ink px-5 py-4 text-foreground">
   <IslandFlash
-    icon={<BatteryLow size={18} strokeWidth={1.5} />}
+    icon={<CloudRain size={18} strokeWidth={1.5} />}
     tone="warning"
-    title="Low battery"
-    caption="Plug in soon"
-    value="18%"
-    trailing={<BatteryGlyph level={18} />}
+    title="Rain soon"
+    caption="Light rain for about an hour"
+    value="15 min"
   />
 </div>
 
@@ -36,10 +33,10 @@ The icon and the figure take the tone's hue.
 
 <div className="dark w-full max-w-md rounded-box bg-ink px-5 py-4 text-foreground">
   <IslandFlash
-    icon={<Headphones size={18} strokeWidth={1.5} />}
-    title="AirPods Pro"
-    caption="Connected"
-    action={<Button variant="ghost" size="compact">Settings</Button>}
+    icon={<ClipboardCheck size={18} strokeWidth={1.5} />}
+    title="Copied"
+    caption="bun run build && bun run check"
+    action={<Button variant="ghost" size="compact">Pin</Button>}
   />
 </div>
 

@@ -11,7 +11,7 @@ import ExpandedIsland from '../../blocks/app/expanded-island'
 import Island from '../../components/island/island'
 import type { IslandState } from '../../lib/geometry'
 import { TABS } from '../../mock/data'
-import { ArtworkTile, panelTabs } from '../../mock/island-content'
+import { ArtworkTile, PLAYING, panelTabs } from '../../mock/island-content'
 import { SceneDesk } from '../../mock/scene'
 
 interface WidgetsProps {
@@ -22,15 +22,15 @@ interface WidgetsProps {
 }
 
 /**
- * The open island with a tab per widget: Now Playing, Timer, Calendar,
- * Shelf, Controls, Devices and System.
+ * The open island with a tab per widget: Now Playing, Calendar, Weather,
+ * Clock, System, Clipboard and Recent files.
  *
  * The tabs sit in the wings around the notch with settings at the far
  * right; the tab's title runs under them and its view fills a content area
  * of fixed height that scrolls a taller view. Pick a tab in the island, or
  * under the screen, which drives the same selection. Every view is a block
- * on mock data (NowPlaying, Timer, Agenda, Shelf, Controls, Devices,
- * SystemStats) inside ExpandedIsland. Escape, or a press outside the
+ * on mock data (NowPlaying, Agenda, Weather, Clock, SystemStats,
+ * ClipboardHistory, RecentFiles) inside ExpandedIsland. Escape, or a press outside the
  * controls, closes it to the music in the wings.
  *
  * @example {@include ./examples.mdx}
@@ -54,7 +54,7 @@ export default function Widgets({ tab: initial = 'now-playing', picker = true }:
           onStateChange={setState}
           collapsedState="compact"
           leading={<ArtworkTile />}
-          trailing={<NowPlaying.Trailing />}
+          trailing={<NowPlaying.Trailing track={PLAYING} />}
           expanded={<ExpandedIsland tabs={panelTabs()} value={tab} onValueChange={setTab} onSettings={() => {}} />}
         />
       }
