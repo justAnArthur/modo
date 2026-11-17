@@ -2,9 +2,9 @@
 
 The packages are released from this repo by conventional commits (see [CONTRIBUTING.md](CONTRIBUTING.md)): `@justanarthur/modo` (`lib/`), `@justanarthur/modo-ui` (`ui/`) and `@justanarthur/modo-ui-ai` (`kits/ai/`). Each release also gets GitHub release notes generated from its commits.
 
-## Unreleased
+## 2026-11-17
 
-### @justanarthur/modo
+### @justanarthur/modo 1.1.0
 
 - **Open any example full screen.** Example cards get Open full screen beside Copy and Show code: the example alone on its item's route (`?example=<title slug>`, else its position), without the chrome, across the whole viewport. A modified or middle click opens a new tab; Escape, Back or the close button returns. The Icon contract gains `maximize`, the Button contract passes the click event and `onAuxClick`; new hooks `example-solo`, `example-solo-stage`, `example-solo-actions`.
 - **Grouped Select options.** `SelectOption` takes an optional `group`: a Select lists the ungrouped options first, then each group under its heading, in first-seen order. Plain Select renders `<optgroup>`s; a host Select that ignores `group` keeps showing a flat list. The demo switcher uses it to list design systems and kits apart.
@@ -14,7 +14,7 @@ Fixes:
 - An inline `@example` written as bare JSX (`@example <X />`, or JSX lines after `@example`) is an example instead of being dropped; one with no code at all is a warning.
 - Without typescript installed, the plain parser reads an item written as `const X = Object.assign(function X(…) {…}, { Part })`: its doc block on the const, its props from the function.
 
-### @justanarthur/modo-ui
+### @justanarthur/modo-ui 2.0.0
 
 - The docs Icon draws `maximize` (lucide `Maximize2`).
 - New primitives: `Sortable` (drag or keyboard reorder, `Sortable.Handle`, `useSortableHandle`, `as="none"` inside a host list), `VirtualList` (windowed rows, fixed or measured, `scrollToIndex`) and `Resizable` (split panes with keyboard separators, collapsible panels, nesting).
@@ -83,7 +83,7 @@ Fixes:
 - The compound parts of the function roots (`Popover.Trigger`, `Dialog.Content`, `Select.Item`, `Tooltip.Provider`, `Morph.Part`, …) are typed in the published `.d.ts`; CI type-checks every part from `dist`.
 - A standalone `Accordion` nested in an `Accordion.Group`'s panel keeps its own open state.
 
-### @justanarthur/modo-ui-ai
+### @justanarthur/modo-ui-ai 0.2.0
 
 - **New package (0.1.0): an AI agent app kit on modo-ui**, moved out of the AI desktop prototype (#44) and rebuilt on modo-ui's items: components `Message` (+ `Message.Working`), `ToolCall`, `AgentRun`, `Reasoning`, `WorkSummary`, `TodoList`, `Recap`, `ChapterNav`, `PromptCard`, `PermissionRequest`, `QuestionPrompt`, `PlanApproval`; blocks for the session (`Transcript`, which follows a streaming reply, `Composer`, `AgentPrompt`, `TranscriptSearch`, `CommandPalette`, `ShortcutsSheet`, `FailureState`), the sidebars and boards, the side pane and its panes, and settings; docs-only screens on mock data. modo-ui is a peer; the kit's glyphs extend its icon set through `AiIconProvider`; `styles.css` holds the kit's utilities for a host on modo-ui's prebuilt CSS. Docs at `/ai/`.
 - **The composer's draft is the old modo-ui `InputMessage`**, merged into `Composer` instead of a second chat item: `Composer.Draft` (also `ComposerDraft`) is the draft alone, with attachments (PDF previews through the optional peer `pdfjs-dist`), the queue while a reply streams, history and suggestions; `Composer` takes `value` / `defaultValue` / `onValueChange`, `status` / `defaultStatus` / `onStatusChange` and `onStop` (in place of `streaming`), `queue` / `defaultQueue` / `onQueueChange`, `history`, `suggestions`, `placeholderSuggestion`, `accept` and `maxFiles`, and `onSend` gets the files too. `FileThumbnail` is exported; `styles.css` carries the draft's edge states. SessionBoard's reply box is `Composer.Draft`.
