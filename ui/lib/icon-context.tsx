@@ -24,9 +24,11 @@ import {
   ChevronsLeft,
   ChevronsRight,
   ChevronsUpDown,
+  ChevronUp,
   Circle,
   CircleAlert,
   CircleCheck,
+  CircleQuestionMark,
   Clock,
   Copy,
   CornerDownLeft,
@@ -38,7 +40,9 @@ import {
   EyeOff,
   FileDiff,
   File as FileIcon,
+  Flag,
   Folder,
+  FunnelX,
   Globe,
   GripVertical,
   Heart,
@@ -80,6 +84,9 @@ import {
   SquareLibrary,
   Star,
   Sun,
+  Timer,
+  Trash2,
+  TriangleAlert,
   Upload,
   User,
   Users,
@@ -171,6 +178,13 @@ export type IconName =
   | 'grip-vertical'
   | 'file-diff'
   | 'square'
+  | 'chevron-up'
+  | 'triangle-alert'
+  | 'circle-question-mark'
+  | 'trash'
+  | 'timer'
+  | 'funnel-x'
+  | 'flag'
 
 const defaultIcons: Record<IconName, IconComponent> = {
   'chevron-right': ChevronRight,
@@ -248,6 +262,13 @@ const defaultIcons: Record<IconName, IconComponent> = {
   'grip-vertical': GripVertical,
   'file-diff': FileDiff,
   square: Square,
+  'chevron-up': ChevronUp,
+  'triangle-alert': TriangleAlert,
+  'circle-question-mark': CircleQuestionMark,
+  trash: Trash2,
+  timer: Timer,
+  'funnel-x': FunnelX,
+  flag: Flag,
 }
 
 const IconContext = createContext<Record<IconName, IconComponent> | null>(null)
