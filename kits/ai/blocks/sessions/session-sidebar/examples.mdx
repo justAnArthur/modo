@@ -2,6 +2,50 @@ import SessionSidebar from './index'
 import Sidebar from '@justanarthur/modo-ui/components/navigation/sidebar'
 import { SidebarInsetTopbar } from '@justanarthur/modo-ui/blocks/sidebar-app'
 import { SESSIONS } from '../../../mock/mock'
+import { useState } from 'react'
+
+export const noop = () => {}
+
+export const ACTIONS = {
+  onPin: noop,
+  onArchive: noop,
+  onOpenSplit: noop,
+  onRename: noop,
+  onMarkUnread: noop,
+  onFork: noop,
+  onNewSessionIn: noop,
+  onFilterSection: noop,
+  onOpenSettings: noop,
+}
+
+export function Pinning() {
+  const [pinned, setPinned] = useState(SESSIONS.pinned)
+  const [groups, setGroups] = useState(SESSIONS.groups)
+  const onPin = (id, pin) => {
+    if (pin) {
+      const group = groups.find(g => g.sessions.some(s => s.id === id))
+      const session = group.sessions.find(s => s.id === id)
+      setGroups(groups.map(g => ({ ...g, sessions: g.sessions.filter(s => s.id !== id) })))
+      setPinned([...pinned, { ...session, pinned: true, project: group.label }])
+      return
+    }
+    const session = pinned.find(s => s.id === id)
+    setPinned(pinned.filter(s => s.id !== id))
+    setGroups(
+      groups.map(g => (g.label === session.project ? { ...g, sessions: [{ ...session, pinned: false }, ...g.sessions] } : g)),
+    )
+  }
+  return (
+    <div className="flex h-[640px] w-full overflow-hidden rounded-xl border border-border bg-background">
+      <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+        <SessionSidebar {...SESSIONS} pinned={pinned} groups={groups} onPin={onPin} className="h-full" />
+        <Sidebar.Inset className="min-h-0">
+          <SidebarInsetTopbar />
+        </Sidebar.Inset>
+      </Sidebar.Provider>
+    </div>
+  )
+}
 
 # Sessions
 
@@ -9,7 +53,7 @@ Pinned first, then a group per project and per section, the archive folded at th
 
 <div className="flex h-[640px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
-    <SessionSidebar {...SESSIONS} className="h-full" defaultValue="ai-app" />
+    <SessionSidebar {...SESSIONS} {...ACTIONS} className="h-full" defaultValue="ai-app" />
     <Sidebar.Inset className="min-h-0">
       <SidebarInsetTopbar />
     </Sidebar.Inset>
@@ -22,7 +66,7 @@ Pinned first, then a group per project and per section, the archive folded at th
 
 <div className="flex h-[640px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
-    <SessionSidebar {...SESSIONS} className="h-full" variant="sidebar" defaultValue="billing" />
+    <SessionSidebar {...SESSIONS} {...ACTIONS} className="h-full" variant="sidebar" defaultValue="billing" />
     <Sidebar.Inset className="min-h-0">
       <SidebarInsetTopbar />
     </Sidebar.Inset>
@@ -35,9 +79,15 @@ Pinned first, then a group per project and per section, the archive folded at th
 
 <div className="flex h-[640px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
-    <SessionSidebar {...SESSIONS} className="h-full" list="filters" defaultValue="state:waiting" />
+    <SessionSidebar {...SESSIONS} {...ACTIONS} className="h-full" list="filters" defaultValue="state:waiting" />
     <Sidebar.Inset className="min-h-0">
       <SidebarInsetTopbar />
     </Sidebar.Inset>
   </Sidebar.Provider>
 </div>
+
+# Only what your app does
+
+Each row action, group action and the Settings row shows only with its callback. Here only `onPin` is passed: hover a row for its pin, which moves it into Pinned and back into its project; no archive, no menu, no Settings row.
+
+<Pinning />
