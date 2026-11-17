@@ -1,0 +1,8 @@
+{
+  "ui": "Fluid Functionalism on Base UI and UnoCSS: springs, fluid hover and eight surface levels. Published as modo-ui.",
+  "filled": "The minimal reference: plain CSS tokens and a handful of items.",
+  "fluid-functionalism": "The @fluid registry on its own shadcn foundation.",
+  "mui": "Material UI, its default theme extracted into tokens.",
+  "shadcn": "shadcn/ui as its CLI pulls it, on Tailwind v4.",
+  "ai": "Messages, tool calls, a composer and full agent screens, built on modo ui."
+}
