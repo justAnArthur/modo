@@ -1,7 +1,7 @@
 {
   "name": "@justanarthur/modo-ui-notch",
   "type": "module",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A macOS notch app kit on modo-ui: the island that grows out of the notch (idle, compact, split, expanded, flash), its tabs across the wings and the pieces its activities show. Documented with modo.",
   "license": "MIT",
   "keywords": [
