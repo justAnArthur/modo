@@ -33,7 +33,7 @@ is specific to this package.
   documented items: Craft, Sizes, Surface, Motion, Morph, FluidHover), `layout/` (ScrollArea,
   Separator, Resizable, VirtualList, Sortable) and `content/` (Code, Skeleton).
   `components/` — `actions/` (Button, Copy), `inputs/`, `navigation/`, `overlays/`, `data-display/`
-  (Avatar, Badge, Kbd, List, Table, Diff, LogView, Markdown), `feedback/` (Progress, Meter,
+  (Avatar, Badge, Kbd, List, Table, Diff, LogView, Markdown, Sparkline), `feedback/` (Progress, Meter,
   StatusDot, EmptyState) and `containers/` (Accordion, Card). `blocks/` — compositions (SidebarApp,
   ShellCard, DesktopShell), ungrouped. Package subpaths follow the folders
   (`@justanarthur/modo-ui/components/actions/button`).

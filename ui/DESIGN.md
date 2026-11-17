@@ -22,6 +22,7 @@ colors:
   muted-foreground-dark: "oklch(0.7155 0 0)"
   sunken: "oklch(0.955 0 0)"
   sunken-dark: "oklch(0.17 0 0)"
+  ink: "oklch(0 0 0)"
   accent: "oklch(0.922 0 0)"
   accent-dark: "oklch(0.439 0 0)"
   selected: "oklch(0.87 0 0)"
@@ -380,6 +381,9 @@ Two text colors, a greyscale ground, one blue.
 - **Muted (`bg-muted`)** — a recessed track: the segmented tabs' well, a sunken field at rest.
 - **Sunken (`bg-sunken`)** — a tray set into the page, below surface 1 in both schemes (greyer in light,
   darker in dark), so a card resting in it lifts out: ShellCard's shell.
+- **Ink (`bg-ink`, `fill-ink`, `text-ink`, `border-ink`)** — true black in both schemes, for a surface
+  that has to match the device rather than the theme (a display notch, a bezel). Never a dark-mode
+  background or page text: those stay the surfaces and foreground.
 - **Accent (`bg-accent`)** — the secondary button and the switch's off track. `selected` is a firmer
   grey for persistent selection fills.
 - **Hover / Active (`bg-hover`, `bg-active`)** — translucent overlays (black 4% / 7% in light, white 6% /
@@ -609,7 +613,11 @@ shared systems above (look and motion). Ready-made patterns to reach for before 
   button's glyph.
 - **Meter** — a read-only share of a budget as a bar, a bare line or a ring; the bar slides like
   Progress's, ink at rest, the warning and error status hues as the budget runs out; a thin ink tick
-  marks a pace.
+  marks a pace. The ring scales past the glyph for timers, with the time in its centre; a value on a
+  clock steps instead of springing.
+- **Sparkline** — a trend line in the text color or a status hue, stretched across its box at a constant
+  1.5px stroke, an optional 16% wash under it, a hairline baseline until there are two points; it never
+  animates.
 - **StatusDot** — a run state as a glyph: running is the loading button's glyph, the rest dots in
   their status hue (idle a muted ring).
 - **Kbd** — a keycap chip in `micro` on a hairline, or plain muted caption text at a row's end, the

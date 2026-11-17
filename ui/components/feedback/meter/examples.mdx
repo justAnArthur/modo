@@ -1,5 +1,6 @@
 import Meter from './index'
 import { SizeProvider } from '../../../primitives/systems/sizes'
+import TimerDemo from './timer-demo'
 
 # Bar
 
@@ -38,6 +39,30 @@ A glyph for toolbars: the label is its accessible name only.
   <Meter variant="ring" label="Context" value={0.3} />
   <Meter variant="ring" label="Context" value={0.78} />
   <Meter variant="ring" label="Context" value={0.94} />
+</div>
+
+# Ring sizes
+
+A size class scales the ring past the inline glyph; its stroke scales with it.
+
+<div className="flex items-center gap-4">
+  <Meter variant="ring" label="Upload" value={0.6} className="size-6" />
+  <Meter variant="ring" label="Upload" value={0.6} className="size-10" />
+  <Meter variant="ring" label="Upload" value={0.6} className="size-16" />
+</div>
+
+# Countdown
+
+Children sit in the ring's centre, and a string child is what screen readers hear as the value. `animate={false}` lets a value that ticks every second step without a spring between ticks. A ring of time left passes `tone`, so a full ring isn't read as a spent budget.
+
+<div className="flex items-center gap-4">
+  <Meter variant="ring" label="Focus timer" value={299} max={1500} tone="default" animate={false} className="size-16 text-caption">
+    04:59
+  </Meter>
+  <Meter variant="ring" label="Break" value={50} max={300} tone="warning" animate={false} className="size-12 text-micro">
+    0:50
+  </Meter>
+  <TimerDemo />
 </div>
 
 # Line

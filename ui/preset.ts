@@ -64,6 +64,7 @@ export const theme = {
     overlay: 'rgb(var(--overlay))',
     selected: 'var(--selected)',
     sunken: 'var(--sunken)',
+    ink: 'var(--ink)',
     thumb: 'var(--thumb)',
     picker: { edge: 'var(--picker-edge)', ring: 'var(--picker-ring)' },
     control: 'var(--control-border)',

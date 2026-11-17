@@ -1,0 +1,79 @@
+import Sparkline from './index'
+import LiveDemo from './live-demo'
+import { SizeProvider } from '../../../primitives/systems/sizes'
+
+# Trend
+
+A row's trend in the surrounding text color; set the width with a class.
+
+<div className="flex w-72 flex-col gap-3 text-body">
+  <div className="flex items-center gap-3">
+    <span className="w-16 shrink-0 text-muted-foreground">CPU</span>
+    <Sparkline className="flex-1" label="CPU, 38%" max={100} values={[12, 18, 15, 32, 41, 28, 35, 52, 47, 39, 44, 38]} />
+    <span className="w-10 shrink-0 text-right tabular-nums">38%</span>
+  </div>
+  <div className="flex items-center gap-3">
+    <span className="w-16 shrink-0 text-muted-foreground">Memory</span>
+    <Sparkline className="flex-1" label="Memory, 71%" max={100} values={[62, 63, 63, 65, 66, 66, 68, 69, 70, 70, 71, 71]} />
+    <span className="w-10 shrink-0 text-right tabular-nums">71%</span>
+  </div>
+</div>
+
+# Area
+
+`area` washes under the line at 16% of its color.
+
+<Sparkline className="w-48" area label="Requests per second, 212" values={[120, 160, 140, 190, 230, 180, 200, 260, 240, 212]} />
+
+# Two series
+
+`secondary` shares the scale in its own tone: network in and out.
+
+<div className="flex w-72 flex-col gap-2">
+  <Sparkline
+    area
+    tone="info"
+    secondaryTone="success"
+    label="Network, 1.2 MB/s in, 0.4 MB/s out"
+    values={[0.4, 0.9, 2.1, 1.6, 0.8, 1.1, 2.4, 1.9, 1.2]}
+    secondary={[0.1, 0.2, 0.5, 0.3, 0.2, 0.6, 0.4, 0.3, 0.4]}
+  />
+  <div className="flex gap-4 text-caption text-muted-foreground">
+    <span className="text-status-info">In 1.2 MB/s</span>
+    <span className="text-status-success">Out 0.4 MB/s</span>
+  </div>
+</div>
+
+# Tones
+
+The status hues, for a series that is running hot.
+
+<div className="flex w-48 flex-col gap-2">
+  <Sparkline tone="success" label="Throughput, 96" values={[40, 62, 55, 78, 70, 88, 96]} />
+  <Sparkline tone="warning" label="Disk, 83%" values={[20, 28, 41, 47, 60, 74, 83]} max={100} />
+  <Sparkline tone="error" label="Errors, 21" values={[2, 3, 2, 8, 6, 14, 21]} />
+</div>
+
+# Live
+
+A point a second into a 30-point window, from empty: a short history spans the whole width, and before two points there is a baseline.
+
+<LiveDemo />
+
+# Short histories
+
+One point or none is a baseline; two points already span the width.
+
+<div className="flex w-48 flex-col gap-3">
+  <Sparkline label="No data yet" values={[]} />
+  <Sparkline label="One sample" values={[40]} />
+  <Sparkline label="Two samples" values={[20, 60]} />
+</div>
+
+# Compact
+
+In a compact region the line is 20px tall instead of 24px.
+
+<SizeProvider size="compact">
+  <Sparkline className="w-40" area label="CPU, 38%" max={100} values={[12, 18, 15, 32, 41, 28, 35, 52, 47, 39, 44, 38]} />
+</SizeProvider>

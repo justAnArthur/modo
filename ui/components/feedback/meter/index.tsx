@@ -3,7 +3,8 @@
  * share of a budget (usage, a rate limit, a context window), as a bar or a
  * ring, on Base UI's Meter (the `meter` role and its values). The bar's fill
  * slides in with `translateX` on `spring.moderate`, like Progress's, and turns
- * to the warning and error status hues as the budget runs out.
+ * to the warning and error status hues as the budget runs out. The ring's SVG
+ * fills its root, so a size class scales it, with content centred over it.
  */
 
 'use client'
@@ -29,7 +30,7 @@ const RING_FILL: Record<MeterTone, string> = {
   warning: 'text-status-warning',
   error: 'text-status-error',
 }
-const RING_SIZE: Record<SizeVariant, number> = { default: 16, compact: 14 }
+const RING_SIZE: Record<SizeVariant, string> = { default: 'size-4', compact: 'size-3.5' }
 const CAPTION: Record<SizeVariant, string> = { default: 'text-caption', compact: 'text-caption-compact' }
 
 const enter = springEnter(spring.moderate)
@@ -59,9 +60,13 @@ interface MeterProps {
   tone?: MeterTone
   /** A share between 0 and 1 where a thin tick crosses the bar or the line: where an even spend would be by now, a soft limit. The ring ignores it. */
   marker?: number
+  /** Springs the fill to a new value. Turn it off for a value that advances on a clock (a countdown ticking every second), so the fill steps instead of repainting between ticks. Defaults to `true`. */
+  animate?: boolean
+  /** Content centred in the ring, such as a countdown's `04:59`; a string is also what screen readers hear as the value. The bar and the line ignore it. */
+  children?: ReactNode
   /** Pins the meter to one step of the size ladder (36px default, 28px compact). Defaults to the surrounding SizeProvider. */
   size?: SizeVariant
-  /** Classes for the root. */
+  /** Classes for the root; on the ring a size class (`size-16`) scales it past the inline glyph. */
   className?: string
 }
 
@@ -80,6 +85,10 @@ interface MeterProps {
  * A `marker` draws a tick across the bar or the line at a share, such as
  * where an even spend would be by now, so the fill reads against time.
  *
+ * The ring also serves timers and countdowns: a size class scales it, its
+ * children sit in its centre, and `animate={false}` lets a value that ticks
+ * every second step without a spring between ticks.
+ *
  * @example {@include ./examples.mdx}
  */
 const Meter = forwardRef<HTMLDivElement, MeterProps>(
@@ -94,6 +103,8 @@ const Meter = forwardRef<HTMLDivElement, MeterProps>(
       errorAt = 0.9,
       tone: toneProp,
       marker,
+      animate = true,
+      children,
       size: sizeProp,
       className,
     },
@@ -103,14 +114,18 @@ const Meter = forwardRef<HTMLDivElement, MeterProps>(
     const reduceMotion = useReduceMotion()
     const share = Math.min(Math.max(value / max, 0), 1)
     const tone = toneProp ?? toneOf(share, warnAt, errorAt)
-    const transition = reduceMotion ? { duration: 0 } : enter
+    const transition = reduceMotion || !animate ? { duration: 0 } : enter
     const root = { ref, value, max, 'aria-label': label }
 
     if (variant === 'ring') {
-      const px = RING_SIZE[size.variant]
+      const valueText = typeof children === 'string' ? children : undefined
       return (
-        <MeterPrimitive.Root {...root} className={cn('inline-flex shrink-0', className)}>
-          <svg width={px} height={px} viewBox="0 0 20 20" aria-hidden="true" className="-rotate-90">
+        <MeterPrimitive.Root
+          {...root}
+          getAriaValueText={valueText === undefined ? undefined : () => valueText}
+          className={cn('relative inline-grid shrink-0 place-items-center', RING_SIZE[size.variant], className)}
+        >
+          <svg viewBox="0 0 20 20" aria-hidden="true" className="absolute inset-0 size-full -rotate-90">
             <circle cx="10" cy="10" r="7" fill="none" strokeWidth="2.5" className="stroke-current text-border" />
             <motion.circle
               cx="10"
@@ -125,6 +140,7 @@ const Meter = forwardRef<HTMLDivElement, MeterProps>(
               transition={transition}
             />
           </svg>
+          {children !== undefined && <span className="relative tabular-nums">{children}</span>}
         </MeterPrimitive.Root>
       )
     }
