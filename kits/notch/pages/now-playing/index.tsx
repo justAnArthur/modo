@@ -10,15 +10,17 @@ import Timer from '../../blocks/activities/timer'
 import ExpandedIsland from '../../blocks/app/expanded-island'
 import Island from '../../components/island/island'
 import type { IslandState } from '../../lib/geometry'
-import { MockArtwork } from '../../mock/artwork'
+import { ARTWORK_TINT, type ArtworkVariant, MockArtwork } from '../../mock/artwork'
 import { TRACKS } from '../../mock/data'
 import { panelTabs, useRun } from '../../mock/island-content'
 import { type Scene, SceneDesk } from '../../mock/scene'
 
-const ART = ['aurora', 'night', 'dusk'] as const
+const ART = ['aurora', 'night', 'dusk'] as const satisfies ArtworkVariant[]
 const PLAYLIST: NowPlayingTrack[] = TRACKS.map((track, i) => ({
   ...track,
-  artwork: i === 2 ? undefined : <MockArtwork variant={ART[i]} />,
+  ...(i === 2
+    ? { artwork: null }
+    : { artwork: <MockArtwork variant={ART[i] ?? 'aurora'} />, tint: ARTWORK_TINT[ART[i] ?? 'aurora'] }),
 }))
 
 const SCENES: (Scene & { state: IslandState })[] = [
@@ -41,8 +43,8 @@ interface MusicProps {
  * the island opens, and a moment's flash when the track changes.
  *
  * Pick a scene under the screen, or use the player: previous and next walk a
- * playlist (the last track has no artwork, so the player leads with a small
- * note tile), play / pause settles the wings' bars, and the scrubber runs on
+ * playlist (the artwork crossfades from one cover to the next, never through
+ * a blank, and the last track has none, so its placeholder shows), play / pause settles the wings' bars, and the scrubber runs on
  * by itself. With a timer running too, the track keeps the wings and the
  * timer melts off into the bubble. Everything is the NowPlaying block and
  * its parts on the Island.
@@ -72,7 +74,7 @@ export default function Music({ scene: initial = 'expanded', picker = true }: Mu
           collapsedState="compact"
           activity={`track:${index}`}
           leading={<NowPlaying.Leading track={track} />}
-          trailing={<NowPlaying.Trailing playing={playing} />}
+          trailing={<NowPlaying.Trailing track={track} playing={playing} />}
           minimal={<Timer.Minimal run={run} />}
           flash={<NowPlaying.Flash track={track} playing={playing} />}
           expanded={
@@ -82,12 +84,14 @@ export default function Music({ scene: initial = 'expanded', picker = true }: Mu
               tabs={panelTabs({
                 'now-playing': (
                   <NowPlaying
-                    key={index}
                     track={scene === 'empty' ? null : track}
                     playing={playing}
                     onPlayingChange={setPlaying}
                     onPrevious={() => step(-1)}
                     onNext={() => step(1)}
+                    defaultRepeat="off"
+                    defaultShuffle={false}
+                    defaultLiked={false}
                   />
                 ),
               })}

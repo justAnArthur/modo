@@ -21,14 +21,14 @@ import PowerAlert from '../blocks/system/power-alert'
 import SystemStats from '../blocks/system/system-stats'
 import Island from '../components/island/island'
 import { ISLAND_STATES, type IslandState } from '../lib/geometry'
-import { MockArtwork } from './artwork'
+import { ARTWORK_TINT, MockArtwork } from './artwork'
 import { AGENDA_NOW, DEVICES, EVENTS, FILES, POWER, SAMPLES, TABS, TIMER, TRACK } from './data'
 import { useFitScale } from './fit'
 
 const MINUTE = 60_000
 
 /** The mock track, with generated artwork. */
-export const PLAYING: NowPlayingTrack = { ...TRACK, artwork: <MockArtwork /> }
+export const PLAYING: NowPlayingTrack = { ...TRACK, artwork: <MockArtwork />, tint: ARTWORK_TINT.aurora }
 
 /** The mock shelf, two files with previews. */
 export const SHELF: ShelfFile[] = FILES.map(file =>
@@ -66,7 +66,8 @@ export function ChargingFlash() {
 
 /** Every widget of the open island, by tab value. */
 export function widgetFor(tab: string): ReactNode {
-  if (tab === 'now-playing') return <NowPlaying track={PLAYING} />
+  if (tab === 'now-playing')
+    return <NowPlaying track={PLAYING} defaultShuffle={false} defaultRepeat="all" defaultLiked />
   if (tab === 'timer') return <Timer />
   if (tab === 'calendar') return <Agenda events={EVENTS} now={AGENDA_NOW} />
   if (tab === 'shelf') return <Shelf defaultValue={SHELF} onAirDrop={() => {}} />
@@ -99,7 +100,7 @@ export function DemoIsland({ defaultTab, ...props }: DemoIslandProps) {
   return (
     <Island
       leading={<ArtworkTile />}
-      trailing={<NowPlaying.Trailing />}
+      trailing={<NowPlaying.Trailing track={PLAYING} />}
       minimal={<TimerBubble />}
       flash={<ChargingFlash />}
       expanded={<ExpandedPanel defaultTab={defaultTab} />}
@@ -165,7 +166,7 @@ export function ScreenEdge({
 }
 
 /** The open island on a strip of screen, on `tab`, its view replaced by `children` when given. */
-export function WidgetIsland({ tab, children, height = 340 }: { tab: string; children?: ReactNode; height?: number }) {
+export function WidgetIsland({ tab, children, height = 260 }: { tab: string; children?: ReactNode; height?: number }) {
   const tabs = panelTabs(children ? { [tab]: children } : {})
   return (
     <ScreenEdge height={height}>

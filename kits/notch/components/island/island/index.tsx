@@ -63,7 +63,7 @@ interface IslandProps {
   notchHeight?: number
   /** The open island's width in px; it shrinks to the room it has. Defaults to `720`. */
   panelWidth?: number
-  /** The open island's height in px. Defaults to `320`. */
+  /** The open island's height in px. Defaults to `240`. */
   panelHeight?: number
   /** The compact left wing: the activity's glyph (`compact` and `split`). */
   leading?: ReactNode
@@ -157,7 +157,7 @@ export default function Island({
   notchWidth = 185,
   notchHeight = 32,
   panelWidth = 720,
-  panelHeight = 320,
+  panelHeight = 240,
   leading,
   trailing,
   minimal,

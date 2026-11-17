@@ -5,10 +5,26 @@ import { AGENDA_NOW, EVENTS } from '../../../mock/data'
 
 # Today and tomorrow
 
-Each calendar's color as a dot, the start time, the place, and Join for a video call.
+The next event as the hero, how soon set large, with Join for a call; the rest of today beside it, tomorrow folded to its first event, today's all-day events as chips on the date line.
 
 <WidgetIsland tab="calendar">
   <Agenda events={EVENTS} now={AGENDA_NOW} />
+</WidgetIsland>
+
+# In progress
+
+While an event runs the hero says `Now` and how long is left.
+
+<WidgetIsland tab="calendar">
+  <Agenda events={EVENTS} now={AGENDA_NOW + 65 * 60_000} defaultTomorrowOpen />
+</WidgetIsland>
+
+# Later today
+
+More than an hour out, the hero is the start time.
+
+<WidgetIsland tab="calendar">
+  <Agenda events={EVENTS} now={AGENDA_NOW + 5 * 60 * 60_000} />
 </WidgetIsland>
 
 # Nothing planned
@@ -27,13 +43,13 @@ Each calendar's color as a dot, the start time, the place, and Join for a video 
 
 # Access off
 
-`access="denied"` points to the system's settings.
+`access="denied"` says where to turn it on.
 
 <WidgetIsland tab="calendar">
   <Agenda events={[]} access="denied" />
 </WidgetIsland>
 
-# Up next
+# Compact
 
 The next event a few minutes out: `Agenda.Leading` and `Agenda.Trailing` count down in the wings.
 
@@ -41,13 +57,13 @@ The next event a few minutes out: `Agenda.Leading` and `Agenda.Trailing` count d
 
 # Minimal
 
-`Agenda.Minimal` empties toward the start in the split island's bubble.
+`Agenda.Minimal`, a ring in the event's color, empties toward the start in the split island's bubble.
 
 <AgendaSplit />
 
 # Up next, open
 
-`Agenda.UpNext` in the open island.
+`Agenda.UpNext`, the hero on its own in the open island.
 
 <UpNextIsland />
 

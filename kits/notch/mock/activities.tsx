@@ -33,7 +33,7 @@ export function TimerSplit() {
   return (
     <WingsIsland
       leading={<NowPlaying.Leading track={PLAYING} />}
-      trailing={<NowPlaying.Trailing />}
+      trailing={<NowPlaying.Trailing track={PLAYING} />}
       minimal={<Timer.Minimal run={run} />}
     />
   )

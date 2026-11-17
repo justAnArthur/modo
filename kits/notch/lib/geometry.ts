@@ -31,7 +31,7 @@ export interface Shape {
 }
 
 export const DEFAULT_NOTCH: Size = { width: 185, height: 32 }
-export const DEFAULT_PANEL: Size = { width: 720, height: 320 }
+export const DEFAULT_PANEL: Size = { width: 720, height: 240 }
 
 /** The open island's one content inset: header, title and content all start here, clear of the bottom corners. */
 export const INSET = 20

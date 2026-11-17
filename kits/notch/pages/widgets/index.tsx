@@ -11,7 +11,7 @@ import ExpandedIsland from '../../blocks/app/expanded-island'
 import Island from '../../components/island/island'
 import type { IslandState } from '../../lib/geometry'
 import { TABS } from '../../mock/data'
-import { ArtworkTile, panelTabs } from '../../mock/island-content'
+import { ArtworkTile, PLAYING, panelTabs } from '../../mock/island-content'
 import { SceneDesk } from '../../mock/scene'
 
 interface WidgetsProps {
@@ -54,7 +54,7 @@ export default function Widgets({ tab: initial = 'now-playing', picker = true }:
           onStateChange={setState}
           collapsedState="compact"
           leading={<ArtworkTile />}
-          trailing={<NowPlaying.Trailing />}
+          trailing={<NowPlaying.Trailing track={PLAYING} />}
           expanded={<ExpandedIsland tabs={panelTabs()} value={tab} onValueChange={setTab} onSettings={() => {}} />}
         />
       }

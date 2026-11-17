@@ -15,6 +15,8 @@ export interface Track {
   artist: string
   album: string
   source: string
+  output: string
+  outputKind: 'built-in' | 'headphones' | 'speaker' | 'airplay'
   /** Seconds. */
   duration: number
   /** Seconds. */
@@ -26,14 +28,34 @@ export const TRACK: Track = {
   artist: 'M83',
   album: "Hurry Up, We're Dreaming",
   source: 'Music',
+  output: 'AirPods Pro',
+  outputKind: 'headphones',
   duration: 243,
   position: 71,
 }
 
 export const TRACKS: Track[] = [
   TRACK,
-  { title: 'Teardrop', artist: 'Massive Attack', album: 'Mezzanine', source: 'Spotify', duration: 330, position: 12 },
-  { title: 'Nightcall', artist: 'Kavinsky', album: 'OutRun', source: 'Safari', duration: 258, position: 190 },
+  {
+    title: 'Teardrop',
+    artist: 'Massive Attack',
+    album: 'Mezzanine',
+    source: 'Spotify',
+    output: 'Living room',
+    outputKind: 'airplay',
+    duration: 330,
+    position: 12,
+  },
+  {
+    title: 'Nightcall',
+    artist: 'Kavinsky',
+    album: 'OutRun',
+    source: 'Safari',
+    output: 'MacBook Pro Speakers',
+    outputKind: 'built-in',
+    duration: 258,
+    position: 190,
+  },
 ]
 
 export const POWER = { level: 82, charging: true, untilFull: 38, remaining: 252 }

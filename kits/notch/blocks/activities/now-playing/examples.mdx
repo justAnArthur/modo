@@ -1,49 +1,68 @@
 import NowPlaying from './index'
-import { MockArtwork } from '../../../mock/artwork'
-import { FlashIsland, PLAYING, ScreenEdge, TimerBubble, WidgetIsland, WingsIsland } from '../../../mock/island-content'
+import Button from '@justanarthur/modo-ui/components/actions/button'
+import { ARTWORK_TINT, MockArtwork } from '../../../mock/artwork'
+import { FlashIsland, PLAYING, WidgetIsland, WingsIsland } from '../../../mock/island-content'
 import { TRACK } from '../../../mock/data'
 
 # Player
 
-The open island's view: artwork, title and artist, the scrubber running on by itself, the transport and the app it plays in.
+The artwork as the hero's picture with a glow of its tint, the title, artist and album, the scrubber ticking on by itself, the transport, the app and the device it plays on, and shuffle, repeat and the heart.
 
 <WidgetIsland tab="now-playing">
-  <NowPlaying track={PLAYING} />
+  <NowPlaying track={PLAYING} defaultShuffle={false} defaultRepeat="all" defaultLiked />
+</WidgetIsland>
+
+# Paused, no extras
+
+Without shuffle, repeat or like values or handlers, their buttons stay out; paused, the bars settle.
+
+<WidgetIsland tab="now-playing">
+  <NowPlaying track={{ ...PLAYING, output: undefined }} defaultPlaying={false} />
 </WidgetIsland>
 
 # Without artwork
 
-A small note tile leads the title row instead of an empty square.
+`artwork: null` says the track has none: the note placeholder takes the artwork's place. Left out, the artwork is still loading, and the last picture stays up.
 
 <WidgetIsland tab="now-playing">
-  <NowPlaying track={TRACK} defaultPlaying={false} />
+  <NowPlaying track={{ ...TRACK, artwork: null }} defaultPlaying={false} />
+</WidgetIsland>
+
+# A stream
+
+A `duration` of `0` hides the scrubber.
+
+<WidgetIsland tab="now-playing">
+  <NowPlaying
+    track={{ title: 'Lofi beats to code to', artist: 'Radio', source: 'Safari', output: 'Living room', outputKind: 'airplay', duration: 0, position: 0, artwork: <MockArtwork variant="night" />, tint: ARTWORK_TINT.night }}
+  />
 </WidgetIsland>
 
 # Nothing playing
 
 <WidgetIsland tab="now-playing">
-  <NowPlaying track={null} />
+  <NowPlaying track={null} emptyActions={<Button variant="secondary" size="compact">Open Music</Button>} />
 </WidgetIsland>
 
 # Compact
 
-`NowPlaying.Leading` and `NowPlaying.Trailing` in the wings; the bars settle low while paused.
+`NowPlaying.Leading` and `NowPlaying.Trailing` in the wings: the artwork, and the bars in its tint, settling low while paused.
 
 <div className="flex w-full flex-col gap-3">
-  <WingsIsland leading={<NowPlaying.Leading track={PLAYING} />} trailing={<NowPlaying.Trailing />} />
-  <WingsIsland leading={<NowPlaying.Leading track={PLAYING} />} trailing={<NowPlaying.Trailing playing={false} />} />
+  <WingsIsland leading={<NowPlaying.Leading track={PLAYING} />} trailing={<NowPlaying.Trailing track={PLAYING} />} />
+  <WingsIsland leading={<NowPlaying.Leading track={PLAYING} />} trailing={<NowPlaying.Trailing track={PLAYING} playing={false} />} />
 </div>
 
 # Minimal
 
-`NowPlaying.Minimal`, the artwork as a disc, in the split island's bubble beside a timer.
+`NowPlaying.Minimal`, the artwork as a disc, in the split island's bubble.
 
-<WingsIsland leading={<NowPlaying.Leading track={PLAYING} />} trailing={<NowPlaying.Trailing />} minimal={<NowPlaying.Minimal track={PLAYING} />} />
+<WingsIsland leading={<NowPlaying.Leading track={PLAYING} />} trailing={<NowPlaying.Trailing track={PLAYING} />} minimal={<NowPlaying.Minimal track={PLAYING} />} />
 
 # Track change
 
 `NowPlaying.Flash` announces the next track for a moment.
 
 <FlashIsland>
-  <NowPlaying.Flash track={{ ...PLAYING, title: 'Teardrop', artist: 'Massive Attack', artwork: <MockArtwork variant="night" /> }} />
+  <NowPlaying.Flash track={{ ...PLAYING, title: 'Teardrop', artist: 'Massive Attack', album: 'Mezzanine', artwork: <MockArtwork variant="night" />, tint: ARTWORK_TINT.night }} />
 </FlashIsland>

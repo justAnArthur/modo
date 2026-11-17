@@ -8,15 +8,18 @@
 'use client'
 
 import Button from '@justanarthur/modo-ui/components/actions/button'
+import { useReduceMotion } from '@justanarthur/modo-ui/lib/reduced-motion'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import ScrollArea from '@justanarthur/modo-ui/primitives/layout/scroll-area'
 import { SizeProvider } from '@justanarthur/modo-ui/primitives/systems/sizes'
 import { Settings } from 'lucide-react'
+import { motion } from 'motion/react'
 import { type ReactNode, useState } from 'react'
 import IslandTabs, { type IslandTab } from '../../../components/island/island-tabs'
 import { DEFAULT_NOTCH, INSET } from '../../../lib/geometry'
 import { useIsland } from '../../../lib/island-context'
+import { contentEnter, contentHidden, contentShown } from '../../../lib/motion'
 
 interface ExpandedIslandTab extends IslandTab {
   /** The tab's view, in the content area. */
@@ -52,8 +55,14 @@ interface ExpandedIslandProps {
  * the selected tab's title, or the hovered tab's as a preview. The view
  * fills the rest: the area keeps its height whatever the view holds, and a
  * taller view scrolls inside it, its edges fading with `scroll-fade` (a
- * modo-ui ScrollArea), back at the top on each new tab. Every part starts at
+ * modo-ui ScrollArea), back at the top on each new tab, where the new view
+ * sharpens in the way the island swaps its content. Every part starts at
  * the island's one inset, clear of its rounded bottom corners.
+ *
+ * The views are made for the area the default panel leaves (about 680 × 165
+ * at 720 × 240): build each one on the kit's Widget frame, so every tab has
+ * one hero set large, a muted line, its facts and quiet actions in the same
+ * places.
  *
  * Pass it as the Island's `expanded`; it reads the notch from the Island.
  * Selection runs through `value` / `onValueChange`, or is kept here from
@@ -77,6 +86,7 @@ export default function ExpandedIsland({
   const tab = tabs.find(t => t.value === value) ?? tabs[0]
   const title = tabs.find(t => t.value === hovered)?.label ?? tab?.label
   const notch = island?.geometry.notch.height ?? DEFAULT_NOTCH.height
+  const reduced = useReduceMotion()
 
   return (
     <div className={cn('flex size-full flex-col', className)}>
@@ -110,13 +120,19 @@ export default function ExpandedIsland({
           className="min-h-0 flex-1"
           viewportClassName="scroll-fade [&>div]:flex [&>div]:min-h-full [&>div]:flex-col"
         >
-          <div className="flex flex-1 flex-col py-1 [&>*]:flex-1" style={{ paddingInline: INSET }}>
+          <motion.div
+            className="flex flex-1 flex-col py-1 [&>*]:flex-1"
+            style={{ paddingInline: INSET }}
+            initial={reduced ? { opacity: 0 } : contentHidden}
+            animate={reduced ? { opacity: 1 } : contentShown}
+            transition={contentEnter}
+          >
             {tab ? (
               tab.content
             ) : (
               <div className="flex items-center justify-center text-caption text-muted-foreground">{empty}</div>
             )}
-          </div>
+          </motion.div>
         </ScrollArea>
       </div>
     </div>

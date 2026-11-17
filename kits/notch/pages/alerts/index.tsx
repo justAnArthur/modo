@@ -16,7 +16,7 @@ import Island from '../../components/island/island'
 import type { IslandState } from '../../lib/geometry'
 import { useSoon } from '../../mock/activities'
 import { DEVICES, POWER } from '../../mock/data'
-import { ArtworkTile, FlashIsland } from '../../mock/island-content'
+import { ArtworkTile, FlashIsland, PLAYING } from '../../mock/island-content'
 import { type Scene, SceneDesk } from '../../mock/scene'
 
 const ALERTS: Scene[] = [
@@ -91,7 +91,7 @@ export default function Alerts({ alert: initial = 'charging', picker = true }: A
           onStateChange={next => setState(next === 'expanded' ? 'compact' : next)}
           activity={alert}
           leading={<ArtworkTile />}
-          trailing={<NowPlaying.Trailing />}
+          trailing={<NowPlaying.Trailing track={PLAYING} />}
           flash={flash}
         />
       }

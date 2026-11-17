@@ -11,7 +11,7 @@ import { CalendarDays, Music, Timer as TimerIcon } from 'lucide-react'
 
 Tabs in the wings around the notch, settings at the far right; hover a tab to preview its title.
 
-<ScreenEdge height={340}>
+<ScreenEdge height={260}>
   <Island defaultState="expanded" collapsedState="idle" expanded={<ExpandedPanel />} />
 </ScreenEdge>
 
@@ -19,7 +19,7 @@ Tabs in the wings around the notch, settings at the far right; hover a tab to pr
 
 `tabs` takes each tab's icon, label and view.
 
-<ScreenEdge height={340}>
+<ScreenEdge height={260}>
   <Island
     defaultState="expanded"
     collapsedState="idle"
@@ -40,6 +40,6 @@ Tabs in the wings around the notch, settings at the far right; hover a tab to pr
 
 The content area keeps its height and scrolls a taller view, its edges fading.
 
-<ScreenEdge height={260}>
-  <Island defaultState="expanded" collapsedState="idle" panelHeight={240} expanded={<ExpandedPanel defaultTab="calendar" />} />
+<ScreenEdge height={220}>
+  <Island defaultState="expanded" collapsedState="idle" panelHeight={196} expanded={<ExpandedPanel defaultTab="calendar" />} />
 </ScreenEdge>
