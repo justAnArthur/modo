@@ -25,13 +25,20 @@ import Dialog from '@justanarthur/modo-ui/components/overlays/dialog'
 
 Subpaths follow the docs' tiers and groups: `primitives/*`, `components/*`
 (`components/actions/button`, `components/inputs/select`, …) and `blocks/*`
-(`blocks/sidebar-app`). The shared systems are subpaths too, for components of
-your own: `lib/utils`, `lib/springs`, `lib/size-scale`, `lib/shape-classes`,
-`lib/field-classes`, `lib/field-box`, `lib/size-context`, `lib/shape-context`,
-`lib/icon-context` (`useIcon`, `useIcons`, `IconProvider`), `lib/use-controllable-state`, `lib/use-morph`, `lib/surface-classes` and
-`lib/goo-indicator`; Button's, Badge's and FileDropzone's pure tables are
-`components/actions/button/variants`, `components/data-display/badge/variants` and
-`components/inputs/file-dropzone/variants`.
+(`blocks/sidebar-app`). Every shared system in `lib/` is a subpath too, for
+components of your own: `lib/utils`, `lib/springs`, `lib/size-scale`,
+`lib/shape-classes`, `lib/field-classes`, `lib/field-box`, `lib/size-context`,
+`lib/shape-context` (`useShape`, `useShapeContext`), `lib/surface-classes`,
+`lib/surface-context`, `lib/icon-context` (`useIcon`, `useIcons`,
+`IconProvider`), `lib/use-controllable-state`, `lib/use-morph`,
+`lib/goo-indicator`, `lib/use-fluid-hover`, `lib/fluid-hover-highlight`,
+`lib/reduced-motion`, `lib/scroll-column`, `lib/slot` (`cloneSlot`),
+`lib/row-order` and the rest of the folder. Button's, Badge's, ColorPicker's and
+FileDropzone's pure tables are `components/actions/button/variants`,
+`components/data-display/badge/variants`,
+`components/inputs/color-picker/variants` and
+`components/inputs/file-dropzone/variants`. `tokens/<group>.css` serves each
+token group's source (`colors`, `typography`, `motion`, `radius`, `spacing`).
 
 ## Styles
 
@@ -116,6 +123,11 @@ color both sides with `light-dark()`:
 }
 ```
 
+The primary Button paints with its own hooks, so a brand fill needs no fork:
+`--primary`, `--primary-hover`, `--primary-active`, `--primary-foreground` and
+`--shadow-button-primary` (an extra shadow list on the fill). They default to
+the ink; re-point `--primary-hover` and `--primary-active` with `--primary`.
+
 The tokens live in five groups: colors (`--background`, `--foreground`,
 `--muted-foreground`, `--accent`, `--brand`, `--destructive`, `--status-*`,
 `--syntax-*`, …), typography (`--font-sans`, `--text-<role>`,
@@ -179,10 +191,10 @@ The same conventions run through every component:
 - Every module with state, effects, handlers or browser APIs opens with
   `'use client'`, kept at the top of each built chunk, so the components work
   from Server Components (Next.js App Router) as client components.
-- `@justanarthur/modo-ui/lib/{utils,springs,size-scale,shape-classes,field-classes}`
-  and `components/{button,badge,inputs/file-dropzone}/variants` carry no
+- `@justanarthur/modo-ui/lib/{utils,springs,size-scale,shape-classes,field-classes,surface-classes}`
+  and `components/{actions/button,data-display/badge,inputs/color-picker,inputs/file-dropzone}/variants` carry no
   `'use client'`, so a Server Component can call `cn`, read the class tables,
-  build a link with `buttonVariants` or check a file with `acceptsFile`. The
+  build a link with `buttonVariants({ surface: true })`, parse a color or check a file with `acceptsFile`. The
   components and the context and hook subpaths are client modules; each
   context is one instance, shared by the barrel, the items and the subpaths.
 - In a Server Component, use the named parts (`CardHeader`, `DialogContent`,
@@ -223,7 +235,7 @@ items next to its own. Re-export one as an item:
 
 ```tsx
 // components/actions/button/index.tsx
-export { default } from '@justanarthur/modo-ui/components/button'
+export { default } from '@justanarthur/modo-ui/components/actions/button'
 ```
 
 The package ships its TypeScript sources and each item's `examples.mdx` under
@@ -234,6 +246,35 @@ styles in the site's `css` (`@import "@justanarthur/modo-ui/styles.css";`);
 the prebuilt sheet holds the components' utilities, so for the layout
 utilities the examples add, point your Tailwind `@source` or UnoCSS `content`
 at `node_modules/@justanarthur/modo-ui/{primitives,components,blocks}`.
+
+To wear ui's docs look as well, pin the chrome's slots to `@justanarthur/modo-ui/docs`,
+load its look after the package styles and add the theme script:
+
+```ts
+// modo.config.ts
+shell: {
+  Button: '@justanarthur/modo-ui/docs#Button',
+  Link: '@justanarthur/modo-ui/docs#Link',
+  Select: '@justanarthur/modo-ui/docs#Select',
+  Icon: '@justanarthur/modo-ui/docs#Icon',
+  Sidebar: '@justanarthur/modo-ui/docs#DocsNav',
+},
+panel: { items: [{ label: 'Theme', component: '@justanarthur/modo-ui/docs#ThemeSwitcher' }] },
+vite: './vite.ts',
+```
+
+```css
+/* the site's css */
+@import "@justanarthur/modo-ui/docs/chrome.css";
+```
+
+`@justanarthur/modo-ui/docs/vite` exports `docsTheme({ storageKey })`, a Vite
+plugin that applies the stored light / dark / system preference before first
+paint (add it to `config.plugins` in your `vite` extension), and
+`withUno(configFile)`, the whole extension for a UnoCSS host (UnoCSS over your
+uno config, plus `docsTheme`; needs `unocss`). The chrome's own elements are
+styled by `chrome.css` through `data-modo-ui` attributes, so nothing needs
+scanning.
 
 ## Credits
 
