@@ -23,7 +23,7 @@ import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid
 import { useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import { WeightLabel } from '../../../lib/weight-label'
-import type { ColorFormat } from './color-math'
+import type { ColorFormat } from './variants'
 
 const FORMAT_LABELS: Record<ColorFormat, string> = {
   hex: 'HEX',

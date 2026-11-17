@@ -17,10 +17,10 @@ import { useControllableState } from '../../../lib/use-controllable-state'
 import { useMorph } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import { SizeScope } from '../../../primitives/systems/sizes'
-import { type ParsedColor, parseColor, rgbToHexStr } from './color-math'
 import { PanelSurfaceContext } from './context'
 import { ColorPicker, type ColorPickerPopoverProps, type ColorPickerProps } from './index'
 import { ColorTile } from './swatches'
+import { type ParsedColor, parseColor, rgbToHexStr } from './variants'
 
 /** ColorPicker.Popover: the panel behind a trigger showing the color, on a bordered field box. */
 export const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
@@ -31,7 +31,15 @@ export const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverP
       triggerShowValue = true,
       triggerShowRemove = false,
       onTriggerRemove,
+      removeLabel = 'Remove color',
+      disabled: disabledProp,
+      readOnly: readOnlyProp,
       triggerClassName,
+      id,
+      'aria-label': ariaLabel,
+      'aria-labelledby': ariaLabelledBy,
+      'aria-describedby': ariaDescribedBy,
+      'aria-invalid': ariaInvalid,
       open,
       defaultOpen,
       onOpenChange,
@@ -59,7 +67,15 @@ export const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverP
     )
 
     // The trigger's own hooks run outside the SizeScope it renders, so it reads `size` directly.
-    const box = useFieldBox({ variant: 'bordered', size })
+    const box = useFieldBox({
+      variant: 'bordered',
+      invalid: ariaInvalid,
+      disabled: disabledProp,
+      readOnly: readOnlyProp,
+      size,
+    })
+    const { disabled, readOnly } = box
+    const locked = disabled || readOnly
     const sizeClasses = box.size
     const compact = sizeClasses.variant === 'compact'
     const frameRef = useRef<HTMLDivElement>(null)
@@ -74,7 +90,14 @@ export const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverP
       <SizeScope size={size}>
         <OverlayContext.Provider value={root.state}>
           {/* Non-modal: the page keeps scrolling and the panel follows its trigger. */}
-          <Popover.Root open={root.open} onOpenChange={root.onOpenChange} modal={false}>
+          <Popover.Root
+            open={root.open && !locked}
+            onOpenChange={(next, details) => {
+              if (next && locked) return
+              root.onOpenChange(next, details)
+            }}
+            modal={false}
+          >
             {/* The frame holds the trigger and the remove button side by side: no control nests in another. */}
             <div
               ref={mergeRefs(frameRef, ref)}
@@ -82,14 +105,23 @@ export const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverP
               className={cn(
                 box.props.className,
                 // A button field has no caret: keyboard focus rings it.
-                'inline-flex items-center cursor-pointer [&:has(:focus-visible)]:!ring-focus-ring',
+                'inline-flex items-center [&:has(:focus-visible)]:!ring-focus-ring',
+                locked ? 'cursor-default' : 'cursor-pointer',
                 sizeClasses.control,
                 triggerClassName,
               )}
             >
               <Popover.Trigger
+                id={id}
+                aria-label={ariaLabel}
+                aria-labelledby={ariaLabelledBy}
+                aria-describedby={ariaDescribedBy}
+                aria-invalid={ariaInvalid}
+                disabled={disabled}
+                tabIndex={readOnly ? -1 : undefined}
                 className={cn(
-                  'flex items-center self-stretch bg-transparent outline-none cursor-pointer weight-medium',
+                  'flex items-center self-stretch bg-transparent outline-none weight-medium',
+                  !locked && 'cursor-pointer',
                   sizeClasses.gap,
                 )}
               >
@@ -100,10 +132,10 @@ export const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverP
                 )}
                 {triggerLabel && triggerLabelPosition === 'right' && label}
               </Popover.Trigger>
-              {triggerShowRemove && (
+              {triggerShowRemove && !locked && (
                 <button
                   type="button"
-                  aria-label="Remove color"
+                  aria-label={removeLabel}
                   onClick={onTriggerRemove}
                   className="ml-1 flex items-center bg-transparent text-muted-foreground hover:text-foreground outline-none cursor-pointer"
                 >

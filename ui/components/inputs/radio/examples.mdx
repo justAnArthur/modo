@@ -41,6 +41,16 @@ With `onValueChange` and no `defaultValue`, the group starts empty and reports e
   <Radio value="team" label="Team" disabled />
 </Radio.Group>
 
+# Rich labels
+
+`label` takes any node, here a name and a price; the row is then named by
+its content (`aria-labelledby`).
+
+<Radio.Group defaultValue="pro">
+  <Radio value="free" label={<span className="flex gap-2">Free <span className="text-muted-foreground">$0</span></span>} />
+  <Radio value="pro" label={<span className="flex gap-2">Pro <span className="text-muted-foreground">$12 / month</span></span>} />
+</Radio.Group>
+
 # Bare
 
 A `Radio` without a `label` is just the circle, picked by its `value`. Lay bare radios out however you like: when none of the group's direct children is a labelled row, the group draws no rows of its own, and Base UI moves focus and selection with the arrow keys. Name each one with a `<label htmlFor>` pointing at its `id`, or `aria-label`.

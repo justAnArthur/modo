@@ -11,7 +11,10 @@ import { createContext, type ReactNode, type RefObject, useContext } from 'react
 /** An object item: `value` and `label`, plus whatever the rows need. */
 export interface ComboboxItemObject {
   value: string
-  label: string
+  /** What the row and the chip show: text, or any node with a `textValue`. */
+  label: ReactNode
+  /** The item as text: what the query filters, the field shows and a chip is named by. Defaults to `label` when it is a string, else `value`. */
+  textValue?: string
   [key: string]: unknown
 }
 
@@ -23,8 +26,27 @@ export function itemValue(item: ComboboxItemData): string {
   return typeof item === 'string' ? item : item.value
 }
 
+/** The item as text: what filters, fills the field and names a chip. */
 export function itemLabel(item: ComboboxItemData): string {
+  if (typeof item === 'string') return item
+  return item.textValue ?? (typeof item.label === 'string' ? item.label : item.value)
+}
+
+/** The item as shown: its label node. */
+export function itemNode(item: ComboboxItemData): ReactNode {
   return typeof item === 'string' ? item : item.label
+}
+
+/** Every fixed word the fields announce, for translating them. */
+export interface ComboboxLabels {
+  /** Names the chevron button. Defaults to `"Open"`. */
+  open?: string
+  /** Names the clear ✕ of a `clearable` field. Defaults to `"Clear"`. */
+  clear?: string
+  /** Names a chip's remove ✕ from the chip's text. Defaults to ``(label) => `Remove ${label}` ``. */
+  remove?: (label: string) => string
+  /** The fields' placeholder while nothing is typed or selected, unless a field sets its own. Defaults to `"Search…"`. */
+  placeholder?: string
 }
 
 // The create row is one more item the primitive filters and highlights, so
@@ -55,6 +77,8 @@ interface ComboboxContextValue {
   readOnly: boolean
   /** Closes the popup (the footer's `close`). */
   close: () => void
+  /** The fields' words, from the root's `labels`. */
+  labels: ComboboxLabels
 }
 
 export const ComboboxContext = createContext<ComboboxContextValue | null>(null)

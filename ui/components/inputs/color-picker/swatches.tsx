@@ -11,7 +11,7 @@ import { useIcon } from '../../../lib/icon-context'
 import { useShape } from '../../../lib/shape-context'
 import { useSize } from '../../../lib/size-context'
 import { cn } from '../../../lib/utils'
-import { parseColor, resolveCssColor, rgbToHexStr } from './color-math'
+import { parseColor, resolveCssColor, rgbToHexStr } from './variants'
 
 export const CHECKER_BG: CSSProperties = {
   backgroundImage:

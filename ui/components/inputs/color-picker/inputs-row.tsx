@@ -5,7 +5,7 @@
  */
 
 import { AlphaInput, ChannelTooltip, ColorInput } from './color-input'
-import { type ColorFormat, type ParsedColor, rgbToHsl, rgbToOklch } from './color-math'
+import { type ColorFormat, type ParsedColor, rgbToHsl, rgbToOklch } from './variants'
 
 export type ChannelKey = 'hex' | 'r' | 'g' | 'b' | 'hSL' | 'sSL' | 'lSL' | 'L' | 'C' | 'H' | 'alphaPercent'
 

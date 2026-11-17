@@ -7,7 +7,7 @@
 
 'use client'
 
-import { Combobox as ComboboxPrimitive } from '@base-ui/react/combobox'
+import { Combobox as ComboboxPrimitive, type ComboboxRootChangeEventDetails } from '@base-ui/react/combobox'
 import { type ReactNode, useCallback, useMemo, useRef, useState } from 'react'
 import { useFieldState } from '../../../lib/field-box'
 import { OverlayContext, useOverlayRoot } from '../../../lib/overlay'
@@ -19,6 +19,7 @@ import {
   ComboboxHighlightContext,
   type ComboboxItemData,
   type ComboboxItemObject,
+  type ComboboxLabels,
   type ComboboxValue,
   CREATE_VALUE,
   type Highlight,
@@ -47,6 +48,8 @@ const ALWAYS_HIGHLIGHT = 'always' as unknown as boolean
 function defaultCreateLabel(query: string): ReactNode {
   return `Create “${query}”`
 }
+
+const NO_LABELS: ComboboxLabels = {}
 
 function toValues(v: string | readonly string[] | undefined): string[] {
   if (v === undefined) return []
@@ -79,8 +82,8 @@ interface ComboboxProps {
   query?: string
   /** Initial query, for an uncontrolled field. Defaults to `""`. */
   defaultQuery?: string
-  /** Called with the field's text on every keystroke, and when a pick, a clear or a close rewrites it. */
-  onQueryChange?: (query: string) => void
+  /** Called with the field's text on every keystroke, and when a pick, a clear or a close rewrites it; Base UI's details tell them apart (`details.reason === 'input-change'` for typing). */
+  onQueryChange?: (query: string, details: ComboboxRootChangeEventDetails) => void
   /** Items are on their way: the chevron turns into a spinner, a status row is pinned under the scrolling rows (announced, in sight however long the list) and the empty message waits. Defaults to `false`. */
   loading?: boolean
   /** The loading row's text. Defaults to `"Loading…"`. */
@@ -102,6 +105,8 @@ interface ComboboxProps {
   name?: string
   /** Marks the hidden form input required. */
   required?: boolean
+  /** The fields' fixed words (the "Open", "Clear" and "Remove …" button names, the "Search…" placeholder), for another language. Each key falls back to its English default. */
+  labels?: ComboboxLabels
   /** Pins field and popup to one step of the size ladder (default 36px, compact 28px — see the Sizes primitive). Omitted, both follow the surrounding SizeProvider. */
   size?: SizeVariant
 }
@@ -132,11 +137,13 @@ interface ComboboxProps {
  * more", "Add new…"); a press on it leaves focus and the caret in the input,
  * and Tab still reaches it from the keyboard. `readOnly` shows the picks and
  * takes no input. A row's label may be any node (an avatar and a name); it
- * keeps its own box, where text is trimmed and truncated.
+ * keeps its own box, where text is trimmed and truncated. An object item's
+ * `label` may be a node too, with a `textValue` to filter, fill the field
+ * and name its chip by. `labels` translates the fields' fixed words.
  *
  * Statics:
- * - `Combobox.Input` — the single-pick field: icon, text input, clear ✕, chevron.
- * - `Combobox.Chips` — the multiple field: one chip per pick ahead of the input.
+ * - `Combobox.Input` — the single-pick field: icon, text input, clear ✕, chevron (`hideTrigger` drops it).
+ * - `Combobox.Chips` — the multiple field: one chip per pick ahead of the input, with the same `hideTrigger`.
  * - `Combobox.Content` — the popup surface, holding `Combobox.Empty` and `Combobox.List`:
  *   `side`, `align`, `sideOffset`, `container`, a `footer` under the list, and the morph options
  *   `from`, `effect`, `hideSource`, `tier`.
@@ -173,6 +180,7 @@ const Combobox = Object.assign(
     disabled: disabledProp,
     name,
     required: requiredProp,
+    labels = NO_LABELS,
     size,
   }: ComboboxProps) {
     const { disabled, readOnly, required } = useFieldState({
@@ -185,7 +193,10 @@ const Combobox = Object.assign(
     const controlledValues = useMemo(() => (value === undefined ? undefined : toValues(value)), [value])
     const [values, setValues] = useControllableState<string[]>(controlledValues, toValues(defaultValue))
     // Base UI owns the field's text unless the caller does; this mirrors it either way.
-    const [inputValue, setInputValue] = useControllableState(queryProp, defaultQuery, onQueryChange)
+    const queryDetails = useRef<ComboboxRootChangeEventDetails | null>(null)
+    const [inputValue, setInputValue] = useControllableState(queryProp, defaultQuery, next =>
+      onQueryChange?.(next, queryDetails.current as ComboboxRootChangeEventDetails),
+    )
     const [highlight, setHighlight] = useState<Highlight | null>(null)
     // Items the create row made while no consumer owns the list.
     const [createdItems, setCreatedItems] = useState<ComboboxItemData[]>([])
@@ -284,6 +295,7 @@ const Combobox = Object.assign(
         loadingLabel,
         readOnly,
         close,
+        labels,
       }),
       [
         values,
@@ -297,6 +309,7 @@ const Combobox = Object.assign(
         loadingLabel,
         readOnly,
         close,
+        labels,
       ],
     )
 
@@ -323,7 +336,10 @@ const Combobox = Object.assign(
                 }
                 inputValue={queryProp}
                 defaultInputValue={defaultQuery}
-                onInputValueChange={next => setInputValue(next)}
+                onInputValueChange={(next, details) => {
+                  queryDetails.current = details
+                  setInputValue(next)
+                }}
                 autoHighlight={ALWAYS_HIGHLIGHT}
                 onItemHighlighted={(item, details) =>
                   setHighlight(
@@ -364,6 +380,7 @@ export type {
   ComboboxItemData,
   ComboboxItemObject,
   ComboboxItemProps,
+  ComboboxLabels,
   ComboboxListProps,
   ComboboxProps,
   ComboboxValue,
