@@ -125,7 +125,7 @@ interface WidgetMetaItemProps {
 function WidgetMetaItem({ icon: Icon, children }: WidgetMetaItemProps) {
   const size = useSize()
   return (
-    <span className="flex min-w-0 shrink-0 items-center gap-1 last:shrink">
+    <span className="flex min-w-0 items-center gap-1 [&:not(:last-child)]:shrink-0">
       {Icon && <Icon size={META_ICON[size.variant]} strokeWidth={1.5} className="shrink-0" />}
       <span className="min-w-0 truncate">{children}</span>
     </span>
