@@ -29,6 +29,13 @@ function useShape(): ShapeClasses {
   return ctx.classes
 }
 
+/** The surrounding `ShapeProvider`'s `shape`, `setShape` and `classes`, for a shape switch. Throws outside one. */
+function useShapeContext(): ShapeContextValue {
+  const ctx = useContext(ShapeContext)
+  if (!ctx) throw new Error('useShapeContext must be used within a ShapeProvider')
+  return ctx
+}
+
 function ShapeProvider({ children, defaultShape = 'rounded' }: { children: ReactNode; defaultShape?: ShapeVariant }) {
   const [shape, setShapeState] = useState<ShapeVariant>(defaultShape)
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -66,4 +73,5 @@ function ShapeProvider({ children, defaultShape = 'rounded' }: { children: React
 }
 
 export type { ShapeClasses, ShapeVariant } from './shape-classes'
-export { ShapeProvider, useShape }
+export type { ShapeContextValue }
+export { ShapeProvider, useShape, useShapeContext }
