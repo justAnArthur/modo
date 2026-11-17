@@ -1,12 +1,12 @@
 import IslandTabs from './index'
 import Button from '@justanarthur/modo-ui/components/actions/button'
-import { CalendarDays, Music, Settings, Timer } from 'lucide-react'
+import { CalendarDays, CloudSun, Music, Settings } from 'lucide-react'
 import { TABS } from '../../../mock/data'
 import { Fit } from '../../../mock/island-content'
 
 # Both wings
 
-Six tabs balance across the wings, three on each side of the notch; the pill melts across the gap.
+Seven tabs balance across the wings, the left one taking the odd one; the pill melts across the gap.
 
 <Fit width={720}>
 <div className="dark w-full rounded-box bg-ink px-5 text-foreground">
@@ -22,11 +22,11 @@ Three tabs balance too, the left wing taking the odd one.
 <div className="dark w-full rounded-box bg-ink px-5 text-foreground">
   <IslandTabs
     size="compact"
-    defaultValue="timer"
+    defaultValue="calendar"
     tabs={[
       { value: 'now-playing', label: 'Now Playing', icon: Music },
-      { value: 'timer', label: 'Timer', icon: Timer },
       { value: 'calendar', label: 'Calendar', icon: CalendarDays },
+      { value: 'weather', label: 'Weather', icon: CloudSun },
     ]}
   />
 </div>
@@ -48,6 +48,6 @@ The default step: 36px tabs for a roomier panel.
 
 <Fit width={720}>
 <div className="dark w-full rounded-box bg-ink px-5 text-foreground">
-  <IslandTabs tabs={TABS} defaultValue="devices" />
+  <IslandTabs tabs={TABS} defaultValue="system" />
 </div>
 </Fit>

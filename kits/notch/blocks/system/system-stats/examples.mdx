@@ -7,7 +7,7 @@ import NowPlaying from '../../activities/now-playing'
 
 The CPU load as the hero with its trend, the facts under it, the busiest processes beside it.
 
-<WidgetIsland tab="stats">
+<WidgetIsland tab="system">
   <SystemStats samples={READINGS} battery={BATTERY} disk={DISK} uptime={UPTIME} processes={PROCESSES} />
 </WidgetIsland>
 
@@ -15,7 +15,7 @@ The CPU load as the hero with its trend, the facts under it, the busiest process
 
 When memory is what's tight, `hero="memory"` makes its pressure the figure; the line takes the warning hue.
 
-<WidgetIsland tab="stats">
+<WidgetIsland tab="system">
   <SystemStats samples={PRESSURE_READINGS} hero="memory" battery={CHARGING} disk={DISK} uptime={UPTIME} processes={PROCESSES} />
 </WidgetIsland>
 
@@ -23,7 +23,7 @@ When memory is what's tight, `hero="memory"` makes its pressure the figure; the 
 
 No `processes`, no aside: the hero takes the width.
 
-<WidgetIsland tab="stats">
+<WidgetIsland tab="system">
   <SystemStats samples={READINGS} disk={DISK} uptime={UPTIME} />
 </WidgetIsland>
 
@@ -31,7 +31,7 @@ No `processes`, no aside: the hero takes the width.
 
 Before the first reading the figures are dashes over the Sparkline's baseline; the battery and the disk need no second reading.
 
-<WidgetIsland tab="stats">
+<WidgetIsland tab="system">
   <SystemStats samples={[]} battery={BATTERY} disk={DISK} uptime={UPTIME} />
 </WidgetIsland>
 

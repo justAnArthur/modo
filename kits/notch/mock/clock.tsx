@@ -6,12 +6,11 @@
 
 'use client'
 
-import { Clock3 } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { useState } from 'react'
 import Clock, { type ClockZone, type PomodoroRun } from '../blocks/activities/clock'
 import NowPlaying from '../blocks/activities/now-playing'
-import { FlashIsland, PLAYING, WingsIsland } from './island-content'
-import { TabIsland } from './tab-island'
+import { PLAYING } from './artwork'
+import { FlashIsland, WingsIsland } from './screen'
 
 const MINUTE = 60_000
 
@@ -38,17 +37,6 @@ export function pomodoroRun(
 /** A run made once, when the component mounts. */
 export function useRun(...args: Parameters<typeof pomodoroRun>) {
   return useState(() => pomodoroRun(...args))[0]
-}
-
-const TAB = { value: 'clock', label: 'Clock', icon: Clock3 }
-
-/** The open island on a Clock tab, in the timer's place. */
-export function ClockIsland({ children }: { children: ReactNode }) {
-  return (
-    <TabIsland tab={TAB} replace="timer">
-      {children}
-    </TabIsland>
-  )
 }
 
 /** The clock in focus, round 2 of 4, 62% to go. */

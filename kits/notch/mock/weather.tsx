@@ -6,11 +6,9 @@
 
 'use client'
 
-import { CloudSun } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { useState } from 'react'
 import Weather, { type WeatherDay, type WeatherHour, type WeatherNow } from '../blocks/activities/weather'
-import { FlashIsland, WingsIsland } from './island-content'
-import { TabIsland } from './tab-island'
+import { FlashIsland, WingsIsland } from './screen'
 
 const MINUTE = 60_000
 const HOUR = 60 * MINUTE
@@ -72,13 +70,6 @@ export const DAYS: WeatherDay[] = [
 
 /** The forecast for `Weather`'s props. */
 export const FORECAST = { location: WEATHER_LOCATION, current: CURRENT, hours: HOURS, days: DAYS, now: WEATHER_NOW }
-
-const TAB = { value: 'weather', label: 'Weather', icon: CloudSun }
-
-/** The open island on a Weather tab, after the calendar. */
-export function WeatherIsland({ children }: { children: ReactNode }) {
-  return <TabIsland tab={TAB}>{children}</TabIsland>
-}
 
 /** The weather in the compact island's wings. */
 export function WeatherWings() {

@@ -1,68 +1,68 @@
 import Weather from './index'
-import { DAYS, FORECAST, NIGHT, RainSoonFlash, WEATHER_NOW, WeatherIsland, WeatherSplit, WeatherWings } from '../../../mock/weather'
-import { FlashIsland } from '../../../mock/island-content'
+import { DAYS, FORECAST, NIGHT, RainSoonFlash, WEATHER_NOW, WeatherSplit, WeatherWings } from '../../../mock/weather'
+import { FlashIsland, WidgetIsland } from '../../../mock/island-content'
 
 # Now and the next hours
 
 The temperature as the hero after the condition's glyph, how warm it feels and when the rain comes, today's high, low, rain, wind, humidity and UV; the next six hours beside it with the chance of rain once it turns wet, and tomorrow.
 
-<WeatherIsland>
+<WidgetIsland tab="weather">
   <Weather {...FORECAST} onRefresh={() => {}} />
-</WeatherIsland>
+</WidgetIsland>
 
 # Fahrenheit
 
 `unit="fahrenheit"` converts what it shows, the wind to mph; the data stays in °C and km/h.
 
-<WeatherIsland>
+<WidgetIsland tab="weather">
   <Weather {...FORECAST} unit="fahrenheit" />
-</WeatherIsland>
+</WidgetIsland>
 
 # A clear night
 
 The moon's glyph by night, the hue plain; a dry strip leaves the chance of rain out.
 
-<WeatherIsland>
+<WidgetIsland tab="weather">
   <Weather location="Bratislava" current={NIGHT.current} hours={NIGHT.hours} days={DAYS} now={NIGHT.current.time + 10 * 60_000} />
-</WeatherIsland>
+</WidgetIsland>
 
 # Offline
 
 The last forecast stays up; the header says how old it is.
 
-<WeatherIsland>
+<WidgetIsland tab="weather">
   <Weather {...FORECAST} now={WEATHER_NOW + 2 * 60 * 60_000} status="offline" />
-</WeatherIsland>
+</WidgetIsland>
 
 # Loading
 
 The first fetch shows the widget's shape.
 
-<WeatherIsland>
+<WidgetIsland tab="weather">
   <Weather location="Bratislava" status="loading" />
-</WeatherIsland>
+</WidgetIsland>
 
 # Couldn't load
 
-<WeatherIsland>
+<WidgetIsland tab="weather">
   <Weather status="error" onRefresh={() => {}} />
-</WeatherIsland>
+</WidgetIsland>
 
 # Asking for location
 
 `access="undetermined"` asks for the location.
 
-<WeatherIsland>
+<WidgetIsland tab="weather">
   <Weather access="undetermined" />
-</WeatherIsland>
+</WidgetIsland>
 
 # Location off
 
 `access="denied"` says where to turn it on.
 
-<WeatherIsland>
+<WidgetIsland tab="weather">
   <Weather access="denied" />
-</WeatherIsland>
+</WidgetIsland>
 
 # Compact
 

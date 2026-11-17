@@ -6,52 +6,55 @@
 
 import { type ReactNode, useState } from 'react'
 import Agenda from '../../blocks/activities/agenda'
+import Clock from '../../blocks/activities/clock'
 import NowPlaying from '../../blocks/activities/now-playing'
-import Shelf from '../../blocks/activities/shelf'
-import Timer from '../../blocks/activities/timer'
-import Controls from '../../blocks/system/controls'
-import Devices from '../../blocks/system/devices'
-import PowerAlert from '../../blocks/system/power-alert'
+import Weather from '../../blocks/activities/weather'
+import ClipboardHistory from '../../blocks/system/clipboard'
+import RecentFiles from '../../blocks/system/recent-files'
 import Island from '../../components/island/island'
 import type { IslandState } from '../../lib/geometry'
 import { useSoon } from '../../mock/activities'
-import { DEVICES, POWER } from '../../mock/data'
+import { ARTWORK_TINT, MockArtwork } from '../../mock/artwork'
+import { CLIPS } from '../../mock/clipboard'
+import { TRACKS } from '../../mock/data'
+import { DOWNLOADS, SCREENSHOTS } from '../../mock/files'
 import { ArtworkTile, FlashIsland, PLAYING } from '../../mock/island-content'
 import { type Scene, SceneDesk } from '../../mock/scene'
 
 const ALERTS: Scene[] = [
-  { value: 'charging', label: 'Charging' },
-  { value: 'unplugged', label: 'On battery' },
-  { value: 'low', label: 'Low battery' },
-  { value: 'critical', label: 'Critical' },
-  { value: 'volume', label: 'Volume' },
-  { value: 'brightness', label: 'Brightness' },
-  { value: 'keyboard', label: 'Keyboard' },
-  { value: 'device', label: 'Device' },
-  { value: 'timer', label: "Time's up" },
+  { value: 'track', label: 'Track change' },
   { value: 'meeting', label: 'Meeting' },
-  { value: 'drop', label: 'Shelf drop' },
+  { value: 'rain', label: 'Rain soon' },
+  { value: 'focus-done', label: 'Focus done' },
+  { value: 'break-over', label: 'Break over' },
+  { value: 'copied', label: 'Copied' },
+  { value: 'downloaded', label: 'Downloaded' },
+  { value: 'screenshot', label: 'Screenshot' },
 ]
+
+const NEXT_TRACK = { ...TRACKS[1]!, artwork: <MockArtwork variant="night" />, tint: ARTWORK_TINT.night }
+const noop = () => {}
 
 /** The flash for each alert, on the blocks and the mock data. */
 export function useAlert(alert: string): ReactNode {
   const event = useSoon(0.9)
-  if (alert === 'charging') return <PowerAlert kind="charging" level={POWER.level} minutes={POWER.untilFull} />
-  if (alert === 'unplugged') return <PowerAlert kind="unplugged" level={POWER.level} minutes={POWER.remaining} />
-  if (alert === 'low') return <PowerAlert kind="low" level={19} />
-  if (alert === 'critical') return <PowerAlert kind="critical" level={8} />
-  if (alert === 'volume') return <Controls.Level kind="volume" defaultValue={0.62} />
-  if (alert === 'brightness') return <Controls.Level kind="brightness" defaultValue={0.3} />
-  if (alert === 'keyboard') return <Controls.Level kind="keyboard" defaultValue={0.8} />
-  if (alert === 'device') return <Devices.Connected device={DEVICES[0]!} />
-  if (alert === 'timer') return <Timer.Done kind="focus" next="break" minutes={5} />
-  if (alert === 'meeting') return <Agenda.Starting event={event} />
-  if (alert === 'drop') return <Shelf.Drop phase="dragging" count={3} />
+  const rainAt = useState(() => Date.now() + 15 * 60_000)[0]
+  if (alert === 'track') return <NowPlaying.Flash track={NEXT_TRACK} />
+  if (alert === 'meeting') return <Agenda.Starting event={event} onJoin={noop} />
+  if (alert === 'rain')
+    return (
+      <Weather.Alert condition="rain" startsAt={rainAt} caption="Light rain for about an hour · 70%" onAction={noop} />
+    )
+  if (alert === 'focus-done') return <Clock.PhaseDone ended={{ phase: 'focus', round: 2 }} onStart={noop} />
+  if (alert === 'break-over') return <Clock.PhaseDone ended={{ phase: 'short-break', round: 2 }} onStart={noop} />
+  if (alert === 'copied') return <ClipboardHistory.Copied clip={CLIPS[0]!} onPin={noop} />
+  if (alert === 'downloaded') return <RecentFiles.Saved file={DOWNLOADS[0]!} onOpen={noop} />
+  if (alert === 'screenshot') return <RecentFiles.Saved file={SCREENSHOTS[0]!} onOpen={noop} />
   return null
 }
 
 interface AlertsProps {
-  /** The alert shown at first. Defaults to `'charging'`. */
+  /** The alert shown at first. Defaults to `'track'`. */
   alert?: string
   /** Show the alerts under the screen. Defaults to `true`. */
   picker?: boolean
@@ -61,17 +64,16 @@ interface AlertsProps {
  * Every alert a notch app flashes below the notch, over whatever the island
  * showed before.
  *
- * Power (a charger in or out, the battery at 20% and at 10%), the HUD that
- * replaces the system's volume, brightness and keyboard backlight overlay, a
- * Bluetooth device connecting, a timer reaching zero, a meeting a minute
- * out and files dragged onto the notch. Pick one under the screen: the
+ * The next track, a meeting a minute out, rain a quarter of an hour away, a
+ * Pomodoro round's end (focus done, break over), a clip copied, a download
+ * landing and a screenshot saved. Pick one under the screen: the
  * island drops into the flash, and one alert replacing another swaps with
  * the blur because each is keyed by its kind (the Island's `activity`).
  * Press the island, or let it be, to go back to the music in the wings.
  *
  * @example {@include ./examples.mdx}
  */
-export default function Alerts({ alert: initial = 'charging', picker = true }: AlertsProps) {
+export default function Alerts({ alert: initial = 'track', picker = true }: AlertsProps) {
   const [alert, setAlert] = useState(initial)
   const [state, setState] = useState<IslandState>('flash')
   const flash = useAlert(alert)

@@ -1,16 +1,14 @@
 import ClipboardHistory from './index'
-import { ClipboardList } from 'lucide-react'
-import { FlashIsland, WingsIsland } from '../../../mock/island-content'
-import { TabIsland } from '../../../mock/widget-tab'
+import { FlashIsland, WidgetIsland, WingsIsland } from '../../../mock/island-content'
 import { CLIP_NOW, CLIPS, PINNED } from '../../../mock/clipboard'
 
 # Latest clip
 
 The newest clip as the hero, with where it came from and Copy; the history beside it, pinned clips on top. Arrow keys move the selection, Enter copies.
 
-<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+<WidgetIsland tab="clipboard">
   <ClipboardHistory clips={CLIPS} defaultPinned={PINNED} now={CLIP_NOW} onDelete={() => {}} />
-</TabIsland>
+</WidgetIsland>
 
 # Kinds
 
@@ -20,55 +18,55 @@ Each kind previews as what it is.
 
 The domain with its favicon, the page's title, the path.
 
-<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+<WidgetIsland tab="clipboard">
   <ClipboardHistory clips={CLIPS} defaultValue="docs" now={CLIP_NOW} onDelete={() => {}} />
-</TabIsland>
+</WidgetIsland>
 
 ## Image
 
-<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+<WidgetIsland tab="clipboard">
   <ClipboardHistory clips={CLIPS} defaultValue="shot" now={CLIP_NOW} onDelete={() => {}} />
-</TabIsland>
+</WidgetIsland>
 
 ## Color
 
-<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+<WidgetIsland tab="clipboard">
   <ClipboardHistory clips={CLIPS} defaultValue="brand" defaultPinned={PINNED} now={CLIP_NOW} onDelete={() => {}} />
-</TabIsland>
+</WidgetIsland>
 
 ## File
 
-<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+<WidgetIsland tab="clipboard">
   <ClipboardHistory clips={CLIPS} defaultValue="brief" now={CLIP_NOW} onDelete={() => {}} />
-</TabIsland>
+</WidgetIsland>
 
 # Searching
 
 `defaultQuery` (or `query`) narrows the list; the hero follows the first match.
 
-<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+<WidgetIsland tab="clipboard">
   <ClipboardHistory clips={CLIPS} defaultQuery="main" now={CLIP_NOW} />
-</TabIsland>
+</WidgetIsland>
 
 # Paused, an app ignored
 
 `paused` stops recording, with a chip and Resume on the context line; `ignoredApp` says whose copies are never kept.
 
-<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+<WidgetIsland tab="clipboard">
   <ClipboardHistory clips={CLIPS} defaultPaused ignoredApp="1Password" now={CLIP_NOW} />
-</TabIsland>
+</WidgetIsland>
 
 # Empty
 
-<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+<WidgetIsland tab="clipboard">
   <ClipboardHistory clips={[]} />
-</TabIsland>
+</WidgetIsland>
 
 # Empty and paused
 
-<TabIsland value="clipboard" label="Clipboard" icon={ClipboardList}>
+<WidgetIsland tab="clipboard">
   <ClipboardHistory clips={[]} defaultPaused />
-</TabIsland>
+</WidgetIsland>
 
 # Compact
 

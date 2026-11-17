@@ -4,6 +4,8 @@
  */
 
 import { cn } from '@justanarthur/modo-ui/lib/utils'
+import type { NowPlayingTrack } from '../blocks/activities/now-playing'
+import { TRACK } from './data'
 
 export type ArtworkVariant = 'aurora' | 'dusk' | 'night'
 
@@ -30,3 +32,6 @@ export function MockArtwork({ variant = 'aurora', className }: { variant?: Artwo
     </span>
   )
 }
+
+/** The mock track, with generated artwork. */
+export const PLAYING: NowPlayingTrack = { ...TRACK, artwork: <MockArtwork />, tint: ARTWORK_TINT.aurora }

@@ -22,18 +22,17 @@ interface OverviewProps {
  * A notch app on a Mac's screen: the island hangs from the top edge over the
  * menu bar, out of the notch, and grows with what it has to show.
  *
- * Music plays in the wings (`compact`), a focus timer joins it in a bubble
- * that melts off the right end (`split`), a charger plugs in for a moment
- * (`flash`), and a press or a hover opens the panel (`expanded`) with a tab
+ * Music plays in the wings (`compact`), a Pomodoro round joins it in a
+ * bubble that melts off the right end (`split`), a download lands for a
+ * moment (`flash`), and a press or a hover opens the panel (`expanded`) with a tab
  * per widget in the wings around the notch. Escape, or leaving the open
  * island, closes it back to where it was. The wallpaper and the menu bar are
  * made of the theme's tokens; the island stays true black in both schemes.
  *
- * The components draw the island; the blocks fill it: NowPlaying, Timer,
- * Agenda, Shelf, Controls, Devices and SystemStats each come with the parts
- * for the wings, the bubble and their flash, PowerAlert is the power
- * flashes, ExpandedIsland the open island's layout and SettingsWindow the
- * app's settings. The other pages put them on the screen: now playing,
+ * The components draw the island; the blocks fill it: NowPlaying, Agenda,
+ * Weather, Clock, SystemStats, ClipboardHistory and RecentFiles each come
+ * with the parts for the wings, the bubble and their flash, ExpandedIsland
+ * is the open island's layout and SettingsWindow the app's settings. The other pages put them on the screen: now playing,
  * every alert, every widget, two activities at once and the settings.
  *
  * @example {@include ./examples.mdx}

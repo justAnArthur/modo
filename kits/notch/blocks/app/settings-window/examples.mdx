@@ -11,8 +11,10 @@ General, Plugins, Permissions and About, then a page per plugin's settings.
 
 # Plugins
 
+A switch per plugin, and a chevron to the page of one that brings settings.
+
 <MockWindow title="Settings">
-  <SettingsWindow name="Just Notch" defaultValue="plugins" plugins={PLUGINS} defaultEnabled={{ stats: false, devices: false }} permissions={PERMISSIONS} about={ABOUT} />
+  <SettingsWindow name="Just Notch" defaultValue="plugins" plugins={PLUGINS} defaultEnabled={{ system: false }} permissions={PERMISSIONS} about={ABOUT} />
 </MockWindow>
 
 # Permissions
@@ -25,6 +27,8 @@ A spinner while one is read; Open Settings beside one that isn't granted.
 
 # A plugin's settings
 
+Grouped rows: a label, what it does, the control at the end.
+
 <MockWindow title="Settings">
-  <SettingsWindow name="Just Notch" defaultValue="plugin:calendar" plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />
+  <SettingsWindow name="Just Notch" defaultValue="plugin:clock" plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />
 </MockWindow>

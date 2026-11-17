@@ -22,15 +22,15 @@ interface WidgetsProps {
 }
 
 /**
- * The open island with a tab per widget: Now Playing, Timer, Calendar,
- * Shelf, Controls, Devices and System.
+ * The open island with a tab per widget: Now Playing, Calendar, Weather,
+ * Clock, System, Clipboard and Recent files.
  *
  * The tabs sit in the wings around the notch with settings at the far
  * right; the tab's title runs under them and its view fills a content area
  * of fixed height that scrolls a taller view. Pick a tab in the island, or
  * under the screen, which drives the same selection. Every view is a block
- * on mock data (NowPlaying, Timer, Agenda, Shelf, Controls, Devices,
- * SystemStats) inside ExpandedIsland. Escape, or a press outside the
+ * on mock data (NowPlaying, Agenda, Weather, Clock, SystemStats,
+ * ClipboardHistory, RecentFiles) inside ExpandedIsland. Escape, or a press outside the
  * controls, closes it to the music in the wings.
  *
  * @example {@include ./examples.mdx}
