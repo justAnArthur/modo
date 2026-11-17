@@ -7,9 +7,7 @@
     "paths": {
       "@justanarthur/modo-ui": ["../../ui/index.ts"],
       "@justanarthur/modo-ui/*": ["../../ui/*"]
-    },
-    // vite.ts imports ui/vite.ts by its file name: Node loads it with type stripping
-    "allowImportingTsExtensions": true
+    }
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", ".modo-tmp", "dist"]

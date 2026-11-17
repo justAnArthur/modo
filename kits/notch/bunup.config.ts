@@ -3,7 +3,8 @@ import { type BunupPlugin, defineConfig } from 'bunup'
 
 const shared = {
   format: 'esm',
-  dts: { inferTypes: true },
+  // Split: shared declarations land in shared chunks; unsplit, bunup drops the barrel's index.d.ts.
+  dts: { inferTypes: true, splitting: true },
   sourceBase: '.',
   preferredTsconfig: './tsconfig.build.json',
   // modo-ui, react and the rest stay imports: modo-ui is a peer, so the host's copy (and its contexts) is the one in use

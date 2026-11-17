@@ -100,7 +100,7 @@
     "motion": "^13.4.0"
   },
   "peerDependencies": {
-    "@justanarthur/modo-ui": "^1.0.0",
+    "@justanarthur/modo-ui": "^2.1.0",
     "react": ">=18",
     "react-dom": ">=18"
   },

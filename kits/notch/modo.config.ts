@@ -15,11 +15,11 @@ export default defineConfig({
   },
   vite: './vite.ts',
   shell: {
-    Button: '../../ui/components/button',
-    Code: '../../ui/primitives/code',
-    Select: '../../ui/modo.components.tsx#Select',
-    Icon: '../../ui/modo.components.tsx#Icon',
-    Sidebar: '../../ui/modo.components.tsx#DocsNav',
+    Button: '@justanarthur/modo-ui/docs#Button',
+    Code: '@justanarthur/modo-ui/primitives/content/code',
+    Select: '@justanarthur/modo-ui/docs#Select',
+    Icon: '@justanarthur/modo-ui/docs#Icon',
+    Sidebar: '@justanarthur/modo-ui/docs#DocsNav',
   },
-  panel: { items: [{ label: 'Theme', component: '../../ui/modo.components.tsx#ThemeSwitcher' }] },
+  panel: { items: [{ label: 'Theme', component: '@justanarthur/modo-ui/docs#ThemeSwitcher' }] },
 })
