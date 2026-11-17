@@ -30,8 +30,18 @@ type TableSection = 'header' | 'body' | 'footer'
 
 const TableSectionContext = createContext<TableSection>('body')
 
+/** A `Table.Header` or `Table.Row`'s own `stacked`, for the rows and cells below it. */
+const StackedContext = createContext<boolean | null>(null)
+
 function useTable() {
   return useContext(TableContext)
+}
+
+/** Whether this part lays out as a card: the table stacks and no part above opted out (`stacked={false}`). */
+function useStacked(own?: boolean) {
+  const table = useContext(TableContext)?.stacked ?? false
+  const part = useContext(StackedContext)
+  return table && (own ?? part ?? true)
 }
 
 /** Unsorted → ascending → descending → unsorted; another column starts at ascending. */
@@ -46,4 +56,4 @@ function useCellPadding() {
 }
 
 export type { SortDirection, TableContextValue, TableSection, TableSort }
-export { nextSort, TableContext, TableSectionContext, useCellPadding, useTable }
+export { nextSort, StackedContext, TableContext, TableSectionContext, useCellPadding, useStacked, useTable }

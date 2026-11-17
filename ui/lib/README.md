@@ -19,7 +19,8 @@ Reach for these before writing the pattern by hand. One line each: what it is, w
 - `shape-classes.ts` — `shapeMap` and `ShapeVariant`: the shape's class tables, pure. `shape-context.tsx` re-exports them beside `ShapeProvider` / `useShape`.
 - `primitives/systems/sizes` `SizeScope` — `<SizeScope size={size}>`: wraps a component's subtree for its own `size` prop. Replaces `size ? <SizeProvider size={size}>{x}</SizeProvider> : x`.
 - `surface-context.tsx` `useLift(offset)` — the level `offset` above the substrate, capped at 8. Replaces `Math.min(useSurface() + N, 8)`; re-provide it with `SurfaceProvider`.
-- `row-index.tsx` — `IndexedRows` numbers a group's rows; `useRowIndex(own?)` is a row's index (0 outside a group); `useRowPosition()` is `undefined` outside `IndexedRows` (a table's header row). `isRow(child)` picks which children count, so a label or separator between rows takes no position (Dropdown).
+- `row-index.tsx` — `IndexedRows` numbers a group's rows; `useRowIndex(own?)` is a row's index (0 outside a group); `useRowPosition()` is `undefined` outside `IndexedRows`.
+- `row-order.tsx` — rows numbered in document order, wherever they sit below the panel (groups, fragments, conditions): the panel provides `useRowOrder()` through `RowOrderContext`, a row reads `useRowSlot(ref, index?)` → `{ index, firstRow }` (`index` undefined until the first layout pass); an explicit `index` wins and the loose rows start after the highest one; `RowOrderContext.Provider value={null}` takes rows out (a table's header, footer or detail row). Dropdown's panels and Table use it; flat groups keep `IndexedRows`.
 
 ## Rows, focus, labels
 

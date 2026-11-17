@@ -17,6 +17,7 @@ import {
   useRef,
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
+import { RowOrderContext, useRowOrder } from '../../../lib/row-order'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { useFluidHover } from '../../../lib/use-fluid-hover'
@@ -39,6 +40,8 @@ interface TableProps extends HTMLAttributes<HTMLTableElement> {
   defaultSort?: TableSort | null
   /** Called with the next sort when a sortable head is pressed: ascending, then descending, then `null`. */
   onSortChange?: (sort: TableSort | null) => void
+  /** Classes for the hover container around the `<table>`, e.g. `overflow-x-auto` for a wide table. */
+  containerClassName?: string
 }
 
 type TableComponent = ForwardRefExoticComponent<TableProps & RefAttributes<HTMLTableElement>> & {
@@ -68,13 +71,22 @@ type TableComponent = ForwardRefExoticComponent<TableProps & RefAttributes<HTMLT
  * `defaultSort` / `onSortChange`, and its arrow crossfades into the new
  * direction (`aria-sort` follows). The table reports the sort; ordering the
  * rows is yours. `stacked` turns body rows into two-column cards while the
- * table's container is narrow, each cell led by its `label`.
+ * table's container is narrow, each cell led by its `label`;
+ * `stacked={false}` on a `Table.Header` or `Table.Row` keeps that part
+ * tabular. `containerClassName` styles the hover container around the
+ * `<table>` (`overflow-x-auto` for a wide one).
+ *
+ * Body rows number themselves in document order across the table's bodies,
+ * inside fragments and conditions too; an explicit `index` still wins.
+ * Header and footer rows stay out, and so does any row under a
+ * `RowOrderContext.Provider value={null}` (`lib/row-order`), e.g. a detail
+ * row that belongs to the row above.
  *
  * Statics:
- * - `Table.Header` — `<thead>`; hidden while stacked.
- * - `Table.Body` — `<tbody>`; numbers its rows for the hover highlight.
+ * - `Table.Header` — `<thead>`; hidden while stacked, unless `stacked={false}`.
+ * - `Table.Body` — `<tbody>`.
  * - `Table.Footer` — `<tfoot>`, for totals: its rows render semibold in the foreground and stay out of the hover.
- * - `Table.Row` — `<tr>`; rows outside `Table.Body` stay out of the hover.
+ * - `Table.Row` — `<tr>`: `index`, `stacked` (`false` keeps the row tabular); rows outside `Table.Body` stay out of the hover.
  * - `Table.Head` — `<th>`; `value` makes it a sort button.
  * - `Table.Cell` — `<td>`; `label` leads the value while stacked.
  * - `Table.Caption` — `<caption>`, a muted line below the table.
@@ -87,8 +99,22 @@ type TableComponent = ForwardRefExoticComponent<TableProps & RefAttributes<HTMLT
  * @license MIT © 2026 Micka Touillaud
  */
 const Table = forwardRef<HTMLTableElement, TableProps>(
-  ({ children, size, stacked = false, sort: sortProp, defaultSort = null, onSortChange, className, ...props }, ref) => {
+  (
+    {
+      children,
+      size,
+      stacked = false,
+      sort: sortProp,
+      defaultSort = null,
+      onSortChange,
+      containerClassName,
+      className,
+      ...props
+    },
+    ref,
+  ) => {
     const containerRef = useRef<HTMLDivElement>(null)
+    const rowOrder = useRowOrder()
     const sizeClasses = useSize(size)
     const hover = useFluidHover(containerRef)
     const { activeIndex, handlers, registerItem } = hover
@@ -107,7 +133,7 @@ const Table = forwardRef<HTMLTableElement, TableProps>(
     return (
       <SizeScope size={size}>
         <TableContext.Provider value={contextValue}>
-          <div ref={containerRef} className={cn('relative', stacked && '@container')} {...handlers}>
+          <div ref={containerRef} className={cn('relative', stacked && '@container', containerClassName)} {...handlers}>
             <FluidHoverHighlight hover={hover} />
             <table
               ref={ref}
@@ -119,7 +145,7 @@ const Table = forwardRef<HTMLTableElement, TableProps>(
               )}
               {...props}
             >
-              {children}
+              <RowOrderContext.Provider value={rowOrder}>{children}</RowOrderContext.Provider>
             </table>
           </div>
         </TableContext.Provider>
@@ -143,7 +169,7 @@ Object.assign(Table, {
 
 export type { SortDirection, TableSort } from './context'
 export type { TableHeadProps } from './head'
-export type { TableCellProps, TableEmptyProps, TableRowProps } from './parts'
+export type { TableCellProps, TableEmptyProps, TableHeaderProps, TableRowProps } from './parts'
 export type { TableProps }
 export { Table, TableBody, TableCaption, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow }
 
