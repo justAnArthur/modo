@@ -140,3 +140,23 @@ The trigger can be any element. `Morph.Part` pairs the card's cover and title wi
     </div>
   </Dialog.Content>
 </Dialog>
+
+# Outside presses
+
+`disablePointerDismissal` ignores presses outside the panel: only Escape and
+the dialog's own closes dismiss it. To decide per press, read
+`details.reason` in `onOpenChange` and call `details.cancel()`.
+
+<Dialog disablePointerDismissal>
+  <Dialog.Trigger render={<Button variant="secondary">Edit draft</Button>} />
+  <Dialog.Content>
+    <Dialog.Header>
+      <Dialog.Title>Unsaved draft</Dialog.Title>
+      <Dialog.Description>A stray click outside won't close this one.</Dialog.Description>
+    </Dialog.Header>
+    <Dialog.Footer>
+      <Dialog.Close render={<Button variant="ghost">Discard</Button>} />
+      <Dialog.Close render={<Button>Save</Button>} />
+    </Dialog.Footer>
+  </Dialog.Content>
+</Dialog>

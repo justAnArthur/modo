@@ -10,7 +10,16 @@
 
 import { Drawer as DrawerPrimitive } from '@base-ui/react/drawer'
 import { motion } from 'motion/react'
-import { createContext, forwardRef, type HTMLAttributes, type ReactNode, useContext, useState } from 'react'
+import {
+  type ComponentProps,
+  createContext,
+  forwardRef,
+  type HTMLAttributes,
+  type ReactNode,
+  useContext,
+  useLayoutEffect,
+  useState,
+} from 'react'
 import { useMergeRefs } from '../../../lib/merge-refs'
 import { type Side, usePortalContainer } from '../../../lib/overlay'
 import { PopupSurface } from '../../../lib/popup-surface'
@@ -30,8 +39,15 @@ import {
 
 type SheetSide = Side
 
-/** The sheet's edge, and whether its last close was a swipe. */
-const SheetContext = createContext<{ side: SheetSide; swiped: boolean }>({ side: 'bottom', swiped: false })
+interface SheetState {
+  side: SheetSide
+  /** Whether its last close was a swipe. */
+  swiped: boolean
+  /** A `Sheet.Content` `side` overriding the root's, so the swipe follows it. */
+  setContentSide: (side: SheetSide | undefined) => void
+}
+
+const SheetContext = createContext<SheetState>({ side: 'bottom', swiped: false, setContentSide: () => {} })
 
 const SWIPE: Record<SheetSide, 'up' | 'right' | 'down' | 'left'> = {
   top: 'up',
@@ -50,9 +66,19 @@ const PLACEMENT: Record<SheetSide, string> = {
 // Literal per shape so the class extractor sees each one.
 const INDENT_RADIUS = { pill: 'data-[active]:rounded-3xl', rounded: 'data-[active]:rounded-xl' }
 
+type DrawerPopupProps = ComponentProps<typeof DrawerPrimitive.Popup>
+
 interface SheetContentProps extends MorphProps, HTMLAttributes<HTMLDivElement> {
   /** Portal target. Defaults to the nearest `PortalContainer`, else the document body. */
   container?: HTMLElement | null
+  /** The edge the sheet is attached to, overriding the `Sheet`'s; the swipe follows it. Defaults to the `Sheet`'s `side`. */
+  side?: SheetSide
+  /** Where focus goes when the sheet opens: a ref, `false` to leave it, `true` for the default, or a function of how it opened (`'mouse'`, `'touch'`, `'pen'`, `'keyboard'`). Defaults to the first tabbable element in the panel. */
+  initialFocus?: DrawerPopupProps['initialFocus']
+  /** Where focus goes when the sheet closes: a ref, `false` to leave it, `true` for the default, or a function of how it closed. Defaults to the trigger. */
+  finalFocus?: DrawerPopupProps['finalFocus']
+  /** Classes for the positioned popup box, merged after its placement, so a width class resizes the sheet. `className` styles the surface's content box. */
+  popupClassName?: string
   /** Classes for the sheet's content box: padding, layout. */
   className?: string
   /** The sheet's content. Everything inside reads the sheet's surface level as its substrate. */
@@ -60,8 +86,30 @@ interface SheetContentProps extends MorphProps, HTMLAttributes<HTMLDivElement> {
 }
 
 const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(
-  ({ from, effect, hideSource, tier, container, className, children, ...props }, ref) => {
-    const { side, swiped } = useContext(SheetContext)
+  (
+    {
+      from,
+      effect,
+      hideSource,
+      tier,
+      container,
+      side: sideProp,
+      initialFocus,
+      finalFocus,
+      popupClassName,
+      className,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
+    const { side: rootSide, swiped, setContentSide } = useContext(SheetContext)
+    const side = sideProp ?? rootSide
+    useLayoutEffect(() => {
+      if (!sideProp) return
+      setContentSide(sideProp)
+      return () => setContentSide(undefined)
+    }, [sideProp, setContentSide])
     const { open, origin } = useDialogState()
     const morph = useMorph(open, origin, {
       from: from ?? side,
@@ -69,6 +117,8 @@ const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(
       hideSource,
       tier,
       exit: swiped ? { effect: 'slide', from: side } : undefined,
+      // A custom `finalFocus` places focus itself; the morph's own return to the trigger would undo it.
+      returnFocus: typeof finalFocus === 'boolean' ? finalFocus : finalFocus === undefined,
     })
     const popupRef = useMergeRefs(ref, morph.popupRef)
     const portal = usePortalContainer(container)
@@ -86,6 +136,8 @@ const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(
           <DrawerPrimitive.Popup
             ref={popupRef}
             {...props}
+            initialFocus={initialFocus}
+            finalFocus={finalFocus}
             className={cn(
               'absolute flex flex-col focus:outline-none',
               PLACEMENT[side],
@@ -94,6 +146,7 @@ const SheetContent = forwardRef<HTMLDivElement, SheetContentProps>(
               // release; Base UI drops the transition while a swipe is live.
               '[transform:translate(var(--drawer-swipe-movement-x),calc(var(--drawer-snap-point-offset)_+_var(--drawer-swipe-movement-y)))]',
               'transition-[transform] duration-slow',
+              popupClassName,
             )}
           >
             <PopupSurface
@@ -128,14 +181,17 @@ const SheetIndent = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>((
 })
 SheetIndent.displayName = 'SheetIndent'
 
+/** What `onOpenChange` receives besides the open state: Base UI's Drawer change details. */
+type SheetOpenChangeDetails = DrawerPrimitive.Root.ChangeEventDetails
+
 interface SheetProps {
   /** Controlled open state. Pair with `onOpenChange`. */
   open?: boolean
   /** Initial open state, for an uncontrolled sheet. Defaults to `false`. */
   defaultOpen?: boolean
-  /** Called when the sheet opens or closes, including by a swipe. */
-  onOpenChange?: (open: boolean) => void
-  /** The edge the sheet is attached to; a swipe back toward it dismisses it. Defaults to `'bottom'`. */
+  /** Called when the sheet opens or closes, including by a swipe, with Base UI's change details: `reason` (`'swipe'`, `'escape-key'`, `'outside-press'`, …), the `event`, and `cancel()` to keep it as it is. */
+  onOpenChange?: (open: boolean, details: SheetOpenChangeDetails) => void
+  /** The edge the sheet is attached to; a swipe back toward it dismisses it. A `Sheet.Content` `side` overrides it. Defaults to `'bottom'`. */
   side?: 'top' | 'right' | 'bottom' | 'left'
   /** Snap points for a top or bottom sheet: fractions of the viewport height (0–1), pixels, or `px` / `rem` strings. */
   snapPoints?: (number | string)[]
@@ -143,6 +199,8 @@ interface SheetProps {
   defaultSnapPoint?: number | string
   /** Traps focus and locks page scroll while open. Defaults to `true`. */
   modal?: boolean
+  /** Ignore presses outside the sheet: only Escape, a swipe and its own closes dismiss it. Defaults to `false`. */
+  disablePointerDismissal?: boolean
   /** The trigger and the content — `Sheet.Trigger` plus a `Sheet.Content`. */
   children?: ReactNode
 }
@@ -157,13 +215,16 @@ interface SheetProps {
  * go), top and bottom sheets can rest at `snapPoints`, and
  * focus and scroll are held while it is open. It floats a spacing step off
  * its edge and lifts 4 surface levels off its substrate, like a dialog; top
- * and bottom sheets show a handle.
+ * and bottom sheets show a handle. `onOpenChange` hears why
+ * (`details.reason`, `'swipe'` included) and can `details.cancel()` it.
  *
  * Statics:
  * - `Sheet.Trigger`, `Sheet.Header`, `Sheet.Footer`, `Sheet.Title`,
  *   `Sheet.Description`, `Sheet.Close` — Dialog's parts, which work the same
  *   here.
- * - `Sheet.Content` — the panel: `container`, and the morph options `from`
+ * - `Sheet.Content` — the panel: `side` (overrides the root's), `container`,
+ *   `initialFocus`, `finalFocus`, `popupClassName` (sizes the popup box),
+ *   and the morph options `from`
  *   (default: the sheet's `side`), `effect` (default `'goo'`), `hideSource`,
  *   `tier` (default `'slow'`).
  * - `Sheet.Provider` / `Sheet.Indent` — wrap the page in an `Indent` under a
@@ -181,23 +242,27 @@ const Sheet = Object.assign(
     snapPoints,
     defaultSnapPoint,
     modal = true,
+    disablePointerDismissal,
   }: SheetProps) {
     const [swiped, setSwiped] = useState(false)
+    const [contentSide, setContentSide] = useState<SheetSide>()
+    const edge = contentSide ?? side
 
     return (
-      <SheetContext.Provider value={{ side, swiped }}>
+      <SheetContext.Provider value={{ side: edge, swiped, setContentSide }}>
         <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
           {root => (
             <DrawerPrimitive.Root
               open={root.open}
               onOpenChange={(next, details) => {
-                setSwiped(!next && details.reason === 'swipe')
                 root.onOpenChange(next, details)
+                if (!details.isCanceled) setSwiped(!next && details.reason === 'swipe')
               }}
-              swipeDirection={SWIPE[side]}
+              swipeDirection={SWIPE[edge]}
               snapPoints={snapPoints}
               defaultSnapPoint={defaultSnapPoint}
               modal={modal}
+              disablePointerDismissal={disablePointerDismissal}
             >
               {children}
             </DrawerPrimitive.Root>
@@ -219,7 +284,7 @@ const Sheet = Object.assign(
   },
 )
 
-export type { SheetContentProps, SheetProps, SheetSide }
+export type { SheetContentProps, SheetOpenChangeDetails, SheetProps, SheetSide }
 export { Sheet, SheetContent, SheetIndent }
 
 export default Sheet

@@ -10,10 +10,12 @@
 import { Select as SelectPrimitive } from '@base-ui/react/select'
 import {
   Children,
+  type ComponentProps,
   createContext,
   forwardRef,
   type HTMLAttributes,
   isValidElement,
+  type ReactElement,
   type ReactNode,
   useContext,
   useEffect,
@@ -30,7 +32,6 @@ import type { IconComponent } from '../../../lib/icon-context'
 import { useMergeRefs } from '../../../lib/merge-refs'
 import {
   type AnchorProps,
-  type OpenChangeDetails,
   OverlayContext,
   positionerProps,
   useOverlay,
@@ -51,6 +52,7 @@ import {
 import { PopupSurface } from '../../../lib/popup-surface'
 import { useRowFocus } from '../../../lib/row-group'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
+import { slotRender } from '../../../lib/slot'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { useFluidHover, useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { useKeyboardNavGate } from '../../../lib/use-keyboard-nav-gate'
@@ -109,6 +111,9 @@ function collectSelectItems(node: ReactNode, out: { value: string; label: ReactN
   return out
 }
 
+/** What `onOpenChange` receives besides the open state: Base UI's Select change details. */
+type SelectOpenChangeDetails = SelectPrimitive.Root.ChangeEventDetails
+
 interface SelectProps {
   /** `Select.Trigger` and `Select.Content`. */
   children: ReactNode
@@ -122,8 +127,8 @@ interface SelectProps {
   open?: boolean
   /** Initial open state, for an uncontrolled select. Defaults to `false`. */
   defaultOpen?: boolean
-  /** Called when the popup opens or closes; after a pick, once the 300ms acknowledgment has run. */
-  onOpenChange?: (open: boolean) => void
+  /** Called when the popup opens or closes, with Base UI's change details: `reason` (`'trigger-press'`, `'item-press'`, `'escape-key'`, `'outside-press'`, …), the `event`, and `cancel()` to keep it as it is. After a pick, once the 300ms acknowledgment has run. */
+  onOpenChange?: (open: boolean, details: SelectOpenChangeDetails) => void
   /** Disables the entire select. Defaults to `false`. */
   disabled?: boolean
   /** Shows the value but takes no pick: the popup stays shut. Defaults to `false`. */
@@ -136,7 +141,7 @@ interface SelectProps {
   size?: SizeVariant
 }
 
-interface SelectValueProps {
+interface SelectValueProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'children' | 'placeholder'> {
   /** Shown, muted, while nothing is selected. Defaults to `"Select…"`. */
   placeholder?: ReactNode
   /** Extra classes for the value slot. */
@@ -144,25 +149,33 @@ interface SelectValueProps {
 }
 
 /** The trigger's value slot: the picked row's label, else the muted placeholder. */
-function SelectValue({ placeholder = 'Select…', className }: SelectValueProps) {
-  const { textLabel } = useSelectContext()
-  return (
-    <SelectPrimitive.Value
-      placeholder={placeholder}
-      className={cn(
-        textLabel ? rowLabelClass : 'flex min-w-0 flex-1 items-center',
-        'text-left text-foreground data-[placeholder]:text-muted-foreground',
-        className,
-      )}
-    />
-  )
-}
+const SelectValue = forwardRef<HTMLSpanElement, SelectValueProps>(
+  ({ placeholder = 'Select…', className, ...props }, ref) => {
+    const { textLabel } = useSelectContext()
+    return (
+      <SelectPrimitive.Value
+        ref={ref}
+        placeholder={placeholder}
+        className={cn(
+          textLabel ? rowLabelClass : 'flex min-w-0 flex-1 items-center',
+          'text-left text-foreground data-[placeholder]:text-muted-foreground',
+          className,
+        )}
+        {...props}
+      />
+    )
+  },
+)
 
 SelectValue.displayName = 'SelectValue'
 
 interface SelectTriggerProps extends Omit<HTMLAttributes<HTMLButtonElement>, 'children'> {
-  /** Replaces the built-in value slot, typically with a `Select.Value`. The icon and chevron stay. */
+  /** Replaces the built-in value slot, typically with a `Select.Value`. The icon and chevron stay. With `asChild`, the element that becomes the trigger. */
   children?: ReactNode
+  /** An element that becomes the trigger, look included (`render={<Button/>}`): childless, it gets the value slot, `icon` and chevron; with children of its own, they are the whole body. */
+  render?: ReactElement
+  /** Compose onto the single child element instead, the same way as `render`. Defaults to `false`. */
+  asChild?: boolean
   /** Framed at rest, or invisible until hovered or focused. Defaults to `"bordered"`. */
   variant?: FieldVariant
   /** Optional icon displayed before the value. */
@@ -175,22 +188,41 @@ interface SelectTriggerProps extends Omit<HTMLAttributes<HTMLButtonElement>, 'ch
   size?: SizeVariant
   /** Extra classes for the trigger button. */
   className?: string
+  /** Extra classes for the div around the trigger, which holds the `error` message under it: a flex column, so `contents` takes it out of the layout. */
+  wrapperClassName?: string
 }
 
+const ownChildren = (el: ReactElement) => (el.props as { children?: ReactNode }).children
+
 const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
-  ({ className, variant = 'bordered', icon: Icon, placeholder = 'Select…', error, size, children, ...props }, ref) => {
+  (
+    {
+      className,
+      wrapperClassName,
+      variant = 'bordered',
+      icon: Icon,
+      placeholder = 'Select…',
+      error,
+      size,
+      render,
+      asChild,
+      children,
+      ...props
+    },
+    ref,
+  ) => {
     const { disabled, readOnly } = useSelectContext()
     const field = useFieldBox({ variant, invalid: error ? true : undefined, disabled, readOnly, size })
     const sizeClasses = field.size
     const compact = sizeClasses.variant === 'compact'
-
-    return (
-      <div className="flex flex-col gap-1">
-        <SelectPrimitive.Trigger
-          ref={ref}
-          aria-invalid={field.invalid || undefined}
-          {...field.props}
-          className={cn(
+    // A caller's element brings its own look; its own children (or `render`'s trigger children) are the whole body.
+    const el = slotRender(render, asChild, children)
+    const body = el && (asChild ? ownChildren(el) : (children ?? ownChildren(el)))
+    const look = el
+      ? { className: cn('group/field', className) }
+      : {
+          ...field.props,
+          className: cn(
             field.props.className,
             'flex items-center justify-between cursor-pointer outline-none focus-visible:ring-focus-ring',
             sizeClasses.control,
@@ -198,27 +230,34 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
             sizeClasses.gap,
             compact ? 'min-w-[128px]' : 'min-w-[160px]',
             className,
+          ),
+        }
+
+    return (
+      <div className={cn('flex flex-col gap-1', wrapperClassName)}>
+        <SelectPrimitive.Trigger ref={ref} render={el} aria-invalid={field.invalid || undefined} {...look} {...props}>
+          {body ?? (
+            <>
+              <span className={cn('flex min-w-0 flex-1 items-center', sizeClasses.gap)}>
+                {Icon && <Icon size={sizeClasses.icon} strokeWidth={1.5} className={fieldIconClasses} />}
+                {(el ? undefined : children) ?? <SelectValue placeholder={placeholder} />}
+              </span>
+              <svg
+                aria-hidden
+                width={sizeClasses.icon}
+                height={sizeClasses.icon}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="shrink-0 text-muted-foreground transition-colors duration-fast group-hover/field:text-foreground"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </>
           )}
-          {...props}
-        >
-          <span className={cn('flex min-w-0 flex-1 items-center', sizeClasses.gap)}>
-            {Icon && <Icon size={sizeClasses.icon} strokeWidth={1.5} className={fieldIconClasses} />}
-            {children ?? <SelectValue placeholder={placeholder} />}
-          </span>
-          <svg
-            aria-hidden
-            width={sizeClasses.icon}
-            height={sizeClasses.icon}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="shrink-0 text-muted-foreground transition-colors duration-fast group-hover/field:text-foreground"
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
         </SelectPrimitive.Trigger>
         {error && <span className="text-caption text-destructive pl-3">{error}</span>}
       </div>
@@ -228,7 +267,11 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
 
 SelectTrigger.displayName = 'SelectTrigger'
 
+type SelectPopupProps = ComponentProps<typeof SelectPrimitive.Popup>
+
 interface SelectContentProps extends AnchorProps, MorphProps, Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
+  /** Where focus goes when the popup closes: a ref, `false` to leave it, `true` for the default, or a function of how it closed. Defaults to the trigger. */
+  finalFocus?: SelectPopupProps['finalFocus']
   /** Additional classes for the menu container. */
   className?: string
   /** `Select.Item`, `Select.Group`, `Select.Label`, `Select.Separator`. */
@@ -237,11 +280,31 @@ interface SelectContentProps extends AnchorProps, MorphProps, Omit<HTMLAttribute
 
 const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
   (
-    { side, align, sideOffset, container, from, effect, hideSource, tier = 'moderate', className, children, ...props },
+    {
+      side,
+      align,
+      sideOffset,
+      container,
+      finalFocus,
+      from,
+      effect,
+      hideSource,
+      tier = 'moderate',
+      className,
+      children,
+      ...props
+    },
     ref,
   ) => {
     const { open, origin } = useOverlay('Select.Content')
-    const morph = useMorph(open, origin, { from, effect, hideSource, tier })
+    const morph = useMorph(open, origin, {
+      from,
+      effect,
+      hideSource,
+      tier,
+      // A custom `finalFocus` places focus itself; the morph's own return to the trigger would undo it.
+      returnFocus: typeof finalFocus === 'boolean' ? finalFocus : finalFocus === undefined,
+    })
     const popupRef = useMergeRefs(ref, morph.popupRef)
     const containerRef = useRef<HTMLDivElement>(null)
     const hover = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
@@ -280,6 +343,7 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
           <SelectContentContext.Provider value={contentCtx}>
             <SelectPrimitive.Popup
               ref={popupRef}
+              finalFocus={finalFocus}
               // Capture: the primitive moves focus during its own keydown.
               onKeyDownCapture={trackKeyboardNav}
               onMouseEnter={() => {
@@ -412,7 +476,8 @@ const SelectSeparator = PopupSeparator
  * seen; Escape and outside presses close at once. The trigger sits on the
  * field box, like Combobox's field. Uncontrolled through `defaultValue` and
  * `defaultOpen`, controlled through `value` + `onValueChange` and `open` +
- * `onOpenChange`.
+ * `onOpenChange`; `onOpenChange` hears why (`details.reason`) and can
+ * `details.cancel()` it.
  *
  * Rows need no `index`: they take their place in document order, inside a
  * `Select.Group` or out of a `map`. A row's label may be any node (an icon
@@ -421,10 +486,13 @@ const SelectSeparator = PopupSeparator
  * matches.
  *
  * Statics:
- * - `Select.Trigger` — the field: `variant`, `icon`, `placeholder`, `error`;
- *   children replace its value slot (a `Select.Value`).
+ * - `Select.Trigger` — the field: `variant`, `icon`, `placeholder`, `error`,
+ *   `wrapperClassName`; children replace its value slot (a `Select.Value`).
+ *   `render={<Button/>}` or `asChild` make your own element the trigger,
+ *   look included: childless it keeps the value slot and chevron, with
+ *   children those are its whole body.
  * - `Select.Value` — the value slot: the picked row's label, else the muted `placeholder`.
- * - `Select.Content` — the popup: `side`, `align`, `sideOffset`, `container` and the
+ * - `Select.Content` — the popup: `side`, `align`, `sideOffset`, `container`, `finalFocus` and the
  *   morph options `from`, `effect`, `hideSource`, `tier`.
  * - `Select.Item` — one row: `value`, optional `index`, `textValue`, `icon`, `disabled`;
  *   its children are the label.
@@ -456,20 +524,25 @@ const Select = Object.assign(
       required: requiredProp,
     })
     const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
-    const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
+    // Reported here rather than through the root's state, so the handler gets the details and can cancel.
+    const root = useOverlayRoot({ open, defaultOpen })
     const items = useMemo(() => collectSelectItems(children), [children])
 
     const ack = useRef<number | undefined>(undefined)
     useEffect(() => () => clearTimeout(ack.current), [])
 
     // Any other close (Escape, outside press, the trigger) is at once and cancels a pending ack.
-    const handleOpenChange = (next: boolean, details: OpenChangeDetails & { reason: string }) => {
+    const handleOpenChange = (next: boolean, details: SelectOpenChangeDetails) => {
       clearTimeout(ack.current)
       if (!next && details.reason === 'item-press') {
-        ack.current = window.setTimeout(() => root.setOpen(false), selectionAckMs)
+        ack.current = window.setTimeout(() => {
+          onOpenChange?.(false, details)
+          if (!details.isCanceled) root.setOpen(false)
+        }, selectionAckMs)
         return
       }
-      root.onOpenChange(next, details)
+      onOpenChange?.(next, details)
+      if (!details.isCanceled) root.onOpenChange(next, details)
     }
 
     const indexByValue = useMemo(() => new Map(items.map((item, index) => [item.value, index])), [items])
@@ -515,7 +588,14 @@ const Select = Object.assign(
   },
 )
 
-export type { SelectContentProps, SelectItemProps, SelectProps, SelectTriggerProps, SelectValueProps }
+export type {
+  SelectContentProps,
+  SelectItemProps,
+  SelectOpenChangeDetails,
+  SelectProps,
+  SelectTriggerProps,
+  SelectValueProps,
+}
 export { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue }
 
 export default Select

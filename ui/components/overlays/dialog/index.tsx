@@ -9,14 +9,13 @@
 
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { motion } from 'motion/react'
-import { forwardRef, type HTMLAttributes, type ReactNode, useId, useMemo } from 'react'
+import { type ComponentProps, forwardRef, type HTMLAttributes, type ReactNode, useId, useMemo } from 'react'
 import { useIcon } from '../../../lib/icon-context'
 import { useMergeRefs } from '../../../lib/merge-refs'
 import { MorphPartScope } from '../../../lib/morph-part'
 import {
   type OpenChangeDetails,
   OverlayContext,
-  type OverlayRootProps,
   useOverlay,
   useOverlayRoot,
   usePortalContainer,
@@ -37,6 +36,8 @@ const useDialogState = () => useOverlay('Dialog part')
 const DialogTrigger = slotPart(DialogPrimitive.Trigger, 'DialogTrigger')
 const DialogClose = slotPart(DialogPrimitive.Close, 'DialogClose')
 
+type DialogPopupProps = ComponentProps<typeof DialogPrimitive.Popup>
+
 // Literal per step so the class extractor sees each one.
 const WIDTH: Record<DialogWidth, Record<SizeVariant, string>> = {
   sm: { default: 'max-w-[400px]', compact: 'max-w-[360px]' },
@@ -53,6 +54,12 @@ interface DialogContentProps extends MorphProps, HTMLAttributes<HTMLDivElement> 
   showCloseButton?: boolean
   /** Centered, or 12dvh from the top so a panel whose height follows its content keeps its top edge still. Defaults to `'center'`. */
   position?: 'center' | 'top'
+  /** Where focus goes when the dialog opens: a ref, `false` to leave it, `true` for the default, or a function of how it opened (`'mouse'`, `'touch'`, `'pen'`, `'keyboard'`). Defaults to the first tabbable element in the panel. */
+  initialFocus?: DialogPopupProps['initialFocus']
+  /** Where focus goes when the dialog closes: a ref, `false` to leave it, `true` for the default, or a function of how it closed. Defaults to the trigger. */
+  finalFocus?: DialogPopupProps['finalFocus']
+  /** Classes for the positioned popup box around the surface, merged after its width, so `w-max` or `max-w-[60rem]` sizes the panel. `className` styles the surface's content box. */
+  popupClassName?: string
   /** Dialog content. Everything inside reads the dialog's surface level as its substrate. */
   children?: ReactNode
 }
@@ -70,6 +77,9 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
       effect,
       hideSource,
       tier,
+      initialFocus,
+      finalFocus,
+      popupClassName,
       ...props
     },
     ref,
@@ -78,7 +88,14 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
     const variant = useSizeVariant()
     const portal = usePortalContainer(container)
     const { open, origin } = useDialogState()
-    const morph = useMorph(open, origin, { from, effect, hideSource, tier })
+    const morph = useMorph(open, origin, {
+      from,
+      effect,
+      hideSource,
+      tier,
+      // A custom `finalFocus` places focus itself; the morph's own return to the trigger would undo it.
+      returnFocus: typeof finalFocus === 'boolean' ? finalFocus : finalFocus === undefined,
+    })
     const popupRef = useMergeRefs(ref, morph.popupRef)
     const inset = portal ? 'absolute' : 'fixed'
 
@@ -91,11 +108,14 @@ const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
         <DialogPrimitive.Popup
           ref={popupRef}
           {...props}
+          initialFocus={initialFocus}
+          finalFocus={finalFocus}
           className={cn(
             inset,
             'left-1/2 z-50 w-[calc(100%-2rem)] -translate-x-1/2 focus:outline-none',
             position === 'top' ? 'top-[12dvh]' : 'top-1/2 -translate-y-1/2',
             WIDTH[width][variant],
+            popupClassName,
           )}
         >
           <PopupSurface morph={morph} lift="panel" className={cn('p-6', className)}>
@@ -158,23 +178,47 @@ const DialogDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLPa
 )
 DialogDescription.displayName = 'DialogDescription'
 
-interface DialogStateProps extends OverlayRootProps {
-  children: (root: { open: boolean; onOpenChange: (next: boolean, details: OpenChangeDetails) => void }) => ReactNode
+/** What `onOpenChange` receives besides the open state: Base UI's Dialog change details. */
+type DialogOpenChangeDetails = DialogPrimitive.Root.ChangeEventDetails
+
+/** What `DialogState` reads of a change's details: Base UI's (Dialog, AlertDialog, Drawer), or a plain one from code. */
+interface DialogStateDetails extends OpenChangeDetails {
+  isCanceled?: boolean
+}
+
+interface DialogStateProps<Details extends DialogStateDetails> {
+  open?: boolean
+  defaultOpen?: boolean
+  onOpenChange?: (open: boolean, details: Details) => void
+  children: (root: { open: boolean; onOpenChange: (next: boolean, details: Details) => void }) => ReactNode
 }
 
 /**
  * A dialog's root state, for any dialog-like Base UI root (AlertDialog,
- * Drawer, Command): spread `root` on it. Also scopes `Morph.Part` pairs.
+ * Drawer, Command): spread `root` on it. `onOpenChange` hears the change
+ * first, so `details.cancel()` keeps the state. Also scopes `Morph.Part` pairs.
  */
-function DialogState({ open, defaultOpen, onOpenChange, children }: DialogStateProps) {
-  const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
+function DialogState<Details extends DialogStateDetails>({
+  open,
+  defaultOpen,
+  onOpenChange,
+  children,
+}: DialogStateProps<Details>) {
+  // Reported here rather than through the root's state, so the handler gets the details and can cancel.
+  const root = useOverlayRoot({ open, defaultOpen })
   const id = useId()
   const parts = useMemo(() => ({ id, open: root.open }), [id, root.open])
 
   return (
     <OverlayContext.Provider value={root.state}>
       <MorphPartScope.Provider value={parts}>
-        {children({ open: root.open, onOpenChange: root.onOpenChange })}
+        {children({
+          open: root.open,
+          onOpenChange: (next, details) => {
+            onOpenChange?.(next, details)
+            if (!details.isCanceled) root.onOpenChange(next, details)
+          },
+        })}
       </MorphPartScope.Provider>
     </OverlayContext.Provider>
   )
@@ -185,10 +229,12 @@ interface DialogProps {
   open?: boolean
   /** Initial open state, for an uncontrolled dialog. Defaults to `false`. */
   defaultOpen?: boolean
-  /** Called when the dialog opens or closes. */
-  onOpenChange?: (open: boolean) => void
+  /** Called when the dialog opens or closes, with Base UI's change details: `reason` (`'trigger-press'`, `'outside-press'`, `'escape-key'`, `'close-press'`, …), the `event`, and `cancel()` to keep it as it is. */
+  onOpenChange?: (open: boolean, details: DialogOpenChangeDetails) => void
   /** Traps focus and locks page scroll while open. Defaults to `true`. */
   modal?: boolean
+  /** Ignore presses outside the panel: only Escape and the dialog's own closes dismiss it. Defaults to `false`. */
+  disablePointerDismissal?: boolean
   /** The trigger and the content — `Dialog.Trigger` plus a `Dialog.Content`. */
   children?: ReactNode
 }
@@ -207,13 +253,18 @@ interface DialogProps {
  * in the panel, so a card's image or title flies into the dialog.
  * `position="top"` anchors the panel 12dvh down so a content-sized panel (a
  * command menu) keeps its top edge still. Built on Base UI's Dialog: open
- * state is controlled with `open` / `onOpenChange` or left to `defaultOpen`.
+ * state is controlled with `open` / `onOpenChange` or left to `defaultOpen`;
+ * `onOpenChange` hears why (`details.reason`) and can `details.cancel()` it,
+ * e.g. to keep the dialog open on an outside press, and
+ * `disablePointerDismissal` ignores outside presses altogether.
+ * `initialFocus` and `finalFocus` choose where focus goes on open and close.
  *
  * Statics:
  * - `Dialog.Trigger` — the control that opens it. `render={<Button/>}` or
  *   Radix-style `asChild` with a single child both work.
  * - `Dialog.Content` — the panel: `width` (default `'sm'`), `position`
  *   (default `'center'`), `showCloseButton` (default `true`), `container`,
+ *   `initialFocus`, `finalFocus`, `popupClassName` (sizes the popup box),
  *   and the morph options `from` (default `'trigger'`), `effect` (default
  *   `'goo'`), `hideSource`, `tier` (default `'slow'`).
  * - `Dialog.Header` / `Dialog.Footer` — the stacked title block, and the
@@ -229,11 +280,11 @@ interface DialogProps {
  * @license MIT © 2026 Micka Touillaud
  */
 const Dialog = Object.assign(
-  function Dialog({ children, open, defaultOpen, onOpenChange, modal }: DialogProps) {
+  function Dialog({ children, open, defaultOpen, onOpenChange, modal, disablePointerDismissal }: DialogProps) {
     return (
       <DialogState open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
         {root => (
-          <DialogPrimitive.Root {...root} modal={modal}>
+          <DialogPrimitive.Root {...root} modal={modal} disablePointerDismissal={disablePointerDismissal}>
             {children}
           </DialogPrimitive.Root>
         )}
@@ -253,6 +304,7 @@ const Dialog = Object.assign(
 
 export type {
   DialogContentProps,
+  DialogOpenChangeDetails,
   DialogProps,
   DialogSlotProps as DialogTriggerProps,
   DialogSlotProps as DialogCloseProps,
