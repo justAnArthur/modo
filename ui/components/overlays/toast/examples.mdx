@@ -42,6 +42,22 @@ An `action` puts a button in the body.
   />
 </Toast>
 
+# Custom icon and action
+
+`icon` replaces the state's glyph with an icon component or any node, and
+`action` takes any node: here a `Toast.Close` that dismisses the toast.
+
+<Toast position="top-left">
+  <Toast.Trigger
+    type="info"
+    icon={<span className="text-caption weight-semibold">3</span>}
+    title="Reviewers assigned"
+    description="Ana, Ben and Chloé will look at it today."
+    action={<Toast.Close variant="secondary">Got it</Toast.Close>}
+    render={<Button variant="secondary">Request review</Button>}
+  />
+</Toast>
+
 # From anywhere
 
 Mount one `<Toast manager={toast} />` and call the global `toast` from any handler or module, React or not. It takes options or just a title and returns the toast's id; `toast.loading` stays until `toast.update` turns it into a result, which then leaves on the default timeout. `useToast()` under that `Toast` works on the same stack.

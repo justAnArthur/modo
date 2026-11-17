@@ -174,6 +174,30 @@
   --syntax-sign: var(--muted-foreground);
 }
 
+/* ── Primary action (theme hooks) ──
+   What the primary Button paints, as hooks a host re-points to recolour it
+   (a brand fill with a lit edge) without forking the component:
+     --primary                the fill. Defaults to the ink.
+     --primary-hover          its hover fill, 10% toward --background.
+     --primary-active         its pressed fill, 20% toward --background.
+     --primary-foreground     the label on the fill. Defaults to --background.
+     --shadow-button-primary  an extra shadow list for the fill layer, drawn
+                              over the layer's own press ring (a highlight,
+                              an outline, a drop). The default is an
+                              invisible no-op that stays valid in a list.
+   All five default to what the primary Button always drew. Override
+   --primary-hover and --primary-active with --primary, since their defaults
+   mix from the value --primary has where they are declared. `bg-primary`,
+   `text-primary-foreground` and `shadow-button-primary` read them. Zero
+   specificity (:where), so a host's override wins in any stylesheet order. */
+:where(:root, .light, .dark) {
+  --primary: var(--foreground);
+  --primary-hover: color-mix(in oklab, var(--primary) 90%, var(--background));
+  --primary-active: color-mix(in oklab, var(--primary) 80%, var(--background));
+  --primary-foreground: var(--background);
+  --shadow-button-primary: 0 0 #0000;
+}
+
 /* ── Badge palette ──
    Badge's `color` hues (upstream hex, as exact oklch). Constant across
    schemes; the solid variant mixes each 15% into --background. */

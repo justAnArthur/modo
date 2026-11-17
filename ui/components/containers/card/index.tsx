@@ -110,9 +110,9 @@ const isCardImage = (child: ReactNode) =>
  * Statics:
  * - `Card.Group` — the layout and the hover: `orientation`, `columns`, `border`, `separated`, `fluidHover`, `value`.
  * - `Card.Header` — the title and description grid; pins Card.Action top-right.
- * - `Card.Title` — weight-animates while the card is selected.
+ * - `Card.Title` — weight-animates while the card is selected; `as` renders it in a heading (`'h3'`, …) or another tag.
  * - `Card.Description`, `Card.Action`, `Card.Content`, `Card.Footer` (the actions row).
- * - `Card.Divider` — a hairline between parts, full-bleed; vertical in an inline card.
+ * - `Card.Divider` — a hairline between parts, full-bleed (the Separator primitive); vertical in an inline card, or as its `orientation` says.
  * - `Card.Media` — an icon tile, a logo or a `[logoA, logoB]` pair.
  * - `Card.Image` — a full-bleed banner, or a leading image when inline.
  * - `Card.Eyebrow` — a small muted label above the title.
@@ -359,6 +359,7 @@ Object.assign(Card, {
 
 export type { CardBorder, CardGroupProps, CardOrientation } from './card-group'
 export type { CardButtonProps, CardFeatureProps, CardImageProps, CardLogo, CardMediaProps } from './card-media'
+export type { CardTitleProps, CardTitleTag } from './card-parts'
 export type { CardProps }
 export {
   Card,

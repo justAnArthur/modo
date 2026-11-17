@@ -13,6 +13,7 @@ import {
   forwardRef,
   type HTMLAttributes,
   type ReactNode,
+  type RefObject,
   type SyntheticEvent,
   useCallback,
   useContext,
@@ -28,6 +29,7 @@ import { useOverlay, usePortalContainer } from '../../../lib/overlay'
 import { isDisabledRow, POPUP_SHAPE, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
 import { PopupSurface } from '../../../lib/popup-surface'
 import { rowIndexOf } from '../../../lib/row-group'
+import { RowOrderContext, useRowOrder } from '../../../lib/row-order'
 import { type ItemRect, useFluidHover } from '../../../lib/use-fluid-hover'
 import { SelectionBackgrounds, useMergeSplitBlocks, useSelectionRuns } from '../../../lib/use-merge-split'
 import { type MorphProps, useMorph } from '../../../lib/use-morph'
@@ -35,7 +37,13 @@ import { cn } from '../../../lib/utils'
 import { ScrollArea } from '../../../primitives/layout/scroll-area'
 import { DropdownFilterContext, DropdownSearchHostContext, useDropdownSearchHost } from './dropdown-search'
 import { DropdownContext, type MenuItemRenderOptions } from './menu-item'
-import { NO_INDICES, type PanelSelectionProps, usePanelRows, usePanelSelection } from './panel-state'
+import {
+  type PanelSelectionProps,
+  useCheckedRows,
+  usePanelRows,
+  usePanelSelection,
+  useValueChecked,
+} from './panel-state'
 
 const NO_RECTS: ItemRect[] = []
 
@@ -80,7 +88,19 @@ function renderMenuItem({
   return <Menu.Item {...shared}>{children}</Menu.Item>
 }
 
-interface MenuPopupProps extends PanelSelectionProps, MorphProps, Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
+/** Where focus goes as a menu popup opens and closes, documented once for every menu content. */
+interface MenuFocusProps {
+  /** Where focus goes once the menu has opened: `false` leaves it where the primitive put it (Base UI still focuses the popup, or the first row on a keyboard open), a ref focuses that element. Defaults to the first enabled row in `Dropdown.Content`, the primitive's own choice elsewhere. */
+  initialFocus?: boolean | RefObject<HTMLElement | null>
+  /** Where focus goes once the menu has closed: `false` leaves it, a ref moves it there, a function picks by how it closed. Defaults to the trigger. */
+  finalFocus?: ComponentProps<typeof Menu.Popup>['finalFocus']
+}
+
+interface MenuPopupProps
+  extends PanelSelectionProps,
+    MenuFocusProps,
+    MorphProps,
+    Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   /** The name thrown outside a root. */
   part: string
   /** `Menu.Positioner` props: the anchor side and offsets, or none for a context menu at the pointer. */
@@ -110,6 +130,8 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
       container,
       keepMounted: keepMountedProp,
       focusFirstRow,
+      initialFocus,
+      finalFocus,
       checkedIndex,
       defaultCheckedIndex,
       onCheckedIndexChange,
@@ -128,12 +150,21 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
   ) => {
     const keepMounted = useContext(KeepMountedContext) || (keepMountedProp ?? false)
     const { open, origin } = useOverlay(part)
-    const morph = useMorph(open, origin, { from, effect, hideSource, tier })
+    const morph = useMorph(open, origin, {
+      from,
+      effect,
+      hideSource,
+      tier,
+      // A custom `finalFocus` places focus itself; the morph's own return to the trigger would undo it.
+      returnFocus: typeof finalFocus === 'boolean' ? finalFocus : finalFocus === undefined,
+    })
     const popupRef = useMergeRefs(ref, morph.popupRef)
     const containerRef = useRef<HTMLDivElement>(null)
     const hover = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
     const { activeIndex, setActiveIndex, itemRects, isMeasured, handlers, registerItem, remeasure } = hover
 
+    const rowOrder = useRowOrder()
+    const { valueChecked, reportChecked } = useValueChecked()
     const rows = usePanelRows(children)
     const selection = usePanelSelection(
       {
@@ -155,12 +186,20 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
     const lit = activeIndex ?? pinned
     const shownHover = useMemo(() => ({ ...hover, activeIndex: lit }), [hover, lit])
 
+    // Read through a ref: a fresh `{ current }` each render must not re-run the effect.
+    const focusTarget = useRef(initialFocus)
+    focusTarget.current = initialFocus
+    const focusesRef = typeof initialFocus === 'object'
+    const focusesRow = focusFirstRow && initialFocus !== false
+
     // A frame after the primitive's own open focus, which lands on the popup for a pointer open.
     useEffect(() => {
-      if (!open || !focusFirstRow) return
+      if (!open || !(focusesRef || focusesRow)) return
       let inner: number | undefined
       const outer = requestAnimationFrame(() => {
         inner = requestAnimationFrame(() => {
+          const target = focusTarget.current
+          if (typeof target === 'object') return target.current?.focus()
           const rowsBox = containerRef.current
           if (hasSearch() || !rowsBox) return
           if (rowsBox.contains(document.activeElement) && document.activeElement !== rowsBox) return
@@ -171,7 +210,7 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
         cancelAnimationFrame(outer)
         if (inner !== undefined) cancelAnimationFrame(inner)
       }
-    }, [open, focusFirstRow, hasSearch])
+    }, [open, focusesRef, focusesRow, hasSearch])
 
     // See lib/overlay.tsx: a popup may be mounted while closed.
     useEffect(() => {
@@ -182,7 +221,7 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
     const { multiple } = selection
     const checkedRect =
       isMeasured && !multiple && selection.checkedIndex != null ? (itemRects[selection.checkedIndex] ?? null) : null
-    const runs = useSelectionRuns(selection.checkedIndices ?? NO_INDICES)
+    const runs = useSelectionRuns(useCheckedRows(selection.checkedIndices, valueChecked))
     const blocks = useMergeSplitBlocks(runs, open ? itemRects : NO_RECTS, POPUP_SHAPE.bgRadius)
 
     const panel = useMemo(
@@ -197,9 +236,11 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
         selfManaged: selection.selfManaged,
         toggleIndex: selection.toggleIndex,
         pin,
+        reportChecked,
       }),
       [
         pin,
+        reportChecked,
         registerItem,
         lit,
         selection.checkedIndex,
@@ -219,6 +260,7 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
                 <DropdownSearchHostContext.Provider value={search.host}>
                   <Menu.Popup
                     ref={popupRef}
+                    finalFocus={finalFocus}
                     onKeyDownCapture={e => ownEvent(e) && search.onKeyDownCapture(e)}
                     onMouseEnter={handlers.onMouseEnter}
                     onMouseMove={e => ownEvent(e) && handlers.onMouseMove(e)}
@@ -257,7 +299,7 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
                         viewportClassName={cn(popupViewportClass, !search.searchMounted && 'scroll-fade')}
                       >
                         <div ref={containerRef} className="relative flex flex-col p-1">
-                          {multiple && <SelectionBackgrounds blocks={blocks} />}
+                          <SelectionBackgrounds blocks={blocks} />
                           {checkedRect && (
                             <GooIndicator
                               rect={checkedRect}
@@ -273,7 +315,7 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
                           />
                           {/* display: contents keeps the rows direct flex children for the fluid hover. */}
                           <Menu.RadioGroup value={selection.checkedIndex ?? null} className="contents">
-                            {rows.content}
+                            <RowOrderContext.Provider value={rowOrder}>{rows.content}</RowOrderContext.Provider>
                           </Menu.RadioGroup>
                         </div>
                       </ScrollArea>
@@ -291,4 +333,4 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
 
 MenuPopup.displayName = 'MenuPopup'
 
-export type { MenuPopupProps }
+export type { MenuFocusProps, MenuPopupProps }

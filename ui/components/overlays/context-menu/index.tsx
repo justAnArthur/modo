@@ -15,13 +15,14 @@ import type { MorphProps, MorphSide } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import { SizeScope } from '../../../primitives/systems/sizes'
 import { DropdownLabel, DropdownSeparator } from '../dropdown'
-import { MenuItem } from '../dropdown/menu-item'
-import { MenuPopup } from '../dropdown/menu-popup'
+import { MenuItem, type MenuItemProps } from '../dropdown/menu-item'
+import { type MenuFocusProps, MenuPopup } from '../dropdown/menu-popup'
 import type { PanelSelectionProps } from '../dropdown/panel-state'
 import { DropdownSub, DropdownSubContent, DropdownSubTrigger } from '../dropdown/submenu'
 
 interface ContextMenuContentProps
   extends PanelSelectionProps,
+    MenuFocusProps,
     Omit<MorphProps, 'from'>,
     Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   /** Where the menu grows from (see Morph): the press point, its own center, a viewport edge, or a ref to any element. Defaults to `'pointer'`. */
@@ -92,10 +93,11 @@ interface ContextMenuProps {
  * - `ContextMenu.Trigger` — the area that opens it (a `div`).
  * - `ContextMenu.Content` — the menu: Dropdown's selection props
  *   (`checkedIndex`, `defaultCheckedIndex`, `checkedIndices`, …),
- *   `container`, `keepMounted`, and the morph options `from`, `effect`, `hideSource`,
- *   `tier`.
- * - `ContextMenu.Item` — a row: `index`, `label`, `icon`, `shortcut`,
- *   `checked`, `onSelect`, `disabled`.
+ *   `container`, `keepMounted`, `initialFocus`, `finalFocus`, and the morph
+ *   options `from`, `effect`, `hideSource`, `tier`.
+ * - `ContextMenu.Item` — Dropdown's row (`MenuItem`, also exported as
+ *   `ContextMenuItem`): `label` or `children`, `textValue`, `index`, `icon`,
+ *   `inset`, `shortcut`, `checked`, `onSelect(event)`, `disabled`.
  * - `ContextMenu.Label` / `ContextMenu.Separator` — a caption over a run of
  *   rows and a rule between runs.
  * - `ContextMenu.Sub` — a submenu (`open`, `defaultOpen`, `onOpenChange`,
@@ -132,7 +134,11 @@ const ContextMenu = Object.assign(
   },
 )
 
-export type { ContextMenuContentProps, ContextMenuProps }
-export { ContextMenu, ContextMenuContent }
+/** `ContextMenu.Item` by name: Dropdown's row. */
+const ContextMenuItem = MenuItem
+type ContextMenuItemProps = MenuItemProps
+
+export type { ContextMenuContentProps, ContextMenuItemProps, ContextMenuProps }
+export { ContextMenu, ContextMenuContent, ContextMenuItem }
 
 export default ContextMenu

@@ -60,6 +60,16 @@ state of its own.
 
 <ColorPicker.Popover triggerLabel="Fill" triggerShowRemove defaultValue="#6B97FF" />
 
+# Disabled and read-only
+
+`disabled` dims the trigger; `readOnly` shows the color at full strength. Neither
+opens the panel, and both hide the X.
+
+<div className="flex flex-wrap gap-3">
+  <ColorPicker.Popover triggerLabel="Fill" triggerShowRemove defaultValue="#6B97FF" disabled />
+  <ColorPicker.Popover triggerLabel="Fill" triggerShowRemove defaultValue="#6B97FF" readOnly />
+</div>
+
 # Eyedropper Support
 
 The eyedropper uses the native `window.EyeDropper` API, which only

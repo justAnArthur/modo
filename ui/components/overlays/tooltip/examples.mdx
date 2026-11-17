@@ -81,19 +81,19 @@ For tall or wide triggers, a centered tooltip sits far from the pointer —
 
 # Delay
 
-`delayDuration` overrides the hover delay per tooltip. Wrap a region in
-`Tooltip.Provider` to share one delay and let adjacent tooltips skip it,
-and the morph: the next label shows in place.
+`delay` (or Radix's `delayDuration`) overrides the hover delay per tooltip.
+Wrap a region in `Tooltip.Provider` to share one delay and let adjacent
+tooltips skip it, and the morph: the next label shows in place.
 
-<Tooltip.Provider delayDuration={300} skipDelayDuration={500}>
+<Tooltip.Provider delay={300} skipDelayDuration={500}>
   <div className="flex flex-wrap gap-3">
-    <Tooltip content="Instant" delayDuration={0}>
+    <Tooltip content="Instant" delay={0}>
       <Button variant="secondary">No delay</Button>
     </Tooltip>
     <Tooltip content="Grouped: 300ms, then instant between neighbours">
       <Button variant="secondary">Grouped</Button>
     </Tooltip>
-    <Tooltip content="Slow" delayDuration={500}>
+    <Tooltip content="Slow" delay={500}>
       <Button variant="secondary">500ms delay</Button>
     </Tooltip>
   </div>

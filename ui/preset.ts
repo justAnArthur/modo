@@ -51,6 +51,13 @@ export const theme = {
       hover: 'var(--accent-hover)',
     },
     brand: { DEFAULT: 'var(--brand)', hover: 'var(--brand-hover)' },
+    // The primary Button's fill and label: the ink by default, a host's brand when re-pointed.
+    primary: {
+      DEFAULT: 'var(--primary)',
+      hover: 'var(--primary-hover)',
+      active: 'var(--primary-active)',
+      foreground: 'var(--primary-foreground)',
+    },
     'focus-ring': 'var(--focus-ring)',
     // The tint-direction triplet as a color, so `bg-overlay/8` is the
     // rgb(var(--overlay) / 0.08) ramp.
@@ -134,6 +141,7 @@ export const theme = {
     'surface-8': 'var(--shadow-8)',
     thumb: 'var(--shadow-thumb)',
     'button-ghost': 'var(--shadow-button-ghost)',
+    'button-primary': 'var(--shadow-button-primary)',
     'button-outline': 'var(--shadow-button-outline)',
     'button-outline-pressed': 'var(--shadow-button-outline-pressed)',
     'picker-thumb': 'var(--shadow-picker-thumb)',

@@ -62,6 +62,29 @@ Two panels and plain links. Hover or press a trigger: the panel melts out of it.
   </NavigationMenu>
 </div>
 
+# Indicator
+
+A `NavigationMenu.Indicator` in the list takes over the marker under the open
+item (else the current page's link), so `className` can fill it.
+
+<div className="flex min-h-[220px] w-full justify-center">
+  <NavigationMenu aria-label="With indicator">
+    <NavigationMenu.List>
+      <NavigationMenu.Indicator className="bg-hover" />
+      <NavigationMenu.Item value="learn">
+        <NavigationMenu.Trigger>Learn</NavigationMenu.Trigger>
+        <NavigationMenu.Content className="flex w-48 flex-col">
+          <NavigationMenu.Link href="#start">Getting started</NavigationMenu.Link>
+          <NavigationMenu.Link href="#guides">Guides</NavigationMenu.Link>
+        </NavigationMenu.Content>
+      </NavigationMenu.Item>
+      <NavigationMenu.Item>
+        <NavigationMenu.Link href="#blog" active>Blog</NavigationMenu.Link>
+      </NavigationMenu.Item>
+    </NavigationMenu.List>
+  </NavigationMenu>
+</div>
+
 # Router links
 
 A router's link component goes in `render` and `active` follows the route; the link keeps its classes, hover and keys.

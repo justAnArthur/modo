@@ -13,6 +13,7 @@ import {
   type ForwardRefExoticComponent,
   forwardRef,
   type HTMLAttributes,
+  isValidElement,
   type PointerEvent,
   type ReactNode,
   type Ref,
@@ -23,11 +24,12 @@ import {
   useRef,
   useState,
 } from 'react'
-import { useIcon } from '../../../lib/icon-context'
+import { type IconComponent, useIcon } from '../../../lib/icon-context'
 import { mergeRefs } from '../../../lib/merge-refs'
 import { useRowPosition } from '../../../lib/row-index'
 import { useShape } from '../../../lib/shape-context'
 import { type SizeVariant, useSize } from '../../../lib/size-context'
+import { type SlotProps, slotRender } from '../../../lib/slot'
 import { spring } from '../../../lib/springs'
 import { useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
@@ -95,8 +97,8 @@ type AccordionComponent = ForwardRefExoticComponent<AccordionProps & RefAttribut
  * Statics:
  * - `Accordion.Group` — the grouped root: the same `type`, `collapsible`, `value`, `defaultValue`, `onValueChange`, `highlight` and `size`.
  * - `Accordion.Item` — `value`, `disabled`, and `index` to override its place in a group.
- * - `Accordion.Trigger` — the row that toggles its item.
- * - `Accordion.Content` — the collapsible panel: `effect` (`'goo'` or a plain `'morph'`) and the spring `tier` (`'slow'` or `'moderate'`).
+ * - `Accordion.Trigger` — the row that toggles its item: `icon` swaps or hides the chevron, `weightShift={false}` renders a rich label once, `render` / `asChild` make your own element the whole trigger (`nativeButton={false}` for a non-button).
+ * - `Accordion.Content` — the collapsible panel: `effect` (`'goo'` or a plain `'morph'`), the spring `tier` (`'slow'` or `'moderate'`) and `contentClassName` for the inner row.
  *
  * @example {@include ./examples.mdx}
  * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/accordion.tsx Fluid Functionalism
@@ -189,14 +191,28 @@ const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(
 
 AccordionItem.displayName = 'AccordionItem'
 
-interface AccordionTriggerProps extends HTMLAttributes<HTMLButtonElement> {
-  /** Trigger label content. */
-  children: ReactNode
+interface AccordionTriggerProps extends SlotProps {
+  /** Trigger label content. With `render`, it fills that element when the element has no children of its own. */
+  children?: ReactNode
+  /** The glyph at the row's end, which turns a quarter turn when the item opens (so give it a right-pointing one), or `false` for none. Defaults to the icon context's `chevron-right`. */
+  icon?: IconComponent | false
+  /** Whether the label gets heavier while the item is open. On, a hidden semibold copy reserves the label's width; off, it renders once and keeps its content's own weight, for rich content that shouldn't be duplicated in the DOM. Defaults to `true`. */
+  weightShift?: boolean
+  /** Whether the `render` / `asChild` element is a native `<button>`: pass `false` for a `<div>`, so Base UI adds the button role and keyboard handling itself. Defaults to `true`. */
+  nativeButton?: boolean
+}
+
+// Base UI tracks the trigger by the id it is given, so a slot element's own `id` must be that id.
+const slotId = (el: unknown, id?: string) => {
+  const own = isValidElement(el) ? (el.props as { id?: unknown }).id : undefined
+  return typeof own === 'string' ? own : id
 }
 
 const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
-  ({ children, className, ...props }, ref) => {
+  ({ children, className, icon, weightShift = true, render, asChild, nativeButton, ...props }, ref) => {
+    const el = slotRender(render, asChild, children)
     const ChevronRight = useIcon('chevron-right')
+    const Glyph = icon === false ? null : (icon ?? ChevronRight)
     const group = useContext(AccordionGroupContext)
     const { index, isOpen, triggerRef, highlight, press } = useAccordionItem()
     const shape = useShape()
@@ -215,37 +231,66 @@ const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
     const trigger = (
       // A <div>, not Base UI's default <h3>, which would break the styles' ancestor selectors.
       <AccordionPrimitive.Header render={<div />}>
-        <AccordionPrimitive.Trigger
-          ref={ref as Ref<HTMLElement>}
-          className={cn(
-            'relative z-10 flex items-center w-full cursor-pointer outline-none select-none',
-            sizeClasses.gap,
-            shape.item,
-            sizeClasses.px,
-            sizeClasses.variant === 'compact' ? 'py-1' : 'py-2',
-            !group && 'focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-0',
-            className,
-          )}
-          {...props}
-        >
-          <WeightLabel emphasized={isOpen} lit={lit} className={cn('flex-1 text-left', sizeClasses.text)}>
-            {children}
-          </WeightLabel>
-          <motion.span
-            className="shrink-0 inline-flex items-center justify-center"
-            animate={{ rotate: isOpen ? 90 : 0 }}
-            transition={spring.fast}
+        {el ? (
+          // A slot element is the whole trigger, its own look included: no row padding, ring, label or glyph.
+          // Base UI fills a `render` element that has no children of its own with the part's children.
+          <AccordionPrimitive.Trigger
+            ref={ref as Ref<HTMLElement>}
+            className={className}
+            {...props}
+            render={el}
+            nativeButton={nativeButton}
+            id={slotId(el, props.id)}
           >
-            <ChevronRight
-              size={sizeClasses.icon}
-              strokeWidth={lit ? 2 : 1.5}
-              className={cn(
-                'transition-[color,stroke-width] duration-fast',
-                lit ? 'text-foreground' : 'text-muted-foreground',
-              )}
-            />
-          </motion.span>
-        </AccordionPrimitive.Trigger>
+            {render ? children : undefined}
+          </AccordionPrimitive.Trigger>
+        ) : (
+          <AccordionPrimitive.Trigger
+            ref={ref as Ref<HTMLElement>}
+            className={cn(
+              'relative z-10 flex items-center w-full cursor-pointer outline-none select-none',
+              sizeClasses.gap,
+              shape.item,
+              sizeClasses.px,
+              sizeClasses.variant === 'compact' ? 'py-1' : 'py-2',
+              !group && 'focus-visible:ring-1 focus-visible:ring-focus-ring focus-visible:ring-offset-0',
+              className,
+            )}
+            {...props}
+          >
+            {weightShift ? (
+              <WeightLabel emphasized={isOpen} lit={lit} className={cn('flex-1 text-left', sizeClasses.text)}>
+                {children}
+              </WeightLabel>
+            ) : (
+              <span
+                className={cn(
+                  'block min-w-0 flex-1 text-left transition-[color] duration-fast',
+                  sizeClasses.text,
+                  lit ? 'text-foreground' : 'text-muted-foreground',
+                )}
+              >
+                {children}
+              </span>
+            )}
+            {Glyph && (
+              <motion.span
+                className="shrink-0 inline-flex items-center justify-center"
+                animate={{ rotate: isOpen ? 90 : 0 }}
+                transition={spring.fast}
+              >
+                <Glyph
+                  size={sizeClasses.icon}
+                  strokeWidth={lit ? 2 : 1.5}
+                  className={cn(
+                    'transition-[color,stroke-width] duration-fast',
+                    lit ? 'text-foreground' : 'text-muted-foreground',
+                  )}
+                />
+              </motion.span>
+            )}
+          </AccordionPrimitive.Trigger>
+        )}
       </AccordionPrimitive.Header>
     )
 

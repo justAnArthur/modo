@@ -20,6 +20,17 @@ The indicator slides to the clicked tab; the hover pill previews the next one.
   </Tabs>
 </div>
 
+# Rich labels
+
+`label` takes any node, here text with a count.
+
+<Tabs defaultValue="open">
+  <Tabs.List>
+    <Tabs.Item value="open" label={<span className="flex gap-1.5">Open <span className="text-muted-foreground">12</span></span>} />
+    <Tabs.Item value="closed" label={<span className="flex gap-1.5">Closed <span className="text-muted-foreground">48</span></span>} />
+  </Tabs.List>
+</Tabs>
+
 # With Icons
 
 A leading `icon` thickens its stroke while its tab is hovered or active.

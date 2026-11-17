@@ -36,14 +36,38 @@ accessible name, so a screen reader announces "Copy Install command".
 # Button Variant
 
 `variant="button"` trades the tooltip for a visible Copy label. The label
-slot is pre-sized to the widest state ("Copied"), so the row never
-reflows when the state flips.
+slot is pre-sized to the widest of its words, so the row never reflows
+when the state flips.
 
 <div className="w-full max-w-72">
   <Copy
     variant="button"
     value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json"
   />
+</div>
+
+# Inline chip
+
+`variant="chip"` is an inline `<span>` around `children`: it sits in a
+sentence, copies its own text (or `value` when the text is not what you want
+copied), and shows the glyph after it. It is a real button, so Tab reaches it
+and Enter or Space copies; the result is announced through a live region.
+
+<p className="text-body text-muted-foreground">
+  Run <Copy variant="chip">bun add @base-ui/react</Copy> to install, or copy the registry
+  entry <Copy variant="chip" value="https://fluidfunctionalism.com/r/input-copy.json">input-copy</Copy> instead.
+  In a dense region the chip steps down: <Copy variant="chip" size="compact">bun run dev</Copy>.
+</p>
+
+# Glyph only
+
+`variant="glyph"` is the copy glyph with no visible value, for a place that
+already shows it. Name it with `aria-label`: that is its tooltip and its
+accessible name. A press copies `value` and the glyph melts into the check.
+
+<div className="flex items-center gap-1 text-body">
+  <span className="font-mono text-foreground">INV-2026-0042</span>
+  <Copy variant="glyph" value="INV-2026-0042" aria-label="Copy invoice number" />
 </div>
 
 # Left Aligned
@@ -61,6 +85,20 @@ in either variant.
     align="left"
     value="npx shadcn@latest add https://www.fluidfunctionalism.com/r/input-copy.json"
   />
+</div>
+
+# Other languages
+
+`labels` replaces the words of the control (tooltip, accessible name, the
+button word, the announcement); keys you leave out keep their English default.
+
+<div className="flex w-full max-w-72 flex-col gap-4">
+  <Copy
+    variant="button"
+    value="npm i modo"
+    labels={{ word: 'Kopírovať', copied: 'Skopírované', failed: 'Kopírovanie zlyhalo', failedWord: 'Chyba' }}
+  />
+  <Copy variant="glyph" value="npm i modo" aria-label="Kopírovať príkaz" labels={{ copied: 'Skopírované' }} />
 </div>
 
 # Disabled

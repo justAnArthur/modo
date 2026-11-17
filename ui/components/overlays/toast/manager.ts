@@ -2,7 +2,7 @@
  * Local addition (not part of Fluid Functionalism): the toast API both ways
  * share, and the global `toast()` that works outside React. `toastApi` turns
  * a Base UI manager into `show`, the per-state shortcuts, `promise`,
- * `update` and `close`; `useToast()` builds it over the provider's store,
+ * `update` and `close` (alias `dismiss`); `useToast()` builds it over the provider's store,
  * `toast` over one module-level manager that a `Toast` mounted with
  * `manager={toast}` subscribes its store to, so both reach the same stack.
  * Calls made before that `Toast` subscribes (a child's mount effect runs
@@ -11,18 +11,37 @@
  */
 
 import { type ToastManager, Toast as ToastPrimitive } from '@base-ui/react/toast'
+import { isValidElement, type ReactNode } from 'react'
+import type { IconComponent } from '../../../lib/icon-context'
 
 type ToastType = 'success' | 'loading' | 'error' | 'warning' | 'info' | 'action'
+
+/** A button in the toast's body. */
+interface ToastActionOptions {
+  label: ReactNode
+  onClick?: () => void
+}
 
 interface ToastOptions {
   /** Reuse an id to replace a toast that is still showing. */
   id?: string
-  title?: string
-  description?: string
+  title?: ReactNode
+  description?: ReactNode
   type?: ToastType
   /** Ms before it leaves; 0 keeps it until dismissed. */
   timeout?: number
-  action?: { label: string; onClick?: () => void }
+  /** Replaces the state's icon in the pill: an icon component, or any node. */
+  icon?: IconComponent | ReactNode
+  /** A button in the body (`{ label, onClick }`), or any node (a `Toast.Close`, say). */
+  action?: ToastActionOptions | ReactNode
+  /** Runs once the toast starts to leave, however it was closed. */
+  onClose?: () => void
+}
+
+/** What a toast keeps beside Base UI's own fields. */
+interface ToastData {
+  icon?: IconComponent | ReactNode
+  action?: ReactNode
 }
 
 /** A toast's options, or just its title. */
@@ -35,12 +54,24 @@ interface ToastPromiseOptions<T> {
   error: ToastResult<unknown>
 }
 
-type ManagerCalls = Pick<ToastManager, 'add' | 'close' | 'update' | 'promise'>
+type ManagerCalls = Pick<ToastManager<ToastData>, 'add' | 'close' | 'update' | 'promise'>
 
-/** Options as Base UI's manager takes them. Keys left out stay out, so an update never clears a field it doesn't name. */
+const isActionButton = (action: unknown): action is ToastActionOptions =>
+  typeof action === 'object' && action !== null && !isValidElement(action) && 'label' in action
+
+/**
+ * Options as Base UI's manager takes them: a button action as `actionProps`, an icon or a node
+ * action in `data`. Keys left out stay out, so an update never clears a field it doesn't name.
+ */
 function managerOptions(input: ToastInput) {
-  const { action, ...rest } = typeof input === 'string' ? { title: input } : input
-  return { ...rest, ...(action && { actionProps: { children: action.label, onClick: action.onClick } }) }
+  const { action, icon, ...rest } = typeof input === 'string' ? { title: input } : input
+  const button = isActionButton(action)
+  const node = action === undefined || button ? undefined : action
+  return {
+    ...rest,
+    ...(button && { actionProps: { children: action.label, onClick: action.onClick } }),
+    ...((icon !== undefined || node !== undefined) && { data: { icon, action: node } }),
+  }
 }
 
 const resultOptions = <T>(result: ToastResult<T>) =>
@@ -71,14 +102,16 @@ function toastApi(manager: ManagerCalls) {
     update: (id: string, input: ToastInput) => manager.update(id, managerOptions(input)),
     /** Closes one toast, or every toast without an id. */
     close: (id?: string) => manager.close(id),
+    /** Same as `close`. */
+    dismiss: (id?: string) => manager.close(id),
   }
 }
 
 const browser = typeof window !== 'undefined'
 
 /** Base UI's manager, holding its calls until a provider listens. */
-function createQueuedManager(): ToastManager {
-  const manager = ToastPrimitive.createToastManager()
+function createQueuedManager(): ToastManager<ToastData> {
+  const manager = ToastPrimitive.createToastManager<ToastData>()
   let listeners = 0
   let queue: (() => void)[] = []
   let count = 0
@@ -123,7 +156,7 @@ const globalApi = toastApi(globalManager)
  * Shows a toast from anywhere (an event handler, a fetch wrapper, code
  * outside React) in the `Toast` mounted with `manager={toast}`: `toast(…)`,
  * `toast.success` / `error` / `warning` / `info` / `loading`, `promise`,
- * `update` and `close`. Each takes options or a title.
+ * `update` and `close` (alias `dismiss`). Each takes options or a title.
  */
 const toast = Object.assign((input: ToastInput) => globalApi.show(input), globalApi, {
   // Base UI's provider subscribes through this key, so `toast` itself is what `<Toast manager>` takes.
@@ -133,5 +166,5 @@ const toast = Object.assign((input: ToastInput) => globalApi.show(input), global
 /** What `<Toast manager>` takes: the global `toast`, or a manager from Base UI's `Toast.createToastManager()`. */
 type ToastSource = Pick<ToastManager, ' subscribe'>
 
-export type { ToastInput, ToastOptions, ToastPromiseOptions, ToastSource, ToastType }
+export type { ToastActionOptions, ToastData, ToastInput, ToastOptions, ToastPromiseOptions, ToastSource, ToastType }
 export { toast, toastApi }

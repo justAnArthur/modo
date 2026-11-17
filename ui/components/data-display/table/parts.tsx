@@ -9,18 +9,27 @@
 
 import { forwardRef, type HTMLAttributes, type ReactNode, type TdHTMLAttributes, useContext, useRef } from 'react'
 import { mergeRefs } from '../../../lib/merge-refs'
-import { IndexedRows, useRowPosition } from '../../../lib/row-index'
+import { RowOrderContext, useRowSlot } from '../../../lib/row-order'
 import { useSize } from '../../../lib/size-context'
 import { useRegisterFluidHoverItem } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
-import { TableSectionContext, useCellPadding, useTable } from './context'
+import { StackedContext, TableSectionContext, useCellPadding, useStacked, useTable } from './context'
 
-const TableHeader = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
-  ({ className, ...props }, ref) => {
-    const stacked = useTable()?.stacked
+interface TableHeaderProps extends HTMLAttributes<HTMLTableSectionElement> {
+  /** `false` keeps the header showing while a `stacked` table lays its rows out as cards. Defaults to the table's `stacked`. */
+  stacked?: boolean
+}
+
+const TableHeader = forwardRef<HTMLTableSectionElement, TableHeaderProps>(
+  ({ stacked: own, className, ...props }, ref) => {
+    const stacked = useStacked(own)
     return (
       <TableSectionContext.Provider value="header">
-        <thead ref={ref} className={cn(stacked && 'hidden @lg:table-header-group', className)} {...props} />
+        <RowOrderContext.Provider value={null}>
+          <StackedContext.Provider value={own ?? null}>
+            <thead ref={ref} className={cn(stacked && 'hidden @lg:table-header-group', className)} {...props} />
+          </StackedContext.Provider>
+        </RowOrderContext.Provider>
       </TableSectionContext.Provider>
     )
   },
@@ -29,13 +38,9 @@ const TableHeader = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTable
 TableHeader.displayName = 'TableHeader'
 
 const TableBody = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTableSectionElement>>(
-  ({ children, className, ...props }, ref) => {
+  ({ className, ...props }, ref) => {
     const stacked = useTable()?.stacked
-    return (
-      <tbody ref={ref} className={cn(stacked && 'block @lg:table-row-group', className)} {...props}>
-        <IndexedRows>{children}</IndexedRows>
-      </tbody>
-    )
+    return <tbody ref={ref} className={cn(stacked && 'block @lg:table-row-group', className)} {...props} />
   },
 )
 
@@ -46,7 +51,9 @@ const TableFooter = forwardRef<HTMLTableSectionElement, HTMLAttributes<HTMLTable
     const stacked = useTable()?.stacked
     return (
       <TableSectionContext.Provider value="footer">
-        <tfoot ref={ref} className={cn(stacked && 'block @lg:table-footer-group', className)} {...props} />
+        <RowOrderContext.Provider value={null}>
+          <tfoot ref={ref} className={cn(stacked && 'block @lg:table-footer-group', className)} {...props} />
+        </RowOrderContext.Provider>
       </TableSectionContext.Provider>
     )
   },
@@ -77,42 +84,49 @@ const TableCaption = forwardRef<HTMLTableCaptionElement, HTMLAttributes<HTMLTabl
 TableCaption.displayName = 'TableCaption'
 
 interface TableRowProps extends HTMLAttributes<HTMLTableRowElement> {
-  /** The row's place in the hover order. Defaults to its position in `Table.Body`; header and footer rows have none. */
+  /** The row's place in the hover order, from 0. Defaults to its place among the body rows in document order; header and footer rows have none. */
   index?: number
+  /** `false` keeps this row tabular while a `stacked` table lays its rows out as cards. Defaults to the table's `stacked`. */
+  stacked?: boolean
 }
 
-const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(({ index: indexProp, className, ...props }, ref) => {
-  const internalRef = useRef<HTMLTableRowElement>(null)
-  const ctx = useTable()
-  const section = useContext(TableSectionContext)
-  const position = useRowPosition()
-  const index = indexProp ?? position
+const TableRow = forwardRef<HTMLTableRowElement, TableRowProps>(
+  ({ index: indexProp, stacked: own, className, ...props }, ref) => {
+    const internalRef = useRef<HTMLTableRowElement>(null)
+    const ctx = useTable()
+    const section = useContext(TableSectionContext)
+    const stacked = useStacked(own)
+    const { index } = useRowSlot(internalRef, indexProp)
 
-  useRegisterFluidHoverItem(ctx?.registerItem, index, internalRef)
+    useRegisterFluidHoverItem(ctx?.registerItem, index, internalRef)
 
-  const isBodyRow = index !== undefined
-  const activeIdx = ctx?.activeIndex ?? null
-  // The header's border runs along row 0, so it melts into the lit band; a footer row keeps its own.
-  const hideBorder =
-    activeIdx !== null &&
-    ((isBodyRow && (index === activeIdx || index === activeIdx - 1)) || (section === 'header' && activeIdx === 0))
+    const isBodyRow = index !== undefined
+    const activeIdx = ctx?.activeIndex ?? null
+    // The header's border runs along row 0, so it melts into the lit band; a footer row keeps its own.
+    const hideBorder =
+      activeIdx !== null &&
+      ((isBodyRow && (index === activeIdx || index === activeIdx - 1)) || (section === 'header' && activeIdx === 0))
 
-  return (
-    <tr
-      ref={mergeRefs(internalRef, ref)}
-      data-fluid-hover-index={index}
-      className={cn(
-        'group/row relative z-10 border-b transition-[border-color] duration-fast',
-        hideBorder ? 'border-transparent' : 'border-accent/40',
-        isBodyRow && activeIdx === index && 'is-active',
-        section === 'body' ? 'weight-normal' : 'weight-semibold',
-        ctx?.stacked && 'grid grid-cols-2 py-1 @lg:table-row @lg:py-0',
-        className,
-      )}
-      {...props}
-    />
-  )
-})
+    const row = (
+      <tr
+        ref={mergeRefs(internalRef, ref)}
+        data-fluid-hover-index={index}
+        className={cn(
+          'group/row relative z-10 border-b transition-[border-color] duration-fast',
+          hideBorder ? 'border-transparent' : 'border-accent/40',
+          isBodyRow && activeIdx === index && 'is-active',
+          section === 'body' ? 'weight-normal' : 'weight-semibold',
+          stacked && 'grid grid-cols-2 py-1 @lg:table-row @lg:py-0',
+          className,
+        )}
+        {...props}
+      />
+    )
+
+    // A row's own `stacked` reaches its cells.
+    return own === undefined ? row : <StackedContext.Provider value={own}>{row}</StackedContext.Provider>
+  },
+)
 
 TableRow.displayName = 'TableRow'
 
@@ -123,7 +137,7 @@ interface TableCellProps extends TdHTMLAttributes<HTMLTableCellElement> {
 
 const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(({ label, className, children, ...props }, ref) => {
   const compact = useSize().variant === 'compact'
-  const stacked = useTable()?.stacked
+  const stacked = useStacked()
   const footer = useContext(TableSectionContext) === 'footer'
   return (
     <td
@@ -184,5 +198,5 @@ const TableEmpty = forwardRef<HTMLTableRowElement, TableEmptyProps>(
 
 TableEmpty.displayName = 'TableEmpty'
 
-export type { TableCellProps, TableEmptyProps, TableRowProps }
+export type { TableCellProps, TableEmptyProps, TableHeaderProps, TableRowProps }
 export { TableBody, TableCaption, TableCell, TableEmpty, TableFooter, TableHeader, TableRow }

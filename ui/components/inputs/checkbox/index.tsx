@@ -142,11 +142,14 @@ const CheckboxGroup = forwardRef<HTMLDivElement, CheckboxGroupProps>(
 
 CheckboxGroup.displayName = 'CheckboxGroup'
 
+/** A checkbox's state: on, off, or `'indeterminate'` (partly on), as Radix and shadcn spell it. */
+type CheckboxCheckedState = boolean | 'indeterminate'
+
 interface CheckboxProps extends HTMLAttributes<HTMLDivElement> {
   /** Text label for the checkbox. Omit it, outside a group, for the bare box (see Bare): name it with `aria-label`, `aria-labelledby` or a `<label htmlFor>` pointing at its `id`. */
   label?: string
-  /** Whether the checkbox is checked (controlled). Defaults to the group's checked set inside a `Checkbox.Group`, else its own state. */
-  checked?: boolean
+  /** Whether the checkbox is checked (controlled); `'indeterminate'` shows the dash, as `indeterminate` does. Defaults to the group's checked set inside a `Checkbox.Group`, else its own state. */
+  checked?: CheckboxCheckedState
   /** Whether a standalone checkbox starts checked (uncontrolled). Defaults to `false`. */
   defaultChecked?: boolean
   /** Shows a dash instead of the check: some, not all, of what it stands for is on. A press checks it. Defaults to `false`. */
@@ -274,8 +277,9 @@ function CheckboxBox({ checked, indeterminate, active, compact, skipAnimation, b
  * draws itself in, and the checked label animates to semibold without
  * shifting its width. A standalone checkbox keeps its own state from
  * `defaultChecked`, or is controlled with `checked`; `onCheckedChange`
- * reports every toggle. `indeterminate` shows a dash (`aria-checked="mixed"`),
- * which blurs into the check when it is pressed; the press reports `true`.
+ * reports every toggle. `indeterminate` (or `checked="indeterminate"`) shows
+ * a dash (`aria-checked="mixed"`), which blurs into the check when it is
+ * pressed; the press reports `true`.
  *
  * Without a `label`, outside a group, the checkbox is the box alone: Base
  * UI's checkbox, so a `<label htmlFor>` pointing at its `id` toggles it,
@@ -307,7 +311,7 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
       label,
       checked: checkedProp,
       defaultChecked = false,
-      indeterminate = false,
+      indeterminate: indeterminateProp = false,
       onCheckedChange,
       onToggle: onToggleProp,
       index: indexProp,
@@ -324,13 +328,15 @@ const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(
     const hasMounted = useRef(false)
     const group = useContext(CheckboxGroupContext)
     const index = useRowIndex(indexProp)
-    const [ownChecked, setOwnChecked] = useControllableState(checkedProp, defaultChecked, onCheckedChange)
+    const explicit = checkedProp === 'indeterminate' ? false : checkedProp
+    const [ownChecked, setOwnChecked] = useControllableState(explicit, defaultChecked, onCheckedChange)
     const [hovered, setHovered] = useState(false)
     const disabled = disabledProp ?? group?.disabled ?? false
     const bare = label === undefined && !group
 
     // An explicit `checked` wins, then the group's set, then the row's own state.
-    const checked = checkedProp ?? (group ? group.checkedIndices.has(index) : ownChecked)
+    const checked = explicit ?? (group ? group.checkedIndices.has(index) : ownChecked)
+    const indeterminate = indeterminateProp || checkedProp === 'indeterminate'
     const onToggle = () => {
       if (disabled) return
       // A dash checks, as a native mixed checkbox does.
@@ -454,6 +460,6 @@ Checkbox.displayName = 'Checkbox'
 
 Object.assign(Checkbox, { Group: CheckboxGroup })
 
-export type { CheckboxGroupProps, CheckboxProps }
+export type { CheckboxCheckedState, CheckboxGroupProps, CheckboxProps }
 export { Checkbox, CheckboxGroup }
 export default Checkbox

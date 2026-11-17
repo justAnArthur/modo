@@ -28,6 +28,7 @@ import { cn } from '../../../lib/utils'
 import { SizeScope } from '../../../primitives/systems/sizes'
 import { NavigationMenuContent } from './content'
 import { NavigationMenuContext } from './context'
+import { NavigationMenuIndicator } from './indicator'
 import { NavigationMenuItem } from './item'
 import { NavigationMenuLink } from './link'
 import { NavigationMenuList } from './list'
@@ -64,6 +65,7 @@ type NavigationMenuComponent = ForwardRefExoticComponent<NavigationMenuProps & R
   Trigger: typeof NavigationMenuTrigger
   Content: typeof NavigationMenuContent
   Link: typeof NavigationMenuLink
+  Indicator: typeof NavigationMenuIndicator
 }
 
 /**
@@ -91,6 +93,8 @@ type NavigationMenuComponent = ForwardRefExoticComponent<NavigationMenuProps & R
  * - `NavigationMenu.Trigger` — opens its item's panel; the chevron turns and the label turns semibold while open.
  * - `NavigationMenu.Content` — the item's panel; lay it out with `className`.
  * - `NavigationMenu.Link` — a top-level item in the strip, a row in a panel (`icon`, `description`); `active`, `closeOnClick`, `render`.
+ * - `NavigationMenu.Indicator` — the strip's liquid marker as a part: put it in the List to place it among
+ *   the items and fill it with `className`. Without one the List draws the same marker itself.
  *
  * @example {@include ./examples.mdx}
  */
@@ -185,9 +189,11 @@ Object.assign(NavigationMenu, {
   Trigger: NavigationMenuTrigger,
   Content: NavigationMenuContent,
   Link: NavigationMenuLink,
+  Indicator: NavigationMenuIndicator,
 })
 
 export type { NavigationMenuContentProps } from './content'
+export type { NavigationMenuIndicatorProps } from './indicator'
 export type { NavigationMenuItemProps } from './item'
 export type { NavigationMenuLinkProps } from './link'
 export type { NavigationMenuListProps } from './list'
@@ -196,6 +202,7 @@ export type { NavigationMenuProps }
 export {
   NavigationMenu,
   NavigationMenuContent,
+  NavigationMenuIndicator,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,

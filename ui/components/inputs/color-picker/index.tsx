@@ -29,6 +29,12 @@ import type { MorphProps } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
 import { SizeScope } from '../../../primitives/systems/sizes'
 import { AlphaSlider, HueSlider } from './channel-sliders'
+import { PanelSurfaceContext } from './context'
+import { FormatMenu } from './format-menu'
+import { ColorInputsRow } from './inputs-row'
+import { ColorPickerPopover } from './popover'
+import { SaturationSquare } from './saturation-square'
+import { ColorSwatch, type ColorSwatchProps, ColorTile, EyeDropperButton, SwatchStrip } from './swatches'
 import {
   buildParsed,
   type ColorFormat,
@@ -43,13 +49,7 @@ import {
   rgbToHsl,
   rgbToHsv,
   rgbToOklch,
-} from './color-math'
-import { PanelSurfaceContext } from './context'
-import { FormatMenu } from './format-menu'
-import { ColorInputsRow } from './inputs-row'
-import { ColorPickerPopover } from './popover'
-import { SaturationSquare } from './saturation-square'
-import { ColorSwatch, type ColorSwatchProps, ColorTile, EyeDropperButton, SwatchStrip } from './swatches'
+} from './variants'
 
 const PANEL_WIDTH = 280
 
@@ -91,12 +91,28 @@ interface ColorPickerPopoverProps extends ColorPickerProps, MorphProps {
   triggerLabelPosition?: 'left' | 'right'
   /** Show the hex value (without alpha) next to the tile. Defaults to `true`. */
   triggerShowValue?: boolean
-  /** Render an X button beside the trigger; pairs with `onTriggerRemove`. Defaults to `false`. */
+  /** Render an X button beside the trigger; pairs with `onTriggerRemove`. Hidden while `disabled` or `readOnly`. Defaults to `false`. */
   triggerShowRemove?: boolean
   /** Fired when the X button is clicked. */
   onTriggerRemove?: () => void
-  /** Classes for the trigger's frame. */
+  /** Accessible name of the X button. Defaults to `"Remove color"`. */
+  removeLabel?: string
+  /** Disables the trigger: it dims, skips the tab order and never opens the panel. Defaults to the surrounding Field's `disabled`, else `false`. */
+  disabled?: boolean
+  /** Shows the color but keeps it unchangeable: the trigger skips the tab order, never opens the panel and hides the X button. Defaults to the surrounding Field's `readOnly`, else `false`. */
+  readOnly?: boolean
+  /** Classes for the trigger's frame, the popover's root. */
   triggerClassName?: string
+  /** The trigger button's id, which a `<label htmlFor>` targets (a form field's control id). */
+  id?: string
+  /** Names the trigger button. */
+  'aria-label'?: string
+  /** Ids of the elements naming the trigger button. */
+  'aria-labelledby'?: string
+  /** Ids of the elements describing the trigger button (a field's help text and error). */
+  'aria-describedby'?: string
+  /** Marks the trigger button invalid for assistive tech, and the field destructive. */
+  'aria-invalid'?: boolean
   /** Controlled open state. Pair with `onOpenChange`. */
   open?: boolean
   /** Initial open state when uncontrolled. Defaults to `false`. */

@@ -1,6 +1,6 @@
 import Dropdown from './index'
 import Button from '../../actions/button'
-import { Bell, ChevronDown, Copy, FileText, Folder, Image, Link, Share, Clock, Lock, Mail, Monitor, Palette, Settings, Shield, SquareLibrary, Star, Users } from 'lucide-react'
+import { Bell, ChevronDown, ClipboardPaste, Copy, FileText, Folder, Image, Link, LogOut, Scissors, Share, Clock, Lock, Mail, Monitor, Palette, Settings, Shield, SquareLibrary, Star, User, Users } from 'lucide-react'
 
 # Basic
 
@@ -154,5 +154,89 @@ its own selection; `keepMounted` keeps it across opens.
     </Dropdown.Sub>
     <Dropdown.Separator />
     <Dropdown.Item icon={Copy} label="Duplicate" shortcut="⌘D" />
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Labelled groups and shortcuts
+
+Dropdown.Group names a run of rows with the Dropdown.Label inside it.
+Rows take their content as `children` and number themselves in document
+order, groups included; `shortcut` or a Dropdown.Shortcut adds a muted key
+hint, and `inset` lines a row without an icon up with the ones that have one.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="ghost" trailingIcon={ChevronDown}>Edit</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Group>
+      <Dropdown.Label>Clipboard</Dropdown.Label>
+      <Dropdown.Item icon={Scissors} shortcut="⌘X">Cut</Dropdown.Item>
+      <Dropdown.Item icon={Copy} shortcut="⌘C">Copy</Dropdown.Item>
+      <Dropdown.Item icon={ClipboardPaste}>
+        Paste
+        <Dropdown.Shortcut>⌘V</Dropdown.Shortcut>
+      </Dropdown.Item>
+    </Dropdown.Group>
+    <Dropdown.Separator />
+    <Dropdown.Group>
+      <Dropdown.Label inset>Account</Dropdown.Label>
+      <Dropdown.Item inset>Profile</Dropdown.Item>
+      <Dropdown.Item inset shortcut="⇧⌘Q">Log out</Dropdown.Item>
+    </Dropdown.Group>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Rows of nodes
+
+A row's `children` can be more than text: its nodes lay out as the row's own,
+an icon among them at the ladder's icon size. `textValue` gives such a row
+its typeahead text.
+
+<Dropdown aria-label="Account">
+  <Dropdown.Item textValue="Profile">
+    <User />
+    <span>Profile</span>
+    <span className="ml-auto text-muted-foreground">Pro</span>
+  </Dropdown.Item>
+  <Dropdown.Item textValue="Settings">
+    <Settings />
+    <span>Settings</span>
+  </Dropdown.Item>
+  <Dropdown.Item textValue="Log out">
+    <LogOut />
+    <span>Log out</span>
+  </Dropdown.Item>
+</Dropdown>
+
+# Radio group
+
+Dropdown.RadioGroup picks one Dropdown.RadioItem by its `value`, through
+`value` / `defaultValue` / `onValueChange`, instead of by index.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="ghost" trailingIcon={ChevronDown}>Sort by</Button>} />
+  <Dropdown.Content>
+    <Dropdown.RadioGroup defaultValue="updated">
+      <Dropdown.Label>Sort by</Dropdown.Label>
+      <Dropdown.RadioItem value="name">Name</Dropdown.RadioItem>
+      <Dropdown.RadioItem value="created">Date created</Dropdown.RadioItem>
+      <Dropdown.RadioItem value="updated">Last updated</Dropdown.RadioItem>
+    </Dropdown.RadioGroup>
+  </Dropdown.Content>
+</Dropdown.Menu>
+
+# Checkbox items
+
+Each Dropdown.CheckboxItem toggles itself (`checked` / `defaultChecked` /
+`onCheckedChange`) and keeps the menu open; checked rows that touch share
+one background.
+
+<Dropdown.Menu>
+  <Dropdown.Trigger render={<Button variant="ghost" trailingIcon={ChevronDown}>View</Button>} />
+  <Dropdown.Content>
+    <Dropdown.Label>Panels</Dropdown.Label>
+    <Dropdown.CheckboxItem defaultChecked>Status bar</Dropdown.CheckboxItem>
+    <Dropdown.CheckboxItem defaultChecked>Activity bar</Dropdown.CheckboxItem>
+    <Dropdown.CheckboxItem>Minimap</Dropdown.CheckboxItem>
+    <Dropdown.CheckboxItem disabled>Panel</Dropdown.CheckboxItem>
   </Dropdown.Content>
 </Dropdown.Menu>

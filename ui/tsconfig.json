@@ -1,6 +1,11 @@
 {
   "extends": "../tsconfig.base.json",
-  "compilerOptions": { "noEmit": true, "types": ["node"] },
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"],
+    // vite.ts imports docs/vite.ts by its file name: Node loads it with type stripping
+    "allowImportingTsExtensions": true
+  },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["node_modules", ".modo-tmp", "dist", "test"]
 }

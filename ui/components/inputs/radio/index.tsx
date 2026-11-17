@@ -22,6 +22,7 @@ import {
   type RefAttributes,
   useContext,
   useEffect,
+  useId,
   useRef,
   useState,
 } from 'react'
@@ -141,7 +142,7 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
     // Bare radios lay themselves out: with no labelled row among the children
     // the group draws no rows and leaves the arrow keys to Base UI's group.
     const hasRows = Children.toArray(children).some(
-      child => isValidElement(child) && (child.props as { label?: string }).label !== undefined,
+      child => isValidElement(child) && (child.props as { label?: ReactNode }).label !== undefined,
     )
     const context = {
       registerItem,
@@ -221,8 +222,8 @@ const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(
 RadioGroup.displayName = 'RadioGroup'
 
 interface RadioProps extends HTMLAttributes<HTMLDivElement> {
-  /** Text label for the radio item. Omit it for the bare circle in a layout of your own (see Bare): it then needs a `value`, and a name from `aria-label`, `aria-labelledby` or a `<label htmlFor>` pointing at its `id`. */
-  label?: string
+  /** Label beside the circle: text, or any node (it then names the row through `aria-labelledby`). Omit it for the bare circle in a layout of your own (see Bare): it then needs a `value`, and a name from `aria-label`, `aria-labelledby` or a `<label htmlFor>` pointing at its `id`. */
+  label?: ReactNode
   /** Position within the `Radio.Group`: the row's `selectedIndex`. Defaults to its order among the group's rows. */
   index?: number
   /** Whether this item is selected. Defaults to the group's selection. */
@@ -321,6 +322,7 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
     const index = useRowIndex(indexProp)
     const disabled = disabledProp ?? group.disabled
     const bare = label === undefined
+    const labelId = useId()
     const [hovered, setHovered] = useState(false)
 
     // A bare radio is no row: it joins neither the hover nor the arrow keys.
@@ -394,7 +396,8 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
         role="radio"
         aria-checked={isSelected}
         aria-disabled={disabled || undefined}
-        aria-label={label}
+        aria-label={typeof label === 'string' ? label : undefined}
+        aria-labelledby={typeof label === 'string' ? undefined : labelId}
         onClick={handleSelect}
         onMouseDown={focusRowOnPress}
         onKeyDown={e => {
@@ -412,7 +415,13 @@ const Radio = forwardRef<HTMLDivElement, RadioProps>(
       >
         <div className={cn('relative shrink-0', compact ? 'w-[14px] h-[14px]' : 'w-[16px] h-[16px]')}>{circle}</div>
 
-        <WeightLabel emphasized={isSelected} lit={isSelected || isActive} trim className={sizeClasses.text}>
+        <WeightLabel
+          id={labelId}
+          emphasized={isSelected}
+          lit={isSelected || isActive}
+          trim
+          className={sizeClasses.text}
+        >
           {label}
         </WeightLabel>
 

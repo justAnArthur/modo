@@ -53,7 +53,9 @@ const TooltipGroupContext = createContext(false)
 
 interface TooltipProviderProps {
   children: ReactNode
-  /** Hover delay before tooltips open, in ms. Defaults to `200`. */
+  /** Hover delay before tooltips open, in ms (Base UI's name). Defaults to `200`. */
+  delay?: number
+  /** Same as `delay` (Radix's name); `delay` wins when both are set. Defaults to `200`. */
   delayDuration?: number
   /** After a tooltip closes, adjacent tooltips opened within this window skip the hover delay, in ms. Defaults to `300`. */
   skipDelayDuration?: number
@@ -64,10 +66,10 @@ interface TooltipProviderProps {
  * shows its tooltip at once instead of re-waiting the delay. Wrap once at
  * the app or section level; a bare Tooltip still works without it.
  */
-function TooltipProvider({ children, delayDuration = DEFAULT_DELAY, skipDelayDuration = 300 }: TooltipProviderProps) {
+function TooltipProvider({ children, delay, delayDuration, skipDelayDuration = 300 }: TooltipProviderProps) {
   return (
     <TooltipGroupContext.Provider value={true}>
-      <TooltipPrimitive.Provider delay={delayDuration} timeout={skipDelayDuration}>
+      <TooltipPrimitive.Provider delay={delay ?? delayDuration ?? DEFAULT_DELAY} timeout={skipDelayDuration}>
         {children}
       </TooltipPrimitive.Provider>
     </TooltipGroupContext.Provider>
@@ -291,7 +293,9 @@ interface TooltipProps {
   sideOffset?: number
   /** Portal target. Defaults to the nearest `PortalContainer`, else the document body. */
   container?: HTMLElement | null
-  /** Hover delay before this tooltip opens, in ms. Defaults to `200`, or to the ambient `TooltipProvider`'s `delayDuration`. */
+  /** Hover delay before this tooltip opens, in ms (Base UI's name). Defaults to `200`, or to the ambient `TooltipProvider`'s delay. */
+  delay?: number
+  /** Same as `delay` (Radix's name); `delay` wins when both are set. */
   delayDuration?: number
   /** Additional classes applied to the tooltip content container. */
   className?: string
@@ -326,7 +330,7 @@ interface TooltipProps {
  *
  * Leave `content` out and `Tooltip` is the root of a compound tooltip: a
  * `Tooltip.Trigger` and a `Tooltip.Content` inside it. The root keeps the
- * state props (`open`, `defaultOpen`, `onOpenChange`, `delayDuration`,
+ * state props (`open`, `defaultOpen`, `onOpenChange`, `delay` or `delayDuration`,
  * `followCursor`); placement and the morph move to the content. The label
  * looks and moves the same either way.
  *
@@ -339,7 +343,8 @@ interface TooltipProps {
  *   props land on the popup.
  * - `Tooltip.Provider` — `TooltipProvider`: groups tooltips so moving from
  *   one trigger to an adjacent one skips the hover delay, and the morph: the
- *   next label shows in place.
+ *   next label shows in place. `delay` (or `delayDuration`) sets the hover
+ *   delay of every tooltip in it, `skipDelayDuration` the hand-off window.
  * - `Tooltip.PortalContainer` — the shared `PortalContainer`: portal every
  *   descendant tooltip into a given element instead of the body.
  *
@@ -355,6 +360,7 @@ const Tooltip = Object.assign(
     align,
     sideOffset,
     container,
+    delay,
     delayDuration,
     className,
     contentClassName,
@@ -366,7 +372,7 @@ const Tooltip = Object.assign(
     effect,
     tier,
   }: TooltipProps) {
-    const root = { open, defaultOpen, onOpenChange, delayDuration, followCursor }
+    const root = { open, defaultOpen, onOpenChange, delayDuration: delay ?? delayDuration, followCursor }
     if (content === undefined) return <TooltipRoot {...root}>{children}</TooltipRoot>
 
     return (

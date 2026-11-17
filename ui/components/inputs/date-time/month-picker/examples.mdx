@@ -14,3 +14,15 @@ import { de } from 'react-day-picker/locale'
 <div className="w-60 max-w-full">
   <MonthPicker locale={de} placeholder="Ablaufdatum" startMonth={new Date(2026, 9, 1)} endMonth={new Date(2036, 11, 1)} />
 </div>
+
+# Month only
+
+`withYear={false}` leaves the month column alone; `formatDate` writes the field's text from the month's first day.
+
+<div className="w-60 max-w-full">
+  <MonthPicker
+    withYear={false}
+    formatDate={date => `Every ${date.toLocaleDateString('en-US', { month: 'long' })}`}
+    defaultValue={new Date(2026, 9, 1)}
+  />
+</div>

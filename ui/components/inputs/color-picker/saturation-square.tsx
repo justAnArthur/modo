@@ -10,7 +10,7 @@ import { motion } from 'motion/react'
 import { useCallback, useRef, useState } from 'react'
 import { useShape } from '../../../lib/shape-context'
 import { cn } from '../../../lib/utils'
-import { clamp01, hsvToRgb } from './color-math'
+import { clamp01, hsvToRgb } from './variants'
 
 const SQUARE_HEIGHT = 156
 

@@ -47,6 +47,19 @@ The sheet oozes up out of the bottom edge. Swipe it back down, press outside or 
   </Sheet>
 </div>
 
+# Side on the content
+
+`Sheet.Content` may name the edge instead of the root; the swipe follows it.
+`popupClassName` sizes the sheet's box.
+
+<Sheet>
+  <Sheet.Trigger render={<Button variant="secondary">Wide right sheet</Button>} />
+  <Sheet.Content side="right" popupClassName="w-[min(36rem,calc(100%-1rem))]">
+    <Sheet.Title>Activity</Sheet.Title>
+    <Sheet.Description>Swipe right to dismiss.</Sheet.Description>
+  </Sheet.Content>
+</Sheet>
+
 # From the trigger
 
 `from="trigger"` grows the sheet out of the button instead of the edge; once open it behaves like any sheet.

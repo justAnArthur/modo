@@ -42,6 +42,8 @@
     "primitives",
     "components",
     "blocks",
+    "docs",
+    "tokens",
     "README.md",
     "LICENSE*"
   ],
@@ -76,71 +78,221 @@
       "source": "./blocks/*/index.tsx",
       "default": "./dist/blocks/*/index.js"
     },
-    "./lib/utils": {
-      "types": "./dist/lib/utils.d.ts",
-      "source": "./lib/utils.ts",
-      "default": "./dist/lib/utils.js"
+    "./lib/date-locale": {
+      "types": "./dist/lib/date-locale.d.ts",
+      "source": "./lib/date-locale.ts",
+      "default": "./dist/lib/date-locale.js"
     },
-    "./lib/springs": {
-      "types": "./dist/lib/springs.d.ts",
-      "source": "./lib/springs.ts",
-      "default": "./dist/lib/springs.js"
-    },
-    "./lib/size-scale": {
-      "types": "./dist/lib/size-scale.d.ts",
-      "source": "./lib/size-scale.ts",
-      "default": "./dist/lib/size-scale.js"
-    },
-    "./lib/shape-classes": {
-      "types": "./dist/lib/shape-classes.d.ts",
-      "source": "./lib/shape-classes.ts",
-      "default": "./dist/lib/shape-classes.js"
-    },
-    "./lib/field-classes": {
-      "types": "./dist/lib/field-classes.d.ts",
-      "source": "./lib/field-classes.ts",
-      "default": "./dist/lib/field-classes.js"
+    "./lib/date-mask": {
+      "types": "./dist/lib/date-mask.d.ts",
+      "source": "./lib/date-mask.ts",
+      "default": "./dist/lib/date-mask.js"
     },
     "./lib/field-box": {
       "types": "./dist/lib/field-box.d.ts",
       "source": "./lib/field-box.ts",
       "default": "./dist/lib/field-box.js"
     },
-    "./lib/size-context": {
-      "types": "./dist/lib/size-context.d.ts",
-      "source": "./lib/size-context.tsx",
-      "default": "./dist/lib/size-context.js"
+    "./lib/field-classes": {
+      "types": "./dist/lib/field-classes.d.ts",
+      "source": "./lib/field-classes.ts",
+      "default": "./dist/lib/field-classes.js"
     },
-    "./lib/shape-context": {
-      "types": "./dist/lib/shape-context.d.ts",
-      "source": "./lib/shape-context.tsx",
-      "default": "./dist/lib/shape-context.js"
+    "./lib/fluid-hover-highlight": {
+      "types": "./dist/lib/fluid-hover-highlight.d.ts",
+      "source": "./lib/fluid-hover-highlight.tsx",
+      "default": "./dist/lib/fluid-hover-highlight.js"
     },
-    "./lib/icon-context": {
-      "types": "./dist/lib/icon-context.d.ts",
-      "source": "./lib/icon-context.tsx",
-      "default": "./dist/lib/icon-context.js"
-    },
-    "./lib/use-controllable-state": {
-      "types": "./dist/lib/use-controllable-state.d.ts",
-      "source": "./lib/use-controllable-state.ts",
-      "default": "./dist/lib/use-controllable-state.js"
-    },
-    "./lib/use-morph": {
-      "types": "./dist/lib/use-morph.d.ts",
-      "source": "./lib/use-morph.ts",
-      "default": "./dist/lib/use-morph.js"
+    "./lib/focus-ring": {
+      "types": "./dist/lib/focus-ring.d.ts",
+      "source": "./lib/focus-ring.tsx",
+      "default": "./dist/lib/focus-ring.js"
     },
     "./lib/goo-indicator": {
       "types": "./dist/lib/goo-indicator.d.ts",
       "source": "./lib/goo-indicator.tsx",
       "default": "./dist/lib/goo-indicator.js"
     },
+    "./lib/icon-context": {
+      "types": "./dist/lib/icon-context.d.ts",
+      "source": "./lib/icon-context.tsx",
+      "default": "./dist/lib/icon-context.js"
+    },
+    "./lib/merge-refs": {
+      "types": "./dist/lib/merge-refs.d.ts",
+      "source": "./lib/merge-refs.ts",
+      "default": "./dist/lib/merge-refs.js"
+    },
+    "./lib/morph-layers": {
+      "types": "./dist/lib/morph-layers.d.ts",
+      "source": "./lib/morph-layers.tsx",
+      "default": "./dist/lib/morph-layers.js"
+    },
+    "./lib/morph-part": {
+      "types": "./dist/lib/morph-part.d.ts",
+      "source": "./lib/morph-part.tsx",
+      "default": "./dist/lib/morph-part.js"
+    },
+    "./lib/overlay": {
+      "types": "./dist/lib/overlay.d.ts",
+      "source": "./lib/overlay.tsx",
+      "default": "./dist/lib/overlay.js"
+    },
+    "./lib/popup": {
+      "types": "./dist/lib/popup.d.ts",
+      "source": "./lib/popup.ts",
+      "default": "./dist/lib/popup.js"
+    },
+    "./lib/popup-rows": {
+      "types": "./dist/lib/popup-rows.d.ts",
+      "source": "./lib/popup-rows.tsx",
+      "default": "./dist/lib/popup-rows.js"
+    },
+    "./lib/popup-surface": {
+      "types": "./dist/lib/popup-surface.d.ts",
+      "source": "./lib/popup-surface.tsx",
+      "default": "./dist/lib/popup-surface.js"
+    },
+    "./lib/rect": {
+      "types": "./dist/lib/rect.d.ts",
+      "source": "./lib/rect.ts",
+      "default": "./dist/lib/rect.js"
+    },
+    "./lib/reduced-motion": {
+      "types": "./dist/lib/reduced-motion.d.ts",
+      "source": "./lib/reduced-motion.ts",
+      "default": "./dist/lib/reduced-motion.js"
+    },
+    "./lib/row-group": {
+      "types": "./dist/lib/row-group.d.ts",
+      "source": "./lib/row-group.tsx",
+      "default": "./dist/lib/row-group.js"
+    },
+    "./lib/row-index": {
+      "types": "./dist/lib/row-index.d.ts",
+      "source": "./lib/row-index.tsx",
+      "default": "./dist/lib/row-index.js"
+    },
+    "./lib/row-order": {
+      "types": "./dist/lib/row-order.d.ts",
+      "source": "./lib/row-order.tsx",
+      "default": "./dist/lib/row-order.js"
+    },
+    "./lib/scroll-column": {
+      "types": "./dist/lib/scroll-column.d.ts",
+      "source": "./lib/scroll-column.tsx",
+      "default": "./dist/lib/scroll-column.js"
+    },
+    "./lib/shape-classes": {
+      "types": "./dist/lib/shape-classes.d.ts",
+      "source": "./lib/shape-classes.ts",
+      "default": "./dist/lib/shape-classes.js"
+    },
+    "./lib/shape-context": {
+      "types": "./dist/lib/shape-context.d.ts",
+      "source": "./lib/shape-context.tsx",
+      "default": "./dist/lib/shape-context.js"
+    },
+    "./lib/size-context": {
+      "types": "./dist/lib/size-context.d.ts",
+      "source": "./lib/size-context.tsx",
+      "default": "./dist/lib/size-context.js"
+    },
+    "./lib/size-scale": {
+      "types": "./dist/lib/size-scale.d.ts",
+      "source": "./lib/size-scale.ts",
+      "default": "./dist/lib/size-scale.js"
+    },
+    "./lib/slot": {
+      "types": "./dist/lib/slot.d.ts",
+      "source": "./lib/slot.tsx",
+      "default": "./dist/lib/slot.js"
+    },
+    "./lib/spinner-glyph": {
+      "types": "./dist/lib/spinner-glyph.d.ts",
+      "source": "./lib/spinner-glyph.tsx",
+      "default": "./dist/lib/spinner-glyph.js"
+    },
+    "./lib/springs": {
+      "types": "./dist/lib/springs.d.ts",
+      "source": "./lib/springs.ts",
+      "default": "./dist/lib/springs.js"
+    },
     "./lib/surface-classes": {
       "types": "./dist/lib/surface-classes.d.ts",
       "source": "./lib/surface-classes.ts",
       "default": "./dist/lib/surface-classes.js"
     },
+    "./lib/surface-context": {
+      "types": "./dist/lib/surface-context.d.ts",
+      "source": "./lib/surface-context.tsx",
+      "default": "./dist/lib/surface-context.js"
+    },
+    "./lib/use-autosize-textarea": {
+      "types": "./dist/lib/use-autosize-textarea.d.ts",
+      "source": "./lib/use-autosize-textarea.ts",
+      "default": "./dist/lib/use-autosize-textarea.js"
+    },
+    "./lib/use-controllable-state": {
+      "types": "./dist/lib/use-controllable-state.d.ts",
+      "source": "./lib/use-controllable-state.ts",
+      "default": "./dist/lib/use-controllable-state.js"
+    },
+    "./lib/use-fluid-hover": {
+      "types": "./dist/lib/use-fluid-hover.d.ts",
+      "source": "./lib/use-fluid-hover.ts",
+      "default": "./dist/lib/use-fluid-hover.js"
+    },
+    "./lib/use-is-mobile": {
+      "types": "./dist/lib/use-is-mobile.d.ts",
+      "source": "./lib/use-is-mobile.ts",
+      "default": "./dist/lib/use-is-mobile.js"
+    },
+    "./lib/use-iso-layout-effect": {
+      "types": "./dist/lib/use-iso-layout-effect.d.ts",
+      "source": "./lib/use-iso-layout-effect.ts",
+      "default": "./dist/lib/use-iso-layout-effect.js"
+    },
+    "./lib/use-keyboard-nav-gate": {
+      "types": "./dist/lib/use-keyboard-nav-gate.d.ts",
+      "source": "./lib/use-keyboard-nav-gate.ts",
+      "default": "./dist/lib/use-keyboard-nav-gate.js"
+    },
+    "./lib/use-merge-split": {
+      "types": "./dist/lib/use-merge-split.d.ts",
+      "source": "./lib/use-merge-split.tsx",
+      "default": "./dist/lib/use-merge-split.js"
+    },
+    "./lib/use-morph": {
+      "types": "./dist/lib/use-morph.d.ts",
+      "source": "./lib/use-morph.ts",
+      "default": "./dist/lib/use-morph.js"
+    },
+    "./lib/use-touch-primary": {
+      "types": "./dist/lib/use-touch-primary.d.ts",
+      "source": "./lib/use-touch-primary.tsx",
+      "default": "./dist/lib/use-touch-primary.js"
+    },
+    "./lib/utils": {
+      "types": "./dist/lib/utils.d.ts",
+      "source": "./lib/utils.ts",
+      "default": "./dist/lib/utils.js"
+    },
+    "./lib/weight-label": {
+      "types": "./dist/lib/weight-label.d.ts",
+      "source": "./lib/weight-label.tsx",
+      "default": "./dist/lib/weight-label.js"
+    },
+    "./docs": {
+      "types": "./dist/docs/index.d.ts",
+      "source": "./docs/index.ts",
+      "default": "./dist/docs/index.js"
+    },
+    "./docs/vite": {
+      "types": "./dist/docs/vite.d.ts",
+      "default": "./dist/docs/vite.js"
+    },
+    "./docs/chrome.css": "./docs/chrome.css",
     "./unocss": {
       "types": "./dist/preset.d.ts",
       "default": "./dist/preset.js"
@@ -149,6 +301,7 @@
     "./base.css": "./dist/base.css",
     "./tokens.css": "./dist/tokens.css",
     "./tailwind.css": "./dist/tailwind.css",
+    "./tokens/*": "./tokens/*",
     "./package.json": "./package.json"
   },
   "scripts": {
@@ -173,7 +326,17 @@
   },
   "peerDependencies": {
     "react": ">=18",
-    "react-dom": ">=18"
+    "react-dom": ">=18",
+    "@justanarthur/modo": ">=1",
+    "unocss": ">=66"
+  },
+  "peerDependenciesMeta": {
+    "@justanarthur/modo": {
+      "optional": true
+    },
+    "unocss": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@justanarthur/modo": "workspace:*",

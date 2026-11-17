@@ -7,16 +7,15 @@
 
 'use client'
 
-import { Menu } from '@base-ui/react/menu'
-import { forwardRef, type HTMLAttributes, type ReactNode, useEffect, useMemo } from 'react'
-import { type IconComponent, useIcon } from '../../../lib/icon-context'
+import { Menu, type MenuRootChangeEventDetails } from '@base-ui/react/menu'
+import { forwardRef, type HTMLAttributes, type ReactNode, useMemo } from 'react'
+import { useIcon } from '../../../lib/icon-context'
 import { type AnchorProps, OverlayContext, positionerProps, useOverlay, useOverlayRoot } from '../../../lib/overlay'
-import { useRowIndex } from '../../../lib/row-index'
 import { useSize } from '../../../lib/size-context'
 import type { MorphProps } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import { DropdownContext, type DropdownContextValue, MenuItem, useDropdown } from './menu-item'
-import { MenuPopup } from './menu-popup'
+import { DropdownContext, type DropdownContextValue, type MenuItemProps, MenuRow, useDropdown } from './menu-item'
+import { type MenuFocusProps, MenuPopup } from './menu-popup'
 import type { PanelSelectionProps } from './panel-state'
 
 interface DropdownSubProps {
@@ -26,19 +25,28 @@ interface DropdownSubProps {
   open?: boolean
   /** Initial open state, uncontrolled. Defaults to `false`. */
   defaultOpen?: boolean
-  /** Called when the submenu opens or closes. */
-  onOpenChange?: (open: boolean) => void
+  /** Called when the submenu opens or closes, with Base UI's change details: `reason`, the `event`, and `cancel()` to keep it as it is. */
+  onOpenChange?: (open: boolean, details: MenuRootChangeEventDetails) => void
   /** Disables the submenu: its trigger row dims and never opens it. Defaults to `false`. */
   disabled?: boolean
 }
 
 /** A submenu: its trigger row and its panel, inside `Dropdown.Content` or another submenu. */
 function DropdownSub({ children, open, defaultOpen, onOpenChange, disabled = false }: DropdownSubProps) {
-  const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
+  const root = useOverlayRoot({ open, defaultOpen })
 
   return (
     <OverlayContext.Provider value={root.state}>
-      <Menu.SubmenuRoot open={root.open} onOpenChange={root.onOpenChange} disabled={disabled}>
+      <Menu.SubmenuRoot
+        open={root.open}
+        onOpenChange={(next, details) => {
+          // Base UI re-reports a closed submenu as closed once per sibling that opens: the handler hears changes only.
+          if (next === root.open) return
+          onOpenChange?.(next, details)
+          if (!details.isCanceled) root.onOpenChange(next, details)
+        }}
+        disabled={disabled}
+      >
         {children}
       </Menu.SubmenuRoot>
     </OverlayContext.Provider>
@@ -47,13 +55,8 @@ function DropdownSub({ children, open, defaultOpen, onOpenChange, disabled = fal
 
 DropdownSub.displayName = 'DropdownSub'
 
-interface DropdownSubTriggerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
-  /** Leading icon. Without one the row is text only. */
-  icon?: IconComponent
-  /** The row's label; also its typeahead text. */
-  label: string
-  /** Position among the parent panel's rows. Omitted, the row takes its place in order. */
-  index?: number
+interface DropdownSubTriggerProps
+  extends Omit<MenuItemProps, 'checked' | 'onSelect' | 'closeOnClick' | 'render' | 'asChild' | 'sourceIndex'> {
   /** Dims the row; the pointer and the keyboard skip it. Defaults to `false`. */
   disabled?: boolean
   /** Open the submenu when the pointer rests on the row. Defaults to `true`. */
@@ -70,18 +73,11 @@ interface DropdownSubTriggerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
  * stays lit while its submenu is open.
  */
 const DropdownSubTrigger = forwardRef<HTMLDivElement, DropdownSubTriggerProps>(
-  ({ index: indexProp, openOnHover = true, delay, closeDelay, ...props }, ref) => {
+  ({ openOnHover = true, delay, closeDelay, ...props }, ref) => {
     const { open } = useOverlay('Dropdown.SubTrigger')
-    const index = useRowIndex(indexProp)
     const parent = useDropdown()
-    const { pin } = parent
     const Chevron = useIcon('chevron-right')
     const size = useSize()
-
-    useEffect(() => {
-      pin?.(index, open)
-      return () => pin?.(index, false)
-    }, [pin, index, open])
 
     const ctx = useMemo<DropdownContextValue>(
       () => ({
@@ -104,7 +100,7 @@ const DropdownSubTrigger = forwardRef<HTMLDivElement, DropdownSubTriggerProps>(
               size={size.icon}
               strokeWidth={open ? 2 : 1.5}
               className={cn(
-                'shrink-0 transition-[color,stroke-width] duration-fast',
+                'ml-auto shrink-0 transition-[color,stroke-width] duration-fast',
                 open ? 'text-foreground' : 'text-muted-foreground',
               )}
             />
@@ -116,7 +112,7 @@ const DropdownSubTrigger = forwardRef<HTMLDivElement, DropdownSubTriggerProps>(
 
     return (
       <DropdownContext.Provider value={ctx}>
-        <MenuItem ref={ref} index={index} {...props} />
+        <MenuRow ref={ref} pinned={open} {...props} />
       </DropdownContext.Provider>
     )
   },
@@ -126,6 +122,7 @@ DropdownSubTrigger.displayName = 'DropdownSubTrigger'
 
 interface DropdownSubContentProps
   extends PanelSelectionProps,
+    MenuFocusProps,
     AnchorProps,
     MorphProps,
     Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
@@ -139,6 +136,8 @@ interface DropdownSubContentProps
   sideOffset?: number
   /** Extra classes for the submenu surface: it is 14rem wide by default. */
   className?: string
+  /** Keep the submenu mounted (hidden) while closed, so its rows keep their own state across opens. A kept parent keeps it too. Defaults to `false`. */
+  keepMounted?: boolean
 }
 
 /** The submenu's panel, lifted above the menu it came from and grown out of its trigger row. */

@@ -29,13 +29,15 @@ interface AccordionContentProps extends HTMLAttributes<HTMLDivElement> {
   effect?: 'goo' | 'morph'
   /** Spring tier the panel opens on; it closes on the tier's faster exit tween. Defaults to `'slow'`. */
   tier?: 'moderate' | 'slow'
+  /** Classes for the inner row that holds the children, merged over its defaults (the row inset, the top and bottom padding, the muted body text), so `px-0 text-foreground` takes the content flush and full-strength. `className` sets the panel around it. */
+  contentClassName?: string
 }
 
 // `t` stops at 1: the slow tier's bounce would push the rows below past their place and back.
 const grow = (a: Rect, b: Rect, t: number) => clampRect(lerpRect(a, b, Math.min(1, t)))
 
 const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps>(
-  ({ children, className, effect = 'goo', tier = 'slow', ...props }, ref) => {
+  ({ children, className, effect = 'goo', tier = 'slow', contentClassName, ...props }, ref) => {
     const group = useContext(AccordionGroupContext)
     const { isOpen, highlight, press } = useAccordionItem()
     const shape = useShape()
@@ -198,6 +200,7 @@ const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps>(
                     sizeClasses.px,
                     sizeClasses.text,
                     sizeClasses.variant === 'compact' ? 'pb-2.5' : 'pb-3',
+                    contentClassName,
                   )}
                 >
                   {children}

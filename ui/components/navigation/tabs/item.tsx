@@ -33,8 +33,8 @@ interface TabItemProps extends ComponentPropsWithoutRef<typeof TabsPrimitive.Tab
   value: string
   /** Icon before the label. Its stroke thickens while the tab is hovered or selected. */
   icon?: IconComponent
-  /** The tab's text. Collapsed under `activeLabel`, it is the tab's accessible name. */
-  label: string
+  /** The label: text, or a node such as text with a counter or a badge. Collapsed under `activeLabel`, a text label is the tab's accessible name; give a node label's tab an `aria-label`. */
+  label: ReactNode
   /** Renders the tab as a link to this URL (link tabs, for route-based navigation): a press follows the link and selects the tab. For a router's link component, pass it as `render` instead. */
   href?: string
 }
@@ -78,7 +78,7 @@ const TabItem = forwardRef<HTMLButtonElement, TabItemProps>(
         render={link}
         nativeButton={link === undefined}
         data-fluid-hover-index={index}
-        aria-label={showLabel ? undefined : label}
+        aria-label={showLabel || typeof label !== 'string' ? undefined : label}
         className={cn(
           // A fixed height, so the trimmed label doesn't shrink the tab.
           'relative z-10 flex items-center cursor-pointer bg-transparent border-none outline-none',

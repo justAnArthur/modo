@@ -16,9 +16,9 @@ export default defineConfig({
   vite: './vite.ts',
   shell: {
     Button: './components/actions/button',
-    Select: './modo.components.tsx#Select',
-    Icon: './modo.components.tsx#Icon',
-    Sidebar: './modo.components.tsx#DocsNav',
+    Select: './docs/chrome.tsx#Select',
+    Icon: './docs/chrome.tsx#Icon',
+    Sidebar: './docs/chrome.tsx#DocsNav',
   },
-  panel: { items: [{ label: 'Theme', component: './modo.components.tsx#ThemeSwitcher' }] },
+  panel: { items: [{ label: 'Theme', component: './docs/chrome.tsx#ThemeSwitcher' }] },
 })

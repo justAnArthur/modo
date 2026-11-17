@@ -2,19 +2,45 @@
  * Local addition (not part of Fluid Functionalism): a month field with
  * scrolling month and year columns. After utegsk/ui's MonthPicker, its value
  * the month's first day (as react-day-picker's `month` is) instead of
- * `{ month, year }`.
+ * `{ month, year }`. `withYear`, `formatDate`, `labels`, the form props and
+ * a BCP 47 `locale` after utegsk/ui's as well.
  */
 
 'use client'
 
 import { format, type Locale, startOfMonth } from 'date-fns'
-import { type RefObject, useMemo, useRef } from 'react'
-import { defaultLocale, fieldLabel, monthRange, parseMonthText } from '../../../../lib/date-locale'
+import { type AriaAttributes, type FocusEvent, type ReactNode, type RefObject, useMemo, useRef } from 'react'
+import {
+  defaultLocale,
+  fieldLabel,
+  monthRange,
+  parseMonthNameText,
+  parseMonthText,
+  resolveLocale,
+} from '../../../../lib/date-locale'
 import type { FieldVariant } from '../../../../lib/field-classes'
 import { ScrollColumn } from '../../../../lib/scroll-column'
 import type { SizeVariant } from '../../../../lib/size-context'
 import { useControllableState } from '../../../../lib/use-controllable-state'
-import { ColumnsPanel, columnsPopupClass, PickerInput, PickerShell } from '../picker-shell'
+import {
+  ColumnsPanel,
+  columnsPopupClass,
+  type PickerControlAttributes,
+  PickerInput,
+  PickerShell,
+} from '../picker-shell'
+
+/** Every word the picker announces, for translating it. */
+interface MonthPickerLabels {
+  /** Names the panel's month input. Defaults to the `placeholder`, else `"Month"`. */
+  field?: string
+  /** Names the month column. Defaults to the locale's name for it. */
+  month?: string
+  /** Names the year column. Defaults to the locale's name for it. */
+  year?: string
+  /** Names the panel's close button. Defaults to `"Close"`. */
+  close?: string
+}
 
 interface MonthPickerProps {
   /** The picked month as its first day; `null` when empty. */
@@ -23,14 +49,36 @@ interface MonthPickerProps {
   defaultValue?: Date | null
   /** Called with the new month's first day, or `null` when the field is cleared. */
   onValueChange?: (value: Date | null) => void
-  /** A react-day-picker / date-fns locale: month names and what typing reads. Defaults to `enUS`. */
-  locale?: Locale
+  /** A react-day-picker / date-fns locale, or a BCP 47 tag (`"sk"`) read through Intl: month names and what typing reads. Defaults to `enUS`. */
+  locale?: Locale | string
+  /** Adds the year column, and the year to the field; `false` leaves a month of the current year (or of the value's). Defaults to `true`. */
+  withYear?: boolean
+  /** The field's text for a month, in place of the locale's ("October 2026"): `(date) => …`, given its first day. */
+  formatDate?: (date: Date) => ReactNode
+  /** Every word the picker announces (`field`, `month`, `year`, `close`), for translating it. Defaults to English and the locale's field names. */
+  labels?: MonthPickerLabels
   /** Shown while empty. */
   placeholder?: string
   /** The first month that can be picked. Defaults to 100 years back. */
   startMonth?: Date
   /** The last month that can be picked. Defaults to 50 years ahead. */
   endMonth?: Date
+  /** Shows the value but never opens. Defaults to the surrounding Field's `readOnly`. */
+  readOnly?: boolean
+  /** A native form won't submit while the value is empty. Defaults to the surrounding Field's `required`. */
+  required?: boolean
+  /** Names the field's button in place of its label. */
+  'aria-label'?: string
+  /** Ids of the elements naming the field's button, in place of its own label. */
+  'aria-labelledby'?: string
+  /** Ids of the elements describing the field's button (a hint, an error message). */
+  'aria-describedby'?: string
+  /** Marks the value invalid, as `invalid` does. */
+  'aria-invalid'?: AriaAttributes['aria-invalid']
+  /** Called when the field's button loses focus. */
+  onBlur?: (event: FocusEvent<HTMLElement>) => void
+  /** Attributes for the field's button: a `ref`, `data-*`, `autoFocus`, `tabIndex`, handlers (they run before the picker's own). */
+  controlProps?: PickerControlAttributes
   /** Disables the field. Defaults to `false`. */
   disabled?: boolean
   /** Framed at rest, or invisible until hovered or focused. Defaults to `"bordered"`. */
@@ -75,7 +123,10 @@ function MonthPicker({
   value: valueProp,
   defaultValue = null,
   onValueChange,
-  locale = defaultLocale,
+  locale: localeProp = defaultLocale,
+  withYear = true,
+  formatDate,
+  labels,
   startMonth,
   endMonth,
   open: openProp,
@@ -86,16 +137,17 @@ function MonthPicker({
   const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
   const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
   const input = useRef<HTMLInputElement>(null)
+  const locale = resolveLocale(localeProp)
   const today = useMemo(() => new Date(), [])
   const { start, end } = monthRange(today, startMonth, endMonth)
   const year = value?.getFullYear() ?? today.getFullYear()
-  const formatted = value ? format(value, 'LLLL y', { locale }) : ''
+  const formatted = value ? format(value, withYear ? 'LLLL y' : 'LLLL', { locale }) : ''
 
   // Clamped into the range, so a year change can't land outside it.
   const pick = (date: Date) => setValue(startOfMonth(date < start ? start : date > end ? end : date))
 
   const readMonth = (text: string) => {
-    const read = parseMonthText(text, locale)
+    const read = withYear ? parseMonthText(text, locale) : parseMonthNameText(text, locale, new Date(year, 0, 1))
     if (!read || read < start || read > end) return false
     setValue(startOfMonth(read))
     return true
@@ -125,12 +177,13 @@ function MonthPicker({
       open={open}
       onOpenChange={setOpen}
       icon="calendar"
-      display={formatted}
+      display={value && formatDate ? formatDate(value) : formatted}
+      closeLabel={labels?.close}
       formValue={value ? format(value, 'yyyy-MM') : undefined}
       header={
         <PickerInput
           ref={input}
-          aria-label={shell.placeholder ?? 'Month'}
+          aria-label={labels?.field ?? shell.placeholder ?? 'Month'}
           placeholder={shell.placeholder}
           formatted={formatted}
           onText={readMonth}
@@ -144,27 +197,29 @@ function MonthPicker({
     >
       <ColumnsPanel>
         <ScrollColumn
-          label={fieldLabel(locale, 'month')}
+          label={labels?.month ?? fieldLabel(locale, 'month')}
           options={months}
           value={value?.getMonth() ?? null}
           follow={value?.getMonth() ?? today.getMonth()}
           onValueChange={m => pick(new Date(year, m, 1))}
           className="min-w-0 flex-1"
         />
-        <ScrollColumn
-          label={fieldLabel(locale, 'year')}
-          options={years}
-          value={value?.getFullYear() ?? null}
-          follow={year}
-          onValueChange={y => pick(new Date(y, value?.getMonth() ?? today.getMonth(), 1))}
-          className="min-w-0 flex-1"
-        />
+        {withYear && (
+          <ScrollColumn
+            label={labels?.year ?? fieldLabel(locale, 'year')}
+            options={years}
+            value={value?.getFullYear() ?? null}
+            follow={year}
+            onValueChange={y => pick(new Date(y, value?.getMonth() ?? today.getMonth(), 1))}
+            className="min-w-0 flex-1"
+          />
+        )}
       </ColumnsPanel>
     </PickerShell>
   )
 }
 
-export type { MonthPickerProps }
+export type { MonthPickerLabels, MonthPickerProps }
 export { MonthPicker }
 
 export default MonthPicker

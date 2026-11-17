@@ -88,7 +88,8 @@ function resolveSlotTemplate(
 /**
  * Renders `content` into the template (from `resolveSlotTemplate`), merging
  * classes and styles, chaining handlers (the template's first) and merging
- * refs; or into `DefaultTag` when there is no template.
+ * refs; or into `DefaultTag` when there is no template. Without `content`
+ * the element keeps its own children.
  */
 function slotElement(
   template: ReactElement<TemplateProps> | null,
@@ -96,7 +97,9 @@ function slotElement(
   props: TemplateProps & { ref?: Ref<HTMLElement> },
   content: ReactNode,
 ): ReactElement {
-  if (!template) return <DefaultTag {...props}>{content}</DefaultTag>
+  // No `content`, no `children` key: a Base UI part fills a render element only when it brings none.
+  if (!template)
+    return content === undefined ? <DefaultTag {...props} /> : <DefaultTag {...props}>{content}</DefaultTag>
 
   const own = template.props
   const merged: TemplateProps & { ref?: Ref<HTMLElement> } = {
@@ -117,8 +120,18 @@ function slotElement(
   }
   const templateRef = (own as { ref?: Ref<HTMLElement> }).ref ?? (template as unknown as { ref?: Ref<HTMLElement> }).ref
   merged.ref = mergeRefs(props.ref, templateRef)
-  return cloneElement(template, merged, content)
+  return content === undefined ? cloneElement(template, merged) : cloneElement(template, merged, content)
+}
+
+/**
+ * Clones `child` with `slotProps` merged in, as Radix's `Slot` composes onto its single child: the
+ * child's props win, handlers chain (the child's first), classes join, styles merge, and `ref`
+ * composes with the child's own. `slotElement` with the child as its template.
+ */
+function cloneSlot(child: ReactElement, slotProps: Record<string, unknown> = {}, ref?: Ref<HTMLElement>) {
+  const template = child as ReactElement<TemplateProps>
+  return slotElement(template, 'div', { ...slotProps, ref }, template.props.children)
 }
 
 export type { SlotProps }
-export { resolveSlotTemplate, slotElement, slotPart, slotRender }
+export { cloneSlot, resolveSlotTemplate, slotElement, slotPart, slotRender }

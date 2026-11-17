@@ -8,7 +8,6 @@
 'use client'
 
 import { Button as ButtonPrimitive } from '@base-ui/react/button'
-import type { VariantProps } from 'class-variance-authority'
 import { AnimatePresence, animate, motion, useMotionValue } from 'motion/react'
 import {
   type ButtonHTMLAttributes,
@@ -27,18 +26,9 @@ import { resolveSlotTemplate, slotElement } from '../../../lib/slot'
 import { SpinnerGlyph } from '../../../lib/spinner-glyph'
 import { spring, springEnter } from '../../../lib/springs'
 import { cn } from '../../../lib/utils'
-import { buttonVariants } from './variants'
+import { type ButtonSize, type ButtonSizeCanonical, type ButtonVariant, buttonVariants } from './variants'
 
-type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'outline' | 'ghost' | 'destructive' | 'success' | 'link'
-
-type ButtonSizeCanonical = 'default' | 'compact' | 'icon' | 'icon-compact'
-
-/** `icon-sm` is the modo chrome's name for `icon-compact` (its shell Button contract). */
-type ButtonSize = ButtonSizeCanonical | 'icon-sm'
-
-interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
-    Omit<VariantProps<typeof buttonVariants>, 'size'> {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Visual style of the button. `outline` frames it in the control border; `destructive` and `success` tint the label and a wash of their hue; `link` is underlined-on-hover text at the control height. Defaults to `"primary"`. */
   variant?: ButtonVariant
   /** Step on the size ladder (36px default, 28px compact — see Sizes), or its square icon-only step. `"icon-sm"` is `"icon-compact"` (the modo chrome's name). Omitted, the button follows the surrounding SizeProvider. */
@@ -68,8 +58,9 @@ interface ButtonProps
    sideways but under 1px vertically). Fill colors are opaque color-mix()es
    rather than alpha so the fill and its spread ring never seam. */
 const bgVariants: Record<ButtonVariant, string> = {
+  // The `--primary*` hooks (tokens/colors.css); `--shadow-button-primary` joins the press ring.
   primary:
-    '[--btn-bg:var(--foreground)] group-hover:[--btn-bg:color-mix(in_oklab,var(--foreground)_90%,var(--background))] group-active:[--btn-bg:color-mix(in_oklab,var(--foreground)_80%,var(--background))] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+    '[--btn-bg:var(--primary)] group-hover:[--btn-bg:var(--primary-hover)] group-active:[--btn-bg:var(--primary-active)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg),var(--shadow-button-primary)] group-active:shadow-[0_0_0_0px_var(--btn-bg),var(--shadow-button-primary)]',
   secondary:
     '[--btn-bg:var(--accent)] group-hover:[--btn-bg:color-mix(in_oklab,var(--accent)_80%,var(--background))] group-active:[--btn-bg:var(--accent)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   // The border ring is an outer 1px shadow at rest that hands off to an
@@ -98,7 +89,7 @@ const bgVariants: Record<ButtonVariant, string> = {
    geometric press-collapse still reacts on top. */
 const activeBgVariants: Record<ButtonVariant, string> = {
   primary:
-    '[--btn-bg:color-mix(in_oklab,var(--foreground)_80%,var(--background))] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
+    '[--btn-bg:var(--primary-active)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg),var(--shadow-button-primary)] group-active:shadow-[0_0_0_0px_var(--btn-bg),var(--shadow-button-primary)]',
   secondary:
     '[--btn-bg:var(--accent)] bg-[var(--btn-bg)] shadow-[0_0_0_1px_var(--btn-bg)] group-active:shadow-[0_0_0_0px_var(--btn-bg)]',
   tertiary:
@@ -326,6 +317,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
 Button.displayName = 'Button'
 
+export type { ButtonSizeCanonical, ButtonVariantsOptions } from './variants'
 export { buttonVariants } from './variants'
 export type { ButtonProps, ButtonSize, ButtonVariant }
 export { Button }

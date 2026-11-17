@@ -37,10 +37,12 @@ is specific to this package.
   StatusDot, EmptyState) and `containers/` (Accordion, Card). `blocks/` — compositions (SidebarApp,
   ShellCard, DesktopShell), ungrouped. Package subpaths follow the folders
   (`@justanarthur/modo-ui/components/actions/button`).
-- `modo.components.tsx` — docs-only adapters for the chrome's slots (`Select`, `Icon`, `DocsNav`) and the
-  Theme panel item. `global.css` — base styles and the chrome's look through `data-modo` attributes.
-  `vite.ts` — the docs site's Vite extension (UnoCSS, theme script); `withUno(configFile)` gives a kit
-  (`kits/<name>/`) the same over its own uno config.
+- `docs/` — the docs chrome, shipped (`@justanarthur/modo-ui/docs`, `/docs/chrome.css`, `/docs/vite`):
+  `chrome.tsx` adapts the chrome's slots (`Button`, `Link`, `Select`, `Icon`, `DocsNav`) and the Theme panel
+  item, `chrome.css` is its look through `data-modo` / `data-modo-ui` attributes (no utilities, so a host
+  scans nothing), `vite.ts` holds `docsTheme` (the theme script) and `withUno(configFile)` (UnoCSS plus
+  the theme script, the extension kits use). `global.css` imports `base.css` and `docs/chrome.css`; `vite.ts`
+  at the root is `withUno` over ui's uno config; `modo.components.tsx` holds the site's `Logo`.
 - `guides/` — the docs' Getting started and Theming pages (not shipped). `test/` — `bun test` for the
   pure helpers (`date-mask`, FileDropzone's `variants`) and the shape radii against their tokens.
 

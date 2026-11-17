@@ -7,7 +7,7 @@
 
 'use client'
 
-import { Menu } from '@base-ui/react/menu'
+import { Menu, type MenuRootChangeEventDetails } from '@base-ui/react/menu'
 import {
   type ForwardRefExoticComponent,
   forwardRef,
@@ -23,8 +23,9 @@ import { GooIndicator } from '../../../lib/goo-indicator'
 import { useMergeRefs } from '../../../lib/merge-refs'
 import { type AnchorProps, OverlayContext, positionerProps, useOverlayRoot } from '../../../lib/overlay'
 import { isDisabledRow, POPUP_SHAPE } from '../../../lib/popup'
-import { PopupLabel, PopupSeparator } from '../../../lib/popup-rows'
+import { PopupSeparator } from '../../../lib/popup-rows'
 import { useRowGroup } from '../../../lib/row-group'
+import { RowOrderContext, useRowOrder } from '../../../lib/row-order'
 import type { SizeVariant } from '../../../lib/size-context'
 import { type SlotProps, slotPart } from '../../../lib/slot'
 import { useFluidHover } from '../../../lib/use-fluid-hover'
@@ -37,12 +38,33 @@ import { DropdownEmpty, DropdownFilterContext, DropdownSearch, type DropdownSear
 import {
   DropdownContext,
   type DropdownContextValue,
+  DropdownShortcut,
+  type DropdownShortcutProps,
   MenuItem,
+  type MenuItemProps,
   type MenuItemRenderOptions,
   useDropdown,
 } from './menu-item'
-import { MenuPopup } from './menu-popup'
-import { NO_INDICES, type PanelSelectionProps, usePanelRows, usePanelSelection } from './panel-state'
+import {
+  DropdownCheckboxItem,
+  type DropdownCheckboxItemProps,
+  DropdownGroup,
+  type DropdownGroupProps,
+  DropdownLabel,
+  type DropdownLabelProps,
+  DropdownRadioGroup,
+  type DropdownRadioGroupProps,
+  DropdownRadioItem,
+  type DropdownRadioItemProps,
+} from './menu-parts'
+import { type MenuFocusProps, MenuPopup } from './menu-popup'
+import {
+  type PanelSelectionProps,
+  useCheckedRows,
+  usePanelRows,
+  usePanelSelection,
+  useValueChecked,
+} from './panel-state'
 import {
   DropdownSub,
   DropdownSubContent,
@@ -51,6 +73,10 @@ import {
   DropdownSubTrigger,
   type DropdownSubTriggerProps,
 } from './submenu'
+
+// Not `Menu.Root.ChangeEventDetails`: bunup's .d.ts renames the `Menu` import, and the `.Menu` static's key with it.
+/** What `onOpenChange` receives besides the open state: Base UI's Menu change details (`reason`, `event`, `cancel()`, `isCanceled`). */
+type DropdownOpenChangeDetails = MenuRootChangeEventDetails
 
 interface DropdownProps extends HTMLAttributes<HTMLDivElement> {
   /** `Dropdown.Item` rows, plus `Dropdown.Label` and `Dropdown.Separator`. */
@@ -82,6 +108,11 @@ type DropdownComponent = ForwardRefExoticComponent<DropdownProps & RefAttributes
   Separator: typeof DropdownSeparator
   Search: typeof DropdownSearch
   Empty: typeof DropdownEmpty
+  Group: typeof DropdownGroup
+  Shortcut: typeof DropdownShortcut
+  CheckboxItem: typeof DropdownCheckboxItem
+  RadioGroup: typeof DropdownRadioGroup
+  RadioItem: typeof DropdownRadioItem
   Sub: typeof DropdownSub
   SubTrigger: typeof DropdownSubTrigger
   SubContent: typeof DropdownSubContent
@@ -106,24 +137,48 @@ type DropdownComponent = ForwardRefExoticComponent<DropdownProps & RefAttributes
  * the query too, keeping only the rows whose `label` matches and showing
  * `Dropdown.Empty` when none do.
  *
- * Rows are the panel's children and number themselves in order, so `index`
- * is needed only to key a row on something else. Captions, rules, the search
- * and the empty state take no number. In the popup, `Dropdown.Sub` nests a
+ * Rows number themselves in document order, inside groups, fragments and
+ * conditions too, so `index` is needed only to key a row on something else.
+ * Captions, rules, the search and the empty state take no number. A row
+ * takes a `label` or its content as `children` (with `textValue` for
+ * typeahead and the filter), `inset` lines it up with rows that have an
+ * icon, and `shortcut` (or a `Dropdown.Shortcut`) adds a muted key hint.
+ * `Dropdown.CheckboxItem` and `Dropdown.RadioGroup` / `Dropdown.RadioItem`
+ * select by their own state and value instead of by index; their checked
+ * rows melt into one background like a multiple selection.
+ * `Dropdown.Group` names a run of rows with the `Dropdown.Label` inside it.
+ *
+ * In the popup, `Dropdown.Sub` nests a
  * menu: its `Dropdown.SubTrigger` row opens a `Dropdown.SubContent` beside it
  * on hover, a press or ArrowRight (ArrowLeft and Escape close it), grown out
  * of that row through the same morph, with rows, selection and fluid hover of
  * its own. The trigger row stays lit while its submenu is open.
  *
- * Statics: Dropdown.Menu (the popup root: open, defaultOpen, onOpenChange,
- * disabled, size), Dropdown.Trigger (render or asChild), Dropdown.Content
- * (the popup panel: the selection props above, side, align, sideOffset,
- * container and the morph options from, effect, hideSource, tier),
- * Dropdown.Item (a row: label, icon, index, checked, onSelect, shortcut,
- * disabled), Dropdown.Label, Dropdown.Separator, Dropdown.Search,
- * Dropdown.Empty, and in the popup Dropdown.Sub (open, defaultOpen,
- * onOpenChange, disabled), Dropdown.SubTrigger (label, icon, index, disabled,
- * openOnHover, delay, closeDelay) and Dropdown.SubContent (Dropdown.Content's
- * props; it opens on the right, aligned to the start, 8px out).
+ * Statics:
+ * - `Dropdown.Menu` — the popup root: `open`, `defaultOpen`, `onOpenChange`
+ *   (with Base UI's details: `reason`, `cancel()`), `disabled`, `size`.
+ * - `Dropdown.Trigger` — `render` or `asChild`.
+ * - `Dropdown.Content` — the popup panel: the selection props above, `side`,
+ *   `align`, `sideOffset`, `container`, `keepMounted`, `initialFocus`,
+ *   `finalFocus` and the morph options `from`, `effect`, `hideSource`, `tier`.
+ * - `Dropdown.Item` — a row: `label` or `children`, `textValue`, `icon`,
+ *   `index`, `inset`, `checked`, `onSelect(event)` (`preventDefault()` keeps
+ *   the menu open), `shortcut`, `closeOnClick`, `disabled`, `render` /
+ *   `asChild`.
+ * - `Dropdown.CheckboxItem` — a row toggling itself: `checked`,
+ *   `defaultChecked`, `onCheckedChange`, `closeOnClick` (default `false`).
+ * - `Dropdown.RadioGroup` / `Dropdown.RadioItem` — one choice by value:
+ *   `value`, `defaultValue`, `onValueChange` on the group, `value` on each row.
+ * - `Dropdown.Group` / `Dropdown.Label` — a named run of rows and its caption
+ *   (`inset`).
+ * - `Dropdown.Separator` — a rule between runs.
+ * - `Dropdown.Shortcut` — a muted key hint at a row's end.
+ * - `Dropdown.Search` / `Dropdown.Empty` — a filter field and its no-match row.
+ * - `Dropdown.Sub` / `Dropdown.SubTrigger` / `Dropdown.SubContent` — in the
+ *   popup, a submenu: its state (`open`, `defaultOpen`, `onOpenChange` with
+ *   the details, `disabled`), its trigger row (a row's props plus
+ *   `openOnHover`, `delay`, `closeDelay`) and its panel (Dropdown.Content's
+ *   props; it opens on the right, aligned to the start, 8px out).
  *
  * @example {@include ./examples.mdx}
  * @source https://github.com/mickadesign/fluid-functionalism/blob/b3587bdbd83fc66c2a6aae3817ffb856cb09260b/registry/base/dropdown.tsx Fluid Functionalism
@@ -151,6 +206,8 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
     const { activeIndex, itemRects, handlers, registerItem } = hover
     const focus = useRowGroup(hover, { axis: 'xy' })
 
+    const rowOrder = useRowOrder()
+    const { valueChecked, reportChecked } = useValueChecked()
     const rows = usePanelRows(children)
     const selection = usePanelSelection(
       {
@@ -167,7 +224,7 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
 
     const { multiple } = selection
     const checkedRect = !multiple && selection.checkedIndex != null ? (itemRects[selection.checkedIndex] ?? null) : null
-    const runs = useSelectionRuns(selection.checkedIndices ?? NO_INDICES)
+    const runs = useSelectionRuns(useCheckedRows(selection.checkedIndices, valueChecked))
     const blocks = useMergeSplitBlocks(runs, itemRects, POPUP_SHAPE.bgRadius)
     const panel = useMemo(
       () => ({
@@ -178,6 +235,7 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
         checkedIndices: selection.checkedIndices,
         selfManaged: selection.selfManaged,
         toggleIndex: selection.toggleIndex,
+        reportChecked,
       }),
       [
         registerItem,
@@ -187,34 +245,37 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownProps>(
         selection.checkedIndices,
         selection.selfManaged,
         selection.toggleIndex,
+        reportChecked,
       ],
     )
 
     return (
       <SizeScope size={size}>
-        <DropdownContext.Provider value={panel}>
-          <DropdownFilterContext.Provider value={rows.filterCtx}>
-            <Elevated
-              offset={2}
-              shadowLevel={3}
-              ref={mergedRef}
-              onMouseEnter={handlers.onMouseEnter}
-              onMouseMove={handlers.onMouseMove}
-              onMouseLeave={handlers.onMouseLeave}
-              onClick={handlers.onClick}
-              {...focus.handlers}
-              role="group"
-              className={cn('relative flex w-72 max-w-full flex-col p-1 select-none', className)}
-              {...props}
-            >
-              {multiple && <SelectionBackgrounds blocks={blocks} />}
-              {checkedRect && <GooIndicator rect={checkedRect} className={cn('bg-active', POPUP_SHAPE.bg)} />}
-              <FluidHoverHighlight hover={hover} from={checkedRect} className={POPUP_SHAPE.bg} />
-              <FocusRing rect={focus.focusRect} className={POPUP_SHAPE.focusRing} />
-              {rows.content}
-            </Elevated>
-          </DropdownFilterContext.Provider>
-        </DropdownContext.Provider>
+        <RowOrderContext.Provider value={rowOrder}>
+          <DropdownContext.Provider value={panel}>
+            <DropdownFilterContext.Provider value={rows.filterCtx}>
+              <Elevated
+                offset={2}
+                shadowLevel={3}
+                ref={mergedRef}
+                onMouseEnter={handlers.onMouseEnter}
+                onMouseMove={handlers.onMouseMove}
+                onMouseLeave={handlers.onMouseLeave}
+                onClick={handlers.onClick}
+                {...focus.handlers}
+                role="group"
+                className={cn('relative flex w-72 max-w-full flex-col p-1 select-none', className)}
+                {...props}
+              >
+                <SelectionBackgrounds blocks={blocks} />
+                {checkedRect && <GooIndicator rect={checkedRect} className={cn('bg-active', POPUP_SHAPE.bg)} />}
+                <FluidHoverHighlight hover={hover} from={checkedRect} className={POPUP_SHAPE.bg} />
+                <FocusRing rect={focus.focusRect} className={POPUP_SHAPE.focusRing} />
+                {rows.content}
+              </Elevated>
+            </DropdownFilterContext.Provider>
+          </DropdownContext.Provider>
+        </RowOrderContext.Provider>
       </SizeScope>
     )
   },
@@ -229,8 +290,8 @@ interface DropdownMenuProps {
   open?: boolean
   /** Initial open state — uncontrolled. Defaults to `false`. */
   defaultOpen?: boolean
-  /** Called when the menu opens or closes. */
-  onOpenChange?: (open: boolean) => void
+  /** Called when the menu opens or closes, with Base UI's change details: `reason` (`'trigger-press'`, `'item-press'`, `'outside-press'`, `'escape-key'`, …), the `event`, and `cancel()` to keep it as it is. */
+  onOpenChange?: (open: boolean, details: DropdownOpenChangeDetails) => void
   /** Disables the menu. Defaults to `false`. */
   disabled?: boolean
   /** Pins trigger-side content and the portalled popup rows to one step of the size ladder (default 36px, compact 28px — see Sizes). Omitted, they follow the surrounding SizeProvider. */
@@ -238,13 +299,22 @@ interface DropdownMenuProps {
 }
 
 function DropdownMenu({ children, open, defaultOpen, onOpenChange, disabled = false, size }: DropdownMenuProps) {
-  const root = useOverlayRoot({ open, defaultOpen, onOpenChange })
+  // Reported here rather than through the root's state, so the handler gets the details and can cancel.
+  const root = useOverlayRoot({ open, defaultOpen })
 
   return (
     <SizeScope size={size}>
       <OverlayContext.Provider value={root.state}>
         {/* Non-modal: the page keeps scrolling and the popup follows its trigger. */}
-        <Menu.Root open={root.open} onOpenChange={root.onOpenChange} disabled={disabled} modal={false}>
+        <Menu.Root
+          open={root.open}
+          onOpenChange={(next, details) => {
+            onOpenChange?.(next, details)
+            if (!details.isCanceled) root.onOpenChange(next, details)
+          }}
+          disabled={disabled}
+          modal={false}
+        >
           {children}
         </Menu.Root>
       </OverlayContext.Provider>
@@ -267,6 +337,7 @@ const DropdownTrigger = slotPart<DropdownTriggerProps>(Menu.Trigger, 'DropdownTr
 
 interface DropdownContentProps
   extends PanelSelectionProps,
+    MenuFocusProps,
     AnchorProps,
     MorphProps,
     Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
@@ -298,7 +369,6 @@ const DropdownContent = forwardRef<HTMLDivElement, DropdownContentProps>(
 
 DropdownContent.displayName = 'DropdownContent'
 
-const DropdownLabel = PopupLabel
 const DropdownSeparator = PopupSeparator
 
 Object.assign(Dropdown, {
@@ -310,31 +380,49 @@ Object.assign(Dropdown, {
   Separator: DropdownSeparator,
   Search: DropdownSearch,
   Empty: DropdownEmpty,
+  Group: DropdownGroup,
+  Shortcut: DropdownShortcut,
+  CheckboxItem: DropdownCheckboxItem,
+  RadioGroup: DropdownRadioGroup,
+  RadioItem: DropdownRadioItem,
   Sub: DropdownSub,
   SubTrigger: DropdownSubTrigger,
   SubContent: DropdownSubContent,
 })
 
 export type {
+  DropdownCheckboxItemProps,
   DropdownContentProps,
   DropdownContextValue,
+  DropdownGroupProps,
+  DropdownLabelProps,
   DropdownMenuProps,
+  DropdownOpenChangeDetails,
   DropdownProps,
+  DropdownRadioGroupProps,
+  DropdownRadioItemProps,
   DropdownSearchProps,
+  DropdownShortcutProps,
   DropdownSubContentProps,
   DropdownSubProps,
   DropdownSubTriggerProps,
   DropdownTriggerProps,
+  MenuItemProps,
   MenuItemRenderOptions,
 }
 export {
   Dropdown,
+  DropdownCheckboxItem,
   DropdownContent,
   DropdownEmpty,
+  DropdownGroup,
   DropdownLabel,
   DropdownMenu,
+  DropdownRadioGroup,
+  DropdownRadioItem,
   DropdownSearch,
   DropdownSeparator,
+  DropdownShortcut,
   DropdownSub,
   DropdownSubContent,
   DropdownSubTrigger,

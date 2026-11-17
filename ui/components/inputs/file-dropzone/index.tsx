@@ -11,6 +11,7 @@ import { Field } from '@base-ui/react/field'
 import { motion } from 'motion/react'
 import {
   type ChangeEvent,
+  type CSSProperties,
   type DragEvent,
   type ForwardRefExoticComponent,
   forwardRef,
@@ -74,6 +75,8 @@ interface FileDropzoneProps {
   size?: SizeVariant
   /** Classes for the zone. */
   className?: string
+  /** Inline styles for the zone (its `<label>` root): layout only, such as a width from a parent's measurement. */
+  style?: CSSProperties
 }
 
 type DragState = 'idle' | DragVerdict
@@ -152,6 +155,7 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
       readOnly,
       size: sizeProp,
       className,
+      style,
       'aria-describedby': ariaDescribedBy,
     },
     ref,
@@ -222,6 +226,7 @@ const FileDropzone = forwardRef<HTMLInputElement, FileDropzoneProps>(
       <>
         {/* biome-ignore lint/a11y/noLabelWithoutControl: the file input inside is the control (Field.Control renders it). */}
         <label
+          style={style}
           onDragEnter={onDragEnter}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}

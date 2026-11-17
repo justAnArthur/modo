@@ -6,7 +6,7 @@
 
 'use client'
 
-import { NumberField } from '@base-ui/react/number-field'
+import { NumberField, type NumberFieldRootChangeEventDetails } from '@base-ui/react/number-field'
 import { forwardRef, type InputHTMLAttributes, type ReactNode, useRef } from 'react'
 import { focusControlOnPress, useFieldBox } from '../../../lib/field-box'
 import {
@@ -33,8 +33,8 @@ interface NumberInputProps extends NativeInputProps {
   value?: number | null
   /** Initial value when uncontrolled. Empty when unset. */
   defaultValue?: number
-  /** Called with the new value as it changes (typing, steppers, arrow keys, scrubbing); `null` when cleared. */
-  onValueChange?: (value: number | null) => void
+  /** Called with the new value as it changes (typing, steppers, arrow keys, scrubbing); `null` when cleared. The second argument is Base UI's change details: `reason` names the cause (`"input-change"`, `"keyboard"`, `"increment-press"`, `"scrub"`, …). */
+  onValueChange?: (value: number | null, details: NumberFieldRootChangeEventDetails) => void
   /** Called once a change is done: on blur after typing, on release after a stepper press or a scrub. */
   onValueCommitted?: (value: number | null) => void
   /** Lowest value the steppers, arrow keys and blur clamp to. */
@@ -158,7 +158,7 @@ const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
         name={name}
         value={value}
         defaultValue={defaultValue}
-        onValueChange={next => onValueChange?.(next)}
+        onValueChange={(next, details) => onValueChange?.(next, details)}
         onValueCommitted={next => onValueCommitted?.(next)}
         min={min}
         max={max}

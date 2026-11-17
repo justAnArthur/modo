@@ -6,6 +6,7 @@
 'use client'
 
 import { createContext, type MutableRefObject, useContext } from 'react'
+import type { ItemRect } from '../../../lib/use-fluid-hover'
 
 interface NavigationMenuContextValue {
   /** The open item's value, or `null` while closed. */
@@ -21,6 +22,9 @@ const NavigationMenuContext = createContext<NavigationMenuContextValue | null>(n
 /** The value of the item a part sits in. */
 const ItemContext = createContext('')
 
+/** The strip's marker: where it sits, and `claim` for a `NavigationMenu.Indicator` that draws it instead of the List (returns the release). */
+const ListMarkerContext = createContext<{ rect?: ItemRect; claim: () => () => void } | null>(null)
+
 /** Inside a panel: a link there is a row, not a strip item. */
 const InContentContext = createContext(false)
 
@@ -31,4 +35,4 @@ function useNavigationMenu(part: string) {
 }
 
 export type { NavigationMenuContextValue }
-export { InContentContext, ItemContext, NavigationMenuContext, useNavigationMenu }
+export { InContentContext, ItemContext, ListMarkerContext, NavigationMenuContext, useNavigationMenu }

@@ -1,7 +1,8 @@
 /*
  * Local addition (not part of Fluid Functionalism): the NavigationMenu strip.
  * One fluid hover highlight, one liquid marker under the open item (else the
- * current page's link) and one keyboard ring travel along it.
+ * current page's link) and one keyboard ring travel along it. A
+ * `NavigationMenu.Indicator` among the items takes the marker over.
  */
 
 'use client'
@@ -12,7 +13,9 @@ import {
   forwardRef,
   type ReactNode,
   type SyntheticEvent,
+  useCallback,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react'
@@ -24,11 +27,11 @@ import { useRowFocus } from '../../../lib/row-group'
 import { useShape } from '../../../lib/shape-context'
 import { useFluidHover } from '../../../lib/use-fluid-hover'
 import { cn } from '../../../lib/utils'
-import { useNavigationMenu } from './context'
+import { ListMarkerContext, useNavigationMenu } from './context'
 import { useDomRows } from './use-dom-rows'
 
 interface NavigationMenuListProps extends ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.List> {
-  /** `NavigationMenu.Item`s. */
+  /** `NavigationMenu.Item`s, and optionally a `NavigationMenu.Indicator`. */
   children?: ReactNode
 }
 
@@ -51,31 +54,39 @@ const NavigationMenuList = forwardRef<HTMLUListElement, NavigationMenuListProps>
       setMarked(open >= 0 ? open : items.findIndex(el => el.hasAttribute('data-active')))
     })
     const markedRect = hover.isMeasured && marked >= 0 ? hover.itemRects[marked] : undefined
+    const [claimed, setClaimed] = useState(false)
+    const claim = useCallback(() => {
+      setClaimed(true)
+      return () => setClaimed(false)
+    }, [])
+    const marker = useMemo(() => ({ rect: markedRect, claim }), [markedRect, claim])
 
     // The panels are React children of their items, portalled out of the strip: their events
     // bubble here too, and React reports no mouse leave on the way into them.
     const inStrip = (e: SyntheticEvent) => e.currentTarget.contains(e.target as Node)
 
     return (
-      <NavigationMenuPrimitive.List
-        ref={mergedRef}
-        onMouseEnter={hover.handlers.onMouseEnter}
-        onMouseLeave={hover.handlers.onMouseLeave}
-        onMouseMove={e => (inStrip(e) ? hover.handlers.onMouseMove(e) : hover.handlers.onMouseLeave())}
-        onClick={e => inStrip(e) && hover.handlers.onClick(e)}
-        onFocus={e => inStrip(e) && focus.handlers.onFocus(e)}
-        onBlur={e => inStrip(e) && focus.handlers.onBlur(e)}
-        className={cn('relative m-0 flex list-none items-center p-0', className)}
-        {...props}
-      >
-        {/* A list item, so the strip stays valid markup. */}
-        <li aria-hidden className="contents">
-          {markedRect && <GooIndicator rect={markedRect} className={cn('bg-active', shape.bg)} />}
-          <FluidHoverHighlight hover={hover} className={shape.bg} />
-          <FocusRing rect={focus.focusRect} className={shape.focusRing} />
-        </li>
-        {children}
-      </NavigationMenuPrimitive.List>
+      <ListMarkerContext.Provider value={marker}>
+        <NavigationMenuPrimitive.List
+          ref={mergedRef}
+          onMouseEnter={hover.handlers.onMouseEnter}
+          onMouseLeave={hover.handlers.onMouseLeave}
+          onMouseMove={e => (inStrip(e) ? hover.handlers.onMouseMove(e) : hover.handlers.onMouseLeave())}
+          onClick={e => inStrip(e) && hover.handlers.onClick(e)}
+          onFocus={e => inStrip(e) && focus.handlers.onFocus(e)}
+          onBlur={e => inStrip(e) && focus.handlers.onBlur(e)}
+          className={cn('relative m-0 flex list-none items-center p-0', className)}
+          {...props}
+        >
+          {/* A list item, so the strip stays valid markup. */}
+          <li aria-hidden className="contents">
+            {markedRect && !claimed && <GooIndicator rect={markedRect} className={cn('bg-active', shape.bg)} />}
+            <FluidHoverHighlight hover={hover} className={shape.bg} />
+            <FocusRing rect={focus.focusRect} className={shape.focusRing} />
+          </li>
+          {children}
+        </NavigationMenuPrimitive.List>
+      </ListMarkerContext.Provider>
     )
   },
 )

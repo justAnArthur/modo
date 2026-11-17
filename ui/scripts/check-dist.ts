@@ -39,8 +39,9 @@ const IMPORT = /^import\s*(\{[^}]*\}|\*\s*as\s+\w+|\w+)?\s*(?:from\s*)?"([^"]+)"
 const EXPORT = /^export\s*\{[^}]*\}(?:\s*from\s*"[^"]+")?;?$/gm
 const COMMENT = /^\s*\/\/.*$/gm
 
-// preset.js runs in the host's Node config, never in a React tree
-const files = globSync('dist/**/*.js', { cwd: ROOT }).filter(file => file !== 'dist/preset.js')
+// preset.js and docs/vite.js run in the host's Node config, never in a React tree
+const NODE_ONLY = ['dist/preset.js', 'dist/docs/vite.js']
+const files = globSync('dist/**/*.js', { cwd: ROOT }).filter(file => !NODE_ONLY.includes(file))
 const chunks = new Map<string, Chunk>(
   files.map(file => {
     const code = read(file)
@@ -124,7 +125,11 @@ for (const [subpath, value] of Object.entries<string | { types: string; source?:
   pkg.exports,
 )) {
   if (typeof value === 'string') {
-    if (!shipped.has(value.slice(2))) failures.push(`${subpath}: ${value} is not in the tarball`)
+    const [before, after = ''] = value.slice(2).split('*')
+    const hit = value.includes('*')
+      ? [...shipped].some(file => file.startsWith(before!) && file.endsWith(after))
+      : shipped.has(before!)
+    if (!hit) failures.push(`${subpath}: ${value} is not in the tarball`)
     continue
   }
   const [before, after = ''] = value.default.slice(2).split('*')
@@ -144,6 +149,12 @@ for (const [subpath, value] of Object.entries<string | { types: string; source?:
     if (source) sourceTargets.push(source)
     specifiers.push(`${PACKAGE}${subpath.slice(1).replace('*', star)}`)
   }
+}
+
+// Every lib module is a subpath of its own, so a host extending an item reaches the same instance.
+for (const file of globSync('lib/*.{ts,tsx}', { cwd: ROOT })) {
+  const subpath = `./${file.replace(/\.tsx?$/, '')}`
+  if (pkg.exports[subpath]?.source !== `./${file}`) failures.push(`${file} has no ${subpath} export`)
 }
 
 const imports = specifiers.map(specifier => `await import(${JSON.stringify(specifier)})`).join('\n')
