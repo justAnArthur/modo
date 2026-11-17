@@ -88,7 +88,8 @@ function resolveSlotTemplate(
 /**
  * Renders `content` into the template (from `resolveSlotTemplate`), merging
  * classes and styles, chaining handlers (the template's first) and merging
- * refs; or into `DefaultTag` when there is no template.
+ * refs; or into `DefaultTag` when there is no template. Without `content`
+ * the element keeps its own children.
  */
 function slotElement(
   template: ReactElement<TemplateProps> | null,
@@ -96,7 +97,9 @@ function slotElement(
   props: TemplateProps & { ref?: Ref<HTMLElement> },
   content: ReactNode,
 ): ReactElement {
-  if (!template) return <DefaultTag {...props}>{content}</DefaultTag>
+  // No `content`, no `children` key: a Base UI part fills a render element only when it brings none.
+  if (!template)
+    return content === undefined ? <DefaultTag {...props} /> : <DefaultTag {...props}>{content}</DefaultTag>
 
   const own = template.props
   const merged: TemplateProps & { ref?: Ref<HTMLElement> } = {
@@ -117,7 +120,7 @@ function slotElement(
   }
   const templateRef = (own as { ref?: Ref<HTMLElement> }).ref ?? (template as unknown as { ref?: Ref<HTMLElement> }).ref
   merged.ref = mergeRefs(props.ref, templateRef)
-  return cloneElement(template, merged, content)
+  return content === undefined ? cloneElement(template, merged) : cloneElement(template, merged, content)
 }
 
 /**

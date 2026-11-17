@@ -289,7 +289,7 @@ const MenuRow = forwardRef<HTMLDivElement, MenuRowProps>(
         // Toggling one of several stays open; picking one of one closes.
         closeOnClick: closeOnClick ?? (kind ? kind === 'radio' : !multiple),
         onClick: handleActivate,
-        element: rowElement({}),
+        element: rowElement({}, content),
         children: content,
       })
     }
