@@ -4,7 +4,7 @@
 
 'use client'
 
-import SettingsWindow from '../../blocks/settings-window'
+import SettingsWindow from '../../blocks/app/settings-window'
 import { ABOUT, MockWindow, PERMISSIONS, PLUGINS } from '../../mock/settings'
 
 interface SettingsProps {

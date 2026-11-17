@@ -1,0 +1,49 @@
+import NowPlaying from './index'
+import { MockArtwork } from '../../../mock/artwork'
+import { FlashIsland, PLAYING, ScreenEdge, TimerBubble, WidgetIsland, WingsIsland } from '../../../mock/island-content'
+import { TRACK } from '../../../mock/data'
+
+# Player
+
+The open island's view: artwork, title and artist, the scrubber running on by itself, the transport and the app it plays in.
+
+<WidgetIsland tab="now-playing">
+  <NowPlaying track={PLAYING} />
+</WidgetIsland>
+
+# Without artwork
+
+A small note tile leads the title row instead of an empty square.
+
+<WidgetIsland tab="now-playing">
+  <NowPlaying track={TRACK} defaultPlaying={false} />
+</WidgetIsland>
+
+# Nothing playing
+
+<WidgetIsland tab="now-playing">
+  <NowPlaying track={null} />
+</WidgetIsland>
+
+# Compact
+
+`NowPlaying.Leading` and `NowPlaying.Trailing` in the wings; the bars settle low while paused.
+
+<div className="flex w-full flex-col gap-3">
+  <WingsIsland leading={<NowPlaying.Leading track={PLAYING} />} trailing={<NowPlaying.Trailing />} />
+  <WingsIsland leading={<NowPlaying.Leading track={PLAYING} />} trailing={<NowPlaying.Trailing playing={false} />} />
+</div>
+
+# Minimal
+
+`NowPlaying.Minimal`, the artwork as a disc, in the split island's bubble beside a timer.
+
+<WingsIsland leading={<NowPlaying.Leading track={PLAYING} />} trailing={<NowPlaying.Trailing />} minimal={<NowPlaying.Minimal track={PLAYING} />} />
+
+# Track change
+
+`NowPlaying.Flash` announces the next track for a moment.
+
+<FlashIsland>
+  <NowPlaying.Flash track={{ ...PLAYING, title: 'Teardrop', artist: 'Massive Attack', artwork: <MockArtwork variant="night" /> }} />
+</FlashIsland>

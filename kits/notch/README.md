@@ -69,7 +69,7 @@ export function NotchPanel({ state, onStateChange }) {
 | `useIsland()` | The enclosing Island's state, notch and panel geometry and current outline. |
 | `shapeFor`, `islandPath`, `stripLayout`, … | The pure geometry (`@justanarthur/modo-ui-notch/lib/geometry`). |
 
-Each component and block is also a subpath: `@justanarthur/modo-ui-notch/components/island`, `@justanarthur/modo-ui-notch/blocks/now-playing`.
+Each component and block is also a subpath: `@justanarthur/modo-ui-notch/components/island/island`, `@justanarthur/modo-ui-notch/blocks/activities/now-playing`.
 
 ## License
 

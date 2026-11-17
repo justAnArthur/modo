@@ -6,9 +6,9 @@
 'use client'
 
 import { useState } from 'react'
-import ExpandedIsland from '../../blocks/expanded-island'
-import NowPlaying from '../../blocks/now-playing'
-import Island from '../../components/island'
+import NowPlaying from '../../blocks/activities/now-playing'
+import ExpandedIsland from '../../blocks/app/expanded-island'
+import Island from '../../components/island/island'
 import type { IslandState } from '../../lib/geometry'
 import { TABS } from '../../mock/data'
 import { ArtworkTile, panelTabs } from '../../mock/island-content'

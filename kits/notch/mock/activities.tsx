@@ -8,11 +8,11 @@
 
 import { CalendarDays } from 'lucide-react'
 import { useState } from 'react'
-import Agenda from '../blocks/agenda'
-import ExpandedIsland from '../blocks/expanded-island'
-import NowPlaying from '../blocks/now-playing'
-import Timer from '../blocks/timer'
-import Island from '../components/island'
+import Agenda from '../blocks/activities/agenda'
+import NowPlaying from '../blocks/activities/now-playing'
+import Timer from '../blocks/activities/timer'
+import ExpandedIsland from '../blocks/app/expanded-island'
+import Island from '../components/island/island'
 import { soonEvent } from './data'
 import { FlashIsland, PLAYING, ScreenEdge, useRun, WingsIsland } from './island-content'
 

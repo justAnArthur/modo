@@ -4,11 +4,11 @@
  */
 
 import { Activity, CalendarDays, Files, Headphones, Music, SlidersHorizontal, Timer } from 'lucide-react'
-import type { AgendaEvent } from '../blocks/agenda'
-import type { DeviceInfo } from '../blocks/devices'
-import type { ShelfFile } from '../blocks/shelf'
-import type { StatsSample } from '../blocks/system-stats'
-import type { IslandTab } from '../components/island-tabs'
+import type { AgendaEvent } from '../blocks/activities/agenda'
+import type { ShelfFile } from '../blocks/activities/shelf'
+import type { DeviceInfo } from '../blocks/system/devices'
+import type { StatsSample } from '../blocks/system/system-stats'
+import type { IslandTab } from '../components/island/island-tabs'
 
 export interface Track {
   title: string

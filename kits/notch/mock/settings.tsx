@@ -7,7 +7,7 @@
 
 'use client'
 
-import Button from '@justanarthur/modo-ui/components/button'
+import Button from '@justanarthur/modo-ui/components/actions/button'
 import Radio from '@justanarthur/modo-ui/components/inputs/radio'
 import Switch from '@justanarthur/modo-ui/components/inputs/switch'
 import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
@@ -23,7 +23,7 @@ import {
   Timer,
 } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
-import type { AboutRow, SettingsPermission, SettingsPlugin } from '../blocks/settings-window'
+import type { AboutRow, SettingsPermission, SettingsPlugin } from '../blocks/app/settings-window'
 import { useFitScale } from './fit'
 
 function AlertSwitches() {
