@@ -19,6 +19,7 @@ import { cn } from '@justanarthur/modo-ui/lib/utils'
 import FluidHover from '@justanarthur/modo-ui/primitives/systems/fluid-hover'
 import {
   ArrowDownToLine,
+  ArrowUpRight,
   Camera,
   Copy,
   File,
@@ -207,7 +208,7 @@ interface HeroProps {
   props: RecentFilesProps
 }
 
-/** The newest file: its name, size and age, Show in Finder, Copy, Move to Trash and Open. */
+/** The newest file: its name, size, age and where it came from, Show in Finder, Copy, Move to Trash and Open. */
 function Hero({ file, now, props }: HeroProps) {
   const { onOpen, onReveal, onCopy, onDelete } = props
   return (
@@ -218,11 +219,17 @@ function Hero({ file, now, props }: HeroProps) {
           {[bytes(file.size), ago(now - file.addedAt), file.from && `from ${file.from}`].filter(Boolean).join(' · ')}
         </Widget.Subtitle>
       </div>
-      <div className="-ml-2.5 flex min-w-0 items-center gap-0.5">
+      <div className="-mr-1 flex min-w-0 items-center justify-end gap-0.5">
         {onReveal && <Widget.Action icon={FolderSearch} label="Show in Finder" onClick={() => onReveal(file)} />}
         {onCopy && <Widget.Action icon={Copy} label="Copy" onClick={() => onCopy(file)} />}
         {onDelete && <Widget.Action icon={Trash2} label="Move to Trash" onClick={() => onDelete(file)} />}
-        <Button variant="primary" size="compact" className="ml-auto" onClick={() => onOpen?.(file)}>
+        <Button
+          variant="primary"
+          size="compact"
+          leadingIcon={ArrowUpRight}
+          className="ml-1.5"
+          onClick={() => onOpen?.(file)}
+        >
           Open
         </Button>
       </div>

@@ -44,8 +44,9 @@ export const CLIPS: ClipboardClip[] = [
   {
     id: 'brand',
     kind: 'color',
-    // A theme token, so the swatch follows the scheme and no literal color sits in the docs.
-    content: 'var(--badge-blue)',
+    // A theme token as copied from code; the swatch paints it, so it follows the scheme and no literal color sits in the docs.
+    content: '--badge-blue',
+    color: 'var(--badge-blue)',
     detail: 'modo-ui badge blue',
     app: 'Zed',
     copiedAt: ago(48),

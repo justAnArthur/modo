@@ -1,7 +1,7 @@
 /*!
  * Local addition: a notch app's clock, the time, the date and a few world
  * clocks, with a Pomodoro cycle that takes the widget over while it runs.
- * Replaces the Timer block: the run is a value the host may own and persist.
+ * The run is a value the host may own and persist.
  */
 
 'use client'
