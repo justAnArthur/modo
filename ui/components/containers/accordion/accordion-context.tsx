@@ -29,8 +29,17 @@ interface AccordionMultipleProps {
   collapsible?: never
 }
 
+/** `type` decided at runtime (a wrapper's own prop): the value's shape follows it. */
+interface AccordionEitherProps {
+  type: 'single' | 'multiple'
+  value?: string | string[]
+  defaultValue?: string | string[]
+  onValueChange?: (value: string | string[]) => void
+  collapsible?: boolean
+}
+
 /** The value props both roots take: one open item, or several. */
-type AccordionValueProps = AccordionSingleProps | AccordionMultipleProps
+type AccordionValueProps = AccordionSingleProps | AccordionMultipleProps | AccordionEitherProps
 
 const NONE: string[] = []
 
@@ -40,23 +49,23 @@ const NONE: string[] = []
  * close its open item when `collapsible` is `false`.
  */
 function useAccordionValue(props: AccordionValueProps) {
-  const single = props.type === 'multiple' ? undefined : props
-  const multiple = props.type === 'multiple' ? props : undefined
-  const [one, setOne] = useControllableState(single?.value, single?.defaultValue ?? '', single?.onValueChange)
-  const [many, setMany] = useControllableState(multiple?.value, multiple?.defaultValue ?? NONE, multiple?.onValueChange)
+  // Every member fits the widest one; the union only checks the shapes against a literal `type`.
+  const { type, value, defaultValue, onValueChange: onChange, collapsible } = props as AccordionEitherProps
+  const multiple = type === 'multiple'
+  const [current, setCurrent] = useControllableState(value, defaultValue ?? (multiple ? NONE : ''), onChange)
 
-  const list = multiple ? many : one ? [one] : NONE
+  const list = typeof current === 'string' ? (current ? [current] : NONE) : current
   const key = list.join('\n')
   // Keyed on the values, not the fresh array.
   const open = useMemo(() => list, [key])
 
   const onValueChange = (next: string[]) => {
-    if (multiple) return setMany(next)
-    if (next.length === 0 && single?.collapsible === false) return
-    setOne(next[0] ?? '')
+    if (multiple) return setCurrent(next)
+    if (next.length === 0 && collapsible === false) return
+    setCurrent(next[0] ?? '')
   }
 
-  return { open, key, onValueChange, multiple: !!multiple }
+  return { open, key, onValueChange, multiple }
 }
 
 /** Strips the value props, leaving what goes on the root element. */

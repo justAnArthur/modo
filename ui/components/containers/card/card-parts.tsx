@@ -11,6 +11,7 @@ import { forwardRef, type HTMLAttributes, useContext } from 'react'
 import { useSize } from '../../../lib/size-context'
 import { cn } from '../../../lib/utils'
 import { WeightLabel } from '../../../lib/weight-label'
+import Separator, { type SeparatorProps } from '../../../primitives/layout/separator'
 import { CardContext } from './card-group'
 
 const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({ className, ...props }, ref) => {
@@ -38,13 +39,20 @@ const CardHeader = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(({
 
 CardHeader.displayName = 'CardHeader'
 
-const CardTitle = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>(
-  ({ className, children, ...props }, ref) => {
+type CardTitleTag = 'span' | 'div' | 'p' | 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6'
+
+interface CardTitleProps extends HTMLAttributes<HTMLSpanElement> {
+  /** The element the title renders in: a heading level (`'h2'`, `'h3'`, …) for the page outline, or another tag. Any other tag wraps the label, which keeps the ref, the props and the look. Defaults to `'span'`. */
+  as?: CardTitleTag
+}
+
+const CardTitle = forwardRef<HTMLSpanElement, CardTitleProps>(
+  ({ as: Tag = 'span', className, children, ...props }, ref) => {
     const { emphasized, orientation } = useContext(CardContext)
     const compact = useSize().variant === 'compact'
     // A consumer's `truncate` lands on the label's grid, which can't ellipsize
     // (only a block's own line boxes can); its nowrap inherits into the cells.
-    return (
+    const label = (
       <WeightLabel
         ref={ref}
         data-slot="card-title"
@@ -58,6 +66,9 @@ const CardTitle = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>(
         {children}
       </WeightLabel>
     )
+    if (Tag === 'span') return label
+    // The one-column track lets a truncating label shrink below its text.
+    return <Tag className="m-0 grid min-w-0 grid-cols-[minmax(0,1fr)]">{label}</Tag>
   },
 )
 
@@ -152,28 +163,27 @@ const CardEyebrow = forwardRef<HTMLSpanElement, HTMLAttributes<HTMLSpanElement>>
 
 CardEyebrow.displayName = 'CardEyebrow'
 
-/** A hairline across the card between its parts, spaced like them; vertical in an inline card. */
-const CardDivider = forwardRef<HTMLHRElement, HTMLAttributes<HTMLHRElement>>(({ className, ...props }, ref) => {
-  const { orientation } = useContext(CardContext)
+/** A hairline across the card between its parts, spaced like them; vertical in an inline card unless `orientation` says otherwise. */
+const CardDivider = forwardRef<HTMLDivElement, SeparatorProps>(({ className, orientation, ...props }, ref) => {
+  const { orientation: cardOrientation } = useContext(CardContext)
   const compact = useSize().variant === 'compact'
-  const vertical = orientation === 'inline'
+  const vertical = (orientation ?? (cardOrientation === 'inline' ? 'vertical' : 'horizontal')) === 'vertical'
   return (
-    <hr
+    <Separator
       ref={ref}
-      aria-orientation={vertical ? 'vertical' : 'horizontal'}
       data-slot="card-divider"
+      {...props}
+      orientation={vertical ? 'vertical' : 'horizontal'}
       className={cn(
-        'shrink-0 border-0 bg-border/60',
-        vertical
-          ? cn('h-auto w-px self-stretch', compact ? 'my-2.5' : 'my-3.5')
-          : cn('h-px w-full', compact ? 'mt-2.5' : 'mt-3'),
+        'bg-border/60',
+        vertical ? (compact ? 'my-2.5' : 'my-3.5') : compact ? 'mt-2.5' : 'mt-3',
         className,
       )}
-      {...props}
     />
   )
 })
 
 CardDivider.displayName = 'CardDivider'
 
+export type { CardTitleProps, CardTitleTag }
 export { CardAction, CardContent, CardDescription, CardDivider, CardEyebrow, CardFooter, CardHeader, CardTitle }

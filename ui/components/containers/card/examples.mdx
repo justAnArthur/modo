@@ -165,12 +165,13 @@ the group holds the selection (`defaultValue` here, or `value` and
 `border="outlined"` frames a standalone card in the hairline an outlined
 group gives its tiles. `Card.Divider` runs a hairline across the card
 between its parts, full-bleed and spaced like them; in an inline card it
-stands vertical.
+stands vertical. `as="h3"` puts the title in the page outline without
+changing its look.
 
 <div className="flex w-full max-w-[520px] flex-col gap-4">
   <Card border="outlined">
     <Card.Header>
-      <Card.Title>Team plan</Card.Title>
+      <Card.Title as="h3">Team plan</Card.Title>
       <Card.Description>Everything in Pro, for up to ten seats.</Card.Description>
     </Card.Header>
     <Card.Divider />
