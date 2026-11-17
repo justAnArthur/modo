@@ -14,6 +14,7 @@ import {
   cloneElement,
   createContext,
   forwardRef,
+  isValidElement,
   type MouseEvent,
   type ReactNode,
   type Ref,
@@ -25,7 +26,7 @@ import {
   useRef,
   useState,
 } from 'react'
-import { type IconName, useIcon } from '../../../lib/icon-context'
+import { type IconComponent, type IconName, useIcon } from '../../../lib/icon-context'
 import { GooFilter } from '../../../lib/morph-layers'
 import { useReduceMotion } from '../../../lib/reduced-motion'
 import { useShape } from '../../../lib/shape-context'
@@ -36,8 +37,15 @@ import { SURFACE_BG, SURFACE_SHADOW } from '../../../lib/surface-classes'
 import { SurfaceProvider, useLift } from '../../../lib/surface-context'
 import { GOO_BLUR_RATIO, holdExit } from '../../../lib/use-morph'
 import { cn } from '../../../lib/utils'
-import Button from '../../actions/button'
-import { type ToastSource, type ToastType, toastApi } from './manager'
+import Button, { type ButtonProps } from '../../actions/button'
+import {
+  type ToastActionOptions,
+  type ToastData,
+  type ToastOptions,
+  type ToastSource,
+  type ToastType,
+  toastApi,
+} from './manager'
 
 type ToastPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
 
@@ -84,11 +92,11 @@ const ToastSettings = createContext<{ position: ToastPosition; timeout: number }
 /**
  * Shows toasts from inside a `Toast`: `show`, the per-state shortcuts
  * (`success`, `error`, `warning`, `info`, `loading`), `promise`, `update` and
- * `close`, the same calls as the global `toast`. Under a `Toast` with
+ * `close` (alias `dismiss`), the same calls as the global `toast`. Under a `Toast` with
  * `manager={toast}` both work on one stack.
  */
 function useToast() {
-  const manager = ToastPrimitive.useToastManager()
+  const manager = ToastPrimitive.useToastManager<ToastData>()
   return useMemo(() => toastApi(manager), [manager])
 }
 
@@ -113,17 +121,32 @@ function Shape({ box, className, shapeRef }: { box: Box; className: string; shap
   )
 }
 
-function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
+// A component is a function or a forwardRef / memo object; an element or any other node is drawn as is.
+const isComponent = (icon: ToastData['icon']): icon is IconComponent =>
+  typeof icon === 'function' ||
+  (typeof icon === 'object' && icon !== null && '$$typeof' in icon && !isValidElement(icon))
+
+/** The pill's glyph: the state's icon, or the toast's own `icon`. */
+function StatusIcon({ type, icon }: { type: ToastType; icon: ToastData['icon'] }) {
+  const Glyph = useIcon(GLYPH[type])
+  if (icon != null && icon !== false && !isComponent(icon)) return icon
+  const Icon = isComponent(icon) ? icon : Glyph
+  return (
+    <Icon size={14} strokeWidth={2.5} className={type === 'loading' && Icon === Glyph ? 'animate-spin' : undefined} />
+  )
+}
+
+function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject<ToastData> }) {
   const { position, timeout } = useContext(ToastSettings)
   const shape = useShape()
   // Lifts like a popup: 2 levels, fixed shadow.
   const level = useLift(2)
   const gooId = `toast-goo-${useId().replace(/:/g, '')}`
   const type = (toast.type ?? 'info') as ToastType
-  const Icon = useIcon(GLYPH[type])
+  const customAction = toast.data?.action
   const top = position.startsWith('top')
   const ending = toast.transitionStatus === 'ending'
-  const hasBody = Boolean(toast.description || toast.actionProps)
+  const hasBody = Boolean(toast.description || toast.actionProps || customAction)
   const [hovered, setHovered] = useState(false)
   const [auto, setAuto] = useState(false)
   const expanded = hasBody && type !== 'loading' && !ending && (hovered || auto)
@@ -224,7 +247,8 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
           <ToastPrimitive.Title className="relative inline-flex items-center whitespace-nowrap">
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span
-                key={`${type}-${toast.title}`}
+                // A string title keys itself; a node title crossfades on each update.
+                key={`${type}-${typeof toast.title === 'string' ? toast.title : toast.updateKey}`}
                 className="inline-flex items-center gap-2"
                 initial={{ opacity: 0, filter: 'blur(4px)' }}
                 animate={{ opacity: 1, filter: 'blur(0px)' }}
@@ -232,7 +256,7 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
                 transition={spring.moderate}
               >
                 <span className={cn('flex size-6 items-center justify-center rounded-full', TONES[type])}>
-                  <Icon size={14} strokeWidth={2.5} className={type === 'loading' ? 'animate-spin' : undefined} />
+                  <StatusIcon type={type} icon={toast.data?.icon} />
                 </span>
                 <span className="text-body weight-medium text-foreground">{toast.title}</span>
               </motion.span>
@@ -249,6 +273,7 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
             <div ref={body} className={cn('flex flex-col items-start gap-3 p-4', top ? 'pt-6' : 'pb-6')}>
               <ToastPrimitive.Description className="text-caption text-muted-foreground" />
               {toast.actionProps && <ToastPrimitive.Action render={<Button size="compact" variant="secondary" />} />}
+              {customAction}
             </div>
           </motion.div>
         )}
@@ -258,27 +283,29 @@ function ToastItem({ toast }: { toast: ToastPrimitive.Root.ToastObject }) {
 }
 
 function ToastList() {
-  const { toasts } = ToastPrimitive.useToastManager()
+  const { toasts } = ToastPrimitive.useToastManager<ToastData>()
   return toasts.map(toast => <ToastItem key={toast.id} toast={toast} />)
 }
 
-interface ToastTriggerProps extends Omit<SlotProps, 'type'> {
-  /** The toast's title, in the pill. */
-  title?: string
-  /** Text for the body the pill melts into. */
-  description?: string
+interface ToastTriggerProps extends Omit<SlotProps, 'type' | 'title'> {
+  /** The toast's title, in the pill: text or any node. */
+  title?: ReactNode
+  /** The body the pill melts into: text or any node. */
+  description?: ReactNode
   /** State: sets the icon and its color. Defaults to `'info'`. */
   type?: ToastType
   /** Ms before it leaves; 0 keeps it until dismissed. Defaults to the `Toast`'s `timeout`. */
   timeout?: number
-  /** A button in the body. */
-  action?: { label: string; onClick?: () => void }
+  /** Replaces the state's icon in the pill: an icon component, or any node. */
+  icon?: IconComponent | ReactNode
+  /** A button in the body (`{ label, onClick }`), or any node. */
+  action?: ToastActionOptions | ReactNode
   /** Runs a task: the toast shows `title` while it is pending, then `success` or `error`. */
   promise?: () => Promise<unknown>
   /** The toast once `promise` resolves. */
-  success?: { title?: string; description?: string }
+  success?: ToastOptions
   /** The toast if `promise` rejects. */
-  error?: { title?: string; description?: string }
+  error?: ToastOptions
 }
 
 const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
@@ -288,6 +315,7 @@ const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
       description,
       type,
       timeout,
+      icon,
       action,
       promise,
       success,
@@ -307,11 +335,11 @@ const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
       if (promise) {
         // The error toast is the report; the rejection Base UI hands back would only surface unhandled.
         toast
-          .promise(promise(), { loading: { title, description }, success: success ?? {}, error: error ?? {} })
+          .promise(promise(), { loading: { title, description, icon }, success: success ?? {}, error: error ?? {} })
           .catch(() => {})
         return
       }
-      toast.show({ title, description, type, timeout, action })
+      toast.show({ title, description, type, timeout, icon, action })
     }
     return el ? (
       cloneElement(el, { ...props, ref, onClick: press })
@@ -323,6 +351,31 @@ const ToastTrigger = forwardRef<HTMLButtonElement, ToastTriggerProps>(
   },
 )
 ToastTrigger.displayName = 'ToastTrigger'
+
+interface ToastCloseProps extends SlotProps {
+  /** The Button's variant when there is no `render` element. Defaults to `'ghost'`. */
+  variant?: NonNullable<ButtonProps['variant']>
+}
+
+/** Dismisses the toast it sits in: a compact Button around `children`, an ✕ labelled `Close` without them, or `render` / `asChild`. */
+const ToastClose = forwardRef<HTMLButtonElement, ToastCloseProps>(
+  ({ render, asChild, children, variant = 'ghost', ...props }, ref) => {
+    const XIcon = useIcon('x')
+    const el =
+      slotRender(render, asChild, children) ??
+      (children === undefined ? (
+        <Button size="icon-compact" variant={variant} aria-label="Close">
+          <XIcon />
+        </Button>
+      ) : (
+        <Button size="compact" variant={variant}>
+          {children}
+        </Button>
+      ))
+    return <ToastPrimitive.Close ref={ref} render={el} {...props} />
+  },
+)
+ToastClose.displayName = 'ToastClose'
 
 interface ToastProps {
   /** Where toasts stack; the pill sits on that side and the body opens away from the edge. Defaults to `'top-right'`. */
@@ -353,17 +406,23 @@ interface ToastProps {
  * `Toast` wraps the part of the app that shows toasts and renders them at
  * its `position`. Show one with `Toast.Trigger`, or call `useToast()`
  * inside it: `show`, `success`, `error`, `warning`, `info`, `loading`,
- * `promise`, `update` and `close`. Or mount one `<Toast manager={toast} />`
+ * `promise`, `update` and `close` (alias `dismiss`). Or mount one `<Toast manager={toast} />`
  * near the root and call the global `toast` from anywhere, React or not:
  * `toast('Saved')`, `toast.success({ title, description })`, the same
  * shortcuts. A loading toast stays until it is updated to another type,
- * then leaves on the default timeout.
+ * then leaves on the default timeout. Titles and descriptions take any
+ * node, `icon` replaces the state's glyph (an icon component or a node),
+ * `action` is a button (`{ label, onClick }`) or any node, and `onClose`
+ * runs once the toast starts to leave.
  *
  * Statics:
  * - `Toast.Trigger` — a control that shows a toast when pressed:
  *   `render={<Button/>}` or `asChild`, with the toast's `title`,
  *   `description`, `type`, `timeout`, `action`, or a `promise` with its
  *   `success` / `error` toasts.
+ * - `Toast.Close` — dismisses the toast it sits in, for a node `action` or
+ *   description: an ✕ without children, a compact ghost Button around
+ *   them, or `render` / `asChild`; `variant` (default `'ghost'`).
  *
  * @example {@include ./examples.mdx}
  * @source https://github.com/hiaaryan/sileo/blob/9793f844349983e140cf33cebbb8f51626d41407/src/sileo.tsx Sileo
@@ -391,12 +450,20 @@ const Toast = Object.assign(
   },
   {
     Trigger: ToastTrigger,
+    Close: ToastClose,
   },
 )
 
-export type { ToastInput, ToastOptions, ToastPromiseOptions, ToastSource, ToastType } from './manager'
+export type {
+  ToastActionOptions,
+  ToastInput,
+  ToastOptions,
+  ToastPromiseOptions,
+  ToastSource,
+  ToastType,
+} from './manager'
 export { toast } from './manager'
-export type { ToastPosition, ToastProps, ToastTriggerProps }
-export { Toast, ToastTrigger, useToast }
+export type { ToastCloseProps, ToastPosition, ToastProps, ToastTriggerProps }
+export { Toast, ToastClose, ToastTrigger, useToast }
 
 export default Toast
