@@ -6,7 +6,7 @@
 'use client'
 
 import { Field } from '@base-ui/react/field'
-import { forwardRef, type Ref, type TextareaHTMLAttributes, useRef } from 'react'
+import { forwardRef, type Ref, type TextareaHTMLAttributes, useEffect, useRef } from 'react'
 import { focusControlOnPress, useFieldBox } from '../../../lib/field-box'
 import type { FieldVariant } from '../../../lib/field-classes'
 import { mergeRefs } from '../../../lib/merge-refs'
@@ -23,7 +23,7 @@ interface TextareaProps
   value?: string
   /** Initial value when uncontrolled. Defaults to `''`. */
   defaultValue?: string
-  /** Called with the new value on every change. */
+  /** Called with the new value on every change. With neither `value` nor `onValueChange` the textarea keeps its text in the DOM, for forms that read it through a `ref`. */
   onValueChange?: (value: string) => void
   /** Rows shown when empty; the box never gets shorter. Defaults to `3`. */
   minRows?: number
@@ -66,6 +66,13 @@ const PADDING_Y: Record<SizeVariant, string> = {
  * or put it in an `InputGroup.Field` to label it, join the group's hover and
  * take the field's error.
  *
+ * With neither `value` nor `onValueChange` it is a plain uncontrolled
+ * `<textarea>`: the DOM holds the text, `ref` is the real element, and
+ * `defaultValue`, `ref.current.value = ''` and a native `form.reset()` all
+ * behave as on any textarea (the box re-fits after each), which is what a
+ * form library reading fields through refs (`register()`) needs. Pass it
+ * `name`, `ref` and `defaultValue`.
+ *
  * @example {@include ./examples.mdx}
  */
 const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
@@ -88,11 +95,42 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     ref,
   ) => {
     const [value, setValue] = useControllableState(valueProp, defaultValue, onValueChange)
+    const domHeld = valueProp === undefined && onValueChange === undefined
 
     const textareaRef = useRef<HTMLTextAreaElement | null>(null)
     const box = useFieldBox({ variant, invalid, disabled, readOnly, required, size })
 
-    useAutosizeTextarea(textareaRef, { minRows, maxRows }, [value, box.size.variant])
+    const resize = useAutosizeTextarea(textareaRef, { minRows, maxRows }, [value, box.size.variant])
+
+    // DOM-held text changes without a render: re-fit when code assigns `value` (the setter is
+    // wrapped on the element, over React's own value tracker) and once a form reset has put the
+    // default back.
+    useEffect(() => {
+      const el = textareaRef.current
+      if (!domHeld || !el) return
+      const own = Object.getOwnPropertyDescriptor(el, 'value')
+      const base = own ?? Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')
+      const set = base?.set
+      if (set) {
+        Object.defineProperty(el, 'value', {
+          configurable: true,
+          enumerable: base.enumerable,
+          get: base.get,
+          set(next: string) {
+            set.call(this, next)
+            resize()
+          },
+        })
+      }
+      const form = el.form
+      const onReset = () => setTimeout(resize)
+      form?.addEventListener('reset', onReset)
+      return () => {
+        form?.removeEventListener('reset', onReset)
+        if (own) Object.defineProperty(el, 'value', own)
+        else if (set) Reflect.deleteProperty(el, 'value')
+      }
+    }, [domHeld, resize])
 
     return (
       // biome-ignore lint/a11y/noStaticElementInteractions: the textarea is the focusable control; the box only forwards pointer focus from its padding.
@@ -105,8 +143,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <Field.Control
           ref={mergeRefs(textareaRef, ref) as Ref<HTMLElement>}
           render={<textarea rows={minRows} {...props} />}
-          value={value}
-          onChange={e => setValue(e.target.value)}
+          {...(domHeld ? { defaultValue, onChange: resize } : { value, onChange: e => setValue(e.target.value) })}
           disabled={box.disabled}
           readOnly={box.readOnly}
           required={box.required}
