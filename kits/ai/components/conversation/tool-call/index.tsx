@@ -10,7 +10,9 @@
 import Accordion from '@justanarthur/modo-ui/components/containers/accordion'
 import { Spinner } from '@justanarthur/modo-ui/components/feedback/progress'
 import { statusGlyph } from '@justanarthur/modo-ui/components/feedback/status-dot'
-import type { ReactNode } from 'react'
+import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
+import { createContext, type ReactNode, useContext } from 'react'
+import { useFoldBody } from '../../../lib/fold-body'
 import { type IconName, useIcon } from '../../../lib/icons'
 
 type ToolCallStatus = 'running' | 'waiting' | 'done' | 'error' | 'denied'
@@ -54,18 +56,32 @@ function ToolStatusMark({ status }: ToolStatusMarkProps) {
   return null
 }
 
+/** The open calls of the surrounding group, so a call renders its output only while open. */
+const OpenCalls = createContext<string[] | null>(null)
+
 interface ToolCallGroupProps {
   /** The calls, `ToolCall`s each with its `index`. */
   children: ReactNode
+  /** Open calls, by `value`, controlled. Pair with `onValueChange`. */
+  value?: string[]
   /** Calls open at first, by `value`. */
   defaultValue?: string[]
+  /** Called with the open calls' values when one opens or closes. */
+  onValueChange?: (value: string[]) => void
 }
 
 /** A run of tool calls: one hover highlight down the run, each call folds open in place. */
-function ToolCallGroup({ children, defaultValue }: ToolCallGroupProps) {
+function ToolCallGroup({ children, value, defaultValue = [], onValueChange }: ToolCallGroupProps) {
+  const [open, setOpen] = useControllableState(value, defaultValue, onValueChange)
   return (
-    <Accordion.Group type="multiple" defaultValue={defaultValue} size="compact" className="-mx-2.5 w-auto max-w-none">
-      {children}
+    <Accordion.Group
+      type="multiple"
+      value={open}
+      onValueChange={setOpen}
+      size="compact"
+      className="-mx-2.5 w-auto max-w-none"
+    >
+      <OpenCalls.Provider value={open}>{children}</OpenCalls.Provider>
     </Accordion.Group>
   )
 }
@@ -100,16 +116,22 @@ interface ToolCallProps {
  * `exit 1`) and the call's state: the Spinner while it runs, the warning dot
  * while it waits on you, a mark when it failed or was denied, nothing once
  * it's done. The run is a compact region, and its rows reach into the margin
- * so the labels stay flush with the text around them.
+ * so the labels stay flush with the text around them. A closed call's output
+ * isn't rendered: it mounts as the call opens and unmounts once it has
+ * closed.
  *
  * Statics:
- * - `ToolCall.Group` — a run of calls: `defaultValue` opens some.
+ * - `ToolCall.Group` — a run of calls: `defaultValue` opens some, or
+ *   `value` + `onValueChange` hold them.
  *
  * @example {@include ./examples.mdx}
  */
 const ToolCall = Object.assign(
   function ToolCall({ tool, summary, value, index, icon, status = 'done', meta, children }: ToolCallProps) {
     const Icon = useIcon(icon ?? TOOL_ICON[tool.toLowerCase()] ?? 'wrench')
+    const open = useContext(OpenCalls)
+    // Outside a group nothing says whether it's open: keep the output.
+    const body = useFoldBody(open?.includes(value) ?? true)
     return (
       <Accordion.Item value={value} index={index} disabled={!children}>
         <Accordion.Trigger className="[&>span:first-child]:min-w-0">
@@ -125,11 +147,7 @@ const ToolCall = Object.assign(
             <ToolStatusMark status={status} />
           </span>
         </Accordion.Trigger>
-        {children && (
-          <Accordion.Content>
-            <div className="pb-2">{children}</div>
-          </Accordion.Content>
-        )}
+        {children && <Accordion.Content>{body && <div className="pb-2">{children}</div>}</Accordion.Content>}
       </Accordion.Item>
     )
   },
