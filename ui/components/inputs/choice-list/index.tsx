@@ -9,7 +9,7 @@
 
 'use client'
 
-import { forwardRef, type ReactNode, useRef } from 'react'
+import { forwardRef, memo, type ReactNode, useRef } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { FocusRing } from '../../../lib/focus-ring'
 import { GooIndicator } from '../../../lib/goo-indicator'
@@ -48,7 +48,8 @@ interface RowProps {
   rowClassName?: string
 }
 
-function Row({ option, index, selected, tabbable, register, onPick, rowClassName }: RowProps) {
+// Memoized: the list re-renders on every hover and resize step; a row only when its own props change.
+const Row = memo(function Row({ option, index, selected, tabbable, register, onPick, rowClassName }: RowProps) {
   const ref = useRef<HTMLDivElement | null>(null)
   const shape = useShape()
   const size = useSize()
@@ -98,7 +99,7 @@ function Row({ option, index, selected, tabbable, register, onPick, rowClassName
       </div>
     </div>
   )
-}
+})
 
 interface ChoiceListProps {
   /** The rows, in order. */

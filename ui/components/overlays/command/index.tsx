@@ -17,14 +17,17 @@ import {
   createContext,
   forwardRef,
   type HTMLAttributes,
+  memo,
   type ReactNode,
   type RefObject,
+  useCallback,
   useContext,
   useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { type IconComponent, useIcon } from '../../../lib/icon-context'
@@ -63,8 +66,53 @@ const CommandContext = createContext<{ trigger: RefObject<HTMLButtonElement>; cl
   session: 0,
 })
 
-/** Base UI's highlighted row, as its index among the rendered rows. */
-const CommandHighlight = createContext<number | null>(null)
+/**
+ * Base UI's highlighted row, as its index among the rendered rows. A store,
+ * not a context value: a row subscribes to whether it is the one, so moving
+ * the highlight re-renders two rows instead of every row.
+ */
+interface HighlightStore {
+  get: () => number | null
+  subscribe: (listener: () => void) => () => void
+}
+
+function useHighlightStore() {
+  const [store] = useState(() => {
+    let current: number | null = null
+    const listeners = new Set<() => void>()
+    return {
+      get: () => current,
+      set: (next: number | null) => {
+        if (next === current) return
+        current = next
+        for (const listener of listeners) listener()
+      },
+      subscribe: (listener: () => void) => {
+        listeners.add(listener)
+        return () => {
+          listeners.delete(listener)
+        }
+      },
+    }
+  })
+  return store
+}
+
+const CommandHighlight = createContext<HighlightStore>({ get: () => null, subscribe: () => () => {} })
+
+function useHighlight() {
+  const store = useContext(CommandHighlight)
+  return useSyncExternalStore(store.subscribe, store.get, () => null)
+}
+
+function useIsHighlighted(index: number) {
+  const store = useContext(CommandHighlight)
+  return useSyncExternalStore(
+    store.subscribe,
+    () => store.get() === index,
+    () => false,
+  )
+}
 const CommandRows = createContext<((index: number, element: HTMLElement | null) => void) | undefined>(undefined)
 
 const isGrouped = (items: CommandItems): items is CommandGroup[] => items[0] !== undefined && 'items' in items[0]
@@ -76,7 +124,7 @@ type CommandListRootProps = Omit<
 
 /** Base UI's Autocomplete set up for command rows: it matches labels and keywords and hands its highlight to `CommandList`. */
 function CommandListRoot({ items, ...props }: CommandListRootProps) {
-  const [highlight, setHighlight] = useState<number | null>(null)
+  const highlight = useHighlightStore()
   const { contains } = Autocomplete.useFilter()
 
   return (
@@ -86,7 +134,7 @@ function CommandListRoot({ items, ...props }: CommandListRootProps) {
         items={items}
         itemToStringValue={item => item.label}
         filter={(item, query) => contains([item.label, ...(item.keywords ?? [])].join(' '), query)}
-        onItemHighlighted={(item, details) => setHighlight(item ? details.index : null)}
+        onItemHighlighted={(item, details) => highlight.set(item ? details.index : null)}
       />
     </CommandHighlight.Provider>
   )
@@ -96,7 +144,8 @@ function CommandShortcut({ className, ...props }: HTMLAttributes<HTMLElement>) {
   return <kbd className={cn('ml-auto shrink-0 font-sans text-caption text-muted-foreground', className)} {...props} />
 }
 
-function CommandRow({
+// Memoized: filtering re-renders the list, and a row keeps its render unless its item or index moved.
+const CommandRow = memo(function CommandRow({
   item,
   index,
   onPick,
@@ -106,7 +155,7 @@ function CommandRow({
   onPick: (item: CommandItem) => void
 }) {
   const registerItem = useContext(CommandRows)
-  const active = useContext(CommandHighlight) === index
+  const active = useIsHighlighted(index)
   const ref = useRef<HTMLDivElement>(null)
   const size = useSize()
   useRegisterFluidHoverItem(registerItem, index, ref)
@@ -128,7 +177,7 @@ function CommandRow({
       {item.shortcut && <CommandShortcut>{item.shortcut}</CommandShortcut>}
     </Autocomplete.Item>
   )
-}
+})
 
 interface CommandListProps {
   onPick: (item: CommandItem) => void
@@ -139,12 +188,15 @@ interface CommandListProps {
 /** The filtered rows (grouped or flat) under one fluid highlight, inside a ScrollArea. Goes inside `CommandListRoot`. */
 function CommandList({ onPick, emptyMessage, className }: CommandListProps) {
   const filtered = Autocomplete.useFilteredItems<CommandItem | CommandGroup>() as CommandItems
-  const highlight = useContext(CommandHighlight)
+  const highlight = useHighlight()
   const containerRef = useRef<HTMLDivElement>(null)
+  const pickRef = useRef(onPick)
+  pickRef.current = onPick
+  const pick = useCallback((item: CommandItem) => pickRef.current(item), [])
   const { itemRects, isMeasured, registerItem } = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
   const rect = isMeasured && highlight !== null ? (itemRects[highlight] ?? null) : null
   const rows = (items: CommandItem[], start: number) =>
-    items.map((item, i) => <CommandRow key={item.label} item={item} index={start + i} onPick={onPick} />)
+    items.map((item, i) => <CommandRow key={item.label} item={item} index={start + i} onPick={pick} />)
   let start = 0
 
   return (
@@ -187,6 +239,8 @@ interface CommandPaletteProps {
   emptyMessage?: ReactNode
   /** Classes for the palette's box. */
   className?: string
+  /** The most matching rows rendered, for long lists: the rest are reached by typing. Defaults to every match. */
+  limit?: number
 }
 
 function CommandPalette({
@@ -194,6 +248,7 @@ function CommandPalette({
   placeholder = 'Type a command or search…',
   emptyMessage = 'No results found.',
   className,
+  limit,
 }: CommandPaletteProps) {
   const { close } = useContext(CommandContext)
   const SearchIcon = useIcon('search')
@@ -203,6 +258,7 @@ function CommandPalette({
   return (
     <CommandListRoot
       items={items}
+      limit={limit}
       inline
       open
       autoHighlight="always"
@@ -257,7 +313,7 @@ interface CommandContentProps
 }
 
 const CommandContent = forwardRef<HTMLDivElement, CommandContentProps>(
-  ({ items, placeholder, emptyMessage, className, label = 'Command menu', ...props }, ref) => {
+  ({ items, placeholder, emptyMessage, className, limit, label = 'Command menu', ...props }, ref) => {
     const { session } = useContext(CommandContext)
     return (
       <DialogContent
@@ -276,6 +332,7 @@ const CommandContent = forwardRef<HTMLDivElement, CommandContentProps>(
           placeholder={placeholder}
           emptyMessage={emptyMessage}
           className={className}
+          limit={limit}
         />
       </DialogContent>
     )
@@ -362,10 +419,11 @@ interface CommandProps {
  * - `Command.Trigger` — the control that opens it: `render={<Button/>}` or
  *   `asChild`.
  * - `Command.Content` — the panel: `items`, `placeholder`, `emptyMessage`,
- *   `label`, `container`, and the morph options `from`, `effect`,
+ *   `limit`, `label`, `container`, and the morph options `from`, `effect`,
  *   `hideSource`, `tier` (default `'slow'`).
  * - `Command.Palette` — the search field and list on their own, for a
- *   palette that lives in the page: `items`, `placeholder`, `emptyMessage`.
+ *   palette that lives in the page: `items`, `placeholder`, `emptyMessage`,
+ *   `limit`.
  * - `Command.Shortcut` — a key hint, as the rows show it, e.g. in the
  *   trigger.
  *
