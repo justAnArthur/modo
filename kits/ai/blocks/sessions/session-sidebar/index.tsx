@@ -283,6 +283,14 @@ function usePinnedOrder(pinned: Session[], onChange?: (ids: string[]) => void) {
   return [order, reorder] as const
 }
 
+/** A group's first `limit` sessions, plus the selected one if it falls past them. */
+function capped(sessions: Session[], limit: number | undefined, selected: string | undefined) {
+  if (limit === undefined || sessions.length <= limit) return sessions
+  const head = sessions.slice(0, limit)
+  const picked = sessions.slice(limit).find(s => s.id === selected)
+  return picked ? [...head, picked] : head
+}
+
 /** The overview's job for the list: narrow the board to one state, project or profile, with counts. */
 function SessionFilters({
   pinned,
@@ -365,6 +373,8 @@ interface SessionSidebarProps {
   onPinnedOrderChange?: (ids: string[]) => void
   /** Project folders and the user's own sections, in order. */
   groups: SessionGroup[]
+  /** The most rows a group lists before a "Show N more" row unfolds the rest; the selected session always shows. Omit to list every row. */
+  groupLimit?: number
   /** Archived sessions, folded at the bottom. */
   archived: Session[]
   /** The profiles the sessions run under, for the footer's usage and the profile filters. */
@@ -418,6 +428,8 @@ interface SessionSidebarProps {
  * reorder by a row's grip (drag it, or focus it, press Space and use the
  * arrows), then one group
  * per project folder and per section you made, then the archive, folded.
+ * `groupLimit` caps a long group: past it a "Show N more" row unfolds the
+ * rest (the selected session always shows).
  * A row's leading glyph is its state: an arc turning while it runs, an
  * amber dot while it waits for you, a filled dot for an unread reply and a
  * ring when idle; its badge is the last activity. Hover a row for pin,
@@ -450,6 +462,7 @@ interface SessionSidebarProps {
 export default function SessionSidebar({
   pinned,
   groups,
+  groupLimit,
   archived,
   profiles,
   onPinnedOrderChange,
@@ -479,8 +492,10 @@ export default function SessionSidebar({
   const Bell = useIcon('bell')
   const unread = inbox?.filter(item => !item.read).length ?? 0
   const waiting = everySession(pinned, groups).filter(s => s.status === 'waiting').length
+  const MoreRows = useIcon('more-horizontal')
   const actions = useRowActions({ onOpenSplit, onPin, onArchive, onRename, onMarkUnread, onFork })
   const [selected, select] = useControllableState(value, defaultValue ?? '', onValueChange)
+  const [expanded, setExpanded] = useState<string[]>([])
   const [pinnedOrder, reorderPinned] = usePinnedOrder(pinned, onPinnedOrderChange)
 
   // One delay group for every row's tooltips, instead of a provider per tooltip.
@@ -560,6 +575,9 @@ export default function SessionSidebar({
                 const isProject = group.kind === 'project'
                 const onAction = isProject ? onNewSessionIn : onFilterSection
                 const label = isProject ? `New session in ${group.label}` : 'Filter'
+                const all = expanded.includes(group.label)
+                const shown = capped(group.sessions, all ? undefined : groupLimit, selected)
+                const hidden = group.sessions.length - shown.length
                 return (
                   <Sidebar.Group key={group.label} collapsible>
                     <Sidebar.GroupLabel>{group.label}</Sidebar.GroupLabel>
@@ -573,9 +591,23 @@ export default function SessionSidebar({
                       </Sidebar.GroupActions>
                     )}
                     <Sidebar.Menu>
-                      {group.sessions.map(session => (
+                      {shown.map(session => (
                         <SessionRow key={session.id} session={session} actions={actions} />
                       ))}
+                      {(hidden > 0 || all) && groupLimit !== undefined && group.sessions.length > groupLimit && (
+                        <Sidebar.MenuItem>
+                          <Sidebar.MenuButton
+                            icon={MoreRows}
+                            aria-expanded={all}
+                            className="text-muted-foreground"
+                            onClick={() =>
+                              setExpanded(all ? expanded.filter(l => l !== group.label) : [...expanded, group.label])
+                            }
+                          >
+                            {all ? 'Show fewer' : `Show ${hidden} more`}
+                          </Sidebar.MenuButton>
+                        </Sidebar.MenuItem>
+                      )}
                     </Sidebar.Menu>
                   </Sidebar.Group>
                 )
