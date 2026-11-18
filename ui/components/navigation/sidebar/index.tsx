@@ -14,9 +14,12 @@ import {
   type HTMLAttributes,
   type ReactNode,
   type RefAttributes,
+  type RefObject,
   useEffect,
   useMemo,
+  useRef,
 } from 'react'
+import { useMergeRefs } from '../../../lib/merge-refs'
 import { useControllableState } from '../../../lib/use-controllable-state'
 import { cn } from '../../../lib/utils'
 import { ScrollArea } from '../../../primitives/layout/scroll-area'
@@ -271,6 +274,41 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
 ) as SidebarComponent
 Sidebar.displayName = 'Sidebar'
 
+/**
+ * While the list scrolls under a resting pointer, its rows stop taking the
+ * pointer: every row passing under it would hover (the highlight, revealed
+ * actions, a row's lazy tooltips), a style change and often a commit per row.
+ * Moving the pointer, or 150 ms without a scroll, hands it back.
+ */
+function usePauseHoverWhileScrolling(ref: RefObject<HTMLDivElement | null>, enabled: boolean) {
+  useEffect(() => {
+    const content = enabled ? ref.current : null
+    const scroller = content?.closest('[data-slot="scroll-area-viewport"]')
+    if (!content || !scroller) return
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const resume = () => {
+      clearTimeout(timer)
+      content.removeAttribute('data-scrolling')
+    }
+    const onScroll = () => {
+      if (!content.hasAttribute('data-scrolling')) content.setAttribute('data-scrolling', '')
+      clearTimeout(timer)
+      timer = setTimeout(resume, 150)
+    }
+    const onPointerMove = (e: Event) => {
+      const { movementX, movementY } = e as PointerEvent
+      if ((movementX || movementY) && content.hasAttribute('data-scrolling')) resume()
+    }
+    scroller.addEventListener('scroll', onScroll, { passive: true })
+    scroller.addEventListener('pointermove', onPointerMove, { passive: true })
+    return () => {
+      resume()
+      scroller.removeEventListener('scroll', onScroll)
+      scroller.removeEventListener('pointermove', onPointerMove)
+    }
+  }, [ref, enabled])
+}
+
 export interface SidebarContentProps extends HTMLAttributes<HTMLDivElement> {
   viewportClassName?: string
 }
@@ -278,6 +316,10 @@ export interface SidebarContentProps extends HTMLAttributes<HTMLDivElement> {
 const SidebarContent = forwardRef<HTMLDivElement, SidebarContentProps>(
   ({ className, viewportClassName, children, ...props }, ref) => {
     const { isMobile } = useSidebar()
+    const contentRef = useRef<HTMLDivElement>(null)
+    const mergedRef = useMergeRefs(ref, contentRef)
+    // The sheet is touch, which has no hover to pause.
+    usePauseHoverWhileScrolling(contentRef, !isMobile)
 
     // In the sheet this region scrolls natively (a ScrollArea would
     // double-scroll). The hairline can't sit on the scroller, whose fade mask
@@ -304,7 +346,12 @@ const SidebarContent = forwardRef<HTMLDivElement, SidebarContentProps>(
         className={cn('scroll-divider min-h-0 w-full flex-1', className)}
         viewportClassName={cn('scroll-fade [&>div]:!block [&>div]:!min-w-0', viewportClassName)}
       >
-        <div ref={ref} data-sidebar="content" className="flex w-full min-w-0 flex-col" {...props}>
+        <div
+          ref={mergedRef}
+          data-sidebar="content"
+          className="flex w-full min-w-0 flex-col data-[scrolling]:pointer-events-none"
+          {...props}
+        >
           {children}
         </div>
       </ScrollArea>
