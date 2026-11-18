@@ -26,6 +26,12 @@ export interface ItemRect {
   width: number
 }
 
+/** Two rects with the same box (either may be missing). */
+export function sameRect(a: ItemRect | null | undefined, b: ItemRect | null | undefined) {
+  if (!a || !b) return a === b
+  return a.top === b.top && a.left === b.left && a.width === b.width && a.height === b.height
+}
+
 export interface UseFluidHoverOptions {
   /**
    * Which direction to resolve the nearest item along.
@@ -204,14 +210,6 @@ function resolveActivator(element: HTMLElement): HTMLElement {
   return element.querySelector<HTMLElement>(ACTIVATOR_SELECTOR) ?? element
 }
 
-/**
- * How many frames the coalesced remeasure retries while the registered items
- * still have no layout box. A popup can be in the DOM one frame before it is
- * laid out; retrying beats publishing zeroed rects, and the cap keeps a list
- * that stays hidden for good from spinning frames forever.
- */
-const measurementAttempts = 3
-
 export function useFluidHover<T extends HTMLElement>(
   containerRef: RefObject<T | null>,
   options: UseFluidHoverOptions = {},
@@ -300,12 +298,7 @@ export function useFluidHover<T extends HTMLElement>(
     // compare) so redundant remeasures don't churn re-renders.
     const prev = itemRectsRef.current
     let changed = prev.length !== rects.length
-    for (let i = 0; !changed && i < rects.length; i++) {
-      const p = prev[i]
-      const r = rects[i]
-      if (p === r) continue // both undefined (sparse slot)
-      changed = !p || !r || p.top !== r.top || p.left !== r.left || p.width !== r.width || p.height !== r.height
-    }
+    for (let i = 0; !changed && i < rects.length; i++) changed = !sameRect(prev[i], rects[i])
     if (changed) {
       itemRectsRef.current = rects
       setItemRects(rects)
@@ -318,58 +311,92 @@ export function useFluidHover<T extends HTMLElement>(
   }, [runMeasurement])
 
   /**
-   * The hook's single measurement pass: coalesces every trigger (item
-   * registration, container resize) into one remeasure on the next frame and
-   * is the only place readiness is reported, so `isMeasured` can never turn
-   * true while another pass is still queued.
+   * The hook's single measurement pass, read right after the browser's own
+   * layout: every trigger (registration, `remeasure`, an item or the
+   * container resizing) lands in one ResizeObserver callback, where reading
+   * offsets costs no extra layout. Re-observing the container is the trigger
+   * (`observe` reports a laid-out target once), and a container without a box
+   * (a popup not laid out yet) reports when it gets one. It is the only place
+   * readiness turns true, so `isMeasured` can never be true while a pass is
+   * still queued.
    */
-  const scheduleMeasurement = useCallback(
-    (attemptsLeft: number) => {
-      if (remeasureRafIdRef.current !== null) {
-        cancelAnimationFrame(remeasureRafIdRef.current)
+  const onObserved = useCallback(() => {
+    if (runMeasurement()) setIsMeasured(true)
+  }, [runMeasurement])
+
+  const roRef = useRef<ResizeObserver | null>(null)
+  const observedContainerRef = useRef<HTMLElement | null>(null)
+  const getRo = useCallback(() => {
+    if (roRef.current === null && typeof ResizeObserver !== 'undefined') {
+      roRef.current = new ResizeObserver(onObserved)
+    }
+    return roRef.current
+  }, [onObserved])
+
+  // Re-observing the container makes the observer report it after the next
+  // layout. Deferred to a microtask: registrations run in the commit before
+  // the container's own ref attaches. Without ResizeObserver (tests), a frame.
+  const queuedRef = useRef(false)
+  const scheduleMeasurement = useCallback(() => {
+    if (queuedRef.current) return
+    queuedRef.current = true
+    queueMicrotask(() => {
+      queuedRef.current = false
+      const ro = getRo()
+      const container = containerRef.current
+      if (!ro || !container) {
+        if (remeasureRafIdRef.current !== null) cancelAnimationFrame(remeasureRafIdRef.current)
+        remeasureRafIdRef.current = requestAnimationFrame(() => {
+          remeasureRafIdRef.current = null
+          onObserved()
+        })
+        return
       }
-      remeasureRafIdRef.current = requestAnimationFrame(() => {
-        remeasureRafIdRef.current = null
-        if (runMeasurement()) {
-          setIsMeasured(true)
-        } else if (attemptsLeft > 1) {
-          scheduleMeasurement(attemptsLeft - 1)
-        }
-      })
-    },
-    [runMeasurement],
-  )
+      if (observedContainerRef.current && observedContainerRef.current !== container) {
+        ro.unobserve(observedContainerRef.current)
+      }
+      observedContainerRef.current = container
+      ro.unobserve(container)
+      ro.observe(container, { box: 'border-box' })
+    })
+  }, [containerRef, getRo, onObserved])
 
   const remeasure = useCallback(() => {
     // Readiness drops first: until the pass below settles, the published rects
     // may not describe what is on screen, and an overlay positioned from them
     // would be corrected after mounting — which animates as a slide.
     setIsMeasured(false)
-    scheduleMeasurement(measurementAttempts)
+    scheduleMeasurement()
   }, [scheduleMeasurement])
 
-  // Observes the registered items themselves (not just the container): rows
-  // that change size in place — e.g. the site-wide size step flipping while a
-  // selection background is up — must invalidate the published rects even when
-  // the container the effect below captured has since been remounted and the
-  // ref points at a different element than the one being observed.
-  const itemRoRef = useRef<ResizeObserver | null>(null)
-  const getItemRo = useCallback(() => {
-    if (itemRoRef.current === null && typeof ResizeObserver !== 'undefined') {
-      itemRoRef.current = new ResizeObserver(() => scheduleMeasurement(measurementAttempts))
-    }
-    return itemRoRef.current
-  }, [scheduleMeasurement])
+  // How many indices hold each element: a row that moves to another index
+  // within one batch must stay observed.
+  const observedRef = useRef(new Map<HTMLElement, number>())
+  const track = useCallback(
+    (element: HTMLElement, by: 1 | -1) => {
+      const count = (observedRef.current.get(element) ?? 0) + by
+      if (count > 0) observedRef.current.set(element, count)
+      else observedRef.current.delete(element)
+      // Border box: a row whose padding animates (actions revealed on hover)
+      // keeps its rect, so it must not remeasure the list every frame.
+      if (by === 1 && count === 1) getRo()?.observe(element, { box: 'border-box' })
+      if (count === 0) roRef.current?.unobserve(element)
+    },
+    [getRo],
+  )
 
   const registerItem = useCallback(
     (index: number, element: HTMLElement | null) => {
+      const previous = itemsRef.current.get(index)
+      // The same element at the same index (a parent re-registering its whole
+      // set) changes nothing.
+      if (element && previous === element) return
+      if (previous) track(previous, -1)
       if (element) {
         itemsRef.current.set(index, element)
-        getItemRo()?.observe(element)
+        track(element, 1)
         if (index === activeIndexRef.current) element.setAttribute(ACTIVE_ATTR, '')
       } else {
-        const previous = itemsRef.current.get(index)
-        if (previous) itemRoRef.current?.unobserve(previous)
         // The mark leaves with the element: a row that only moved to another
         // index (a filtering list re-ordering) must not carry it there.
         previous?.removeAttribute(ACTIVE_ATTR)
@@ -382,13 +409,12 @@ export function useFluidHover<T extends HTMLElement>(
           setActiveIndex(current => (current === index && !itemsRef.current.has(index) ? null : current))
         }
       }
-      // Coalesce rapid register/unregister calls (e.g. when an AnimatePresence
-      // remounts a list of rows) into a single remeasure on the next frame,
-      // so consumers don't have to manually call measureItems after the
-      // container's children swap.
+      // Coalesced: a list remounting its rows (an AnimatePresence swap) runs
+      // one pass, after layout, so consumers don't call measureItems after
+      // the container's children swap.
       remeasure()
     },
-    [remeasure, getItemRo],
+    [remeasure, track],
   )
 
   const handleMouseMove = useCallback(
@@ -474,30 +500,28 @@ export function useFluidHover<T extends HTMLElement>(
     [isItemDisabled, gapClick, gapClickMaxDistance],
   )
 
-  // Remeasure when the container resizes — a reflow moves items even though
-  // the registered set is unchanged, which would otherwise leave itemRects
-  // stale. Coalesced through the same rAF as register/unregister. Readiness is
-  // deliberately not dropped: the item set is unchanged, so the published rects
+  // The container resizing reflows the items even though the set is
+  // unchanged. Readiness is deliberately not dropped: the published rects
   // stay usable, and hiding overlays on every reflow would flicker them.
   useEffect(() => {
     const container = containerRef.current
-    if (!container || typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(() => scheduleMeasurement(measurementAttempts))
-    ro.observe(container)
-    return () => ro.disconnect()
-  }, [containerRef, scheduleMeasurement])
+    const ro = getRo()
+    if (!container || !ro) return
+    observedContainerRef.current = container
+    ro.observe(container, { box: 'border-box' })
+    return () => {
+      ro.unobserve(container)
+      if (observedContainerRef.current === container) observedContainerRef.current = null
+    }
+  }, [containerRef, getRo])
 
-  // Clean up rAF and the item observer on unmount
   useEffect(() => {
     return () => {
-      if (rafIdRef.current !== null) {
-        cancelAnimationFrame(rafIdRef.current)
-      }
-      if (remeasureRafIdRef.current !== null) {
-        cancelAnimationFrame(remeasureRafIdRef.current)
-      }
-      itemRoRef.current?.disconnect()
-      itemRoRef.current = null
+      if (rafIdRef.current !== null) cancelAnimationFrame(rafIdRef.current)
+      if (remeasureRafIdRef.current !== null) cancelAnimationFrame(remeasureRafIdRef.current)
+      roRef.current?.disconnect()
+      roRef.current = null
+      observedRef.current.clear()
     }
   }, [])
 

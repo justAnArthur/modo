@@ -24,7 +24,14 @@ import { useControllableState } from '../../../lib/use-controllable-state'
 import { useIsoLayoutEffect } from '../../../lib/use-iso-layout-effect'
 import { cn } from '../../../lib/utils'
 import { SizeScope } from '../../../primitives/systems/sizes'
-import { MenuItemContext, type MenuItemContextValue, MenuScopeContext, useMenuScope } from './menu-scope'
+import {
+  MenuItemContext,
+  type MenuItemContextValue,
+  MenuRowContext,
+  type MenuRowContextValue,
+  MenuScopeContext,
+  useMenuScope,
+} from './menu-scope'
 
 export interface SidebarMenuProps extends HTMLAttributes<HTMLUListElement> {
   /** Pins the menu's rows to one step of the size ladder. Omitted, they follow the surrounding SizeProvider. */
@@ -74,7 +81,7 @@ function useMenuRow(
   rowRef: MutableRefObject<HTMLLIElement | null>,
   isSubRow: boolean,
   sub?: Pick<SidebarMenuItemProps, 'collapsible' | 'open' | 'defaultOpen' | 'onOpenChange'>,
-): MenuItemContextValue {
+): { item: MenuItemContextValue; row: MenuRowContextValue } {
   const scope = useContext(MenuScopeContext)
   const registerRow = scope?.registerRow
   const setRowButton = scope?.setRowButton
@@ -115,9 +122,6 @@ function useMenuRow(
     [setRowButton, rowRef],
   )
 
-  const isHovered = rowRef.current !== null && scope?.hoveredRowEl === rowRef.current
-  const isActiveRow = rowRef.current !== null && (scope?.activeRows.includes(rowRef.current) ?? false)
-
   const [trailing, setTrailing] = useState({ actionCount: 0, actionsShowOnHover: false, hasBadge: false })
   const setActions = useCallback(
     (count: number, showOnHover: boolean) =>
@@ -137,12 +141,14 @@ function useMenuRow(
   const subOpen = sub?.collapsible ? open : undefined
   const toggleSub = useCallback(() => setOpen(prev => !prev), [setOpen])
 
-  return useMemo(
+  const row = useMemo(
+    () => ({ rowRef, isSubRow, setActions, setHasBadge }),
+    [rowRef, isSubRow, setActions, setHasBadge],
+  )
+  const item = useMemo(
     () => ({
       rowRef,
       attachRow,
-      isHovered,
-      isActiveRow,
       isSubRow,
       setActive,
       setButtonEl,
@@ -152,35 +158,25 @@ function useMenuRow(
       subOpen,
       toggleSub,
     }),
-    [
-      rowRef,
-      attachRow,
-      isHovered,
-      isActiveRow,
-      isSubRow,
-      setActive,
-      setButtonEl,
-      trailing,
-      setActions,
-      setHasBadge,
-      subOpen,
-      toggleSub,
-    ],
+    [rowRef, attachRow, isSubRow, setActive, setButtonEl, trailing, setActions, setHasBadge, subOpen, toggleSub],
   )
+  return { item, row }
 }
 
 const SidebarMenuItem = forwardRef<HTMLLIElement, SidebarMenuItemProps>(
   ({ collapsible, open, defaultOpen, onOpenChange, className, children, ...props }, ref) => {
     const rowRef = useRef<HTMLLIElement | null>(null)
-    const item = useMenuRow(rowRef, false, { collapsible, open, defaultOpen, onOpenChange })
+    const { item, row } = useMenuRow(rowRef, false, { collapsible, open, defaultOpen, onOpenChange })
     // Stable: an inline ref is detached around every re-render, and child layout effects fire in that window.
-    const row = useMergeRefs(item.attachRow, ref)
+    const attach = useMergeRefs(item.attachRow, ref)
     return (
-      <MenuItemContext.Provider value={item}>
-        <li ref={row} data-sidebar="menu-item" className={cn('group/menu-item relative', className)} {...props}>
-          {children}
-        </li>
-      </MenuItemContext.Provider>
+      <MenuRowContext.Provider value={row}>
+        <MenuItemContext.Provider value={item}>
+          <li ref={attach} data-sidebar="menu-item" className={cn('group/menu-item relative', className)} {...props}>
+            {children}
+          </li>
+        </MenuItemContext.Provider>
+      </MenuRowContext.Provider>
     )
   },
 )
@@ -191,14 +187,21 @@ export type SidebarMenuSubItemProps = LiHTMLAttributes<HTMLLIElement>
 const SidebarMenuSubItem = forwardRef<HTMLLIElement, SidebarMenuSubItemProps>(
   ({ className, children, ...props }, ref) => {
     const rowRef = useRef<HTMLLIElement | null>(null)
-    const item = useMenuRow(rowRef, true)
-    const row = useMergeRefs(item.attachRow, ref)
+    const { item, row } = useMenuRow(rowRef, true)
+    const attach = useMergeRefs(item.attachRow, ref)
     return (
-      <MenuItemContext.Provider value={item}>
-        <li ref={row} data-sidebar="menu-sub-item" className={cn('group/menu-sub-item relative', className)} {...props}>
-          {children}
-        </li>
-      </MenuItemContext.Provider>
+      <MenuRowContext.Provider value={row}>
+        <MenuItemContext.Provider value={item}>
+          <li
+            ref={attach}
+            data-sidebar="menu-sub-item"
+            className={cn('group/menu-sub-item relative', className)}
+            {...props}
+          >
+            {children}
+          </li>
+        </MenuItemContext.Provider>
+      </MenuRowContext.Provider>
     )
   },
 )

@@ -22,10 +22,10 @@
 'use client'
 
 import { animate, motion, type Transition, useMotionValue, type ValueAnimationTransition } from 'motion/react'
-import { type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react'
+import { memo, type ReactNode, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useReduceMotion } from './reduced-motion'
 import { spring } from './springs'
-import type { ItemRect } from './use-fluid-hover'
+import { type ItemRect, sameRect } from './use-fluid-hover'
 import { GOO_BLUR_RATIO, GOO_MATRIX } from './use-morph'
 import { cn } from './utils'
 
@@ -161,12 +161,7 @@ interface GooIndicatorProps {
   opacity?: number
 }
 
-/**
- * An indicator that travels between items with a liquid neck. Render it in the
- * items' `relative` container, beneath them: the items' text stays above it,
- * unfiltered.
- */
-export function GooIndicator({
+function GooIndicatorBase({
   rect,
   from,
   className,
@@ -258,6 +253,23 @@ export function GooIndicator({
     </motion.div>
   )
 }
+
+/**
+ * An indicator that travels between items with a liquid neck. Render it in the
+ * items' `relative` container, beneath them: the items' text stays above it,
+ * unfiltered. Its list re-renders on every hover; an indicator whose box did
+ * not move skips the render (rects are fresh objects each time).
+ */
+export const GooIndicator = memo(
+  GooIndicatorBase,
+  (a, b) =>
+    sameRect(a.rect, b.rect) &&
+    sameRect(a.from, b.from) &&
+    a.className === b.className &&
+    a.shadow === b.shadow &&
+    a.transition === b.transition &&
+    a.opacity === b.opacity,
+)
 
 export type { GooIndicatorProps, GooLayerProps }
 export { union }

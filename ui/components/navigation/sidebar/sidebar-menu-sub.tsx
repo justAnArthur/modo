@@ -26,7 +26,7 @@ import { type SizeVariant, useSize } from '../../../lib/size-context'
 import { resolveSlotTemplate, slotElement } from '../../../lib/slot'
 import { useIsoLayoutEffect } from '../../../lib/use-iso-layout-effect'
 import { cn } from '../../../lib/utils'
-import { gutterVars, MenuItemContext, MenuScopeContext, SidebarSelection } from './menu-scope'
+import { gutterVars, MenuItemContext, MenuScopeContext, SidebarSelection, useRowState } from './menu-scope'
 import { MenuRowLabel } from './row-label'
 import { useMeasuredCollapse } from './use-measured-collapse'
 
@@ -130,7 +130,8 @@ const SidebarMenuSubButton = forwardRef<HTMLAnchorElement, SidebarMenuSubButtonP
       return () => setButtonEl?.(null)
     }, [setButtonEl])
 
-    const lit = isActive || (item?.isHovered ?? false)
+    const { isHovered } = useRowState(item?.rowRef)
+    const lit = isActive || isHovered
     const { template, content } = resolveSlotTemplate(render, asChild, children)
     const asButton = !template && value !== undefined && props.href === undefined
 
