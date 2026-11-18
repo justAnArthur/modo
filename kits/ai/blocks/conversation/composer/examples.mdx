@@ -162,3 +162,18 @@ The compact step for dense surfaces; `disabled` dims the draft and takes no inpu
   <Composer.Draft size="compact" placeholder="Reply to the session" />
   <Composer.Draft defaultValue="This draft is disabled" disabled />
 </div>
+
+# Sessions that run in place
+
+An app without worktrees drops their rows from the project popover with `targetOptions`; open it to see only the project and branch. `onCompact` is what the run settings' Compact button calls.
+
+<div className="w-full max-w-2xl">
+  <Composer
+    {...COMPOSER}
+    target
+    branch="main"
+    targetOptions={{ worktree: false, baseBranch: false, setupScript: false }}
+    defaultWorktree={false}
+    onCompact={() => {}}
+  />
+</div>
