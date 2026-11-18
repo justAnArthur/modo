@@ -32,6 +32,7 @@ import {
   PortalContainer,
   positionerProps,
   type Side,
+  useOpenedOnce,
   useOverlayRoot,
   usePortalContainer,
 } from '../../../lib/overlay'
@@ -235,7 +236,7 @@ interface TooltipContentProps extends CollisionProps, Omit<HTMLAttributes<HTMLDi
   tier?: MorphTier
 }
 
-const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
+const TooltipContentBody = forwardRef<HTMLDivElement, TooltipContentProps>(
   (
     {
       children,
@@ -307,6 +308,13 @@ const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(
     )
   },
 )
+TooltipContentBody.displayName = 'TooltipContentBody'
+
+// Mounted on the first open: a list of rows with tooltips costs no morph or portal until one shows.
+const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>((props, ref) => {
+  const opened = useOpenedOnce(useTooltipState('Tooltip.Content').open)
+  return opened ? <TooltipContentBody ref={ref} {...props} /> : null
+})
 TooltipContent.displayName = 'TooltipContent'
 
 interface TooltipProps extends CollisionProps {

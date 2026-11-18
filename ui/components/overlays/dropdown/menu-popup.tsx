@@ -25,7 +25,7 @@ import {
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { GooIndicator } from '../../../lib/goo-indicator'
 import { useMergeRefs } from '../../../lib/merge-refs'
-import { useOverlay, usePortalContainer } from '../../../lib/overlay'
+import { useOpenedOnce, useOverlay, usePortalContainer } from '../../../lib/overlay'
 import { isDisabledRow, POPUP_SHAPE, popupScrollAreaClass, popupViewportClass } from '../../../lib/popup'
 import { PopupSurface } from '../../../lib/popup-surface'
 import { rowIndexOf } from '../../../lib/row-group'
@@ -122,7 +122,7 @@ interface MenuPopupProps
  * an optional `Dropdown.Search`. It reads `open` and the morph origin from
  * the root's `OverlayContext`.
  */
-export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
+const MenuPopupBody = forwardRef<HTMLDivElement, MenuPopupProps>(
   (
     {
       part,
@@ -330,6 +330,15 @@ export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>(
     )
   },
 )
+
+MenuPopupBody.displayName = 'MenuPopupBody'
+
+export const MenuPopup = forwardRef<HTMLDivElement, MenuPopupProps>((props, ref) => {
+  const keepMounted = useContext(KeepMountedContext) || (props.keepMounted ?? false)
+  const opened = useOpenedOnce(useOverlay(props.part).open)
+  // Closed and never opened, Base UI renders nothing here: skip the morph and the hover with it.
+  return keepMounted || opened ? <MenuPopupBody ref={ref} {...props} /> : null
+})
 
 MenuPopup.displayName = 'MenuPopup'
 

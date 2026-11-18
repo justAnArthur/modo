@@ -19,6 +19,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useState,
 } from 'react'
 import { useControllableState } from './use-controllable-state'
 import { inPlaceOffset, type MorphOrigin, type MorphProps, opensInPlace, useMorphOrigin } from './use-morph'
@@ -111,6 +112,18 @@ function useOverlay(part: string): OverlayState {
 }
 
 /**
+ * False until `open` first turns true, then true for good. Content that
+ * mounts its machinery (the morph, a fluid hover, the portal) behind it costs
+ * nothing in a list of triggers until one opens, and stays mounted after, for
+ * its close and the next open.
+ */
+function useOpenedOnce(open: boolean) {
+  const [opened, setOpened] = useState(open)
+  if (open && !opened) setOpened(true)
+  return opened || open
+}
+
+/**
  * Base UI `Positioner` props for an anchored overlay: the content's
  * anchoring props over the overlay's defaults, pulled back over the trigger
  * when the panel opens in place. Spread them on the `Positioner`.
@@ -159,4 +172,12 @@ function usePortalContainer(container?: HTMLElement | null) {
 }
 
 export type { Align, AnchorProps, CollisionProps, OpenChangeDetails, OverlayRootProps, OverlayState, Side }
-export { OverlayContext, PortalContainer, positionerProps, useOverlay, useOverlayRoot, usePortalContainer }
+export {
+  OverlayContext,
+  PortalContainer,
+  positionerProps,
+  useOpenedOnce,
+  useOverlay,
+  useOverlayRoot,
+  usePortalContainer,
+}
