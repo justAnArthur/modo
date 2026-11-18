@@ -26,7 +26,7 @@ import { resolveSlotTemplate, slotElement } from '../../../lib/slot'
 import { spring } from '../../../lib/springs'
 import { useIsoLayoutEffect } from '../../../lib/use-iso-layout-effect'
 import { cn } from '../../../lib/utils'
-import { gutterVars, MenuItemContext, MenuScopeContext, SidebarSelection } from './menu-scope'
+import { gutterVars, MenuItemContext, SidebarSelection, useRowState } from './menu-scope'
 import { MenuRowLabel } from './row-label'
 
 export const sidebarMenuButtonVariants = cva(
@@ -87,7 +87,6 @@ const SidebarMenuButton = forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
     },
     ref,
   ) => {
-    const scope = useContext(MenuScopeContext)
     const item = useContext(MenuItemContext)
     const selection = useContext(SidebarSelection)
     const shape = useShape()
@@ -111,11 +110,9 @@ const SidebarMenuButton = forwardRef<HTMLButtonElement, SidebarMenuButtonProps>(
       return () => setButtonEl?.(null)
     }, [setButtonEl])
     const resolvedDot = dot ?? (status ? (status === 'idle' ? 'ring' : 'filled') : undefined)
-    const lit = effectiveActive || (item?.isHovered ?? false)
-
-    // Roving tabindex: the active rows are the tab stops, else the first row.
-    const row = item?.rowRef.current ?? null
-    const tabIdx = effectiveActive ? 0 : scope?.hasActive ? -1 : row !== null && row === scope?.firstRowEl ? 0 : -1
+    const row = useRowState(item?.rowRef)
+    const lit = effectiveActive || row.isHovered
+    const tabIdx = effectiveActive || row.isTabStop ? 0 : -1
 
     const { template, content } = resolveSlotTemplate(render, asChild, children)
 

@@ -24,7 +24,7 @@ import { useSize } from '../../../lib/size-context'
 import { resolveSlotTemplate, slotElement } from '../../../lib/slot'
 import { useIsoLayoutEffect } from '../../../lib/use-iso-layout-effect'
 import { cn } from '../../../lib/utils'
-import { MenuActionsClusterContext, MenuItemContext } from './menu-scope'
+import { MenuActionsClusterContext, MenuRowContext, useRowState } from './menu-scope'
 
 export interface SidebarMenuActionProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /** Hidden until the row is hovered or focused, so the label keeps the room at rest. Defaults to `false`. */
@@ -39,7 +39,7 @@ const SidebarMenuAction = forwardRef<HTMLButtonElement, SidebarMenuActionProps>(
   ({ className, showOnHover = false, render, asChild, children, onClick, style, ...props }, ref) => {
     const shape = useShape()
     const size = useSize()
-    const item = useContext(MenuItemContext)
+    const item = useContext(MenuRowContext)
     const inCluster = useContext(MenuActionsClusterContext)
     const { template, content } = resolveSlotTemplate(render, asChild, children)
 
@@ -106,7 +106,7 @@ export interface SidebarMenuActionsProps extends HTMLAttributes<HTMLDivElement> 
 /** A row's cluster of `SidebarMenuAction`s: it positions them and reports the count, so the button reserves the exact gutter. */
 const SidebarMenuActions = forwardRef<HTMLDivElement, SidebarMenuActionsProps>(
   ({ className, showOnHover = false, children, ...props }, ref) => {
-    const item = useContext(MenuItemContext)
+    const item = useContext(MenuRowContext)
     const size = useSize()
     const count = Children.count(children)
 
@@ -144,9 +144,9 @@ SidebarMenuActions.displayName = 'SidebarMenuActions'
 export type SidebarMenuBadgeProps = HTMLAttributes<HTMLDivElement>
 
 const SidebarMenuBadge = forwardRef<HTMLDivElement, SidebarMenuBadgeProps>(({ className, ...props }, ref) => {
-  const item = useContext(MenuItemContext)
+  const item = useContext(MenuRowContext)
   const size = useSize()
-  const lit = item?.isActiveRow ?? false
+  const lit = useRowState(item?.rowRef).isActiveRow
 
   const setHasBadge = item?.setHasBadge
   useIsoLayoutEffect(() => {

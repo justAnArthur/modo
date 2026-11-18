@@ -6,10 +6,11 @@
 'use client'
 
 import { AnimatePresence, motion } from 'motion/react'
+import { memo } from 'react'
 import { useReduceMotion } from './reduced-motion'
 import { useShape } from './shape-context'
 import { spring } from './springs'
-import type { ItemRect } from './use-fluid-hover'
+import { type ItemRect, sameRect } from './use-fluid-hover'
 import { cn } from './utils'
 
 interface FocusRingProps {
@@ -21,13 +22,7 @@ interface FocusRingProps {
   className?: string
 }
 
-/**
- * A 1px `focus-ring` border drawn 2px outside the focused row. It springs
- * between rows on `spring.fast` (jumps under reduced motion) and fades out
- * when focus leaves. Render it inside the rows' `relative` container, above
- * the hover highlight.
- */
-export function FocusRing({ rect, instant = false, className }: FocusRingProps) {
+function FocusRingBase({ rect, instant = false, className }: FocusRingProps) {
   const shape = useShape()
   const reduceMotion = useReduceMotion()
   const jump = instant || reduceMotion
@@ -47,3 +42,15 @@ export function FocusRing({ rect, instant = false, className }: FocusRingProps) 
     </AnimatePresence>
   )
 }
+
+/**
+ * A 1px `focus-ring` border drawn 2px outside the focused row. It springs
+ * between rows on `spring.fast` (jumps under reduced motion) and fades out
+ * when focus leaves. Render it inside the rows' `relative` container, above
+ * the hover highlight. Skips the render while its box and props hold (rects
+ * are fresh objects on every list render).
+ */
+export const FocusRing = memo(
+  FocusRingBase,
+  (a, b) => sameRect(a.rect, b.rect) && a.instant === b.instant && a.className === b.className,
+)

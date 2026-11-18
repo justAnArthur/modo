@@ -14,19 +14,22 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type MutableRefObject,
+  memo,
   type ReactNode,
   type RefObject,
   useCallback,
+  useContext,
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from 'react'
 import { FluidHoverHighlight } from '../../../lib/fluid-hover-highlight'
 import { FocusRing } from '../../../lib/focus-ring'
 import { GooIndicator } from '../../../lib/goo-indicator'
 import { useShape } from '../../../lib/shape-context'
 import { spring } from '../../../lib/springs'
-import { type ItemRect, useFluidHover } from '../../../lib/use-fluid-hover'
+import { type ItemRect, sameRect, useFluidHover } from '../../../lib/use-fluid-hover'
 import { useIsoLayoutEffect } from '../../../lib/use-iso-layout-effect'
 import { cn } from '../../../lib/utils'
 
@@ -36,17 +39,24 @@ import { cn } from '../../../lib/utils'
 // as one piece. The active background stays one per level, so a current
 // section and the current page inside it can both be lit.
 
+/** What rows read from the scope: the hovered row, every visible active row (DOM order) and the first row. */
+interface MenuScopeSnapshot {
+  hovered: HTMLElement | null
+  active: HTMLElement[]
+  first: HTMLElement | null
+}
+
+// Stable for the scope's life: rows subscribe to the snapshot instead of
+// reading it from context, so a hover re-renders the two rows it moves
+// between, not every row.
 interface MenuScopeValue {
   registerRow: (el: HTMLElement) => () => void
   setRowButton: (row: HTMLElement, button: HTMLElement | null) => void
   setRowActive: (row: HTMLElement, active: boolean) => void
-  hoveredRowEl: HTMLElement | null
-  /** Every visible active row, in DOM order. */
-  activeRows: HTMLElement[]
-  firstRowEl: HTMLElement | null
-  hasActive: boolean
   /** A sub-menu toggled: re-read what is visible. */
   refreshVisibility: () => void
+  subscribe: (listener: () => void) => () => void
+  getSnapshot: () => MenuScopeSnapshot
 }
 
 export const MenuScopeContext = createContext<MenuScopeValue | null>(null)
@@ -63,8 +73,6 @@ export interface MenuItemContextValue {
   rowRef: MutableRefObject<HTMLLIElement | null>
   /** The row's `<li>` ref callback; replays its active flag to the scope. */
   attachRow: (node: HTMLLIElement | null) => void
-  isHovered: boolean
-  isActiveRow: boolean
   /** Inside `SidebarMenuSubItem`: actions centre on the shorter row. */
   isSubRow: boolean
   setActive: (active: boolean) => void
@@ -82,8 +90,41 @@ export interface MenuItemContextValue {
 
 export const MenuItemContext = createContext<MenuItemContextValue | null>(null)
 
+/** The row's stable part, for the actions and the badge: they re-render with neither the gutter nor the sub-menu. */
+export type MenuRowContextValue = Pick<MenuItemContextValue, 'rowRef' | 'isSubRow' | 'setActions' | 'setHasBadge'>
+
+export const MenuRowContext = createContext<MenuRowContextValue | null>(null)
+
 /** True inside a SidebarMenuActions cluster, where each action flows in the row. */
 export const MenuActionsClusterContext = createContext(false)
+
+const NO_SUBSCRIPTION = () => () => {}
+const HOVERED = 1
+const ACTIVE = 2
+const TAB_STOP = 4
+
+/** The row's hover, active and tab-stop flags, re-rendering only when one of its own flips. */
+export function useRowState(rowRef: MutableRefObject<HTMLElement | null> | undefined) {
+  const scope = useContext(MenuScopeContext)
+  const flags = useSyncExternalStore(
+    scope?.subscribe ?? NO_SUBSCRIPTION,
+    () => {
+      const row = rowRef?.current
+      if (!scope || !row) return 0
+      const { hovered, active, first } = scope.getSnapshot()
+      const isActive = active.includes(row)
+      // Roving tabindex: the active rows are the tab stops, else the first row.
+      const tabStop = active.length > 0 ? isActive : row === first
+      return (row === hovered ? HOVERED : 0) | (isActive ? ACTIVE : 0) | (tabStop ? TAB_STOP : 0)
+    },
+    () => 0,
+  )
+  return {
+    isHovered: (flags & HOVERED) !== 0,
+    isActiveRow: (flags & ACTIVE) !== 0,
+    isTabStop: (flags & TAB_STOP) !== 0,
+  }
+}
 
 /** Inside a collapsed sub-tree. Such rows stay registered: unregistering on every toggle would churn the measurements and blink the overlays. */
 function rowHidden(el: HTMLElement) {
@@ -153,6 +194,41 @@ export function gutterVars(item: MenuItemContextValue | null) {
   return { '--row-gutter': `${rest}px`, '--row-gutter-hover': `${hover}px` }
 }
 
+interface ActiveBackground {
+  key: string
+  rect: ItemRect
+  rowChanged: boolean
+}
+
+function sameBackgrounds(a: ActiveBackground[], b: ActiveBackground[]) {
+  return (
+    a.length === b.length &&
+    a.every((x, i) => x.key === b[i]?.key && x.rowChanged === b[i]?.rowChanged && sameRect(x.rect, b[i]?.rect))
+  )
+}
+
+/** The active rows' backgrounds. The menu re-renders on every hover; these skip it unless a selection moved. */
+const ActiveBackgrounds = memo(
+  function ActiveBackgrounds({ items, className }: { items: ActiveBackground[]; className: string }) {
+    return (
+      <AnimatePresence>
+        {items.map(({ key, rect, rowChanged }) => (
+          <motion.div
+            key={key}
+            className="pointer-events-none absolute top-0 left-0"
+            initial={false}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: spring.moderate.exit }}
+          >
+            <GooIndicator rect={rect} className={className} transition={rowChanged ? spring.moderate : false} />
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    )
+  },
+  (a, b) => a.className === b.className && sameBackgrounds(a.items, b.items),
+)
+
 interface MenuScopeOptions {
   /** Draw the travelling keyboard focus ring. Off, keyboard focus moves the hover only (a settings dialog's section list). Defaults to `true`. */
   focusRing?: boolean
@@ -169,15 +245,9 @@ export function useMenuScope(containerRef: RefObject<HTMLElement | null>, { focu
   const activeMapRef = useRef<Map<HTMLElement, boolean>>(new Map())
   const [orderedRows, setOrderedRows] = useState<HTMLElement[]>([])
   const orderedRowsRef = useRef(orderedRows)
-  orderedRowsRef.current = orderedRows
   const registeredCountRef = useRef(0)
   const [activeRows, setActiveRows] = useState<HTMLElement[]>([])
   const [focusedRowEl, setFocusedRowEl] = useState<HTMLElement | null>(null)
-
-  const recomputeActive = useCallback(() => {
-    const next = orderedRowsRef.current.filter(el => activeMapRef.current.get(el) && !rowSkipped(el))
-    setActiveRows(prev => (sameElements(prev, next) ? prev : next))
-  }, [])
 
   const rowButton = useCallback(
     (row: HTMLElement) =>
@@ -191,55 +261,78 @@ export function useMenuScope(containerRef: RefObject<HTMLElement | null>, { focu
   // Indexes come from DOM order, so rows take no index and conditional rows
   // just work. The hover measures the row's button, not the `<li>`: a row
   // hosting an expanded sub-tree is tall, and its gaps would go to the parent.
+  // Every change only marks the order stale; one sort runs per batch (a
+  // microtask after the commit that mounted a list of rows), or at once when
+  // something reads the order first.
+  const staleRef = useRef(false)
   const syncRows = useCallback(() => {
+    staleRef.current = false
     const sorted = [...rowsRef.current].sort(byDomOrder)
-    // Synchronously: callers in the same commit must see the set they changed.
-    orderedRowsRef.current = sorted
-    setOrderedRows(prev => (sameElements(prev, sorted) ? prev : sorted))
+    if (!sameElements(orderedRowsRef.current, sorted)) {
+      orderedRowsRef.current = sorted
+      setOrderedRows(sorted)
+    }
     for (const [i, el] of sorted.entries()) registerItem(i, rowButton(el) ?? el)
     for (let i = sorted.length; i < registeredCountRef.current; i++) registerItem(i, null)
     registeredCountRef.current = sorted.length
-    recomputeActive()
-  }, [registerItem, recomputeActive, rowButton])
+    const active = sorted.filter(el => activeMapRef.current.get(el) && !rowSkipped(el))
+    setActiveRows(prev => (sameElements(prev, active) ? prev : active))
+  }, [registerItem, rowButton])
+
+  const rows = useCallback(() => {
+    if (staleRef.current) syncRows()
+    return orderedRowsRef.current
+  }, [syncRows])
+
+  const invalidate = useCallback(() => {
+    if (staleRef.current) return
+    staleRef.current = true
+    queueMicrotask(() => {
+      if (staleRef.current) syncRows()
+    })
+  }, [syncRows])
 
   const registerRow = useCallback(
     (el: HTMLElement) => {
       rowsRef.current.add(el)
-      syncRows()
+      invalidate()
       return () => {
         rowsRef.current.delete(el)
         rowButtonsRef.current.delete(el)
         activeMapRef.current.delete(el)
-        syncRows()
+        invalidate()
       }
     },
-    [syncRows],
+    [invalidate],
   )
 
   const setRowButton = useCallback(
     (row: HTMLElement, button: HTMLElement | null) => {
       if (button) rowButtonsRef.current.set(row, button)
       else rowButtonsRef.current.delete(row)
-      syncRows()
+      invalidate()
     },
-    [syncRows],
+    [invalidate],
   )
 
   const setRowActive = useCallback(
     (row: HTMLElement, active: boolean) => {
+      if (activeMapRef.current.get(row) === active) return
       activeMapRef.current.set(row, active)
-      recomputeActive()
+      invalidate()
     },
-    [recomputeActive],
+    [invalidate],
   )
 
   const refreshVisibility = useCallback(() => {
-    recomputeActive()
+    const ordered = rows()
+    const active = ordered.filter(el => activeMapRef.current.get(el) && !rowSkipped(el))
+    setActiveRows(prev => (sameElements(prev, active) ? prev : active))
     setActiveIndex(prev => {
-      const row = prev !== null ? orderedRowsRef.current[prev] : undefined
+      const row = prev !== null ? ordered[prev] : undefined
       return row && rowSkipped(row) ? null : prev
     })
-  }, [recomputeActive, setActiveIndex])
+  }, [rows, setActiveIndex])
 
   // A row's rect spans its `<li>`, which grows with an expanded sub-menu: the
   // overlays clamp to the button (32px, the tallest row, if it isn't found).
@@ -282,12 +375,12 @@ export function useMenuScope(containerRef: RefObject<HTMLElement | null>, { focu
       if (!target.closest(ROW_BUTTON)) return
       const row = target.closest<HTMLElement>('[data-sidebar="menu-item"],[data-sidebar="menu-sub-item"]')
       if (!row) return
-      const idx = orderedRowsRef.current.indexOf(row)
+      const idx = rows().indexOf(row)
       if (idx === -1) return
       setActiveIndex(idx)
       setFocusedRowEl(target.matches(':focus-visible') ? row : null)
     },
-    [setActiveIndex],
+    [rows, setActiveIndex],
   )
 
   const onBlur = useCallback(
@@ -325,18 +418,30 @@ export function useMenuScope(containerRef: RefObject<HTMLElement | null>, { focu
 
   const hoveredRowEl = activeIndex !== null ? (orderedRows[activeIndex] ?? null) : null
 
+  // The snapshot rows read, published after each commit that changed it.
+  const snapshotRef = useRef<MenuScopeSnapshot>({ hovered: null, active: [], first: null })
+  const listenersRef = useRef(new Set<() => void>())
+  const firstRowEl = orderedRows[0] ?? null
+  useIsoLayoutEffect(() => {
+    const prev = snapshotRef.current
+    if (prev.hovered === hoveredRowEl && prev.active === activeRows && prev.first === firstRowEl) return
+    snapshotRef.current = { hovered: hoveredRowEl, active: activeRows, first: firstRowEl }
+    for (const listener of listenersRef.current) listener()
+  }, [hoveredRowEl, activeRows, firstRowEl])
+
   const value = useMemo<MenuScopeValue>(
     () => ({
       registerRow,
       setRowButton,
       setRowActive,
-      hoveredRowEl,
-      activeRows,
-      firstRowEl: orderedRows[0] ?? null,
-      hasActive: activeRows.length > 0,
       refreshVisibility,
+      subscribe: listener => {
+        listenersRef.current.add(listener)
+        return () => listenersRef.current.delete(listener)
+      },
+      getSnapshot: () => snapshotRef.current,
     }),
-    [registerRow, setRowButton, setRowActive, hoveredRowEl, activeRows, orderedRows, refreshVisibility],
+    [registerRow, setRowButton, setRowActive, refreshVisibility],
   )
 
   const shape = useShape()
@@ -393,23 +498,7 @@ export function useMenuScope(containerRef: RefObject<HTMLElement | null>, { focu
 
   const overlays: ReactNode = isMeasured ? (
     <>
-      <AnimatePresence>
-        {activeRects.map(({ key, rect, rowChanged }) => (
-          <motion.div
-            key={key}
-            className="pointer-events-none absolute top-0 left-0"
-            initial={false}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: spring.moderate.exit }}
-          >
-            <GooIndicator
-              rect={rect}
-              className={cn('bg-active', shape.bg)}
-              transition={rowChanged ? spring.moderate : false}
-            />
-          </motion.div>
-        ))}
-      </AnimatePresence>
+      <ActiveBackgrounds items={activeRects} className={cn('bg-active', shape.bg)} />
       <FluidHoverHighlight
         rect={hoverRect}
         session={sessionRef.current}
