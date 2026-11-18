@@ -64,7 +64,8 @@ export function NotchPanel({ state, onStateChange }) {
 | `ClipboardHistory` | The latest clip as the hero (text, link, image, color, file), the searchable history beside it with pins, pause and ignored apps; `.Leading`, `.Trailing`, `.Copied`. |
 | `RecentFiles` | The newest download or screenshot as the hero, ready to open, reveal, copy or drag out, the ones before it beside it, a download under way; `.Leading`, `.Trailing`, `.Minimal`, `.Saved`. |
 | `ExpandedIsland` | The open island's layout: tabs in the wings, the tab's title, a fixed-height scrolling view. |
-| `SettingsWindow` | The app's settings: General, Plugins, Permissions, About and each plugin's page. |
+| `SettingsWindow` | The app's settings: General, Plugins, Permissions, About, the host's own `pages` (placed `after` a built-in one) and each plugin's page; a plugin row takes a `badge` and `actions`. |
+| `LibraryListing` | A plugin library for a settings page: each plugin's state (install, update, incompatible, installing, failed), permission and host chips, loading, offline and empty states; `.Detail`, one plugin's page with screenshots and its permissions explained. |
 | `useStableArtwork`, `useArtworkTint` | Artwork held across updates and the tint read from an image (`@justanarthur/modo-ui-notch/lib/artwork`). |
 | `useIsland()` | The enclosing Island's state, notch and panel geometry and current outline. |
 | `shapeFor`, `islandPath`, `stripLayout`, … | The pure geometry (`@justanarthur/modo-ui-notch/lib/geometry`). |

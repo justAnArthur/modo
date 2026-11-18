@@ -37,6 +37,29 @@ interface SettingsPlugin {
   icon?: IconComponent
   /** Its settings, on a page of its own under Plugin settings. */
   settings?: ReactNode
+  /** A label after its name in the Plugins list, such as an Update or Incompatible Badge. */
+  badge?: ReactNode
+  /** Controls before its switch in the Plugins list, such as an Uninstall Button. */
+  actions?: ReactNode
+}
+
+type BuiltInPage = 'general' | 'plugins' | 'permissions' | 'about'
+
+interface SettingsPage {
+  /** The page's `value`; keep it clear of the built-in ids and `plugin:`. */
+  id: string
+  /** Its sidebar row and its title. */
+  label: string
+  /** A line under the title. */
+  lead?: ReactNode
+  /** Its glyph in the sidebar. */
+  icon?: IconComponent
+  /** What the page shows under its title. */
+  content: ReactNode
+  /** A count or a short label at the sidebar row's end, such as the updates waiting. */
+  badge?: ReactNode
+  /** The page whose sidebar row it follows: a built-in page or another page's `id`. Pages after the same one keep their order. Defaults to the end, after About. */
+  after?: BuiltInPage | (string & {})
 }
 
 interface SettingsPermission {
@@ -56,7 +79,7 @@ interface AboutRow {
 interface SettingsWindowProps {
   /** The app's name, over the sidebar. Defaults to `'Notch'`. */
   name?: string
-  /** The page shown: `general`, `plugins`, `permissions`, `about` or `plugin:<id>` (controlled). */
+  /** The page shown: `general`, `plugins`, `permissions`, `about`, a `pages` id or `plugin:<id>` (controlled). */
   value?: string
   /** The page shown at first (uncontrolled). Defaults to `'general'`. */
   defaultValue?: string
@@ -82,6 +105,8 @@ interface SettingsWindowProps {
   onOpenPermission?: (id: string) => void
   /** The About page's rows: version, mode, screen. Defaults to `[]`. */
   about?: AboutRow[]
+  /** The host's own pages, listed among the built-in ones (see `after`), such as a plugin library. Defaults to `[]`. */
+  pages?: SettingsPage[]
   /** Drops the sidebar's inset on the left: its rows run to the window's edge and their text sits only the row's own padding in, so a host can line it up with an edge of its own (the open island's inset). Defaults to `false`. */
   flush?: boolean
   /** Classes for the window's content, which fills its container. */
@@ -172,10 +197,12 @@ function Plugins({ plugins, enabled, onChange, onOpen }: PluginsProps) {
                     <span className="flex min-w-0 items-center gap-2">
                       <Icon size={16} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
                       <span className="truncate">{plugin.name}</span>
+                      {plugin.badge}
                     </span>
                   }
                   description={plugin.description}
                 >
+                  {plugin.actions}
                   {plugin.settings !== undefined && (
                     <Button
                       variant="ghost"
@@ -259,16 +286,36 @@ function About({ rows }: { rows: AboutRow[] }) {
   )
 }
 
-const PAGES: { value: string; label: string; icon: IconComponent }[] = [
+interface SidebarPage {
+  value: string
+  label: string
+  icon?: IconComponent
+  badge?: ReactNode
+  after?: string
+}
+
+const PAGES: SidebarPage[] = [
   { value: 'general', label: 'General', icon: Settings2 },
   { value: 'plugins', label: 'Plugins', icon: Puzzle },
   { value: 'permissions', label: 'Permissions', icon: ShieldCheck },
   { value: 'about', label: 'About', icon: Info },
 ]
 
+/** The built-in pages with the host's slotted in, each after its `after` and the pages already there. */
+function sidebarPages(pages: SettingsPage[]) {
+  const items = [...PAGES]
+  for (const page of pages) {
+    const anchor = items.findIndex(item => item.value === page.after)
+    let at = anchor === -1 ? items.length : anchor + 1
+    while (anchor !== -1 && items[at]?.after === page.after) at++
+    items.splice(at, 0, { value: page.id, label: page.label, icon: page.icon, badge: page.badge, after: page.after })
+  }
+  return items
+}
+
 /**
  * A notch app's settings window: General, Plugins, Permissions and About,
- * and a page for each plugin's own settings.
+ * the host's own `pages`, and a page for each plugin's own settings.
  *
  * A modo-ui Sidebar pinned open (the window is small, about 760 × 520, so
  * it never folds into a drawer) lists the pages under the app's `name`, then
@@ -279,6 +326,13 @@ const PAGES: { value: string; label: string; icon: IconComponent }[] = [
  * shows what macOS granted as a StatusDot per row, with Open Settings beside
  * one that isn't granted, and a spinner while it's being read. About lists the `about` rows. A plugin's page shows its
  * `settings` node under its name.
+ *
+ * A plugin row takes a `badge` after its name (Update, Incompatible) and
+ * `actions` before its switch (Uninstall). The host's `pages` list among the
+ * built-in ones, each right after the page its `after` names (a Library
+ * after Plugins), else at the end, with an optional `badge` at the row's
+ * end; each shows its `content` under its `label` and `lead`, like the
+ * built-in pages.
  *
  * The page, the preferences and the plugins' states each run both ways
  * (`value`, `preferences`, `enabled` with their `default*` and `on*Change`),
@@ -304,6 +358,7 @@ export default function SettingsWindow({
   permissions = [],
   onOpenPermission,
   about = [],
+  pages = [],
   flush = false,
   className,
 }: SettingsWindowProps) {
@@ -312,6 +367,7 @@ export default function SettingsWindow({
   const [enabled, setEnabled] = useControllableState(enabledProp, defaultEnabled, onEnabledChange)
   const withSettings = plugins.filter(plugin => plugin.settings !== undefined)
   const plugin = withSettings.find(p => `plugin:${p.id}` === page)
+  const custom = pages.find(p => p.id === page)
 
   return (
     <Sidebar.Provider
@@ -326,11 +382,12 @@ export default function SettingsWindow({
           <Sidebar.Group className={cn(flush && 'pl-0')}>
             <Sidebar.GroupLabel>{name}</Sidebar.GroupLabel>
             <Sidebar.Menu>
-              {PAGES.map(item => (
+              {sidebarPages(pages).map(item => (
                 <Sidebar.MenuItem key={item.value}>
                   <Sidebar.MenuButton icon={item.icon} value={item.value}>
                     {item.label}
                   </Sidebar.MenuButton>
+                  {item.badge !== undefined && <Sidebar.MenuBadge>{item.badge}</Sidebar.MenuBadge>}
                 </Sidebar.MenuItem>
               ))}
             </Sidebar.Menu>
@@ -365,6 +422,11 @@ export default function SettingsWindow({
             )}
             {page === 'permissions' && <Permissions permissions={permissions} onOpen={onOpenPermission} />}
             {page === 'about' && <About rows={about} />}
+            {custom && (
+              <Page title={custom.label} lead={custom.lead}>
+                {custom.content}
+              </Page>
+            )}
             {plugin && (
               <Page title={plugin.name} lead={plugin.description}>
                 {plugin.settings}
@@ -377,5 +439,14 @@ export default function SettingsWindow({
   )
 }
 
-export type { AboutRow, AppPreferences, ScreensPreference, SettingsPermission, SettingsPlugin, SettingsWindowProps }
+export type {
+  AboutRow,
+  AppPreferences,
+  BuiltInPage,
+  ScreensPreference,
+  SettingsPage,
+  SettingsPermission,
+  SettingsPlugin,
+  SettingsWindowProps,
+}
 export { SettingsWindow }

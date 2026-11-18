@@ -5,6 +5,7 @@
 'use client'
 
 import SettingsWindow from '../../blocks/app/settings-window'
+import { LIBRARY_PAGE } from '../../mock/library'
 import { ABOUT, MockWindow, PERMISSIONS, PLUGINS } from '../../mock/settings'
 
 interface SettingsProps {
@@ -13,13 +14,16 @@ interface SettingsProps {
 }
 
 /**
- * The notch app's settings, in a window of its own: General, Plugins,
- * Permissions and About, then a page for each plugin that brings settings.
+ * The notch app's settings, in a window of its own: General, Plugins, the
+ * plugin Library, Permissions and About, then a page for each plugin that
+ * brings settings.
  *
  * Walk the sidebar: General's launch at login switch and the screens the
  * island shows on; the seven plugins, each with its switch and a chevron to
- * its page; what macOS granted, with Open Settings beside Location, which it
- * didn't, and a spinner on Automation, still being read; the version. Under
+ * its page; the Library after them, an update waiting on its row, its
+ * plugins in every state and each one's page; what macOS granted, with Open
+ * Settings beside Location, which it didn't, and a spinner on Automation,
+ * still being read; the version. Under
  * Plugin settings each plugin's own, as grouped rows of a label, what it
  * does and its control: the track announcement, the calendar's countdown
  * and alerts, the weather's location, unit and rain alert, the clock's
@@ -33,7 +37,14 @@ interface SettingsProps {
 export default function Settings({ page = 'general' }: SettingsProps) {
   return (
     <MockWindow title="Just Notch Settings">
-      <SettingsWindow name="Just Notch" defaultValue={page} plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />
+      <SettingsWindow
+        name="Just Notch"
+        defaultValue={page}
+        pages={[LIBRARY_PAGE]}
+        plugins={PLUGINS}
+        permissions={PERMISSIONS}
+        about={ABOUT}
+      />
     </MockWindow>
   )
 }
