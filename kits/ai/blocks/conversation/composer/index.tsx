@@ -99,6 +99,7 @@ interface ProjectPickerProps {
   onWorktreeChange: (worktree: boolean) => void
   baseBranch: string
   onBaseBranchChange: (branch: string) => void
+  options: Required<ComposerTargetOptions>
 }
 
 /** Where a session runs: the project, a worktree of its own and how it is set up. */
@@ -113,6 +114,7 @@ function ProjectPicker({
   onWorktreeChange,
   baseBranch,
   onBaseBranchChange,
+  options,
 }: ProjectPickerProps) {
   const label = projects.find(p => p.path === project)?.label ?? ''
   const Folder = useIcon('folder')
@@ -148,37 +150,45 @@ function ProjectPicker({
               }))}
             />
           </List.Section>
-          <List.Section title="Checkout">
-            {branch && (
-              <List.Row label="Branch">
-                <span className="min-w-0 truncate font-mono text-caption text-muted-foreground">{branch}</span>
-              </List.Row>
-            )}
-            <List.Row label="New worktree">
-              <Switch
-                label="New worktree"
-                checked={worktree}
-                onCheckedChange={onWorktreeChange}
-                disabled={locked}
-                className={LIST_SWITCH}
-              />
-            </List.Row>
-            <List.Row label="Run setup script">
-              <Switch label="Run setup script" defaultChecked disabled={locked} className={LIST_SWITCH} />
-            </List.Row>
-            <List.Row label="Base branch">
-              <Select value={baseBranch} onValueChange={onBaseBranchChange} disabled={locked}>
-                <Select.Trigger variant="borderless" className="min-w-0" />
-                <Select.Content>
-                  {branches.map((b, i) => (
-                    <Select.Item key={b} index={i} value={b}>
-                      {b}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select>
-            </List.Row>
-          </List.Section>
+          {(branch || options.worktree || options.setupScript || options.baseBranch) && (
+            <List.Section title="Checkout">
+              {branch && (
+                <List.Row label="Branch">
+                  <span className="min-w-0 truncate font-mono text-caption text-muted-foreground">{branch}</span>
+                </List.Row>
+              )}
+              {options.worktree && (
+                <List.Row label="New worktree">
+                  <Switch
+                    label="New worktree"
+                    checked={worktree}
+                    onCheckedChange={onWorktreeChange}
+                    disabled={locked}
+                    className={LIST_SWITCH}
+                  />
+                </List.Row>
+              )}
+              {options.setupScript && (
+                <List.Row label="Run setup script">
+                  <Switch label="Run setup script" defaultChecked disabled={locked} className={LIST_SWITCH} />
+                </List.Row>
+              )}
+              {options.baseBranch && (
+                <List.Row label="Base branch">
+                  <Select value={baseBranch} onValueChange={onBaseBranchChange} disabled={locked}>
+                    <Select.Trigger variant="borderless" className="min-w-0" />
+                    <Select.Content>
+                      {branches.map((b, i) => (
+                        <Select.Item key={b} index={i} value={b}>
+                          {b}
+                        </Select.Item>
+                      ))}
+                    </Select.Content>
+                  </Select>
+                </List.Row>
+              )}
+            </List.Section>
+          )}
         </SizeProvider>
       </Popover.Content>
     </Popover>
@@ -192,6 +202,7 @@ interface RunSettingsProps {
   outputStyles: string[]
   context: number
   compacting: boolean
+  onCompact?: () => void
   model: string
   onModelChange: (model: string) => void
   effort: string
@@ -212,6 +223,7 @@ function RunSettings({
   outputStyles,
   context,
   compacting,
+  onCompact,
   model,
   onModelChange,
   effort,
@@ -315,7 +327,7 @@ function RunSettings({
                 warnAt={0.8}
                 errorAt={0.95}
               />
-              <Button variant="ghost" size="compact" disabled={compacting || context < 0.2}>
+              <Button variant="ghost" size="compact" disabled={compacting || context < 0.2} onClick={onCompact}>
                 Compact
               </Button>
             </List.Row>
@@ -337,6 +349,16 @@ function LiftedDraft(props: ComposerDraftProps) {
       <ComposerDraft {...props} className={cn(SURFACE_BG[level], props.className)} />
     </SurfaceProvider>
   )
+}
+
+/** Which of the project popover's checkout rows a session offers. Each defaults to `true`. */
+interface ComposerTargetOptions {
+  /** The New worktree switch. */
+  worktree?: boolean
+  /** The Base branch a new worktree starts from. */
+  baseBranch?: boolean
+  /** The Run setup script switch. */
+  setupScript?: boolean
 }
 
 interface ComposerProps {
@@ -412,6 +434,10 @@ interface ComposerProps {
   context?: number
   /** The conversation is being compacted: the context meter says so. Defaults to `false`. */
   compacting?: boolean
+  /** Called by the context section's Compact button: compact the conversation (and set `compacting` while it runs). */
+  onCompact?: () => void
+  /** The checkout rows the project popover offers: `{ worktree: false }` for an app that runs sessions in place, with no worktrees. Each defaults to `true`. */
+  targetOptions?: ComposerTargetOptions
   /** Whether a reply is streaming. While it is, Enter queues the draft and the empty draft's button stops the reply; on the streaming→idle edge the head of the queue sends. Pair with `onStatusChange` / `onStop`, or set `defaultStatus`. */
   status?: DraftStatus
   /** The initial status when uncontrolled; Stop then flips it to `"idle"` itself. Defaults to `"idle"`. */
@@ -482,7 +508,10 @@ interface ComposerProps {
  * how it runs: one trigger showing the permission mode, the model, the
  * effort and a small context ring opens the model (with a note on each), a
  * tall effort slider, the permission mode, fast mode, the output style and
- * the context with a compact button. All three popovers share one layout: a
+ * the context with a compact button (`onCompact`). `targetOptions` drops
+ * checkout rows an app doesn't offer (`{ worktree: false, baseBranch:
+ * false, setupScript: false }` for sessions that run in place). All three
+ * popovers share one layout: a
  * caption per section, then rows with the label on the left and the control
  * on the right.
  *
@@ -549,6 +578,8 @@ const Composer = Object.assign(
     onOutputStyleChange,
     context = 0.62,
     compacting = false,
+    onCompact,
+    targetOptions,
     defaultStatus = 'idle',
     target = false,
     profile,
@@ -597,6 +628,7 @@ const Composer = Object.assign(
                 onWorktreeChange={setWorktree}
                 baseBranch={inList(baseBranch, branches)}
                 onBaseBranchChange={setBaseBranch}
+                options={{ worktree: true, baseBranch: true, setupScript: true, ...targetOptions }}
               />
               <ProfileSwitcher
                 profiles={profiles}
@@ -613,6 +645,7 @@ const Composer = Object.assign(
                   outputStyles={outputStyles}
                   context={context}
                   compacting={compacting}
+                  onCompact={onCompact}
                   model={inList(model, modelNames)}
                   onModelChange={setModel}
                   effort={inList(effort, efforts, middleEffort)}
@@ -645,7 +678,7 @@ const Composer = Object.assign(
 )
 
 export { FileThumbnail } from './file-thumbnail'
-export type { ComposerDraftProps, ComposerProps, DraftSlotContext, DraftStatus, QueuedMessage }
+export type { ComposerDraftProps, ComposerProps, ComposerTargetOptions, DraftSlotContext, DraftStatus, QueuedMessage }
 export { Composer, ComposerDraft }
 
 export default Composer

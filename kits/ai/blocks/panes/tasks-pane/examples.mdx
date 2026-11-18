@@ -4,11 +4,11 @@ import TasksPane from './index'
 
 # Tasks
 
-Background agents, shells and child sessions: stop a running one, retry one that failed or stopped.
+Background agents, shells and child sessions: stop a running one, retry one that failed or stopped. Stop and Retry show with their callbacks.
 
 <div className="w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background p-2">
   <SizeProvider size="compact">
-    <TasksPane tasks={PANE_TASKS} />
+    <TasksPane tasks={PANE_TASKS} onStop={() => {}} onRetry={() => {}} />
   </SizeProvider>
 </div>
 
@@ -19,5 +19,15 @@ With nothing running in the background, the pane says what runs there.
 <div className="w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background p-2">
   <SizeProvider size="compact">
     <TasksPane tasks={[]} />
+  </SizeProvider>
+</div>
+
+# Read-only
+
+Without `onStop` and `onRetry`, the rows only report: no actions, and no room kept for them.
+
+<div className="w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background p-2">
+  <SizeProvider size="compact">
+    <TasksPane tasks={PANE_TASKS} />
   </SizeProvider>
 </div>

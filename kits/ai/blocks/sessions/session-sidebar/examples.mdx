@@ -91,3 +91,16 @@ Pinned first, then a group per project and per section, the archive folded at th
 Each row action, group action and the Settings row shows only with its callback. Here only `onPin` is passed: hover a row for its pin, which moves it into Pinned and back into its project; no archive, no menu, no Settings row.
 
 <Pinning />
+
+# Long groups
+
+`groupLimit` caps every group: past it, a "Show N more" row unfolds the rest, and "Show fewer" folds them back. The selected session shows even when it falls past the cap.
+
+<div className="flex h-[640px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <SessionSidebar {...SESSIONS} {...ACTIONS} groupLimit={1} className="h-full" defaultValue="ai-app" />
+    <Sidebar.Inset className="min-h-0">
+      <SidebarInsetTopbar />
+    </Sidebar.Inset>
+  </Sidebar.Provider>
+</div>

@@ -126,14 +126,32 @@ const Transcript = Object.assign(
         atEnd.current = end
         setFollowing(end)
       }
-      const observer = new ResizeObserver(() => {
-        if (atEnd.current) toEnd()
+      // Heights from the entries, not the DOM: a width-only change (a pane
+      // dragged wider) reads no layout. A grown column or a shrunk viewport
+      // sticks to the end once, on the next frame, however many lines landed.
+      const heights = new WeakMap<Element, number>()
+      let frame = 0
+      const observer = new ResizeObserver(entries => {
+        let changed = false
+        for (const entry of entries) {
+          const height = entry.borderBoxSize[0]?.blockSize ?? entry.contentRect.height
+          if (heights.get(entry.target) === height) continue
+          heights.set(entry.target, height)
+          changed = true
+        }
+        if (!changed || !atEnd.current || frame) return
+        frame = requestAnimationFrame(() => {
+          frame = 0
+          if (atEnd.current) toEnd()
+        })
       })
       el.addEventListener('scroll', onScroll, { passive: true })
       observer.observe(content)
+      observer.observe(el)
       return () => {
         el.removeEventListener('scroll', onScroll)
         observer.disconnect()
+        cancelAnimationFrame(frame)
       }
     }, [])
 

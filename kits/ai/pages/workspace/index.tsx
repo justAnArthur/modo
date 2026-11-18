@@ -28,7 +28,7 @@ import Transcript from '../../blocks/conversation/transcript'
 import TranscriptSearch from '../../blocks/conversation/transcript-search'
 import CommandPalette from '../../blocks/dialogs/command-palette'
 import ShortcutsSheet from '../../blocks/dialogs/shortcuts-sheet'
-import SidePane from '../../blocks/panes/side-pane'
+import SidePane, { type SidePaneExtension } from '../../blocks/panes/side-pane'
 import SessionSidebar from '../../blocks/sessions/session-sidebar'
 import { useIcon } from '../../lib/icons'
 import type { PaletteItem, PaneId, Session } from '../../lib/types'
@@ -51,6 +51,13 @@ const SIDEBAR_ACTIONS = {
   onFilterSection: () => {},
   onOpenSettings: () => {},
 }
+
+/** The side pane's task actions and plugin panes, inert in this demo but shown. */
+const PANE_PROPS = { tasks: { onStop: () => {}, onRetry: () => {} } }
+const PLUGINS: SidePaneExtension[] = [
+  { label: 'Browser (install)', icon: 'globe' },
+  { label: 'iOS simulator (install)', icon: 'monitor' },
+]
 
 type PromptKind = 'none' | 'permission' | 'edit' | 'question' | 'multi' | 'preview' | 'plan' | 'offer' | 'task'
 
@@ -420,6 +427,8 @@ export default function Workspace({
       right={
         <SidePane
           data={SIDE_PANE_DATA}
+          paneProps={PANE_PROPS}
+          extensions={PLUGINS}
           pane={openPane}
           onPaneChange={setOpenPane}
           onClose={() => setPaneOpen(false)}

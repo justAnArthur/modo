@@ -75,6 +75,11 @@
       "source": "./lib/pace.ts",
       "default": "./dist/lib/pace.js"
     },
+    "./lib/pane-parts": {
+      "types": "./dist/lib/pane-parts.d.ts",
+      "source": "./lib/pane-parts.tsx",
+      "default": "./dist/lib/pane-parts.js"
+    },
     "./styles.css": "./dist/styles.css",
     "./package.json": "./package.json"
   },

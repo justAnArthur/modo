@@ -48,3 +48,22 @@ An app without side panes or a settings window leaves those groups out: `panes={
     settings={[]}
   />
 </div>
+
+# Hundreds of sessions
+
+Before you type, a group lists its first `recentLimit` rows and counts the rest; type and it searches them all, listing the first `matchLimit` matches. Here 400 sessions, 5 shown until you type "session 1". `searchTranscripts={false}` and `manageProfiles={false}` drop those rows.
+
+<div className="flex h-[520px] w-full items-start justify-center pt-6">
+  <CommandPalette
+    hotkey={false}
+    label="Search many"
+    sessions={Array.from({ length: 400 }, (_, i) => ({ ...PINNED[i % PINNED.length], id: `many-${i}`, title: `Session ${i}` }))}
+    projects={PROJECTS}
+    profiles={PROFILES}
+    commands={COMMANDS}
+    recentLimit={5}
+    matchLimit={10}
+    searchTranscripts={false}
+    manageProfiles={false}
+  />
+</div>

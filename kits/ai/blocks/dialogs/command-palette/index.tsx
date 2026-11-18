@@ -8,13 +8,45 @@
 
 import Button from '@justanarthur/modo-ui/components/actions/button'
 import Kbd from '@justanarthur/modo-ui/components/data-display/kbd'
-import Command, { type CommandGroup } from '@justanarthur/modo-ui/components/overlays/command'
-import type { ReactElement } from 'react'
+import Command, { type CommandGroup, type CommandItem } from '@justanarthur/modo-ui/components/overlays/command'
+import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
+import { type FormEvent, type ReactElement, useState } from 'react'
 import { useIcons } from '../../../lib/icons'
 import { STATUS_GLYPH } from '../../../lib/status-glyph'
 import type { Command as AgentCommand, PaletteItem, PaneId, Profile, Project, Session } from '../../../lib/types'
 import { PANES } from '../../panes/side-pane'
 import type { SettingsWindowSection } from '../../settings/settings-window'
+
+// Base UI's `contains`, closely enough: case- and accent-blind substring.
+const fold = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+const matches = (item: CommandItem, query: string) =>
+  fold([item.label, ...(item.keywords ?? [])].join(' ')).includes(query)
+
+/**
+ * A group cut down to what is worth rendering: its first `recent` rows
+ * before you type, its first `limit` matches after. A disabled last row says
+ * how many more there are; it carries the query as a keyword, so the list's
+ * own filter keeps it.
+ */
+function cap(group: CommandGroup, query: string, recent: number, limit: number): CommandGroup {
+  const q = fold(query.trim())
+  const rows = q ? group.items.filter(item => matches(item, q)) : group.items
+  const max = q ? limit : recent
+  if (rows.length <= max) return { ...group, items: rows }
+  const more = rows.length - max
+  const what = group.label.toLowerCase()
+  return {
+    ...group,
+    items: [
+      ...rows.slice(0, max),
+      {
+        label: q ? `${more} more ${what} match · keep typing` : `${more} more ${what} · type to search them`,
+        keywords: [query],
+        disabled: true,
+      },
+    ],
+  }
+}
 
 interface CommandPaletteProps {
   /** The sessions to switch to, most recent first. */
@@ -33,6 +65,14 @@ interface CommandPaletteProps {
   profile?: string
   /** The current project's path: "New session as …" starts there. Defaults to the first project. */
   project?: string
+  /** Rows each group lists before you type (sessions: the most recent); a last row counts the rest. Defaults to `30`. */
+  recentLimit?: number
+  /** Matches each group lists once you type, out of all its rows; a last row counts the rest. Defaults to `50`. */
+  matchLimit?: number
+  /** Offer the Search transcripts row (`onSelect` gets `{ kind: 'search' }`). Defaults to `true`. */
+  searchTranscripts?: boolean
+  /** Offer the Manage profiles row (`onSelect` gets `{ kind: 'profiles' }`). Defaults to `true`. */
+  manageProfiles?: boolean
   /** Called with the picked row; the palette closes. */
   onSelect?: (item: PaletteItem) => void
   /** Controlled open state. */
@@ -63,7 +103,13 @@ interface CommandPaletteProps {
  * `onSelect` and closes the panel. The panel is Command's: it grows out of
  * the trigger, and ⌘K (Ctrl+K elsewhere) toggles it from anywhere. A group
  * with no rows is left out: an app without side panes passes `panes={false}`,
- * one without a settings window `settings={[]}`.
+ * one without a settings window `settings={[]}`; `searchTranscripts={false}`
+ * and `manageProfiles={false}` drop those two rows.
+ *
+ * Built for hundreds of sessions: before you type, each group lists its
+ * first `recentLimit` rows (the most recent sessions); once you type, it
+ * searches all of them and lists the first `matchLimit` matches. A last,
+ * disabled row counts the rest and asks for more letters.
  *
  * @example {@include ./examples.mdx}
  */
@@ -76,9 +122,13 @@ export default function CommandPalette({
   panes,
   profile,
   project,
+  recentLimit = 30,
+  matchLimit = 50,
+  searchTranscripts = true,
+  manageProfiles = true,
   onSelect,
-  open,
-  defaultOpen,
+  open: openProp,
+  defaultOpen = false,
   onOpenChange,
   hotkey = 'k',
   trigger,
@@ -86,6 +136,14 @@ export default function CommandPalette({
   className,
 }: CommandPaletteProps) {
   const icons = useIcons()
+  const [open, setOpen] = useControllableState(openProp, defaultOpen, onOpenChange)
+  const [query, setQuery] = useState('')
+  // Each open starts with an empty field, as the panel's own does.
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) setQuery('')
+  }
   const active = profiles.find(p => p.id === profile) ?? profiles[0]
   const here = projects.find(p => p.path === project) ?? projects[0]
   const pick = (item: PaletteItem) => () => onSelect?.(item)
@@ -152,12 +210,16 @@ export default function CommandPalette({
     {
       label: 'Find',
       items: [
-        {
-          label: 'Search transcripts',
-          icon: icons.search,
-          keywords: ['find', 'history', 'messages'],
-          onSelect: pick({ kind: 'search' }),
-        },
+        ...(searchTranscripts
+          ? [
+              {
+                label: 'Search transcripts',
+                icon: icons.search,
+                keywords: ['find', 'history', 'messages'],
+                onSelect: pick({ kind: 'search' }),
+              },
+            ]
+          : []),
         { label: 'Keyboard shortcuts', icon: icons.command, shortcut: '⌘/', onSelect: pick({ kind: 'shortcuts' }) },
       ],
     },
@@ -195,13 +257,15 @@ export default function CommandPalette({
           disabled: p === active,
           onSelect: pick({ kind: 'profile', id: p.id }),
         })),
-        { label: 'Manage profiles', icon: icons.users, onSelect: pick({ kind: 'profiles' }) },
+        ...(manageProfiles
+          ? [{ label: 'Manage profiles', icon: icons.users, onSelect: pick({ kind: 'profiles' }) }]
+          : []),
       ],
     },
   ]
 
   return (
-    <Command open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange} hotkey={hotkey}>
+    <Command open={open} onOpenChange={setOpen} hotkey={hotkey}>
       {trigger !== null && (
         <Command.Trigger
           render={
@@ -228,7 +292,9 @@ export default function CommandPalette({
       <Command.Content
         label="Command palette"
         placeholder="Search sessions, commands and settings…"
-        items={groups.filter(g => g.items.length > 0)}
+        items={groups.map(g => cap(g, query, recentLimit, matchLimit)).filter(g => g.items.length > 0)}
+        // The query lives in the panel's field: its input events bubble here.
+        onInput={(e: FormEvent<HTMLDivElement>) => setQuery((e.target as HTMLInputElement).value)}
       />
     </Command>
   )
