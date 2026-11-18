@@ -37,16 +37,32 @@ const SIGN: Record<DiffLineKind, string> = {
 }
 const SIGN_CHAR: Record<DiffLineKind, string> = { add: '+', remove: '−', context: ' ', hunk: '' }
 
-/** Reads a unified diff (`@@ -a,b +c,d @@` hunks, `+`/`-`/space lines); file headers are skipped. */
+// What git prints above a file's hunks: never code.
+const GIT_HEADER =
+  /^(diff --git |index |(new|deleted) file mode |(old|new) mode |(dis)?similarity index |rename (from|to) |copy (from|to) |Binary files )/
+
+/** Reads a unified diff (`@@ -a,b +c,d @@` hunks, `+`/`-`/space lines); file headers (`git diff`'s too) are skipped. */
 function parsePatch(patch: string): DiffLine[] {
   const lines: DiffLine[] = []
   let oldNo = 0
   let newNo = 0
-  for (const raw of patch.replace(/^\n+|\n+$/g, '').split('\n')) {
-    if (raw.startsWith('+++') || raw.startsWith('---')) continue
+  // Between a file's first header line and its first hunk; a patch may also start straight with lines.
+  let header = true
+  const raws = patch.replace(/^\n+|\n+$/g, '').split('\n')
+  for (const [i, raw] of raws.entries()) {
+    if (raw.startsWith('diff --git ')) header = true
+    if (header && (GIT_HEADER.test(raw) || raw.startsWith('---') || raw.startsWith('+++'))) continue
+    // Inside hunks, a `---` / `+++` pair starts the next file (`diff -u` of several); alone it is a line that began with `--` or `++`.
+    if (raw.startsWith('--- ') && raws[i + 1]?.startsWith('+++ ')) {
+      header = true
+      continue
+    }
+    // "\ No newline at end of file" annotates the line above it.
+    if (raw.startsWith('\\')) continue
 
     const hunk = raw.match(/^@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@(.*)$/)
     if (hunk) {
+      header = false
       oldNo = Number(hunk[1])
       newNo = Number(hunk[2])
       lines.push({ kind: 'hunk', text: raw })
