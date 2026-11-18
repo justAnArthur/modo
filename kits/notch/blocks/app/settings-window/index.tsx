@@ -125,8 +125,9 @@ function General({ preferences, onChange }: GeneralProps) {
           </List.Row>
         </List.Section>
       </List>
-      <div className="flex flex-col gap-2">
-        <span className="text-caption text-muted-foreground">Show the island on</span>
+      {/* Laid out as a List.Section, so its heading lines up with Startup's. */}
+      <div className="flex flex-col gap-1">
+        <span className="pl-2 text-caption text-muted-foreground">Show the island on</span>
         <ChoiceList
           label="Show the island on"
           value={preferences.screens}
