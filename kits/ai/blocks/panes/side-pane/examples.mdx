@@ -1,12 +1,19 @@
 import SidePane from './index'
 import { SIDE_PANE_DATA } from '../../../mock/mock-panes'
 
+export const PLUGINS = [
+  { label: 'Browser (install)', icon: 'globe' },
+  { label: 'iOS simulator (install)', icon: 'monitor' },
+]
+
+export const PANE_PROPS = { tasks: { onStop: () => {}, onRetry: () => {} } }
+
 # Changes
 
 Staged and unstaged files under a commit field; hover a row to stage, unstage or revert it. The picked file's diff wraps its long lines; the toggle above it scrolls them instead.
 
 <div className="flex h-[640px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
-  <SidePane data={SIDE_PANE_DATA} className="flex-1" />
+  <SidePane data={SIDE_PANE_DATA} paneProps={PANE_PROPS} extensions={PLUGINS} className="flex-1" />
 </div>
 
 # File
@@ -14,7 +21,7 @@ Staged and unstaged files under a commit field; hover a row to stage, unstage or
 The open file under its path crumb, with copy and open in editor.
 
 <div className="flex h-[420px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
-  <SidePane data={SIDE_PANE_DATA} className="flex-1" defaultPane="file" />
+  <SidePane data={SIDE_PANE_DATA} paneProps={PANE_PROPS} extensions={PLUGINS} className="flex-1" defaultPane="file" />
 </div>
 
 # Pull request
@@ -22,7 +29,7 @@ The open file under its path crumb, with copy and open in editor.
 CI checks as they run; the failed one is open on the tail of its log with Ask Claude to fix, and the merge waits for it. Auto-fix lets the session watch CI and answer reviews.
 
 <div className="flex h-[640px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
-  <SidePane data={SIDE_PANE_DATA} className="flex-1" defaultPane="pr" />
+  <SidePane data={SIDE_PANE_DATA} paneProps={PANE_PROPS} extensions={PLUGINS} className="flex-1" defaultPane="pr" />
 </div>
 
 # Terminal
@@ -30,7 +37,7 @@ CI checks as they run; the failed one is open on the tail of its log with Ask Cl
 The session's shell in its folder: type at the prompt and press Enter.
 
 <div className="flex h-[420px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
-  <SidePane data={SIDE_PANE_DATA} className="flex-1" defaultPane="terminal" />
+  <SidePane data={SIDE_PANE_DATA} paneProps={PANE_PROPS} extensions={PLUGINS} className="flex-1" defaultPane="terminal" />
 </div>
 
 # Artifacts
@@ -38,7 +45,7 @@ The session's shell in its folder: type at the prompt and press Enter.
 What Claude made in this session, newest first; a press opens one.
 
 <div className="flex h-[320px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
-  <SidePane data={SIDE_PANE_DATA} className="flex-1" defaultPane="artifacts" />
+  <SidePane data={SIDE_PANE_DATA} paneProps={PANE_PROPS} extensions={PLUGINS} className="flex-1" defaultPane="artifacts" />
 </div>
 
 # Tasks
@@ -46,7 +53,7 @@ What Claude made in this session, newest first; a press opens one.
 Background agents, shells and child sessions: stop a running one, retry one that failed or stopped.
 
 <div className="flex h-[360px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
-  <SidePane data={SIDE_PANE_DATA} className="flex-1" defaultPane="tasks" />
+  <SidePane data={SIDE_PANE_DATA} paneProps={PANE_PROPS} extensions={PLUGINS} className="flex-1" defaultPane="tasks" />
 </div>
 
 # Extensions slot
@@ -54,5 +61,19 @@ Background agents, shells and child sessions: stop a running one, retry one that
 The last tab is yours: a pane from your own MCP server or plugin, here every profile's limits as pace bars. The + menu adds optional plugin panes.
 
 <div className="flex h-[640px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
-  <SidePane data={SIDE_PANE_DATA} className="flex-1" defaultPane="extension" />
+  <SidePane data={SIDE_PANE_DATA} paneProps={PANE_PROPS} extensions={PLUGINS} className="flex-1" defaultPane="extension" />
+</div>
+
+# Two panes
+
+An app with only changes and tasks passes `panes={['changes', 'tasks']}` and just their data; `badges` counts on the tabs' glyphs, and with no `extensions` there is no +. `paneProps` hands each pane its callbacks: here Tasks gets none, so it only reports.
+
+<div className="flex h-[480px] w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background">
+  <SidePane
+    data={{ changes: SIDE_PANE_DATA.changes, tasks: SIDE_PANE_DATA.tasks }}
+    panes={['changes', 'tasks']}
+    badges={{ changes: SIDE_PANE_DATA.changes.length, tasks: SIDE_PANE_DATA.tasks.filter(t => t.status === 'running').length }}
+    paneProps={{ changes: { branch: 'feat/safe-redirect', ahead: 2 } }}
+    className="flex-1"
+  />
 </div>

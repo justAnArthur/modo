@@ -5,6 +5,7 @@
 
 'use client'
 
+import { TooltipProvider } from '@justanarthur/modo-ui/components/overlays/tooltip'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { useState } from 'react'
 import { useIcon } from '../../../lib/icons'
@@ -14,7 +15,18 @@ import { RunningGlyph } from '../../../lib/status-glyph'
 
 const TASK_KIND_ICON = { agent: 'bot', shell: 'terminal', session: 'split' } as const
 
-function TaskRow({ task, onStop, onRetry }: { task: PaneTask; onStop: () => void; onRetry: () => void }) {
+function TaskRow({
+  task,
+  onStop,
+  onRetry,
+  slot,
+}: {
+  task: PaneTask
+  onStop?: () => void
+  onRetry?: () => void
+  /** The pane offers an action: keep its column, so the glyphs line up. */
+  slot: boolean
+}) {
   const Icon = useIcon(TASK_KIND_ICON[task.kind])
   const Failed = useIcon('circle-x')
   const Done = useIcon('circle-check')
@@ -42,22 +54,24 @@ function TaskRow({ task, onStop, onRetry }: { task: PaneTask; onStop: () => void
         {task.status === 'failed' && <Failed size={14} strokeWidth={1.5} className="text-status-error" />}
       </span>
       {/* One slot for the action, so the glyphs line up whether a row has one or not. */}
-      <span className="flex w-7 shrink-0 justify-center">
-        {running && <IconAction icon={Stop} label="Stop" onClick={onStop} />}
-        {(task.status === 'failed' || task.status === 'stopped') && (
-          <IconAction icon={Retry} label="Retry" onClick={onRetry} />
-        )}
-      </span>
+      {slot && (
+        <span className="flex w-7 shrink-0 justify-center">
+          {running && onStop && <IconAction icon={Stop} label="Stop" onClick={onStop} />}
+          {(task.status === 'failed' || task.status === 'stopped') && onRetry && (
+            <IconAction icon={Retry} label="Retry" onClick={onRetry} />
+          )}
+        </span>
+      )}
     </li>
   )
 }
 
 interface TasksPaneProps {
-  /** The session's background tasks. The pane keeps its own copy as you stop and retry. */
+  /** The session's background tasks. The pane shows them as given, a Stop or Retry applied until the next `tasks` arrives. */
   tasks: PaneTask[]
-  /** Called with the running task Stop ends. */
+  /** Called with the running task Stop ends. Omit to leave Stop out. */
   onStop?: (task: PaneTask) => void
-  /** Called with the failed or stopped task Retry starts again. */
+  /** Called with the failed or stopped task Retry starts again. Omit to leave Retry out. */
   onRetry?: (task: PaneTask) => void
 }
 
@@ -66,15 +80,21 @@ interface TasksPaneProps {
  * running ones first.
  *
  * Each row names the task with its kind as a glyph and a line on what it
- * is doing or how it ended. A running task stops from its row; one that
- * failed or stopped retries. With none, the pane says what runs there.
+ * is doing or how it ended. A running task stops from its row (with
+ * `onStop`); one that failed or stopped retries (with `onRetry`). The rows
+ * follow `tasks`: a Stop or Retry shows at once and holds until new `tasks`
+ * arrive. With none, the pane says what runs there.
  *
  * @example {@include ./examples.mdx}
  */
 export default function TasksPane({ tasks, onStop, onRetry }: TasksPaneProps) {
-  const [list, setList] = useState(tasks)
+  const [local, setLocal] = useState({ source: tasks, list: tasks })
+  const list = local.source === tasks ? local.list : tasks
   const setStatus = (id: string, status: PaneTask['status']) =>
-    setList(l => l.map(t => (t.id === id ? { ...t, status } : t)))
+    setLocal(l => ({
+      source: tasks,
+      list: (l.source === tasks ? l.list : tasks).map(t => (t.id === id ? { ...t, status } : t)),
+    }))
   const running = list.filter(t => t.status === 'running')
   const finished = list.filter(t => t.status !== 'running')
 
@@ -93,32 +113,41 @@ export default function TasksPane({ tasks, onStop, onRetry }: TasksPaneProps) {
         <TaskRow
           key={task.id}
           task={task}
-          onStop={() => {
-            setStatus(task.id, 'stopped')
-            onStop?.(task)
-          }}
-          onRetry={() => {
-            setStatus(task.id, 'running')
-            onRetry?.(task)
-          }}
+          slot={Boolean(onStop || onRetry)}
+          onStop={
+            onStop &&
+            (() => {
+              setStatus(task.id, 'stopped')
+              onStop(task)
+            })
+          }
+          onRetry={
+            onRetry &&
+            (() => {
+              setStatus(task.id, 'running')
+              onRetry(task)
+            })
+          }
         />
       ))}
     </ul>
   )
 
   return (
-    <div className="flex flex-col gap-2">
-      {running.length > 0 && (
-        <PaneSection title="Running" meta={running.length}>
-          {rows(running)}
-        </PaneSection>
-      )}
-      {finished.length > 0 && (
-        <PaneSection title="Finished" meta={finished.length}>
-          {rows(finished)}
-        </PaneSection>
-      )}
-    </div>
+    <TooltipProvider>
+      <div className="flex flex-col gap-2">
+        {running.length > 0 && (
+          <PaneSection title="Running" meta={running.length}>
+            {rows(running)}
+          </PaneSection>
+        )}
+        {finished.length > 0 && (
+          <PaneSection title="Finished" meta={finished.length}>
+            {rows(finished)}
+          </PaneSection>
+        )}
+      </div>
+    </TooltipProvider>
   )
 }
 

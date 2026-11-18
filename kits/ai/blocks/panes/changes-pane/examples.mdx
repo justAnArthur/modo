@@ -21,3 +21,21 @@ With nothing changed, the pane says the tree matches the last commit.
     <ChangesPane changes={[]} />
   </SizeProvider>
 </div>
+
+# Branch, confirm and errors
+
+`branch`, `ahead` and `behind` add a row on top; `error` says what the last action hit. `onRevert` returns a promise here (your confirm, then the discard), so a reverted row stays until it resolves. `canAutoCommit={false}` asks for a message, for a session too busy to write one.
+
+<div className="w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background p-2">
+  <SizeProvider size="compact">
+    <ChangesPane
+      changes={PANE_CHANGES}
+      branch="feat/safe-redirect"
+      ahead={2}
+      behind={1}
+      error="error: could not lock config file .git/config: File exists"
+      onRevert={() => new Promise(resolve => setTimeout(resolve, 800))}
+      canAutoCommit={false}
+    />
+  </SizeProvider>
+</div>
