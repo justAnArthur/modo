@@ -1,0 +1,54 @@
+import LibraryListing from './index'
+import { LIBRARY, LIBRARY_PERMISSIONS, MockLibrary } from '../../../mock/library'
+
+# Library
+
+An entry in each state: an update, installed, installing, incompatible, failed and not installed. Install, Update and Retry walk the phases; the chevron opens a plugin's page.
+
+<div className="max-w-160">
+  <MockLibrary />
+</div>
+
+# A plugin's page
+
+Screenshots, the full description, the permissions in plain words, the hosts and the source.
+
+<div className="max-w-160">
+  <MockLibrary open="github" />
+</div>
+
+# Installing
+
+The phase and the share done, in place of the action.
+
+<div className="max-w-160">
+  <LibraryListing.Detail entry={LIBRARY[2]} permissionInfo={LIBRARY_PERMISSIONS} onBack={() => {}} />
+</div>
+
+# Loading
+
+<div className="max-w-160">
+  <LibraryListing loading />
+</div>
+
+# Offline
+
+`error` stands in for the list, with Try Again when there is an `onRetry`.
+
+<div className="max-w-160">
+  <LibraryListing error="Couldn't reach the library. Check your connection and try again." onRetry={() => {}} />
+</div>
+
+# Empty
+
+<div className="max-w-160">
+  <LibraryListing entries={[]} />
+</div>
+
+# In the island
+
+The island's dark scope on ink, as the open island shows settings.
+
+<div className="dark max-w-160 rounded-xl bg-ink p-6 text-foreground">
+  <MockLibrary />
+</div>

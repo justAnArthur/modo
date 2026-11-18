@@ -1,5 +1,6 @@
 import SettingsWindow from './index'
 import { ABOUT, MockWindow, PERMISSIONS, PLUGINS } from '../../../mock/settings'
+import { LIBRARY_PAGE, LIBRARY_PLUGINS } from '../../../mock/library'
 
 # Settings
 
@@ -39,4 +40,20 @@ Grouped rows: a label, what it does, the control at the end.
 
 <MockWindow title="Settings">
   <SettingsWindow name="Just Notch" flush plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />
+</MockWindow>
+
+# Pages of the host's own
+
+`pages` list among the built-in ones: a Library right `after` Plugins, with a `badge` at its row's end.
+
+<MockWindow title="Settings">
+  <SettingsWindow name="Just Notch" defaultValue="library" pages={[LIBRARY_PAGE]} plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />
+</MockWindow>
+
+# Badges and actions on plugins
+
+A plugin row's `badge` follows its name (an update, where it came from, incompatible) and its `actions` sit before the switch.
+
+<MockWindow title="Settings">
+  <SettingsWindow name="Just Notch" defaultValue="plugins" pages={[LIBRARY_PAGE]} plugins={LIBRARY_PLUGINS} defaultEnabled={{ legacy: false }} permissions={PERMISSIONS} about={ABOUT} />
 </MockWindow>
