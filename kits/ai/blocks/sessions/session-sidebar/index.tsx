@@ -23,7 +23,16 @@ import {
 import Tooltip, { TooltipProvider } from '@justanarthur/modo-ui/components/overlays/tooltip'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import Sortable, { useSortableHandle } from '@justanarthur/modo-ui/primitives/layout/sortable'
-import { memo, type ReactElement, type SyntheticEvent, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import {
+  memo,
+  type ReactElement,
+  type SyntheticEvent,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { type IconComponent, useIcon } from '../../../lib/icons'
 import { STATUS_GLYPH, STATUS_LABEL } from '../../../lib/status-glyph'
 import type { Profile, Session, SessionGroup, SessionStatus } from '../../../lib/types'
@@ -60,46 +69,42 @@ function ReorderAction() {
   )
 }
 
-/** What a row's hover actions and menu call. An action whose callback is absent is left out. */
-type RowActions = Pick<
-  SessionSidebarProps,
-  'onOpenSplit' | 'onPin' | 'onArchive' | 'onRename' | 'onMarkUnread' | 'onFork'
->
+const ACTIONS = [
+  'onOpenSplit',
+  'onPin',
+  'onArchive',
+  'onRename',
+  'onMarkUnread',
+  'onFork',
+  'onNewSessionIn',
+  'onFilterSection',
+] as const
 
-const ROW_ACTIONS = ['onOpenSplit', 'onPin', 'onArchive', 'onRename', 'onMarkUnread', 'onFork'] as const
+/** What a row's hover actions and menu, and a group's action, call. An action whose callback is absent is left out. */
+type RowActions = Pick<SessionSidebarProps, (typeof ACTIONS)[number]>
 
 /**
- * Stand-ins for the row callbacks that keep their identity while the same
- * ones are passed, so memoized rows skip the sidebar's re-renders; each
- * calls the latest callback.
+ * Stand-ins for the row and group callbacks that keep their identity while
+ * the same ones are passed, so memoized rows and groups skip the sidebar's
+ * re-renders; each calls the latest callback.
  */
 function useRowActions(actions: RowActions): RowActions {
   const latest = useRef(actions)
   useLayoutEffect(() => {
     latest.current = actions
   })
-  const present = ROW_ACTIONS.filter(key => actions[key]).join()
+  const present = ACTIONS.filter(key => actions[key]).join()
   return useMemo(() => {
-    const call = (key: keyof RowActions) => (id: string, value: boolean) =>
-      (latest.current[key] as ((id: string, value: boolean) => void) | undefined)?.(id, value)
+    const call =
+      (key: keyof RowActions) =>
+      (...args: unknown[]) =>
+        (latest.current[key] as ((...args: unknown[]) => void) | undefined)?.(...args)
     return Object.fromEntries(present.split(',').flatMap(key => (key ? [[key, call(key as keyof RowActions)]] : [])))
   }, [present])
 }
 
 /** What a row shows: a fresh but equal session (an app rebuilds its list each render) doesn't re-render it. */
-function sameRowData(a: Session, b: Session) {
-  const kids = (s: Session) => (s.children ?? []).map(c => `${c.id}\n${c.title}\n${c.status}`).join('\n\n')
-  return (
-    a === b ||
-    (a.id === b.id &&
-      a.title === b.title &&
-      a.status === b.status &&
-      a.profile === b.profile &&
-      a.updated === b.updated &&
-      a.pinned === b.pinned &&
-      kids(a) === kids(b))
-  )
-}
+const sameRowData = (a: Session, b: Session) => a.updated === b.updated && sameRowShape(a, b)
 
 interface SessionRowProps {
   session: Session
@@ -161,24 +166,121 @@ function RowMenu({
   )
 }
 
+/** What a row's button, actions and children show: everything but the last activity. */
+function sameRowShape(a: Session, b: Session) {
+  const kids = (s: Session) => (s.children ?? []).map(c => `${c.id}\n${c.title}\n${c.status}`).join('\n\n')
+  return (
+    a === b ||
+    (a.id === b.id &&
+      a.title === b.title &&
+      a.status === b.status &&
+      a.profile === b.profile &&
+      a.pinned === b.pinned &&
+      kids(a) === kids(b))
+  )
+}
+
+type RowPartProps = Required<Omit<SessionRowProps, 'actions'>> & { actions: RowActions; armed: boolean }
+
+const samePart = (a: RowPartProps, b: RowPartProps) =>
+  a.reorder === b.reorder &&
+  a.archived === b.archived &&
+  a.actions === b.actions &&
+  a.armed === b.armed &&
+  sameRowShape(a.session, b.session)
+
+/** The row's button: apart from its badge, so the minute ticking over re-renders the badge alone. */
+const RowButton = memo(
+  function RowButton({ session }: Pick<RowPartProps, 'session'>) {
+    const glyph = STATUS_GLYPH[session.status]
+    return (
+      <Sidebar.MenuButton
+        value={session.id}
+        icon={glyph}
+        status={glyph ? undefined : session.status === 'unread' ? 'unread' : 'idle'}
+        title={`${session.title} · ${STATUS_LABEL[session.status]} · ${session.profile}`}
+      >
+        <span className="truncate">{session.title}</span>
+      </Sidebar.MenuButton>
+    )
+  },
+  (a, b) => sameRowShape(a.session, b.session),
+)
+
+/** The row's hover actions and its linked children. */
+const RowRest = memo(function RowRest({ session, reorder, archived, actions, armed }: RowPartProps) {
+  const { onOpenSplit, onPin, onArchive, onRename, onMarkUnread, onFork } = actions
+  const Pin = useIcon('pin')
+  const Archive = useIcon('archive')
+  const More = useIcon('more-vertical')
+  const Branch = useIcon('git-branch')
+  const children = session.children ?? []
+  const pinLabel = session.pinned ? 'Unpin' : 'Pin'
+  const archiveLabel = archived ? 'Unarchive' : 'Archive'
+  const hasMenu = Boolean(
+    onOpenSplit || onRename || (onMarkUnread && session.status !== 'unread') || onFork || (reorder && onArchive),
+  )
+
+  // Filtered: the cluster sizes the row's gutter by its child count, nulls included. A pinned row trades Archive (in its menu) for the grip.
+  const cluster = [
+    reorder && <ReorderAction key="reorder" />,
+    onPin && (
+      <ActionTip key="pin" armed={armed} label={pinLabel}>
+        <Sidebar.MenuAction
+          aria-label={pinLabel}
+          data-row-action="pin"
+          onClick={() => onPin(session.id, !session.pinned)}
+        >
+          <Pin />
+        </Sidebar.MenuAction>
+      </ActionTip>
+    ),
+    !reorder && onArchive && (
+      <ActionTip key="archive" armed={armed} label={archiveLabel}>
+        <Sidebar.MenuAction
+          aria-label={archiveLabel}
+          data-row-action="archive"
+          onClick={() => onArchive(session.id, !archived)}
+        >
+          <Archive />
+        </Sidebar.MenuAction>
+      </ActionTip>
+    ),
+    hasMenu &&
+      (armed ? (
+        <RowMenu key="more" session={session} reorder={reorder} archived={archived} actions={actions} />
+      ) : (
+        <Sidebar.MenuAction key="more" aria-label="More options" aria-haspopup="menu" data-row-action="more">
+          <More />
+        </Sidebar.MenuAction>
+      )),
+  ].filter(Boolean)
+
+  return (
+    <>
+      {cluster.length > 0 && <Sidebar.MenuActions showOnHover>{cluster}</Sidebar.MenuActions>}
+      {children.length > 0 && (
+        <Sidebar.MenuSub>
+          {children.map(child => (
+            <Sidebar.MenuSubItem key={child.id}>
+              <Sidebar.MenuSubButton value={child.id} icon={STATUS_GLYPH[child.status] ?? Branch}>
+                {child.title}
+              </Sidebar.MenuSubButton>
+            </Sidebar.MenuSubItem>
+          ))}
+        </Sidebar.MenuSub>
+      )}
+    </>
+  )
+}, samePart)
+
 const SessionRow = memo(
   function SessionRow({ session, reorder = false, archived = false, actions }: SessionRowProps) {
-    const { onOpenSplit, onPin, onArchive, onRename, onMarkUnread, onFork } = actions
     // Tooltips and the menu cost a dozen components a row: they mount on the row's first hover or focus.
     const [armed, setArmed] = useState(false)
     const refocus = useRef<string | undefined>(undefined)
     const row = useRef<HTMLLIElement>(null)
-    const Pin = useIcon('pin')
-    const Archive = useIcon('archive')
-    const More = useIcon('more-vertical')
-    const Branch = useIcon('git-branch')
-    const glyph = STATUS_GLYPH[session.status]
-    const children = session.children ?? []
-    const pinLabel = session.pinned ? 'Unpin' : 'Pin'
-    const archiveLabel = archived ? 'Unarchive' : 'Archive'
-    const hasMenu = Boolean(
-      onOpenSplit || onRename || (onMarkUnread && session.status !== 'unread') || onFork || (reorder && onArchive),
-    )
+    const nested = (session.children?.length ?? 0) > 0
 
     // Arming swaps an action for its tooltip-wrapped twin: give focus back to the one that had it.
     useLayoutEffect(() => {
@@ -192,70 +294,17 @@ const SessionRow = memo(
       setArmed(true)
     }
 
-    // Filtered: the cluster sizes the row's gutter by its child count, nulls included. A pinned row trades Archive (in its menu) for the grip.
-    const cluster = [
-      reorder && <ReorderAction key="reorder" />,
-      onPin && (
-        <ActionTip key="pin" armed={armed} label={pinLabel}>
-          <Sidebar.MenuAction
-            aria-label={pinLabel}
-            data-row-action="pin"
-            onClick={() => onPin(session.id, !session.pinned)}
-          >
-            <Pin />
-          </Sidebar.MenuAction>
-        </ActionTip>
-      ),
-      !reorder && onArchive && (
-        <ActionTip key="archive" armed={armed} label={archiveLabel}>
-          <Sidebar.MenuAction
-            aria-label={archiveLabel}
-            data-row-action="archive"
-            onClick={() => onArchive(session.id, !archived)}
-          >
-            <Archive />
-          </Sidebar.MenuAction>
-        </ActionTip>
-      ),
-      hasMenu &&
-        (armed ? (
-          <RowMenu key="more" session={session} reorder={reorder} archived={archived} actions={actions} />
-        ) : (
-          <Sidebar.MenuAction key="more" aria-label="More options" aria-haspopup="menu" data-row-action="more">
-            <More />
-          </Sidebar.MenuAction>
-        )),
-    ].filter(Boolean)
-
     return (
       <Sidebar.MenuItem
         ref={row}
-        collapsible={children.length > 0 ? true : undefined}
-        defaultOpen={children.length > 0 ? true : undefined}
+        collapsible={nested ? true : undefined}
+        defaultOpen={nested ? true : undefined}
         onPointerEnter={armed ? undefined : arm}
         onFocus={armed ? undefined : arm}
       >
-        <Sidebar.MenuButton
-          value={session.id}
-          icon={glyph}
-          status={glyph ? undefined : session.status === 'unread' ? 'unread' : 'idle'}
-          title={`${session.title} · ${STATUS_LABEL[session.status]} · ${session.profile}`}
-        >
-          <span className="truncate">{session.title}</span>
-        </Sidebar.MenuButton>
+        <RowButton session={session} />
         <Sidebar.MenuBadge>{session.updated}</Sidebar.MenuBadge>
-        {cluster.length > 0 && <Sidebar.MenuActions showOnHover>{cluster}</Sidebar.MenuActions>}
-        {children.length > 0 && (
-          <Sidebar.MenuSub>
-            {children.map(child => (
-              <Sidebar.MenuSubItem key={child.id}>
-                <Sidebar.MenuSubButton value={child.id} icon={STATUS_GLYPH[child.status] ?? Branch}>
-                  {child.title}
-                </Sidebar.MenuSubButton>
-              </Sidebar.MenuSubItem>
-            ))}
-          </Sidebar.MenuSub>
-        )}
+        <RowRest session={session} reorder={reorder} archived={archived} actions={actions} armed={armed} />
       </Sidebar.MenuItem>
     )
   },
@@ -263,7 +312,8 @@ const SessionRow = memo(
     a.reorder === b.reorder &&
     a.archived === b.archived &&
     a.actions === b.actions &&
-    sameRowData(a.session, b.session),
+    a.session.updated === b.session.updated &&
+    sameRowShape(a.session, b.session),
 )
 
 /**
@@ -290,6 +340,75 @@ function capped(sessions: Session[], limit: number | undefined, selected: string
   const picked = sessions.slice(limit).find(s => s.id === selected)
   return picked ? [...head, picked] : head
 }
+
+interface GroupSectionProps {
+  group: SessionGroup
+  actions: RowActions
+  /** The rows listed before Show more; `undefined` lists all. */
+  limit: number | undefined
+  /** The group is longer than the sidebar's `groupLimit`: it gets the Show more / Show fewer row. */
+  capped: boolean
+  /** The selected session, when it is in this group: it shows past the limit. */
+  keep: string | undefined
+  onToggle: (label: string) => void
+}
+
+/** A project folder or section, memoized like its rows: a change in one group re-renders only that group. */
+const GroupSection = memo(
+  function GroupSection({ group, actions, limit, capped: long, keep, onToggle }: GroupSectionProps) {
+    const Plus = useIcon('plus')
+    const Filter = useIcon('sliders-horizontal')
+    const MoreRows = useIcon('more-horizontal')
+    const isProject = group.kind === 'project'
+    const onAction = isProject ? actions.onNewSessionIn : actions.onFilterSection
+    const label = isProject ? `New session in ${group.label}` : 'Filter'
+    const shown = capped(group.sessions, limit, keep)
+    const hidden = group.sessions.length - shown.length
+
+    return (
+      <Sidebar.Group collapsible>
+        <Sidebar.GroupLabel>{group.label}</Sidebar.GroupLabel>
+        {onAction && (
+          <Sidebar.GroupActions>
+            <Tooltip content={label} side="top">
+              <Sidebar.GroupAction aria-label={label} onClick={() => onAction(group)}>
+                {isProject ? <Plus /> : <Filter />}
+              </Sidebar.GroupAction>
+            </Tooltip>
+          </Sidebar.GroupActions>
+        )}
+        <Sidebar.Menu>
+          {shown.map(session => (
+            <SessionRow key={session.id} session={session} actions={actions} />
+          ))}
+          {long && (
+            <Sidebar.MenuItem>
+              <Sidebar.MenuButton
+                icon={MoreRows}
+                aria-expanded={limit === undefined}
+                className="text-muted-foreground"
+                onClick={() => onToggle(group.label)}
+              >
+                {limit === undefined ? 'Show fewer' : `Show ${hidden} more`}
+              </Sidebar.MenuButton>
+            </Sidebar.MenuItem>
+          )}
+        </Sidebar.Menu>
+      </Sidebar.Group>
+    )
+  },
+  (a, b) =>
+    a.actions === b.actions &&
+    a.limit === b.limit &&
+    a.capped === b.capped &&
+    a.keep === b.keep &&
+    a.onToggle === b.onToggle &&
+    a.group.label === b.group.label &&
+    a.group.kind === b.group.kind &&
+    a.group.path === b.group.path &&
+    a.group.sessions.length === b.group.sessions.length &&
+    a.group.sessions.every((s, i) => sameRowData(s, b.group.sessions[i]!)),
+)
 
 /** The overview's job for the list: narrow the board to one state, project or profile, with counts. */
 function SessionFilters({
@@ -488,14 +607,25 @@ export default function SessionSidebar({
   const Plus = useIcon('plus')
   const Board = useIcon('layout-dashboard')
   const Settings = useIcon('settings')
-  const Filter = useIcon('sliders-horizontal')
   const Bell = useIcon('bell')
   const unread = inbox?.filter(item => !item.read).length ?? 0
   const waiting = everySession(pinned, groups).filter(s => s.status === 'waiting').length
-  const MoreRows = useIcon('more-horizontal')
-  const actions = useRowActions({ onOpenSplit, onPin, onArchive, onRename, onMarkUnread, onFork })
+  const actions = useRowActions({
+    onOpenSplit,
+    onPin,
+    onArchive,
+    onRename,
+    onMarkUnread,
+    onFork,
+    onNewSessionIn,
+    onFilterSection,
+  })
   const [selected, select] = useControllableState(value, defaultValue ?? '', onValueChange)
   const [expanded, setExpanded] = useState<string[]>([])
+  const toggleGroup = useCallback(
+    (label: string) => setExpanded(open => (open.includes(label) ? open.filter(l => l !== label) : [...open, label])),
+    [],
+  )
   const [pinnedOrder, reorderPinned] = usePinnedOrder(pinned, onPinnedOrderChange)
 
   // One delay group for every row's tooltips, instead of a provider per tooltip.
@@ -571,47 +701,17 @@ export default function SessionSidebar({
                 </Sidebar.Menu>
               </Sidebar.Group>
 
-              {groups.map(group => {
-                const isProject = group.kind === 'project'
-                const onAction = isProject ? onNewSessionIn : onFilterSection
-                const label = isProject ? `New session in ${group.label}` : 'Filter'
-                const all = expanded.includes(group.label)
-                const shown = capped(group.sessions, all ? undefined : groupLimit, selected)
-                const hidden = group.sessions.length - shown.length
-                return (
-                  <Sidebar.Group key={group.label} collapsible>
-                    <Sidebar.GroupLabel>{group.label}</Sidebar.GroupLabel>
-                    {onAction && (
-                      <Sidebar.GroupActions>
-                        <Tooltip content={label} side="top">
-                          <Sidebar.GroupAction aria-label={label} onClick={() => onAction(group)}>
-                            {isProject ? <Plus /> : <Filter />}
-                          </Sidebar.GroupAction>
-                        </Tooltip>
-                      </Sidebar.GroupActions>
-                    )}
-                    <Sidebar.Menu>
-                      {shown.map(session => (
-                        <SessionRow key={session.id} session={session} actions={actions} />
-                      ))}
-                      {(hidden > 0 || all) && groupLimit !== undefined && group.sessions.length > groupLimit && (
-                        <Sidebar.MenuItem>
-                          <Sidebar.MenuButton
-                            icon={MoreRows}
-                            aria-expanded={all}
-                            className="text-muted-foreground"
-                            onClick={() =>
-                              setExpanded(all ? expanded.filter(l => l !== group.label) : [...expanded, group.label])
-                            }
-                          >
-                            {all ? 'Show fewer' : `Show ${hidden} more`}
-                          </Sidebar.MenuButton>
-                        </Sidebar.MenuItem>
-                      )}
-                    </Sidebar.Menu>
-                  </Sidebar.Group>
-                )
-              })}
+              {groups.map(group => (
+                <GroupSection
+                  key={group.label}
+                  group={group}
+                  actions={actions}
+                  limit={expanded.includes(group.label) ? undefined : groupLimit}
+                  capped={groupLimit !== undefined && group.sessions.length > groupLimit}
+                  keep={group.sessions.some(s => s.id === selected) ? selected : undefined}
+                  onToggle={toggleGroup}
+                />
+              ))}
 
               <Sidebar.Group collapsible defaultOpen={false}>
                 <Sidebar.GroupLabel>Archived</Sidebar.GroupLabel>
