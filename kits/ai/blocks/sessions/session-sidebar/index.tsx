@@ -20,9 +20,10 @@ import {
   DropdownTrigger,
   MenuItem,
 } from '@justanarthur/modo-ui/components/overlays/dropdown'
-import Tooltip from '@justanarthur/modo-ui/components/overlays/tooltip'
+import Tooltip, { TooltipProvider } from '@justanarthur/modo-ui/components/overlays/tooltip'
+import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import Sortable, { useSortableHandle } from '@justanarthur/modo-ui/primitives/layout/sortable'
-import { useMemo } from 'react'
+import { memo, type ReactElement, type SyntheticEvent, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { type IconComponent, useIcon } from '../../../lib/icons'
 import { STATUS_GLYPH, STATUS_LABEL } from '../../../lib/status-glyph'
 import type { Profile, Session, SessionGroup, SessionStatus } from '../../../lib/types'
@@ -65,6 +66,41 @@ type RowActions = Pick<
   'onOpenSplit' | 'onPin' | 'onArchive' | 'onRename' | 'onMarkUnread' | 'onFork'
 >
 
+const ROW_ACTIONS = ['onOpenSplit', 'onPin', 'onArchive', 'onRename', 'onMarkUnread', 'onFork'] as const
+
+/**
+ * Stand-ins for the row callbacks that keep their identity while the same
+ * ones are passed, so memoized rows skip the sidebar's re-renders; each
+ * calls the latest callback.
+ */
+function useRowActions(actions: RowActions): RowActions {
+  const latest = useRef(actions)
+  useLayoutEffect(() => {
+    latest.current = actions
+  })
+  const present = ROW_ACTIONS.filter(key => actions[key]).join()
+  return useMemo(() => {
+    const call = (key: keyof RowActions) => (id: string, value: boolean) =>
+      (latest.current[key] as ((id: string, value: boolean) => void) | undefined)?.(id, value)
+    return Object.fromEntries(present.split(',').flatMap(key => (key ? [[key, call(key as keyof RowActions)]] : [])))
+  }, [present])
+}
+
+/** What a row shows: a fresh but equal session (an app rebuilds its list each render) doesn't re-render it. */
+function sameRowData(a: Session, b: Session) {
+  const kids = (s: Session) => (s.children ?? []).map(c => `${c.id}\n${c.title}\n${c.status}`).join('\n\n')
+  return (
+    a === b ||
+    (a.id === b.id &&
+      a.title === b.title &&
+      a.status === b.status &&
+      a.profile === b.profile &&
+      a.updated === b.updated &&
+      a.pinned === b.pinned &&
+      kids(a) === kids(b))
+  )
+}
+
 interface SessionRowProps {
   session: Session
   /** Inside the pinned Sortable: the actions lead with a grip. */
@@ -74,95 +110,177 @@ interface SessionRowProps {
   actions: RowActions
 }
 
-function SessionRow({ session, reorder, archived = false, actions }: SessionRowProps) {
-  const { onOpenSplit, onPin, onArchive, onRename, onMarkUnread, onFork } = actions
-  const Pin = useIcon('pin')
-  const Archive = useIcon('archive')
+/** A row action's tooltip, mounted once its row is first hovered or focused. */
+function ActionTip({ armed, label, children }: { armed: boolean; label: string; children: ReactElement }) {
+  return armed ? (
+    <Tooltip content={label} side="top">
+      {children}
+    </Tooltip>
+  ) : (
+    children
+  )
+}
+
+/** A row's menu, mounted once its row is first hovered or focused. */
+function RowMenu({
+  session,
+  reorder,
+  archived,
+  actions,
+}: Required<Omit<SessionRowProps, 'actions'>> & { actions: RowActions }) {
+  const { onOpenSplit, onArchive, onRename, onMarkUnread, onFork } = actions
   const More = useIcon('more-vertical')
+  const Archive = useIcon('archive')
   const Pencil = useIcon('pencil')
   const Columns = useIcon('columns-2')
   const Dot = useIcon('circle-dot')
   const Branch = useIcon('git-branch')
-  const glyph = STATUS_GLYPH[session.status]
-  const children = session.children ?? []
-  const pinLabel = session.pinned ? 'Unpin' : 'Pin'
   const archiveLabel = archived ? 'Unarchive' : 'Archive'
 
-  const menu = [
-    onOpenSplit && (
-      <MenuItem key="split" icon={Columns} label="Open in split view" onSelect={() => onOpenSplit(session.id)} />
-    ),
-    onRename && <MenuItem key="rename" icon={Pencil} label="Rename" onSelect={() => onRename(session.id)} />,
-    onMarkUnread && session.status !== 'unread' && (
-      <MenuItem key="unread" icon={Dot} label="Mark as unread" onSelect={() => onMarkUnread(session.id)} />
-    ),
-    onFork && <MenuItem key="fork" icon={Branch} label="Fork into a new session" onSelect={() => onFork(session.id)} />,
-    reorder && onArchive && (
-      <MenuItem key="archive" icon={Archive} label={archiveLabel} onSelect={() => onArchive(session.id, !archived)} />
-    ),
-  ].filter(Boolean)
-
-  // Filtered: the cluster sizes the row's gutter by its child count, nulls included. A pinned row trades Archive (in its menu) for the grip.
-  const cluster = [
-    reorder && <ReorderAction key="reorder" />,
-    onPin && (
-      <Tooltip key="pin" content={pinLabel} side="top">
-        <Sidebar.MenuAction aria-label={pinLabel} onClick={() => onPin(session.id, !session.pinned)}>
-          <Pin />
-        </Sidebar.MenuAction>
-      </Tooltip>
-    ),
-    !reorder && onArchive && (
-      <Tooltip key="archive" content={archiveLabel} side="top">
-        <Sidebar.MenuAction aria-label={archiveLabel} onClick={() => onArchive(session.id, !archived)}>
-          <Archive />
-        </Sidebar.MenuAction>
-      </Tooltip>
-    ),
-    menu.length > 0 && (
-      <DropdownMenu key="more">
-        <DropdownTrigger
-          render={
-            <Sidebar.MenuAction aria-label="More options">
-              <More />
-            </Sidebar.MenuAction>
-          }
-        />
-        <DropdownContent className="w-[240px] min-w-0" align="start" sideOffset={4}>
-          {menu}
-        </DropdownContent>
-      </DropdownMenu>
-    ),
-  ].filter(Boolean)
-
   return (
-    <Sidebar.MenuItem
-      collapsible={children.length > 0 ? true : undefined}
-      defaultOpen={children.length > 0 ? true : undefined}
-    >
-      <Sidebar.MenuButton
-        value={session.id}
-        icon={glyph}
-        status={glyph ? undefined : session.status === 'unread' ? 'unread' : 'idle'}
-        title={`${session.title} · ${STATUS_LABEL[session.status]} · ${session.profile}`}
-      >
-        <span className="truncate">{session.title}</span>
-      </Sidebar.MenuButton>
-      <Sidebar.MenuBadge>{session.updated}</Sidebar.MenuBadge>
-      {cluster.length > 0 && <Sidebar.MenuActions showOnHover>{cluster}</Sidebar.MenuActions>}
-      {children.length > 0 && (
-        <Sidebar.MenuSub>
-          {children.map(child => (
-            <Sidebar.MenuSubItem key={child.id}>
-              <Sidebar.MenuSubButton value={child.id} icon={STATUS_GLYPH[child.status] ?? Branch}>
-                {child.title}
-              </Sidebar.MenuSubButton>
-            </Sidebar.MenuSubItem>
-          ))}
-        </Sidebar.MenuSub>
-      )}
-    </Sidebar.MenuItem>
+    <DropdownMenu>
+      <DropdownTrigger
+        render={
+          <Sidebar.MenuAction aria-label="More options" data-row-action="more">
+            <More />
+          </Sidebar.MenuAction>
+        }
+      />
+      <DropdownContent className="w-[240px] min-w-0" align="start" sideOffset={4}>
+        {onOpenSplit && <MenuItem icon={Columns} label="Open in split view" onSelect={() => onOpenSplit(session.id)} />}
+        {onRename && <MenuItem icon={Pencil} label="Rename" onSelect={() => onRename(session.id)} />}
+        {onMarkUnread && session.status !== 'unread' && (
+          <MenuItem icon={Dot} label="Mark as unread" onSelect={() => onMarkUnread(session.id)} />
+        )}
+        {onFork && <MenuItem icon={Branch} label="Fork into a new session" onSelect={() => onFork(session.id)} />}
+        {reorder && onArchive && (
+          <MenuItem icon={Archive} label={archiveLabel} onSelect={() => onArchive(session.id, !archived)} />
+        )}
+      </DropdownContent>
+    </DropdownMenu>
   )
+}
+
+const SessionRow = memo(
+  function SessionRow({ session, reorder = false, archived = false, actions }: SessionRowProps) {
+    const { onOpenSplit, onPin, onArchive, onRename, onMarkUnread, onFork } = actions
+    // Tooltips and the menu cost a dozen components a row: they mount on the row's first hover or focus.
+    const [armed, setArmed] = useState(false)
+    const refocus = useRef<string | undefined>(undefined)
+    const row = useRef<HTMLLIElement>(null)
+    const Pin = useIcon('pin')
+    const Archive = useIcon('archive')
+    const More = useIcon('more-vertical')
+    const Branch = useIcon('git-branch')
+    const glyph = STATUS_GLYPH[session.status]
+    const children = session.children ?? []
+    const pinLabel = session.pinned ? 'Unpin' : 'Pin'
+    const archiveLabel = archived ? 'Unarchive' : 'Archive'
+    const hasMenu = Boolean(
+      onOpenSplit || onRename || (onMarkUnread && session.status !== 'unread') || onFork || (reorder && onArchive),
+    )
+
+    // Arming swaps an action for its tooltip-wrapped twin: give focus back to the one that had it.
+    useLayoutEffect(() => {
+      if (!armed || !refocus.current) return
+      row.current?.querySelector<HTMLElement>(`[data-row-action="${refocus.current}"]`)?.focus()
+      refocus.current = undefined
+    }, [armed])
+
+    const arm = (e: SyntheticEvent) => {
+      if (e.type === 'focus') refocus.current = (e.target as HTMLElement).dataset.rowAction
+      setArmed(true)
+    }
+
+    // Filtered: the cluster sizes the row's gutter by its child count, nulls included. A pinned row trades Archive (in its menu) for the grip.
+    const cluster = [
+      reorder && <ReorderAction key="reorder" />,
+      onPin && (
+        <ActionTip key="pin" armed={armed} label={pinLabel}>
+          <Sidebar.MenuAction
+            aria-label={pinLabel}
+            data-row-action="pin"
+            onClick={() => onPin(session.id, !session.pinned)}
+          >
+            <Pin />
+          </Sidebar.MenuAction>
+        </ActionTip>
+      ),
+      !reorder && onArchive && (
+        <ActionTip key="archive" armed={armed} label={archiveLabel}>
+          <Sidebar.MenuAction
+            aria-label={archiveLabel}
+            data-row-action="archive"
+            onClick={() => onArchive(session.id, !archived)}
+          >
+            <Archive />
+          </Sidebar.MenuAction>
+        </ActionTip>
+      ),
+      hasMenu &&
+        (armed ? (
+          <RowMenu key="more" session={session} reorder={reorder} archived={archived} actions={actions} />
+        ) : (
+          <Sidebar.MenuAction key="more" aria-label="More options" aria-haspopup="menu" data-row-action="more">
+            <More />
+          </Sidebar.MenuAction>
+        )),
+    ].filter(Boolean)
+
+    return (
+      <Sidebar.MenuItem
+        ref={row}
+        collapsible={children.length > 0 ? true : undefined}
+        defaultOpen={children.length > 0 ? true : undefined}
+        onPointerEnter={armed ? undefined : arm}
+        onFocus={armed ? undefined : arm}
+      >
+        <Sidebar.MenuButton
+          value={session.id}
+          icon={glyph}
+          status={glyph ? undefined : session.status === 'unread' ? 'unread' : 'idle'}
+          title={`${session.title} · ${STATUS_LABEL[session.status]} · ${session.profile}`}
+        >
+          <span className="truncate">{session.title}</span>
+        </Sidebar.MenuButton>
+        <Sidebar.MenuBadge>{session.updated}</Sidebar.MenuBadge>
+        {cluster.length > 0 && <Sidebar.MenuActions showOnHover>{cluster}</Sidebar.MenuActions>}
+        {children.length > 0 && (
+          <Sidebar.MenuSub>
+            {children.map(child => (
+              <Sidebar.MenuSubItem key={child.id}>
+                <Sidebar.MenuSubButton value={child.id} icon={STATUS_GLYPH[child.status] ?? Branch}>
+                  {child.title}
+                </Sidebar.MenuSubButton>
+              </Sidebar.MenuSubItem>
+            ))}
+          </Sidebar.MenuSub>
+        )}
+      </Sidebar.MenuItem>
+    )
+  },
+  (a, b) =>
+    a.reorder === b.reorder &&
+    a.archived === b.archived &&
+    a.actions === b.actions &&
+    sameRowData(a.session, b.session),
+)
+
+/**
+ * The pinned rows' order: `pinned`'s own, or the order just dragged into
+ * until the app hands back a different `pinned`, so a drag shows at once
+ * and a row pinned later joins the list.
+ */
+function usePinnedOrder(pinned: Session[], onChange?: (ids: string[]) => void) {
+  const ids = pinned.map(s => s.id)
+  const key = ids.join('\n')
+  const [dragged, setDragged] = useState<{ key: string; order: string[] }>()
+  const order = dragged?.key === key ? dragged.order : ids
+  const reorder = (next: string[]) => {
+    setDragged({ key, order: next })
+    onChange?.(next)
+  }
+  return [order, reorder] as const
 }
 
 /** The overview's job for the list: narrow the board to one state, project or profile, with counts. */
@@ -241,7 +359,7 @@ function SessionFilters({
 }
 
 interface SessionSidebarProps {
-  /** Pinned sessions, above every group, in the order you dragged them into. */
+  /** Pinned sessions, above every group, in their order. A drag shows its new order at once and hands it to `onPinnedOrderChange`; the next `pinned` wins. */
   pinned: Session[]
   /** Called with the pinned sessions' ids after one is dragged to a new place. */
   onPinnedOrderChange?: (ids: string[]) => void
@@ -321,6 +439,12 @@ interface SessionSidebarProps {
  * Put it inside a `Sidebar.Provider`, next to the `Sidebar.Inset` that holds
  * the session.
  *
+ * Built for hundreds of sessions: an app may rebuild its session objects on
+ * every render, and only rows whose shown data changed (title, state, last
+ * activity, pin, children) re-render; the row callbacks may be fresh
+ * closures too. A row's tooltips and menu mount on its first hover or
+ * focus.
+ *
  * @example {@include ./examples.mdx}
  */
 export default function SessionSidebar({
@@ -355,140 +479,140 @@ export default function SessionSidebar({
   const Bell = useIcon('bell')
   const unread = inbox?.filter(item => !item.read).length ?? 0
   const waiting = everySession(pinned, groups).filter(s => s.status === 'waiting').length
-  const actions = { onOpenSplit, onPin, onArchive, onRename, onMarkUnread, onFork }
+  const actions = useRowActions({ onOpenSplit, onPin, onArchive, onRename, onMarkUnread, onFork })
+  const [selected, select] = useControllableState(value, defaultValue ?? '', onValueChange)
+  const [pinnedOrder, reorderPinned] = usePinnedOrder(pinned, onPinnedOrderChange)
 
+  // One delay group for every row's tooltips, instead of a provider per tooltip.
   return (
-    <Sidebar
-      variant={variant}
-      className={className}
-      value={value}
-      defaultValue={value === undefined ? defaultValue : undefined}
-      onValueChange={onValueChange}
-    >
-      <Sidebar.Header>
-        <div className="flex flex-col gap-0.5">
-          <Sidebar.Menu>
-            <Sidebar.MenuItem>
-              <Sidebar.MenuButton icon={Board} value="overview">
-                Overview
-                <span className="ml-auto text-micro tabular-nums text-muted-foreground">{waiting} need you</span>
-              </Sidebar.MenuButton>
-            </Sidebar.MenuItem>
-            {inbox && (
+    <TooltipProvider>
+      <Sidebar variant={variant} className={className} value={selected} onValueChange={select}>
+        <Sidebar.Header>
+          <div className="flex flex-col gap-0.5">
+            <Sidebar.Menu>
               <Sidebar.MenuItem>
-                <Inbox
-                  items={inbox}
-                  onAction={onInboxAction}
-                  side="right"
-                  align="start"
-                  trigger={
-                    <Sidebar.MenuButton icon={Bell} aria-label={unread > 0 ? `Inbox, ${unread} unread` : 'Inbox'}>
-                      Inbox
-                    </Sidebar.MenuButton>
-                  }
-                />
-                {unread > 0 && <Sidebar.MenuBadge>{unread}</Sidebar.MenuBadge>}
+                <Sidebar.MenuButton icon={Board} value="overview">
+                  Overview
+                  <span className="ml-auto text-micro tabular-nums text-muted-foreground">{waiting} need you</span>
+                </Sidebar.MenuButton>
               </Sidebar.MenuItem>
-            )}
-            <Sidebar.MenuItem>
-              <Sidebar.MenuButton icon={Plus} value="new">
-                New session
-                <Kbd variant="plain" className="ml-auto">
-                  ⌘N
-                </Kbd>
-              </Sidebar.MenuButton>
-            </Sidebar.MenuItem>
-          </Sidebar.Menu>
-          <SidebarSearchField
-            placeholder="Search sessions"
-            {...(onSearch && {
-              readOnly: true,
-              onClick: onSearch,
-              onKeyDown: e => {
-                if (e.key === 'Enter') onSearch()
-              },
-            })}
-          />
-        </div>
-      </Sidebar.Header>
+              {inbox && (
+                <Sidebar.MenuItem>
+                  <Inbox
+                    items={inbox}
+                    onAction={onInboxAction}
+                    side="right"
+                    align="start"
+                    trigger={
+                      <Sidebar.MenuButton icon={Bell} aria-label={unread > 0 ? `Inbox, ${unread} unread` : 'Inbox'}>
+                        Inbox
+                      </Sidebar.MenuButton>
+                    }
+                  />
+                  {unread > 0 && <Sidebar.MenuBadge>{unread}</Sidebar.MenuBadge>}
+                </Sidebar.MenuItem>
+              )}
+              <Sidebar.MenuItem>
+                <Sidebar.MenuButton icon={Plus} value="new">
+                  New session
+                  <Kbd variant="plain" className="ml-auto">
+                    ⌘N
+                  </Kbd>
+                </Sidebar.MenuButton>
+              </Sidebar.MenuItem>
+            </Sidebar.Menu>
+            <SidebarSearchField
+              placeholder="Search sessions"
+              {...(onSearch && {
+                readOnly: true,
+                onClick: onSearch,
+                onKeyDown: e => {
+                  if (e.key === 'Enter') onSearch()
+                },
+              })}
+            />
+          </div>
+        </Sidebar.Header>
 
-      {/* No hairline at the scroll edges: the fade alone says the list goes on. */}
-      <Sidebar.Content className="before:!content-none after:!content-none">
-        {list === 'filters' && <SessionFilters pinned={pinned} groups={groups} profiles={profiles} />}
-        {list === 'sessions' && (
-          <>
-            <Sidebar.Group collapsible>
-              <Sidebar.GroupLabel>Pinned</Sidebar.GroupLabel>
-              <Sidebar.Menu>
-                <Sortable
-                  as="none"
-                  handle
-                  items={pinned.map(session => ({
-                    id: session.id,
-                    label: session.title,
-                    content: <SessionRow session={session} reorder actions={actions} />,
-                  }))}
-                  onOrderChange={onPinnedOrderChange}
-                />
-              </Sidebar.Menu>
-            </Sidebar.Group>
+        {/* No hairline at the scroll edges: the fade alone says the list goes on. */}
+        <Sidebar.Content className="before:!content-none after:!content-none">
+          {list === 'filters' && <SessionFilters pinned={pinned} groups={groups} profiles={profiles} />}
+          {list === 'sessions' && (
+            <>
+              <Sidebar.Group collapsible>
+                <Sidebar.GroupLabel>Pinned</Sidebar.GroupLabel>
+                <Sidebar.Menu>
+                  <Sortable
+                    as="none"
+                    handle
+                    items={pinned.map(session => ({
+                      id: session.id,
+                      label: session.title,
+                      content: <SessionRow session={session} reorder actions={actions} />,
+                    }))}
+                    order={pinnedOrder}
+                    onOrderChange={reorderPinned}
+                  />
+                </Sidebar.Menu>
+              </Sidebar.Group>
 
-            {groups.map(group => {
-              const isProject = group.kind === 'project'
-              const onAction = isProject ? onNewSessionIn : onFilterSection
-              const label = isProject ? `New session in ${group.label}` : 'Filter'
-              return (
-                <Sidebar.Group key={group.label} collapsible>
-                  <Sidebar.GroupLabel>{group.label}</Sidebar.GroupLabel>
-                  {onAction && (
-                    <Sidebar.GroupActions>
-                      <Tooltip content={label} side="top">
-                        <Sidebar.GroupAction aria-label={label} onClick={() => onAction(group)}>
-                          {isProject ? <Plus /> : <Filter />}
-                        </Sidebar.GroupAction>
-                      </Tooltip>
-                    </Sidebar.GroupActions>
-                  )}
-                  <Sidebar.Menu>
-                    {group.sessions.map(session => (
-                      <SessionRow key={session.id} session={session} actions={actions} />
-                    ))}
-                  </Sidebar.Menu>
-                </Sidebar.Group>
-              )
-            })}
+              {groups.map(group => {
+                const isProject = group.kind === 'project'
+                const onAction = isProject ? onNewSessionIn : onFilterSection
+                const label = isProject ? `New session in ${group.label}` : 'Filter'
+                return (
+                  <Sidebar.Group key={group.label} collapsible>
+                    <Sidebar.GroupLabel>{group.label}</Sidebar.GroupLabel>
+                    {onAction && (
+                      <Sidebar.GroupActions>
+                        <Tooltip content={label} side="top">
+                          <Sidebar.GroupAction aria-label={label} onClick={() => onAction(group)}>
+                            {isProject ? <Plus /> : <Filter />}
+                          </Sidebar.GroupAction>
+                        </Tooltip>
+                      </Sidebar.GroupActions>
+                    )}
+                    <Sidebar.Menu>
+                      {group.sessions.map(session => (
+                        <SessionRow key={session.id} session={session} actions={actions} />
+                      ))}
+                    </Sidebar.Menu>
+                  </Sidebar.Group>
+                )
+              })}
 
-            <Sidebar.Group collapsible defaultOpen={false}>
-              <Sidebar.GroupLabel>Archived</Sidebar.GroupLabel>
-              <Sidebar.Menu>
-                {archived.map(session => (
-                  <SessionRow key={session.id} session={session} archived actions={actions} />
-                ))}
-              </Sidebar.Menu>
-            </Sidebar.Group>
-          </>
-        )}
-      </Sidebar.Content>
+              <Sidebar.Group collapsible defaultOpen={false}>
+                <Sidebar.GroupLabel>Archived</Sidebar.GroupLabel>
+                <Sidebar.Menu>
+                  {archived.map(session => (
+                    <SessionRow key={session.id} session={session} archived actions={actions} />
+                  ))}
+                </Sidebar.Menu>
+              </Sidebar.Group>
+            </>
+          )}
+        </Sidebar.Content>
 
-      <Sidebar.Footer>
-        <Sidebar.Group collapsible>
-          <Sidebar.GroupLabel>Usage</Sidebar.GroupLabel>
-          <ProfileUsage profiles={profiles} onManage={onOpenSettings} />
-        </Sidebar.Group>
-        {onOpenSettings && (
-          <Sidebar.Menu>
-            <Sidebar.MenuItem>
-              <Sidebar.MenuButton icon={Settings} onClick={onOpenSettings}>
-                Settings
-                <Kbd variant="plain" className="ml-auto">
-                  ⌘,
-                </Kbd>
-              </Sidebar.MenuButton>
-            </Sidebar.MenuItem>
-          </Sidebar.Menu>
-        )}
-      </Sidebar.Footer>
-    </Sidebar>
+        <Sidebar.Footer>
+          <Sidebar.Group collapsible>
+            <Sidebar.GroupLabel>Usage</Sidebar.GroupLabel>
+            <ProfileUsage profiles={profiles} onManage={onOpenSettings} />
+          </Sidebar.Group>
+          {onOpenSettings && (
+            <Sidebar.Menu>
+              <Sidebar.MenuItem>
+                <Sidebar.MenuButton icon={Settings} onClick={onOpenSettings}>
+                  Settings
+                  <Kbd variant="plain" className="ml-auto">
+                    ⌘,
+                  </Kbd>
+                </Sidebar.MenuButton>
+              </Sidebar.MenuItem>
+            </Sidebar.Menu>
+          )}
+        </Sidebar.Footer>
+      </Sidebar>
+    </TooltipProvider>
   )
 }
 
