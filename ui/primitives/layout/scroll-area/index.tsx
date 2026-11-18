@@ -22,6 +22,26 @@ import { useShape } from '../../../lib/shape-context'
 import { useTouchPrimary } from '../../../lib/use-touch-primary'
 import { cn } from '../../../lib/utils'
 
+// Base UI writes the edge distances (`--scroll-area-overflow-*`) on the
+// viewport at every scroll event and registers them non-inherited, except in
+// WebKit, where an inherited var re-styles every descendant per event: a long
+// list recalculated thousands of elements a frame. Only the viewport reads
+// them (`scroll-fade`), so they are registered for WebKit too.
+if (typeof CSS !== 'undefined' && 'registerProperty' in CSS) {
+  for (const edge of ['x-start', 'x-end', 'y-start', 'y-end']) {
+    try {
+      CSS.registerProperty({
+        name: `--scroll-area-overflow-${edge}`,
+        syntax: '<length>',
+        inherits: false,
+        initialValue: '0px',
+      })
+    } catch {
+      // Already registered.
+    }
+  }
+}
+
 // Touch-primary devices get native overflow scrolling (momentum,
 // rubber-banding); the exported ScrollBar no-ops there.
 const ScrollAreaContext = createContext<boolean>(false)
