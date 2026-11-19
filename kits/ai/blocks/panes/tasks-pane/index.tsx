@@ -7,6 +7,7 @@
 
 import { TooltipProvider } from '@justanarthur/modo-ui/components/overlays/tooltip'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
+import Skeleton from '@justanarthur/modo-ui/primitives/content/skeleton'
 import { useState } from 'react'
 import { useIcon } from '../../../lib/icons'
 import { IconAction, PaneEmpty, PaneSection } from '../../../lib/pane-parts'
@@ -67,8 +68,8 @@ function TaskRow({
 }
 
 interface TasksPaneProps {
-  /** The session's background tasks. The pane shows them as given, a Stop or Retry applied until the next `tasks` arrives. */
-  tasks: PaneTask[]
+  /** The session's background tasks. The pane shows them as given, a Stop or Retry applied until the next `tasks` arrives. `undefined` is still loading: placeholder rows instead of "No background tasks". */
+  tasks: PaneTask[] | undefined
   /** Called with the running task Stop ends. Omit to leave Stop out. */
   onStop?: (task: PaneTask) => void
   /** Called with the failed or stopped task Retry starts again. Omit to leave Retry out. */
@@ -83,7 +84,8 @@ interface TasksPaneProps {
  * is doing or how it ended. A running task stops from its row (with
  * `onStop`); one that failed or stopped retries (with `onRetry`). The rows
  * follow `tasks`: a Stop or Retry shows at once and holds until new `tasks`
- * arrive. With none, the pane says what runs there.
+ * arrive. With none, the pane says what runs there; with `tasks` still
+ * `undefined`, it shows placeholder rows until the first list arrives.
  *
  * @example {@include ./examples.mdx}
  */
@@ -93,8 +95,16 @@ export default function TasksPane({ tasks, onStop, onRetry }: TasksPaneProps) {
   const setStatus = (id: string, status: PaneTask['status']) =>
     setLocal(l => ({
       source: tasks,
-      list: (l.source === tasks ? l.list : tasks).map(t => (t.id === id ? { ...t, status } : t)),
+      list: ((l.source === tasks ? l.list : tasks) ?? []).map(t => (t.id === id ? { ...t, status } : t)),
     }))
+
+  if (!list)
+    return (
+      <div aria-busy>
+        <Skeleton rows={3} className="px-2" />
+      </div>
+    )
+
   const running = list.filter(t => t.status === 'running')
   const finished = list.filter(t => t.status !== 'running')
 
