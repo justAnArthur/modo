@@ -274,13 +274,13 @@ interface MarkdownProps {
  */
 const Markdown = Object.assign(
   function Markdown({ children, streaming = false, className }: MarkdownProps) {
-    const tokens = useMemo(() => Lexer.lex(streaming ? settle(children) : children), [children, streaming])
-
-    return (
-      <MarkdownProse className={className}>
-        <Blocks tokens={tokens} />
-      </MarkdownProse>
+    // One element per source, so a re-render of the parent skips the tree.
+    const blocks = useMemo(
+      () => <Blocks tokens={Lexer.lex(streaming ? settle(children) : children)} />,
+      [children, streaming],
     )
+
+    return <MarkdownProse className={className}>{blocks}</MarkdownProse>
   },
   { Prose: MarkdownProse },
 )

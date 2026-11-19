@@ -6,7 +6,7 @@
 
 'use client'
 
-import { type ReactNode, useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import Button from '../../components/actions/button'
 import Sidebar from '../../components/navigation/sidebar'
 import { useSidebarShortcut } from '../../components/navigation/sidebar/sidebar-shortcut'
@@ -229,6 +229,7 @@ export default function DesktopShell({
   const hasRight = right !== undefined
   const paneOpen = hasRight && rightOpen
   const inCard = titleBar === 'card'
+  const paneSizes = useMemo(() => (paneOpen ? [100 - paneSize, paneSize] : [100, 0]), [paneOpen, paneSize])
 
   // The window's own width, not the viewport's: a framed or resized window doesn't follow the viewport.
   const root = useRef<HTMLDivElement | null>(null)
@@ -324,7 +325,7 @@ export default function DesktopShell({
           {!hasRight || narrow ? (
             card(narrow && paneOpen ? right : main)
           ) : (
-            <Resizable sizes={paneOpen ? [100 - paneSize, paneSize] : [100, 0]} onSizesChange={onSizesChange}>
+            <Resizable sizes={paneSizes} onSizesChange={onSizesChange}>
               <Resizable.Panel defaultSize={100 - defaultPaneSize} minSize={100 - maxPaneSize}>
                 {card(main)}
               </Resizable.Panel>

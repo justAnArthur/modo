@@ -57,7 +57,7 @@ const TabsList = forwardRef<HTMLDivElement, TabsListProps>(
     const size = useSize()
     const lift = useLift(3)
     const hover = useFluidHover(containerRef, { axis: 'x' })
-    const { activeIndex: hoveredIndex, setActiveIndex, itemRects, handlers, registerItem, measureItems } = hover
+    const { activeIndex: hoveredIndex, setActiveIndex, itemRects, handlers, registerItem } = hover
     const focus = useRowFocus(hover)
 
     // Positions match IndexedRows: one per element child.
@@ -71,10 +71,6 @@ const TabsList = forwardRef<HTMLDivElement, TabsListProps>(
     useLayoutEffect(() => {
       setFallback(first)
     }, [first, setFallback])
-
-    useEffect(() => {
-      measureItems()
-    }, [measureItems, children])
 
     const selectedIndex = selectedValue === undefined ? -1 : values.indexOf(selectedValue)
     const [optimisticIndex, setOptimisticIndex] = useState<number | null>(null)

@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment } from 'react'
+import { Fragment, useMemo } from 'react'
 import type { TokenType } from 'sugar-high'
 import { parse } from 'sugar-high/core'
 import { type Language, lang, languages } from 'sugar-high/lang'
@@ -45,7 +45,9 @@ function highlight(source: string, language: Language['id']) {
  *
  * sugar-high tokenizes; each token type takes a `--syntax-*` token from
  * tokens/colors.css, so code follows light and dark like everything else.
- * Long lines scroll sideways under a fading edge instead of wrapping. It is
+ * Long lines scroll sideways under a fading edge instead of wrapping, on the
+ * platform's own scrollbar (ScrollArea's `native`), so hundreds of blocks
+ * cost nothing while their column resizes. It is
  * also the docs chrome's Code slot: every example's source and every fenced
  * block on these pages renders through it.
  *
@@ -64,17 +66,20 @@ export default function Code({
   className?: string
 }) {
   const level = useLift(1)
-  const source = children.trim()
   const id = lang(language)
+  // The same element on every render, so React skips the token spans.
+  const code = useMemo(() => {
+    const source = children.trim()
+    return <code>{id && id !== 'plaintext' ? highlight(source, id) : source}</code>
+  }, [children, id])
   return (
     <ScrollArea
+      native
       orientation="horizontal"
       viewportClassName="scroll-fade-x"
       className={cn('rounded-xl', SURFACE_BG[level], className)}
     >
-      <pre className="m-0 w-max min-w-full p-4 font-mono text-caption leading-relaxed text-foreground">
-        <code>{id && id !== 'plaintext' ? highlight(source, id) : source}</code>
-      </pre>
+      <pre className="m-0 w-max min-w-full p-4 font-mono text-caption leading-relaxed text-foreground">{code}</pre>
     </ScrollArea>
   )
 }
