@@ -263,10 +263,11 @@ export default function BusinessGrid({
                       </span>
                       <span className="flex w-7 justify-center">
                         <Tooltip content={`${item.title} · v${item.version}`} side="top">
+                          {/* Spacing is logical: in vertical writing px (padding-inline) is the top and bottom. */}
                           <span
                             aria-hidden
                             className={cn(
-                              'block max-h-32 rotate-180 truncate py-2 text-caption weight-normal [writing-mode:vertical-rl]',
+                              'block max-h-32 rotate-180 truncate px-2 text-caption weight-normal [writing-mode:vertical-rl]',
                               activeItem === item.key ? 'text-foreground' : 'text-muted-foreground',
                             )}
                           >
