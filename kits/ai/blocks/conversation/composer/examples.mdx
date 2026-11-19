@@ -57,10 +57,17 @@ In the draft, the + palette and the run trigger (permission mode, model, effort,
 
 # New session
 
-`target`: the project (its popover holds the worktree, setup script and base branch) and the profile can still be picked.
+`target`: the project (its popover holds the worktree, setup script and base branch) and the profile can still be picked. With `onAddProfile` and `onManageProfiles`, the profile panel's footer shows "Add profile" and "Manage"; a press closes the panel, then calls them.
 
 <div className="flex h-[200px] w-full max-w-2xl items-end">
-  <Composer {...COMPOSER} target context={0} placeholder="Describe the task, or type / for commands" />
+  <Composer
+    {...COMPOSER}
+    target
+    context={0}
+    placeholder="Describe the task, or type / for commands"
+    onAddProfile={() => {}}
+    onManageProfiles={() => {}}
+  />
 </div>
 
 # Controlled settings

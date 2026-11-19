@@ -18,6 +18,7 @@ import Popover from '@justanarthur/modo-ui/components/overlays/popover'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { SizeProvider } from '@justanarthur/modo-ui/primitives/systems/sizes'
+import { useState } from 'react'
 import { useIcon } from '../../../lib/icons'
 import { NO_USAGE, percent } from '../../../lib/pace'
 import { RowTrigger } from '../../../lib/row-trigger'
@@ -103,6 +104,10 @@ interface ProfileSwitcherProps {
   variant?: 'button' | 'sidebar'
   /** Which side of the trigger the panel opens on. Defaults to `'bottom'`. */
   side?: 'top' | 'right' | 'bottom' | 'left'
+  /** Called when the panel's "Add profile" is pressed, after the panel closes: open the add-profile flow here. Without it the button is not shown. */
+  onAddProfile?: () => void
+  /** Called when the panel's "Manage" is pressed, after the panel closes: open the profiles screen here. Without it the button is not shown. */
+  onManage?: () => void
   /** Classes for the trigger. */
   className?: string
 }
@@ -121,7 +126,9 @@ interface ProfileSwitcherProps {
  * shows no lines on the trigger, a dash for its share and "No usage yet"
  * under Limits, instead of empty tracks. The panel grows out of the
  * trigger; the active profile's background melts to the row you pick, and
- * the arrow keys move the pick.
+ * the arrow keys move the pick. Its footer holds "Add profile" and "Manage"
+ * when `onAddProfile` and `onManage` are given; pressing one closes the
+ * panel, then calls it.
  *
  * @example {@include ./examples.mdx}
  */
@@ -133,14 +140,23 @@ export default function ProfileSwitcher({
   defaultOpen = false,
   variant = 'button',
   side = 'bottom',
+  onAddProfile,
+  onManage,
   className,
 }: ProfileSwitcherProps) {
   const [current, setCurrent] = useControllableState(value, defaultValue ?? profiles[0]?.id ?? '', onValueChange)
+  const [open, setOpen] = useState(defaultOpen)
   const active = profiles.find(p => p.id === current) ?? profiles[0]
   const ChevronsUpDown = useIcon('chevrons-up-down')
   const Plus = useIcon('plus')
   const Settings = useIcon('settings')
   if (!active) return null
+
+  /** Closes the panel, then hands off: the app's next screen opens over a settled page. */
+  const closeThen = (action: () => void) => () => {
+    setOpen(false)
+    action()
+  }
 
   const trigger =
     variant === 'sidebar' ? (
@@ -163,7 +179,7 @@ export default function ProfileSwitcher({
     )
 
   const popover = (
-    <Popover defaultOpen={defaultOpen}>
+    <Popover open={open} onOpenChange={setOpen}>
       <Popover.Trigger render={trigger} />
       <Popover.Content side={side} align="start" sideOffset={8} className={LIST_POPOVER}>
         <SizeProvider size="default">
@@ -194,14 +210,26 @@ export default function ProfileSwitcher({
                 </List.Row>
               ))}
           </List.Section>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="compact" leadingIcon={Plus}>
-              Add profile
-            </Button>
-            <Button variant="ghost" size="compact" leadingIcon={Settings} className="ml-auto">
-              Manage
-            </Button>
-          </div>
+          {(onAddProfile || onManage) && (
+            <div className="flex items-center gap-1">
+              {onAddProfile && (
+                <Button variant="ghost" size="compact" leadingIcon={Plus} onClick={closeThen(onAddProfile)}>
+                  Add profile
+                </Button>
+              )}
+              {onManage && (
+                <Button
+                  variant="ghost"
+                  size="compact"
+                  leadingIcon={Settings}
+                  className="ml-auto"
+                  onClick={closeThen(onManage)}
+                >
+                  Manage
+                </Button>
+              )}
+            </div>
+          )}
         </SizeProvider>
       </Popover.Content>
     </Popover>

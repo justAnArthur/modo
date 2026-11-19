@@ -523,6 +523,10 @@ interface ComposerProps {
   defaultProfile?: string
   /** Called with the profile picked, by id. */
   onProfileChange?: (profile: string) => void
+  /** Called when the profile panel's "Add profile" is pressed, after it closes. Without it the button is not shown. */
+  onAddProfile?: () => void
+  /** Called when the profile panel's "Manage" is pressed, after it closes. Without it the button is not shown. */
+  onManageProfiles?: () => void
   /** The draft's placeholder. Defaults to `'Ask, or type / for commands'`. */
   placeholder?: string
   /** Called with the trimmed text and the attached files when a message is sent, or sent from the queue. */
@@ -556,7 +560,9 @@ interface ComposerProps {
  * The row under it, on the shell, holds the rest. On the left, where the
  * session runs: the project, whose popover also holds the worktree, the
  * setup script and the base branch, and the profile, with two thin lines for
- * its session and weekly limits (see the profile switcher). On the right,
+ * its session and weekly limits (see the profile switcher; its panel's "Add
+ * profile" and "Manage" show when `onAddProfile` and `onManageProfiles` are
+ * given). On the right,
  * how it runs: one trigger showing the permission mode, the model, the
  * effort and a small context ring opens the model (with a note on each), a
  * tall effort slider, the permission mode, fast mode, the output style and
@@ -638,6 +644,8 @@ const Composer = Object.assign(
     profile,
     defaultProfile,
     onProfileChange,
+    onAddProfile,
+    onManageProfiles,
     placeholder = 'Ask, or type / for commands',
     className,
     ...draft
@@ -688,6 +696,8 @@ const Composer = Object.assign(
                 value={profile}
                 defaultValue={defaultProfile}
                 onValueChange={onProfileChange}
+                onAddProfile={onAddProfile}
+                onManage={onManageProfiles}
                 side="top"
               />
               <div className="ml-auto min-w-0">

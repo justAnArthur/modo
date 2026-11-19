@@ -1,15 +1,17 @@
 /*!
  * Local addition: the AI app's "Add profile" flow. A Dialog stepper: pick a
  * kind (a Claude account in its own config dir, or an Anthropic-compatible
- * provider), name it, sign in (the `claude login` output in a LogView, or a
- * test request against the provider), done. The sign-in itself runs outside;
- * its state comes in through `signIn`.
+ * provider), name it, sign in (`claude login`, or a test request against the
+ * provider), done; or, in `'sign-in'` mode, the sign-in step alone for an
+ * existing profile. The sign-in itself runs outside; its state comes in
+ * through `signIn`.
  */
 
 'use client'
 
 import Button from '@justanarthur/modo-ui/components/actions/button'
 import Copy from '@justanarthur/modo-ui/components/actions/copy'
+import Accordion from '@justanarthur/modo-ui/components/containers/accordion'
 import List from '@justanarthur/modo-ui/components/data-display/list'
 import LogView from '@justanarthur/modo-ui/components/data-display/log-view'
 import { Spinner } from '@justanarthur/modo-ui/components/feedback/progress'
@@ -261,21 +263,69 @@ function Details({
   )
 }
 
-function SignIn({ draft, status, onRetry }: { draft: ProfileDraft; status: SignInStatus; onRetry?: () => void }) {
+/** The code the sign-in page shows when its browser can't reach the CLI's localhost callback. */
+function CodeField({ onSubmit }: { onSubmit: (code: string) => void }) {
+  const [code, setCode] = useState('')
+  const id = useId()
+  const trimmed = code.trim()
+  return (
+    <form
+      className="flex flex-col gap-[var(--space-1)]"
+      onSubmit={e => {
+        e.preventDefault()
+        if (!trimmed) return
+        onSubmit(trimmed)
+        setCode('')
+      }}
+    >
+      <Label htmlFor={id} size="compact">
+        The page shows a code instead? Paste it here
+      </Label>
+      <div className="flex items-center gap-[var(--space-2)]">
+        <Input
+          id={id}
+          variant="bordered"
+          size="compact"
+          className="min-w-0 flex-1"
+          autoComplete="off"
+          spellCheck={false}
+          value={code}
+          onValueChange={setCode}
+        />
+        <Button type="submit" variant="secondary" size="compact" disabled={!trimmed}>
+          Submit
+        </Button>
+      </div>
+    </form>
+  )
+}
+
+function SignIn({
+  draft,
+  status,
+  onRetry,
+  onSubmitCode,
+}: {
+  draft: ProfileDraft
+  status: SignInStatus
+  onRetry?: () => void
+  onSubmitCode?: (code: string) => void
+}) {
   const CircleCheck = useIcon('circle-check')
   const CircleX = useIcon('circle-x')
   const External = useIcon('external-link')
   const Retry = useIcon('rotate-ccw')
   const compatible = draft.kind === 'compatible'
+  const waiting = status.state === 'waiting'
 
   const head: Record<SignInStatus['state'], { icon: ReactNode; title: string; detail: ReactNode }> = {
     idle: {
-      icon: <Spinner className="size-4" />,
+      icon: <Spinner className="size-5" />,
       title: compatible ? 'Starting the test request…' : 'Starting claude login…',
       detail: compatible ? draft.baseUrl : configDirFor(draft),
     },
     waiting: {
-      icon: <Spinner className="size-4" />,
+      icon: <Spinner className="size-5" />,
       title: compatible ? `Testing ${draft.baseUrl}…` : 'Waiting for the browser…',
       detail: compatible
         ? `One short request with the key from $${draft.apiKeyEnv}.`
@@ -295,28 +345,50 @@ function SignIn({ draft, status, onRetry }: { draft: ProfileDraft; status: SignI
   const { icon, title, detail } = head[status.state]
 
   return (
-    <div className="flex flex-col gap-[var(--space-3)]">
+    <div className="flex flex-col gap-[var(--space-4)]">
       <div className="flex items-start gap-[var(--space-3)]">
-        <span className="mt-0.5 flex shrink-0">{icon}</span>
+        {/* One 20px column for the spinner and the marks, so the title doesn't shift between states. */}
+        <span className="flex size-5 shrink-0 items-center justify-center">{icon}</span>
         <div aria-live="polite" className="flex min-w-0 flex-1 flex-col">
           <span className="text-body weight-medium text-foreground">{title}</span>
           {detail && <span className="text-caption text-muted-foreground">{detail}</span>}
         </div>
         {status.state === 'failed' && onRetry && (
           <Button variant="secondary" size="compact" leadingIcon={Retry} onClick={onRetry}>
-            Try again
+            Retry
           </Button>
         )}
-        {status.state === 'waiting' && status.url && (
+      </div>
+
+      {waiting && status.url && (
+        <div className="flex items-center gap-[var(--space-2)]">
+          <Copy
+            value={status.url}
+            size="compact"
+            className="min-w-0 flex-1"
+            labels={{ copy: 'Copy the sign-in link' }}
+          />
           <Button variant="ghost" size="compact" leadingIcon={External} asChild>
             <a href={status.url} target="_blank" rel="noreferrer">
               Open again
             </a>
           </Button>
-        )}
-      </div>
-      {status.state === 'waiting' && status.url && <Copy value={status.url} label="Sign-in link" size="compact" />}
-      <LogView label={compatible ? 'Test request' : 'claude login'} lines={status.log} maxHeight={180} wrap />
+        </div>
+      )}
+
+      {waiting && !compatible && onSubmitCode && <CodeField onSubmit={onSubmitCode} />}
+
+      {/* The CLI's own words, for when something looks off: folded away, and gone once it worked. */}
+      {status.state !== 'success' && status.log.length > 0 && (
+        <Accordion size="compact" highlight="trigger">
+          <Accordion.Item value="output">
+            <Accordion.Trigger>Show output</Accordion.Trigger>
+            <Accordion.Content>
+              <LogView label={compatible ? 'Test request' : 'claude login'} lines={status.log} maxHeight={180} wrap />
+            </Accordion.Content>
+          </Accordion.Item>
+        </Accordion>
+      )}
     </div>
   )
 }
@@ -355,10 +427,15 @@ function Summary({ draft, status }: { draft: ProfileDraft; status: SignInStatus 
   )
 }
 
+/** Adding a new profile (the four steps), or signing an existing one in again (the sign-in step alone). */
+export type OnboardingMode = 'add' | 'sign-in'
+
 interface ProfileOnboardingPanelProps {
-  /** The step shown (controlled). Pair with `onStepChange`. */
+  /** `'add'` walks the four steps. `'sign-in'` signs an existing profile in again: the sign-in step alone, without the stepper or Back, titled "Sign in to <name>" (the name from `defaultDraft`); Done hands the profile to `onComplete` once it succeeds. The app starts the sign-in itself there, as no step is entered. Defaults to `'add'`. */
+  mode?: OnboardingMode
+  /** The step shown (controlled). Pair with `onStepChange`. Ignored in `'sign-in'` mode. */
   step?: OnboardingStep
-  /** The step it starts on. Defaults to `'kind'`. */
+  /** The step it starts on. Defaults to `'kind'`. Ignored in `'sign-in'` mode. */
   defaultStep?: OnboardingStep
   /** Called when Back or Continue moves to another step. */
   onStepChange?: (step: OnboardingStep) => void
@@ -370,7 +447,9 @@ interface ProfileOnboardingPanelProps {
   signIn?: SignInStatus
   /** Called on entering the sign-in step, with what the form holds: start `claude login` or the test request here. */
   onSignIn?: (draft: ProfileDraft) => void
-  /** Called with the new profile when Add profile is pressed on the last step. */
+  /** Called with the code the sign-in page shows when its browser can't reach the CLI's callback: pass it on to `claude login`. Given, a code field shows while the sign-in waits. */
+  onSubmitCode?: (code: string) => void
+  /** Called with the new profile when Add profile is pressed on the last step (Done, in `'sign-in'` mode). */
   onComplete?: (profile: Profile) => void
   /** Called when Cancel is pressed on the first step. */
   onCancel?: () => void
@@ -380,6 +459,7 @@ interface ProfileOnboardingPanelProps {
 
 /** The stepper's body, without the Dialog: for a page of its own, or the docs. */
 function ProfileOnboardingPanel({
+  mode = 'add',
   step,
   defaultStep = 'kind',
   onStepChange,
@@ -387,11 +467,14 @@ function ProfileOnboardingPanel({
   taken = [],
   signIn = IDLE,
   onSignIn,
+  onSubmitCode,
   onComplete,
   onCancel,
   className,
 }: ProfileOnboardingPanelProps) {
-  const [current, setCurrent] = useControllableState(step, defaultStep, onStepChange)
+  const [stepState, setCurrent] = useControllableState(step, defaultStep, onStepChange)
+  const signInOnly = mode === 'sign-in'
+  const current = signInOnly ? 'sign-in' : stepState
   const [draft, setDraft] = useState<ProfileDraft>({
     ...EMPTY_DRAFT,
     ...defaultDraft,
@@ -404,7 +487,7 @@ function ProfileOnboardingPanel({
     if (next === 'sign-in') onSignIn?.(draft)
     setCurrent(next)
   }
-  const back = STEPS[at - 1]?.id
+  const back = signInOnly ? undefined : STEPS[at - 1]?.id
   const canContinue =
     current === 'kind' ||
     (current === 'details' && ready(draft) && !taken.includes(draft.name)) ||
@@ -424,15 +507,20 @@ function ProfileOnboardingPanel({
           title: 'Name it and give it a home',
           description: 'A new config dir keeps this account apart from your others.',
         },
-    'sign-in': compatible
-      ? { title: 'Test the connection', description: 'One request checks the URL, the key and the model mapping.' }
-      : { title: 'Sign in', description: 'claude login opens your browser for the account this profile uses.' },
+    'sign-in': signInOnly
+      ? {
+          title: draft.name ? `Sign in to ${draft.name}` : 'Sign in again',
+          description: 'claude login opens your browser; sign in with the account this profile uses.',
+        }
+      : compatible
+        ? { title: 'Test the connection', description: 'One request checks the URL, the key and the model mapping.' }
+        : { title: 'Sign in', description: 'claude login opens your browser for the account this profile uses.' },
     done: { title: 'Ready', description: 'New sessions can run under it from the profile switcher.' },
   }
 
   return (
     <div className={cn('flex flex-col gap-[var(--space-5)]', className)}>
-      <Stepper step={current} />
+      {!signInOnly && <Stepper step={current} />}
       <div className="flex flex-col gap-[var(--space-1)]">
         <h2 className="m-0 text-title text-foreground">{titles[current].title}</h2>
         <p className="m-0 text-body text-muted-foreground">{titles[current].description}</p>
@@ -470,7 +558,9 @@ function ProfileOnboardingPanel({
         />
       )}
       {current === 'details' && <Details draft={draft} taken={taken} onChange={setDraft} />}
-      {current === 'sign-in' && <SignIn draft={draft} status={signIn} onRetry={() => onSignIn?.(draft)} />}
+      {current === 'sign-in' && (
+        <SignIn draft={draft} status={signIn} onRetry={() => onSignIn?.(draft)} onSubmitCode={onSubmitCode} />
+      )}
       {current === 'done' && <Summary draft={draft} status={signIn} />}
 
       <div className="flex items-center justify-end gap-[var(--space-2)]">
@@ -485,8 +575,13 @@ function ProfileOnboardingPanel({
             </Button>
           )
         )}
-        {current === 'done' ? (
-          <Button onClick={() => onComplete?.(toProfile(draft, signIn))}>Add profile</Button>
+        {current === 'done' || signInOnly ? (
+          <Button
+            disabled={signInOnly && signIn.state !== 'success'}
+            onClick={() => onComplete?.(toProfile(draft, signIn))}
+          >
+            {signInOnly ? 'Done' : 'Add profile'}
+          </Button>
         ) : (
           <Button disabled={!canContinue} onClick={() => go(STEPS[at + 1]?.id ?? 'done')}>
             {current === 'details' ? (compatible ? 'Test connection' : 'Sign in') : 'Continue'}
@@ -506,9 +601,11 @@ interface ProfileOnboardingProps {
   defaultOpen?: boolean
   /** Called when the dialog opens or closes. */
   onOpenChange?: (open: boolean) => void
-  /** The step shown (controlled). Pair with `onStepChange`. */
+  /** `'add'` walks the four steps. `'sign-in'` signs an existing profile in again: the sign-in step alone, without the stepper or Back, titled "Sign in to <name>" (the name from `defaultDraft`); Done hands the profile to `onComplete` once it succeeds. The app starts the sign-in itself there, as no step is entered. Defaults to `'add'`. */
+  mode?: OnboardingMode
+  /** The step shown (controlled). Pair with `onStepChange`. Ignored in `'sign-in'` mode. */
   step?: OnboardingStep
-  /** The step it starts on. Defaults to `'kind'`. */
+  /** The step it starts on. Defaults to `'kind'`. Ignored in `'sign-in'` mode. */
   defaultStep?: OnboardingStep
   /** Called when Back or Continue moves to another step. */
   onStepChange?: (step: OnboardingStep) => void
@@ -520,7 +617,9 @@ interface ProfileOnboardingProps {
   signIn?: SignInStatus
   /** Called on entering the sign-in step, with what the form holds: start `claude login` or the test request here. */
   onSignIn?: (draft: ProfileDraft) => void
-  /** Called with the new profile when Add profile is pressed on the last step; the dialog closes. */
+  /** Called with the code the sign-in page shows when its browser can't reach the CLI's callback: pass it on to `claude login`. Given, a code field shows while the sign-in waits. */
+  onSubmitCode?: (code: string) => void
+  /** Called with the new profile when Add profile is pressed on the last step (Done, in `'sign-in'` mode); the dialog closes. */
   onComplete?: (profile: Profile) => void
 }
 
@@ -533,10 +632,18 @@ interface ProfileOnboardingProps {
  * model each Claude tier maps to); sign in; done. Entering the sign-in step
  * calls `onSignIn`, where the app starts `claude login` under the new
  * `CLAUDE_CONFIG_DIR` (or a test request against the provider) and feeds
- * its progress back through `signIn`: the CLI's output scrolls in a log,
- * "waiting for the browser" with the link to open again or copy, then
+ * its progress back through `signIn`: "waiting for the browser", then
  * success with the account and plan, or the error and a retry. Continue
  * waits for success. The last step hands the new profile to `onComplete`.
+ * While it waits, the link sits in one row (copy it, or open it again);
+ * with `onSubmitCode`, a field takes the code the page shows when its browser
+ * can't reach the CLI. The CLI's raw output folds behind "Show output" and
+ * goes once the sign-in succeeds.
+ *
+ * `mode="sign-in"` signs an existing profile in again: the sign-in step
+ * alone, without the stepper or Back, titled after the profile in
+ * `defaultDraft`, and Done instead of Continue. The app starts `claude
+ * login` itself there (no step is entered), and Retry calls `onSignIn`.
  * The dialog grows out of its trigger; `ProfileOnboarding.Panel` is the same
  * stepper without it.
  *
@@ -558,7 +665,12 @@ const ProfileOnboarding = Object.assign(
     return (
       <Dialog open={isOpen} onOpenChange={setOpen}>
         {trigger && <Dialog.Trigger render={trigger} />}
-        <Dialog.Content width="lg" aria-label="Add a profile">
+        <Dialog.Content
+          width="lg"
+          aria-label={
+            panel.mode === 'sign-in' ? `Sign in to ${panel.defaultDraft?.name ?? 'the profile'}` : 'Add a profile'
+          }
+        >
           <ProfileOnboardingPanel
             {...panel}
             onCancel={() => setOpen(false)}
