@@ -1,6 +1,6 @@
 import { resolve, sep } from 'node:path'
 import { isCSSRequest, normalizePath, type Plugin } from 'vite'
-import { itemPath, STATIC_PAGES, tierPath } from '../lib/paths'
+import { DOCS_PATH, itemPath, SITE_PATH, STATIC_PAGES, sitePath, tierPath } from '../lib/paths'
 import { cap } from '../lib/text'
 import type { BundleResult, Bundler } from './bundle'
 import { emitRoutes } from './static-routes'
@@ -72,8 +72,14 @@ export function itemsPlugin(options: Options): Plugin {
         // Dev keeps serving what built; a build must not ship a site with missing pages.
         if (errorCount > 0) this.error('the bundle has errors (reported above), so the site was not written')
         if (!config) return
+        const pages = items.filter(it => it.tier === 'pages')
+        const unknown = (config.pages?.primary ?? []).filter(id => !pages.some(it => it.id === id))
+        if (unknown.length > 0) this.warn(`pages.primary names no page: ${unknown.join(', ')}`)
         emitRoutes(this, bundle, config, [
           ...STATIC_PAGES.map(({ path, title }) => ({ path: path.slice(1), title })),
+          { path: DOCS_PATH.slice(1) },
+          ...(pages.length > 0 ? [{ path: SITE_PATH.slice(1) }] : []),
+          ...pages.map(it => ({ path: sitePath(it.id).slice(1), title: it.name, description: it.description })),
           ...[...new Set(items.map(it => it.tier))].map(tier => ({ path: tierPath(tier).slice(1), title: cap(tier) })),
           ...items.map(it => ({
             path: itemPath(it.tier, it.id).slice(1),

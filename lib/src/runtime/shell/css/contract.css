@@ -42,6 +42,7 @@
   --modo-radius-sm: var(--radius-sm, 4px);
   --modo-radius-md: var(--radius-md, var(--radius, 8px));
   --modo-radius-lg: var(--radius-lg, var(--radius, 12px));
+  --modo-radius-full: var(--radius-full, 9999px);
   /* The host sets --modo-measure itself; its stylesheets load after this one. */
   --modo-measure: 72ch;
   /* No default: without a host family the chrome inherits the page's. */
@@ -66,6 +67,7 @@
 [data-modo="bento-count"],
 [data-modo="bento-desc"],
 [data-modo="canvas-frame-title"],
+[data-modo="site-menu"],
 [data-modo="token-name"],
 [data-modo="color-tile"] {
   font-size: var(--modo-font-size-sm);
@@ -73,6 +75,7 @@
 }
 
 [data-modo="token-meta"],
+[data-modo="site-menu-label"],
 [data-modo="color-tile-pair"],
 [data-modo="color-tile-foot"],
 [data-modo="type-metrics"] {

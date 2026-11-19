@@ -1,7 +1,7 @@
 import { config } from 'virtual:modo-config'
 import { type ReactNode, useEffect } from 'react'
 import { pageTitle } from '../lib/head'
-import { CANVAS_PAGE, decodePath, GUIDES_PATH, HOME_PATH, tierPath, tokenPath } from '../lib/paths'
+import { CANVAS_PAGE, DOCS_PATH, decodePath, GUIDES_PATH, HOME_PATH, tierPath, tokenPath } from '../lib/paths'
 import { TIERS } from '../lib/tiers'
 import { PageIdScope } from './anchor'
 import { ExampleSolo } from './items/example-solo'
@@ -13,6 +13,8 @@ import { HomePage } from './pages/home'
 import { NotFoundPage } from './pages/not-found'
 import { TierPage } from './pages/tier'
 import { TokensPage } from './pages/tokens'
+import { useSiteId } from './site/routes'
+import { SiteView } from './site/site-view'
 import { TokenGroupView } from './tokens/group-page'
 
 /** The one segment under `parent` (`/docs/tokens/colors` → `colors`). */
@@ -21,8 +23,9 @@ function child(path: string, parent: string): string | undefined {
   return rest && !rest.includes('/') ? rest : undefined
 }
 
-function page(path: string, example: string | null): ReactNode {
-  if (path === HOME_PATH) return <HomePage />
+function page(path: string, example: string | null, siteId: string | undefined): ReactNode {
+  if (siteId !== undefined) return <SiteView id={siteId} />
+  if (path === HOME_PATH || path === DOCS_PATH) return <HomePage />
   if (path === CANVAS_PAGE.path) return <CanvasPage />
   if (path === GUIDES_PATH) return <GuidePage slug="" />
   if (path.startsWith(`${GUIDES_PATH}/`)) return <GuidePage slug={path.slice(GUIDES_PATH.length + 1)} />
@@ -45,6 +48,7 @@ function scrollToHash(hash: string) {
 export function Router(): ReactNode {
   const path = usePath()
   const example = useExampleParam()
+  const siteId = useSiteId()
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -72,10 +76,11 @@ export function Router(): ReactNode {
       config.name,
       document.querySelector('[data-modo="page-title"]')?.textContent ??
         document.querySelector('[data-modo="example-solo"]')?.getAttribute('aria-label') ??
+        document.querySelector('[data-modo="site"]')?.getAttribute('data-title') ??
         undefined,
     )
   }, [path, example])
 
   // Keyed by page so its state (an open code panel, heading ids) doesn't carry over.
-  return <PageIdScope key={`${path}?${example}`}>{page(path, example)}</PageIdScope>
+  return <PageIdScope key={`${path}?${example}`}>{page(path, example, siteId)}</PageIdScope>
 }
