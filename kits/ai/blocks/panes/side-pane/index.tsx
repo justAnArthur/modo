@@ -225,7 +225,13 @@ export default function SidePane({
                 <Dropdown.Content align="start" className="w-60">
                   <Dropdown.Label>From plugins</Dropdown.Label>
                   {extensions.map((e, i) => (
-                    <Dropdown.Item key={e.label} index={i} icon={icons[e.icon]} label={e.label} onSelect={e.onSelect} />
+                    <Dropdown.Item
+                      key={`${i}:${e.label}`}
+                      index={i}
+                      icon={icons[e.icon]}
+                      label={e.label}
+                      onSelect={e.onSelect}
+                    />
                   ))}
                 </Dropdown.Content>
               </Dropdown.Menu>

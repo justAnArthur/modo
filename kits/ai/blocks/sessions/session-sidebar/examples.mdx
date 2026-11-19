@@ -18,6 +18,27 @@ export const ACTIONS = {
   onOpenSettings: noop,
 }
 
+export const TWINS = [
+  {
+    label: 'api',
+    kind: 'project',
+    path: '~/Projects/acme/api',
+    sessions: [
+      { id: 'acme-auth', title: 'Rotate the signing keys', status: 'running', profile: 'work', updated: 'now' },
+      { id: 'acme-logs', title: 'Trim the request logs', status: 'idle', profile: 'work', updated: '2h' },
+    ],
+  },
+  {
+    label: 'api',
+    kind: 'project',
+    path: '~/Projects/side/api',
+    sessions: [
+      { id: 'side-rate', title: 'Add a rate limiter', status: 'unread', profile: 'work-personal', updated: '5m' },
+      { id: 'side-docs', title: 'Document the webhooks', status: 'idle', profile: 'work-personal', updated: '1d' },
+    ],
+  },
+]
+
 export function Pinning() {
   const [pinned, setPinned] = useState(SESSIONS.pinned)
   const [groups, setGroups] = useState(SESSIONS.groups)
@@ -99,6 +120,19 @@ Each row action, group action and the Settings row shows only with its callback.
 <div className="flex h-[640px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
     <SessionSidebar {...SESSIONS} {...ACTIONS} groupLimit={1} className="h-full" defaultValue="ai-app" />
+    <Sidebar.Inset className="min-h-0">
+      <SidebarInsetTopbar />
+    </Sidebar.Inset>
+  </Sidebar.Provider>
+</div>
+
+# Folders of one name
+
+Two checkouts of one repo share a folder name: `path` tells their groups apart, so each keeps its own rows, its hover and its Show more.
+
+<div className="flex h-[640px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
+    <SessionSidebar {...SESSIONS} {...ACTIONS} groups={TWINS} groupLimit={1} className="h-full" defaultValue="acme-auth" />
     <Sidebar.Inset className="min-h-0">
       <SidebarInsetTopbar />
     </Sidebar.Inset>

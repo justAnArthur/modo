@@ -73,8 +73,8 @@ function TodoList({ items, title = 'Tasks', defaultOpen = true }: TodoListProps)
         </Button>
       </div>
       <ol className={cn('m-0 flex flex-col p-0', !open && 'hidden')}>
-        {items.map(item => (
-          <li key={item.content} className="flex min-h-6 items-center gap-2 text-body">
+        {items.map((item, i) => (
+          <li key={`${i}:${item.content}`} className="flex min-h-6 items-center gap-2 text-body">
             <span className="flex size-4 shrink-0 items-center justify-center">
               {item.status === 'in_progress' ? (
                 <Spinner className="size-3.5" />

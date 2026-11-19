@@ -34,6 +34,7 @@ import {
   useState,
 } from 'react'
 import { type IconComponent, useIcon } from '../../../lib/icons'
+import { groupKey } from '../../../lib/session-group'
 import { STATUS_GLYPH, STATUS_LABEL } from '../../../lib/status-glyph'
 import type { Profile, Session, SessionGroup, SessionStatus } from '../../../lib/types'
 import { ProfileTile } from '../../profiles/profile-switcher'
@@ -350,7 +351,7 @@ interface GroupSectionProps {
   capped: boolean
   /** The selected session, when it is in this group: it shows past the limit. */
   keep: string | undefined
-  onToggle: (label: string) => void
+  onToggle: (key: string) => void
 }
 
 /** A project folder or section, memoized like its rows: a change in one group re-renders only that group. */
@@ -387,7 +388,7 @@ const GroupSection = memo(
                 icon={MoreRows}
                 aria-expanded={limit === undefined}
                 className="text-muted-foreground"
-                onClick={() => onToggle(group.label)}
+                onClick={() => onToggle(groupKey(group))}
               >
                 {limit === undefined ? 'Show fewer' : `Show ${hidden} more`}
               </Sidebar.MenuButton>
@@ -423,7 +424,8 @@ function SessionFilters({
   const Folder = useIcon('folder')
   const all = everySession(pinned, groups)
   const count = (match: (s: Session) => boolean) => all.filter(match).length
-  const projects = groups.filter(g => g.kind === 'project')
+  // A filter matches a project by its label: folders of one name share a row.
+  const projects = [...new Set(groups.filter(g => g.kind === 'project').map(g => g.label))]
   const used = profiles.filter(p => all.some(s => s.profile === p.id))
   // Built once per profile list: a component made during render would remount its row's icon every time.
   const icons = useMemo(
@@ -457,7 +459,7 @@ function SessionFilters({
       <Sidebar.Group>
         <Sidebar.GroupLabel>Projects</Sidebar.GroupLabel>
         <Sidebar.Menu>
-          {projects.map(({ label }) => (
+          {projects.map(label => (
             <Sidebar.MenuItem key={label}>
               <Sidebar.MenuButton value={`project:${label}` satisfies SessionFilter} icon={Folder}>
                 {label}
@@ -548,7 +550,8 @@ interface SessionSidebarProps {
  * arrows), then one group
  * per project folder and per section you made, then the archive, folded.
  * `groupLimit` caps a long group: past it a "Show N more" row unfolds the
- * rest (the selected session always shows).
+ * rest (the selected session always shows). Groups are told apart by
+ * `path`, so two project folders of one name are two groups.
  * A row's leading glyph is its state: an arc turning while it runs, an
  * amber dot while it waits for you, a filled dot for an unread reply and a
  * ring when idle; its badge is the last activity. Hover a row for pin,
@@ -623,7 +626,7 @@ export default function SessionSidebar({
   const [selected, select] = useControllableState(value, defaultValue ?? '', onValueChange)
   const [expanded, setExpanded] = useState<string[]>([])
   const toggleGroup = useCallback(
-    (label: string) => setExpanded(open => (open.includes(label) ? open.filter(l => l !== label) : [...open, label])),
+    (key: string) => setExpanded(open => (open.includes(key) ? open.filter(k => k !== key) : [...open, key])),
     [],
   )
   const [pinnedOrder, reorderPinned] = usePinnedOrder(pinned, onPinnedOrderChange)
@@ -701,17 +704,20 @@ export default function SessionSidebar({
                 </Sidebar.Menu>
               </Sidebar.Group>
 
-              {groups.map(group => (
-                <GroupSection
-                  key={group.label}
-                  group={group}
-                  actions={actions}
-                  limit={expanded.includes(group.label) ? undefined : groupLimit}
-                  capped={groupLimit !== undefined && group.sessions.length > groupLimit}
-                  keep={group.sessions.some(s => s.id === selected) ? selected : undefined}
-                  onToggle={toggleGroup}
-                />
-              ))}
+              {groups.map(group => {
+                const key = groupKey(group)
+                return (
+                  <GroupSection
+                    key={key}
+                    group={group}
+                    actions={actions}
+                    limit={expanded.includes(key) ? undefined : groupLimit}
+                    capped={groupLimit !== undefined && group.sessions.length > groupLimit}
+                    keep={group.sessions.some(s => s.id === selected) ? selected : undefined}
+                    onToggle={toggleGroup}
+                  />
+                )
+              })}
 
               <Sidebar.Group collapsible defaultOpen={false}>
                 <Sidebar.GroupLabel>Archived</Sidebar.GroupLabel>
