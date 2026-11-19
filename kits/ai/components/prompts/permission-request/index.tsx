@@ -30,8 +30,9 @@ interface PermissionRequestProps {
 /**
  * A tool asks for permission to run.
  *
- * The card names the tool and shows what it would run as a code block, with
- * an optional detail under it (a Diff for an edit). The answers sit on the
+ * The card names the tool and shows what it would run as a code block; with
+ * a detail (a Diff for an edit) the command is the path above it, a quiet
+ * line. The answers sit on the
  * bottom row, the safest first: deny, always allow the `rule`, or allow once.
  *
  * @example {@include ./examples.mdx}
@@ -64,7 +65,14 @@ export default function PermissionRequest({
         </>
       }
     >
-      <Code language="sh">{command}</Code>
+      {/* With a detail (an edit's diff) the command is the path it touches: a line naming it, not a script to read. */}
+      {detail ? (
+        <span className="min-w-0 truncate font-mono text-caption text-muted-foreground" title={command}>
+          {command}
+        </span>
+      ) : (
+        <Code language="sh">{command}</Code>
+      )}
       {detail}
     </PromptCard>
   )

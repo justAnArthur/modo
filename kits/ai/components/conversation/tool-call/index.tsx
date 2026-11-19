@@ -147,7 +147,7 @@ const ToolCall = Object.assign(
             <ToolStatusMark status={status} />
           </span>
         </Accordion.Trigger>
-        {children && <Accordion.Content>{body && <div className="pb-2">{children}</div>}</Accordion.Content>}
+        {children && <Accordion.Content>{body && children}</Accordion.Content>}
       </Accordion.Item>
     )
   },

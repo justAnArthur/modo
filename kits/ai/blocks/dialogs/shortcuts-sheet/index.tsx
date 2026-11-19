@@ -171,7 +171,7 @@ const ShortcutsSheet = Object.assign(
     return (
       <Dialog open={isOpen} onOpenChange={setOpen}>
         {trigger && <Dialog.Trigger render={trigger} />}
-        <Dialog.Content width="xl" aria-label="Keyboard shortcuts" className="flex h-[min(600px,80dvh)] flex-col">
+        <Dialog.Content width="xl" aria-label="Keyboard shortcuts" className="flex max-h-[min(600px,80dvh)] flex-col">
           <ShortcutsSheetPanel groups={groups} defaultQuery={defaultQuery} className="flex-1" />
         </Dialog.Content>
       </Dialog>

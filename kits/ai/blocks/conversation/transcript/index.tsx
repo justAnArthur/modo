@@ -36,10 +36,11 @@ type TurnProps = Omit<MessageProps, 'role'>
 // That contains paint to the turn's box: an assistant turn widens it by a
 // padding its negative margin takes back, so the work rows' hover fill (which
 // bleeds past the column) and focus rings still show.
-// The rhythm: a user turn opens an exchange, so it takes a column gap of its
-// own above it (32px from the reply before, 16px to the reply after); the
-// assistant turn's `-my-1` gives back the paint margin it adds.
-const USER_TURN = 'content-visibility-auto [contain-intrinsic-size:auto_5rem] mt-4 mb-1 first:mt-0'
+// The rhythm: a user turn opens an exchange, so it takes more than a column gap
+// above it (40px from the reply before) than below (16px to its reply), and
+// the column reads as question and answer pairs; the assistant turn's `-my-1`
+// gives back the paint margin it adds.
+const USER_TURN = 'content-visibility-auto [contain-intrinsic-size:auto_5rem] mt-6 first:mt-0'
 const ASSISTANT_TURN = 'content-visibility-auto [contain-intrinsic-size:auto_20rem] -mx-4 px-4 -my-1 py-1'
 
 // No static's key names a binding of this file: the declaration bundler renames

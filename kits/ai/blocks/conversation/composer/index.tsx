@@ -198,7 +198,7 @@ function ProjectPicker({
               {options.worktree && (
                 <List.Row label="New worktree">
                   <Switch
-                    label="New worktree"
+                    aria-label="New worktree"
                     checked={worktree}
                     onCheckedChange={onWorktreeChange}
                     disabled={locked}
@@ -208,7 +208,7 @@ function ProjectPicker({
               )}
               {options.setupScript && (
                 <List.Row label="Run setup script">
-                  <Switch label="Run setup script" defaultChecked disabled={locked} className={LIST_SWITCH} />
+                  <Switch aria-label="Run setup script" defaultChecked disabled={locked} className={LIST_SWITCH} />
                 </List.Row>
               )}
               {options.baseBranch && (
@@ -247,6 +247,8 @@ interface RunSettingsProps {
   onEffortChange: (effort: string) => void
   mode: string
   onModeChange: (mode: string) => void
+  /** Offer the fast mode switch. */
+  fastMode: boolean
   fast: boolean
   onFastChange: (fast: boolean) => void
   style: string
@@ -268,6 +270,7 @@ function RunSettings({
   onEffortChange,
   mode,
   onModeChange,
+  fastMode,
   fast,
   onFastChange,
   style,
@@ -339,21 +342,25 @@ function RunSettings({
                 </Select.Content>
               </Select>
             </List.Row>
-            <List.Row label="Fast mode">
-              <Switch label="Fast mode" checked={fast} onCheckedChange={onFastChange} className={LIST_SWITCH} />
-            </List.Row>
-            <List.Row label="Output style">
-              <Select value={style} onValueChange={onStyleChange}>
-                <Select.Trigger variant="borderless" className="min-w-0" />
-                <Select.Content>
-                  {outputStyles.map((o, i) => (
-                    <Select.Item key={o} index={i} value={o}>
-                      {o}
-                    </Select.Item>
-                  ))}
-                </Select.Content>
-              </Select>
-            </List.Row>
+            {fastMode && (
+              <List.Row label="Fast mode">
+                <Switch aria-label="Fast mode" checked={fast} onCheckedChange={onFastChange} className={LIST_SWITCH} />
+              </List.Row>
+            )}
+            {outputStyles.length > 1 && (
+              <List.Row label="Output style">
+                <Select value={style} onValueChange={onStyleChange}>
+                  <Select.Trigger variant="borderless" className="min-w-0" />
+                  <Select.Content>
+                    {outputStyles.map((o, i) => (
+                      <Select.Item key={o} index={i} value={o}>
+                        {o}
+                      </Select.Item>
+                    ))}
+                  </Select.Content>
+                </Select>
+              </List.Row>
+            )}
           </List.Section>
           <List.Section title="Context" aside={compacting ? 'Compacting…' : `${percent}% of the window`}>
             <List.Row label="Compacts at 95%">
@@ -406,7 +413,7 @@ interface ComposerProps {
   efforts: string[]
   /** The permission modes, each with its icon and note. */
   permissionModes: PermissionMode[]
-  /** The output styles. */
+  /** The output styles. Run settings offers a pick from two on. */
   outputStyles: string[]
   /** The commands, skills and plugins: the + palette lists them, and a draft that starts with "/" offers the matching ones above the text. Picking one writes `/name ` into the draft. */
   commands: Command[]
@@ -456,6 +463,8 @@ interface ComposerProps {
   defaultPermissionMode?: string
   /** Called with the permission mode's label when another one is picked. */
   onPermissionModeChange?: (mode: string) => void
+  /** Offer the fast mode switch in Run settings: `false` for an agent without one. Defaults to `true`. */
+  fastMode?: boolean
   /** Whether fast mode is on, controlled. Pair with `onFastChange`. */
   fast?: boolean
   /** Start with fast mode on when uncontrolled. Defaults to `false`. */
@@ -613,6 +622,7 @@ const Composer = Object.assign(
     permissionMode: permissionModeProp,
     defaultPermissionMode,
     onPermissionModeChange,
+    fastMode = true,
     fast: fastProp,
     defaultFast = false,
     onFastChange,
@@ -695,6 +705,7 @@ const Composer = Object.assign(
                   onEffortChange={setEffort}
                   mode={inList(mode, modeLabels)}
                   onModeChange={setMode}
+                  fastMode={fastMode}
                   fast={fast}
                   onFastChange={setFast}
                   style={inList(style, outputStyles)}
