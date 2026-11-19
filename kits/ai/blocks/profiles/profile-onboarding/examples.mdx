@@ -34,15 +34,20 @@ The base URL, the env var that holds the key, and which model each Claude tier m
 
 # Waiting for the browser
 
-`claude login` runs under the new config dir; its output scrolls in the log, with the link to open again or copy.
+`claude login` runs under the new config dir. One row holds the link, to copy or open again; with `onSubmitCode`, a field takes the code the page shows when its browser can't reach the CLI. The CLI's own output folds behind "Show output".
 
 <div className="w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
-  <ProfileOnboarding.Panel defaultStep="sign-in" defaultDraft={{ name: 'research' }} signIn={SIGN_IN_WAITING} />
+  <ProfileOnboarding.Panel
+    defaultStep="sign-in"
+    defaultDraft={{ name: 'research' }}
+    signIn={SIGN_IN_WAITING}
+    onSubmitCode={() => {}}
+  />
 </div>
 
 # Signed in
 
-Continue lights once the sign-in succeeds.
+Continue lights once the sign-in succeeds; the account and plan replace the link, and the output goes.
 
 <div className="w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
   <ProfileOnboarding.Panel defaultStep="sign-in" defaultDraft={{ name: 'research' }} signIn={SIGN_IN_SUCCESS} />
@@ -50,10 +55,23 @@ Continue lights once the sign-in succeeds.
 
 # Sign-in failed
 
-The error, the CLI's last words and a retry.
+The error and a retry; the CLI's last words are under "Show output".
 
 <div className="w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
   <ProfileOnboarding.Panel defaultStep="sign-in" defaultDraft={{ name: 'research' }} signIn={SIGN_IN_FAILED} />
+</div>
+
+# Sign in again
+
+`mode="sign-in"` signs an existing profile in again: the sign-in step alone, without the stepper or Back, titled after the profile. Done waits for the sign-in, then hands the profile to `onComplete`.
+
+<div className="w-full max-w-[540px] rounded-xl border border-border bg-background p-6">
+  <ProfileOnboarding.Panel
+    mode="sign-in"
+    defaultDraft={{ name: 'work', configDir: '~/.claude-work' }}
+    signIn={SIGN_IN_WAITING}
+    onSubmitCode={() => {}}
+  />
 </div>
 
 # Done
