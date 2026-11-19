@@ -1,0 +1,54 @@
+import PrDetail from './index'
+import { DRAFT_PR, HEADERS_CONFLICT, HEADERS_PR, OG_VIDEO_MERGED, OG_VIDEO_PR } from '../../mock/pull-requests'
+
+# Ready to merge
+
+sonnet-fixer's `og:video` PR: approved, its checks green (one skipped). Pick the method on Merge's chevron.
+
+<div className="flex h-[680px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <PrDetail pr={OG_VIDEO_PR} onMerge={() => {}} onRecheck={() => {}} onClose={() => {}} className="flex-1" />
+</div>
+
+# A failing check
+
+Lint failed and the preview is still building: Merge waits, and says why.
+
+<div className="flex h-[620px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <PrDetail pr={HEADERS_PR} onMerge={() => {}} onRecheck={() => {}} onClose={() => {}} className="flex-1" />
+</div>
+
+# Conflicting
+
+<div className="flex h-[300px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <PrDetail pr={HEADERS_CONFLICT} defaultMethod="rebase" onMerge={() => {}} onRecheck={() => {}} className="flex-1" />
+</div>
+
+# A draft
+
+No checks and no description yet.
+
+<div className="flex h-[420px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <PrDetail pr={DRAFT_PR} onRecheck={() => {}} onClose={() => {}} className="flex-1" />
+</div>
+
+# Merging
+
+<div className="flex h-[300px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <PrDetail pr={OG_VIDEO_PR} merging onClose={() => {}} className="flex-1" />
+</div>
+
+# Merged
+
+In place of Merge, what merging did.
+
+<div className="flex h-[620px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <PrDetail pr={OG_VIDEO_MERGED} onRecheck={() => {}} onClose={() => {}} className="flex-1" />
+</div>
+
+# Loading
+
+While `standards pr view` runs.
+
+<div className="flex h-[420px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <PrDetail onClose={() => {}} className="flex-1" />
+</div>

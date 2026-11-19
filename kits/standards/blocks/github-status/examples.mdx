@@ -1,0 +1,46 @@
+import GithubStatus from './index'
+import { DEVICE_CODE } from '../../mock/setup'
+
+# Signed in
+
+<div className="w-[420px] max-w-full rounded-xl border border-border p-4">
+  <GithubStatus status={{ loggedIn: true, user: 'justAnArthur', protocol: 'https' }} />
+</div>
+
+# Signed out
+
+<div className="w-[420px] max-w-full rounded-xl border border-border p-4">
+  <GithubStatus status={{ loggedIn: false }} onSignIn={() => {}} />
+</div>
+
+# Signing in
+
+The code `gh auth login` printed, to copy and paste on GitHub's device page.
+
+<div className="w-[420px] max-w-full rounded-xl border border-border p-4">
+  <GithubStatus status={{ loggedIn: false }} signingIn code={DEVICE_CODE} onOpenGithub={() => {}} onCancel={() => {}} />
+</div>
+
+# Starting
+
+Before `gh` has printed its code.
+
+<div className="w-[420px] max-w-full rounded-xl border border-border p-4">
+  <GithubStatus status={{ loggedIn: false }} signingIn />
+</div>
+
+# Sign-in failed
+
+<div className="w-[420px] max-w-full rounded-xl border border-border p-4">
+  <GithubStatus
+    status={{ loggedIn: false }}
+    error="The code expired before it was entered. Sign in again for a new one."
+    onSignIn={() => {}}
+  />
+</div>
+
+# Reading the status
+
+<div className="w-[420px] max-w-full rounded-xl border border-border p-4">
+  <GithubStatus />
+</div>

@@ -1,9 +1,9 @@
 import RunTranscript from './index'
-import { HEADERS_FIX, OG_VIDEO_FIX } from '../../../mock/runs'
+import { HEADERS_FIX, HERO_TRANSCRIPT, OG_VIDEO_FIX } from '../../../mock/runs'
 
 # A finished fix run
 
-sonnet-fixer on Camasys's `og:video`: the prompt, the work folded into one row, and the reply with the PR. Press the row, or the eye, to see each call.
+sonnet-fixer on Camasys's `og:video`: the task folded to its first line, the work folded into one row, and the reply with the PR. Press the task for the whole prompt, the row (or the eye) for each call.
 
 <div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border">
   <RunTranscript items={OG_VIDEO_FIX.transcript} />
@@ -17,8 +17,24 @@ sonnet-fixer on Camasys's `og:video`: the prompt, the work folded into one row, 
 
 # Running
 
-The last call has no result yet, so it spins.
+The live turn's row reads "Working…" with the call it is on; open it and the last call, still without a result, spins.
 
 <div className="flex h-[480px] w-full overflow-hidden rounded-xl border border-border">
-  <RunTranscript items={HEADERS_FIX.transcript} running defaultShowWork />
+  <RunTranscript items={HEADERS_FIX.transcript} running />
+</div>
+
+# Just started
+
+Before the agent has done anything, one plain line under the task says it is working.
+
+<div className="flex h-[280px] w-full overflow-hidden rounded-xl border border-border">
+  <RunTranscript items={HEADERS_FIX.transcript.slice(0, 1)} running />
+</div>
+
+# An ai check
+
+The model's side of a check: its question is the task, then the fetch it made and its verdict.
+
+<div className="flex h-[400px] w-full overflow-hidden rounded-xl border border-border">
+  <RunTranscript items={HERO_TRANSCRIPT} />
 </div>

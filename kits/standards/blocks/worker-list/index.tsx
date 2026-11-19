@@ -11,16 +11,11 @@ import Table from '@justanarthur/modo-ui/components/data-display/table'
 import EmptyState from '@justanarthur/modo-ui/components/feedback/empty-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { Bot } from 'lucide-react'
+import { PERMISSION } from '../../lib/states'
 import type { Worker } from '../../lib/types'
 
 // The heads of the kit's other tables (BusinessesOverview, BusinessGrid): a muted caption on a 36px row.
 const HEAD = 'h-9 text-caption weight-normal text-muted-foreground'
-
-const PERMISSION: Record<Worker['permission_mode'], string> = {
-  default: 'asks first',
-  acceptEdits: 'accepts edits',
-  plan: 'plans, edits nothing',
-}
 
 interface WorkerListProps {
   /** The worker presets, in the order to show them. */
@@ -77,7 +72,7 @@ export default function WorkerList({ workers, className }: WorkerListProps) {
               <Table.Cell className="whitespace-nowrap py-2">
                 <span className="flex flex-col">
                   <span className="font-mono text-caption">{worker.permission_mode}</span>
-                  <span className="text-caption text-muted-foreground">{PERMISSION[worker.permission_mode]}</span>
+                  <span className="text-caption text-muted-foreground">{PERMISSION[worker.permission_mode].label}</span>
                 </span>
               </Table.Cell>
               <Table.Cell className="whitespace-nowrap font-mono text-caption">{worker.profile}</Table.Cell>

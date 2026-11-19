@@ -16,9 +16,12 @@ import { Wrench } from 'lucide-react'
 import type { Worker } from '../../../lib/types'
 
 const MODE: Record<Worker['permission_mode'], string> = {
+  manual: 'asks first',
   acceptEdits: 'edits',
-  default: 'asks first',
+  auto: 'auto',
+  dontAsk: 'allowed only',
   plan: 'plans only',
+  bypassPermissions: 'trusted',
 }
 
 /** `sonnet · medium · edits`: what a preset runs and may do. */

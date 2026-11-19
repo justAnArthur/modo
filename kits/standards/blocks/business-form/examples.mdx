@@ -1,0 +1,78 @@
+import BusinessForm from './index'
+import { BUSINESSES, PACKS } from '../../mock/status'
+import { NEW_BUSINESS } from '../../mock/setup'
+
+# A new business
+
+Type a name: the id follows it as a slug until you type one. Add asset appends a website; pick its kind.
+
+<div className="flex h-[640px] w-[480px] max-w-full overflow-hidden rounded-xl border border-border">
+  <BusinessForm packs={PACKS} onSave={() => {}} onCancel={() => {}} onClose={() => {}} className="flex-1" />
+</div>
+
+# A repo to clone
+
+Northwind's repo has no local checkout yet, so it offers Clone. The website pack follows the latest version, the repo pack stays on v1.
+
+<div className="flex h-[860px] w-[480px] max-w-full overflow-hidden rounded-xl border border-border">
+  <BusinessForm
+    title="Northwind"
+    defaultValue={NEW_BUSINESS}
+    packs={PACKS}
+    onClone={() => {}}
+    onSave={() => {}}
+    onCancel={() => {}}
+    onClose={() => {}}
+    className="flex-1"
+  />
+</div>
+
+# Cloning
+
+<div className="flex h-[560px] w-[480px] max-w-full overflow-hidden rounded-xl border border-border">
+  <BusinessForm
+    title="Northwind"
+    defaultValue={{ ...NEW_BUSINESS, assets: [NEW_BUSINESS.assets[1]] }}
+    packs={PACKS}
+    cloning="repo"
+    onSave={() => {}}
+    onCancel={() => {}}
+    className="flex-1"
+  />
+</div>
+
+# Editing a business
+
+Camasys, with Delete, which asks first.
+
+<div className="flex h-[760px] w-[480px] max-w-full overflow-hidden rounded-xl border border-border">
+  <BusinessForm
+    title="Camasys"
+    defaultValue={BUSINESSES[0]}
+    packs={PACKS}
+    onSave={() => {}}
+    onCancel={() => {}}
+    onDelete={() => {}}
+    onClose={() => {}}
+    className="flex-1"
+  />
+</div>
+
+# Validation messages
+
+What the engine's schema said about the last Save, each under its field.
+
+<div className="flex h-[760px] w-[480px] max-w-full overflow-hidden rounded-xl border border-border">
+  <BusinessForm
+    defaultValue={{ ...NEW_BUSINESS, id: 'camasys', assets: [{ id: 'repo', kind: 'repo', repo: 'northwind web' }], packs: [] }}
+    errors={{
+      id: 'camasys is taken by another business.',
+      'assets.0.repo': 'A GitHub repo as owner/name.',
+      packs: 'Follow at least one pack.',
+    }}
+    packs={PACKS}
+    onSave={() => {}}
+    onCancel={() => {}}
+    className="flex-1"
+  />
+</div>
