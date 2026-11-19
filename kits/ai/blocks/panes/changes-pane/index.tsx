@@ -83,8 +83,9 @@ function FileList({
   )
 }
 
-/** Applies an action's effect on the rows now, or once its promise resolves (not on `false` or a rejection). */
+/** Applies an action's effect on the rows now, or once its promise resolves; never on `false` (returned or resolved) or a rejection. */
 function after(result: unknown, apply: () => void) {
+  if (result === false) return
   if (!(result instanceof Promise)) return apply()
   result.then(
     ok => {
@@ -99,9 +100,9 @@ interface ChangesPaneProps {
   changes: PaneChange[]
   /** Called with the paths staged (`true`) or unstaged (`false`). The rows move at once. */
   onStage?: (paths: string[], staged: boolean) => void
-  /** Called with the paths reverted. Return a promise (a confirm, then the discard) and the rows leave once it resolves, unless it resolves `false` or rejects; return nothing and they leave at once. */
+  /** Called with the paths reverted. Return a promise (a confirm, then the discard) and the rows leave once it resolves, unless it resolves `false` or rejects; return `false` and they stay; return anything else and they leave at once. */
   onRevert?: (paths: string[]) => unknown
-  /** Called by Commit with the message (empty when Claude writes one) and the staged paths. The rows leave as `onRevert`'s do: once a returned promise resolves to anything but `false`, else at once. */
+  /** Called by Commit with the message (empty when Claude writes one) and the staged paths. The rows leave as `onRevert`'s do: not on `false`, once a returned promise resolves to anything but `false`, else at once. */
   onCommit?: (message: string, paths: string[]) => unknown
   /** Called by the diff's open in editor with the file's path. */
   onOpenFile?: (path: string) => void
