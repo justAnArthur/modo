@@ -101,6 +101,10 @@ interface BusinessGridProps {
   onOpenCell?: (cell: CellStatus) => void
   /** Called with the picked cells and the worker on Fix. */
   onFix?: (cells: CellStatus[], worker: string) => void
+  /** Disables Fix N with ▾ worker; cells can still be picked. Defaults to `false`. */
+  fixDisabled?: boolean
+  /** Why Fix is disabled, in a tooltip over it while `fixDisabled`. */
+  fixDisabledReason?: string
   /** The time the cards' "12m ago" counts from, in epoch ms. Defaults to now. */
   now?: number
   /** Classes for the root. Give it a height (or a flex parent) so the grid scrolls under its sticky head. */
@@ -124,8 +128,11 @@ interface BusinessGridProps {
  * Shift-press failing cells on one asset (or tick the asset's box for all of
  * them) to pick them, then Fix N with ▾ worker, at the head's end, sends them
  * as one run and one PR. Picking a cell on another asset starts the selection
- * over. The head and the asset column stay put while the grid scrolls; the
- * card is as tall as its rows, up to the block's height.
+ * over. `fixDisabled` (with a `fixDisabledReason` for its tooltip) keeps the
+ * picking but dims the fix. A cell being checked shows the spinner and can't
+ * be picked until its result lands; coverage counts it as its last state.
+ * The head and the asset column stay put while the grid scrolls; the card is
+ * as tall as its rows, up to the block's height.
  *
  * @example {@include ./examples.mdx}
  */
@@ -140,6 +147,8 @@ export default function BusinessGrid({
   active,
   onOpenCell,
   onFix,
+  fixDisabled = false,
+  fixDisabledReason,
   now = Date.now(),
   className,
 }: BusinessGridProps) {
@@ -189,6 +198,8 @@ export default function BusinessGrid({
               count={pickedCells.length}
               size="compact"
               onFix={worker => onFix?.(pickedCells, worker)}
+              disabled={fixDisabled}
+              disabledReason={fixDisabledReason}
             />
             <Button variant="ghost" size="compact" onClick={() => setPicked([])}>
               Clear

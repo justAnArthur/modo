@@ -10,6 +10,15 @@ The pack's coverage across the business's assets, and the cells that fail with n
   <PackCoverageCell label="just-standards, Repo" value={1} onClick={() => {}} />
 </div>
 
+# Checking
+
+Some of the pack's cells are being checked: a spinner trails the figures, which stay the last results until theirs land.
+
+<div className="flex flex-col items-start gap-2">
+  <PackCoverageCell label="Camasys, Website" value={0.7} fails={1} checking={12} onClick={() => {}} />
+  <PackCoverageCell label="modo, Website" value={0.14} fails={6} pinned={1} checking={4} onClick={() => {}} />
+</div>
+
 # Pinned
 
 A business that stays on an older version of the pack.

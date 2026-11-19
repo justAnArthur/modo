@@ -7,8 +7,9 @@ import type { Asset, Business, CellStatus, LoadedItem, LoadedPack, ShownState } 
 
 export const cellKey = (asset: string, item: string) => `${asset}:${item}`
 
-/** What the cell shows: a run under way wins over the check's state. */
-export const shownState = (cell: CellStatus): ShownState => cell.run?.state ?? cell.state
+/** What the cell shows: a check under way wins over a run, a run over the check's state. */
+export const shownState = (cell: CellStatus): ShownState =>
+  cell.checking ? 'checking' : (cell.run?.state ?? cell.state)
 
 /** The version of `pack` the business follows, or `undefined` when it hasn't adopted it. */
 export function adoptedVersion(business: Business, pack: LoadedPack) {
@@ -36,9 +37,14 @@ export interface Coverage {
   fails: number
   /** Cells a worker is on, or with a PR open. */
   inFlight: number
+  /** Cells being checked; every other figure counts them as their last state. */
+  checking: number
 }
 
-/** Pass and pass-older count as passing; waived cells don't count; error, stale and unchecked count against. */
+/**
+ * Pass and pass-older count as passing; waived cells don't count; error, stale and unchecked count against.
+ * A cell being checked counts as its last state until its new result lands, so the figures hold still during a run.
+ */
 export function coverageOf(cells: CellStatus[]): Coverage {
   const counted = cells.filter(cell => cell.state !== 'waived')
   const passing = counted.filter(cell => cell.state === 'pass' || cell.state === 'pass-older').length
@@ -46,8 +52,9 @@ export function coverageOf(cells: CellStatus[]): Coverage {
     value: counted.length ? passing / counted.length : null,
     passing,
     counted: counted.length,
-    fails: cells.filter(cell => shownState(cell) === 'fail').length,
+    fails: cells.filter(cell => cell.state === 'fail' && !cell.run).length,
     inFlight: cells.filter(cell => cell.run).length,
+    checking: cells.filter(cell => cell.checking).length,
   }
 }
 

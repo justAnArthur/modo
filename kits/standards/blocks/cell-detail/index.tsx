@@ -201,12 +201,20 @@ interface CellDetailProps {
   now?: number
   /** Called with the picked worker's id on Fix. */
   onFix?: (worker: string) => void
+  /** Disables Fix with ▾ worker. Defaults to `false`. */
+  fixDisabled?: boolean
+  /** Why Fix is disabled, in a tooltip over it while `fixDisabled`. */
+  fixDisabledReason?: string
   /** Called on Re-check. */
   onRecheck?: () => void
   /** Called with the reason and end date (an ISO date) when the cell is waived. */
   onWaive?: (waiver: { reason: string; until?: string }) => void
   /** Called on Lift waiver, for a waived cell. */
   onLiftWaiver?: () => void
+  /** Disables the ⋯ menu's Waive… (Lift waiver on a waived cell). Defaults to `false`. */
+  waiveDisabled?: boolean
+  /** Why waiving is disabled, shown under the disabled row in the ⋯ menu while `waiveDisabled`. */
+  waiveDisabledReason?: string
   /** Called on the close button. Without it there is none. */
   onClose?: () => void
   /** Classes for the root. */
@@ -219,8 +227,9 @@ interface CellDetailProps {
  * tried, and what to do about it.
  *
  * The head names the item, the asset and the pack, with the cell's state.
- * Work under way shows first: the worker on it, or the PR open until the
- * check passes. Then the evidence as the check wrote it, the item's why, the
+ * Work under way shows first: a check running now (the cell keeps its last
+ * state and evidence until the result lands, and Re-check spins), the worker
+ * on it, or the PR open until the check passes. Then the evidence as the check wrote it, the item's why, the
  * check written out as in its `item.yml`, and the history: one timeline of
  * the cell's checks and fix runs (see RunTimeline). Press an entry and the
  * pane turns to it, with a back control: a check's log, step by step (see
@@ -230,7 +239,9 @@ interface CellDetailProps {
  * The actions stay on one row and follow the state: a failing cell gets Fix
  * with ▾ worker (the business's default first, see WorkerPicker); every cell
  * can be re-checked; the ⋯ menu holds Waive, which opens a reason and an end
- * date in place, or Lift waiver on a waived cell.
+ * date in place, or Lift waiver on a waived cell. `fixDisabled` and
+ * `waiveDisabled` dim either one while it isn't available, each with an
+ * optional reason: a tooltip over Fix, a line under the row in the menu.
  *
  * Give the pane a height when a transcript can open in it: the transcript
  * scrolls inside it.
@@ -251,9 +262,13 @@ export default function CellDetail({
   onRunChange,
   now = Date.now(),
   onFix,
+  fixDisabled = false,
+  fixDisabledReason,
   onRecheck,
   onWaive,
   onLiftWaiver,
+  waiveDisabled = false,
+  waiveDisabledReason,
   onClose,
   className,
 }: CellDetailProps) {
@@ -261,6 +276,8 @@ export default function CellDetail({
   const [open, setOpen] = useControllableState(runProp, defaultRun, onRunChange)
   const state = shownState(cell)
   const { result, run, waiver } = cell
+  // The state the last check left: the actions follow it, so they hold still while a check runs.
+  const last = run?.state ?? cell.state
 
   const check = history.find(entry => entry.checked_at === open)
   if (check) {
@@ -330,6 +347,13 @@ export default function CellDetail({
         <CloseButton onClose={onClose} />
       </header>
 
+      {cell.checking && (
+        <div className="flex items-start gap-2 text-body text-foreground">
+          <StatusDot status="running" className="mt-0.5" />
+          <span>Checking now. Until the result lands, the cell keeps its last state: {STATE_LABEL[last]}.</span>
+        </div>
+      )}
+
       {run && (
         <div className="flex items-start gap-2 text-body text-foreground">
           <StatusDot status={run.state === 'running' ? 'running' : 'waiting'} className="mt-0.5" />
@@ -347,16 +371,18 @@ export default function CellDetail({
       )}
 
       <div className="flex items-center gap-2">
-        {state === 'fail' && (
+        {last === 'fail' && (
           <WorkerPicker
             workers={workers}
             defaultValue={business.worker}
             size="compact"
             onFix={onFix}
+            disabled={fixDisabled}
+            disabledReason={fixDisabledReason}
             className="min-w-0"
           />
         )}
-        <Button variant="secondary" size="compact" leadingIcon={RotateCw} onClick={onRecheck}>
+        <Button variant="secondary" size="compact" leadingIcon={RotateCw} loading={cell.checking} onClick={onRecheck}>
           Re-check
         </Button>
         <Dropdown.Menu>
@@ -369,15 +395,28 @@ export default function CellDetail({
           />
           <Dropdown.Content align="end">
             {waiver ? (
-              <Dropdown.Item icon={ShieldCheck} label="Lift waiver" onSelect={() => onLiftWaiver?.()} />
+              <Dropdown.Item
+                icon={ShieldCheck}
+                label="Lift waiver"
+                disabled={waiveDisabled}
+                onSelect={() => onLiftWaiver?.()}
+              />
             ) : (
-              <Dropdown.Item icon={ShieldOff} label="Waive…" onSelect={() => setWaiving(true)} />
+              <Dropdown.Item
+                icon={ShieldOff}
+                label="Waive…"
+                disabled={waiveDisabled}
+                onSelect={() => setWaiving(true)}
+              />
+            )}
+            {waiveDisabled && waiveDisabledReason && (
+              <p className="max-w-56 px-2 pt-1 pb-1.5 text-caption text-muted-foreground">{waiveDisabledReason}</p>
             )}
           </Dropdown.Content>
         </Dropdown.Menu>
       </div>
 
-      {waiving && <WaiveForm onWaive={onWaive} onCancel={() => setWaiving(false)} />}
+      {waiving && !waiveDisabled && <WaiveForm onWaive={onWaive} onCancel={() => setWaiving(false)} />}
 
       {waiver && (
         <Section title="Waiver" aside={waiver.until ? `until ${waiver.until}` : 'no end date'}>

@@ -219,8 +219,8 @@ export type CellState = 'pass' | 'pass-older' | 'fail' | 'error' | 'stale' | 'un
 /** Work under way on a cell: a worker on it, or the PR it opened, until the check passes. */
 export type CellRun = { state: 'running'; worker: string } | { state: 'pr-open'; url: string; number: number }
 
-/** What a cell shows: its run when one is under way, else its state. */
-export type ShownState = CellState | CellRun['state']
+/** What a cell shows: `checking` while a check runs, else its run when one is under way, else its state. */
+export type ShownState = CellState | CellRun['state'] | 'checking'
 
 /** One asset × one item. */
 export interface CellStatus {
@@ -233,4 +233,6 @@ export interface CellStatus {
   waiver?: Waiver
   /** App-side: the run or PR under way. */
   run?: CellRun
+  /** App-side: a check of the cell is under way. `state`, `result` and `run` stay as the last check left them, and coverage counts the cell as that state until the new result lands. */
+  checking?: boolean
 }

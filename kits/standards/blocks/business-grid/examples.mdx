@@ -40,3 +40,32 @@ modo stays on Website v1 (no sitemap health or hero yet) and adopts Repo v1: rep
   now={NOW}
   className="h-[420px]"
 />
+
+# A check under way
+
+Every cell but the waived one is being checked: each spins and keeps its last result for its card, the coverage holds still, and nothing can be picked until the results land.
+
+<BusinessGrid
+  business={BUSINESSES.find(b => b.id === 'modo')}
+  packs={PACKS}
+  cells={STATUS.modo.map(cell => (cell.state === 'waived' ? cell : { ...cell, checking: true }))}
+  workers={WORKERS}
+  now={NOW}
+  className="h-[460px]"
+/>
+
+# Fix not available yet
+
+`fixDisabled` keeps the picking but dims Fix N with ▾ worker; `fixDisabledReason` says why in a tooltip over it.
+
+<BusinessGrid
+  business={BUSINESSES.find(b => b.id === 'uteg')}
+  packs={PACKS}
+  cells={STATUS.uteg}
+  workers={WORKERS}
+  defaultSelected={['site:website/og-image', 'site:website/og-video', 'site:website/structured-data']}
+  fixDisabled
+  fixDisabledReason="Fix runs come in the next version."
+  now={NOW}
+  className="h-[420px]"
+/>

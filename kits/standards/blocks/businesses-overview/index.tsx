@@ -40,6 +40,10 @@ function Legend() {
       text: "The share of the pack's checks that pass, and the cells failing with nobody on them.",
     },
     {
+      sample: <PackCoverageCell label="Sample" value={0.7} fails={2} checking={3} />,
+      text: 'Some of its cells are being checked: the figures are the last results until theirs land.',
+    },
+    {
       sample: <span className="text-caption text-muted-foreground">v1</span>,
       text: 'Stays on an older version of the pack.',
     },
@@ -102,7 +106,9 @@ interface BusinessesOverviewProps {
  * it (`v1`). The last column is the business's coverage over all its packs;
  * a strip above sums the whole table: coverage, failing cells, cells a worker
  * or a PR is on, and the businesses. Coverage counts pass and older-version
- * pass as passing and leaves waived cells out.
+ * pass as passing and leaves waived cells out. A cell being checked counts as
+ * its last state until its result lands, so a run doesn't shake the figures:
+ * its pack cells trail a spinner and the strip says how many are checking.
  *
  * The head and the business column stay put while the table scrolls, so it
  * stays readable at 30 rows and more; give the block a height, and the card
@@ -151,7 +157,7 @@ export default function BusinessesOverview({
         <Stat
           label="Coverage"
           value={total.value === null ? '—' : `${Math.round(total.value * 100)}%`}
-          detail={`${total.passing} of ${total.counted} checks`}
+          detail={total.checking ? `${total.checking} checking` : `${total.passing} of ${total.counted} checks`}
         />
         <Stat label="Failing, nobody on it" value={total.fails} />
         <Stat label="In flight" value={total.inFlight} detail="workers and open PRs" />
@@ -228,6 +234,7 @@ export default function BusinessesOverview({
                                 label={`${business.name}, ${pack.title}`}
                                 value={coverage.value}
                                 fails={coverage.fails}
+                                checking={coverage.checking}
                                 pinned={version < pack.version ? version : undefined}
                                 onClick={onOpenBusiness && (() => onOpenBusiness(business.id, pack.id))}
                                 className="-mx-1.5"
@@ -237,7 +244,12 @@ export default function BusinessesOverview({
                         )
                       })}
                       <td className={cn(cell, 'pr-4')}>
-                        <PackCoverageCell label={business.name} value={all.value} fails={all.fails} />
+                        <PackCoverageCell
+                          label={business.name}
+                          value={all.value}
+                          fails={all.fails}
+                          checking={all.checking}
+                        />
                       </td>
                     </tr>
                   )

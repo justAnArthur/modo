@@ -7,6 +7,7 @@
 'use client'
 
 import Badge from '@justanarthur/modo-ui/components/data-display/badge'
+import { statusGlyph } from '@justanarthur/modo-ui/components/feedback/status-dot'
 import PreviewCard from '@justanarthur/modo-ui/components/overlays/preview-card'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { Check, Clock, GitPullRequest, Minus, X } from 'lucide-react'
@@ -22,6 +23,7 @@ const LOOK: Record<ShownState, string> = {
   fail: 'bg-destructive-wash text-destructive-strong',
   running: 'bg-status-warning/16 text-foreground',
   'pr-open': 'bg-status-info/16 text-status-info',
+  checking: 'bg-status-loading/16 text-foreground',
   error: 'bg-active text-muted-foreground',
   stale: 'border border-dashed border-control text-muted-foreground',
   waived: 'border border-border text-muted-foreground',
@@ -31,6 +33,9 @@ const LOOK: Record<ShownState, string> = {
 const BOX = { default: 'size-6', small: 'size-4' }
 const ICON = { default: 'size-3.5', small: 'size-2.5' }
 const TEXT = { default: 'text-micro', small: 'text-micro-compact' }
+const SPIN = { default: 22, small: 15 }
+
+const Spinning = statusGlyph('running')
 
 type GlyphSize = keyof typeof BOX
 
@@ -55,6 +60,7 @@ function GlyphMark({ state, worker, version = 1, size = 'default' }: StateGlyphP
   if (state === 'stale') return <Clock className={icon} />
   if (state === 'waived') return <Minus className={icon} />
   if (state === 'pr-open') return <GitPullRequest className={icon} />
+  if (state === 'checking') return <Spinning size={SPIN[size]} />
   if (state === 'pass-older') return <span className={text}>v{version}</span>
   if (state === 'running') return <span className={text}>{worker ? initialsOf(worker) : '…'}</span>
   if (state === 'error')
@@ -97,6 +103,14 @@ function CellCard({ cell, asset, now }: { cell: CellStatus; asset?: string; now:
       </div>
       {result && <p className="break-words font-mono text-caption text-foreground">{result.evidence}</p>}
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-caption">
+        {cell.checking && (
+          <>
+            <dt className="text-muted-foreground">Now</dt>
+            <dd className="text-foreground">
+              {result ? 'Checking again; the last result stands until it lands' : 'Checking for the first time'}
+            </dd>
+          </>
+        )}
         {result && (
           <>
             <dt className="text-muted-foreground">Checked</dt>
@@ -126,7 +140,7 @@ function CellCard({ cell, asset, now }: { cell: CellStatus; asset?: string; now:
             </dd>
           </>
         )}
-        {!result && !waiver && (
+        {!result && !waiver && !cell.checking && (
           <>
             <dt className="text-muted-foreground">Checked</dt>
             <dd className="text-foreground">never</dd>
@@ -160,7 +174,10 @@ interface StateCellProps {
  * item is a faint outline marked `v1`; a waived cell is a neutral dash; a
  * cell nobody has checked yet is a hollow dot. Work under way wins over the
  * check: a worker on the cell shows its initials on amber, an open PR its
- * mark on blue, until the check passes.
+ * mark on blue, until the check passes. A check running right now wins over
+ * both: modo-ui's spinner on a grey wash, calm next to the amber of a worker,
+ * while the cell keeps its last result for the card (see `checking` on
+ * CellStatus).
  *
  * Hover (or focus) the cell and its card oozes out (see PreviewCard): the
  * item, the asset, the evidence as the check wrote it, when it was checked,
@@ -177,12 +194,13 @@ interface StateCellProps {
 const StateCell = Object.assign(
   function StateCell({ cell, asset, selected = false, onClick, now = Date.now() }: StateCellProps) {
     const state = shownState(cell)
+    const last = cell.checking ? `, last ${STATE_LABEL[cell.run?.state ?? cell.state]}` : ''
     return (
       <PreviewCard>
         <PreviewCard.Trigger
           delay={250}
           closeDelay={100}
-          aria-label={`${cell.title}: ${STATE_LABEL[state]}${selected ? ', selected' : ''}`}
+          aria-label={`${cell.title}: ${STATE_LABEL[state]}${last}${selected ? ', selected' : ''}`}
           render={
             <button
               type="button"
