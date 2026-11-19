@@ -26,25 +26,34 @@ import { useIcon } from '../../../lib/icons'
 
 type TurnProps = Omit<MessageProps, 'role'>
 
+// Off-screen turns skip layout and paint, so a resize (a side pane dragged, the
+// window) re-lays out only the turns in view; each keeps its last height while
+// skipped (a guess until it first shows), so the scrollbar holds still.
+// That contains paint to the turn's box: an assistant turn widens it by a
+// padding its negative margin takes back, so the work rows' hover fill (which
+// bleeds past the column) and focus rings still show.
+const USER_TURN = 'content-visibility-auto [contain-intrinsic-size:auto_5rem]'
+const ASSISTANT_TURN = 'content-visibility-auto [contain-intrinsic-size:auto_20rem] -mx-4 px-4 -my-1 py-1'
+
 // No static's key names a binding of this file: the declaration bundler renames
 // a clashing binding to Name2, and a key spelled like it goes along (`Transcript.Working2`).
-function UserTurn(props: TurnProps) {
+function UserTurn({ className, ...props }: TurnProps) {
   // biome-ignore lint/a11y/useValidAriaRole: Message's `role` is who speaks, not an ARIA role
-  return <Message role="user" {...props} />
+  return <Message role="user" className={cn(USER_TURN, className)} {...props} />
 }
 
 /** The agent's turn. A string is markdown, rendered as it streams in; JSX (work, tool runs, prose) renders as is. */
-function AssistantTurn({ children, streaming, ...props }: TurnProps) {
+function AssistantTurn({ children, streaming, className, ...props }: TurnProps) {
   if (typeof children === 'string')
     return (
-      <div className="flex flex-col gap-3">
+      <div className={cn('flex flex-col gap-3', ASSISTANT_TURN, className)}>
         <Markdown streaming={streaming}>{children}</Markdown>
         {streaming && <Message.Working />}
       </div>
     )
   return (
     // biome-ignore lint/a11y/useValidAriaRole: Message's `role` is who speaks, not an ARIA role
-    <Message role="assistant" streaming={streaming} {...props}>
+    <Message role="assistant" streaming={streaming} className={cn(ASSISTANT_TURN, className)} {...props}>
       {children}
     </Message>
   )
@@ -79,6 +88,13 @@ interface TranscriptProps {
  * and follows it: while you read at the end, a turn that arrives or a reply
  * that streams keeps it in view; scroll up and it lets go, with a button to
  * jump back to the latest.
+ *
+ * Built for long sessions: a turn out of view (`Transcript.User`,
+ * `Transcript.Assistant`) skips layout and paint (`content-visibility:
+ * auto`), so resizing the column next to hundreds of turns re-lays out only
+ * the ones you see. Its text stays selectable and findable, and a chapter
+ * inside it still scrolls into view. The column's text is selectable even
+ * inside an app whose chrome turns selection off.
  *
  * Statics (aliases of the components, named for the session):
  * - `Transcript.User` / `Transcript.Assistant` — a Message with its `role` set.
@@ -120,12 +136,21 @@ const Transcript = Object.assign(
       const el = viewport.current
       const content = column.current
       if (!el || !content) return
+      // At the end the transcript sticks on its own: scroll anchoring off there,
+      // or a turn above laying out (an off-screen one coming near) would nudge
+      // the scroll and read as the reader leaving the end. Reading higher up,
+      // anchoring keeps the text still.
+      const follow = (end: boolean) => {
+        atEnd.current = end
+        el.style.overflowAnchor = end ? 'none' : ''
+      }
       const onScroll = () => {
         const end = el.scrollHeight - el.scrollTop - el.clientHeight < 8
         if (end === atEnd.current) return
-        atEnd.current = end
+        follow(end)
         setFollowing(end)
       }
+      follow(atEnd.current)
       // Heights from the entries, not the DOM: a width-only change (a pane
       // dragged wider) reads no layout. A grown column or a shrunk viewport
       // sticks to the end once, on the next frame, however many lines landed.
@@ -173,7 +198,10 @@ const Transcript = Object.assign(
         </div>
         <ScrollArea className="min-h-0 flex-1" viewportClassName="scroll-fade">
           <WorkSummary.Provider open={showWork}>
-            <div ref={column} className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-6 py-6 [contain:inline-size]">
+            <div
+              ref={column}
+              className="mx-auto flex w-full max-w-3xl select-text flex-col gap-5 px-6 py-6 [contain:inline-size]"
+            >
               {children}
             </div>
           </WorkSummary.Provider>

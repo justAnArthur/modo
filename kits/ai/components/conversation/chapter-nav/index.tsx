@@ -62,6 +62,16 @@ interface ChapterNavProps {
  *
  * @example {@include ./examples.mdx}
  */
+/**
+ * Scrolls the break to the top, then again once the turns around it have
+ * laid out: in a transcript an off-screen turn holds a guessed height until
+ * it shows, so the first scroll can land a little off.
+ */
+function align(target: HTMLElement, frames: number) {
+  target.scrollIntoView({ block: 'start' })
+  if (frames > 0) requestAnimationFrame(() => align(target, frames - 1))
+}
+
 const ChapterNav = Object.assign(
   function ChapterNav({ chapters, defaultValue, onValueChange }: ChapterNavProps) {
     const [current, setCurrent] = useControllableState<string>(
@@ -73,7 +83,8 @@ const ChapterNav = Object.assign(
 
     const pick = (id: string) => {
       setCurrent(id)
-      document.getElementById(id)?.scrollIntoView({ block: 'start' })
+      const target = document.getElementById(id)
+      if (target) align(target, 2)
     }
 
     return (
