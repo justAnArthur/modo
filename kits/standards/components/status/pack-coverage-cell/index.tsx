@@ -5,6 +5,7 @@
 
 'use client'
 
+import StatusDot from '@justanarthur/modo-ui/components/feedback/status-dot'
 import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import type { MouseEventHandler } from 'react'
@@ -17,6 +18,8 @@ interface PackCoverageCellProps {
   value?: number | null
   /** Failing cells nobody is on yet. Defaults to `0`. */
   fails?: number
+  /** Cells of the pack being checked right now: a spinner shows, and the figures stay the last results until theirs land. Defaults to `0`. */
+  checking?: number
   /** The version the business stays on, when it pins an older one than the pack's latest: shown as `v1`. */
   pinned?: number
   /** The accessible name: the business and the pack, such as `Camasys, Website`. */
@@ -34,7 +37,9 @@ interface PackCoverageCellProps {
  * A pack the business hasn't adopted is a dashed "not adopted" box: a choice,
  * not a failure, so it is never red. A business that stays on an older
  * version of the pack (`website@1`) marks it `v1`. With `onClick` the cell is a
- * button that opens the business there.
+ * button that opens the business there. While some of its cells are being
+ * checked a small spinner trails the figures, which hold their last results
+ * until the new ones land.
  *
  * @example {@include ./examples.mdx}
  */
@@ -42,6 +47,7 @@ export default function PackCoverageCell({
   adopted = true,
   value = null,
   fails = 0,
+  checking = 0,
   pinned,
   label,
   onClick,
@@ -69,6 +75,7 @@ export default function PackCoverageCell({
         {fails > 0 && `×${fails}`}
       </span>
       {pinned !== undefined && <span className="text-caption text-muted-foreground">v{pinned}</span>}
+      {checking > 0 && <StatusDot status="running" size="compact" className="text-muted-foreground" />}
     </>
   )
 
@@ -77,7 +84,7 @@ export default function PackCoverageCell({
   return (
     <button
       type="button"
-      aria-label={`${label}: ${value === null ? 'nothing counted' : `${Math.round(value * 100)}%`}${fails ? `, ${fails} failing` : ''}`}
+      aria-label={`${label}: ${value === null ? 'nothing counted' : `${Math.round(value * 100)}%`}${fails ? `, ${fails} failing` : ''}${checking ? `, ${checking} being checked` : ''}`}
       onClick={onClick}
       className={cn(
         'inline-flex h-7 cursor-pointer items-center gap-1 px-1.5 text-body outline-none transition-[box-shadow] duration-fast hover:ring-1 hover:ring-border focus-visible:ring-1 focus-visible:ring-focus-ring',

@@ -7,8 +7,11 @@
 
 import ButtonGroup from '@justanarthur/modo-ui/components/actions/button-group'
 import Dropdown from '@justanarthur/modo-ui/components/overlays/dropdown'
+import Tooltip from '@justanarthur/modo-ui/components/overlays/tooltip'
+import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import type { SizeVariant } from '@justanarthur/modo-ui/lib/size-context'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
+import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { Wrench } from 'lucide-react'
 import type { Worker } from '../../../lib/types'
 
@@ -41,6 +44,8 @@ interface WorkerPickerProps {
   size?: SizeVariant
   /** Disables both buttons. Defaults to `false`. */
   disabled?: boolean
+  /** Why it is disabled, shown in a tooltip over the whole split button while `disabled`. */
+  disabledReason?: string
   /** Classes for the root. */
   className?: string
 }
@@ -57,6 +62,9 @@ interface WorkerPickerProps {
  * ButtonGroup). Works controlled (`value` +
  * `onValueChange`) or uncontrolled (`defaultValue`).
  *
+ * `disabled` dims both segments; with a `disabledReason` the split button
+ * gets a tooltip saying why, on hover and on keyboard focus.
+ *
  * @example {@include ./examples.mdx}
  */
 export default function WorkerPicker({
@@ -69,13 +77,22 @@ export default function WorkerPicker({
   variant = 'primary',
   size,
   disabled = false,
+  disabledReason,
   className,
 }: WorkerPickerProps) {
   const [picked, setPicked] = useControllableState(value, defaultValue, onValueChange)
   const index = workers.findIndex(worker => worker.id === picked)
+  const shape = useShape()
+  const explained = disabled && disabledReason
 
-  return (
-    <ButtonGroup variant={variant} size={size} disabled={disabled} aria-label="Fix" className={className}>
+  const group = (
+    <ButtonGroup
+      variant={variant}
+      size={size}
+      disabled={disabled}
+      aria-label="Fix"
+      className={explained ? undefined : className}
+    >
       <ButtonGroup.Button leadingIcon={Wrench} disabled={disabled || !picked} onClick={() => picked && onFix?.(picked)}>
         {count > 1 ? `Fix ${count} with ${picked}` : `Fix with ${picked}`}
       </ButtonGroup.Button>
@@ -92,6 +109,24 @@ export default function WorkerPicker({
         ))}
       </ButtonGroup.Menu>
     </ButtonGroup>
+  )
+
+  if (!explained) return group
+
+  return (
+    <Tooltip content={disabledReason}>
+      <span
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: disabled buttons take no pointer or focus, so the wrapper carries the reason
+        tabIndex={0}
+        className={cn(
+          'inline-flex outline-none focus-visible:ring-1 focus-visible:ring-focus-ring',
+          shape.button,
+          className,
+        )}
+      >
+        {group}
+      </span>
+    </Tooltip>
   )
 }
 

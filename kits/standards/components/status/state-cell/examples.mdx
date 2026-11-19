@@ -4,7 +4,7 @@ import { SHOWN_STATES, STATE_LABEL } from '../../../lib/states'
 
 # Every state
 
-Hover a cell for its card. Fail is the only red; a check that couldn't run is a grey `!`.
+Hover a cell for its card. Fail is the only red; a check that couldn't run is a grey `!`; a check running now is a calm spinner.
 
 <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2">
   {[
@@ -13,6 +13,7 @@ Hover a cell for its card. Fail is the only red; a check that couldn't run is a 
     statusOf('camasys', 'site', 'website/og-video'),
     statusOf('camasys', 'site', 'website/security-headers'),
     statusOf('acadsys', 'site', 'website/security-headers'),
+    { ...statusOf('camasys', 'site', 'website/icons'), checking: true },
     statusOf('acadsys', 'site', 'website/llms-txt'),
     statusOf('camasys', 'site', 'website/sitemap-health'),
     statusOf('modo', 'docs', 'website/security-headers'),
@@ -34,6 +35,18 @@ Hover a cell for its card. Fail is the only red; a check that couldn't run is a 
     <span key={state} className="flex items-center gap-2 text-caption text-muted-foreground">
       <StateCell.Glyph state={state} size="small" worker="sonnet-fixer" />
       {STATE_LABEL[state]}
+    </span>
+  ))}
+</div>
+
+# Checking
+
+While a check runs, every cell it covers spins, distinct from the amber of a worker fixing one. Each keeps its last result: hover one for it.
+
+<div className="flex">
+  {STATUS.uteg.map(cell => (
+    <span key={cell.item} className="flex w-7 justify-center">
+      <StateCell cell={{ ...cell, checking: true }} asset="www.uteg.sk" now={NOW} />
     </span>
   ))}
 </div>

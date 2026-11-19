@@ -21,6 +21,44 @@ Camasys has no `og:video`: the evidence as the check wrote it, the item's why an
   />
 </div>
 
+# Checking
+
+A re-check is running: the head spins, Re-check holds its loading glyph, and the evidence, actions and history stay those of the last check until the result lands.
+
+<div className="w-[420px] max-w-full rounded-xl border border-border">
+  <CellDetail
+    cell={{ ...statusOf('camasys', 'site', 'website/og-video'), checking: true }}
+    item={PACKS[0].entries.find(i => i.id === 'og-video')}
+    pack={PACKS[0]}
+    asset={BUSINESSES[0].assets[0]}
+    business={BUSINESSES[0]}
+    workers={WORKERS}
+    {...runsOf('camasys', statusOf('camasys', 'site', 'website/og-video'))}
+    now={NOW}
+  />
+</div>
+
+# Fix and Waive not available yet
+
+`fixDisabled` and `waiveDisabled` dim each action on its own. Hover Fix for its reason; open the ⋯ menu for Waive's.
+
+<div className="w-[420px] max-w-full rounded-xl border border-border">
+  <CellDetail
+    cell={statusOf('camasys', 'site', 'website/og-video')}
+    item={PACKS[0].entries.find(i => i.id === 'og-video')}
+    pack={PACKS[0]}
+    asset={BUSINESSES[0].assets[0]}
+    business={BUSINESSES[0]}
+    workers={WORKERS}
+    history={historyOf(statusOf('camasys', 'site', 'website/og-video'))}
+    fixDisabled
+    fixDisabledReason="Fix runs come in the next version."
+    waiveDisabled
+    waiveDisabledReason="Waivers come in the next version."
+    now={NOW}
+  />
+</div>
+
 # A check's log
 
 The request and its assertions; the failing ones sit on the error hue. Back returns to the cell.

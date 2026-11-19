@@ -14,6 +14,22 @@ The seven businesses in the workspace, as `standards status` reported them. Hove
   className="h-[420px]"
 />
 
+# A check under way
+
+Camasys and UTEG are being checked: their pack cells trail a spinner, the strip counts the cells checking, and every figure stays the last results until theirs land.
+
+<BusinessesOverview
+  businesses={BUSINESSES}
+  packs={PACKS}
+  status={{
+    ...STATUS,
+    camasys: STATUS.camasys.map(cell => ({ ...cell, checking: true })),
+    uteg: STATUS.uteg.map(cell => ({ ...cell, checking: true })),
+  }}
+  onOpenBusiness={() => {}}
+  className="h-[420px]"
+/>
+
 # Thirty-two businesses
 
 25 fake ones on `.example` hosts join them: the head and the business column stay put as the table scrolls.
