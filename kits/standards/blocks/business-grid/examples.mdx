@@ -1,0 +1,42 @@
+import BusinessGrid from './index'
+import { BUSINESSES, NOW, PACKS, STATUS, WORKERS } from '../../mock/status'
+
+# Camasys
+
+One website against Website v2. Hover a cell for its evidence; a worker is on the security headers, robots.txt passes the older v1 of its item, and the sitemap check is a week old.
+
+<BusinessGrid
+  business={BUSINESSES[0]}
+  packs={PACKS}
+  cells={STATUS.camasys}
+  workers={WORKERS}
+  now={NOW}
+  className="h-[420px]"
+/>
+
+# Two kinds of asset
+
+modo stays on Website v1 (no sitemap health or hero yet) and adopts Repo v1: repo items don't apply to the docs site, website items don't apply to the repo. Its security headers are waived.
+
+<BusinessGrid
+  business={BUSINESSES.find(b => b.id === 'modo')}
+  packs={PACKS}
+  cells={STATUS.modo}
+  workers={WORKERS}
+  now={NOW}
+  className="h-[460px]"
+/>
+
+# Picking failing cells
+
+⌘-click failing cells on one asset, or tick its box: Fix N with ▾ worker sends them as one run.
+
+<BusinessGrid
+  business={BUSINESSES.find(b => b.id === 'uteg')}
+  packs={PACKS}
+  cells={STATUS.uteg}
+  workers={WORKERS}
+  defaultSelected={['site:website/og-image', 'site:website/og-video', 'site:website/structured-data']}
+  now={NOW}
+  className="h-[420px]"
+/>

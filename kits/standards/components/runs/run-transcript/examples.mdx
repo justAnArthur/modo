@@ -1,0 +1,24 @@
+import RunTranscript from './index'
+import { HEADERS_FIX, OG_VIDEO_FIX } from '../../../mock/runs'
+
+# A finished fix run
+
+sonnet-fixer on Camasys's `og:video`: the prompt, the work folded into one row, and the reply with the PR. Press the row, or the eye, to see each call.
+
+<div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border">
+  <RunTranscript items={OG_VIDEO_FIX.transcript} />
+</div>
+
+# Work shown
+
+<div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border">
+  <RunTranscript items={OG_VIDEO_FIX.transcript} defaultShowWork />
+</div>
+
+# Running
+
+The last call has no result yet, so it spins.
+
+<div className="flex h-[480px] w-full overflow-hidden rounded-xl border border-border">
+  <RunTranscript items={HEADERS_FIX.transcript} running defaultShowWork />
+</div>

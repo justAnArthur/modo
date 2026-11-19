@@ -13,7 +13,7 @@ controlled + uncontrolled.
 
 | You need | Reach for |
 |---|---|
-| An action | `Button` (`primary` / `secondary` / `tertiary` / `outline` / `ghost` / `destructive` / `success` / `link`; `icon` sizes; `loading`; `asChild` for links) |
+| An action | `ButtonGroup` for a split button (action + ▾ menu) or joined buttons; `Button` (`primary` / `secondary` / `tertiary` / `outline` / `ghost` / `destructive` / `success` / `link`; `icon` sizes; `loading`; `asChild` for links) |
 | A status or category label | `Badge` (`solid` / `dot` / `outline`, 17 colors; changes animate) |
 | A person's or team's picture | `Avatar` (`.Image`, `.Fallback`; `shape` `circle` / `square`) |
 | A text field, with label and error | `Field` (`.Label`, `.Description`, `.Error`) around any control, or `InputGroup` + `InputGroup.Field` for a stack of fields |
@@ -104,6 +104,7 @@ controlled + uncontrolled.
 | Item | Path | Statics | Systems | Notes |
 |---|---|---|---|---|
 | `Button` | `components/actions/button` | — | L C | 8 variants: `primary`, `secondary`, `tertiary`, `outline` (control-border frame), `ghost`, `destructive` / `success` (`-strong` text on a wash), `link`. Press shrinks the fill 1px/side; icons thicken; `loading` folds into a circle (box unchanged) and keeps focus; `active` forces pressed. `buttonVariants` in `variants.ts` is server-safe. Serves the chrome's Button slot. `buttonVariants({ surface: true })` for an anchor; the primary fill reads `--primary*`. |
+| `ButtonGroup` | `components/actions/button-group` | `.Button .Menu` | L C | Joins Buttons into one control: round outer corners, square inner edges, a hairline between segments; `variant`, `size`, `disabled` pass to every segment. `.Menu` is the split button's chevron segment on `Dropdown` (`label`, `icon`, `open` / `defaultOpen` / `onOpenChange`, `Dropdown.Content` props, `align="end"`). |
 | `Badge` | `components/data-display/badge` | — | L | `variant` `solid` \| `dot` \| `outline`, `color`, `size`; a new label springs width and blur-crossfades. |
 | `Avatar` | `components/data-display/avatar` | `.Image .Fallback` | L | Base UI Avatar; the image fades in, the fallback shows while it loads or fails; `shape` `circle` \| `square`. |
 | `Progress` | `components/feedback/progress` | `.Spinner` | L | Base UI Progress; the fill slides on `spring.moderate`; `value={null}` sweeps on `--duration-loop`; `label`, `showValue`, `format`. `.Spinner` is Button's loading glyph. |

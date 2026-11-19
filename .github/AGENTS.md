@@ -208,6 +208,7 @@ Not part of the toolkit template: re-add this section after an `update` rewrites
 | `@justanarthur/modo-ui` | `ui/` | `ui`, `modo-ui`, `justanarthur/modo-ui`, `@justanarthur/modo-ui` |
 | `@justanarthur/modo-ui-ai` | `kits/ai/` | `ai`, `modo-ui-ai`, `justanarthur/modo-ui-ai`, `@justanarthur/modo-ui-ai` |
 | `@justanarthur/modo-ui-notch` | `kits/notch/` | `notch`, `modo-ui-notch`, `justanarthur/modo-ui-notch`, `@justanarthur/modo-ui-notch` |
+| `@justanarthur/modo-ui-standards` | `kits/standards/` | `standards`, `modo-ui-standards`, `justanarthur/modo-ui-standards`, `@justanarthur/modo-ui-standards` |
 
 `demo` and the demo design systems are private: their scopes never bump anything. A kit under `kits/` is a published package of its own (public `publishConfig`, `modo-ui` as a peer); `publish-npm-on-tag` builds it with its `build` script and publishes it like `ui`.
 

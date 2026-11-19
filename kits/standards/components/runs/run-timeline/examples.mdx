@@ -1,0 +1,25 @@
+import RunTimeline from './index'
+import { NOW, statusOf } from '../../../mock/status'
+import { runsOf } from '../../../mock/runs'
+
+# Checks and fixes
+
+Camasys's `og:video`: failing again since a deploy, after sonnet-fixer's PR #24 had made it pass.
+
+<div className="w-[420px] max-w-full">
+  <RunTimeline
+    checks={runsOf('camasys', statusOf('camasys', 'site', 'website/og-video')).history}
+    fixes={runsOf('camasys', statusOf('camasys', 'site', 'website/og-video')).fixRuns}
+    now={NOW}
+  />
+</div>
+
+# A run under way
+
+<div className="w-[420px] max-w-full">
+  <RunTimeline
+    checks={runsOf('camasys', statusOf('camasys', 'site', 'website/security-headers')).history}
+    fixes={runsOf('camasys', statusOf('camasys', 'site', 'website/security-headers')).fixRuns}
+    now={NOW}
+  />
+</div>

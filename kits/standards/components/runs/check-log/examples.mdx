@@ -1,0 +1,34 @@
+import CheckLog from './index'
+import { HEADERS_FAIL, HERO_LOG, OG_VIDEO_FAIL, SITEMAP_SCRIPT } from '../../../mock/runs'
+
+# An http check
+
+Camasys's home page answered 200, and none of the four `og:video` tags was there.
+
+<div className="w-[420px] max-w-full">
+  <CheckLog log={OG_VIDEO_FAIL} />
+</div>
+
+# Some pass
+
+HSTS is set; `nosniff` is missing.
+
+<div className="w-[420px] max-w-full">
+  <CheckLog log={HEADERS_FAIL} />
+</div>
+
+# A script
+
+The sitemap check's output as it printed it.
+
+<div className="w-[420px] max-w-full">
+  <CheckLog log={SITEMAP_SCRIPT} />
+</div>
+
+# An ai check
+
+The hero check's model session: what it fetched, how it judged. Give it a height: it scrolls inside.
+
+<div className="flex h-[480px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <CheckLog log={HERO_LOG} />
+</div>

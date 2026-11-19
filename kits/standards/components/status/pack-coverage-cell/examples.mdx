@@ -1,0 +1,23 @@
+import PackCoverageCell from './index'
+
+# Coverage and fails
+
+The pack's coverage across the business's assets, and the cells that fail with nobody on them.
+
+<div className="flex flex-col items-start gap-2">
+  <PackCoverageCell label="Camasys, Website" value={0.7} fails={1} onClick={() => {}} />
+  <PackCoverageCell label="UTEG, Website" value={0} fails={9} onClick={() => {}} />
+  <PackCoverageCell label="just-standards, Repo" value={1} onClick={() => {}} />
+</div>
+
+# Pinned
+
+A business that stays on an older version of the pack.
+
+<PackCoverageCell label="modo, Website" value={0.14} fails={6} pinned={1} />
+
+# Not adopted
+
+A choice, not a failure: dashed, never red.
+
+<PackCoverageCell label="Camasys, Repo" adopted={false} />

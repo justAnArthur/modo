@@ -1,0 +1,61 @@
+import StateCell from './index'
+import { NOW, STATUS, statusOf } from '../../../mock/status'
+import { SHOWN_STATES, STATE_LABEL } from '../../../lib/states'
+
+# Every state
+
+Hover a cell for its card. Fail is the only red; a check that couldn't run is a grey `!`.
+
+<div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2">
+  {[
+    statusOf('camasys', 'site', 'website/hero'),
+    statusOf('camasys', 'site', 'website/robots-sitemap'),
+    statusOf('camasys', 'site', 'website/og-video'),
+    statusOf('camasys', 'site', 'website/security-headers'),
+    statusOf('acadsys', 'site', 'website/security-headers'),
+    statusOf('acadsys', 'site', 'website/llms-txt'),
+    statusOf('camasys', 'site', 'website/sitemap-health'),
+    statusOf('modo', 'docs', 'website/security-headers'),
+    { asset: 'site', item: 'website/hero', title: 'The first screen says what it is, for whom, and what to do', state: 'unchecked' },
+  ].map((cell, index) => (
+    <div key={index} className="contents">
+      <StateCell cell={cell} now={NOW} />
+      <span className="text-body text-muted-foreground">{cell.title}</span>
+    </div>
+  ))}
+</div>
+
+# The legend's glyphs
+
+`StateCell.Glyph` draws the look alone, at 24px or the legend's 16px.
+
+<div className="flex flex-wrap items-center gap-4">
+  {SHOWN_STATES.map(state => (
+    <span key={state} className="flex items-center gap-2 text-caption text-muted-foreground">
+      <StateCell.Glyph state={state} size="small" worker="sonnet-fixer" />
+      {STATE_LABEL[state]}
+    </span>
+  ))}
+</div>
+
+# A row
+
+One asset's cells as the grid lays them out, a 28px column each.
+
+<div className="flex">
+  {STATUS.uteg.map(cell => (
+    <span key={cell.item} className="flex w-7 justify-center">
+      <StateCell cell={cell} asset="www.uteg.sk" now={NOW} />
+    </span>
+  ))}
+</div>
+
+# Selected
+
+A cell picked for a multi-cell fix takes a ring.
+
+<div className="flex gap-1">
+  <StateCell cell={statusOf('uteg', 'site', 'website/og-image')} selected now={NOW} />
+  <StateCell cell={statusOf('uteg', 'site', 'website/og-video')} selected now={NOW} />
+  <StateCell cell={statusOf('uteg', 'site', 'website/icons')} now={NOW} />
+</div>

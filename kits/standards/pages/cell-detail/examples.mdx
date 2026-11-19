@@ -1,0 +1,43 @@
+import CellDetailPage from './index'
+
+# A failing cell
+
+<CellDetailPage />
+
+# The check's log
+
+The last check, opened from the timeline: the request, then the four `og:video` assertions that failed.
+
+<CellDetailPage run="2026-11-19T10:52:05.222Z" />
+
+# The fix that opened a PR
+
+sonnet-fixer's run on `og:video`: it read the layout, edited `generateMetadata`, checked the tags on a local build and opened PR #24.
+
+<CellDetailPage run="run-og-video" />
+
+# A worker on it
+
+<CellDetailPage open="site:website/security-headers" />
+
+# The run under way
+
+sonnet-fixer on the security headers, still going.
+
+<CellDetailPage open="site:website/security-headers" run="run-security-headers" />
+
+# An ai check
+
+The hero check's log is the model's session: what it fetched and how it judged.
+
+<CellDetailPage open="site:website/hero" run="2026-11-19T10:52:16.118Z" />
+
+# Couldn't check
+
+<CellDetailPage id="acadsys" open="site:website/llms-txt" />
+
+# Dark
+
+<div className="dark w-full">
+  <CellDetailPage />
+</div>

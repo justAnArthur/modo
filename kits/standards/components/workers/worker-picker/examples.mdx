@@ -1,0 +1,29 @@
+import WorkerPicker from './index'
+import { WORKERS } from '../../../mock/status'
+
+# Fix with
+
+The business's default worker first; the chevron attached to it picks another preset, with its model, effort and what it may do.
+
+<WorkerPicker workers={WORKERS} defaultValue="sonnet-fixer" />
+
+# A batch
+
+Several failing cells on one asset go to one worker as one run and one PR.
+
+<WorkerPicker workers={WORKERS} defaultValue="opus-fixer" count={3} />
+
+# Secondary and compact
+
+Beside another main action, and in a dense toolbar.
+
+<div className="flex flex-col items-start gap-3">
+  <WorkerPicker workers={WORKERS} variant="secondary" />
+  <WorkerPicker workers={WORKERS} size="compact" count={2} />
+</div>
+
+# Disabled
+
+While nothing may be fixed, both segments dim.
+
+<WorkerPicker workers={WORKERS} disabled />
