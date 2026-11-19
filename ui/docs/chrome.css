@@ -173,3 +173,37 @@
 [data-modo-ui="nav-controls"] {
   padding-inline: var(--space-2);
 }
+
+/* The site view's indicator (/site): the badge and its menu as one of the
+   design system's popups, a surface lifted off the page on its shadow. */
+[data-modo="site-badge"],
+[data-modo="site-menu"] {
+  border-color: transparent;
+  background-color: var(--surface-3);
+  box-shadow: var(--shadow-3);
+}
+
+[data-modo="site-badge"] {
+  transition: background-color var(--duration-fast);
+}
+
+[data-modo="site-badge"]:hover {
+  background-image: linear-gradient(var(--hover), var(--hover));
+}
+
+[data-modo="site-menu"] {
+  border-radius: var(--radius-shell);
+}
+
+[data-modo="site-menu-page"] {
+  border-radius: var(--radius);
+  transition: background-color var(--duration-fast);
+}
+
+[data-modo="site-menu-page"]:hover {
+  background-color: var(--hover);
+}
+
+[data-modo="site-menu-page"][aria-current="page"] {
+  background-color: var(--active);
+}
