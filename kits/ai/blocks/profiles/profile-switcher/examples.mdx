@@ -1,5 +1,20 @@
 import ProfileSwitcher from './index'
+import { useState } from 'react'
 import { PROFILES } from '../../../mock/mock'
+
+export function WithActions() {
+  const [last, setLast] = useState('Nothing pressed yet')
+  return (
+    <div className="flex h-[560px] w-full flex-col items-center gap-3 pt-6">
+      <ProfileSwitcher
+        profiles={PROFILES}
+        onAddProfile={() => setLast('Add profile: open the add-profile flow')}
+        onManage={() => setLast('Manage: open the profiles screen')}
+      />
+      <code className="font-mono text-caption text-muted-foreground">{last}</code>
+    </div>
+  )
+}
 
 # Switcher
 
@@ -8,6 +23,12 @@ Press the trigger: the panel grows out of it. Pick a profile and its background 
 <div className="flex h-[560px] w-full items-start justify-center pt-6">
   <ProfileSwitcher profiles={PROFILES} />
 </div>
+
+# Add and manage
+
+`onAddProfile` and `onManage` put "Add profile" and "Manage" in the panel's footer; each shows only when its handler is given. A press closes the panel, then calls the handler.
+
+<WithActions />
 
 # Near a limit
 
