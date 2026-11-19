@@ -312,16 +312,25 @@ const Resizable = forwardRef<HTMLDivElement, ResizableProps>(
     const panels = items.filter(
       (child): child is ReactElement<ResizablePanelProps> => isValidElement(child) && child.type === ResizablePanel,
     )
-    const limits = panels.map(({ props }) => ({
-      min: props.minSize ?? 0,
-      max: props.maxSize ?? 100,
-      collapsible: props.collapsible ?? false,
-    }))
+    const limitKey = panels.map(({ props }) => `${props.minSize}:${props.maxSize}:${props.collapsible}`).join()
+    const limits = useMemo(
+      () =>
+        panels.map(({ props }) => ({
+          min: props.minSize ?? 0,
+          max: props.maxSize ?? 100,
+          collapsible: props.collapsible ?? false,
+        })),
+      [limitKey],
+    )
     const sizeKey = panels.map(({ props }) => props.defaultSize).join()
     const defaults = useMemo(() => defaultSizes(panels.map(({ props }) => props.defaultSize)), [sizeKey])
     const [current, setCurrent] = useControllableState(sizes, defaults, onSizesChange)
     const [dragging, setDragging] = useState(false)
-    const group = { id, direction, sizes: current, limits, defaults, step, setSizes: setCurrent, dragging, setDragging }
+    // A new context value walks the whole subtree for consumers, so it changes only with what it holds.
+    const group = useMemo(
+      () => ({ id, direction, sizes: current, limits, defaults, step, setSizes: setCurrent, dragging, setDragging }),
+      [id, direction, current, limits, defaults, step, setCurrent, dragging],
+    )
 
     let panel = -1
     const indexed = items.map(child => {
