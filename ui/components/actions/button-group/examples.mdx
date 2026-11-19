@@ -1,0 +1,96 @@
+import ButtonGroup from './index'
+import Dropdown from '../../overlays/dropdown'
+import { AlignCenter, AlignLeft, AlignRight, Archive, Copy, GitMerge, Rocket, Save, Trash2 } from 'lucide-react'
+
+# Group
+
+Related actions as one control: the outer corners stay round, the inner edges square, and a hairline of the surface parts the segments.
+
+<div className="flex flex-wrap items-center gap-3">
+  <ButtonGroup variant="secondary" aria-label="Alignment">
+    <ButtonGroup.Button size="icon" aria-label="Align left">
+      <AlignLeft />
+    </ButtonGroup.Button>
+    <ButtonGroup.Button size="icon" aria-label="Align center">
+      <AlignCenter />
+    </ButtonGroup.Button>
+    <ButtonGroup.Button size="icon" aria-label="Align right">
+      <AlignRight />
+    </ButtonGroup.Button>
+  </ButtonGroup>
+  <ButtonGroup variant="tertiary" aria-label="Message">
+    <ButtonGroup.Button leadingIcon={Archive}>Archive</ButtonGroup.Button>
+    <ButtonGroup.Button>Snooze</ButtonGroup.Button>
+    <ButtonGroup.Button variant="destructive" leadingIcon={Trash2}>Delete</ButtonGroup.Button>
+  </ButtonGroup>
+</div>
+
+# Split button
+
+The main action, and its variants on an attached chevron. The menu grows out of the chevron, lines up with the group's end, and the chevron stays pressed while it shows.
+
+<ButtonGroup aria-label="Merge">
+  <ButtonGroup.Button leadingIcon={GitMerge}>Merge pull request</ButtonGroup.Button>
+  <ButtonGroup.Menu label="Merge options" defaultCheckedIndex={0}>
+    <Dropdown.Label>Merge with</Dropdown.Label>
+    <Dropdown.Item label="Merge commit" />
+    <Dropdown.Item label="Squash and merge" />
+    <Dropdown.Item label="Rebase and merge" />
+  </ButtonGroup.Menu>
+</ButtonGroup>
+
+# Variants
+
+Every Button variant joins: filled ones part on a hairline of the surface, framed ones share one frame.
+
+<div className="flex flex-col items-start gap-3">
+  {['primary', 'secondary', 'tertiary', 'outline', 'ghost', 'destructive', 'success'].map(variant => (
+    <ButtonGroup key={variant} variant={variant} aria-label={variant}>
+      <ButtonGroup.Button leadingIcon={Save}>Save</ButtonGroup.Button>
+      <ButtonGroup.Menu label="Save options">
+        <Dropdown.Item icon={Copy} label="Save a copy" />
+        <Dropdown.Item icon={Rocket} label="Save and publish" />
+      </ButtonGroup.Menu>
+    </ButtonGroup>
+  ))}
+</div>
+
+# Sizes
+
+`size` pins every segment to one step of the ladder, and the menu's rows with them.
+
+<div className="flex flex-wrap items-center gap-3">
+  <ButtonGroup aria-label="Deploy">
+    <ButtonGroup.Button leadingIcon={Rocket}>Deploy</ButtonGroup.Button>
+    <ButtonGroup.Menu label="Deploy to">
+      <Dropdown.Item label="Production" />
+      <Dropdown.Item label="Staging" />
+    </ButtonGroup.Menu>
+  </ButtonGroup>
+  <ButtonGroup size="compact" aria-label="Deploy">
+    <ButtonGroup.Button leadingIcon={Rocket}>Deploy</ButtonGroup.Button>
+    <ButtonGroup.Menu label="Deploy to">
+      <Dropdown.Item label="Production" />
+      <Dropdown.Item label="Staging" />
+    </ButtonGroup.Menu>
+  </ButtonGroup>
+</div>
+
+# Disabled
+
+`disabled` on the group dims every segment; on one segment, only that one.
+
+<div className="flex flex-wrap items-center gap-3">
+  <ButtonGroup variant="secondary" disabled aria-label="Deploy">
+    <ButtonGroup.Button>Deploy</ButtonGroup.Button>
+    <ButtonGroup.Menu label="Deploy to">
+      <Dropdown.Item label="Production" />
+    </ButtonGroup.Menu>
+  </ButtonGroup>
+  <ButtonGroup aria-label="Deploy">
+    <ButtonGroup.Button disabled>Deploy</ButtonGroup.Button>
+    <ButtonGroup.Menu label="Deploy to">
+      <Dropdown.Item label="Production" />
+    </ButtonGroup.Menu>
+  </ButtonGroup>
+</div>

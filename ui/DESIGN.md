@@ -569,7 +569,10 @@ shared systems above (look and motion). Ready-made patterns to reach for before 
   `outline` frames the fill in the control border (3:1 against the surfaces, where `border` is a
   hairline), the ring moving inward on press; `destructive` and `success` put the hue's `-strong` text
   on a wash of itself, never a solid fill; `link` is text at control height with a fading underline. A
-  loading button keeps focus and swallows presses.
+  loading button keeps focus and swallows presses. A ButtonGroup joins buttons of one variant and
+  height: outer corners round, inner edges square, filled segments parted by a hairline of the
+  substrate, framed ones sharing one frame; the split button attaches a chevron segment that opens
+  a menu.
 - **Inputs** — transparent and ringless at rest, a `bg-muted/50` wash plus a `ring-border` ring on
   hover, `bg-card` plus the ring on focus; the label sits above in muted body text. Errors: destructive caption at
   `weight-medium`, a `destructive-light` wash. A text field signals focus by its fill alone; a button
