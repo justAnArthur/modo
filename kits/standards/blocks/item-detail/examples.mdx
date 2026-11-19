@@ -1,0 +1,66 @@
+import ItemDetail from './index'
+import { BUSINESSES, NOW, PACKS, STATUS } from '../../mock/status'
+
+# On one business
+
+Camasys's `og:video`, as the grid opens it from the column head: the why, the check, the recipe a worker is told, and the one asset it applies to.
+
+<div className="flex h-[760px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <ItemDetail
+    item={PACKS[0].entries.find(i => i.id === 'og-video')}
+    pack={PACKS[0]}
+    businesses={[BUSINESSES[0]]}
+    status={STATUS}
+    onOpenCell={() => {}}
+    onOpenPack={() => {}}
+    now={NOW}
+    onClose={() => {}}
+    className="flex-1"
+  />
+</div>
+
+# Across businesses
+
+The security headers on every business: one list per business, a worker on Camasys's, a PR open on Acadsys's, modo's docs waived.
+
+<div className="flex h-[760px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <ItemDetail
+    item={PACKS[0].entries.find(i => i.id === 'security-headers')}
+    pack={PACKS[0]}
+    businesses={BUSINESSES}
+    status={STATUS}
+    onOpenCell={() => {}}
+    onOpenPack={() => {}}
+    now={NOW}
+    className="flex-1"
+  />
+</div>
+
+# Added in a later pack version
+
+`hero` came with Website v2: modo, pinned to v1, is named under the list. Its check is an ai one.
+
+<div className="flex h-[760px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <ItemDetail
+    item={PACKS[0].entries.find(i => i.id === 'hero')}
+    pack={PACKS[0]}
+    businesses={BUSINESSES}
+    status={STATUS}
+    now={NOW}
+    className="flex-1"
+  />
+</div>
+
+# Without a recipe
+
+An item with no `recipe.md` leaves the section out.
+
+<div className="w-[420px] max-w-full rounded-xl border border-border">
+  <ItemDetail
+    item={{ ...PACKS[1].entries.find(i => i.id === 'topics'), recipe: undefined }}
+    pack={PACKS[1]}
+    businesses={BUSINESSES.filter(b => b.id === 'modo' || b.id === 'just-standards')}
+    status={STATUS}
+    now={NOW}
+  />
+</div>

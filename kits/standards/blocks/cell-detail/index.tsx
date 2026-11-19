@@ -17,8 +17,7 @@ import Textarea from '@justanarthur/modo-ui/components/inputs/textarea'
 import Dropdown from '@justanarthur/modo-ui/components/overlays/dropdown'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import Code from '@justanarthur/modo-ui/primitives/content/code'
-import { ArrowLeft, ArrowUpRight, Ellipsis, RotateCw, ShieldCheck, ShieldOff, X } from 'lucide-react'
+import { ArrowLeft, ArrowUpRight, Ellipsis, RotateCw, ShieldCheck, ShieldOff } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import CheckLog from '../../components/runs/check-log'
 import { duration, plural } from '../../components/runs/format'
@@ -26,17 +25,10 @@ import RunTimeline from '../../components/runs/run-timeline'
 import RunTranscript from '../../components/runs/run-transcript'
 import StateCell from '../../components/status/state-cell'
 import WorkerPicker from '../../components/workers/worker-picker'
-import { adoptedVersion, ago, assetName, shownState, toYaml } from '../../lib/cells'
+import { adoptedVersion, ago, assetName, shownState } from '../../lib/cells'
 import { STATE_BADGE, STATE_LABEL } from '../../lib/states'
 import type { Asset, Business, CellStatus, FixRun, LoadedItem, LoadedPack, Result, Worker } from '../../lib/types'
-
-const CHECK_KIND: Record<LoadedItem['check']['kind'], string> = {
-  http: 'Fetches the site and asserts on what it gets',
-  repo: 'Reads files in the local checkout',
-  github: 'Asks GitHub about the repo',
-  script: 'Runs the item’s check.ts',
-  ai: 'Asks a cheap model to judge, read-only',
-}
+import { CheckSection, CloseButton, PANE, PaneHeader, PaneSection as Section, TEXT_LINK } from '../pane'
 
 const CHECK_TITLE: Record<Result['state'], string> = {
   pass: 'Check passed',
@@ -45,27 +37,6 @@ const CHECK_TITLE: Record<Result['state'], string> = {
 }
 
 const EVIDENCE = 'break-words rounded-lg bg-muted px-3 py-2 font-mono text-caption text-foreground'
-
-function Section({ title, aside, children }: { title: string; aside?: ReactNode; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-2">
-      <div className="flex items-baseline justify-between gap-3">
-        <h3 className="text-subtitle text-foreground">{title}</h3>
-        {aside && <span className="text-caption text-muted-foreground">{aside}</span>}
-      </div>
-      {children}
-    </section>
-  )
-}
-
-function CloseButton({ onClose }: { onClose?: () => void }) {
-  if (!onClose) return null
-  return (
-    <Button variant="ghost" size="icon-compact" aria-label="Close" onClick={onClose}>
-      <X />
-    </Button>
-  )
-}
 
 function WaiveForm({ onWaive, onCancel }: { onWaive?: CellDetailProps['onWaive']; onCancel: () => void }) {
   const [reason, setReason] = useState('')
@@ -330,22 +301,18 @@ export default function CellDetail({
     .join(' · ')
 
   return (
-    <div className={cn('flex min-h-0 flex-col gap-6 overflow-y-auto p-5', className)}>
-      <header className="flex items-start gap-3">
-        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-          <h2 className="text-title text-foreground">{item.title}</h2>
-          <span className="text-caption text-muted-foreground">
-            {assetName(asset)} · {business.name} · {pack.title} v{adoptedVersion(business, pack) ?? pack.version}
-          </span>
-          <div className="flex items-center gap-2 pt-1">
-            <StateCell.Glyph state={state} worker={run?.state === 'running' ? run.worker : undefined} />
-            <Badge size="compact" color={STATE_BADGE[state]}>
-              {STATE_LABEL[state]}
-            </Badge>
-          </div>
+    <div className={cn(PANE, className)}>
+      <PaneHeader title={item.title} onClose={onClose}>
+        <span className="text-caption text-muted-foreground">
+          {assetName(asset)} · {business.name} · {pack.title} v{adoptedVersion(business, pack) ?? pack.version}
+        </span>
+        <div className="flex items-center gap-2 pt-1">
+          <StateCell.Glyph state={state} worker={run?.state === 'running' ? run.worker : undefined} />
+          <Badge size="compact" color={STATE_BADGE[state]}>
+            {STATE_LABEL[state]}
+          </Badge>
         </div>
-        <CloseButton onClose={onClose} />
-      </header>
+      </PaneHeader>
 
       {cell.checking && (
         <div className="flex items-start gap-2 text-body text-foreground">
@@ -361,7 +328,7 @@ export default function CellDetail({
             <span>{run.worker} is on it. The cell turns green once its check passes.</span>
           ) : (
             <span>
-              <a href={run.url} className="underline decoration-border underline-offset-4 hover:decoration-foreground">
+              <a href={run.url} className={TEXT_LINK}>
                 PR #{run.number}
               </a>{' '}
               is open. The cell shows it until its check passes.
@@ -437,10 +404,7 @@ export default function CellDetail({
         <p className="text-body text-foreground">{item.why}</p>
       </Section>
 
-      <Section title="Check" aside={`${item.check.kind} · v${item.version}`}>
-        <p className="text-caption text-muted-foreground">{CHECK_KIND[item.check.kind]}.</p>
-        <Code language="yaml">{toYaml(item.check)}</Code>
-      </Section>
+      <CheckSection item={item} />
 
       <Section title="History" aside={counts || undefined}>
         {counts ? (

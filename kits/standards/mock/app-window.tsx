@@ -36,6 +36,8 @@ interface AppWindowProps {
   pane?: ReactNode
   /** Called when the side pane's toggle folds it. */
   onPaneClose?: () => void
+  /** What the pane holds, for its toggle's label. Defaults to `'Cell'`. */
+  paneLabel?: string
   /** The window's size in px. Defaults to 1280 × 800. */
   width?: number
   height?: number
@@ -47,6 +49,7 @@ export function AppWindow({
   children,
   pane,
   onPaneClose,
+  paneLabel = 'Cell',
   width = 1280,
   height = 800,
 }: AppWindowProps) {
@@ -110,7 +113,7 @@ export function AppWindow({
           rightOpen={pane !== undefined}
           onRightOpenChange={open => !open && onPaneClose?.()}
           defaultPaneSize={36}
-          rightLabel="Cell"
+          rightLabel={paneLabel}
         />
       </div>
     </div>

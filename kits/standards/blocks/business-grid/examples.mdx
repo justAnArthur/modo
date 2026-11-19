@@ -69,3 +69,19 @@ Every cell but the waived one is being checked: each spins and keeps its last re
   now={NOW}
   className="h-[420px]"
 />
+
+# Opening an item or a pack
+
+With `onOpenItem` and `onOpenPack` the column heads and the pack's head are buttons: hover one, press it to open the item or the pack in the side pane. `activeItem` lights the open item's head and column, `activePack` the pack's head.
+
+<BusinessGrid
+  business={BUSINESSES[0]}
+  packs={PACKS}
+  cells={STATUS.camasys}
+  workers={WORKERS}
+  onOpenItem={() => {}}
+  onOpenPack={() => {}}
+  activeItem="website/og-video"
+  now={NOW}
+  className="h-[420px]"
+/>

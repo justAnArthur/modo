@@ -1,0 +1,16 @@
+import WorkerList from './index'
+import { WORKERS } from '../../mock/status'
+
+# The workspace's workers
+
+Two fixers that accept edits, and a reviewer that only plans and is allowed no extra tools.
+
+<div className="w-full">
+  <WorkerList workers={WORKERS} />
+</div>
+
+# No workers
+
+<div className="w-full">
+  <WorkerList workers={[]} />
+</div>

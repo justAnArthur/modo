@@ -17,23 +17,13 @@ import { SURFACE_BG } from '@justanarthur/modo-ui/lib/surface-classes'
 import { useSurface } from '@justanarthur/modo-ui/lib/surface-context'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
-import type { MouseEvent } from 'react'
+import { forwardRef, type HTMLAttributes, type MouseEvent, type Ref } from 'react'
 import CoverageMeter from '../../components/status/coverage-meter'
 import StateCell from '../../components/status/state-cell'
 import WorkerPicker from '../../components/workers/worker-picker'
 import { adoptedVersion, assetName, cellKey, cellsOfPack, coverageOf, itemsOf, shownState } from '../../lib/cells'
-import { SHOWN_STATES, STATE_LABEL } from '../../lib/states'
+import { KIND_LABEL, SHOWN_STATES, STATE_LABEL } from '../../lib/states'
 import type { Asset, AssetKind, Business, CellStatus, LoadedPack, Worker } from '../../lib/types'
-
-const KIND_LABEL: Record<AssetKind, string> = {
-  website: 'website',
-  webapp: 'web app',
-  mobile: 'mobile app',
-  repo: 'repo',
-  social: 'social account',
-  newsletter: 'newsletter',
-  api: 'API',
-}
 
 const isRed = (cell: CellStatus) => shownState(cell) === 'fail'
 
@@ -42,6 +32,38 @@ function groupByKind(assets: Asset[]) {
   for (const asset of assets) groups.set(asset.kind, [...(groups.get(asset.kind) ?? []), asset])
   return [...groups]
 }
+
+const HEAD_BUTTON =
+  'cursor-pointer select-none rounded-lg outline-none transition-colors duration-fast hover:bg-hover hover:text-foreground focus-visible:ring-1 focus-visible:ring-focus-ring'
+
+interface HeadProps extends HTMLAttributes<HTMLElement> {
+  /** Opens what the head names; without it the head is plain text. */
+  onOpen?: () => void
+  active: boolean
+  /** The accessible name, when the visible text is hidden from screen readers. */
+  label?: string
+  className: string
+  /** Classes only the button takes: its padding around the hover fill. */
+  buttonClassName: string
+}
+
+/** A head's label: a button that opens what it names when there is a handler, else plain text. Forwards its ref and props, so a Tooltip can wrap it. */
+const Head = forwardRef<HTMLElement, HeadProps>(
+  ({ onOpen, active, label, className, buttonClassName, ...props }, ref) => {
+    if (!onOpen) return <span ref={ref} {...props} className={className} />
+    return (
+      <button
+        ref={ref as Ref<HTMLButtonElement>}
+        type="button"
+        {...props}
+        aria-label={label}
+        aria-current={active || undefined}
+        onClick={onOpen}
+        className={cn(className, HEAD_BUTTON, buttonClassName, active && 'bg-active text-foreground')}
+      />
+    )
+  },
+)
 
 function Legend() {
   const Info = useIcon('info')
@@ -99,6 +121,14 @@ interface BusinessGridProps {
   active?: string
   /** Called on a plain press of a cell: open its drawer. */
   onOpenCell?: (cell: CellStatus) => void
+  /** Called with an item's key (`pack/item`) on a press of its column head. Without it the heads are plain text. */
+  onOpenItem?: (item: string) => void
+  /** Called with a pack's id on a press of its head. Without it the heads are plain text. */
+  onOpenPack?: (pack: string) => void
+  /** The key (`pack/item`) of the item open in the drawer: its column head and cells are lit. */
+  activeItem?: string
+  /** The id of the pack open in the drawer: its head is lit. */
+  activePack?: string
   /** Called with the picked cells and the worker on Fix. */
   onFix?: (cells: CellStatus[], worker: string) => void
   /** Disables Fix N with ▾ worker; cells can still be picked. Defaults to `false`. */
@@ -146,6 +176,10 @@ export default function BusinessGrid({
   onSelectedChange,
   active,
   onOpenCell,
+  onOpenItem,
+  onOpenPack,
+  activeItem,
+  activePack,
   onFix,
   fixDisabled = false,
   fixDisabledReason,
@@ -159,7 +193,8 @@ export default function BusinessGrid({
   const itemCount = columns.reduce((sum, { items }) => sum + items.length, 0)
   const pickedCells = picked.map(key => byKey.get(key)).filter(cell => cell !== undefined)
   const pickedAsset = business.assets.find(asset => asset.id === pickedCells[0]?.asset)
-  const [activeAsset, activeItem] = active?.split(':') ?? []
+  const [activeAsset, activeCellItem] = active?.split(':') ?? []
+  const litItem = activeItem ?? activeCellItem
   const groups = groupByKind(business.assets)
   const lastAsset = groups.at(-1)?.[1].at(-1)
 
@@ -236,13 +271,18 @@ export default function BusinessGrid({
                         index > 0 && 'border-l',
                       )}
                     >
-                      <span className="flex items-baseline gap-1.5 whitespace-nowrap">
+                      <Head
+                        onOpen={onOpenPack && (() => onOpenPack(pack.id))}
+                        active={activePack === pack.id}
+                        className="flex items-baseline gap-1.5 whitespace-nowrap"
+                        buttonClassName="-mx-1.5 px-1.5 py-1"
+                      >
                         <span className="weight-semibold text-foreground">{pack.title}</span>
                         <span className="text-caption text-muted-foreground">
                           v{adoptedVersion(business, pack)}
                           {coverage.value !== null && ` · ${Math.round(coverage.value * 100)}%`}
                         </span>
-                      </span>
+                      </Head>
                     </th>
                   )
                 })}
@@ -269,21 +309,28 @@ export default function BusinessGrid({
                         itemEdge(pack, index, items.length),
                       )}
                     >
-                      <span className="sr-only">
-                        {item.title} v{item.version}
-                      </span>
-                      <span className="flex w-7 justify-center">
+                      {!onOpenItem && (
+                        <span className="sr-only">
+                          {item.title} v{item.version}
+                        </span>
+                      )}
+                      <span className={cn('flex w-7 justify-center', onOpenItem && 'pb-1')}>
                         <Tooltip content={`${item.title} · v${item.version}`} side="top">
                           {/* Spacing is logical: in vertical writing px (padding-inline) is the top and bottom. */}
-                          <span
-                            aria-hidden
+                          <Head
+                            onOpen={onOpenItem && (() => onOpenItem(item.key))}
+                            active={activeItem === item.key}
+                            label={`${item.title} v${item.version}`}
                             className={cn(
                               'block max-h-32 rotate-180 truncate px-2 text-caption weight-normal [writing-mode:vertical-rl]',
-                              activeItem === item.key ? 'text-foreground' : 'text-muted-foreground',
+                              litItem === item.key ? 'text-foreground' : 'text-muted-foreground',
                             )}
+                            buttonClassName="py-1"
                           >
-                            {item.label ?? item.title} <span className="text-micro">v{item.version}</span>
-                          </span>
+                            <span aria-hidden>
+                              {item.label ?? item.title} <span className="text-micro">v{item.version}</span>
+                            </span>
+                          </Head>
                         </Tooltip>
                       </span>
                     </th>
@@ -349,7 +396,13 @@ export default function BusinessGrid({
                           return (
                             <td
                               key={item.key}
-                              className={cn(fill, 'border-border p-0', divider, itemEdge(pack, index, items.length))}
+                              className={cn(
+                                fill,
+                                activeItem === item.key && 'bg-hover',
+                                'border-border p-0',
+                                divider,
+                                itemEdge(pack, index, items.length),
+                              )}
                             >
                               <div className="flex h-9 w-7 items-center justify-center">
                                 {item.applies_to.includes(asset.kind) ? (
