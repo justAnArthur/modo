@@ -553,6 +553,8 @@ interface SessionSidebarProps {
  * reorder by a row's grip (drag it, or focus it, press Space and use the
  * arrows), then one group
  * per project folder and per section you made, then the archive, folded.
+ * Pinned and the archive show once they hold a session, and Overview counts
+ * the sessions that need you only when there are some.
  * `groupLimit` caps a long group: past it a "Show N more" row unfolds the
  * rest. The selected session and the ones that need you (running, waiting,
  * unread; `keepVisible` decides) stay in view past the cap, in their place.
@@ -648,7 +650,9 @@ export default function SessionSidebar({
               <Sidebar.MenuItem>
                 <Sidebar.MenuButton icon={Board} value="overview">
                   Overview
-                  <span className="ml-auto text-micro tabular-nums text-muted-foreground">{waiting} need you</span>
+                  {waiting > 0 && (
+                    <span className="ml-auto text-micro tabular-nums text-muted-foreground">{waiting} need you</span>
+                  )}
                 </Sidebar.MenuButton>
               </Sidebar.MenuItem>
               {inbox && (
@@ -694,22 +698,24 @@ export default function SessionSidebar({
           {list === 'filters' && <SessionFilters pinned={pinned} groups={groups} profiles={profiles} />}
           {list === 'sessions' && (
             <>
-              <Sidebar.Group collapsible>
-                <Sidebar.GroupLabel>Pinned</Sidebar.GroupLabel>
-                <Sidebar.Menu>
-                  <Sortable
-                    as="none"
-                    handle
-                    items={pinned.map(session => ({
-                      id: session.id,
-                      label: session.title,
-                      content: <SessionRow session={session} reorder actions={actions} />,
-                    }))}
-                    order={pinnedOrder}
-                    onOrderChange={reorderPinned}
-                  />
-                </Sidebar.Menu>
-              </Sidebar.Group>
+              {pinned.length > 0 && (
+                <Sidebar.Group collapsible>
+                  <Sidebar.GroupLabel>Pinned</Sidebar.GroupLabel>
+                  <Sidebar.Menu>
+                    <Sortable
+                      as="none"
+                      handle
+                      items={pinned.map(session => ({
+                        id: session.id,
+                        label: session.title,
+                        content: <SessionRow session={session} reorder actions={actions} />,
+                      }))}
+                      order={pinnedOrder}
+                      onOrderChange={reorderPinned}
+                    />
+                  </Sidebar.Menu>
+                </Sidebar.Group>
+              )}
 
               {groups.map(group => {
                 const key = groupKey(group)
@@ -729,20 +735,23 @@ export default function SessionSidebar({
                 )
               })}
 
-              <Sidebar.Group collapsible defaultOpen={false}>
-                <Sidebar.GroupLabel>Archived</Sidebar.GroupLabel>
-                <Sidebar.Menu>
-                  {archived.map(session => (
-                    <SessionRow key={session.id} session={session} archived actions={actions} />
-                  ))}
-                </Sidebar.Menu>
-              </Sidebar.Group>
+              {archived.length > 0 && (
+                <Sidebar.Group collapsible defaultOpen={false}>
+                  <Sidebar.GroupLabel>Archived</Sidebar.GroupLabel>
+                  <Sidebar.Menu>
+                    {archived.map(session => (
+                      <SessionRow key={session.id} session={session} archived actions={actions} />
+                    ))}
+                  </Sidebar.Menu>
+                </Sidebar.Group>
+              )}
             </>
           )}
         </Sidebar.Content>
 
         <Sidebar.Footer>
-          <Sidebar.Group collapsible>
+          {/* The footer already insets by a group's padding: a second one would sit deeper than the groups above. */}
+          <Sidebar.Group collapsible className="p-0">
             <Sidebar.GroupLabel>Usage</Sidebar.GroupLabel>
             <ProfileUsage profiles={profiles} onManage={onOpenSettings} />
           </Sidebar.Group>

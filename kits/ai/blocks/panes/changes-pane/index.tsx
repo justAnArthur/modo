@@ -121,7 +121,7 @@ interface ChangesPaneProps {
   onMessageChange?: (message: string) => void
   /** Let an empty message commit, Claude writing it. `false` asks for a message instead (while the session is busy, say). Defaults to `true`. */
   canAutoCommit?: boolean
-  /** What went wrong (git failed, the last action errored), in a line above the files. With no files, it shows instead of the clean tree. */
+  /** What went wrong (git failed, the last action errored), in a line above the files. With no files, it shows instead of the clean tree or the loading rows. */
   error?: ReactNode
   /** The checked-out branch, in a row on top. Omit for no row. */
   branch?: string
@@ -216,12 +216,12 @@ export default function ChangesPane({
   ) : null
   const header = branch && <BranchRow branch={branch} ahead={ahead} behind={behind} />
 
+  // Nothing loaded and an error: there is nothing coming, so no skeleton.
   if (!files)
     return (
-      <div aria-busy className="flex flex-col gap-2">
+      <div aria-busy={!error} className="flex flex-col gap-2">
         {header}
-        {errorLine}
-        <Skeleton rows={3} className="px-2" />
+        {errorLine ?? <Skeleton rows={3} className="px-2" />}
       </div>
     )
 

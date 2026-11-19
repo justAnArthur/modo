@@ -57,7 +57,7 @@ interface FileThumbnailProps {
   className?: string
 }
 
-/** A square preview of a File: images cover it, PDFs show their first page, anything else a document glyph. */
+/** A square preview of a File: images cover it, PDFs show their first page, anything else a document glyph over the file's name. */
 function FileThumbnail({ file, size, className }: FileThumbnailProps) {
   const shape = useShape()
   const isImage = file.type.startsWith('image/')
@@ -118,7 +118,7 @@ function FileThumbnail({ file, size, className }: FileThumbnailProps) {
         </div>
       ) : (
         <div
-          className="absolute inset-0 flex items-center justify-center text-muted-foreground"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-1.5 text-muted-foreground"
           role="img"
           aria-label={file.name}
         >
@@ -136,6 +136,12 @@ function FileThumbnail({ file, size, className }: FileThumbnailProps) {
             <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
             <path d="M14 3v5h5" />
           </svg>
+          {/* Without a preview the name is all that tells two files apart; a tile too small for a line keeps the glyph. */}
+          {size >= 48 && (
+            <span aria-hidden="true" className="max-w-full truncate text-micro">
+              {file.name}
+            </span>
+          )}
         </div>
       )}
     </div>

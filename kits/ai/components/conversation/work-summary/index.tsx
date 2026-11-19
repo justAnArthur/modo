@@ -65,7 +65,8 @@ function WorkFold({
           </span>
         </Accordion.Trigger>
         <Accordion.Content>
-          {body && <div className="flex flex-col gap-2 border-l border-border pb-2 pl-3">{children}</div>}
+          {/* As deep on the right as the guide sits on the left: tool rows reach 10px into the margin and would meet the fold's edge. */}
+          {body && <div className="flex flex-col gap-2 border-l border-border pl-3 pr-2.5">{children}</div>}
         </Accordion.Content>
       </Accordion.Item>
     </Accordion>
