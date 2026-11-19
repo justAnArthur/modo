@@ -1,0 +1,19 @@
+import CoverageMeter from './index'
+
+# Coverage
+
+The bar turns to the error hue below half.
+
+<div className="flex flex-col items-start gap-2 text-body">
+  <CoverageMeter value={1} />
+  <CoverageMeter value={0.8} />
+  <CoverageMeter value={0.56} />
+  <CoverageMeter value={0.3} />
+  <CoverageMeter value={0} />
+</div>
+
+# Nothing counted
+
+Every cell waived, or nothing checked yet.
+
+<CoverageMeter value={null} className="text-body" />

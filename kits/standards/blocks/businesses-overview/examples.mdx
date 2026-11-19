@@ -1,0 +1,34 @@
+import BusinessesOverview from './index'
+import { BUSINESSES, FAKE_BUSINESSES, FAKE_STATUS, PACKS, STATUS } from '../../mock/status'
+
+# Businesses
+
+The seven businesses in the workspace, as `standards status` reported them. Hover a row; a business's name opens it, a pack cell opens it on that pack.
+
+<BusinessesOverview
+  businesses={BUSINESSES}
+  packs={PACKS}
+  status={STATUS}
+  onOpenBusiness={() => {}}
+  onAddBusiness={() => {}}
+  className="h-[420px]"
+/>
+
+# Thirty-two businesses
+
+25 fake ones on `.example` hosts join them: the head and the business column stay put as the table scrolls.
+
+<BusinessesOverview
+  businesses={[...BUSINESSES, ...FAKE_BUSINESSES]}
+  packs={PACKS}
+  status={{ ...STATUS, ...FAKE_STATUS }}
+  onOpenBusiness={() => {}}
+  onAddBusiness={() => {}}
+  className="h-[480px]"
+/>
+
+# Empty
+
+Before the first business.
+
+<BusinessesOverview businesses={[]} packs={PACKS} status={{}} onAddBusiness={() => {}} />

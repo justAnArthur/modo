@@ -1,0 +1,110 @@
+import CellDetail from './index'
+import { BUSINESSES, NOW, PACKS, WORKERS, historyOf, statusOf } from '../../mock/status'
+import { runsOf } from '../../mock/runs'
+
+# A failing cell
+
+Camasys has no `og:video`: the evidence as the check wrote it, the item's why and its check, Fix with ▾ worker beside Re-check and the ⋯ menu, and the timeline of checks and fix runs. Press an entry to read it.
+
+<div className="flex h-[760px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <CellDetail
+    cell={statusOf('camasys', 'site', 'website/og-video')}
+    item={PACKS[0].entries.find(i => i.id === 'og-video')}
+    pack={PACKS[0]}
+    asset={BUSINESSES[0].assets[0]}
+    business={BUSINESSES[0]}
+    workers={WORKERS}
+    {...runsOf('camasys', statusOf('camasys', 'site', 'website/og-video'))}
+    now={NOW}
+    onClose={() => {}}
+    className="flex-1"
+  />
+</div>
+
+# A check's log
+
+The request and its assertions; the failing ones sit on the error hue. Back returns to the cell.
+
+<div className="flex h-[560px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <CellDetail
+    cell={statusOf('camasys', 'site', 'website/og-video')}
+    item={PACKS[0].entries.find(i => i.id === 'og-video')}
+    pack={PACKS[0]}
+    asset={BUSINESSES[0].assets[0]}
+    business={BUSINESSES[0]}
+    workers={WORKERS}
+    {...runsOf('camasys', statusOf('camasys', 'site', 'website/og-video'))}
+    defaultRun="2026-11-19T10:52:05.222Z"
+    now={NOW}
+    className="flex-1"
+  />
+</div>
+
+# A fix run
+
+sonnet-fixer's session on `og:video`, ending in its PR.
+
+<div className="flex h-[640px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <CellDetail
+    cell={statusOf('camasys', 'site', 'website/og-video')}
+    item={PACKS[0].entries.find(i => i.id === 'og-video')}
+    pack={PACKS[0]}
+    asset={BUSINESSES[0].assets[0]}
+    business={BUSINESSES[0]}
+    workers={WORKERS}
+    {...runsOf('camasys', statusOf('camasys', 'site', 'website/og-video'))}
+    defaultRun="run-og-video"
+    now={NOW}
+    className="flex-1"
+  />
+</div>
+
+# A worker on it
+
+The run shows first; the cell turns green when its check passes.
+
+<div className="w-[420px] max-w-full rounded-xl border border-border">
+  <CellDetail
+    cell={statusOf('camasys', 'site', 'website/security-headers')}
+    item={PACKS[0].entries.find(i => i.id === 'security-headers')}
+    pack={PACKS[0]}
+    asset={BUSINESSES[0].assets[0]}
+    business={BUSINESSES[0]}
+    workers={WORKERS}
+    {...runsOf('camasys', statusOf('camasys', 'site', 'website/security-headers'))}
+    now={NOW}
+  />
+</div>
+
+# Couldn't check
+
+Acadsys's `llms.txt` answered 500: grey, not red, and nothing to fix until it can be checked.
+
+<div className="w-[420px] max-w-full rounded-xl border border-border">
+  <CellDetail
+    cell={statusOf('acadsys', 'site', 'website/llms-txt')}
+    item={PACKS[0].entries.find(i => i.id === 'llms-txt')}
+    pack={PACKS[0]}
+    asset={BUSINESSES[1].assets[0]}
+    business={BUSINESSES[1]}
+    workers={WORKERS}
+    history={historyOf(statusOf('acadsys', 'site', 'website/llms-txt'))}
+    now={NOW}
+  />
+</div>
+
+# Waived
+
+modo's docs live on GitHub Pages, which can't set custom headers. Lift waiver is in the ⋯ menu.
+
+<div className="w-[420px] max-w-full rounded-xl border border-border">
+  <CellDetail
+    cell={statusOf('modo', 'docs', 'website/security-headers')}
+    item={PACKS[0].entries.find(i => i.id === 'security-headers')}
+    pack={PACKS[0]}
+    asset={BUSINESSES[5].assets[0]}
+    business={BUSINESSES[5]}
+    workers={WORKERS}
+    now={NOW}
+  />
+</div>

@@ -1,6 +1,6 @@
 # Contributing to modo
 
-Thanks for helping. This is a bun monorepo: the lib (`lib/`, `@justanarthur/modo`), the ui design system (`ui/`, `@justanarthur/modo-ui`), kits built on it (`kits/ai/`, `@justanarthur/modo-ui-ai`; `kits/notch/`, `@justanarthur/modo-ui-notch`) and the demo harness (`demo/`), with one design system per folder in `demo/design-systems/`. [AGENTS.md](AGENTS.md) is the full guide to the layout, the code style and the styling rules; read its **styling** section before touching CSS or components.
+Thanks for helping. This is a bun monorepo: the lib (`lib/`, `@justanarthur/modo`), the ui design system (`ui/`, `@justanarthur/modo-ui`), kits built on it (`kits/ai/`, `@justanarthur/modo-ui-ai`; `kits/notch/`, `@justanarthur/modo-ui-notch`; `kits/standards/`, `@justanarthur/modo-ui-standards`) and the demo harness (`demo/`), with one design system per folder in `demo/design-systems/`. [AGENTS.md](AGENTS.md) is the full guide to the layout, the code style and the styling rules; read its **styling** section before touching CSS or components.
 
 ## Setup
 
@@ -30,7 +30,7 @@ bun run lint                       # biome (bun run format fixes most of it)
 bun run build && bun run check     # builds the lib, ui and the kits, then typechecks every workspace
 bun run test                       # the lib's tests
 .github/scripts/check-ui-pack.sh   # the ui tarball holds its entry, styles and licence
-.github/scripts/check-kit-pack.sh  # the same for the ai kit (pass `notch` for the notch kit)
+.github/scripts/check-kit-pack.sh  # the same for the ai kit (pass `notch` or `standards` for the others)
 .github/scripts/smoke-init.sh      # pack, init, install, build
 ```
 
@@ -46,6 +46,7 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/) with
 | `ui`, `modo-ui`, `justanarthur/modo-ui`, `@justanarthur/modo-ui` | `@justanarthur/modo-ui` |
 | `ai`, `modo-ui-ai`, `justanarthur/modo-ui-ai`, `@justanarthur/modo-ui-ai` | `@justanarthur/modo-ui-ai` |
 | `notch`, `modo-ui-notch`, `justanarthur/modo-ui-notch`, `@justanarthur/modo-ui-notch` | `@justanarthur/modo-ui-notch` |
+| `standards`, `modo-ui-standards`, `justanarthur/modo-ui-standards`, `@justanarthur/modo-ui-standards` | `@justanarthur/modo-ui-standards` |
 | `demo`, anything else, or none | nothing |
 
 On a released scope, `feat` and `perf` bump the minor and everything else (`fix`, `refactor`, `docs`, `chore`, …) the patch, as soon as the commit lands on `main`. Put `[skip bump]` in the message when it shouldn't release anything (CI, repo files). A breaking change bumps the major: since 1.0 that is a deliberate decision, so read the release notes in [.github/AGENTS.md](.github/AGENTS.md#11-this-repo-modo) before you mark one.
