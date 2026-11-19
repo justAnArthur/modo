@@ -12,6 +12,8 @@ import { forwardRef, type HTMLAttributes, useCallback, useEffect, useMemo, useRe
 import { mergeRefs } from '../../../lib/merge-refs'
 import { useShape } from '../../../lib/shape-context'
 import { spring } from '../../../lib/springs'
+import { SURFACE_BG } from '../../../lib/surface-classes'
+import { useSurface } from '../../../lib/surface-context'
 import { cn } from '../../../lib/utils'
 import { layoutPos, PIP_SIZE, snapValue, useDelayedFlag } from './geometry'
 import { ValueBubble } from './value-display'
@@ -69,6 +71,8 @@ const ComfortableSlider = forwardRef<HTMLDivElement, ComfortableSliderProps>(
     } | null>(null)
     const showHoverTooltip = useDelayedFlag(isHovered, 100)
     const shape = useShape()
+    // The mask paints the surface the slider sits on: inside a popover that is a lifted level, not the page.
+    const substrate = SURFACE_BG[useSurface()]
 
     const pipSteps = useMemo(
       () => Array.from({ length: Math.round((max - min) / step) + 1 }, (_, i) => min + i * step),
@@ -388,9 +392,9 @@ const ComfortableSlider = forwardRef<HTMLDivElement, ComfortableSliderProps>(
           {/* Masks the pips behind the label and value. */}
           {variant === 'pips' && (
             <div className="absolute inset-0 flex items-center px-2 z-[2] pointer-events-none" aria-hidden>
-              {label && <span className="text-body px-2 bg-background text-transparent select-none">{label}</span>}
+              {label && <span className={cn('text-body px-2 text-transparent select-none', substrate)}>{label}</span>}
               <span
-                className="text-body tabular-nums ml-auto px-2 bg-background text-transparent select-none"
+                className={cn('text-body tabular-nums ml-auto px-2 text-transparent select-none', substrate)}
                 style={{ minWidth: `${String(formatValue(max)).length}ch` }}
               >
                 {formatValue(value)}
