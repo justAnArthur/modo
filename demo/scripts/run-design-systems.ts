@@ -112,6 +112,29 @@ async function buildSite() {
     execFileSync('node', [MODO_CLI, ...args], { cwd: dirOf(name), stdio: 'inherit' })
   }
   writeFileSync(join(SITE_DIR, 'index.html'), await landing())
+  writeFileSync(join(SITE_DIR, 'llms.txt'), llmsTxt())
+}
+
+const SITE_ORIGIN = process.env.SITE_ORIGIN ?? 'https://justanarthur.github.io'
+
+// llmstxt.org: a curated map of the built site for AI tools and agents.
+function llmsTxt() {
+  const link = (name: string) =>
+    `- [${name}](${SITE_ORIGIN}${SITE_BASE}${name}/): ${TAGLINES[name] ?? `The ${name} docs site.`}`
+  const group = (title: string, g: 'design-systems' | 'kits') => {
+    const names = targets.filter(name => groupOf(name) === g)
+    return names.length ? `## ${title}\n\n${names.map(link).join('\n')}` : ''
+  }
+  const project = [
+    '## Project',
+    '',
+    `- [Live demo](${SITE_ORIGIN}${SITE_BASE}): Landing page listing every design system and kit.`,
+    '- [GitHub](https://github.com/justAnArthur/modo): Source, README and issues.',
+    '- [npm: @justanarthur/modo](https://www.npmjs.com/package/@justanarthur/modo): The library and CLI.',
+  ].join('\n')
+  const summary =
+    "> modo turns a design system into its own docs site: it reads the tokens, primitives, components, blocks and pages of a design system and renders the docs, with chrome built from the design system's own components. Each link below is a live docs site built with modo."
+  return `${['# modo', summary, project, group('Design systems', 'design-systems'), group('Kits', 'kits')].filter(Boolean).join('\n\n')}\n`
 }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
