@@ -85,6 +85,7 @@ export interface SessionGroup {
   /** A project folder, or a section the user made. */
   label: string
   kind: 'project' | 'section'
+  /** A project's folder. It tells apart two folders of one name (`…/a/api`, `…/b/api`); without it a group is known by its kind and label. */
   path?: string
   sessions: Session[]
 }

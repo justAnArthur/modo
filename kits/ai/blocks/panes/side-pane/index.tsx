@@ -47,6 +47,7 @@ const PANES: { id: PaneId; label: string; icon: IconName }[] = [
 
 /** Every pane's data, handed to the pane blocks. Only the panes you show need theirs. */
 interface SidePaneData {
+  /** The session's changed files; `undefined` until the first git status, which Changes shows as loading. */
   changes?: PaneChange[]
   file?: PaneFile
   /** The session's file paths, for the File pane's tree. */
@@ -54,6 +55,7 @@ interface SidePaneData {
   shell?: PaneShell
   pr?: PanePullRequest
   artifacts?: PaneArtifact[]
+  /** The session's background tasks; `undefined` until the first list, which Tasks shows as loading. */
   tasks?: PaneTask[]
   /** The profiles the extensions slot reads usage from. */
   profiles?: Profile[]
@@ -80,12 +82,12 @@ interface SidePaneExtension {
 
 // A pane whose one required piece of data is missing shows nothing.
 const CONTENT: Record<PaneId, (data: SidePaneData, props: SidePanePaneProps) => ReactNode> = {
-  changes: (data, props) => <ChangesPane changes={data.changes ?? []} {...props.changes} />,
+  changes: (data, props) => <ChangesPane changes={data.changes} {...props.changes} />,
   file: (data, props) => data.file && <FilePane file={data.file} files={data.files} {...props.file} />,
   terminal: (data, props) => data.shell && <TerminalPane shell={data.shell} {...props.terminal} />,
   pr: (data, props) => data.pr && <PullRequestPane pr={data.pr} {...props.pr} />,
   artifacts: (data, props) => <ArtifactsPane artifacts={data.artifacts ?? []} {...props.artifacts} />,
-  tasks: (data, props) => <TasksPane tasks={data.tasks ?? []} {...props.tasks} />,
+  tasks: (data, props) => <TasksPane tasks={data.tasks} {...props.tasks} />,
   extension: (data, props) => <UsagePane profiles={data.profiles ?? []} {...props.extension} />,
 }
 
@@ -225,7 +227,13 @@ export default function SidePane({
                 <Dropdown.Content align="start" className="w-60">
                   <Dropdown.Label>From plugins</Dropdown.Label>
                   {extensions.map((e, i) => (
-                    <Dropdown.Item key={e.label} index={i} icon={icons[e.icon]} label={e.label} onSelect={e.onSelect} />
+                    <Dropdown.Item
+                      key={`${i}:${e.label}`}
+                      index={i}
+                      icon={icons[e.icon]}
+                      label={e.label}
+                      onSelect={e.onSelect}
+                    />
                   ))}
                 </Dropdown.Content>
               </Dropdown.Menu>

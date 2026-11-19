@@ -13,6 +13,7 @@ import { TooltipProvider } from '@justanarthur/modo-ui/components/overlays/toolt
 import { useSize } from '@justanarthur/modo-ui/lib/size-context'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
+import Skeleton from '@justanarthur/modo-ui/primitives/content/skeleton'
 import { type ReactNode, useState } from 'react'
 import { useIcon } from '../../../lib/icons'
 import { IconAction, PaneEmpty, PaneSection } from '../../../lib/pane-parts'
@@ -83,8 +84,9 @@ function FileList({
   )
 }
 
-/** Applies an action's effect on the rows now, or once its promise resolves (not on `false` or a rejection). */
+/** Applies an action's effect on the rows now, or once its promise resolves; never on `false` (returned or resolved) or a rejection. */
 function after(result: unknown, apply: () => void) {
+  if (result === false) return
   if (!(result instanceof Promise)) return apply()
   result.then(
     ok => {
@@ -95,13 +97,13 @@ function after(result: unknown, apply: () => void) {
 }
 
 interface ChangesPaneProps {
-  /** The session's changed files, each with its patch. The pane shows them as given, with what you stage, revert and commit applied until the next `changes` arrives. */
-  changes: PaneChange[]
+  /** The session's changed files, each with its patch. The pane shows them as given, with what you stage, revert and commit applied until the next `changes` arrives. `undefined` is still loading (before the first git status): placeholder rows instead of "No changes". */
+  changes: PaneChange[] | undefined
   /** Called with the paths staged (`true`) or unstaged (`false`). The rows move at once. */
   onStage?: (paths: string[], staged: boolean) => void
-  /** Called with the paths reverted. Return a promise (a confirm, then the discard) and the rows leave once it resolves, unless it resolves `false` or rejects; return nothing and they leave at once. */
+  /** Called with the paths reverted. Return a promise (a confirm, then the discard) and the rows leave once it resolves, unless it resolves `false` or rejects; return `false` and they stay; return anything else and they leave at once. */
   onRevert?: (paths: string[]) => unknown
-  /** Called by Commit with the message (empty when Claude writes one) and the staged paths. The rows leave as `onRevert`'s do: once a returned promise resolves to anything but `false`, else at once. */
+  /** Called by Commit with the message (empty when Claude writes one) and the staged paths. The rows leave as `onRevert`'s do: not on `false`, once a returned promise resolves to anything but `false`, else at once. */
   onCommit?: (message: string, paths: string[]) => unknown
   /** Called by the diff's open in editor with the file's path. */
   onOpenFile?: (path: string) => void
@@ -166,7 +168,8 @@ function BranchRow({ branch, ahead = 0, behind = 0 }: { branch: string; ahead?: 
  * Commit takes the staged files (an empty message lets Claude write one,
  * unless `canAutoCommit` is `false`). The picked file's diff wraps its long
  * lines; the toggle above it scrolls them instead. With nothing changed,
- * the pane says the tree is clean.
+ * the pane says the tree is clean; with `changes` still `undefined`, it
+ * shows placeholder rows until the first list arrives.
  *
  * The files follow `changes`: what you press shows at once and holds until
  * the app hands in new `changes` (after its git refresh, say). A revert or
@@ -197,7 +200,7 @@ export default function ChangesPane({
 }: ChangesPaneProps) {
   const [local, setLocal] = useState({ source: changes, files: changes })
   const files = local.source === changes ? local.files : changes
-  const [picked, setPicked] = useControllableState(file, defaultFile ?? changes[0]?.path ?? '', onFileChange)
+  const [picked, setPicked] = useControllableState(file, defaultFile ?? changes?.[0]?.path ?? '', onFileChange)
   const [message, setMessage] = useControllableState(messageProp, defaultMessage, onMessageChange)
   const [wrap, setWrap] = useState(true)
   const Plus = useIcon('plus')
@@ -212,6 +215,15 @@ export default function ChangesPane({
     </div>
   ) : null
   const header = branch && <BranchRow branch={branch} ahead={ahead} behind={behind} />
+
+  if (!files)
+    return (
+      <div aria-busy className="flex flex-col gap-2">
+        {header}
+        {errorLine}
+        <Skeleton rows={3} className="px-2" />
+      </div>
+    )
 
   if (files.length === 0)
     return (
@@ -230,7 +242,7 @@ export default function ChangesPane({
 
   // Over what `changes` was when pressed: a newer `changes` replaces it all.
   const edit = (f: (files: PaneChange[]) => PaneChange[]) =>
-    setLocal(l => ({ source: changes, files: f(l.source === changes ? l.files : changes) }))
+    setLocal(l => ({ source: changes, files: f((l.source === changes ? l.files : changes) ?? []) }))
   const drop = (paths: string[]) => edit(fs => fs.filter(f => !paths.includes(f.path)))
   const setStaged = (paths: string[], value: boolean) => {
     edit(fs => fs.map(f => (paths.includes(f.path) ? { ...f, staged: value } : f)))

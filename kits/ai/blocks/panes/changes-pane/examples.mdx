@@ -22,9 +22,19 @@ With nothing changed, the pane says the tree matches the last commit.
   </SizeProvider>
 </div>
 
+# Loading
+
+`changes={undefined}` is still loading (before the first git status): placeholder rows hold the place instead of saying the tree is clean.
+
+<div className="w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background p-2">
+  <SizeProvider size="compact">
+    <ChangesPane changes={undefined} branch="feat/safe-redirect" />
+  </SizeProvider>
+</div>
+
 # Branch, confirm and errors
 
-`branch`, `ahead` and `behind` add a row on top; `error` says what the last action hit. `onRevert` returns a promise here (your confirm, then the discard), so a reverted row stays until it resolves. `canAutoCommit={false}` asks for a message, for a session too busy to write one.
+`branch`, `ahead` and `behind` add a row on top; `error` says what the last action hit. `onRevert` returns a promise here (your confirm, then the discard), so a reverted row stays until it resolves; resolving or returning `false` (a cancelled confirm) keeps it. `canAutoCommit={false}` asks for a message, for a session too busy to write one.
 
 <div className="w-full max-w-sm overflow-hidden rounded-xl border border-border bg-background p-2">
   <SizeProvider size="compact">

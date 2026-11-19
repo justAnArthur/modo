@@ -70,7 +70,7 @@ export default function ArtifactsPane({ artifacts, onOpen }: ArtifactsPaneProps)
     <PaneSection title="Artifacts" meta={`${artifacts.length} · private until you share them`}>
       <FluidHover className="gap-0">
         {artifacts.map((artifact, i) => (
-          <ArtifactRow key={artifact.title} artifact={artifact} index={i} onOpen={() => onOpen?.(artifact)} />
+          <ArtifactRow key={`${i}:${artifact.title}`} artifact={artifact} index={i} onOpen={() => onOpen?.(artifact)} />
         ))}
       </FluidHover>
     </PaneSection>

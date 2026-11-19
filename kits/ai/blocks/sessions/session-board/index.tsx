@@ -27,6 +27,7 @@ import { SizeProvider } from '@justanarthur/modo-ui/primitives/systems/sizes'
 import { motion } from 'motion/react'
 import { useState } from 'react'
 import { useIcon } from '../../../lib/icons'
+import { groupKey } from '../../../lib/session-group'
 import { STATUS_GLYPH, STATUS_LABEL } from '../../../lib/status-glyph'
 import type { Profile, Session, SessionGroup, SessionPrompt, SessionStatus } from '../../../lib/types'
 import AgentPrompt from '../../conversation/agent-prompt'
@@ -41,6 +42,8 @@ interface BoardSession extends Session {
 }
 
 interface BoardSection {
+  /** Unique among the sections, unlike `label`: two project folders may share a name. */
+  key: string
   label: string
   sessions: BoardSession[]
   /** Folded until its heading is pressed (the archive). */
@@ -77,9 +80,18 @@ function withChildren(sessions: Session[], projectLabel: (s: Session) => string)
 /** The sidebar's order: pinned, every group, the archive folded. */
 function byProject(pinned: Session[], groups: SessionGroup[], archived: Session[]): BoardSection[] {
   return [
-    { label: 'Pinned', sessions: withChildren(pinned, s => s.project ?? 'Pinned') },
-    ...groups.map(g => ({ label: g.label, sessions: withChildren(g.sessions, s => s.project ?? g.label) })),
-    { label: 'Archived', sessions: withChildren(archived, s => s.project ?? 'Archived'), folded: true },
+    { key: 'pinned', label: 'Pinned', sessions: withChildren(pinned, s => s.project ?? 'Pinned') },
+    ...groups.map(g => ({
+      key: `group:${groupKey(g)}`,
+      label: g.label,
+      sessions: withChildren(g.sessions, s => s.project ?? g.label),
+    })),
+    {
+      key: 'archived',
+      label: 'Archived',
+      sessions: withChildren(archived, s => s.project ?? 'Archived'),
+      folded: true,
+    },
   ]
 }
 
@@ -88,7 +100,7 @@ function byState(pinned: Session[], groups: SessionGroup[]): BoardSection[] {
   const all = byProject(pinned, groups, [])
     .flatMap(section => section.sessions)
     .map(s => ({ ...s, child: false }))
-  return STATES.map(({ status, label }) => ({ label, sessions: all.filter(s => s.status === status) }))
+  return STATES.map(({ status, label }) => ({ key: status, label, sessions: all.filter(s => s.status === status) }))
 }
 
 function matches(session: BoardSession, filter: SessionFilter) {
@@ -543,7 +555,7 @@ export default function SessionBoard({
         {sections.map(section => {
           const unfolded = !section.folded || archiveOpen
           return (
-            <section key={section.label} aria-label={section.label} className="flex flex-col">
+            <section key={section.key} aria-label={section.label} className="flex flex-col">
               <SectionHeading section={section} open={unfolded} onToggle={() => setArchiveOpen(!archiveOpen)} />
               {unfolded &&
                 section.sessions.map(session => (

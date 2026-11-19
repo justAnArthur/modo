@@ -34,6 +34,7 @@ import {
   useState,
 } from 'react'
 import { type IconComponent, useIcon } from '../../../lib/icons'
+import { groupKey } from '../../../lib/session-group'
 import { STATUS_GLYPH, STATUS_LABEL } from '../../../lib/status-glyph'
 import type { Profile, Session, SessionGroup, SessionStatus } from '../../../lib/types'
 import { ProfileTile } from '../../profiles/profile-switcher'
@@ -333,12 +334,14 @@ function usePinnedOrder(pinned: Session[], onChange?: (ids: string[]) => void) {
   return [order, reorder] as const
 }
 
-/** A group's first `limit` sessions, plus the selected one if it falls past them. */
-function capped(sessions: Session[], limit: number | undefined, selected: string | undefined) {
+/** Sessions that need you: they stay in view past a group's `groupLimit` unless `keepVisible` says otherwise. */
+const needsAttention = (session: Session) =>
+  session.status === 'running' || session.status === 'waiting' || session.status === 'unread'
+
+/** A group's first `limit` sessions, plus those past them in `keep`, in the group's order. */
+function capped(sessions: Session[], limit: number | undefined, keep: string[]) {
   if (limit === undefined || sessions.length <= limit) return sessions
-  const head = sessions.slice(0, limit)
-  const picked = sessions.slice(limit).find(s => s.id === selected)
-  return picked ? [...head, picked] : head
+  return sessions.filter((s, i) => i < limit || keep.includes(s.id))
 }
 
 interface GroupSectionProps {
@@ -348,9 +351,9 @@ interface GroupSectionProps {
   limit: number | undefined
   /** The group is longer than the sidebar's `groupLimit`: it gets the Show more / Show fewer row. */
   capped: boolean
-  /** The selected session, when it is in this group: it shows past the limit. */
-  keep: string | undefined
-  onToggle: (label: string) => void
+  /** The ids of the group's sessions that show past the limit (the selected one, those `keepVisible` keeps), one per line: a string, so the memo compares it by value. */
+  keep: string
+  onToggle: (key: string) => void
 }
 
 /** A project folder or section, memoized like its rows: a change in one group re-renders only that group. */
@@ -362,7 +365,7 @@ const GroupSection = memo(
     const isProject = group.kind === 'project'
     const onAction = isProject ? actions.onNewSessionIn : actions.onFilterSection
     const label = isProject ? `New session in ${group.label}` : 'Filter'
-    const shown = capped(group.sessions, limit, keep)
+    const shown = capped(group.sessions, limit, keep.split('\n'))
     const hidden = group.sessions.length - shown.length
 
     return (
@@ -381,13 +384,13 @@ const GroupSection = memo(
           {shown.map(session => (
             <SessionRow key={session.id} session={session} actions={actions} />
           ))}
-          {long && (
+          {long && (limit === undefined || hidden > 0) && (
             <Sidebar.MenuItem>
               <Sidebar.MenuButton
                 icon={MoreRows}
                 aria-expanded={limit === undefined}
                 className="text-muted-foreground"
-                onClick={() => onToggle(group.label)}
+                onClick={() => onToggle(groupKey(group))}
               >
                 {limit === undefined ? 'Show fewer' : `Show ${hidden} more`}
               </Sidebar.MenuButton>
@@ -423,7 +426,8 @@ function SessionFilters({
   const Folder = useIcon('folder')
   const all = everySession(pinned, groups)
   const count = (match: (s: Session) => boolean) => all.filter(match).length
-  const projects = groups.filter(g => g.kind === 'project')
+  // A filter matches a project by its label: folders of one name share a row.
+  const projects = [...new Set(groups.filter(g => g.kind === 'project').map(g => g.label))]
   const used = profiles.filter(p => all.some(s => s.profile === p.id))
   // Built once per profile list: a component made during render would remount its row's icon every time.
   const icons = useMemo(
@@ -457,7 +461,7 @@ function SessionFilters({
       <Sidebar.Group>
         <Sidebar.GroupLabel>Projects</Sidebar.GroupLabel>
         <Sidebar.Menu>
-          {projects.map(({ label }) => (
+          {projects.map(label => (
             <Sidebar.MenuItem key={label}>
               <Sidebar.MenuButton value={`project:${label}` satisfies SessionFilter} icon={Folder}>
                 {label}
@@ -492,8 +496,10 @@ interface SessionSidebarProps {
   onPinnedOrderChange?: (ids: string[]) => void
   /** Project folders and the user's own sections, in order. */
   groups: SessionGroup[]
-  /** The most rows a group lists before a "Show N more" row unfolds the rest; the selected session always shows. Omit to list every row. */
+  /** The most rows a group lists before a "Show N more" row unfolds the rest; the selected session and those `keepVisible` keeps show past it. Omit to list every row. */
   groupLimit?: number
+  /** Whether a session past `groupLimit` stays in view, in its place among the rows. Defaults to the sessions that need you: running, waiting or unread. Pass `() => false` to keep only the selected one. */
+  keepVisible?: (session: Session) => boolean
   /** Archived sessions, folded at the bottom. */
   archived: Session[]
   /** The profiles the sessions run under, for the footer's usage and the profile filters. */
@@ -548,7 +554,10 @@ interface SessionSidebarProps {
  * arrows), then one group
  * per project folder and per section you made, then the archive, folded.
  * `groupLimit` caps a long group: past it a "Show N more" row unfolds the
- * rest (the selected session always shows).
+ * rest. The selected session and the ones that need you (running, waiting,
+ * unread; `keepVisible` decides) stay in view past the cap, in their place.
+ * Groups are told apart by `path`, so two project folders of one name are
+ * two groups.
  * A row's leading glyph is its state: an arc turning while it runs, an
  * amber dot while it waits for you, a filled dot for an unread reply and a
  * ring when idle; its badge is the last activity. Hover a row for pin,
@@ -582,6 +591,7 @@ export default function SessionSidebar({
   pinned,
   groups,
   groupLimit,
+  keepVisible = needsAttention,
   archived,
   profiles,
   onPinnedOrderChange,
@@ -623,7 +633,7 @@ export default function SessionSidebar({
   const [selected, select] = useControllableState(value, defaultValue ?? '', onValueChange)
   const [expanded, setExpanded] = useState<string[]>([])
   const toggleGroup = useCallback(
-    (label: string) => setExpanded(open => (open.includes(label) ? open.filter(l => l !== label) : [...open, label])),
+    (key: string) => setExpanded(open => (open.includes(key) ? open.filter(k => k !== key) : [...open, key])),
     [],
   )
   const [pinnedOrder, reorderPinned] = usePinnedOrder(pinned, onPinnedOrderChange)
@@ -701,17 +711,23 @@ export default function SessionSidebar({
                 </Sidebar.Menu>
               </Sidebar.Group>
 
-              {groups.map(group => (
-                <GroupSection
-                  key={group.label}
-                  group={group}
-                  actions={actions}
-                  limit={expanded.includes(group.label) ? undefined : groupLimit}
-                  capped={groupLimit !== undefined && group.sessions.length > groupLimit}
-                  keep={group.sessions.some(s => s.id === selected) ? selected : undefined}
-                  onToggle={toggleGroup}
-                />
-              ))}
+              {groups.map(group => {
+                const key = groupKey(group)
+                return (
+                  <GroupSection
+                    key={key}
+                    group={group}
+                    actions={actions}
+                    limit={expanded.includes(key) ? undefined : groupLimit}
+                    capped={groupLimit !== undefined && group.sessions.length > groupLimit}
+                    keep={group.sessions
+                      .filter(s => s.id === selected || keepVisible(s))
+                      .map(s => s.id)
+                      .join('\n')}
+                    onToggle={toggleGroup}
+                  />
+                )
+              })}
 
               <Sidebar.Group collapsible defaultOpen={false}>
                 <Sidebar.GroupLabel>Archived</Sidebar.GroupLabel>

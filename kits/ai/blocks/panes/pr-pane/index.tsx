@@ -149,8 +149,8 @@ export default function PullRequestPane({
 
       <PaneSection title="Reviews" meta={`${pr.reviews.length} comments`}>
         <ul className="m-0 flex list-none flex-col gap-2 p-0 px-2 pb-1">
-          {pr.reviews.map(review => (
-            <li key={review.where} className="flex min-w-0 flex-col">
+          {pr.reviews.map((review, i) => (
+            <li key={`${i}:${review.where}`} className="flex min-w-0 flex-col">
               <span className="flex min-w-0 gap-2 text-caption text-muted-foreground">
                 <span className="shrink-0 weight-medium text-foreground">{review.author}</span>
                 <span className="min-w-0 truncate font-mono">{review.where}</span>
