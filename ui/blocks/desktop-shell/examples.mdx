@@ -92,6 +92,46 @@ With `titleBar="card"` nothing runs across the window: the traffic lights and th
 </div>
 </div>
 
+# Folded sidebar
+
+The sidebar starts folded. Hover the window's left edge or the sidebar toggle and it peeks: it slides in over the main card, which doesn't move, and folds back a beat after the pointer leaves; focus inside keeps it open. Click the toggle to pin it. The traffic lights, the toggle and the title share one centre line; `peek={false}` turns the peek off.
+
+<div className="w-full overflow-x-auto">
+<div className="h-[560px] w-[960px] overflow-hidden rounded-xl border border-border">
+  <DesktopShell
+    showControls
+    titleBar="card"
+    defaultLeftOpen={false}
+    title={<span className="truncate text-body weight-medium text-foreground">Businesses</span>}
+    trailing={
+      <Button variant="ghost" size="icon-compact" aria-label="Search">
+        <Search />
+      </Button>
+    }
+    left={
+      <Sidebar variant="inset" defaultValue="inbox">
+        <Sidebar.Content>
+          <Sidebar.Group>
+            <Sidebar.GroupLabel>Library</Sidebar.GroupLabel>
+            <Sidebar.Menu>
+              <Sidebar.MenuItem><Sidebar.MenuButton icon={Inbox} value="inbox">Inbox</Sidebar.MenuButton></Sidebar.MenuItem>
+              <Sidebar.MenuItem><Sidebar.MenuButton icon={Star} value="starred">Starred</Sidebar.MenuButton></Sidebar.MenuItem>
+              <Sidebar.MenuItem><Sidebar.MenuButton icon={Folder} value="projects">Projects</Sidebar.MenuButton></Sidebar.MenuItem>
+            </Sidebar.Menu>
+          </Sidebar.Group>
+        </Sidebar.Content>
+      </Sidebar>
+    }
+    main={
+      <div className="flex flex-1 flex-col gap-2 p-6">
+        <span className="text-title text-foreground">Businesses</span>
+        <span className="text-body text-muted-foreground">The peek floats over this card instead of pushing it aside.</span>
+      </div>
+    }
+  />
+</div>
+</div>
+
 # Windows and Linux
 
 Off macOS the title bar starts at the edge; the stand-in window controls sit at its end. Here the side pane starts folded and there is no left sidebar.

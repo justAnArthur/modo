@@ -6,7 +6,17 @@
 
 'use client'
 
-import { type ReactNode, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import {
+  type FocusEvent,
+  type PointerEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import Button from '../../components/actions/button'
 import Sidebar from '../../components/navigation/sidebar'
 import { useSidebarShortcut } from '../../components/navigation/sidebar/sidebar-shortcut'
@@ -41,6 +51,25 @@ const CORNER_ROOM: Record<DesktopPlatform, string> = {
   linux: 'w-6 shrink-0',
 }
 
+// While it peeks, the folded sidebar floats over the main card, on the card's own 8px inset, instead of reflowing it.
+// The panel's side padding is that inset; it also leaves the shadow room inside the sidebar's clip.
+const PEEK_OVERLAY =
+  '[&>[data-slot=sidebar]]:absolute [&>[data-slot=sidebar]]:inset-y-0 [&>[data-slot=sidebar]]:left-0 [&>[data-slot=sidebar]]:z-10 [&>[data-slot=sidebar]>div]:px-2 [&>[data-slot=sidebar]_[data-sidebar=sidebar]]:shadow-surface-3'
+const PEEK_BG: Record<number, string> = {
+  4: '[&>[data-slot=sidebar]_[data-sidebar=sidebar]]:bg-surface-4',
+  5: '[&>[data-slot=sidebar]_[data-sidebar=sidebar]]:bg-surface-5',
+  6: '[&>[data-slot=sidebar]_[data-sidebar=sidebar]]:bg-surface-6',
+  7: '[&>[data-slot=sidebar]_[data-sidebar=sidebar]]:bg-surface-7',
+  8: '[&>[data-slot=sidebar]_[data-sidebar=sidebar]]:bg-surface-8',
+}
+const PEEK_RADIUS = {
+  rounded: '[&>[data-slot=sidebar]_[data-sidebar=sidebar]]:rounded-xl',
+  pill: '[&>[data-slot=sidebar]_[data-sidebar=sidebar]]:rounded-3xl',
+}
+
+// The peek folds back this long after the pointer leaves, like Sidebar's open on hover.
+const PEEK_CLOSE_MS = 300
+
 // Below this window width the side pane takes the main card's place.
 const NARROW = 768
 
@@ -71,6 +100,8 @@ interface DesktopShellProps {
   defaultLeftOpen?: boolean
   /** Called when the left sidebar opens or folds. */
   onLeftOpenChange?: (open: boolean) => void
+  /** While the left sidebar is folded, hovering the window's left edge or the sidebar toggle slides it in over the main card without reflowing it; it folds back a beat after the pointer leaves, and stays while focus is inside it. Defaults to `true`. */
+  peek?: boolean
   /** Controlled open state of the side pane. */
   rightOpen?: boolean
   /** The side pane's open state at first. Defaults to `true`. */
@@ -148,6 +179,64 @@ function WindowControls() {
   )
 }
 
+/**
+ * The folded sidebar's peek. Zones (`data-peek`) are the edge strip, the
+ * toggle, the corner and the sidebar: entering an opening one (the strip,
+ * the toggle) with a mouse peeks; leaving for anything that isn't a zone
+ * folds it back after `PEEK_CLOSE_MS`, unless focus is inside the sidebar.
+ */
+function usePeek(enabled: boolean) {
+  const [open, setOpen] = useState(false)
+  // The last opening was a peek: the sidebar stays out of flow until it is pinned, so folding back never reflows the card.
+  const [overlay, setOverlay] = useState(false)
+  const sidebar = useRef<HTMLDivElement | null>(null)
+  const over = useRef(false)
+  const timer = useRef<ReturnType<typeof setTimeout>>()
+
+  useEffect(() => {
+    if (enabled) return
+    clearTimeout(timer.current)
+    setOpen(false)
+    setOverlay(false)
+  }, [enabled])
+  useEffect(() => () => clearTimeout(timer.current), [])
+
+  const close = () => {
+    clearTimeout(timer.current)
+    timer.current = setTimeout(() => {
+      if (!over.current && !sidebar.current?.contains(document.activeElement)) setOpen(false)
+    }, PEEK_CLOSE_MS)
+  }
+  const zone = (opens: boolean) => ({
+    'data-peek': '',
+    onPointerEnter: (event: PointerEvent) => {
+      over.current = true
+      clearTimeout(timer.current)
+      if (!opens || !enabled || event.pointerType !== 'mouse') return
+      setOpen(true)
+      setOverlay(true)
+    },
+    onPointerLeave: (event: PointerEvent) => {
+      if (event.relatedTarget instanceof Element && event.relatedTarget.closest('[data-peek]')) return
+      over.current = false
+      close()
+    },
+  })
+  const onBlur = (event: FocusEvent) => {
+    if (!(event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget))) close()
+  }
+
+  return {
+    enabled,
+    open: enabled && open,
+    overlay: enabled && overlay,
+    dismiss: () => setOpen(false),
+    sidebar,
+    zone,
+    onBlur,
+  }
+}
+
 /** The main region: an inset card two surface levels up, like Sidebar.Inset. */
 function MainCard({ children }: { children: ReactNode }) {
   const level = useLift(2)
@@ -183,7 +272,18 @@ function MainCard({ children }: { children: ReactNode }) {
  * sidebar's content starts below them), and the title, `trailing` and the
  * side pane toggle head the main card, which drags the window too. With the
  * sidebar folded, the corner controls stay put and the card's header makes
- * room for them.
+ * room for them. The corner sits on the card's 8px inset, so the window
+ * controls, the toggle and the title share one centre line, 26px from the
+ * window's top (22px compact). A native macOS window must put its traffic
+ * lights on that line too: with an overlay title bar, set the window's traffic
+ * light position (Tauri's `trafficLightPosition`) so they centre there,
+ * inside the 72px the corner keeps for them.
+ *
+ * While the sidebar is folded, hovering the window's left edge or the sidebar
+ * toggle peeks it: it slides in over the main card as a card of its own,
+ * without reflowing it, stays while the pointer is over it or focus is inside
+ * it, and folds back a beat after the pointer leaves. Clicking the toggle
+ * pins it open. `peek={false}` turns it off.
  *
  * Under it, the main content is an inset card. The left Sidebar is yours
  * (`left`): it resizes from its rail and folds from its toggle, its rail or
@@ -211,6 +311,7 @@ export default function DesktopShell({
   leftOpen: leftOpenProp,
   defaultLeftOpen = true,
   onLeftOpenChange,
+  peek = true,
   rightOpen: rightOpenProp,
   defaultRightOpen = true,
   onRightOpenChange,
@@ -229,6 +330,10 @@ export default function DesktopShell({
   const hasRight = right !== undefined
   const paneOpen = hasRight && rightOpen
   const inCard = titleBar === 'card'
+  const shape = useShape()
+  const substrate = useLift(0)
+  const peekLevel = useLift(3)
+  const peeking = usePeek(peek && hasLeft && !leftOpen)
   const paneSizes = useMemo(() => (paneOpen ? [100 - paneSize, paneSize] : [100, 0]), [paneOpen, paneSize])
 
   // The window's own width, not the viewport's: a framed or resized window doesn't follow the viewport.
@@ -259,7 +364,11 @@ export default function DesktopShell({
           {showControls && <TrafficLights />}
         </div>
       )}
-      {hasLeft && <Toggle side="left" label={leftLabel} open={leftOpen} onClick={() => setLeftOpen(!leftOpen)} />}
+      {hasLeft && (
+        <span className="contents" {...peeking.zone(true)}>
+          <Toggle side="left" label={leftLabel} open={leftOpen} onClick={() => setLeftOpen(!leftOpen)} />
+        </span>
+      )}
       {leading}
     </>
   )
@@ -294,7 +403,8 @@ export default function DesktopShell({
     <div ref={root} className={cn('relative flex h-full w-full flex-col bg-background', className)}>
       <SizeProvider size={size.variant}>
         {inCard ? (
-          <div data-tauri-drag-region className={cn(bar, 'absolute top-0 left-0 z-20')}>
+          // On the card's 8px inset, so the corner and the card's header share one centre line.
+          <div data-tauri-drag-region className={cn(bar, 'absolute top-2 left-0 z-20')} {...peeking.zone(false)}>
             {corner}
           </div>
         ) : (
@@ -306,14 +416,37 @@ export default function DesktopShell({
       </SizeProvider>
       {/* Sidebar defaults to the viewport's height; under the title bar it takes the body's. */}
       <Sidebar.Provider
-        className={cn('min-h-0 flex-1 [&>[data-slot=sidebar]]:h-full', inCard && CORNER_CLEARANCE[size.variant])}
+        className="min-h-0 flex-1"
         persist={false}
         mobileBreakpoint={0}
         shortcut={hasLeft ? undefined : null}
-        open={leftOpen}
-        onOpenChange={setLeftOpen}
+        open={leftOpen || peeking.open}
+        onOpenChange={open => {
+          // `[` or the rail folds a peek; only the toggle pins it.
+          if (!open) peeking.dismiss()
+          setLeftOpen(open)
+        }}
       >
-        {left}
+        {peeking.enabled && <div className="absolute inset-y-0 left-0 z-10 w-2" {...peeking.zone(true)} />}
+        <SurfaceProvider value={peeking.overlay ? peekLevel : substrate}>
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: it only watches focus leaving the sidebar; the controls inside are the focusable ones. */}
+          <div
+            ref={peeking.sidebar}
+            className={cn(
+              'contents [&>[data-slot=sidebar]]:h-full',
+              inCard && CORNER_CLEARANCE[size.variant],
+              peeking.overlay && [
+                PEEK_OVERLAY,
+                PEEK_BG[peekLevel],
+                PEEK_RADIUS[shape.bgRadius >= 20 ? 'pill' : 'rounded'],
+              ],
+            )}
+            onBlur={peeking.onBlur}
+            {...peeking.zone(false)}
+          >
+            {left}
+          </div>
+        </SurfaceProvider>
         {/* Flush with an open sidebar (its rows bring their own gutter), 8px from the window edge once it folds. */}
         <div
           className={cn(
