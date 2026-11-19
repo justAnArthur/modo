@@ -38,7 +38,7 @@ is specific to this package.
   ShellCard, DesktopShell), ungrouped. Package subpaths follow the folders
   (`@justanarthur/modo-ui/components/actions/button`).
 - `docs/` — the docs chrome, shipped (`@justanarthur/modo-ui/docs`, `/docs/chrome.css`, `/docs/vite`):
-  `chrome.tsx` adapts the chrome's slots (`Button`, `Link`, `Select`, `Icon`, `DocsNav`) and the Theme panel
+  `chrome.tsx` adapts the chrome's slots (`Button`, `Link`, `Select`, `Icon`, `DocsNav`, `SiteSwitcher`: the site view's Popover) and the Theme panel
   item, `chrome.css` is its look through `data-modo` / `data-modo-ui` attributes (no utilities, so a host
   scans nothing), `vite.ts` holds `docsTheme` (the theme script) and `withUno(configFile)` (UnoCSS plus
   the theme script, the extension kits use). `global.css` imports `base.css` and `docs/chrome.css`; `vite.ts`

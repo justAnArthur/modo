@@ -19,6 +19,7 @@ export default defineConfig({
     Select: './docs/chrome.tsx#Select',
     Icon: './docs/chrome.tsx#Icon',
     Sidebar: './docs/chrome.tsx#DocsNav',
+    SiteSwitcher: './docs/chrome.tsx#SiteSwitcher',
   },
   panel: { items: [{ label: 'Theme', component: './docs/chrome.tsx#ThemeSwitcher' }] },
 })

@@ -20,6 +20,7 @@ export default defineConfig({
     Select: '@justanarthur/modo-ui/docs#Select',
     Icon: '@justanarthur/modo-ui/docs#Icon',
     Sidebar: '@justanarthur/modo-ui/docs#DocsNav',
+    SiteSwitcher: '@justanarthur/modo-ui/docs#SiteSwitcher',
   },
   panel: { items: [{ label: 'Theme', component: '@justanarthur/modo-ui/docs#ThemeSwitcher' }] },
 })

@@ -88,6 +88,54 @@ export interface SidebarSectionProps {
   children?: ReactNode
 }
 
+/** The viewport corner the site view's switcher sits in; the lib places it there and moves it when dragged. */
+export type SiteCorner = 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'
+
+/** One page the site view's switcher lists. */
+export interface SiteSwitcherPage {
+  /** The item's folder name under `pages/`. */
+  id: string
+  title: string
+  /** The page's `/site/<id>` url, base included. */
+  href: string
+  /** The page on screen. */
+  current: boolean
+}
+
+/** A `panel.items` entry, rendered: its label and its component, handed `shell`. */
+export interface SiteSwitcherSection {
+  label: string
+  content: ReactNode
+}
+
+export interface SiteSwitcherLink {
+  label: string
+  /** Base included. */
+  href: string
+}
+
+/**
+ * The site view's page switcher (`/site`): a trigger and the menu it opens. The lib draws the
+ * fixed box around it, in `corner`, and drags that box to another corner; a press that ends a drag
+ * never reaches the trigger, so the slot only opens and closes its menu.
+ */
+export interface SiteSwitcherSlotProps {
+  /** The site's name (`config.name`). */
+  name: string
+  /** The site's mark: the `logo` component or image; undefined when there is none. */
+  logo?: ReactNode
+  /** The pages to switch between, in menu order (`pages.primary`, else nav order). */
+  pages: SiteSwitcherPage[]
+  /** The title of the page on screen, listed or not; undefined when the id names no page. */
+  current?: string
+  /** The `panel.items`, in order (a brand or theme switcher). */
+  sections: SiteSwitcherSection[]
+  /** The way back out of the site view: Docs, Canvas. */
+  links: SiteSwitcherLink[]
+  /** Where the trigger sits: open the menu away from the edges. */
+  corner: SiteCorner
+}
+
 /** The components the chrome renders with, one per slot, as panel items receive them. */
 export interface ShellComponents {
   Button: ComponentType<ButtonSlotProps>
@@ -101,6 +149,7 @@ export interface ShellComponents {
     Item: ComponentType<SidebarItemProps>
     Section: ComponentType<SidebarSectionProps>
   }
+  SiteSwitcher: ComponentType<SiteSwitcherSlotProps>
 }
 
 /** The props of a `panel.items[].component`. */
@@ -108,7 +157,7 @@ export interface PanelItemProps {
   shell: ShellComponents
 }
 
-export type SlotName = 'Button' | 'Link' | 'Code' | 'Icon' | 'Select' | 'Sidebar'
+export type SlotName = 'Button' | 'Link' | 'Code' | 'Icon' | 'Select' | 'Sidebar' | 'SiteSwitcher'
 
 interface SlotMatch<P> {
   tier: Tier
@@ -124,6 +173,7 @@ export const SLOTS = {
   Icon: { tier: 'primitives', requiredProps: ['name'] },
   Select: { tier: 'components', requiredProps: ['value', 'onValueChange', 'options'] },
   Sidebar: { tier: 'components', requiredProps: ['children'] },
+  SiteSwitcher: { tier: 'components', requiredProps: ['pages', 'sections'] },
 } as const satisfies {
   Button: SlotMatch<ButtonSlotProps>
   Link: SlotMatch<LinkSlotProps>
@@ -131,6 +181,7 @@ export const SLOTS = {
   Icon: SlotMatch<IconSlotProps>
   Select: SlotMatch<SelectSlotProps>
   Sidebar: SlotMatch<SidebarSlotProps>
+  SiteSwitcher: SlotMatch<SiteSwitcherSlotProps>
 }
 
 /** The Sidebar's parts, matched as their own items when no Sidebar root is. */

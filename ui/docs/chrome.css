@@ -207,3 +207,34 @@
 [data-modo="site-menu-page"][aria-current="page"] {
   background-color: var(--active);
 }
+
+/* The SiteSwitcher slot (./chrome.tsx): its badge is a popup surface off the
+   page, round around its icon button; the logo sits at the icon's size. */
+[data-modo-ui="site-badge"] {
+  display: flex;
+  padding: var(--space-1);
+  border-radius: var(--radius-pill-shell);
+  background-color: var(--surface-3);
+  box-shadow: var(--shadow-3);
+}
+
+[data-modo-ui="site-badge"] > button {
+  border-radius: var(--radius-pill);
+}
+
+[data-modo-ui="site-badge"] img {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* The popover's head and links, inset like the list's captions. */
+[data-modo-ui="site-head"] {
+  display: flex;
+  flex-direction: column;
+  padding-inline: var(--space-2);
+}
+
+[data-modo-ui="site-foot"] {
+  display: flex;
+  gap: var(--space-1);
+}

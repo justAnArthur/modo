@@ -18,6 +18,7 @@ import type {
   SidebarItemProps,
   SidebarSectionProps,
   SidebarSlotProps,
+  SiteSwitcherSlotProps,
 } from '@justanarthur/modo'
 import {
   Check,
@@ -30,13 +31,17 @@ import {
   Monitor,
   Moon,
   Package,
+  PanelsTopLeft,
   Sun,
   X,
 } from 'lucide-react'
 import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useState } from 'react'
 import ModoButton from '../components/actions/button'
+import List, { LIST_POPOVER } from '../components/data-display/list'
 import FluidSelect from '../components/inputs/select'
 import Sidebar, { type SidebarSide, useSidebar } from '../components/navigation/sidebar'
+import Popover from '../components/overlays/popover'
+import Tooltip from '../components/overlays/tooltip'
 import { useIsMobile } from '../lib/use-is-mobile'
 
 /**
@@ -310,5 +315,83 @@ export function ThemeSwitcher() {
         ))}
       </FluidSelect.Content>
     </FluidSelect>
+  )
+}
+
+/**
+ * SiteSwitcher slot: the site view's badge (the site's mark, else a pages glyph) on an elevated
+ * surface, opening a Popover that grows out of it: the site and the page on screen, the pages as a
+ * Sidebar menu (the current one lit, the hover melting from row to row, arrow keys between them), the
+ * panel items as list rows, and the links back to the docs. It opens away from the corner modo keeps
+ * it in; picking a page closes it. modo drags it between corners, so the tooltip says so.
+ */
+export function SiteSwitcher({ name, logo, pages, current, sections, links, corner }: SiteSwitcherSlotProps) {
+  const [open, setOpen] = useState(false)
+  const label = current ? `Pages: ${current}` : 'Pages'
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <div data-modo-ui="site-badge">
+        <Tooltip content="Pages · drag to move" side={corner.startsWith('top') ? 'bottom' : 'top'}>
+          <Popover.Trigger
+            render={
+              <ModoButton variant="ghost" size="icon" aria-label={label}>
+                {logo ?? <PanelsTopLeft aria-hidden />}
+              </ModoButton>
+            }
+          />
+        </Tooltip>
+      </div>
+      <Popover.Content
+        side={corner.startsWith('top') ? 'bottom' : 'top'}
+        align={corner.endsWith('left') ? 'start' : 'end'}
+        sideOffset={8}
+        className={LIST_POPOVER}
+        aria-label={`${name} pages`}
+      >
+        <div data-modo-ui="site-head">
+          <Popover.Title>{name}</Popover.Title>
+          <Popover.Description>{current ?? 'No page'}</Popover.Description>
+        </div>
+        <List.Section title="Pages">
+          <nav aria-label="Pages">
+            <Sidebar.Menu>
+              {pages.map(page => (
+                <Sidebar.MenuItem key={page.id}>
+                  <Sidebar.MenuButton
+                    isActive={page.current}
+                    render={<a href={page.href} aria-current={page.current ? 'page' : undefined} />}
+                    onClick={() => setOpen(false)}
+                  >
+                    {page.title}
+                  </Sidebar.MenuButton>
+                </Sidebar.MenuItem>
+              ))}
+            </Sidebar.Menu>
+          </nav>
+        </List.Section>
+        {sections.length > 0 && (
+          <List>
+            {sections.map((section, i) => (
+              <List.Row key={`${i}-${section.label}`} label={section.label}>
+                {section.content}
+              </List.Row>
+            ))}
+          </List>
+        )}
+        <div data-modo-ui="site-foot">
+          {links.map(link => (
+            <ModoButton
+              key={link.href}
+              variant="ghost"
+              size="compact"
+              render={<a href={link.href} />}
+              onClick={() => setOpen(false)}
+            >
+              {link.label}
+            </ModoButton>
+          ))}
+        </div>
+      </Popover.Content>
+    </Popover>
   )
 }
