@@ -21,6 +21,7 @@ import { AnimatePresence, motion, Reorder } from 'motion/react'
 import {
   forwardRef,
   type HTMLAttributes,
+  type ClipboardEvent as ReactClipboardEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   type MouseEvent as ReactMouseEvent,
   type TextareaHTMLAttributes,
@@ -29,10 +30,19 @@ import {
   useId,
   useMemo,
   useRef,
+  useState,
 } from 'react'
 import { FilePreviewTile } from './file-preview-tile'
 import { QueuedRow } from './queued-row'
-import { caretToEnd, type DraftSlot, type DraftSlotContext, type DraftStatus, type QueuedMessage } from './shared'
+import {
+  caretToEnd,
+  type DraftSlot,
+  type DraftSlotContext,
+  type DraftStatus,
+  type QueuedMessage,
+  type SlashCommand,
+} from './shared'
+import { bareName, matchCommands, SlashList } from './slash-list'
 import { SuggestionRow } from './suggestion-row'
 import { useComposerFiles } from './use-composer-files'
 import { useHistoryNav } from './use-history-nav'
@@ -107,6 +117,8 @@ interface ComposerDraftProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onCha
   history?: string[]
   /** Suggested prompt rendered as the placeholder (with a Tab keycap) while the draft is empty. Pressing Tab fills it into the composer — it doesn't send. Takes precedence over `placeholder`. */
   placeholderSuggestion?: string
+  /** Slash commands: a draft that starts with "/" lists the ones whose name holds what follows it, above the text. ↑ / ↓ move, Enter or Tab inserts `/name `, Escape closes; a click picks one. Defaults to `[]`. */
+  commands?: SlashCommand[]
   /** Suggested prompts listed under the action bar while the draft is empty. ArrowDown moves a highlight into the list (focus stays in the textarea), ArrowUp walks back up and out, Enter or click fills the highlighted prompt. Escape drops the highlight; typing collapses the list. */
   suggestions?: string[]
   /** Extra classes for the composer surface. */
@@ -114,6 +126,14 @@ interface ComposerDraftProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onCha
 }
 
 const isPlain = (e: ReactKeyboardEvent) => !e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey
+const NO_COMMANDS: SlashCommand[] = []
+
+/** A pasted image is named by the clipboard (`image.png`) or not at all: it gets a name a person can read. */
+function namePasted(file: File) {
+  if (!file.type.startsWith('image/') || (file.name && file.name !== `image.${file.type.slice(6)}`)) return file
+  const ext = file.type.slice(6).replace('jpeg', 'jpg').replace(/\+.*/, '')
+  return new File([file], `Pasted image.${ext}`, { type: file.type, lastModified: Date.now() })
+}
 
 /**
  * The composer's draft on its own (Fluid Functionalism's InputMessage): the
@@ -154,6 +174,7 @@ const ComposerDraft = forwardRef<HTMLDivElement, ComposerDraftProps>(
       history = NO_STRINGS,
       placeholderSuggestion,
       suggestions,
+      commands = NO_COMMANDS,
       className,
       ...props
     },
@@ -167,6 +188,7 @@ const ComposerDraft = forwardRef<HTMLDivElement, ComposerDraftProps>(
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const {
       onBlur: textareaOnBlur,
+      onPaste: textareaOnPaste,
       'aria-describedby': textareaDescribedBy,
       ...restTextareaProps
     } = textareaProps ?? {}
@@ -205,6 +227,34 @@ const ComposerDraft = forwardRef<HTMLDivElement, ComposerDraftProps>(
     const ghostHintId = useId()
     const showGhost = !!placeholderSuggestion && value === '' && !attachments.dragging
 
+    // The slash list: open while the draft is one "/word" (commands run from the
+    // start of a message), until Escape dismisses it for that text.
+    const slashQuery = /^\/(\S*)$/.exec(value)?.[1]
+    const slashMatches = useMemo(
+      () => (slashQuery === undefined ? NO_COMMANDS : matchCommands(commands, slashQuery)),
+      [commands, slashQuery],
+    )
+    const [slashDismissed, setSlashDismissed] = useState<string | null>(null)
+    const slashOpen = slashMatches.length > 0 && slashDismissed !== value
+    const slashListRef = useRef<HTMLDivElement | null>(null)
+    const slashHover = useFluidHover(slashListRef)
+    const slashListId = useId()
+    const [slashRegionRef, slashRegionHeight] = useRegionHeight()
+    const { setActiveIndex: setActiveSlash, remeasure: remeasureSlash } = slashHover
+    const activeSlash = slashOpen ? (slashHover.activeIndex ?? 0) : null
+
+    // Each new query lights its first match.
+    useEffect(() => {
+      if (!slashOpen) return
+      remeasureSlash()
+      setActiveSlash(0)
+    }, [slashOpen, slashQuery, remeasureSlash, setActiveSlash])
+
+    useEffect(() => {
+      if (activeSlash != null)
+        document.getElementById(`${slashListId}-${activeSlash}`)?.scrollIntoView({ block: 'nearest' })
+    }, [activeSlash, slashListId])
+
     const [filesRegionRef, filesRegionHeight] = useRegionHeight()
     const [queueRegionRef, queueRegionHeight] = useRegionHeight()
     const [suggestionsRegionRef, suggestionsRegionHeight] = useRegionHeight()
@@ -214,6 +264,12 @@ const ComposerDraft = forwardRef<HTMLDivElement, ComposerDraftProps>(
       if (suggestionsOpen) remeasure()
       else setActiveSuggestion(null)
     }, [suggestionsOpen, remeasure, setActiveSuggestion])
+
+    const pickCommand = (command: SlashCommand) => {
+      recall.exit()
+      setValue(`/${bareName(command)} `)
+      caretToEnd(textareaRef)
+    }
 
     const acceptSuggestion = useCallback(
       (text: string) => {
@@ -263,6 +319,28 @@ const ComposerDraft = forwardRef<HTMLDivElement, ComposerDraftProps>(
     const handleKeyDown = (e: ReactKeyboardEvent<HTMLTextAreaElement>) => {
       if (e.nativeEvent.isComposing) return
 
+      if (slashOpen && !e.altKey && !e.metaKey && !e.ctrlKey) {
+        const last = slashMatches.length - 1
+        const at = activeSlash ?? 0
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault()
+          setActiveSlash(e.key === 'ArrowDown' ? (at >= last ? 0 : at + 1) : at <= 0 ? last : at - 1)
+          return
+        }
+        if ((e.key === 'Enter' && !e.shiftKey) || (e.key === 'Tab' && !e.shiftKey)) {
+          e.preventDefault()
+          const picked = slashMatches[at]
+          if (picked) pickCommand(picked)
+          return
+        }
+        if (e.key === 'Escape') {
+          e.preventDefault()
+          e.stopPropagation()
+          setSlashDismissed(value)
+          return
+        }
+      }
+
       if (suggestionsOpen && isPlain(e)) {
         if (e.key === 'ArrowDown') {
           e.preventDefault()
@@ -307,6 +385,16 @@ const ComposerDraft = forwardRef<HTMLDivElement, ComposerDraftProps>(
       }
     }
 
+    // A pasted screenshot attaches like a dropped file; pasted text pastes as text.
+    const handlePaste = (e: ReactClipboardEvent<HTMLTextAreaElement>) => {
+      textareaOnPaste?.(e)
+      if (!attachments.supported || e.defaultPrevented) return
+      const pasted = Array.from(e.clipboardData.files)
+      if (pasted.length === 0) return
+      if (!e.clipboardData.types.includes('text/plain')) e.preventDefault()
+      attachments.add(pasted.map(namePasted))
+    }
+
     const handleContainerMouseDown = (e: ReactMouseEvent<HTMLDivElement>) => {
       if (!clickToFocus || disabled) return
       const target = e.target as HTMLElement
@@ -318,8 +406,16 @@ const ComposerDraft = forwardRef<HTMLDivElement, ComposerDraftProps>(
     }
 
     const slotCtx = useMemo<DraftSlotContext>(
-      () => ({ openFilePicker: attachments.openPicker, files: attachments.files }),
-      [attachments.openPicker, attachments.files],
+      () => ({
+        openFilePicker: attachments.openPicker,
+        files: attachments.files,
+        setValue: next => {
+          recall.exit()
+          setValue(typeof next === 'function' ? next(textareaRef.current?.value ?? '') : next)
+          caretToEnd(textareaRef)
+        },
+      }),
+      [attachments.openPicker, attachments.files, setValue, recall.exit],
     )
     const leftContent = typeof leftSlot === 'function' ? leftSlot(slotCtx) : leftSlot
     const rightContent = typeof rightSlot === 'function' ? rightSlot(slotCtx) : rightSlot
@@ -420,6 +516,29 @@ const ComposerDraft = forwardRef<HTMLDivElement, ComposerDraftProps>(
               </AnimatePresence>
             )}
 
+            <AnimatePresence initial={false}>
+              {slashOpen && (
+                <motion.div
+                  key="slash-row"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: slashRegionHeight ?? 0, opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={REGION_SPRING}
+                  className="overflow-hidden"
+                >
+                  <div ref={slashRegionRef} className="border-b border-border/60 pb-1">
+                    <SlashList
+                      commands={slashMatches}
+                      listId={slashListId}
+                      hover={slashHover}
+                      listRef={slashListRef}
+                      onPick={pickCommand}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="relative">
               <textarea
                 ref={textareaRef}
@@ -434,6 +553,7 @@ const ComposerDraft = forwardRef<HTMLDivElement, ComposerDraftProps>(
                   setActiveSuggestion(null)
                   textareaOnBlur?.(e)
                 }}
+                onPaste={handlePaste}
                 placeholder={
                   attachments.dragging
                     ? 'Drop files here to add to chat'
@@ -447,7 +567,14 @@ const ComposerDraft = forwardRef<HTMLDivElement, ComposerDraftProps>(
                 aria-describedby={
                   [showGhost ? ghostHintId : null, textareaDescribedBy].filter(Boolean).join(' ') || undefined
                 }
-                aria-activedescendant={activeSuggestion != null ? `${suggestionListId}-${activeSuggestion}` : undefined}
+                aria-controls={slashOpen ? slashListId : undefined}
+                aria-activedescendant={
+                  activeSlash != null
+                    ? `${slashListId}-${activeSlash}`
+                    : activeSuggestion != null
+                      ? `${suggestionListId}-${activeSuggestion}`
+                      : undefined
+                }
                 className={cn(
                   'w-full resize-none rounded-none bg-transparent outline-none',
                   'text-foreground placeholder:text-muted-foreground',
@@ -585,5 +712,5 @@ const ComposerDraft = forwardRef<HTMLDivElement, ComposerDraftProps>(
 
 ComposerDraft.displayName = 'Composer.Draft'
 
-export type { ComposerDraftProps, DraftSlot, DraftSlotContext, DraftStatus, QueuedMessage }
+export type { ComposerDraftProps, DraftSlot, DraftSlotContext, DraftStatus, QueuedMessage, SlashCommand }
 export { ComposerDraft }

@@ -57,7 +57,7 @@ function WorkFold({
       className="-mx-2.5 w-auto max-w-none"
     >
       <Accordion.Item value="work">
-        <Accordion.Trigger className="[&>span:first-child]:min-w-0">
+        <Accordion.Trigger className="[&>span:first-child]:min-w-0 [&>span:first-child]:grid-cols-[minmax(0,1fr)]">
           <span className="flex min-w-0 items-center gap-2">
             {running && <Spinner className="size-3.5" />}
             <span className="shrink-0">{summary}</span>
@@ -65,9 +65,7 @@ function WorkFold({
           </span>
         </Accordion.Trigger>
         <Accordion.Content>
-          {body && (
-            <div className="flex flex-col gap-2 border-l border-border pb-1 pl-[var(--space-3)]">{children}</div>
-          )}
+          {body && <div className="flex flex-col gap-2 border-l border-border pb-2 pl-3">{children}</div>}
         </Accordion.Content>
       </Accordion.Item>
     </Accordion>

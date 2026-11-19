@@ -9,11 +9,15 @@
 
 'use client'
 
+import { useReduceMotion } from '@justanarthur/modo-ui'
 import Button from '@justanarthur/modo-ui/components/actions/button'
 import Markdown from '@justanarthur/modo-ui/components/data-display/markdown'
+import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
+import { spring } from '@justanarthur/modo-ui/lib/springs'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import ScrollArea from '@justanarthur/modo-ui/primitives/layout/scroll-area'
-import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
+import { type ReactNode, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import AgentRun from '../../../components/conversation/agent-run'
 import ChapterNav, { type ChapterNavItem } from '../../../components/conversation/chapter-nav'
 import Message, { type MessageProps } from '../../../components/conversation/message'
@@ -22,7 +26,7 @@ import Recap from '../../../components/conversation/recap'
 import TodoList, { type TodoItem } from '../../../components/conversation/todo-list'
 import ToolCall from '../../../components/conversation/tool-call'
 import WorkSummary from '../../../components/conversation/work-summary'
-import { useIcon } from '../../../lib/icons'
+import { type IconName, useIcon } from '../../../lib/icons'
 
 type TurnProps = Omit<MessageProps, 'role'>
 
@@ -32,7 +36,10 @@ type TurnProps = Omit<MessageProps, 'role'>
 // That contains paint to the turn's box: an assistant turn widens it by a
 // padding its negative margin takes back, so the work rows' hover fill (which
 // bleeds past the column) and focus rings still show.
-const USER_TURN = 'content-visibility-auto [contain-intrinsic-size:auto_5rem]'
+// The rhythm: a user turn opens an exchange, so it takes a column gap of its
+// own above it (32px from the reply before, 16px to the reply after); the
+// assistant turn's `-my-1` gives back the paint margin it adds.
+const USER_TURN = 'content-visibility-auto [contain-intrinsic-size:auto_5rem] mt-4 mb-1 first:mt-0'
 const ASSISTANT_TURN = 'content-visibility-auto [contain-intrinsic-size:auto_20rem] -mx-4 px-4 -my-1 py-1'
 
 // No static's key names a binding of this file: the declaration bundler renames
@@ -59,6 +66,81 @@ function AssistantTurn({ children, streaming, className, ...props }: TurnProps) 
   )
 }
 
+interface CompactBoundaryProps {
+  /** What the compaction kept: a string is markdown. Omit for the divider alone. */
+  summary?: ReactNode
+  /** The divider's label. Defaults to `'Conversation compacted'`. */
+  label?: string
+  /** Start with the summary open. Defaults to `false`. */
+  defaultOpen?: boolean
+}
+
+/** Where the conversation was compacted: a centered hairline whose label opens the summary. */
+function CompactBoundary({ summary, label = 'Conversation compacted', defaultOpen = false }: CompactBoundaryProps) {
+  const [open, setOpen] = useState(defaultOpen)
+  const shape = useShape()
+  const reduceMotion = useReduceMotion()
+  const Chevron = useIcon(open ? 'chevron-up' : 'chevron-down')
+  const id = useId()
+  const rule = <span aria-hidden="true" className="h-px flex-1 bg-border" />
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-3">
+        {rule}
+        {summary ? (
+          <Button
+            variant="ghost"
+            size="compact"
+            trailingIcon={Chevron}
+            aria-expanded={open}
+            aria-controls={id}
+            onClick={() => setOpen(!open)}
+          >
+            {label}
+          </Button>
+        ) : (
+          <span className="text-caption text-muted-foreground">{label}</span>
+        )}
+        {rule}
+      </div>
+      <AnimatePresence initial={false}>
+        {open && summary && (
+          <motion.div
+            id={id}
+            initial={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+            animate={reduceMotion ? { opacity: 1 } : { opacity: 1, height: 'auto' }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0, transition: spring.moderate.exit }}
+            transition={spring.moderate}
+            className="overflow-hidden"
+          >
+            <div className={cn('border border-border px-4 py-3 text-muted-foreground', shape.container)}>
+              {typeof summary === 'string' ? <Markdown>{summary}</Markdown> : summary}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+interface TranscriptNoticeProps {
+  /** The notice: `Interrupted`, `Model switched to Sonnet 5.5`. */
+  children: ReactNode
+  /** A glyph before it. Omit for text alone. */
+  icon?: IconName
+}
+
+/** A quiet line between turns for something that happened to the session, not something said. */
+function TranscriptNotice({ children, icon }: TranscriptNoticeProps) {
+  const Icon = useIcon(icon ?? 'circle-dot')
+  return (
+    <p role="note" className="m-0 flex items-center justify-center gap-2 text-caption text-muted-foreground">
+      {icon && <Icon size={14} strokeWidth={1.5} className="shrink-0" />}
+      {children}
+    </p>
+  )
+}
+
 interface TranscriptProps {
   /** The turns: `Transcript.User`, `Transcript.Assistant` and the parts below. */
   children: ReactNode
@@ -76,8 +158,10 @@ interface TranscriptProps {
  * One session's conversation: what you asked, what the agent said and did,
  * and where the turn left off.
  *
- * The turns sit in one reading column and are the AI components: your
- * messages and the agent's replies are Messages; what the agent did on the
+ * The turns sit in one reading column, capped at a readable measure, and
+ * are the AI components: your messages and the agent's replies are
+ * Messages, with more space above each of yours than inside an exchange,
+ * so the column reads as question and answer pairs; what the agent did on the
  * way (Reasoning, ToolCalls, AgentRuns) folds into one WorkSummary per
  * turn, so the output reads clean. Press a row to open it, or the eye in the
  * corner to show every turn's work at once. Chapters break the column with a
@@ -106,6 +190,13 @@ interface TranscriptProps {
  * - `Transcript.Mention` / `Transcript.Attachment` / `Transcript.Working` — Message.Mention / Message.Attachment / Message.Working.
  * - `Transcript.TaskList` — TodoList.
  * - `Transcript.NextStep` — Recap.
+ * - `Transcript.Compact` — where the conversation was compacted: a centered
+ *   hairline, "Conversation compacted", whose label opens the `summary`
+ *   (markdown), so a compaction reads as a boundary instead of a giant
+ *   message. `label`, `defaultOpen`.
+ * - `Transcript.Notice` — a quiet centered line for something that happened
+ *   to the session rather than something said ("Interrupted", "Model
+ *   switched"): `children`, `icon`.
  *
  * @example {@include ./examples.mdx}
  */
@@ -200,7 +291,7 @@ const Transcript = Object.assign(
           <WorkSummary.Provider open={showWork}>
             <div
               ref={column}
-              className="mx-auto flex w-full max-w-3xl select-text flex-col gap-5 px-6 py-6 [contain:inline-size]"
+              className="mx-auto flex w-full max-w-3xl select-text flex-col gap-4 px-6 py-6 [contain:inline-size]"
             >
               {children}
             </div>
@@ -211,10 +302,10 @@ const Transcript = Object.assign(
             <Button
               variant="secondary"
               size="compact"
+              leadingIcon={Down}
               className="pointer-events-auto absolute bottom-2"
               onClick={toEnd}
             >
-              <Down />
               Latest
             </Button>
           </div>
@@ -237,6 +328,8 @@ const Transcript = Object.assign(
     Working: Message.Working,
     TaskList: TodoList,
     NextStep: Recap,
+    Compact: CompactBoundary,
+    Notice: TranscriptNotice,
   },
 )
 
@@ -245,7 +338,7 @@ type TocChapter = ChapterNavItem
 /** A row of the pinned task list: TodoItem, named for the session. */
 type TaskItem = TodoItem
 
-export type { TaskItem, TocChapter, TranscriptProps }
+export type { CompactBoundaryProps, TaskItem, TocChapter, TranscriptNoticeProps, TranscriptProps }
 
 export default Transcript
 

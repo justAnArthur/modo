@@ -12,7 +12,9 @@ import { useCallback, useRef, useState } from 'react'
  * The pixel height of a collapsible region, for motion to animate to. An
  * `"auto"` target resolves from the transformed size, so under a scaled
  * ancestor the region would overshoot and snap back. Put the ref on the
- * region's content: the height is its clipping parent's `scrollHeight`, and
+ * region's content: the height is the content's box plus its margins (not
+ * the clipping parent's `scrollHeight`, which never drops below the height
+ * it is animating, so a shrinking list would keep its old room), and
  * observing the child keeps the observer out of a loop with the animation.
  */
 export function useRegionHeight() {
@@ -23,7 +25,8 @@ export function useRegionHeight() {
     observer.current = null
     if (!el) return
     const sync = () => {
-      const next = el.parentElement?.scrollHeight ?? el.offsetHeight
+      const { marginTop, marginBottom } = getComputedStyle(el)
+      const next = el.offsetHeight + Number.parseFloat(marginTop) + Number.parseFloat(marginBottom)
       if (next > 0) setHeight(next)
     }
     sync()

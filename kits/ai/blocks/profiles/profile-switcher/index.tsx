@@ -52,18 +52,28 @@ export function ProfileTile({ profile, size = 'md', className }: ProfileTileProp
   )
 }
 
+/** Whether any of a profile's limits has been used: before that its meters would be empty tracks. */
+const hasUsage = (profile: Profile) => profile.limits.some(l => l.value > 0)
+
+/** The session and weekly limits as two thin lines, or nothing before the profile has used any. */
+function UsageLines({ profile }: { profile: Profile }) {
+  if (!hasUsage(profile)) return null
+  return (
+    <span aria-hidden="true" className="flex w-8 shrink-0 flex-col gap-0.5">
+      {profile.limits.slice(0, 2).map(limit => (
+        <Meter key={limit.label} variant="line" label={limit.label} value={limit.value} />
+      ))}
+    </span>
+  )
+}
+
 function ProfileRow({ profile }: { profile: Profile }) {
-  const top = profile.limits.length > 0 ? Math.max(...profile.limits.map(l => l.value)) : undefined
+  const top = hasUsage(profile) ? Math.max(...profile.limits.map(l => l.value)) : undefined
   return (
     <span className="flex min-w-0 flex-1 items-center gap-2">
       <ProfileTile profile={profile} />
       <span className="min-w-0 flex-1 truncate text-body text-foreground">{profile.name}</span>
       <span className="shrink-0 text-caption text-muted-foreground">{profile.plan}</span>
-      <span aria-hidden="true" className="flex w-8 shrink-0 flex-col gap-0.5">
-        {profile.limits.slice(0, 2).map(limit => (
-          <Meter key={limit.label} variant="line" label={limit.label} value={limit.value} />
-        ))}
-      </span>
       <span className="w-8 shrink-0 text-right text-caption tabular-nums text-muted-foreground">
         {top === undefined ? (
           <>
@@ -106,9 +116,10 @@ interface ProfileSwitcherProps {
  * (its sign-in, settings, memory and limits), so the switcher shows what
  * the switch costs before you make it: the plan, the config dir or base
  * URL, how many sessions run there, and the session and weekly meters,
- * which turn amber and red as a limit runs out. A profile with no limits yet
- * (`limits: []`, before its first turn reports usage) shows a dash for its
- * share and "No usage yet" under Limits. The panel grows out of the
+ * which turn amber and red as a limit runs out. A profile with no usage yet
+ * (`limits: []`, or every limit at 0, before its first turn reports usage)
+ * shows no lines on the trigger, a dash for its share and "No usage yet"
+ * under Limits, instead of empty tracks. The panel grows out of the
  * trigger; the active profile's background melts to the row you pick, and
  * the arrow keys move the pick.
  *
@@ -147,11 +158,7 @@ export default function ProfileSwitcher({
         <ProfileTile profile={active} />
         <span className="min-w-0 truncate">{active.name}</span>
         {/* Its two windows at a glance: the 5-hour session above the week. */}
-        <span aria-hidden="true" className="flex w-8 shrink-0 flex-col gap-0.5">
-          {active.limits.slice(0, 2).map(limit => (
-            <Meter key={limit.label} variant="line" label={limit.label} value={limit.value} />
-          ))}
-        </span>
+        <UsageLines profile={active} />
       </RowTrigger>
     )
 
@@ -172,21 +179,22 @@ export default function ProfileSwitcher({
             title={`Limits · ${active.name}`}
             aside={active.provider === 'compatible' ? active.baseUrl : active.configDir}
           >
-            {active.limits.length === 0 && (
-              <p className="m-0 px-[var(--space-2)] text-caption text-muted-foreground">
+            {!hasUsage(active) && (
+              <p className="m-0 px-2 text-caption text-muted-foreground">
                 {NO_USAGE}: limits show once a session under this profile reports usage.
               </p>
             )}
-            {active.limits.map(limit => (
-              <List.Row key={limit.label} label={limit.label}>
-                <Meter variant="line" className="w-16" label={limit.label} value={limit.value} />
-                <span className="w-28 pr-[var(--space-3)] text-right text-caption tabular-nums text-muted-foreground">
-                  {limit.detail}
-                </span>
-              </List.Row>
-            ))}
+            {hasUsage(active) &&
+              active.limits.map(limit => (
+                <List.Row key={limit.label} label={limit.label}>
+                  <Meter variant="line" className="w-16" label={limit.label} value={limit.value} />
+                  <span className="w-28 pr-3 text-right text-caption tabular-nums text-muted-foreground">
+                    {limit.detail}
+                  </span>
+                </List.Row>
+              ))}
           </List.Section>
-          <div className="flex items-center gap-[var(--space-1)]">
+          <div className="flex items-center gap-1">
             <Button variant="ghost" size="compact" leadingIcon={Plus}>
               Add profile
             </Button>

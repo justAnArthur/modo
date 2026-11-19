@@ -133,6 +133,7 @@ export function useComposerFiles({
     controlled: files !== undefined,
     files: list,
     dragging: supported && dragOver,
+    add,
     replace,
     remove,
     openPicker,

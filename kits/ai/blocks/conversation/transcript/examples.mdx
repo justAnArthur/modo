@@ -1,9 +1,9 @@
 import Transcript from './index'
-import { DEMO_CHAPTERS, DEMO_TASKS, DemoBuilding, DemoSession } from '../../../mock/demo-session'
+import { DEMO_CHAPTERS, DEMO_IMAGE, DEMO_TASKS, DemoBuilding, DemoSession } from '../../../mock/demo-session'
 
 # Session
 
-A whole session: chapters, your turns with attachments and @-mentions, folded work with reasoning, tool runs, an Explore run and a background agent, the live turn at the bottom. Open the chapter list in the corner to jump.
+A whole session: chapters, your turns with attachments (an image with its `src` opens full size) and @-mentions, folded work with reasoning, tool runs, an Explore run and a background agent, the live turn at the bottom. Open the chapter list in the corner to jump.
 
 <div className="flex h-[720px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Transcript chapters={DEMO_CHAPTERS} footer={<Transcript.TaskList items={DEMO_TASKS} />}>
@@ -39,5 +39,32 @@ The footer stays under the column: the pinned task list folded to one row, then 
     }
   >
     <DemoBuilding />
+  </Transcript>
+</div>
+
+# Compacted and interrupted
+
+`Transcript.Compact` marks where the conversation was compacted: a centered hairline whose label opens the summary, instead of the summary as one giant message. `Transcript.Notice` is a quiet line for something that happened to the session, like an interrupted turn.
+
+<div className="flex h-[560px] w-full overflow-hidden rounded-xl border border-border bg-background">
+  <Transcript>
+    <Transcript.User>Now run the permission test again, in bypass mode.</Transcript.User>
+    <Transcript.Assistant>{'Re-running the create-and-delete test with permissions bypassed.'}</Transcript.Assistant>
+    <Transcript.Notice icon="ban">Interrupted</Transcript.Notice>
+    <Transcript.User>/compact</Transcript.User>
+    <Transcript.Compact
+      defaultOpen
+      summary={`**Primary request.** Test how AI Desktop handles permission modes: ask before edits, then bypass.
+
+**State.** The test file is deleted and the working tree is clean. A shell alias turns \`rm\` into \`rm -i\`, so the agent uses \`/bin/rm\`.
+
+**Next.** Re-run the test once bypass mode is switched on.`}
+    />
+    <Transcript.User
+      attachments={<Transcript.Attachment kind="image" name="Pasted image.png" detail="1.2 MB" src={DEMO_IMAGE} />}
+    >
+      Here is what the prompt looked like.
+    </Transcript.User>
+    <Transcript.Assistant>{'The file name sits outside the card padding there; the card should hold it on its bottom row.'}</Transcript.Assistant>
   </Transcript>
 </div>

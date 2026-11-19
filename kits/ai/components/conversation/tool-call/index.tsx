@@ -134,7 +134,7 @@ const ToolCall = Object.assign(
     const body = useFoldBody(open?.includes(value) ?? true)
     return (
       <Accordion.Item value={value} index={index} disabled={!children}>
-        <Accordion.Trigger className="[&>span:first-child]:min-w-0">
+        <Accordion.Trigger className="[&>span:first-child]:min-w-0 [&>span:first-child]:grid-cols-[minmax(0,1fr)]">
           <span className="flex min-w-0 items-center gap-2">
             <Icon size={14} strokeWidth={1.5} className="shrink-0" />
             <span className="shrink-0">{tool}</span>
