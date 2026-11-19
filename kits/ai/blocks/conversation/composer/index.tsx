@@ -27,6 +27,7 @@ import { SURFACE_BG } from '@justanarthur/modo-ui/lib/surface-classes'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { SizeProvider } from '@justanarthur/modo-ui/primitives/systems/sizes'
+import { useRef } from 'react'
 import { useIcon } from '../../../lib/icons'
 import { RowTrigger } from '../../../lib/row-trigger'
 import type { Command, Model, PermissionMode, Profile, Project } from '../../../lib/types'
@@ -38,13 +39,28 @@ import {
   type DraftStatus,
   type QueuedMessage,
 } from './draft'
+import type { SlashCommand } from './shared'
+import { bareName } from './slash-list'
+
+interface AddPaletteProps {
+  files: string[]
+  commands: Command[]
+  onAttach: () => void
+  setValue: DraftSlotContext['setValue']
+}
 
 /** One + button: attach, mention a file, run a command, skill or plugin — one searchable list. */
-function AddPalette({ files, commands, onAttach }: { files: string[]; commands: Command[]; onAttach: () => void }) {
+function AddPalette({ files, commands, onAttach, setValue }: AddPaletteProps) {
   const Plus = useIcon('plus')
   const Paperclip = useIcon('paperclip')
   const File = useIcon('file-text')
   const Command = useIcon('command')
+  // A pick writes into the draft and focuses it; the menu then keeps its hands off focus.
+  const inserted = useRef(false)
+  const insert = (update: (value: string) => string) => {
+    inserted.current = true
+    setValue(update)
+  }
   const groups = [
     { label: 'Commands', kind: 'command' },
     { label: 'Skills', kind: 'skill' },
@@ -60,12 +76,27 @@ function AddPalette({ files, commands, onAttach }: { files: string[]; commands: 
           </Button>
         }
       />
-      <Dropdown.Content side="top" align="start" className="w-72">
+      <Dropdown.Content
+        side="top"
+        align="start"
+        className="w-72"
+        finalFocus={() => {
+          const keep = !inserted.current
+          inserted.current = false
+          return keep
+        }}
+      >
         <Dropdown.Search filter placeholder="Files, commands, skills" />
         <Dropdown.Item index={0} icon={Paperclip} label="Attach files…" onSelect={onAttach} />
         <Dropdown.Label>Mention a file</Dropdown.Label>
         {files.map(path => (
-          <Dropdown.Item key={path} index={index++} icon={File} label={path} />
+          <Dropdown.Item
+            key={path}
+            index={index++}
+            icon={File}
+            label={path}
+            onSelect={() => insert(v => `${v}${v && !/\s$/.test(v) ? ' ' : ''}@${path} `)}
+          />
         ))}
         {groups.map(group => (
           <div key={group.kind} className="contents">
@@ -73,7 +104,14 @@ function AddPalette({ files, commands, onAttach }: { files: string[]; commands: 
             {commands
               .filter(c => c.kind === group.kind)
               .map(c => (
-                <Dropdown.Item key={c.name} index={index++} icon={Command} label={c.name} />
+                <Dropdown.Item
+                  key={c.name}
+                  index={index++}
+                  icon={Command}
+                  label={c.name}
+                  // A command runs from the start of the message: it replaces any command already there.
+                  onSelect={() => insert(v => `/${bareName(c)} ${v.replace(/^\/\S*\s*/, '')}`)}
+                />
               ))}
           </div>
         ))}
@@ -370,9 +408,9 @@ interface ComposerProps {
   permissionModes: PermissionMode[]
   /** The output styles. */
   outputStyles: string[]
-  /** The commands, skills and plugins the + palette runs. */
+  /** The commands, skills and plugins: the + palette lists them, and a draft that starts with "/" offers the matching ones above the text. Picking one writes `/name ` into the draft. */
   commands: Command[]
-  /** Files the + palette can mention. */
+  /** Files the + palette can mention: picking one adds `@path ` to the draft. */
   files: string[]
   /** The project folders a session can run in. */
   projects: Project[]
@@ -489,8 +527,10 @@ interface ComposerProps {
  * four triggers, held in a ShellCard.
  *
  * The draft grows with its text, then scrolls; Enter sends and Shift+Enter
- * breaks the line. Files dropped anywhere on it, or attached from the +
- * palette, preview as tiles above the text (images as themselves, PDFs by
+ * breaks the line. Files dropped anywhere on it, pasted into it (a
+ * screenshot on the clipboard attaches as "Pasted image.png"; pasted text
+ * stays text), or attached from the + palette, preview as tiles above the
+ * text (images as themselves, PDFs by
  * their first page with the optional `pdfjs-dist`, the rest as an icon).
  * While a reply streams (`status`) the button queues what you type: queued
  * messages stack above the draft, reorder by drag or Alt+↑/↓, come back into
@@ -498,8 +538,11 @@ interface ComposerProps {
  * with the draft empty the button stops the reply. ↑ on the first line
  * recalls sent messages (`history`); `suggestions` list prompts under an
  * empty draft and `placeholderSuggestion` offers one behind a Tab keycap.
- * The + opens one searchable palette: attach, mention a file, run a
- * command, skill or plugin.
+ * The + opens one searchable palette: attach, mention a file (`@path`
+ * goes into the draft), run a command, skill or plugin (`/name` starts the
+ * draft). Typing "/" at the start of the draft lists the `commands` whose
+ * name holds what follows, above the text: ↑ / ↓ move, Enter or Tab
+ * inserts `/name `, Escape closes, a click picks one.
  *
  * The row under it, on the shell, holds the rest. On the left, where the
  * session runs: the project, whose popover also holds the worktree, the
@@ -529,7 +572,7 @@ interface ComposerProps {
  * Statics:
  * - `Composer.Draft` — the draft alone, without the shell and its menus:
  *   the props above plus `leftSlot` / `rightSlot` (content, or a render
- *   function given `{ openFilePicker, files }`), `files` / `defaultFiles` /
+ *   function given `{ openFilePicker, files, setValue }`), `commands`, `files` / `defaultFiles` /
  *   `onFilesChange` (attachments are on once either is set), `minRows` /
  *   `maxRows`, `size`, `disabled`, `showQueue` and `textareaProps`.
  *
@@ -667,8 +710,9 @@ const Composer = Object.assign(
           placeholder={placeholder}
           defaultStatus={defaultStatus}
           defaultFiles={[]}
-          leftSlot={({ openFilePicker }) => (
-            <AddPalette files={files} commands={commands} onAttach={() => openFilePicker()} />
+          commands={commands}
+          leftSlot={({ openFilePicker, setValue }) => (
+            <AddPalette files={files} commands={commands} onAttach={() => openFilePicker()} setValue={setValue} />
           )}
         />
       </ShellCard>
@@ -678,7 +722,15 @@ const Composer = Object.assign(
 )
 
 export { FileThumbnail } from './file-thumbnail'
-export type { ComposerDraftProps, ComposerProps, ComposerTargetOptions, DraftSlotContext, DraftStatus, QueuedMessage }
+export type {
+  ComposerDraftProps,
+  ComposerProps,
+  ComposerTargetOptions,
+  DraftSlotContext,
+  DraftStatus,
+  QueuedMessage,
+  SlashCommand,
+}
 export { Composer, ComposerDraft }
 
 export default Composer

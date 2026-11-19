@@ -226,11 +226,11 @@ export default function FailureState({
           className,
         )}
       >
-        <div className="flex items-center gap-[var(--space-3)]">
+        <div className="flex items-center gap-3">
           <span className="flex shrink-0">{icon}</span>
           <div className="flex min-w-0 flex-1 flex-col">
             <span className="truncate text-body weight-medium text-foreground">{copy[kind].title}</span>
-            <span className="truncate text-caption text-muted-foreground">{copy[kind].detail}</span>
+            <span className="text-caption text-muted-foreground">{copy[kind].detail}</span>
           </div>
           {progress}
           <div className="flex shrink-0 items-center gap-[var(--space-1)]">

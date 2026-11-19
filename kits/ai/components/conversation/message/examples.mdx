@@ -19,13 +19,19 @@ Your turn is a bubble on the right; the reply is text on the page.
 
 # Attachments and mentions
 
-Files, images and pasted text sit above the bubble; an @-mention is a chip inside the text.
+Files, images and pasted text sit above the bubble, flush with its right edge; an @-mention is a chip inside the text. An image with its `src` shows as a thumbnail: press it to open the image.
 
 <div className="w-full max-w-2xl">
   <Message
     role="user"
     attachments={
       <>
+        <Message.Attachment
+          kind="image"
+          name="Pasted image.png"
+          detail="1.2 MB"
+          src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='1600' height='1000' viewBox='0 0 1600 1000'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF'/><stop offset='1' stop-color='%231E2A4A'/></radialGradient><rect width='1600' height='1000' fill='url(%23a)'/></svg>"
+        />
         <Message.Attachment kind="image" name="screenshot.png" detail="1.2 MB" />
         <Message.Attachment kind="pasted" name="Pasted text" detail="38 lines" />
         <Message.Attachment name="brief.pdf" detail="4 pages" />

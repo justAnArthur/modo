@@ -36,7 +36,11 @@ interface PromptCardProps {
  * The frame lifts two surface levels off whatever it sits on, with a
  * popup's shadow, so a waiting prompt reads as the thing to answer next: a
  * glyph and one line saying what is asked, an optional chip, the body, then
- * a muted hint and the answers on the bottom row. Permission request,
+ * a muted hint and the answers on the bottom row. Everything sits on one
+ * inset, so the title, the body's blocks (a command, a diff), the hint and
+ * the answers share both edges; the body's blocks sit closer to each other
+ * than to the title or the answers, and a hint too long for its row ends in
+ * an ellipsis. Permission request,
  * Question prompt and Plan approval are built on it.
  *
  * @example {@include ./examples.mdx}
@@ -53,13 +57,10 @@ export default function PromptCard({
   const shape = useShape()
   const Icon = useIcon(icon)
   return (
-    <Elevated
-      offset={2}
-      shadowLevel={3}
-      className={cn('flex flex-col gap-3 p-[var(--space-3)]', shape.container, className)}
-    >
-      <div className="flex min-w-0 items-center gap-2">
-        <Icon size={16} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
+    <Elevated offset={2} shadowLevel={3} className={cn('flex min-w-0 flex-col gap-3 p-3', shape.container, className)}>
+      <div className="flex min-w-0 items-start gap-2">
+        {/* Centered on the title's first line (20px), however many it wraps to. */}
+        <Icon size={16} strokeWidth={1.5} className="mt-0.5 shrink-0 text-muted-foreground" />
         <span className="min-w-0 text-body weight-medium text-foreground">{title}</span>
         {tag && (
           <Badge size="compact" color="gray" className="shrink-0">
@@ -67,11 +68,11 @@ export default function PromptCard({
           </Badge>
         )}
       </div>
-      {children}
+      {children && <div className="flex min-w-0 flex-col gap-2">{children}</div>}
       {(actions || hint) && (
-        <div className="flex flex-wrap items-center gap-2">
-          {hint && <span className="min-w-0 flex-1 text-caption text-muted-foreground">{hint}</span>}
-          <div className="ml-auto flex flex-wrap justify-end gap-2">{actions}</div>
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {hint && <span className="min-w-0 flex-1 truncate text-caption text-muted-foreground">{hint}</span>}
+          <div className="ml-auto flex shrink-0 flex-wrap justify-end gap-2">{actions}</div>
         </div>
       )}
     </Elevated>

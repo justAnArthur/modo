@@ -15,6 +15,10 @@ export const DEMO_CHAPTERS: TocChapter[] = [
   { id: 'chapter-verify', title: 'Verification', detail: '14:51 · now' },
 ]
 
+/** A stand-in screenshot, as a data URL, for image attachments. */
+export const DEMO_IMAGE =
+  "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='1600' height='1000' viewBox='0 0 1600 1000'><radialGradient id='a' cx='.2' cy='.15' r='1'><stop stop-color='%236B97FF'/><stop offset='1' stop-color='%231E2A4A'/></radialGradient><rect width='1600' height='1000' fill='url(%23a)'/><rect x='120' y='120' width='360' height='760' rx='24' fill='%23ffffff' fill-opacity='.12'/><rect x='540' y='120' width='940' height='120' rx='24' fill='%23ffffff' fill-opacity='.12'/></svg>"
+
 export const DEMO_TASKS: TaskItem[] = [
   { content: 'Read the design rules and the craft page', status: 'completed' },
   { content: 'Add Meter and Diff components', status: 'completed' },
@@ -32,7 +36,7 @@ export function DemoReading() {
       <Transcript.User
         attachments={
           <>
-            <Transcript.Attachment kind="image" name="claude-desktop.png" detail="1.2 MB" />
+            <Transcript.Attachment kind="image" name="claude-desktop.png" detail="1.2 MB" src={DEMO_IMAGE} />
             <Transcript.Attachment kind="pasted" name="Pasted text" detail="38 lines" />
           </>
         }

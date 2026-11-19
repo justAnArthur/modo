@@ -13,6 +13,18 @@ interface DraftSlotContext {
   openFilePicker: (acceptOverride?: string) => void
   /** Currently-attached files. */
   files: File[]
+  /** Replaces the draft's text (or maps it, given a function), then puts the caret at its end: a palette inserting a command or an @-mention. */
+  setValue: (value: string | ((value: string) => string)) => void
+}
+
+/** A command the draft offers when it starts with "/": `/compact`, a skill. `Command` from the kit fits. */
+interface SlashCommand {
+  /** The name, with or without its leading slash. */
+  name: string
+  /** One line on what it does. */
+  description?: string
+  /** `command`, `skill`, `plugin`: anything but `command` shows as a badge. */
+  kind?: string
 }
 
 type DraftSlot = ReactNode | ((ctx: DraftSlotContext) => ReactNode)
@@ -34,5 +46,5 @@ function caretToEnd(ref: RefObject<HTMLTextAreaElement | null>, focus = true) {
   })
 }
 
-export type { DraftSlot, DraftSlotContext, DraftStatus, QueuedMessage }
+export type { DraftSlot, DraftSlotContext, DraftStatus, QueuedMessage, SlashCommand }
 export { caretToEnd }

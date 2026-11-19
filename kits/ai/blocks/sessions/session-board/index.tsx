@@ -340,7 +340,9 @@ function SessionItem({
     >
       <SurfaceProvider value={open ? level : substrate}>
         <div className="relative">
-          <Accordion.Trigger className={cn('[&>span:first-child]:min-w-0', ACTION_ROOM)}>
+          <Accordion.Trigger
+            className={cn('[&>span:first-child]:min-w-0 [&>span:first-child]:grid-cols-[minmax(0,1fr)]', ACTION_ROOM)}
+          >
             <span className={ROW_GRID}>
               <span className={cn('flex min-w-0 items-center gap-2', session.child && 'pl-5.5')}>
                 <StatusDot status={session.status} />

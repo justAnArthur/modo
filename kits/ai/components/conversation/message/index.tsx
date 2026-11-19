@@ -9,6 +9,7 @@
 'use client'
 
 import { MarkdownProse } from '@justanarthur/modo-ui/components/data-display/markdown'
+import Lightbox from '@justanarthur/modo-ui/components/overlays/lightbox'
 import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import type { ReactNode } from 'react'
@@ -42,12 +43,20 @@ interface AttachmentProps {
   detail?: string
   /** `pasted` is text pasted into the composer, folded to a chip. Defaults to `'file'`. */
   kind?: AttachmentKind
+  /** The image itself (a URL, a data or blob URL): the chip becomes a thumbnail that opens the full image. */
+  src?: string
 }
 
 /** A file, image or pasted text that came with a message. */
-function AttachmentChip({ name, detail, kind = 'file' }: AttachmentProps) {
+function AttachmentChip({ name, detail, kind = 'file', src }: AttachmentProps) {
   const shape = useShape()
   const Icon = useIcon(kind === 'pasted' ? 'clipboard' : kind === 'image' ? 'image' : 'file-text')
+  if (src)
+    return (
+      <Lightbox items={[{ src, alt: name, caption: detail ? `${name} · ${detail}` : name }]}>
+        <Lightbox.Trigger index={0} label={`View ${name}`} className="border border-border" />
+      </Lightbox>
+    )
   return (
     <span className={cn('inline-flex h-11 max-w-56 items-center gap-2 border border-border px-2.5', shape.item)}>
       <Icon size={16} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
@@ -76,15 +85,17 @@ interface MessageProps {
  * One turn of a conversation with an AI: what you asked, or what it answered.
  *
  * Your turn is a bubble on the right, on the muted fill, with its
- * attachments (files, images, pasted text folded to a chip) above it and
- * @-mentions inline. The assistant's turn has no bubble: it is rendered
+ * attachments (files, images, pasted text folded to a chip) above it,
+ * flush with its right edge, and @-mentions inline. An image attachment
+ * given its `src` is a thumbnail instead, and opens the full image (a
+ * Lightbox grown out of the thumbnail). The assistant's turn has no bubble: it is rendered
  * markdown on the page, in Markdown.Prose's type and rhythm, so a long answer reads
  * like a document. While the reply streams, the working dots follow its
  * last block.
  *
  * Statics:
  * - `Message.Mention` — an @-file chip inline in the text: `path`.
- * - `Message.Attachment` — a file, image or pasted-text chip: `name`, `detail`, `kind`.
+ * - `Message.Attachment` — a file, image or pasted-text chip: `name`, `detail`, `kind`; with `src`, an image thumbnail that opens the image.
  * - `Message.Working` — the in-flight dots on their own: three dots that melt
  *   into one blob and split again beside a word that cycles (Thinking,
  *   Planning, …) in the width of the longest, and an optional `label`. One
@@ -107,15 +118,8 @@ const Message = Object.assign(
 
     return (
       <div className={cn('flex flex-col items-end gap-2 pl-[12%]', className)}>
-        {attachments && <div className="flex flex-wrap justify-end gap-2">{attachments}</div>}
-        <div
-          className={cn(
-            'min-w-0 bg-muted px-[var(--space-3)] py-[var(--space-2)] text-body text-foreground',
-            shape.container,
-          )}
-        >
-          {children}
-        </div>
+        {attachments && <div className="flex flex-wrap items-end justify-end gap-2">{attachments}</div>}
+        <div className={cn('min-w-0 bg-muted px-3 py-2 text-body text-foreground', shape.container)}>{children}</div>
       </div>
     )
   },
