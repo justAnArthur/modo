@@ -113,6 +113,10 @@ State attributes are listed in parentheses.
 
 - `canvas` (`data-moving`, `data-panning`, `data-space` while in use), `canvas-world`, `canvas-column` (`data-kind`: `foundations` or a tier), `canvas-frames`, `canvas-frame`, `canvas-frame-title`, `canvas-stage`, `canvas-controls`, `canvas-zoom`.
 
+**Site view** (`/site`, see [`pages`](./config.md#pages))
+
+- `site` (`data-title`), `site-page` (the page, its own stacking context), `site-indicator` (`data-corner`: `bottom-left` | `bottom-right` | `top-left` | `top-right`; `data-open`, `data-dragging`), `site-badge`, `site-menu`, `site-menu-head`, `site-menu-title`, `site-menu-current`, `site-menu-pages`, `site-menu-page` (`aria-current="page"` on the current one), `site-menu-section`, `site-menu-label`, `site-menu-foot`.
+
 ## Dark mode
 
 Set [`theme`](./config.md#theme) to add a light / dark toggle to the header. The toggle:

@@ -12,5 +12,13 @@ export type {
   SidebarSectionProps,
   SidebarSlotProps,
 } from '../lib/contract'
-export type { PanelConfig, PanelItem, RepoConfig, ShellConfig, SiteConfig, ThemeConfig } from '../lib/schema'
+export type {
+  PagesConfig,
+  PanelConfig,
+  PanelItem,
+  RepoConfig,
+  ShellConfig,
+  SiteConfig,
+  ThemeConfig,
+} from '../lib/schema'
 export { defineConfig } from './config'

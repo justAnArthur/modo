@@ -12,7 +12,7 @@ modo preview                 # serve ./dist locally before you deploy
 ## What the build writes
 
 - `index.html` for the home page.
-- A copy of the app shell at `<route>/index.html` for every route, each with its own `<title>`, description and Open Graph tags: `canvas/`, `docs/tokens/`, `docs/tokens/<group>/`, `docs/<tier>/` and `docs/<tier>/<id>/`. A deep link works on a host with no SPA fallback.
+- A copy of the app shell at `<route>/index.html` for every route, each with its own `<title>`, description and Open Graph tags: `canvas/`, `docs/`, `docs/tokens/`, `docs/tokens/<group>/`, `docs/<tier>/` `docs/<tier>/<id>/` and, when there are pages, `site/` and `site/<id>/`. A deep link works on a host with no SPA fallback.
 - `404.html` for any other path. GitHub Pages, Netlify and Vercel serve it automatically.
 - `favicon.<ext>` when [`favicon`](./config.md#favicon) is set.
 - Hashed JS and CSS under `assets/`.

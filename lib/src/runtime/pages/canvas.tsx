@@ -1,4 +1,4 @@
-import { type ItemEntry, items } from 'virtual:modo-items'
+import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import { type CSSProperties, type ReactNode, useRef } from 'react'
@@ -6,7 +6,7 @@ import { itemPath, tokenPath } from '../../lib/paths'
 import { cap } from '../../lib/text'
 import { isScreenSized, TIERS, type Tier } from '../../lib/tiers'
 import { useLive, Viewport } from '../canvas/viewport'
-import { groupTree } from '../groups'
+import { flatten, groupTree } from '../groups'
 import { ExamplePreview } from '../items/preview'
 import { withBase } from '../location'
 import { GroupPreview } from '../tokens/group-page'
@@ -39,10 +39,6 @@ export function CanvasPage() {
       })}
     </Viewport>
   )
-}
-
-function flatten(tree: ReturnType<typeof groupTree<ItemEntry>>): ItemEntry[] {
-  return [...tree.items, ...tree.groups.flatMap(flatten)]
 }
 
 function Column({

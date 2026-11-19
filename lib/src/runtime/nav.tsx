@@ -4,11 +4,12 @@ import { items } from 'virtual:modo-items'
 import { shell } from 'virtual:modo-shell'
 import { tokens } from 'virtual:modo-tokens'
 import type { ReactNode } from 'react'
-import { CANVAS_PAGE, guidePath, HOME_PATH, itemPath, tierPath, tokenPath } from '../lib/paths'
+import { CANVAS_PAGE, guidePath, itemPath, SITE_PATH, tierPath, tokenPath } from '../lib/paths'
 import { cap } from '../lib/text'
 import { TIERS } from '../lib/tiers'
 import { groupTree } from './groups'
 import { usePath, withBase } from './location'
+import { OVERVIEW_PATH, SITE_PAGES } from './site/routes'
 
 export function SidebarNav() {
   const path = usePath()
@@ -19,10 +20,12 @@ export function SidebarNav() {
         // The header already names the system.
         title="Explore"
         items={[
-          { id: HOME_PATH, name: 'Overview' },
+          { id: OVERVIEW_PATH, name: 'Overview' },
           { id: CANVAS_PAGE.path, name: CANVAS_PAGE.title },
+          ...(SITE_PAGES.length > 0 ? [{ id: SITE_PATH, name: 'Site' }] : []),
         ]}
-        isActive={isActive}
+        // Exact: the overview's `/docs` would hold every docs page.
+        isActive={href => path === href}
       />
       {guides.length > 0 ? (
         <NavSection

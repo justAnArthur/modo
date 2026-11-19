@@ -56,6 +56,27 @@ export function decodePath(pathname: string): string {
 /** The overview, as an app path. */
 export const HOME_PATH = '/'
 
+/** The overview's own path, which it keeps when the site view takes `/` (`pages.home`). */
+export const DOCS_PATH = '/docs'
+
+/** The site view: the `pages/` tier full screen, one page at a time, without the docs chrome. */
+export const SITE_PATH = '/site'
+
+/** A page in the site view as an app path (`/site/home`); no id is the first page. */
+export function sitePath(id?: string): string {
+  return id ? `${SITE_PATH}/${id}` : SITE_PATH
+}
+
+/**
+ * The page id an app path shows in the site view: `''` for its first page (`/site`, and `/` when
+ * the site is home), `undefined` for a path outside it.
+ */
+export function siteRouteId(path: string, home: boolean): string | undefined {
+  if (path === SITE_PATH || (home && path === HOME_PATH)) return ''
+  const id = path.startsWith(`${SITE_PATH}/`) ? path.slice(SITE_PATH.length + 1) : ''
+  return id && !id.includes('/') ? id : undefined
+}
+
 /** The canvas: every foundation and item on one pan-and-zoom surface. */
 export const CANVAS_PAGE = { path: '/canvas', title: 'Canvas' }
 

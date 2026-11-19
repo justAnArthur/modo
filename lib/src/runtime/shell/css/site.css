@@ -1,0 +1,135 @@
+/* The site view (/site): a page of the pages/ tier full screen, and the
+   floating indicator over it. Structure only; the host styles the hooks. */
+
+[data-modo="site-page"] {
+  /* The page's own z-indexes stay inside it, so the indicator sits above
+     them; overlays portalled to <body> (a panel item's Select) still sit above the indicator. */
+  isolation: isolate;
+  min-height: 100dvh;
+}
+
+[data-modo="site-indicator"] {
+  position: fixed;
+  z-index: 1;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: var(--space-2, 8px);
+  max-width: calc(100vw - 2 * var(--space-4, 16px));
+  font-family: var(--modo-font-sans);
+}
+
+[data-modo="site-indicator"][data-corner^="top"] {
+  top: var(--space-4, 16px);
+  flex-direction: column;
+}
+
+[data-modo="site-indicator"][data-corner^="bottom"] {
+  bottom: var(--space-4, 16px);
+}
+
+[data-modo="site-indicator"][data-corner$="left"] {
+  left: var(--space-4, 16px);
+}
+
+[data-modo="site-indicator"][data-corner$="right"] {
+  right: var(--space-4, 16px);
+  align-items: flex-end;
+}
+
+[data-modo="site-badge"] {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--modo-border);
+  border-radius: var(--modo-radius-full);
+  background: var(--modo-background);
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  /* The badge drags to another corner; touch must not scroll the page instead. */
+  touch-action: none;
+}
+
+[data-modo="site-indicator"][data-dragging] [data-modo="site-badge"] {
+  cursor: grabbing;
+}
+
+[data-modo="site-badge"] > :is(img, svg) {
+  width: 20px;
+  height: 20px;
+}
+
+[data-modo="site-badge"]:focus-visible,
+[data-modo="site-menu-page"]:focus-visible {
+  outline: 2px solid var(--modo-ring);
+  outline-offset: 2px;
+}
+
+[data-modo="site-menu"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 12px);
+  width: 18rem;
+  max-width: 100%;
+  max-height: calc(100dvh - 36px - 3 * var(--space-4, 16px));
+  overflow: auto;
+  padding: var(--space-3, 12px);
+  border: 1px solid var(--modo-border);
+  border-radius: var(--modo-radius-lg);
+  background: var(--modo-background);
+}
+
+[data-modo="site-menu-head"] {
+  display: flex;
+  flex-direction: column;
+}
+
+[data-modo="site-menu-title"] {
+  font-weight: var(--modo-font-weight-semibold);
+}
+
+[data-modo="site-menu-current"],
+[data-modo="site-menu-label"] {
+  color: var(--modo-muted);
+}
+
+[data-modo="site-menu-label"] {
+  margin: 0 0 var(--space-1, 4px);
+  font-weight: var(--modo-font-weight-medium);
+}
+
+[data-modo="site-menu-pages"] {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-modo="site-menu-page"] {
+  display: block;
+  padding: var(--space-1, 4px) var(--space-2, 8px);
+  border-radius: var(--modo-radius-sm);
+  color: inherit;
+  text-decoration: none;
+}
+
+[data-modo="site-menu-page"]:hover,
+[data-modo="site-menu-page"][aria-current="page"] {
+  background: var(--modo-tint-8);
+}
+
+[data-modo="site-menu-page"][aria-current="page"] {
+  font-weight: var(--modo-font-weight-medium);
+}
+
+[data-modo="site-menu-foot"] {
+  display: flex;
+  gap: var(--space-3, 12px);
+  padding-top: var(--space-2, 8px);
+  border-top: 1px solid var(--modo-border);
+}

@@ -60,6 +60,21 @@ export interface PanelConfig {
   items: PanelItem[]
 }
 
+/**
+ * The site view (`/site`): the `pages/` tier full screen, as a real website, without the docs
+ * chrome; a floating badge switches pages and holds the panel items. It exists whenever there are
+ * pages; this only orders it and decides the landing.
+ */
+export interface PagesConfig {
+  /**
+   * Page ids (an item's folder name under `pages/`) the switcher lists, in this order; the first is
+   * the one `/site` opens. Unset or empty: every page, in nav order.
+   */
+  primary?: string[]
+  /** `/` opens the site view's first page; the overview moves to `/docs`. @default false */
+  home?: boolean
+}
+
 /** A design system's modo.config.ts. */
 export interface SiteConfig {
   /** The design system's name: the header brand, the home page title and every page's `<title>`. */
@@ -86,6 +101,8 @@ export interface SiteConfig {
   shell?: ShellConfig
   /** The side panel: each entry is a labelled component, such as a theme switcher. */
   panel?: PanelConfig
+  /** The site view of the `pages/` tier: which pages its switcher lists, and whether it is the landing. */
+  pages?: PagesConfig
   /** A stylesheet loaded right after the chrome's structural CSS and before tokens: global styles and chrome restyling. */
   css?: string
   /** A module default-exporting `(config: UserConfig) => UserConfig | Promise<UserConfig>`, applied to modo's Vite config (e.g. to add @tailwindcss/vite). */
@@ -134,6 +151,10 @@ export const siteConfigSchema = z
     shell: shellSchema.optional(),
     panel: z
       .object({ items: z.array(z.object({ label: z.string(), component: z.string() }).strict()) })
+      .strict()
+      .optional(),
+    pages: z
+      .object({ primary: z.array(z.string()).optional(), home: z.boolean().optional() })
       .strict()
       .optional(),
     css: z.string().optional(),

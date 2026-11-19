@@ -30,6 +30,7 @@ The schema is strict: an unknown key is an error. Paths are relative to the proj
 | [`repo`](#repo) | `{ url, branch?, dir? }` | none |
 | [`shell`](#shell) | `{ Button?, Link?, Code?, Icon?, Select?, Sidebar? }` | matched by name |
 | [`panel`](#panel) | `{ items: { label, component }[] }` | none |
+| [`pages`](#pages) | `{ primary?, home? }` | every page, `/` stays the overview |
 | [`css`](#css) | `string` (stylesheet path) | none |
 | [`vite`](#vite) | `string` (module path) | none |
 | [`examples`](#examples) | `string` (module path) | none |
@@ -189,6 +190,30 @@ export default function DemoSwitcher({ shell }: PanelItemProps) {
   return <shell.Select value={current} onValueChange={go} options={options} />
 }
 ```
+
+## pages
+
+The site view: each item of the `pages/` tier full screen at `/site/<id>`, as the website it is. No sidebar, header or panel; your `css`, tokens and theme still apply, since it is the same app. It renders the page's first example (as its preview on the canvas does), else the bare component, so an example that wraps the page in its providers (`<Site page theme>…</Site>`) is how it renders here too.
+
+A small round badge sits in the bottom-left corner, over the page; drag it to any corner (remembered per browser). It opens a menu with the site's name, the current page, the pages to switch between, every [`panel`](#panel) item (a brand or theme switcher works the same as in the panel) and links back to the docs and the canvas. Escape or a press outside closes it; a press inside an overlay a panel item opens (a Select's list, portalled to `<body>`) does not.
+
+The view exists whenever there is a page; this field only orders it and picks the landing:
+
+- `primary`: page ids (an item's folder name under `pages/`) the menu lists, in this order. `/site` opens the first. Unset or empty, it lists every page in nav order (each level's own pages first, then its group folders). An id that names no page is skipped, with a warning from `modo build`; when none does, every page is listed.
+- `home`: `true` makes `/` open the first page; the overview moves to `/docs` (also its address without it), and the header brand and the nav's Overview link follow. Default `false`: `/` stays the overview, and the nav's Explore section links the view as Site.
+
+```ts
+pages: { primary: ['avis-sk-2026-home', 'avis-sk-2026-fleet', 'avis-sk-2026-contact'], home: true },
+```
+
+| Path | Shows |
+| --- | --- |
+| `/site` | the first page (`primary[0]`, else the first in nav order) |
+| `/site/<id>` | that page, listed in `primary` or not |
+| `/` | the overview; the first page with `home: true` |
+| `/docs` | the overview |
+
+`modo build` writes `site/index.html` and `site/<id>/index.html` for every page, and `docs/index.html`, so a deep link needs no SPA rewrite. Restyle the badge and menu through their [hooks](./theming.md) (`site-indicator`, `site-badge`, `site-menu`, …); modo-ui's `docs/chrome.css` draws them as one of its popups.
 
 ## css
 

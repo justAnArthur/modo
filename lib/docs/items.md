@@ -13,7 +13,7 @@ Items live in four tier folders at the project root. The docs list them in this 
 | `blocks/` | Page-level patterns assembled from components. |
 | `pages/` | Full screens assembled from blocks. |
 
-Each item gets a page at `/docs/<tier>/<id>`, where `<id>` is its folder name. Blocks and pages are screen-sized: overviews give them whole rows and shrink them to fit, and the canvas lays them out in fewer columns.
+Each item gets a page at `/docs/<tier>/<id>`, where `<id>` is its folder name; a page also shows full screen, without the chrome, at `/site/<id>` (see [`pages`](./config.md#pages)). Blocks and pages are screen-sized: overviews give them whole rows and shrink them to fit, and the canvas lays them out in fewer columns.
 
 Create one with the CLI:
 

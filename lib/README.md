@@ -9,6 +9,7 @@ modo turns your design system into its own docs site. You bring the tokens, comp
 - **TSDoc is the docs.** An item's comment is its page; its props table comes from the source; its examples are live.
 - **Shell inheritance.** When your Button, Link, Code, Icon, Select or Sidebar fit the chrome's slots, the chrome renders with them.
 - **Canvas.** `/canvas` shows every token group and item live on one pan-and-zoom surface.
+- **Site view.** `/site` shows your `pages/` full screen, as the website they are, with a floating badge to switch pages and reach the panel items ([`pages`](https://github.com/justAnArthur/modo/blob/main/lib/docs/config.md#pages)).
 - **Static output.** `modo build` writes a page per route, ready for GitHub Pages, Netlify or Vercel.
 
 ## Install

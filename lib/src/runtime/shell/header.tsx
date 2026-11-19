@@ -1,9 +1,9 @@
 import { config, logoUrl } from 'virtual:modo-config'
 import { Logo, shell } from 'virtual:modo-shell'
 import { useSyncExternalStore } from 'react'
-import { HOME_PATH } from '../../lib/paths'
 import { cap } from '../../lib/text'
 import { withBase } from '../location'
+import { OVERVIEW_PATH } from '../site/routes'
 
 /** Labels for well-known `socials` keys; any other key is capitalized. */
 const NETWORKS: Record<string, string> = {
@@ -28,7 +28,7 @@ export function Header({ menuOpen, onMenu }: { menuOpen: boolean; onMenu: () => 
   const { Button, Icon, Link } = shell
   return (
     <header data-modo="header">
-      <Link href={withBase(HOME_PATH)}>
+      <Link href={withBase(OVERVIEW_PATH)}>
         <span data-modo="brand">
           {Logo ? <Logo /> : logoUrl ? <img data-modo="brand-logo" src={logoUrl} alt="" /> : null}
           <span data-modo="brand-name">{config.name}</span>

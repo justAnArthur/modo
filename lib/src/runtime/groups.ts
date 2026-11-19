@@ -35,3 +35,21 @@ export function groupTree<T extends { group?: string }>(
     })),
   }
 }
+
+/** A group tree's items in reading order: each level's own items, then its groups'. */
+export function flatten<T>(tree: { items: T[]; groups: Group<T>[] }): T[] {
+  return [...tree.items, ...tree.groups.flatMap(flatten)]
+}
+
+/**
+ * The site view's pages: the `primary` ids that name a page, in that order, else every page in nav
+ * order (also when none of the ids does).
+ */
+export function sitePages<T extends { id: string; tier: string; group?: string }>(
+  list: readonly T[],
+  primary: readonly string[] = [],
+): T[] {
+  const pages = flatten(groupTree(list.filter(it => it.tier === 'pages')))
+  const listed = primary.flatMap(id => pages.find(page => page.id === id) ?? [])
+  return listed.length > 0 ? listed : pages
+}
