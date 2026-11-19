@@ -42,7 +42,10 @@ interface EditableTextProps {
  * that shows on hover. The text is selected; Enter or leaving the field
  * commits, Escape puts the old text back. The text and the input share one
  * box on the field ladder, invisible at rest and lit on hover, so editing
- * never moves anything around it. Works controlled (`value` +
+ * never moves anything around it. At rest it reads as plain text; while
+ * editing the box takes the focused field's fill, with no ring (a text field
+ * signals focus by its fill), and the focus ring shows only when the text or
+ * the pencil is reached by keyboard. Works controlled (`value` +
  * `onValueChange`) or uncontrolled (`defaultValue`).
  *
  * @example {@include ./examples.mdx}
@@ -103,7 +106,9 @@ function EditableText({
       {...field.props}
       className={cn(
         field.props.className,
-        'inline-flex max-w-full min-w-0 items-center has-[:focus-visible]:!ring-focus-ring',
+        // The ring marks keyboard focus on the text or the pencil; the input, a text
+        // field, signals focus by its fill alone.
+        'inline-flex max-w-full min-w-0 items-center has-[button:focus-visible]:!ring-focus-ring',
         size.control,
         size.gap,
         className,
