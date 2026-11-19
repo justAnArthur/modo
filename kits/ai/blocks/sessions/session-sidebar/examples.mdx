@@ -115,7 +115,7 @@ Each row action, group action and the Settings row shows only with its callback.
 
 # Long groups
 
-`groupLimit` caps every group: past it, a "Show N more" row unfolds the rest, and "Show fewer" folds them back. The selected session shows even when it falls past the cap.
+`groupLimit` caps every group: past it, a "Show N more" row unfolds the rest, and "Show fewer" folds them back. The selected session and the ones that need you (running, waiting, unread) stay in view past the cap, in their place; `keepVisible` picks them instead (`() => false` keeps only the selected one).
 
 <div className="flex h-[640px] w-full overflow-hidden rounded-xl border border-border bg-background">
   <Sidebar.Provider className="h-full min-h-0" persist={false} mobileBreakpoint={0}>
