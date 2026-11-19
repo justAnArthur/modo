@@ -1,6 +1,6 @@
 /*!
  * Docs-only mock data: the two packs the just-standards engine ships
- * (each pack's `pack.yml` and its items' `item.yml`), as loaded.
+ * (each pack's `pack.yml`, its items' `item.yml` and `recipe.md`), as loaded.
  */
 
 import type { LoadedPack } from '../lib/types'
@@ -84,6 +84,20 @@ const WEBSITE: LoadedPack = {
       key: 'website/meta-basics',
       since: 1,
       label: 'meta basics',
+      recipe: `Set these on the home page, and per page where the framework makes it cheap:
+
+- \`<html lang="…">\` with the page language.
+- \`<title>\`: 10–70 characters, what the page is, then the brand: \`Car rental software for independent fleets · Camasys\`.
+- \`<meta name="description">\`: 50–170 characters, one plain sentence about what a visitor gets.
+- \`<link rel="canonical">\`: the absolute URL of the page, on the production domain, without tracking parameters.
+
+By stack:
+
+- **Next.js (App Router), Payload + Next:** \`export const metadata\` (or \`generateMetadata\`) in \`app/layout.tsx\` and pages, with \`metadataBase\` set to the production origin and \`alternates: { canonical: '/' }\`. \`lang\` goes on \`<html>\` in the root layout. With Payload, read title and description from the SEO fields or global, falling back to the defaults.
+- **Astro:** a shared \`<Seo>\` component or the layout's \`<head>\`; \`Astro.site\` must be set in \`astro.config\` so the canonical is absolute.
+- **Static HTML:** write the tags into \`<head>\` of \`index.html\`.
+
+Write copy from what the site actually says; don't invent claims.`,
     },
     {
       id: 'og-image',
@@ -129,6 +143,13 @@ const WEBSITE: LoadedPack = {
       key: 'website/og-image',
       since: 1,
       label: 'og:image',
+      recipe: `Add \`og:image\` (1200×630 PNG or JPG, under 5 MB, absolute URL), \`og:title\`, \`og:description\` and \`twitter:card\` = \`summary_large_image\`.
+
+- **Image:** reuse the brand's existing social image if the repo has one. Otherwise generate it from the code: Next.js \`app/opengraph-image.tsx\` with \`ImageResponse\` (logo, title, one line, brand colours from the site's CSS), or a static file in \`public/\`. Never use a placeholder or stock picture; if no brand assets exist, say so in the PR.
+- **Next.js / Payload + Next:** \`metadata.openGraph\` and \`metadata.twitter\` in the root layout; \`metadataBase\` makes the image URL absolute.
+- **Astro / static:** the four \`<meta>\` tags in \`<head>\`, with the image under \`public/\` and the URL built from the site origin.
+
+Check the result with \`curl -s <url> | grep og:\` and that the image URL answers 200 with an \`image/*\` type.`,
     },
     {
       id: 'og-video',
@@ -174,6 +195,19 @@ const WEBSITE: LoadedPack = {
       key: 'website/og-video',
       since: 1,
       label: 'og:video',
+      recipe: `Add \`og:video\` with its type and size next to the existing \`og:image\` (keep the image: platforms that don't play video fall back to it).
+
+\`\`\`html
+<meta property="og:video" content="https://example.com/og/loop.mp4">
+<meta property="og:video:secure_url" content="https://example.com/og/loop.mp4">
+<meta property="og:video:type" content="video/mp4">
+<meta property="og:video:width" content="1280">
+<meta property="og:video:height" content="720">
+\`\`\`
+
+- **The video:** an MP4 (H.264, no audio needed), 1280×720, a 3–8 s loop, under 8 MB, served from the site's own origin (\`public/og/loop.mp4\`). Use a video the repo already has (a hero or demo clip). If there is none, don't fake one: wire the tags behind a single constant, leave the file out, and say in the PR that a person must add \`public/og/loop.mp4\`.
+- **Next.js / Payload + Next:** \`metadata.openGraph.videos = [{ url, secureUrl, type: 'video/mp4', width: 1280, height: 720 }]\`. With Payload, prefer an upload field on the SEO global (\`ogVideo\`, relation to media) read in \`generateMetadata\`, with the static file as the fallback.
+- **Astro / static:** the tags in \`<head>\`, URL built from the site origin.`,
     },
     {
       id: 'icons',
@@ -210,6 +244,12 @@ const WEBSITE: LoadedPack = {
       key: 'website/icons',
       since: 1,
       label: 'icons',
+      recipe: `Ship a favicon (SVG preferred, plus a 32×32 PNG or ICO fallback) and a 180×180 \`apple-touch-icon\` PNG, made from the logo the repo already has.
+
+- **Next.js:** \`app/icon.svg\` (or \`icon.png\`) and \`app/apple-icon.png\`; Next writes the \`<link>\` tags itself.
+- **Astro / static:** files in \`public/\` and \`<link rel="icon" href="/favicon.svg" type="image/svg+xml">\`, \`<link rel="apple-touch-icon" href="/apple-touch-icon.png">\` in \`<head>\`.
+
+If there is no logo in the repo, stop and say so in the PR.`,
     },
     {
       id: 'robots-sitemap',
@@ -243,6 +283,13 @@ const WEBSITE: LoadedPack = {
       key: 'website/robots-sitemap',
       since: 1,
       label: 'robots + sitemap',
+      recipe: `Serve \`/robots.txt\` that allows crawling of public pages (never \`Disallow: /\` for \`User-agent: *\` on a live site) and names the sitemap by absolute URL, and serve that sitemap listing every public page.
+
+- **Next.js:** \`app/robots.ts\` returning \`{ rules: { userAgent: '*', allow: '/' }, sitemap: '<origin>/sitemap.xml' }\` and \`app/sitemap.ts\` listing the routes (and CMS documents for Payload, with \`lastModified\`).
+- **Astro:** \`@astrojs/sitemap\` (needs \`site\` in the config) and \`public/robots.txt\` with \`Sitemap: <origin>/sitemap-index.xml\`.
+- **Static:** write both files by hand.
+
+Don't block AI crawlers (GPTBot, ClaudeBot, PerplexityBot) unless the repo already says to.`,
     },
     {
       id: 'structured-data',
@@ -270,6 +317,16 @@ const WEBSITE: LoadedPack = {
       key: 'website/structured-data',
       since: 1,
       label: 'structured data',
+      recipe: `Add one \`<script type="application/ld+json">\` to the home page with a schema.org \`Organization\` (or \`Person\` for a personal site) and a \`WebSite\`, in an \`@graph\`:
+
+- Organization: \`name\`, \`url\`, \`logo\` (absolute), \`sameAs\` (the real social profiles linked from the site).
+- WebSite: \`name\`, \`url\`.
+- A product site may add \`SoftwareApplication\` or \`Product\`, with only facts the site states.
+
+- **Next.js:** render it in the root layout or home page: \`<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />\`.
+- **Astro / static:** the same tag in \`<head>\`.
+
+Validate the JSON parses. Never invent ratings, prices or reviews.`,
     },
     {
       id: 'llms-txt',
@@ -300,6 +357,12 @@ const WEBSITE: LoadedPack = {
       key: 'website/llms-txt',
       since: 1,
       label: 'llms.txt',
+      recipe: `Serve \`/llms.txt\` in the llmstxt.org format: an \`# H1\` with the site name, a \`> \` one-paragraph summary, then \`## \` sections of Markdown links to the most useful pages, each with a short note.
+
+Build it from the real pages (the sitemap or routes), not from memory. Keep it under a few hundred lines.
+
+- **Next.js:** a \`public/llms.txt\`, or \`app/llms.txt/route.ts\` that builds it from the CMS for Payload sites.
+- **Astro / static:** \`public/llms.txt\`.`,
     },
     {
       id: 'security-headers',
@@ -330,6 +393,14 @@ const WEBSITE: LoadedPack = {
       key: 'website/security-headers',
       since: 1,
       label: 'security headers',
+      recipe: `Send \`Strict-Transport-Security: max-age=63072000; includeSubDomains\` and \`X-Content-Type-Options: nosniff\` on every response.
+
+- **Next.js on Vercel or self-hosted:** \`headers()\` in \`next.config.*\` for \`source: '/(.*)'\`.
+- **Vercel (any framework):** \`headers\` in \`vercel.json\` / \`vercel.ts\`.
+- **GitHub Pages:** headers can't be set; HSTS comes from github.io itself. Say so in the PR and suggest a waiver for \`x-content-type-options\` instead of changing hosting.
+- **Behind a proxy (Dokploy, Traefik, nginx):** set them in the proxy config if the app can't.
+
+Don't add a Content-Security-Policy in this change: it needs its own testing.`,
     },
     {
       id: 'sitemap-health',
@@ -346,6 +417,15 @@ const WEBSITE: LoadedPack = {
       key: 'website/sitemap-health',
       since: 2,
       label: 'sitemap health',
+      recipe: `Make the sitemap list only canonical, live pages on the production host:
+
+- Generate it from the real routes and CMS documents (published only), not a hand-kept list.
+- Every URL absolute, on the production origin (no \`localhost\`, preview or staging hosts, no \`http://\` when the site is HTTPS), and exactly the canonical form (trailing slash and \`www\` as the site serves them, so no URL redirects).
+- Drop pages that 404, redirect, or are \`noindex\`.
+
+- **Next.js / Payload:** \`app/sitemap.ts\` built from the routes and the CMS, with the origin from one env variable (\`NEXT_PUBLIC_SERVER_URL\` or \`metadataBase\`) that is set to production in the production environment.
+- **Astro:** \`@astrojs/sitemap\` with \`site\` set to the production origin, and \`filter\` for drafts.
+- **WordPress:** the core sitemap or the SEO plugin's, after fixing the Site Address and removing noindex or redirected pages from it.`,
     },
     {
       id: 'hero',
@@ -364,6 +444,15 @@ const WEBSITE: LoadedPack = {
       key: 'website/hero',
       since: 2,
       label: 'hero',
+      recipe: `Rewrite the first screen of the home page so the heading, the line under it and the primary button answer: what is it, who is it for, what do I do next.
+
+- **Heading:** the product or service in plain words, plus the audience when it fits: \`Rental software for independent car-hire fleets\`. No slogans that need the rest of the page to make sense.
+- **Line under it:** one sentence with the main outcome, in the site's own terms. Only claims the site already supports elsewhere (case studies, numbers on the page); never invent figures.
+- **Primary button:** a specific next step (\`Book a demo\`, \`Get a quote\`), linked to where it actually goes.
+- Keep the design: change copy, and layout only if the button is missing.
+- Keep every language version in step (WPML, Payload locales, i18n files).
+
+In the PR body, put the old and new heading, line and button side by side so a person can judge the copy.`,
     },
   ],
 }
@@ -405,6 +494,9 @@ const REPO: LoadedPack = {
       key: 'repo/readme',
       since: 1,
       label: 'README',
+      recipe: `Follow the \`repo-standard\` skill in this pack (\`SKILL.md\`, with \`references/\` and \`scripts/\` beside it): its procedure step 2 (read the code) and step 3 (write the README for the tier), with the templates in \`references/readme.md\`.
+
+The rules in this prompt win over the skill where they differ: open a pull request instead of pushing to the default branch, and don't archive, rename or change visibility.`,
     },
     {
       id: 'banner',
@@ -429,6 +521,9 @@ const REPO: LoadedPack = {
       key: 'repo/banner',
       since: 1,
       label: 'banner',
+      recipe: `Follow the \`repo-standard\` skill in this pack (\`SKILL.md\`, with \`references/\` and \`scripts/\` beside it): its step 4 (visuals): render \`.github/banner.svg\` with \`scripts/banner.mjs\` from a spec, check both themes, and link it as the first line of the README.
+
+The rules in this prompt win over the skill where they differ: open a pull request instead of pushing to the default branch, and don't archive, rename or change visibility.`,
     },
     {
       id: 'description',
@@ -452,6 +547,9 @@ const REPO: LoadedPack = {
       key: 'repo/description',
       since: 1,
       label: 'description',
+      recipe: `Follow the \`repo-standard\` skill in this pack (\`SKILL.md\`, with \`references/\` and \`scripts/\` beside it): its step 5: \`gh repo edit --description\`, one line, at most 100 characters, says what it is, no trailing period. This is a repo setting, not a file: set it directly and mention it in the PR body.
+
+The rules in this prompt win over the skill where they differ: open a pull request instead of pushing to the default branch, and don't archive, rename or change visibility.`,
     },
     {
       id: 'topics',
@@ -474,6 +572,9 @@ const REPO: LoadedPack = {
       key: 'repo/topics',
       since: 1,
       label: 'topics',
+      recipe: `Follow the \`repo-standard\` skill in this pack (\`SKILL.md\`, with \`references/\` and \`scripts/\` beside it): its step 5 with the vocabulary in \`references/topics.md\`: \`gh repo edit --add-topic\` / \`--remove-topic\`. A repo setting: set it directly and mention it in the PR body.
+
+The rules in this prompt win over the skill where they differ: open a pull request instead of pushing to the default branch, and don't archive, rename or change visibility.`,
     },
     {
       id: 'homepage',
@@ -498,6 +599,9 @@ const REPO: LoadedPack = {
       key: 'repo/homepage',
       since: 1,
       label: 'homepage',
+      recipe: `Follow the \`repo-standard\` skill in this pack (\`SKILL.md\`, with \`references/\` and \`scripts/\` beside it): its step 5: the live demo or docs URL, else \`https://github.com/<owner>/<repo>#readme\`; check it answers with \`curl -sI\`. A repo setting: set it directly and mention it in the PR body.
+
+The rules in this prompt win over the skill where they differ: open a pull request instead of pushing to the default branch, and don't archive, rename or change visibility.`,
     },
     {
       id: 'license',
@@ -518,6 +622,9 @@ const REPO: LoadedPack = {
       key: 'repo/license',
       since: 1,
       label: 'LICENSE',
+      recipe: `Follow the \`repo-standard\` skill in this pack (\`SKILL.md\`, with \`references/\` and \`scripts/\` beside it): its step 6 (files → LICENSE) and its rules on other people's work. Where the skill says to add no license (forks, private repos, co-authored code), add none and say in the PR body that this cell should be waived.
+
+The rules in this prompt win over the skill where they differ: open a pull request instead of pushing to the default branch, and don't archive, rename or change visibility.`,
     },
     {
       id: 'gitignore',
@@ -538,6 +645,9 @@ const REPO: LoadedPack = {
       key: 'repo/gitignore',
       since: 1,
       label: '.gitignore',
+      recipe: `Follow the \`repo-standard\` skill in this pack (\`SKILL.md\`, with \`references/\` and \`scripts/\` beside it): its step 6 (files → .gitignore): the github/gitignore template for the main language plus \`.idea/\`, \`.DS_Store\`, \`.env\`, \`node_modules/\`; untrack IDE files with \`git rm -r --cached\`.
+
+The rules in this prompt win over the skill where they differ: open a pull request instead of pushing to the default branch, and don't archive, rename or change visibility.`,
     },
     {
       id: 'no-env',
@@ -558,6 +668,9 @@ const REPO: LoadedPack = {
       key: 'repo/no-env',
       since: 1,
       label: 'no .env',
+      recipe: `Follow the \`repo-standard\` skill in this pack (\`SKILL.md\`, with \`references/\` and \`scripts/\` beside it): its step 6 (secrets): untrack \`.env\` with \`git rm --cached .env\`, add it to \`.gitignore\`, never print its values, and say in the PR body which secrets must be rotated and that they stay in git history.
+
+The rules in this prompt win over the skill where they differ: open a pull request instead of pushing to the default branch, and don't archive, rename or change visibility.`,
     },
   ],
 }

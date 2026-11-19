@@ -1,10 +1,11 @@
 /*!
- * Local addition: what each cell state is called and the badge it wears.
- * Pure tables, so a Server Component can read them.
+ * Local addition: what each cell state is called and the badge it wears,
+ * and what each asset kind is called. Pure tables, so a Server Component can
+ * read them.
  */
 
 import type { BadgeColor } from '@justanarthur/modo-ui/components/data-display/badge/variants'
-import type { ShownState } from './types'
+import type { AssetKind, ShownState } from './types'
 
 /** Every state a cell can show, in the legend's order. */
 export const SHOWN_STATES: ShownState[] = [
@@ -44,4 +45,14 @@ export const STATE_BADGE: Record<ShownState, BadgeColor> = {
   stale: 'gray',
   waived: 'gray',
   unchecked: 'gray',
+}
+
+export const KIND_LABEL: Record<AssetKind, string> = {
+  website: 'website',
+  webapp: 'web app',
+  mobile: 'mobile app',
+  repo: 'repo',
+  social: 'social account',
+  newsletter: 'newsletter',
+  api: 'API',
 }

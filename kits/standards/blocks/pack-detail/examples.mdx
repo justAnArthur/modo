@@ -1,0 +1,26 @@
+import PackDetail from './index'
+import { BUSINESSES, PACKS, STATUS } from '../../mock/status'
+
+# Website
+
+Ten items in the pack's order, two of them added in v2; the changelog; five businesses on v2 and modo pinned to v1.
+
+<div className="flex h-[760px] w-[420px] max-w-full overflow-hidden rounded-xl border border-border">
+  <PackDetail
+    pack={PACKS[0]}
+    businesses={BUSINESSES}
+    status={STATUS}
+    onOpenItem={() => {}}
+    onOpenBusiness={() => {}}
+    onClose={() => {}}
+    className="flex-1"
+  />
+</div>
+
+# Repo
+
+Adopted by the two businesses with a repo.
+
+<div className="w-[420px] max-w-full rounded-xl border border-border">
+  <PackDetail pack={PACKS[1]} businesses={BUSINESSES} status={STATUS} onOpenItem={() => {}} />
+</div>

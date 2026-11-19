@@ -60,6 +60,8 @@ export interface LoadedItem extends Item {
   since: number
   /** A short name for a narrow column head, such as `og:video`. Defaults to the title. */
   label?: string
+  /** How to make it pass: the item's `recipe.md`, Markdown, the part of a fix prompt the item brings. */
+  recipe?: string
 }
 
 /** A versioned set of items. */

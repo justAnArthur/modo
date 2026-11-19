@@ -54,8 +54,12 @@ export function BusinessScreen({ business, packs, cells, workers, onFix }) {
 | `PackCoverageCell` | One business × one pack on the overview: coverage and fail count, or a dashed "not adopted". |
 | `WorkerPicker` | Fix with ▾ worker: the fix action and a menu of worker presets with their model, effort and permission mode. |
 | `BusinessesOverview` | Businesses × packs, with a summary strip, a total per business and Add business; sticky head and first column. |
-| `BusinessGrid` | One business's assets (grouped by kind) × its adopted packs' items (grouped by pack), a legend, coverage per row, and a multi-cell fix on one asset. |
+| `BusinessGrid` | One business's assets (grouped by kind) × its adopted packs' items (grouped by pack), a legend, coverage per row, a multi-cell fix on one asset, and item and pack heads that open them (`onOpenItem`, `onOpenPack`). |
 | `CellDetail` | One cell's drawer: state, evidence, the item's why, the check as YAML, history, Fix with, Re-check, Waive. |
+| `ItemDetail` | One item's side pane: label, version, pack, asset kinds, why, the check as YAML, the recipe as Markdown, and each asset's cell across the given businesses. |
+| `PackDetail` | One pack's side pane: description, its items with version, since and coverage, the changelog, and who adopted it at which version. |
+| `PackList` | The Packs screen: each pack's version, item count, adopters and coverage, rows that open it. |
+| `WorkerList` | The Workers screen: each worker preset's runtime, model, effort, permission mode, profile and allowed tools, read-only. |
 | `coverageOf`, `itemsOf`, `adoptedVersion`, `shownState`, … | The pure arithmetic of the grids (`@justanarthur/modo-ui-standards/lib/cells`). |
 | `Business`, `CellStatus`, `LoadedPack`, `Worker`, … | The just-standards model as the UI reads it (`@justanarthur/modo-ui-standards/lib/types`). |
 

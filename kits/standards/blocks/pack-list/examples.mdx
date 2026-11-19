@@ -1,0 +1,35 @@
+import PackList from './index'
+import { BUSINESSES, FAKE_BUSINESSES, FAKE_STATUS, PACKS, STATUS } from '../../mock/status'
+
+# The workspace's packs
+
+<div className="w-full">
+  <PackList packs={PACKS} businesses={BUSINESSES} status={STATUS} onOpenPack={() => {}} />
+</div>
+
+# One open
+
+`activePack` keeps the open pack's row lit.
+
+<div className="w-full">
+  <PackList packs={PACKS} businesses={BUSINESSES} status={STATUS} activePack="website" onOpenPack={() => {}} />
+</div>
+
+# Thirty-two businesses
+
+With the 25 fake ones: some stay on Website v1.
+
+<div className="w-full">
+  <PackList
+    packs={PACKS}
+    businesses={[...BUSINESSES, ...FAKE_BUSINESSES]}
+    status={{ ...STATUS, ...FAKE_STATUS }}
+    onOpenPack={() => {}}
+  />
+</div>
+
+# No packs
+
+<div className="w-full">
+  <PackList packs={[]} businesses={BUSINESSES} status={STATUS} />
+</div>
