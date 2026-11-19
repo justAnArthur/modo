@@ -6,7 +6,7 @@
 
 'use client'
 
-import type { ReactNode } from 'react'
+import { type ReactNode, useMemo } from 'react'
 import { useIcon } from '../../../lib/icon-context'
 import { SURFACE_BG } from '../../../lib/surface-classes'
 import { useLift } from '../../../lib/surface-context'
@@ -100,7 +100,8 @@ interface DiffProps {
  * added line is tinted with the success hue and each removed line with the
  * error hue, as tinted text on a wash rather than a solid fill; hunk headers
  * sit on the hover overlay. With a `path` the header counts the change
- * (`+12 −3`). Long lines scroll sideways under a fading edge, or with
+ * (`+12 −3`). Long lines scroll sideways under a fading edge (on the
+ * platform's scrollbar, as Code does), or with
  * `wrap` break under their own text while the gutter holds still, and the
  * frame lifts one surface step above whatever holds it, as Code does.
  *
@@ -109,7 +110,7 @@ interface DiffProps {
 export default function Diff({ patch, path, lineNumbers = true, wrap = false, actions, className }: DiffProps) {
   const level = useLift(1)
   const FileIcon = useIcon('file-diff')
-  const lines = parsePatch(patch)
+  const lines = useMemo(() => parsePatch(patch), [patch])
   const added = lines.filter(l => l.kind === 'add').length
   const removed = lines.filter(l => l.kind === 'remove').length
 
@@ -151,7 +152,7 @@ export default function Diff({ patch, path, lineNumbers = true, wrap = false, ac
       {wrap ? (
         body
       ) : (
-        <ScrollArea orientation="horizontal" viewportClassName="scroll-fade-x">
+        <ScrollArea native orientation="horizontal" viewportClassName="scroll-fade-x">
           {body}
         </ScrollArea>
       )}

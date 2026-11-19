@@ -31,6 +31,22 @@ content keep its natural width instead of squeezing in.
   </div>
 </ScrollArea>
 
+# Native
+
+`native` scrolls on the platform's own scrollbar (an overlay one on macOS)
+with no observers behind it, for scrollers that come by the hundred: every
+Code block is one. The fade stays the same.
+
+<ScrollArea native orientation="horizontal" viewportClassName="scroll-fade-x" className="w-full">
+  <div className="flex gap-2 p-3 w-max">
+    {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((month) => (
+      <div key={month} className="flex items-center justify-center h-20 w-28 shrink-0 border border-border rounded-lg text-body text-foreground">
+        {month}
+      </div>
+    ))}
+  </div>
+</ScrollArea>
+
 # Double overflow
 
 A grid taller and wider than its box. `orientation="both"` adds both
