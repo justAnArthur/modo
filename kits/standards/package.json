@@ -1,7 +1,7 @@
 {
   "name": "@justanarthur/modo-ui-standards",
   "type": "module",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "The UI of just-standards on modo-ui: every business measured against packs of standards, the grid of assets × items, and a failing cell handed to an AI worker. Documented with modo.",
   "license": "MIT",
   "keywords": [
