@@ -113,15 +113,39 @@ export interface Business {
   waivers: Waiver[]
 }
 
+/**
+ * What a worker may do without asking, Claude Code's permission modes: `manual` asks for everything,
+ * `acceptEdits` lets file edits through, `auto` lets Claude Code decide what is safe to run, `dontAsk`
+ * denies what isn't allowed instead of asking, `plan` edits nothing, `bypassPermissions` runs anything
+ * inside the worktree.
+ */
+export type PermissionMode = 'manual' | 'acceptEdits' | 'auto' | 'dontAsk' | 'plan' | 'bypassPermissions'
+
+/** How hard a worker's model thinks. */
+export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max'
+
 /** Someone a cell can be given to: a Claude Code preset in the MVP. */
 export interface Worker {
   id: string
   runtime: 'claude-code'
+  /** The Claude Code config dir it starts from: `~/.claude`. */
   profile: string
   model: string
-  effort?: 'low' | 'medium' | 'high' | 'xhigh' | 'max'
-  permission_mode: 'default' | 'acceptEdits' | 'plan'
+  effort?: Effort
+  permission_mode: PermissionMode
+  /** Permission rules allowed without asking: `Bash(git *)`. */
   allow: string[]
+}
+
+/** A Claude Code profile on this machine: a config dir and the account signed in to it. */
+export interface ClaudeProfile {
+  /** `~/.claude`, `~/.claude-work`. */
+  configDir: string
+  label: string
+  /** Someone is signed in to it. */
+  signedIn?: boolean
+  /** Who, when Claude Code says. */
+  account?: string
 }
 
 /** A check's verdict. `error` means it couldn't check: it is never shown as red. */
@@ -237,4 +261,45 @@ export interface CellStatus {
   run?: CellRun
   /** App-side: a check of the cell is under way. `state`, `result` and `run` stay as the last check left them, and coverage counts the cell as that state until the new result lands. */
   checking?: boolean
+}
+
+/** One check on a pull request, as `gh pr view --json statusCheckRollup` reports it. */
+export interface PullRequestCheck {
+  name: string
+  /** A check run's status (`QUEUED`, `IN_PROGRESS`, `COMPLETED`) or a status context's state (`PENDING`, `SUCCESS`, `FAILURE`, `ERROR`). */
+  state: string
+  /** A finished check run's verdict: `SUCCESS`, `FAILURE`, `NEUTRAL`, `SKIPPED`, `CANCELLED`, `TIMED_OUT`, `ACTION_REQUIRED`; empty otherwise. */
+  conclusion: string
+}
+
+/** A fix run's pull request, as `standards pr view` prints it (all of it from `gh pr view --json`). */
+export interface PullRequest {
+  number: number
+  url: string
+  title: string
+  state: 'OPEN' | 'MERGED' | 'CLOSED'
+  isDraft: boolean
+  mergeable: 'MERGEABLE' | 'CONFLICTING' | 'UNKNOWN'
+  /** GitHub's merge box state: `CLEAN`, `BLOCKED`, `BEHIND`, `DIRTY`, `UNSTABLE`, `DRAFT`, `HAS_HOOKS`, `UNKNOWN`. */
+  mergeStateStatus: string
+  /** `APPROVED`, `CHANGES_REQUESTED`, `REVIEW_REQUIRED`, or empty when the repo asks for no review. */
+  reviewDecision: string
+  checks: PullRequestCheck[]
+  additions: number
+  deletions: number
+  changedFiles: number
+  files: { path: string; additions: number; deletions: number }[]
+  /** Markdown. */
+  body: string
+}
+
+/** How `gh pr merge` merges. */
+export type MergeMethod = 'merge' | 'squash' | 'rebase'
+
+/** Who `gh` is signed in as, from `standards github status`. */
+export interface GithubAuth {
+  loggedIn: boolean
+  user?: string
+  /** The git protocol it pushes over: `https`, `ssh`. */
+  protocol?: string
 }

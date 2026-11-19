@@ -1,0 +1,70 @@
+import WorkerForm from './index'
+import { WORKERS } from '../../mock/status'
+import { PROFILES, TOOL_SUGGESTIONS } from '../../mock/setup'
+
+# A new worker
+
+Allow edits on the first profile, sonnet at the default effort. Pick a model or type any model id; type a rule into Allowed tools and press Enter.
+
+<div className="flex h-[720px] w-[440px] max-w-full overflow-hidden rounded-xl border border-border">
+  <WorkerForm profiles={PROFILES} toolSuggestions={TOOL_SUGGESTIONS} onSave={() => {}} onCancel={() => {}} onClose={() => {}} className="flex-1" />
+</div>
+
+# Editing a preset
+
+opus-fixer, with Delete, which asks first. Pick Trusted to see its warning.
+
+<div className="flex h-[720px] w-[440px] max-w-full overflow-hidden rounded-xl border border-border">
+  <WorkerForm
+    title="opus-fixer"
+    defaultValue={WORKERS[1]}
+    profiles={PROFILES}
+    toolSuggestions={TOOL_SUGGESTIONS}
+    onSave={() => {}}
+    onCancel={() => {}}
+    onDelete={() => {}}
+    onClose={() => {}}
+    className="flex-1"
+  />
+</div>
+
+# Trusted
+
+<div className="flex h-[720px] w-[440px] max-w-full overflow-hidden rounded-xl border border-border">
+  <WorkerForm
+    title="ci-fixer"
+    defaultValue={{ ...WORKERS[0], id: 'ci-fixer', profile: '~/.claude-ci', permission_mode: 'bypassPermissions', allow: [] }}
+    profiles={PROFILES}
+    onSave={() => {}}
+    onCancel={() => {}}
+    onDelete={() => {}}
+    className="flex-1"
+  />
+</div>
+
+# Validation messages
+
+What the engine's schema said about the last Save, each under its field.
+
+<div className="flex h-[760px] w-[440px] max-w-full overflow-hidden rounded-xl border border-border">
+  <WorkerForm
+    defaultValue={{ id: 'Sonnet Fixer', runtime: 'claude-code', profile: '', model: 'sonnet', permission_mode: 'acceptEdits', allow: ['Bash(git *', 'Read'] }}
+    errors={{
+      id: 'Lowercase letters, digits and dashes only.',
+      profile: 'Pick the profile the worker starts from.',
+      'allow.0': 'Bash(git * is missing its closing parenthesis.',
+    }}
+    profiles={PROFILES}
+    onSave={() => {}}
+    onCancel={() => {}}
+    className="flex-1"
+  />
+</div>
+
+# A plan-only preset
+
+opus-reviewer plans and edits nothing, a level the form doesn't offer: none of the four is picked, and the line says what it has.
+
+<div className="flex h-[720px] w-[440px] max-w-full overflow-hidden rounded-xl border border-border">
+  <WorkerForm title="opus-reviewer" defaultValue={WORKERS[2]} profiles={PROFILES} onSave={() => {}} onCancel={() => {}} onDelete={() => {}} className="flex-1" />
+</div>

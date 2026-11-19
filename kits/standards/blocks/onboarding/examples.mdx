@@ -1,0 +1,65 @@
+import Onboarding from './index'
+import { PACKS } from '../../mock/status'
+import { DEVICE_CODE, PROFILES } from '../../mock/setup'
+
+# First launch
+
+Nothing set up yet: the workspace folder is the current step, the rest wait.
+
+<div className="flex h-[720px] w-full overflow-auto rounded-xl border border-border">
+  <Onboarding
+    profiles={PROFILES}
+    github={{ status: { loggedIn: false } }}
+    businessForm={{ packs: PACKS }}
+    onPickWorkspace={() => {}}
+    onCreateWorkspace={() => {}}
+  />
+</div>
+
+# Signing in to GitHub
+
+The workspace and the profile are done; GitHub shows the device code `gh auth login` printed. Skip moves on to the first business.
+
+<div className="flex h-[720px] w-full overflow-auto rounded-xl border border-border">
+  <Onboarding
+    workspace="~/Projects/standards"
+    profiles={PROFILES}
+    profile="~/.claude"
+    github={{ status: { loggedIn: false }, signingIn: true, code: DEVICE_CODE, onOpenGithub: () => {}, onCancel: () => {} }}
+    businessForm={{ packs: PACKS }}
+    onPickWorkspace={() => {}}
+  />
+</div>
+
+# The first business
+
+Signed in to GitHub, so the first business is next: Add a business opens its form in the step.
+
+<div className="flex h-[860px] w-full overflow-auto rounded-xl border border-border">
+  <Onboarding
+    workspace="~/Projects/standards"
+    profiles={PROFILES}
+    profile="~/.claude-work"
+    github={{ status: { loggedIn: true, user: 'justAnArthur', protocol: 'https' } }}
+    businessForm={{ packs: PACKS, onSave: () => {} }}
+    onPickWorkspace={() => {}}
+  />
+</div>
+
+# Ready
+
+GitHub skipped, a business saved: Open just-standards. Set up brings GitHub back.
+
+<div className="flex h-[560px] w-full overflow-auto rounded-xl border border-border">
+  <Onboarding
+    workspace="~/Projects/standards"
+    profiles={PROFILES}
+    profile="~/.claude"
+    github={{ status: { loggedIn: false }, onSignIn: () => {} }}
+    business="Northwind"
+    businessForm={{ packs: PACKS }}
+    defaultSkipped={['github']}
+    onPickWorkspace={() => {}}
+    onFinish={() => {}}
+  />
+</div>
