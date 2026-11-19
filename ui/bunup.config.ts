@@ -1,6 +1,11 @@
 import { readFileSync, writeFileSync } from 'node:fs'
 import { type BunupPlugin, defineConfig } from 'bunup'
 
+// package.json's `sideEffects` lists the TS sources as well as the CSS: Bun
+// applies the field to the package it is bundling, and without the sources
+// listed it drops the barrel's re-exported bindings (index.js then exports
+// names it never declares). Consumers bundle dist/*.js, which stays
+// side-effect free for them.
 const shared = {
   format: 'esm',
   dts: { inferTypes: true },
