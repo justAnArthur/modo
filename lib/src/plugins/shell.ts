@@ -56,6 +56,7 @@ function resolveShell(result: BundleResult): { build: ShellBuild; warnings: stri
     shell.Sidebar.Root,
     shell.Sidebar.Item,
     shell.Sidebar.Section,
+    shell.SiteSwitcher,
   ]
   const cssFiles = [...(logo ? [logo] : []), ...slots, ...panelItems].flatMap(s =>
     s.source === 'fallback' ? [] : s.cssFiles,
@@ -74,6 +75,7 @@ function shellModule(build: ShellBuild, plainModule: string): string {
     __SidebarRoot: shell.Sidebar.Root,
     __SidebarItem: shell.Sidebar.Item,
     __SidebarSection: shell.Sidebar.Section,
+    __SiteSwitcher: shell.SiteSwitcher,
   })
   const built: Array<[string, BuiltSlot]> = [
     ...slots.filter((s): s is [string, BuiltSlot] => s[1].source !== 'fallback'),
@@ -95,6 +97,7 @@ function shellModule(build: ShellBuild, plainModule: string): string {
     `  Select: __Select,`,
     `  Icon: __Icon,`,
     `  Sidebar: { Root: __SidebarRoot, Item: __SidebarRoot.Item ?? __SidebarItem, Section: __SidebarRoot.Section ?? __SidebarSection },`,
+    `  SiteSwitcher: __SiteSwitcher,`,
     `};`,
     `export const panelItems = [${panelItems.map((it, i) => `{ label: ${JSON.stringify(it.label)}, Component: __PanelItem${i} }`).join(', ')}];`,
     `export const Logo = ${logo ? '__Logo' : 'null'};`,

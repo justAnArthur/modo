@@ -25,6 +25,12 @@ export interface ShellConfig {
    * you have no glyph for.
    */
   Icon?: string
+  /**
+   * The site view's page switcher: the trigger and the menu it opens. Matched in `components/` by `pages`, `sections`.
+   * Gets `name`, `logo`, `pages`, `current`, `sections` (the panel items), `links` and `corner`; the lib keeps it in
+   * its corner and drags it.
+   */
+  SiteSwitcher?: string
 }
 
 /** The built-in light / dark toggle: how a theme is written on `<html>`. */
@@ -122,7 +128,7 @@ export interface SiteConfig {
 const ref = z.string().optional()
 
 const shellSchema = z
-  .object({ Button: ref, Link: ref, Select: ref, Sidebar: ref, Code: ref, Icon: ref })
+  .object({ Button: ref, Link: ref, Select: ref, Sidebar: ref, Code: ref, Icon: ref, SiteSwitcher: ref })
   .strict() satisfies z.ZodType<ShellConfig>
 
 const themeSchema = z

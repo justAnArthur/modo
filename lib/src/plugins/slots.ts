@@ -21,6 +21,7 @@ type PlainName =
   | 'PlainSidebarRoot'
   | 'PlainSidebarItem'
   | 'PlainSidebarSection'
+  | 'PlainSiteSwitcher'
 
 // Components are never loaded node-side (the shared build is browser-only): a
 // slot resolves to a bundle path or a plain fallback, which the shell's virtual
@@ -41,6 +42,7 @@ export interface ShellResolution {
   Select: SlotResolution
   Icon: SlotResolution
   Sidebar: { Root: SlotResolution; Item: SlotResolution; Section: SlotResolution }
+  SiteSwitcher: SlotResolution
 }
 
 /** A pinned module's build: null when it didn't build or lacks the export it names. */
@@ -88,7 +90,8 @@ export function resolveShellSlots(
   function pick(slot: SlotName): SlotResolution {
     const found = pinned(slot) ?? matched(slot)
     if (found) return found
-    unresolved.push(slot)
+    // Only a site with pages renders the switcher, so its fallback isn't news on every boot.
+    if (slot !== 'SiteSwitcher') unresolved.push(slot)
     return plain(slot)
   }
 
@@ -106,6 +109,7 @@ export function resolveShellSlots(
     Select: pick('Select'),
     Icon: pick('Icon'),
     Sidebar: pick('Sidebar'),
+    SiteSwitcher: pick('SiteSwitcher'),
   }
   const Root = roots.Sidebar
   const shell: ShellResolution = {

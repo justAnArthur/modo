@@ -1,6 +1,6 @@
 # Shell inheritance
 
-The docs chrome renders with your components. It has six slots. For each, modo looks for one of your items that fits; a slot with no fit uses a plain HTML fallback. So a design system with a Button, Link and Sidebar gets a docs site built from them, with no config.
+The docs chrome renders with your components. It has seven slots. For each, modo looks for one of your items that fits; a slot with no fit uses a plain HTML fallback. So a design system with a Button, Link and Sidebar gets a docs site built from them, with no config.
 
 ## How a slot is filled
 
@@ -18,12 +18,13 @@ For each slot, in order:
 | Icon | `primitives/` | `Icon` | `name` | the label as text |
 | Select | `components/` | `Select` | `value`, `onValueChange`, `options` | `<select>` |
 | Sidebar | `components/` | `Sidebar` | `children` | `<nav>` |
+| SiteSwitcher | `components/` | `SiteSwitcher` | `pages`, `sections` | a badge and a menu of links |
 
 The name is the default export's function or const name, not the folder name. Props come from the item's props table (see [items.md](./items.md#props)), so `children` must be visible there: inherited from another package's typings (`ButtonHTMLAttributes`), it's left out; the slot types below count. A Select that declares `onChange` instead of `onValueChange` doesn't match.
 
 ## Typing slot components
 
-Each slot's props are exported from `@justanarthur/modo`: `ButtonSlotProps`, `LinkSlotProps`, `CodeSlotProps`, `IconSlotProps` (and `IconName`), `SelectSlotProps` (and `SelectOption`), `SidebarSlotProps`, `SidebarItemProps`, `SidebarSectionProps`. `ShellComponents` is the whole resolved chrome and `PanelItemProps` a panel item's props. Type a pinned adapter with them:
+Each slot's props are exported from `@justanarthur/modo`: `ButtonSlotProps`, `LinkSlotProps`, `CodeSlotProps`, `IconSlotProps` (and `IconName`), `SelectSlotProps` (and `SelectOption`), `SidebarSlotProps`, `SidebarItemProps`, `SidebarSectionProps`, `SiteSwitcherSlotProps` (and `SiteSwitcherPage`, `SiteSwitcherSection`, `SiteSwitcherLink`, `SiteCorner`). `ShellComponents` is the whole resolved chrome and `PanelItemProps` a panel item's props. Type a pinned adapter with them:
 
 ```tsx
 // modo.components.tsx
@@ -191,9 +192,39 @@ Sidebar.Section = SidebarSection
 
 When the root is pinned or matched, `Sidebar.Item` and `Sidebar.Section` come from its statics; a missing static uses the Plain part. Only when the root itself falls back does modo look for separate `Item` (`href`, `children`) and `Section` (`title`, `children`) items in `components/`.
 
+### SiteSwitcher
+
+The [site view](./config.md#pages)'s page switcher: a trigger and the menu it opens, over the page at `/site/<id>`. Only a site with `pages/` renders it.
+
+```tsx
+<SiteSwitcher
+  name="Acme"
+  logo={<Logo />}
+  pages={[{ id: 'home', title: 'Home', href: '/site/home', current: true }, …]}
+  current="Home"
+  sections={[{ label: 'Theme', content: <ThemeSwitcher shell={shell} /> }]}
+  links={[{ label: 'Docs', href: '/' }, { label: 'Canvas', href: '/canvas' }]}
+  corner="bottom-left"
+/>
+```
+
+| Prop | |
+| --- | --- |
+| `name` | the site's name |
+| `logo` | the [`logo`](./config.md#logo), rendered (component or `<img>`); undefined without one |
+| `pages` | `{ id, title, href, current }[]`, in menu order (`pages.primary`, else nav order) |
+| `current` | the title of the page on screen, listed or not; undefined when the id names no page |
+| `sections` | the [`panel`](./config.md#panel) items, rendered: `{ label, content }[]` |
+| `links` | the way out of the site view: `{ label, href }[]` (Docs, Canvas) |
+| `corner` | `bottom-left` \| `bottom-right` \| `top-left` \| `top-right`: where the trigger sits, so open the menu away from the edges |
+
+modo keeps the switcher in a fixed box (`site-indicator`) in its corner and drags that box to another corner (remembered per browser); a press that ends a drag never reaches the trigger. So the slot only opens and closes its menu: Escape, a press outside, and picking a page should close it; a press inside an overlay a section opens (a Select's list) should not. Every href includes the base, and the chrome's router turns a click on one into client navigation.
+
+modo-ui ships one: `@justanarthur/modo-ui/docs#SiteSwitcher`, its Popover with the pages as a Sidebar menu.
+
 ## Plain fallbacks
 
-The Plain components are semantic HTML with `data-modo` hooks and no visuals: `PlainButton`, `PlainLink`, `PlainCode`, `PlainSelect`, `PlainIcon`, `PlainSidebarRoot`, `PlainSidebarItem`, `PlainSidebarSection`. Style them through the hooks (see [theming.md](./theming.md)), or replace them by matching or pinning.
+The Plain components are semantic HTML with `data-modo` hooks and no visuals: `PlainButton`, `PlainLink`, `PlainCode`, `PlainSelect`, `PlainIcon`, `PlainSidebarRoot`, `PlainSidebarItem`, `PlainSidebarSection`, `PlainSiteSwitcher`. Style them through the hooks (see [theming.md](./theming.md)), or replace them by matching or pinning.
 
 A fallback is a supported outcome. When any slot falls back, `modo dev` and `modo build` print one line naming them:
 
@@ -201,4 +232,4 @@ A fallback is a supported outcome. When any slot falls back, `modo dev` and `mod
 [modo:shell] warning: Plain fallbacks for Code, Icon, Select: no item matches by name and required props, and modo.config.ts `shell` pins none
 ```
 
-A project with no items and no `shell` prints nothing.
+A project with no items and no `shell` prints nothing. SiteSwitcher is never named: only a site with pages renders it.

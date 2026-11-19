@@ -11,6 +11,11 @@ export type {
   SidebarItemProps,
   SidebarSectionProps,
   SidebarSlotProps,
+  SiteCorner,
+  SiteSwitcherLink,
+  SiteSwitcherPage,
+  SiteSwitcherSection,
+  SiteSwitcherSlotProps,
 } from '../lib/contract'
 export type {
   PagesConfig,

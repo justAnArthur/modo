@@ -28,7 +28,7 @@ The schema is strict: an unknown key is an error. Paths are relative to the proj
 | [`footer`](#footer) | `string` (Markdown) | none |
 | [`theme`](#theme) | `{ attribute?, dark?, light? }` | no toggle |
 | [`repo`](#repo) | `{ url, branch?, dir? }` | none |
-| [`shell`](#shell) | `{ Button?, Link?, Code?, Icon?, Select?, Sidebar? }` | matched by name |
+| [`shell`](#shell) | `{ Button?, Link?, Code?, Icon?, Select?, Sidebar?, SiteSwitcher? }` | matched by name |
 | [`panel`](#panel) | `{ items: { label, component }[] }` | none |
 | [`pages`](#pages) | `{ primary?, home? }` | every page, `/` stays the overview |
 | [`css`](#css) | `string` (stylesheet path) | none |
@@ -149,8 +149,11 @@ shell: {
   Select: './modo.components.tsx#Select',
   Icon: './modo.components.tsx#Icon',
   Sidebar: './modo.components.tsx#DocsNav',
+  SiteSwitcher: './modo.components.tsx#SiteSwitcher',
 },
 ```
+
+`SiteSwitcher` draws the [site view](#pages)'s page switcher; its props are in [shell.md](./shell.md#siteswitcher).
 
 ### Package specifiers
 
@@ -195,7 +198,11 @@ export default function DemoSwitcher({ shell }: PanelItemProps) {
 
 The site view: each item of the `pages/` tier full screen at `/site/<id>`, as the website it is. No sidebar, header or panel; your `css`, tokens and theme still apply, since it is the same app. It renders the page's first example (as its preview on the canvas does), else the bare component, so an example that wraps the page in its providers (`<Site page theme>…</Site>`) is how it renders here too.
 
-A small round badge sits in the bottom-left corner, over the page; drag it to any corner (remembered per browser). It opens a menu with the site's name, the current page, the pages to switch between, every [`panel`](#panel) item (a brand or theme switcher works the same as in the panel) and links back to the docs and the canvas. Escape or a press outside closes it; a press inside an overlay a panel item opens (a Select's list, portalled to `<body>`) does not.
+The page switcher ([`shell.SiteSwitcher`](./shell.md#siteswitcher)) sits in the bottom-left corner, over the page; drag it to any corner (remembered per browser). Its trigger opens a menu with the site's name, the current page, the pages to switch between, every [`panel`](#panel) item (a brand or theme switcher works the same as in the panel) and links back to the docs and the canvas. Escape or a press outside closes it; a press inside an overlay a panel item opens (a Select's list, portalled to `<body>`) does not. Without a SiteSwitcher of your own it is the lib's plain badge and menu; modo-ui's is a Popover:
+
+```ts
+shell: { SiteSwitcher: '@justanarthur/modo-ui/docs#SiteSwitcher' },
+```
 
 The view exists whenever there is a page; this field only orders it and picks the landing:
 
@@ -213,7 +220,7 @@ pages: { primary: ['avis-sk-2026-home', 'avis-sk-2026-fleet', 'avis-sk-2026-cont
 | `/` | the overview; the first page with `home: true` |
 | `/docs` | the overview |
 
-`modo build` writes `site/index.html` and `site/<id>/index.html` for every page, and `docs/index.html`, so a deep link needs no SPA rewrite. Restyle the badge and menu through their [hooks](./theming.md) (`site-indicator`, `site-badge`, `site-menu`, …); modo-ui's `docs/chrome.css` draws them as one of its popups.
+`modo build` writes `site/index.html` and `site/<id>/index.html` for every page, and `docs/index.html`, so a deep link needs no SPA rewrite. Restyle the plain badge and menu through their [hooks](./theming.md) (`site-indicator`, `site-switcher`, `site-badge`, `site-menu`, …); modo-ui's `docs/chrome.css` draws them as one of its popups.
 
 ## css
 

@@ -8,20 +8,18 @@
   min-height: 100dvh;
 }
 
+/* The lib's box: fixed in its corner, dragged to another one. Touch must
+   drag it rather than scroll the page. */
 [data-modo="site-indicator"] {
   position: fixed;
   z-index: 1;
-  display: flex;
-  flex-direction: column-reverse;
-  align-items: flex-start;
-  gap: var(--space-2, 8px);
   max-width: calc(100vw - 2 * var(--space-4, 16px));
   font-family: var(--modo-font-sans);
+  touch-action: none;
 }
 
 [data-modo="site-indicator"][data-corner^="top"] {
   top: var(--space-4, 16px);
-  flex-direction: column;
 }
 
 [data-modo="site-indicator"][data-corner^="bottom"] {
@@ -34,6 +32,27 @@
 
 [data-modo="site-indicator"][data-corner$="right"] {
   right: var(--space-4, 16px);
+}
+
+[data-modo="site-indicator"][data-dragging],
+[data-modo="site-indicator"][data-dragging] * {
+  cursor: grabbing;
+}
+
+/* The plain switcher (no shell.SiteSwitcher): the badge, its menu above it
+   (below it in a top corner), lined up with the corner's side. */
+[data-modo="site-switcher"] {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: var(--space-2, 8px);
+}
+
+[data-modo="site-indicator"][data-corner^="top"] [data-modo="site-switcher"] {
+  flex-direction: column;
+}
+
+[data-modo="site-indicator"][data-corner$="right"] [data-modo="site-switcher"] {
   align-items: flex-end;
 }
 
@@ -50,12 +69,6 @@
   color: inherit;
   font: inherit;
   cursor: pointer;
-  /* The badge drags to another corner; touch must not scroll the page instead. */
-  touch-action: none;
-}
-
-[data-modo="site-indicator"][data-dragging] [data-modo="site-badge"] {
-  cursor: grabbing;
 }
 
 [data-modo="site-badge"] > :is(img, svg) {

@@ -97,4 +97,17 @@ describe('resolveShellSlots', () => {
     ])
     expect(warnings.filter(w => w.startsWith('Shell slot'))).toHaveLength(1)
   })
+
+  test('SiteSwitcher pins or matches like the others, and its fallback is not in the summary', () => {
+    const switcher = item('components', 'SiteSwitcher', ['pages', 'sections'])
+    const matched = resolveShellSlots({}, [switcher], () => null).shell.SiteSwitcher
+    const pin = resolveShellSlots({ shell: { SiteSwitcher: './s.tsx' } }, [switcher], () => pinned('/usr/s.mjs'))
+    const plain = resolveShellSlots({}, [item('primitives', 'Button', ['children'])], () => null)
+    expect([matched.source, pin.shell.SiteSwitcher, plain.shell.SiteSwitcher]).toEqual([
+      'interface-match',
+      pinned('/usr/s.mjs'),
+      { source: 'fallback', fallbackName: 'PlainSiteSwitcher' },
+    ])
+    expect(plain.warnings.join()).not.toContain('SiteSwitcher')
+  })
 })
