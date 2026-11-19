@@ -329,13 +329,11 @@ export default function DesktopShell({
               <Resizable.Panel defaultSize={100 - defaultPaneSize} minSize={100 - maxPaneSize}>
                 {card(main)}
               </Resizable.Panel>
-              {/* The handle is the 8px gutter between the card and the pane, and the card's right edge once it folds. */}
+              {/* The handle is the 8px gutter between the card and the pane, and the card's right edge once it folds.
+                  Like the sidebar's rail, its hairline shows only while it is hovered, held or focused. */}
               <Resizable.Handle
                 label={rightLabel}
-                className={cn(
-                  'w-2 transition-opacity duration-fast',
-                  !paneOpen && 'opacity-0 hover:opacity-100 focus-visible:opacity-100',
-                )}
+                className="w-2 opacity-0 transition-opacity duration-fast hover:opacity-100 focus-visible:opacity-100 data-[dragging]:opacity-100"
               />
               <Resizable.Panel defaultSize={defaultPaneSize} minSize={minPaneSize} maxSize={maxPaneSize} collapsible>
                 <div {...inertProps(!paneOpen)} className="flex h-full min-w-0 flex-col">
