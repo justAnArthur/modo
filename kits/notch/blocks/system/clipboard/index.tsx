@@ -651,6 +651,7 @@ const ClipboardHistory = Object.assign(
     if (!clips.length)
       return (
         <Widget.Message
+          layout={layout}
           icon={paused ? Pause : ClipboardList}
           title={paused ? 'Clipboard history is paused' : 'Copy something'}
           description={

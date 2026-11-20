@@ -422,13 +422,25 @@ export const PERMISSIONS: SettingsPermission[] = [
     id: 'calendar',
     label: 'Calendar',
     description: 'Shows your events and counts down to the next one.',
-    granted: true,
+    state: 'allowed',
+  },
+  {
+    id: 'accessibility',
+    label: 'Accessibility',
+    description: 'Window management, clipboard paste, the volume and brightness overlay.',
+    state: 'stale',
   },
   {
     id: 'location',
     label: 'Location',
     description: 'Finds the weather where you are; a city in Weather needs none.',
-    granted: false,
+    state: 'off',
+  },
+  {
+    id: 'bluetooth',
+    label: 'Bluetooth',
+    description: 'Shows your headphones’ battery when they connect.',
+    state: 'notAsked',
   },
   {
     id: 'automation',

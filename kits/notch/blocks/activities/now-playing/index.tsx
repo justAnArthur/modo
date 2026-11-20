@@ -9,7 +9,6 @@
 
 import { useReduceMotion } from '@justanarthur/modo-ui/lib/reduced-motion'
 import { useSize } from '@justanarthur/modo-ui/lib/size-context'
-import { spring } from '@justanarthur/modo-ui/lib/springs'
 import { SURFACE_BG } from '@justanarthur/modo-ui/lib/surface-classes'
 import { useLift } from '@justanarthur/modo-ui/lib/surface-context'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
@@ -37,6 +36,7 @@ import MediaScrubber from '../../../components/indicators/media-scrubber'
 import IslandFlash from '../../../components/island/island-flash'
 import Widget, { type WidgetLayout } from '../../../components/island/widget'
 import { type Artwork, type ShownArtwork, useArtworkTint, useStableArtwork } from '../../../lib/artwork'
+import { contentFade, motionScale } from '../../../lib/motion'
 
 type NowPlayingOutput = 'built-in' | 'headphones' | 'speaker' | 'airplay'
 type NowPlayingRepeat = 'off' | 'all' | 'one'
@@ -183,7 +183,7 @@ function NowPlayingArtwork({ track, glyph = 14, className }: ArtworkProps) {
         className="absolute inset-0"
         initial={under ? { opacity: 0 } : false}
         animate={{ opacity: 1 }}
-        transition={reduced ? spring.fast : spring.slow}
+        transition={reduced ? contentFade : motionScale.small}
         onAnimationComplete={() => setUnder(null)}
       >
         <Picture art={shown.art} glyph={glyph} />
@@ -241,8 +241,8 @@ function NowPlayingFlash({ track, playing = true }: { track: NowPlayingTrack; pl
 }
 
 // Literal tables: UnoCSS only generates the classes it can read whole.
-const ART = { default: 'size-36 rounded-2xl', compact: 'size-28 rounded-xl' }
-const SHEET_ART = { default: 'size-52 rounded-3xl', compact: 'size-44 rounded-2xl' }
+const ART = { default: 'size-36 rounded-xl', compact: 'size-28 rounded-xl' }
+const SHEET_ART = { default: 'size-52 rounded-2xl', compact: 'size-44 rounded-2xl' }
 const SHEET_TITLE = { default: 'text-display', compact: 'text-display-compact' }
 
 function Glow({ tint, children }: { tint?: string; children: ReactNode }) {
@@ -328,6 +328,7 @@ const NowPlaying = Object.assign(
     if (!track)
       return (
         <Widget.Message
+          layout={layout}
           icon={Music}
           title="Nothing playing"
           description={emptyDescription}

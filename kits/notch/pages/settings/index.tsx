@@ -15,16 +15,16 @@ interface SettingsProps {
 
 /**
  * The notch app's settings, in a window of its own: General, Plugins, the
- * plugin Library, Permissions and About, then a page for each plugin that
- * brings settings.
+ * plugin Library, Permissions and About, and a page for each plugin that
+ * brings settings, opened from Plugins.
  *
  * Walk the sidebar: General's launch at login switch and the screens the
  * island shows on; the seven plugins, each with its switch and a chevron to
  * its page; the Library after them, an update waiting on its row, its
- * plugins in every state and each one's page; what macOS granted, with Open
- * Settings beside Location, which it didn't, and a spinner on Automation,
- * still being read; the version. Under
- * Plugin settings each plugin's own, as grouped rows of a label, what it
+ * plugins in every state and each one's page; the permissions in their four
+ * states (Accessibility needing a reset, Location off, Bluetooth not asked)
+ * and a spinner on Automation, still being read; the version. From a
+ * plugin's chevron in Plugins, its own page, as grouped rows of a label, what it
  * does and its control: the track announcement, the calendar's countdown
  * and alerts, the weather's location, unit and rain alert, the clock's
  * format, world clocks and Pomodoro lengths, the System widget's hero and

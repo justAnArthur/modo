@@ -27,16 +27,17 @@ import { IslandContext } from '../../../lib/island-context'
 import {
   bubbleTransition,
   contentEnter,
+  contentFade,
+  contentGone,
   contentHidden,
   contentLeave,
   contentShown,
+  hoverDelay,
   shapeTransition,
 } from '../../../lib/motion'
 
 type CollapsedState = 'idle' | 'compact' | 'split'
 
-const HOVER_INTENT_MS = 120
-const HOVER_LEAVE_MS = 400
 // Room below the outline while it moves, so the goo tier's overshoot isn't cut off.
 const OVERSHOOT = 24
 const GOO_BLUR = 6
@@ -93,7 +94,6 @@ interface LayerProps {
 
 /** One presentation's content, swapped with the blur and scale. */
 function Layer({ shape, top = 0, reduced, interactive, children }: LayerProps) {
-  const hidden = reduced ? { opacity: 0 } : contentHidden
   return (
     <motion.div
       className={cn('absolute', interactive ? 'pointer-events-auto' : 'pointer-events-none')}
@@ -104,10 +104,10 @@ function Layer({ shape, top = 0, reduced, interactive, children }: LayerProps) {
         height: shape.h,
         transformOrigin: '50% 0',
       }}
-      initial={hidden}
+      initial={reduced ? { opacity: 0 } : contentHidden}
       animate={reduced ? { opacity: 1 } : contentShown}
-      exit={{ ...hidden, transition: contentLeave }}
-      transition={contentEnter}
+      exit={reduced ? { opacity: 0, transition: contentFade } : { ...contentGone, transition: contentLeave }}
+      transition={reduced ? contentFade : contentEnter}
     >
       <div className="absolute inset-x-0 bottom-0" style={{ top }}>
         {children}
@@ -271,7 +271,7 @@ export default function Island({
         if (open && isCollapsed(state)) setState('expanded')
         if (!open && state === 'expanded') collapse()
       },
-      open ? HOVER_INTENT_MS : HOVER_LEAVE_MS,
+      open ? hoverDelay.intent : hoverDelay.leave,
     )
   }
 
@@ -397,8 +397,10 @@ export default function Island({
                   className="flex size-full items-center justify-center"
                   initial={reduced ? { opacity: 0 } : contentHidden}
                   animate={reduced ? { opacity: 1 } : contentShown}
-                  exit={{ opacity: 0, transition: contentLeave }}
-                  transition={contentEnter}
+                  exit={
+                    reduced ? { opacity: 0, transition: contentFade } : { ...contentGone, transition: contentLeave }
+                  }
+                  transition={reduced ? contentFade : contentEnter}
                 >
                   {minimal}
                 </motion.div>

@@ -20,7 +20,7 @@ A switch per plugin, and a chevron to the page of one that brings settings.
 
 # Permissions
 
-A spinner while one is read; Open Settings beside one that isn't granted.
+Allowed, Not asked, Off and Needs reset, each with its one action; a spinner while one is read. The sidebar counts the ones that need you.
 
 <MockWindow title="Settings">
   <SettingsWindow name="Just Notch" defaultValue="permissions" plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />
@@ -28,7 +28,7 @@ A spinner while one is read; Open Settings beside one that isn't granted.
 
 # A plugin's settings
 
-Grouped rows: a label, what it does, the control at the end.
+Reached from its row in Plugins, which stays lit; a Plugins button leads back. Grouped rows: a label, what it does, the control at the end.
 
 <MockWindow title="Settings">
   <SettingsWindow name="Just Notch" defaultValue="plugin:clock" plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />

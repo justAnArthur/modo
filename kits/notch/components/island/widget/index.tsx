@@ -211,18 +211,43 @@ interface WidgetMessageProps {
   title: ReactNode
   /** What to do about it. */
   description?: ReactNode
-  /** The way forward: a Button or two. */
+  /** Called by the state's one primary button, such as Open settings on a connect screen. Leave it out for no button. */
+  onAction?: () => void
+  /** The primary button's label. Defaults to `'Open settings'`. */
+  actionLabel?: string
+  /** Further ways forward after the primary button: a secondary Button or two. */
   actions?: ReactNode
+  /** `fit` centers the block in the short island; `tall` sets it at the top of the tall snap. Either way it starts on the content inset. Defaults to `'fit'`. */
+  layout?: WidgetLayout
   /** Classes for the root, which fills the widget. */
   className?: string
 }
 
-/** A widget's empty, permission or error state, laid out across the wide, short island: tile, text, then the action. */
-function WidgetMessage({ icon: Icon, title, description, actions, className }: WidgetMessageProps) {
+/**
+ * A widget's empty, connect, permission or error state: a tile, the text, then
+ * the way forward, starting on the open island's 20 px content inset like
+ * every other widget, never floating in the middle of the content box.
+ */
+function WidgetMessage({
+  icon: Icon,
+  title,
+  description,
+  onAction,
+  actionLabel = 'Open settings',
+  actions,
+  layout = 'fit',
+  className,
+}: WidgetMessageProps) {
   const size = useSize()
   const level = useLift(1)
   return (
-    <div className={cn('@container flex size-full items-center justify-center', className)}>
+    <div
+      className={cn(
+        '@container flex size-full justify-start',
+        layout === 'tall' ? 'items-start' : 'items-center',
+        className,
+      )}
+    >
       <div className="flex w-full max-w-120 items-center gap-4">
         <span
           className={cn(
@@ -238,7 +263,16 @@ function WidgetMessage({ icon: Icon, title, description, actions, className }: W
             <span className={cn('text-pretty text-muted-foreground', CAPTION[size.variant])}>{description}</span>
           )}
         </div>
-        {actions && <div className="flex shrink-0 items-center gap-2 @max-[22rem]:hidden">{actions}</div>}
+        {(onAction || actions) && (
+          <div className="flex shrink-0 items-center gap-2 @max-[22rem]:hidden">
+            {onAction && (
+              <Button variant="primary" size="compact" onClick={onAction}>
+                {actionLabel}
+              </Button>
+            )}
+            {actions}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -379,8 +413,15 @@ interface WidgetProps {
  * a `Widget.Section`). Color comes from the content (an artwork's tint, a
  * calendar's color, a status hue), never from decoration; depth from one
  * surface step (`Widget.Chip`, `Widget.Message`'s tile), never from boxes.
- * Empty and permission states are a `Widget.Message`, laid out across the
- * wide, short island.
+ * Empty, connect and permission states are a `Widget.Message`, laid out
+ * across the wide, short island from the content inset, its one way forward
+ * an Open settings button (`onAction`).
+ *
+ * One primary button per view, modo-ui's `primary` Button at the compact
+ * step: the hero's action (Join, Copy, Open, Start focus) or a message's
+ * way forward. Every other button is `secondary`, or a quiet `Widget.Action`.
+ * Tiles that touch the content edge take the radius concentric with the
+ * open island's (`innerRadius(RADIUS.expanded)`, 12, `rounded-xl`).
  *
  * At the island's tall snap a widget shows more, not the same layout
  * stretched: each block takes `layout="tall"` and builds a `Widget.Sheet`,

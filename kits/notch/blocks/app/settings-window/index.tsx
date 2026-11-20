@@ -8,7 +8,6 @@
 
 import Button from '@justanarthur/modo-ui/components/actions/button'
 import List, { LIST_SWITCH } from '@justanarthur/modo-ui/components/data-display/list'
-import StatusDot from '@justanarthur/modo-ui/components/feedback/status-dot'
 import ChoiceList from '@justanarthur/modo-ui/components/inputs/choice-list'
 import Switch from '@justanarthur/modo-ui/components/inputs/switch'
 import Sidebar from '@justanarthur/modo-ui/components/navigation/sidebar'
@@ -16,8 +15,12 @@ import type { IconComponent } from '@justanarthur/modo-ui/lib/icon-context'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import ScrollArea from '@justanarthur/modo-ui/primitives/layout/scroll-area'
-import { ChevronRight, Info, Puzzle, Settings2, ShieldCheck } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Info, Puzzle, Settings2, ShieldCheck } from 'lucide-react'
 import type { ReactNode } from 'react'
+import PermissionList, {
+  type PermissionState,
+  permissionsNeedingAttention,
+} from '../../../components/settings/permission-list'
 
 type ScreensPreference = 'notched' | 'all'
 
@@ -35,7 +38,7 @@ interface SettingsPlugin {
   description?: string
   /** Its glyph in the Plugins list. */
   icon?: IconComponent
-  /** Its settings, on a page of its own under Plugin settings. */
+  /** Its settings, on a page of its own, opened from its row in Plugins. */
   settings?: ReactNode
   /** A label after its name in the Plugins list, such as an Update or Incompatible Badge. */
   badge?: ReactNode
@@ -65,10 +68,16 @@ interface SettingsPage {
 interface SettingsPermission {
   id: string
   label: string
-  /** What the app does with it. */
+  /** What the app does with it, naming the features. */
   description: string
-  /** Whether macOS granted it; unset while it's being read. */
+  /** What macOS says: `allowed`, `notAsked`, `off` or `stale` (Needs reset); unset while it's being read. */
+  state?: PermissionState
+  /** @deprecated Use `state`: `true` reads as `allowed`, `false` as `off`. */
   granted?: boolean
+  /** A line under the description, replacing the state's own. */
+  note?: ReactNode
+  /** The row's action, replacing the state's button (the Fix slot). */
+  action?: ReactNode
 }
 
 interface AboutRow {
@@ -77,7 +86,7 @@ interface AboutRow {
 }
 
 interface SettingsWindowProps {
-  /** The app's name, over the sidebar. Defaults to `'Notch'`. */
+  /** The app's name: the sidebar's accessible name. Defaults to `'Notch'`. */
   name?: string
   /** The page shown: `general`, `plugins`, `permissions`, `about`, a `pages` id or `plugin:<id>` (controlled). */
   value?: string
@@ -101,7 +110,9 @@ interface SettingsWindowProps {
   onEnabledChange?: (enabled: Record<string, boolean>) => void
   /** What macOS lets the app read and control. Defaults to `[]`. */
   permissions?: SettingsPermission[]
-  /** Called by Open Settings on a permission that isn't granted. */
+  /** Called by a permission's button with its id and state: ask (`notAsked`), open System Settings (`off`), reset and ask again (`stale`). */
+  onFixPermission?: (id: string, state: PermissionState) => void
+  /** @deprecated Use `onFixPermission`. Called for a permission that is `off`, when `onFixPermission` is not given. */
   onOpenPermission?: (id: string) => void
   /** The About page's rows: version, mode, screen. Defaults to `[]`. */
   about?: AboutRow[]
@@ -229,48 +240,8 @@ function Plugins({ plugins, enabled, onChange, onOpen }: PluginsProps) {
   )
 }
 
-interface PermissionsProps {
-  permissions: SettingsPermission[]
-  onOpen?: (id: string) => void
-}
-
-function Permissions({ permissions, onOpen }: PermissionsProps) {
-  return (
-    <Page title="Permissions" lead="What macOS lets the app read and control.">
-      <List>
-        <List.Section title="Privacy & Security">
-          {permissions.map(permission => (
-            <List.Row
-              key={permission.id}
-              label={
-                <span className="flex min-w-0 items-center gap-2">
-                  <StatusDot
-                    status={permission.granted === undefined ? 'running' : permission.granted ? 'success' : 'waiting'}
-                    label={
-                      permission.granted === undefined ? 'Checking' : permission.granted ? 'Granted' : 'Not granted'
-                    }
-                  />
-                  <span className="truncate">{permission.label}</span>
-                </span>
-              }
-              description={permission.description}
-            >
-              {permission.granted === false ? (
-                <Button variant="ghost" size="compact" onClick={() => onOpen?.(permission.id)}>
-                  Open Settings
-                </Button>
-              ) : (
-                <span className="pr-3 text-caption text-muted-foreground">
-                  {permission.granted ? 'Granted' : 'Checking…'}
-                </span>
-              )}
-            </List.Row>
-          ))}
-        </List.Section>
-      </List>
-    </Page>
-  )
-}
+const permissionState = ({ state, granted }: SettingsPermission): PermissionState | undefined =>
+  state ?? (granted === undefined ? undefined : granted ? 'allowed' : 'off')
 
 function About({ rows }: { rows: AboutRow[] }) {
   return (
@@ -318,14 +289,17 @@ function sidebarPages(pages: SettingsPage[]) {
  * the host's own `pages`, and a page for each plugin's own settings.
  *
  * A modo-ui Sidebar pinned open (the window is small, about 760 × 520, so
- * it never folds into a drawer) lists the pages under the app's `name`, then
- * the plugins that bring settings. General holds the launch at login Switch
+ * it never folds into a drawer) lists the pages, one group with no label.
+ * A plugin's page has one path: the chevron on its row in Plugins (the
+ * sidebar keeps Plugins lit while it shows, and a Plugins button leads
+ * back). General holds the launch at login Switch
  * and a ChoiceList of the screens the island shows on. Plugins lists each
  * installed plugin with its glyph, its line, a Switch that turns it on or
  * off and, for one that brings settings, a chevron to its page. Permissions
- * shows what macOS granted as a StatusDot per row, with Open Settings beside
- * one that isn't granted, and a spinner while it's being read. About lists the `about` rows. A plugin's page shows its
- * `settings` node under its name.
+ * is a PermissionList: Allowed, Not asked, Off or Needs reset per row, each
+ * with its one action (`onFixPermission`), and the sidebar's Permissions row
+ * counts the ones off or stale. About lists the `about` rows. A plugin's page
+ * shows its `settings` node under its name.
  *
  * A plugin row takes a `badge` after its name (Update, Incompatible) and
  * `actions` before its switch (Uninstall). The host's `pages` list among the
@@ -356,6 +330,7 @@ export default function SettingsWindow({
   defaultEnabled = {},
   onEnabledChange,
   permissions = [],
+  onFixPermission,
   onOpenPermission,
   about = [],
   pages = [],
@@ -365,9 +340,10 @@ export default function SettingsWindow({
   const [page, setPage] = useControllableState(value, defaultValue, onValueChange)
   const [preferences, setPreferences] = useControllableState(preferencesProp, defaultPreferences, onPreferencesChange)
   const [enabled, setEnabled] = useControllableState(enabledProp, defaultEnabled, onEnabledChange)
-  const withSettings = plugins.filter(plugin => plugin.settings !== undefined)
-  const plugin = withSettings.find(p => `plugin:${p.id}` === page)
+  const plugin = plugins.find(p => p.settings !== undefined && `plugin:${p.id}` === page)
   const custom = pages.find(p => p.id === page)
+  const rows = permissions.map(permission => ({ ...permission, state: permissionState(permission) }))
+  const attention = permissionsNeedingAttention(rows)
 
   return (
     <Sidebar.Provider
@@ -377,35 +353,23 @@ export default function SettingsWindow({
       mobileBreakpoint={0}
       width="13rem"
     >
-      <Sidebar className="h-full" collapsible="none" value={page} onValueChange={setPage}>
+      <Sidebar className="h-full" collapsible="none" value={plugin ? 'plugins' : page} onValueChange={setPage}>
         <Sidebar.Content>
           <Sidebar.Group className={cn(flush && 'pl-0')}>
-            <Sidebar.GroupLabel>{name}</Sidebar.GroupLabel>
-            <Sidebar.Menu>
-              {sidebarPages(pages).map(item => (
-                <Sidebar.MenuItem key={item.value}>
-                  <Sidebar.MenuButton icon={item.icon} value={item.value}>
-                    {item.label}
-                  </Sidebar.MenuButton>
-                  {item.badge !== undefined && <Sidebar.MenuBadge>{item.badge}</Sidebar.MenuBadge>}
-                </Sidebar.MenuItem>
-              ))}
+            <Sidebar.Menu aria-label={name}>
+              {sidebarPages(pages).map(item => {
+                const badge = item.value === 'permissions' && attention > 0 ? attention : item.badge
+                return (
+                  <Sidebar.MenuItem key={item.value}>
+                    <Sidebar.MenuButton icon={item.icon} value={item.value}>
+                      {item.label}
+                    </Sidebar.MenuButton>
+                    {badge !== undefined && <Sidebar.MenuBadge>{badge}</Sidebar.MenuBadge>}
+                  </Sidebar.MenuItem>
+                )
+              })}
             </Sidebar.Menu>
           </Sidebar.Group>
-          {withSettings.length > 0 && (
-            <Sidebar.Group className={cn(flush && 'pl-0')}>
-              <Sidebar.GroupLabel>Plugin settings</Sidebar.GroupLabel>
-              <Sidebar.Menu>
-                {withSettings.map(p => (
-                  <Sidebar.MenuItem key={p.id}>
-                    <Sidebar.MenuButton icon={p.icon} value={`plugin:${p.id}`}>
-                      {p.name}
-                    </Sidebar.MenuButton>
-                  </Sidebar.MenuItem>
-                ))}
-              </Sidebar.Menu>
-            </Sidebar.Group>
-          )}
         </Sidebar.Content>
       </Sidebar>
       <Sidebar.Inset className="min-h-0 min-w-0">
@@ -420,7 +384,17 @@ export default function SettingsWindow({
                 onOpen={id => setPage(`plugin:${id}`)}
               />
             )}
-            {page === 'permissions' && <Permissions permissions={permissions} onOpen={onOpenPermission} />}
+            {page === 'permissions' && (
+              <Page title="Permissions" lead="What macOS lets the app read and control.">
+                <PermissionList
+                  permissions={rows}
+                  onFix={(id, state) => {
+                    if (onFixPermission) return onFixPermission(id, state)
+                    if (state === 'off') onOpenPermission?.(id)
+                  }}
+                />
+              </Page>
+            )}
             {page === 'about' && <About rows={about} />}
             {custom && (
               <Page title={custom.label} lead={custom.lead}>
@@ -428,9 +402,20 @@ export default function SettingsWindow({
               </Page>
             )}
             {plugin && (
-              <Page title={plugin.name} lead={plugin.description}>
-                {plugin.settings}
-              </Page>
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="ghost"
+                  size="compact"
+                  leadingIcon={ChevronLeft}
+                  className="-ml-3 self-start"
+                  onClick={() => setPage('plugins')}
+                >
+                  Plugins
+                </Button>
+                <Page title={plugin.name} lead={plugin.description}>
+                  {plugin.settings}
+                </Page>
+              </div>
             )}
           </div>
         </ScrollArea>

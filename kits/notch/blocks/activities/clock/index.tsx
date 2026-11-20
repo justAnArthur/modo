@@ -786,7 +786,7 @@ const Clock = Object.assign(
     )
     const start = pomodoro !== false && (
       <Button
-        variant="secondary"
+        variant="primary"
         size="compact"
         leadingIcon={Play}
         className="mb-1"

@@ -1,0 +1,42 @@
+import PermissionList from './index'
+
+# Four states
+
+Allowed, Not asked, Off and Needs reset, each with its one action; Location is still being read.
+
+<div className="w-full max-w-160">
+  <PermissionList
+    permissions={[
+      { id: 'calendars', label: 'Calendars', description: 'Your next event in the island.', state: 'allowed' },
+      { id: 'bluetooth', label: 'Bluetooth', description: 'Headphone battery in the island.', state: 'notAsked' },
+      { id: 'automation', label: 'Automation · Music', description: 'Now Playing and its controls.', state: 'off' },
+      {
+        id: 'accessibility',
+        label: 'Accessibility',
+        description: 'Window management, clipboard paste, the volume and brightness overlay.',
+        state: 'stale',
+      },
+      { id: 'location', label: 'Location', description: 'The forecast where you are.' },
+    ]}
+  />
+</div>
+
+# A Fix slot of the host's
+
+A row's `action` replaces its button, and `note` the state's line.
+
+<div className="w-full max-w-160">
+  <PermissionList
+    title="Needs attention"
+    permissions={[
+      {
+        id: 'accessibility',
+        label: 'Accessibility',
+        description: 'Window management, clipboard paste.',
+        state: 'stale',
+        note: 'If Fix doesn’t help, remove Just Notch from the list with −, then add it again.',
+        action: <span className="pr-3 text-caption text-muted-foreground">Resetting…</span>,
+      },
+    ]}
+  />
+</div>

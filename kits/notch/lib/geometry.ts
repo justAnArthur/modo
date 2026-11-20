@@ -35,6 +35,19 @@ export const DEFAULT_PANEL: Size = { width: 720, height: 240 }
 
 /** The open island's one content inset: header, title and content all start here, clear of the bottom corners. */
 export const INSET = 20
+/**
+ * The island's corner radii, per state: 32 open, 22 for a flash, 13 compact
+ * (and split), 10 for the bare notch.
+ */
+export const RADIUS = { expanded: 32, flash: 22, compact: 13, idle: 10 } as const
+
+/**
+ * The radius concentric with an `outer` corner for a tile `inset` px inside
+ * it: inner = outer − inset, so a tile touching the open island's content
+ * edge takes 12 (`rounded-xl`).
+ */
+export const innerRadius = (outer: number, inset: number = INSET) => Math.max(0, outer - inset)
+
 /** Kept free on each side of the notch. */
 export const NOTCH_GAP = 8
 /** How far a flash reaches past the compact wings, on each side. */
@@ -51,17 +64,22 @@ export const slotWidth = (notch: Size) => notch.height + 8
  */
 export function shapeFor(state: IslandState, { notch, panel }: IslandGeometry, room = Number.POSITIVE_INFINITY): Shape {
   const slot = slotWidth(notch)
-  if (state === 'idle') return { w: notch.width, h: notch.height, radius: 10, shoulder: 6 }
+  if (state === 'idle') return { w: notch.width, h: notch.height, radius: RADIUS.idle, shoulder: 6 }
   if (state === 'compact' || state === 'split')
-    return { w: notch.width + 2 * slot, h: notch.height, radius: 13, shoulder: 8 }
+    return { w: notch.width + 2 * slot, h: notch.height, radius: RADIUS.compact, shoulder: 8 }
   if (state === 'flash')
     return {
       w: Math.min(notch.width + 2 * (slot + FLASH_REACH), room - 20),
       h: notch.height + FLASH_DROP,
-      radius: 24,
+      radius: RADIUS.flash,
       shoulder: 10,
     }
-  return { w: Math.max(notch.width, Math.min(panel.width, room - 28)), h: panel.height, radius: 32, shoulder: 14 }
+  return {
+    w: Math.max(notch.width, Math.min(panel.width, room - 28)),
+    h: panel.height,
+    radius: RADIUS.expanded,
+    shoulder: 14,
+  }
 }
 
 /** The detached bubble of `split`: a circle as tall as the compact island, its center `x` from the island's center. */

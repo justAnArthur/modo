@@ -1,0 +1,29 @@
+import { Keyboard, Sun, Volume1, Volume2, VolumeX } from 'lucide-react'
+import Level from './index'
+
+# Volume
+
+The glyph follows the level; the percent after the bar.
+
+<div className="dark flex w-80 flex-col gap-4 rounded-box bg-ink p-5 text-foreground">
+  <Level icon={Volume2} value={0.72} label="Volume" showValue />
+  <Level icon={Volume1} value={0.25} label="Volume" showValue />
+  <Level icon={VolumeX} value={0} label="Volume" showValue="Muted" />
+</div>
+
+# Brightness and keyboard
+
+Without a value: the bar alone.
+
+<div className="dark flex w-80 flex-col gap-4 rounded-box bg-ink p-5 text-foreground">
+  <Level icon={Sun} value={0.6} label="Brightness" />
+  <Level icon={Keyboard} value={0.35} label="Keyboard backlight" />
+</div>
+
+# In a flash
+
+The HUD below the notch, as an IslandFlash's content.
+
+<div className="dark w-96 rounded-box bg-ink px-5 py-4 text-foreground">
+  <Level icon={Volume2} value={0.5} label="Volume" showValue size="compact" />
+</div>
