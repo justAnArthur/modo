@@ -8,6 +8,8 @@
 
 import Button from '@justanarthur/modo-ui/components/actions/button'
 import Meter from '@justanarthur/modo-ui/components/feedback/meter'
+import { SURFACE_BG } from '@justanarthur/modo-ui/lib/surface-classes'
+import { useLift } from '@justanarthur/modo-ui/lib/surface-context'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import {
@@ -94,32 +96,29 @@ interface ClockProps {
 
 const DEFAULTS: PomodoroSettings = { focus: 25, shortBreak: 5, longBreak: 15, rounds: 4 }
 
-// Literal tables: UnoCSS only generates the classes it can read whole. Focus is warm, a break green.
+// Literal tables: UnoCSS only generates the classes it can read whole. Focus is warm, a short break green, the long break blue.
 const RING: Record<PomodoroPhase, string> = {
   focus: '[&_circle:last-child]:text-status-warning',
   'short-break': '[&_circle:last-child]:text-status-success',
-  'long-break': '[&_circle:last-child]:text-status-success',
+  'long-break': '[&_circle:last-child]:text-status-info',
 }
 const DOT: Record<PomodoroPhase, string> = {
   focus: 'bg-status-warning',
   'short-break': 'bg-status-success',
-  'long-break': 'bg-status-success',
+  'long-break': 'bg-status-info',
 }
 const TILE: Record<PomodoroPhase, string> = {
   focus: 'bg-status-warning/16 text-status-warning',
   'short-break': 'bg-status-success/16 text-status-success',
-  'long-break': 'bg-status-success/16 text-status-success',
+  'long-break': 'bg-status-info/16 text-status-info',
 }
 const MARK: Record<PomodoroPhase, string> = {
   focus: 'var(--status-warning)',
   'short-break': 'var(--status-success)',
-  'long-break': 'var(--status-success)',
+  'long-break': 'var(--status-info)',
 }
-const WASH: Record<PomodoroPhase, string> = {
-  focus: 'bg-status-warning/16',
-  'short-break': 'bg-status-success/16',
-  'long-break': 'bg-status-success/16',
-}
+// What's still to run is a neutral a few surfaces up: a wash of the phase's hue on the black island is too faint to read.
+const OPEN_LIFT = 3
 const GLYPH = { focus: Target, 'short-break': Coffee, 'long-break': Coffee }
 const PHASES: PomodoroPhase[] = ['focus', 'short-break', 'long-break']
 
@@ -341,12 +340,13 @@ interface CycleStripProps {
 
 /** One cycle as a strip, each phase as long as its minutes, in its hue. */
 function CycleStrip({ settings, at = -1, progress = 0 }: CycleStripProps) {
+  const open = SURFACE_BG[useLift(OPEN_LIFT)]
   return (
     <div aria-hidden className="flex h-1.5 w-full gap-1">
       {cycleOf(settings).map((step, i) => (
         <span
           key={`${step.phase}-${step.round}`}
-          className={cn('relative basis-0 overflow-hidden rounded-full', i < at ? DOT[step.phase] : WASH[step.phase])}
+          className={cn('relative basis-0 overflow-hidden rounded-full', i < at ? DOT[step.phase] : open)}
           style={{ flexGrow: lengthOf(step.phase, settings) }}
         >
           {i === at && (
@@ -361,9 +361,10 @@ function CycleStrip({ settings, at = -1, progress = 0 }: CycleStripProps) {
   )
 }
 
-/** Today's finished focus rounds: a dot for each, the cycle's open ones washed, and the time focused. */
+/** Today's finished focus rounds: a dot for each in focus's hue, the cycle's open ones a neutral a few surfaces up, and the time focused. */
 function Today({ completed, settings }: { completed: number; settings: PomodoroSettings }) {
   const slots = Math.min(24, Math.max(1, Math.ceil(completed / settings.rounds)) * settings.rounds)
+  const open = SURFACE_BG[useLift(OPEN_LIFT)]
   return (
     <Widget.Section
       label="Today"
@@ -375,11 +376,7 @@ function Today({ completed, settings }: { completed: number; settings: PomodoroS
     >
       <div className="flex flex-wrap items-center gap-1.5 py-1">
         {Array.from({ length: slots }, (_, slot) => slot).map(slot => (
-          <span
-            key={slot}
-            aria-hidden
-            className={cn('size-2.5 rounded-full', slot < completed ? DOT.focus : WASH.focus)}
-          />
+          <span key={slot} aria-hidden className={cn('size-2.5 rounded-full', slot < completed ? DOT.focus : open)} />
         ))}
       </div>
     </Widget.Section>
@@ -697,7 +694,7 @@ function Running({
  * Under the time the Pomodoro waits with its lengths (`pomodoro`: focus,
  * short and long break in minutes, and the rounds before the long one) and
  * a Start focus button. A run takes the widget over: the phase's ring in
- * its hue (focus warm, a break green) as the picture, the time left as the
+ * its hue (focus warm, a short break green, the long break blue) as the picture, the time left as the
  * hero, its round (`Focus 2 of 4`), when it ends and what comes next, and
  * the next phases with their start times beside it. Pause / resume is the
  * main action, with +1 min and skip beside it and reset at the top.

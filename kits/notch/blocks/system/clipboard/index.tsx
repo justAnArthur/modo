@@ -15,7 +15,7 @@ import { useLift } from '@justanarthur/modo-ui/lib/surface-context'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import FluidHover from '@justanarthur/modo-ui/primitives/systems/fluid-hover'
-import { ClipboardList, Copy, File, Image, Link2, Palette, Pause, Pin, Play, Search, Trash2, Type } from 'lucide-react'
+import { ClipboardList, Copy, Eye, EyeOff, File, Image, Link2, Palette, Pin, Search, Trash2, Type } from 'lucide-react'
 import type { KeyboardEvent, ReactNode } from 'react'
 import IslandFlash from '../../../components/island/island-flash'
 import Widget, { type WidgetLayout } from '../../../components/island/widget'
@@ -269,7 +269,7 @@ interface ListProps {
   onCopy?: (clip: ClipboardClip) => void
 }
 
-/** The clips around the selected one, pinned first, three at most, the selected one lit one surface up. */
+/** The clips around the selected one, pinned first, three at most, the selected one lit one surface up; each group's caption counts all its clips, as the tall list does. */
 function List({ order, selected, pinned, now, searching, onPick, onCopy }: ListProps) {
   const level = useLift(1)
   if (!order.length)
@@ -277,19 +277,23 @@ function List({ order, selected, pinned, now, searching, onPick, onCopy }: ListP
 
   const start = Math.max(0, Math.min(selected - ROWS + 1, order.length - ROWS))
   const shown = order.slice(start, start + ROWS)
-  const more = order.length - start - shown.length
+  const pinnedCount = order.filter(clip => pinned.includes(clip.id)).length
   const groups = [
-    { label: 'Pinned', clips: shown.filter(clip => pinned.includes(clip.id)) },
-    { label: searching ? 'Matches' : 'Recent', clips: shown.filter(clip => !pinned.includes(clip.id)) },
+    { label: 'Pinned', count: pinnedCount, clips: shown.filter(clip => pinned.includes(clip.id)) },
+    {
+      label: searching ? 'Matches' : 'Recent',
+      count: order.length - pinnedCount,
+      clips: shown.filter(clip => !pinned.includes(clip.id)),
+    },
   ].filter(group => group.clips.length)
 
   return (
     <FluidHover className="-mx-2 flex flex-col gap-0" role="listbox" aria-label="Clipboard history">
-      {groups.map((group, g) => (
+      {groups.map(group => (
         <div key={group.label} role="presentation" className="flex min-w-0 flex-col">
           <div className="flex h-6 items-center justify-between px-2 text-caption text-muted-foreground">
             <span>{group.label}</span>
-            {g === groups.length - 1 && more > 0 && <span className="tabular-nums">{more} more</span>}
+            <span className="tabular-nums">{group.count}</span>
           </div>
           {group.clips.map(clip => {
             const index = order.indexOf(clip)
@@ -578,16 +582,21 @@ function ClipboardHistoryCopied({ clip, onPin }: CopiedProps) {
  * Beside it, past a hairline, a search over the history and the clips
  * themselves: pinned ones first, then the rest newest first, each a row of
  * its swatch, thumbnail or glyph, its text and how long ago. Three show at
- * a time, around the selected one, with a count of the rest. The arrow keys
+ * a time, around the selected one, each group's caption counting all its
+ * clips. The search sits on a field one surface up, so it reads as a field
+ * at rest. Both columns start at the top of the widget. The arrow keys
  * move the selection from anywhere in the widget (the search included),
  * Enter copies it, and a double-click copies a row. The selection, the pins
  * and the search each work both ways (`value`, `pinned`, `query`, with
  * their `default…` and `on…Change`).
  *
- * Recording pauses from the context line (`paused`), and an app whose
- * copies are never kept, such as a password manager, shows as a chip
- * (`ignoredApp`). With no clips it says what will show up here, or that
- * the history is paused.
+ * Recording pauses from the context line (`paused`): an eye-slash Pause
+ * recording button, an eye to Resume recording, each named in its tooltip.
+ * While paused the context line says Recording paused and a Not recording
+ * chip in the warning hue sits beside the button. An app whose copies are
+ * never kept, such as a password manager, shows as a chip (`ignoredApp`).
+ * With no clips it says what will show up here, or that recording is
+ * paused, with Resume recording.
  *
  * At the open island's tall snap (`layout="tall"`) it becomes a sheet: the
  * search across the top with the pause and the chips beside it, then a
@@ -636,13 +645,19 @@ const ClipboardHistory = Object.assign(
     const [pinned, setPinned] = useControllableState(pinnedProp, defaultPinned, onPinnedChange)
     const [query, setQuery] = useControllableState(queryProp, defaultQuery, onQueryChange)
     const [paused, setPaused] = useControllableState(pausedProp, defaultPaused, onPausedChange)
+    const field = SURFACE_BG[useLift(1)]
 
     const status = (
       <>
-        {paused ? <Widget.Chip>Paused</Widget.Chip> : ignoredApp && <Widget.Chip>Ignoring {ignoredApp}</Widget.Chip>}
+        {paused ? (
+          <Widget.Chip color="var(--status-warning)">Not recording</Widget.Chip>
+        ) : (
+          ignoredApp && <Widget.Chip>Ignoring {ignoredApp}</Widget.Chip>
+        )}
         <Widget.Action
-          icon={paused ? Play : Pause}
-          label={paused ? 'Resume history' : 'Pause history'}
+          icon={paused ? Eye : EyeOff}
+          label={paused ? 'Resume recording' : 'Pause recording'}
+          pressed={paused}
           onClick={() => setPaused(!paused)}
         />
       </>
@@ -652,8 +667,8 @@ const ClipboardHistory = Object.assign(
       return (
         <Widget.Message
           layout={layout}
-          icon={paused ? Pause : ClipboardList}
-          title={paused ? 'Clipboard history is paused' : 'Copy something'}
+          icon={paused ? EyeOff : ClipboardList}
+          title={paused ? 'Recording is paused' : 'Copy something'}
           description={
             paused
               ? 'Nothing you copy is kept until you resume.'
@@ -661,8 +676,8 @@ const ClipboardHistory = Object.assign(
           }
           actions={
             paused && (
-              <Button variant="secondary" size="compact" leadingIcon={Play} onClick={() => setPaused(false)}>
-                Resume
+              <Button variant="primary" size="compact" leadingIcon={Eye} onClick={() => setPaused(false)}>
+                Resume recording
               </Button>
             )
           }
@@ -702,6 +717,7 @@ const ClipboardHistory = Object.assign(
     const search = (
       <Input
         size="compact"
+        className={field}
         icon={Search}
         placeholder="Search clips"
         aria-label="Search clips"
@@ -744,6 +760,7 @@ const ClipboardHistory = Object.assign(
       <div className={cn('flex min-h-0 flex-col', className)} onKeyDown={onKeyDown}>
         <Widget
           size={size}
+          align="start"
           className="flex-1"
           aside={
             <div className="flex min-w-0 flex-col gap-1">
@@ -753,8 +770,8 @@ const ClipboardHistory = Object.assign(
           }
           media={hasMedia(hero) && <Media clip={hero} />}
         >
-          <Widget.Header icon={KIND_ICON[hero.kind]} trailing={status}>
-            {[hero.app ?? KIND_LABEL[hero.kind], ago(now - hero.copiedAt)].join(' · ')}
+          <Widget.Header icon={paused ? EyeOff : KIND_ICON[hero.kind]} trailing={status}>
+            {paused ? 'Recording paused' : [hero.app ?? KIND_LABEL[hero.kind], ago(now - hero.copiedAt)].join(' · ')}
           </Widget.Header>
           <Hero clip={hero} pinned={heroPinned} onPin={togglePin} onCopy={onCopy} onDelete={onDelete} />
         </Widget>

@@ -7,6 +7,7 @@
 
 'use client'
 
+import Tooltip from '@justanarthur/modo-ui/components/overlays/tooltip'
 import { useReduceMotion } from '@justanarthur/modo-ui/lib/reduced-motion'
 import { useSize } from '@justanarthur/modo-ui/lib/size-context'
 import { SURFACE_BG } from '@justanarthur/modo-ui/lib/surface-classes'
@@ -59,6 +60,8 @@ interface NowPlayingTrack {
   source?: string
   /** Where it plays: a device's name. */
   output?: string
+  /** The device's short name for the output chip (`MacBook Pro`). Defaults to `output` without a trailing Speakers, Headphones or Output. */
+  outputShort?: string
   /** What kind of device `output` is, for its glyph. Defaults to `'built-in'`. */
   outputKind?: NowPlayingOutput
   /** The track's length, in seconds; `0` for a stream, which hides the scrubber. */
@@ -104,17 +107,10 @@ interface NowPlayingProps {
   emptyDescription?: ReactNode
   /** The empty state's way forward, such as a Button that opens a player. */
   emptyActions?: ReactNode
-  /** `tall` is the open island's tall snap: the artwork large, the title on the display role, a full-width scrubber and the transport under it, and where it plays from and to as rows. Defaults to `'fit'`. */
+  /** `tall` is the open island's tall snap: the artwork large, the title on the display role, a full-width scrubber and the output chip, transport and toggles under it. Defaults to `'fit'`. */
   layout?: WidgetLayout
   /** Classes for the root, which fills its container. */
   className?: string
-}
-
-const OUTPUT_LABEL: Record<NowPlayingOutput, string> = {
-  'built-in': 'Built-in speakers',
-  headphones: 'Headphones',
-  speaker: 'Speaker',
-  airplay: 'AirPlay',
 }
 
 const OUTPUT_ICON = { 'built-in': Laptop, headphones: Headphones, speaker: Speaker, airplay: Airplay }
@@ -123,6 +119,33 @@ const REPEAT_LABEL: Record<NowPlayingRepeat, string> = {
   off: 'Repeat',
   all: 'Repeat all',
   one: 'Repeat one',
+}
+
+const shortDevice = (name: string) => name.replace(/\s+(speakers?|headphones|output)$/i, '')
+
+/** Where it plays, as one chip by the controls: the device's glyph, and its short name unless `glyphOnly`; the full name in its tooltip. */
+function OutputChip({ track, glyphOnly }: { track: NowPlayingTrack; glyphOnly: boolean }) {
+  const level = useLift(1)
+  if (!track.output) return null
+  const Icon = OUTPUT_ICON[track.outputKind ?? 'built-in']
+  return (
+    <Tooltip content={track.output}>
+      <span
+        // biome-ignore lint/a11y/noNoninteractiveTabindex: the tooltip's trigger, so keyboard users can read the full name
+        tabIndex={0}
+        role="img"
+        aria-label={`Playing on ${track.output}`}
+        className={cn(
+          'inline-flex h-6 min-w-0 max-w-40 items-center gap-1.5 rounded-full text-caption text-muted-foreground outline-none focus-visible:ring-1 focus-visible:ring-focus-ring',
+          glyphOnly ? 'w-6 justify-center' : 'px-2',
+          SURFACE_BG[level],
+        )}
+      >
+        <Icon size={14} strokeWidth={1.5} className="shrink-0" />
+        {!glyphOnly && <span className="min-w-0 truncate">{track.outputShort ?? shortDevice(track.output)}</span>}
+      </span>
+    </Tooltip>
+  )
 }
 
 type TrackIdentity = Pick<NowPlayingTrack, 'id' | 'title' | 'artist' | 'album' | 'artwork' | 'tint'>
@@ -274,18 +297,19 @@ function Glow({ tint, children }: { tint?: string; children: ReactNode }) {
  *
  * Under the title and artist (with the album) runs the kit's MediaScrubber,
  * which ticks on by itself while playing and seeks once when a drag ends
- * (`onSeek`). The transport sits in the middle of the last row, the source
- * app and the output device on its left, and shuffle, repeat and the heart
+ * (`onSeek`), a thin line that becomes the slider on hover at either snap.
+ * The transport sits in the middle of the last row, the output device as a
+ * glyph chip (its name in the tooltip) and the source app on its left, and shuffle, repeat and the heart
  * on its right, each shown when its value or handler is given. Play / pause
  * runs through `playing` / `onPlayingChange`, or is kept here from
  * `defaultPlaying`; the toggles are the same. Without a track it says
  * nothing is playing and how to change that.
  *
  * At the open island's tall snap (`layout="tall"`) it becomes a sheet: the
- * artwork large beside the source, the title on the display role, the
- * artist and the album on lines of their own; then the scrubber across the
- * whole width with the transport and the toggles in one row under it; then
- * where it plays from and to, the app and the output device, as rows.
+ * artwork large beside the source app (the header, said once), the title on
+ * the display role, the artist and the album on lines of their own; then the
+ * same scrubber across the whole width with one row under it: the output
+ * chip (glyph and short name, `outputShort`), the transport and the toggles.
  *
  * The other forms are parts: `NowPlaying.Leading` and `NowPlaying.Trailing`
  * for the compact island's wings (the artwork, and the tinted Equalizer that
@@ -386,8 +410,6 @@ const NowPlaying = Object.assign(
         <Widget.Action icon={SkipForward} label="Next" filled onClick={onNext} />
       </div>
     )
-    const OutputIcon = OUTPUT_ICON[track.outputKind ?? 'built-in']
-
     if (layout === 'tall')
       return (
         <Widget.Sheet className={cn('relative isolate', className)}>
@@ -409,37 +431,22 @@ const NowPlaying = Object.assign(
 
           <div className="flex flex-col gap-2">
             {track.duration > 0 && (
-              <MediaScrubber position={track.position} duration={track.duration} playing={playing} onSeek={onSeek} />
+              <MediaScrubber
+                quiet
+                position={track.position}
+                duration={track.duration}
+                playing={playing}
+                onSeek={onSeek}
+              />
             )}
             <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-              <span />
+              <span className="flex min-w-0 items-center">
+                <OutputChip track={track} glyphOnly={false} />
+              </span>
               {transport}
               <div className="flex items-center justify-end">{toggles}</div>
             </div>
           </div>
-
-          {(track.source || track.output) && (
-            <Widget.Section label="Playing">
-              {track.source && (
-                <Widget.Row trailing={<Disc3 size={14} strokeWidth={1.5} />} leading="From">
-                  {track.source}
-                </Widget.Row>
-              )}
-              {track.output && (
-                <Widget.Row
-                  leading="On"
-                  trailing={
-                    <>
-                      <OutputIcon size={14} strokeWidth={1.5} />
-                      {OUTPUT_LABEL[track.outputKind ?? 'built-in']}
-                    </>
-                  }
-                >
-                  {track.output}
-                </Widget.Row>
-              )}
-            </Widget.Section>
-          )}
         </Widget.Sheet>
       )
 
@@ -472,10 +479,14 @@ const NowPlaying = Object.assign(
           )}
 
           <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-            <Widget.Meta>
-              {track.source && <Widget.MetaItem icon={Disc3}>{track.source}</Widget.MetaItem>}
-              {track.output && <Widget.MetaItem icon={OutputIcon}>{track.output}</Widget.MetaItem>}
-            </Widget.Meta>
+            <div className="flex min-w-0 items-center gap-2">
+              <OutputChip track={track} glyphOnly />
+              {track.source && (
+                <Widget.Meta>
+                  <Widget.MetaItem icon={Disc3}>{track.source}</Widget.MetaItem>
+                </Widget.Meta>
+              )}
+            </div>
             {transport}
             <div className="flex items-center justify-end">{toggles}</div>
           </div>

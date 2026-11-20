@@ -396,6 +396,8 @@ interface WidgetProps {
   children: ReactNode
   /** Step on the size ladder for every part inside. Omitted, the widget follows the surrounding SizeProvider. */
   size?: SizeVariant
+  /** `center` sets the columns' content in the middle of the widget's height; `start` at its top, for a widget whose columns differ in height (a list beside a hero). Defaults to `'center'`. */
+  align?: 'center' | 'start'
   /** Classes for the root, which fills the island's content area. */
   className?: string
 }
@@ -434,18 +436,22 @@ interface WidgetProps {
  * @example {@include ./examples.mdx}
  */
 const Widget = Object.assign(
-  function Widget({ media, aside, children, size, className }: WidgetProps) {
+  function Widget({ media, aside, children, size, align = 'center', className }: WidgetProps) {
     const step = useSize(size)
+    const justify = align === 'start' ? 'justify-start' : 'justify-center'
     return (
       <SizeScope size={size}>
-        <div className={cn('@container flex w-full min-h-0 flex-col justify-center', className)}>
+        <div className={cn('@container flex w-full min-h-0 flex-col', justify, className)}>
           <div className={cn('flex w-full min-h-0 items-stretch', GAP[step.variant])}>
-            {media && <div className="flex shrink-0 items-center">{media}</div>}
-            <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">{children}</div>
+            {media && (
+              <div className={cn('flex shrink-0', align === 'start' ? 'items-start' : 'items-center')}>{media}</div>
+            )}
+            <div className={cn('flex min-w-0 flex-1 flex-col gap-1', justify)}>{children}</div>
             {aside && (
               <div
                 className={cn(
-                  'flex w-[42%] min-w-0 shrink-0 flex-col justify-center border-l border-border @max-[30rem]:hidden',
+                  'flex w-[42%] min-w-0 shrink-0 flex-col border-l border-border @max-[30rem]:hidden',
+                  justify,
                   ASIDE[step.variant],
                 )}
               >

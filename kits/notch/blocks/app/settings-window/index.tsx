@@ -80,6 +80,17 @@ interface SettingsPermission {
   action?: ReactNode
 }
 
+interface AboutHeader {
+  /** The app's icon, about 64 px: an `<img>` or any element. */
+  icon?: ReactNode
+  /** The app's name, the page's heading. */
+  name: string
+  /** The version line: `Version 1.7.0 (214)`. */
+  version?: ReactNode
+  /** The copyright line: `© 2026 justAnArthur`. */
+  copyright?: ReactNode
+}
+
 interface AboutRow {
   label: string
   value: ReactNode
@@ -114,6 +125,8 @@ interface SettingsWindowProps {
   onFixPermission?: (id: string, state: PermissionState) => void
   /** @deprecated Use `onFixPermission`. Called for a permission that is `off`, when `onFixPermission` is not given. */
   onOpenPermission?: (id: string) => void
+  /** The About page's header: the app's icon, name, version and ©, over its rows. Without it the page is titled About. */
+  aboutHeader?: AboutHeader
   /** The About page's rows: version, mode, screen. Defaults to `[]`. */
   about?: AboutRow[]
   /** The host's own pages, listed among the built-in ones (see `after`), such as a plugin library. Defaults to `[]`. */
@@ -243,17 +256,37 @@ function Plugins({ plugins, enabled, onChange, onOpen }: PluginsProps) {
 const permissionState = ({ state, granted }: SettingsPermission): PermissionState | undefined =>
   state ?? (granted === undefined ? undefined : granted ? 'allowed' : 'off')
 
-function About({ rows }: { rows: AboutRow[] }) {
+function AboutRows({ rows }: { rows: AboutRow[] }) {
+  if (!rows.length) return null
   return (
-    <Page title="About">
-      <List>
-        {rows.map(row => (
-          <List.Row key={row.label} label={<span className="text-muted-foreground">{row.label}</span>}>
-            <span className="min-w-0 truncate pr-3 text-body text-foreground">{row.value}</span>
-          </List.Row>
-        ))}
-      </List>
-    </Page>
+    <List>
+      {rows.map(row => (
+        <List.Row key={row.label} label={<span className="text-muted-foreground">{row.label}</span>}>
+          <span className="min-w-0 truncate pr-3 text-body text-foreground">{row.value}</span>
+        </List.Row>
+      ))}
+    </List>
+  )
+}
+
+function About({ header, rows }: { header?: AboutHeader; rows: AboutRow[] }) {
+  if (!header)
+    return (
+      <Page title="About">
+        <AboutRows rows={rows} />
+      </Page>
+    )
+
+  return (
+    <section className="flex flex-col gap-6">
+      <div className="flex flex-col items-center gap-1 pt-4 text-center">
+        {header.icon && <span className="mb-3 flex size-16 items-center justify-center">{header.icon}</span>}
+        <h2 className="m-0 text-title weight-semibold text-foreground">{header.name}</h2>
+        {header.version && <p className="m-0 text-body text-muted-foreground tabular-nums">{header.version}</p>}
+        {header.copyright && <p className="m-0 text-caption text-muted-foreground">{header.copyright}</p>}
+      </div>
+      <AboutRows rows={rows} />
+    </section>
   )
 }
 
@@ -298,7 +331,9 @@ function sidebarPages(pages: SettingsPage[]) {
  * off and, for one that brings settings, a chevron to its page. Permissions
  * is a PermissionList: Allowed, Not asked, Off or Needs reset per row, each
  * with its one action (`onFixPermission`), and the sidebar's Permissions row
- * counts the ones off or stale. About lists the `about` rows. A plugin's page
+ * counts the ones off or stale. About lists the `about` rows, under the
+ * app's icon, name, version and © when `aboutHeader` is given (the rows
+ * stay the host's, so diagnostics can join them behind an ⌥-click). A plugin's page
  * shows its `settings` node under its name.
  *
  * A plugin row takes a `badge` after its name (Update, Incompatible) and
@@ -332,6 +367,7 @@ export default function SettingsWindow({
   permissions = [],
   onFixPermission,
   onOpenPermission,
+  aboutHeader,
   about = [],
   pages = [],
   flush = false,
@@ -395,7 +431,7 @@ export default function SettingsWindow({
                 />
               </Page>
             )}
-            {page === 'about' && <About rows={about} />}
+            {page === 'about' && <About header={aboutHeader} rows={about} />}
             {custom && (
               <Page title={custom.label} lead={custom.lead}>
                 {custom.content}
@@ -425,6 +461,7 @@ export default function SettingsWindow({
 }
 
 export type {
+  AboutHeader,
   AboutRow,
   AppPreferences,
   BuiltInPage,

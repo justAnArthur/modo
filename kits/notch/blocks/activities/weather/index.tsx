@@ -9,7 +9,6 @@
 'use client'
 
 import Button from '@justanarthur/modo-ui/components/actions/button'
-import Sparkline from '@justanarthur/modo-ui/components/data-display/sparkline'
 import { type SizeVariant, useSize } from '@justanarthur/modo-ui/lib/size-context'
 import { SURFACE_BG } from '@justanarthur/modo-ui/lib/surface-classes'
 import { useLift } from '@justanarthur/modo-ui/lib/surface-context'
@@ -35,7 +34,6 @@ import {
   type LucideIcon,
   MapPin,
   Moon,
-  RotateCw,
   Sun,
   Sunrise,
   Sunset,
@@ -129,7 +127,7 @@ interface WeatherProps {
   now?: number
   /** Formats the hours. Defaults to the browser's locale. */
   locale?: Intl.LocalesArgument
-  /** Called by the refresh button, and by Try again after an error; without it neither shows. */
+  /** Called by Try again when the first fetch failed; without it the button doesn't show. The forecast refreshes on its own, so there is no refresh button. */
   onRefresh?: () => void
   /** Called by Allow location while access is undetermined. */
   onRequestAccess?: () => void
@@ -192,6 +190,14 @@ const WET = 30
 const HOURS = 6
 /** Hours the tall layout's strip scrolls through. */
 const DAY_HOURS = 24
+/** The forecast counts as stale, and says how old it is, past this age. */
+const STALE = 30 * MINUTE
+// The tall strip's curve: a column per hour, and the least span of degrees
+// it draws over its height, so a flat day stays nearly flat.
+const COLUMN = 48
+const CURVE_HEIGHT = 36
+const CURVE_LABEL = 22
+const CURVE_SPAN = 8
 /** Days the tall layout lists. */
 const WEEK = 7
 
@@ -252,9 +258,16 @@ function uvLevel(uv: number) {
 
 function ago(ms: number) {
   const minutes = Math.floor(ms / MINUTE)
-  if (minutes < 1) return 'Just now'
+  if (minutes < 1) return 'just now'
   if (minutes < 60) return `${minutes} min ago`
   return `${Math.floor(minutes / 60)} h ago`
+}
+
+/** Today's chance of rain: the most of the day's own figure and the hours left today, so the details never say less than the strip. */
+function rainToday(today: WeatherDay | undefined, hours: WeatherHour[], midnight: number) {
+  const chances = [today?.precipitation, ...hours.filter(hour => hour.time < midnight).map(hour => hour.precipitation)]
+  const known = chances.filter((chance): chance is number => chance !== undefined)
+  return known.length ? Math.max(...known) : undefined
 }
 
 /** The first hour, from `now`, with a chance of rain worth saying, while it isn't raining already. */
@@ -329,11 +342,56 @@ interface StripProps {
   locale?: Intl.LocalesArgument
 }
 
-/** The tall layout's day ahead: a column per hour (hour, glyph, temperature, chance of rain) with the temperature's curve through them, scrolling sideways. */
-function HourStrip({ hours, unit, locale }: StripProps) {
-  const size = useSize()
+/** The temperature as a line through a point per hour, each point labelled with its value. */
+function TemperatureCurve({ hours, unit }: { hours: WeatherHour[]; unit: WeatherUnit }) {
   const temperatures = hours.map(hour => hour.temperature)
   const low = Math.min(...temperatures)
+  const high = Math.max(...temperatures)
+  const span = Math.max(high - low, CURVE_SPAN)
+  const middle = (low + high) / 2
+  const points = temperatures.map((value, i) => ({
+    x: i * COLUMN + COLUMN / 2,
+    y: CURVE_LABEL + CURVE_HEIGHT * (0.5 - (value - middle) / span),
+  }))
+  const width = hours.length * COLUMN
+  const height = CURVE_LABEL + CURVE_HEIGHT
+  return (
+    <div
+      role="img"
+      aria-label={`Temperature over the next ${hours.length} hours, from ${temp(low, unit)} to ${temp(high, unit)}`}
+      className="relative shrink-0"
+      style={{ width, height }}
+    >
+      <svg aria-hidden width={width} height={height} className="absolute inset-0 overflow-visible">
+        <polyline
+          points={points.map(point => `${point.x},${point.y}`).join(' ')}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="text-muted-foreground"
+        />
+        {points.map((point, i) => (
+          <circle key={hours[i]!.time} cx={point.x} cy={point.y} r={2.5} className="fill-foreground" />
+        ))}
+      </svg>
+      {points.map((point, i) => (
+        <span
+          key={hours[i]!.time}
+          className="absolute w-12 -translate-y-full pb-1 text-center text-body text-foreground"
+          style={{ left: i * COLUMN, top: point.y }}
+        >
+          {temp(hours[i]!.temperature, unit)}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+/** The tall layout's day ahead: a column per hour (hour, glyph), the temperature's curve through them with each hour's value on its point, and the chance of rain, scrolling sideways. */
+function HourStrip({ hours, unit, locale }: StripProps) {
+  const size = useSize()
   const wet = hours.some(hour => (hour.precipitation ?? 0) >= WET)
   return (
     <ScrollArea orientation="horizontal" viewportClassName="scroll-fade-x">
@@ -353,27 +411,16 @@ function HourStrip({ hours, unit, locale }: StripProps) {
             </div>
           ))}
         </div>
-        {/* Inset half a column, so each point sits over its hour. */}
-        <div className="px-6">
-          <Sparkline
-            values={temperatures.map(value => value - low)}
-            max={Math.max(...temperatures) - low}
-            label={`Temperature over the next ${hours.length} hours`}
-            tone="muted"
-          />
-        </div>
-        <div className="flex">
-          {hours.map(hour => (
-            <div key={hour.time} className="flex w-12 shrink-0 flex-col items-center gap-0.5">
-              <span className="text-body text-foreground">{temp(hour.temperature, unit)}</span>
-              {wet && (
-                <span className="h-4 text-caption text-status-info">
-                  {(hour.precipitation ?? 0) >= WET && `${hour.precipitation}%`}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
+        <TemperatureCurve hours={hours} unit={unit} />
+        {wet && (
+          <div className="flex">
+            {hours.map(hour => (
+              <span key={hour.time} className="h-4 w-12 shrink-0 text-center text-caption text-status-info">
+                {(hour.precipitation ?? 0) >= WET && `${hour.precipitation}%`}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </ScrollArea>
   )
@@ -560,12 +607,15 @@ function WeatherAlert({
  * and tomorrow beside it.
  *
  * The hero is the temperature in display type after the condition's glyph,
+ * set as `7°`, the unit left to settings (`unit`),
  * in its hue (the sun's amber, rain's blue, the rest plain); under it the
  * condition, how warm it feels and, when the next hours turn wet, around
- * when. The meta line carries today's high and low, the chance of rain,
+ * when. The meta line carries today's high and low, today's chance of rain
+ * (the most of the day's figure and its hours, so it never contradicts them),
  * the wind, and the humidity and UV index when given, the last giving way
- * first. The header names the place and how long ago the forecast was
- * read, with a refresh button when `onRefresh` is given. Beside it, past a
+ * first. The header names the place, and how long ago the forecast was read
+ * only once that is over 30 minutes, or offline or failed; it refreshes on
+ * its own, so there is no refresh button. Beside it, past a
  * hairline, the next six hours as a strip of hour, glyph and temperature,
  * with the chance of rain under each once any hour is wet, then tomorrow as
  * a row.
@@ -585,11 +635,11 @@ function WeatherAlert({
  * At the open island's tall snap (`layout="tall"`) it becomes a sheet: the
  * hero larger, the condition, how warm it feels and today's high and low
  * beside it; then the next 24 hours as a strip that scrolls sideways, each
- * hour's glyph and temperature with the temperature's curve running through
- * them and the chance of rain under each once any hour is wet; then, split
+ * hour's glyph over the temperature's curve, each point labelled with its
+ * value, and the chance of rain under each once any hour is wet; then, split
  * by a hairline, the week as rows of day, glyph, chance of rain and the low
  * and high on a bar spanning the week's range, and beside it the details:
- * how warm it feels, the wind, the humidity, the UV index in words and
+ * how warm it feels, today's chance of rain, the wind, the humidity, the UV index in words and
  * today's sunrise and sunset (`sunrise` / `sunset` on the day).
  *
  * The other forms are parts: `Weather.Leading` and `Weather.Trailing` for
@@ -688,20 +738,20 @@ const Weather = Object.assign(
     const ahead = hours.filter(hour => hour.time >= hourStart).sort((a, b) => a.time - b.time)
     const [today, tomorrow] = days
     const rain = rainAhead(current, ahead)
-    const fresh = ago(Math.max(0, now - current.time))
+    const chance = rainToday(today, ahead, new Date(now).setHours(24, 0, 0, 0))
+    const age = Math.max(0, now - current.time)
     const freshness =
-      status === 'offline' ? `Offline · ${fresh}` : status === 'error' ? `Not updated · ${fresh}` : fresh
+      status === 'offline'
+        ? `Offline · updated ${ago(age)}`
+        : status === 'error'
+          ? `Not updated · ${ago(age)}`
+          : age > STALE && `Updated ${ago(age)}`
     const feels = current.apparent !== undefined && `Feels like ${temp(current.apparent, unit)}`
     const soon = rain && `${LABEL[rain.condition]} around ${hourOf(rain.time, locale)}`
     const header = (
       <Widget.Header
         icon={MapPin}
-        trailing={
-          <>
-            <span className="whitespace-nowrap pr-1 text-caption">{freshness}</span>
-            {onRefresh && <Widget.Action icon={RotateCw} label="Refresh" onClick={onRefresh} />}
-          </>
-        }
+        trailing={freshness && <span className="whitespace-nowrap pr-1 text-caption">{freshness}</span>}
       >
         {location ?? 'Current location'}
       </Widget.Header>
@@ -721,7 +771,7 @@ const Weather = Object.assign(
                   size={SHEET_GLYPH[size.variant]}
                   className={hueFor(current.condition, current.isDay)}
                 />
-                <Widget.Figure value={degrees(current.temperature, unit)} unit={unit === 'fahrenheit' ? '°F' : '°C'} />
+                <Widget.Figure value={temp(current.temperature, unit)} />
               </div>
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <Widget.Title>{LABEL[current.condition]}</Widget.Title>
@@ -752,9 +802,9 @@ const Weather = Object.assign(
                   {temp(current.apparent, unit)}
                 </Detail>
               )}
-              {today?.precipitation !== undefined && (
-                <Detail icon={Umbrella} label="Chance of rain">
-                  {today.precipitation}%
+              {chance !== undefined && (
+                <Detail icon={Umbrella} label="Rain today">
+                  {chance}%
                 </Detail>
               )}
               {current.wind !== undefined && (
@@ -815,7 +865,7 @@ const Weather = Object.assign(
             size={HERO_GLYPH[size.variant]}
             className={hueFor(current.condition, current.isDay)}
           />
-          <Widget.Figure value={degrees(current.temperature, unit)} unit={unit === 'fahrenheit' ? '°F' : '°C'} />
+          <Widget.Figure value={temp(current.temperature, unit)} />
         </div>
 
         <div className="flex min-w-0 flex-col gap-0.5">
@@ -830,9 +880,7 @@ const Weather = Object.assign(
               <Widget.MetaItem icon={ArrowDown}>{temp(today.low, unit)}</Widget.MetaItem>
             </>
           )}
-          {today?.precipitation !== undefined && (
-            <Widget.MetaItem icon={Umbrella}>{today.precipitation}%</Widget.MetaItem>
-          )}
+          {chance !== undefined && <Widget.MetaItem icon={Umbrella}>{chance}%</Widget.MetaItem>}
           {current.wind !== undefined && <Widget.MetaItem icon={Wind}>{speed(current.wind, unit)}</Widget.MetaItem>}
           {current.humidity !== undefined && (
             <Widget.MetaItem icon={Droplets}>{Math.round(current.humidity)}%</Widget.MetaItem>

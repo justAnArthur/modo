@@ -26,6 +26,14 @@ The moon's glyph by night, the hue plain; a dry strip leaves the chance of rain 
   <Weather location="Bratislava" current={NIGHT.current} hours={NIGHT.hours} days={DAYS} now={NIGHT.current.time + 10 * 60_000} />
 </WidgetIsland>
 
+# Stale
+
+The header says how old the forecast is only once it's over 30 minutes.
+
+<WidgetIsland tab="weather">
+  <Weather {...FORECAST} now={FORECAST.now + 45 * 60000} />
+</WidgetIsland>
+
 # Offline
 
 The last forecast stays up; the header says how old it is.

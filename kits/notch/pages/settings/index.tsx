@@ -6,7 +6,7 @@
 
 import SettingsWindow from '../../blocks/app/settings-window'
 import { LIBRARY_PAGE } from '../../mock/library'
-import { ABOUT, MockWindow, PERMISSIONS, PLUGINS } from '../../mock/settings'
+import { ABOUT_DETAILS, ABOUT_HEADER, MockWindow, PERMISSIONS, PLUGINS } from '../../mock/settings'
 
 interface SettingsProps {
   /** The page open at first. Defaults to `'general'`. */
@@ -43,7 +43,8 @@ export default function Settings({ page = 'general' }: SettingsProps) {
         pages={[LIBRARY_PAGE]}
         plugins={PLUGINS}
         permissions={PERMISSIONS}
-        about={ABOUT}
+        aboutHeader={ABOUT_HEADER}
+        about={ABOUT_DETAILS}
       />
     </MockWindow>
   )

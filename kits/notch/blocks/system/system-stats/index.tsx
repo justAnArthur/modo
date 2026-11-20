@@ -86,7 +86,7 @@ interface SystemStatsProps {
   disk?: StatsDisk
   /** Seconds since the last boot. */
   uptime?: number
-  /** The busiest processes, in any order: the top three list beside the hero, by CPU; the top eight at the tall snap. */
+  /** The busiest processes, in any order: the top three by CPU, beside the hero or, at the tall snap, as a table. */
   processes?: StatsProcess[]
   /** Step on the size ladder. Omitted, it follows the surrounding SizeProvider. */
   size?: SizeVariant
@@ -98,8 +98,22 @@ interface SystemStatsProps {
 
 /** Processes listed before the count of the rest. */
 const ROWS = 3
-/** Processes in the tall snap's table. */
-const SHEET_ROWS = 8
+/** Processes in the tall snap's table: as many as the short island lists, so the sheet never clips. */
+const SHEET_ROWS = 3
+/** The least top a share's trend draws to, so an idle machine's few percent still read as a line, not the floor. */
+const TREND_FLOOR = 0.2
+/** Headroom over a trend's peak. */
+const HEADROOM = 1.25
+/** A series that moves less than this share of its peak is flat: a line, no fill under it. */
+const FLAT = 0.05
+
+/** A share trend's top: its peak with headroom, at least `TREND_FLOOR`, at most 1. */
+const ceilingOf = (series: number[]) => Math.min(1, Math.max(TREND_FLOOR, Math.max(0, ...series) * HEADROOM))
+
+function isFlat(series: number[]) {
+  const peak = Math.max(0, ...series)
+  return peak === 0 || peak - Math.min(...series) < peak * FLAT
+}
 
 const percent = (v: number) => `${Math.round(v * 100)}%`
 const share = (v: number) => (v < 0.1 ? `${(v * 100).toFixed(1)}%` : percent(v))
@@ -223,26 +237,54 @@ interface TrendProps {
   /** The latest share, from 0 to 1; left out while measuring. */
   value?: number
   unit?: string
-  series: number[]
+  /** Every reading, drawn as a trend; left out, the value shows as one meter (memory pressure, which reads as a level, not a history). */
+  series?: number[]
   /** The line under the trend. */
   caption: ReactNode
   className?: string
 }
 
-/** One figure at the tall snap: its share large, every reading as a trend under it, one line on what it means. */
+/** One figure at the tall snap: its share large, its trend (or its meter) under it, one line on what it means. */
 function Trend({ label, icon: Icon, value, unit, series, caption, className }: TrendProps) {
+  const name = value === undefined ? `${label}, measuring` : `${label}, ${percent(value)}`
   return (
     <div className={cn('flex min-w-0 flex-col gap-1', className)} aria-busy={value === undefined}>
       <Widget.Header icon={Icon}>{label}</Widget.Header>
       <Widget.Figure value={value === undefined ? '–' : percent(value)} unit={unit} />
-      <Sparkline
-        values={series}
-        max={1}
-        area
-        tone={toneOf(value ?? 0)}
-        label={value === undefined ? `${label}, measuring` : `${label}, ${percent(value)}`}
-        className={cn('my-1 h-14 w-full', value === undefined && 'text-muted-foreground')}
-      />
+      {series ? (
+        <Sparkline
+          values={series}
+          max={ceilingOf(series)}
+          area={!isFlat(series)}
+          tone={toneOf(value ?? 0)}
+          label={name}
+          className={cn('my-1 h-10 w-full', value === undefined && 'text-muted-foreground')}
+        />
+      ) : (
+        <span className="my-1 flex h-10 items-center">
+          <Meter variant="line" value={value ?? 0} label={name} className="w-full" />
+        </span>
+      )}
+      <Widget.Subtitle>{caption}</Widget.Subtitle>
+    </div>
+  )
+}
+
+interface GaugeProps {
+  icon: LucideIcon
+  label: string
+  /** The share used, from 0 to 1. */
+  value: number
+  tone?: MeterTone
+  caption: string
+}
+
+/** A level at the tall snap, headed like the trends: glyph and name, the level as a line, the figures under it. */
+function Gauge({ icon, label, value, tone, caption }: GaugeProps) {
+  return (
+    <div className="flex min-w-0 flex-col justify-center gap-1">
+      <Widget.Header icon={icon}>{label}</Widget.Header>
+      <Meter variant="line" value={value} tone={tone} label={`${label}, ${caption}`} className="my-1 w-full" />
       <Widget.Subtitle>{caption}</Widget.Subtitle>
     </div>
   )
@@ -319,11 +361,12 @@ function Sheet({ samples, hero, battery, disk, uptime, processes, size, classNam
       icon={MemoryStick}
       value={last && pressureOf(last)}
       unit="pressure"
-      series={samples.map(pressureOf)}
       caption={last ? `${bytes(last.memoryUsed)} of ${bytes(last.memoryTotal)} in use` : 'Measuring…'}
     />
   )
   const [first, second] = hero === 'cpu' ? [cpu, memory] : [memory, cpu]
+  const netIn = samples.map(s => s.netIn)
+  const netOut = samples.map(s => s.netOut)
   const left = battery?.minutesLeft === undefined ? undefined : clock(battery.minutesLeft)
 
   return (
@@ -350,33 +393,29 @@ function Sheet({ samples, hero, battery, disk, uptime, processes, size, classNam
             </span>
           </div>
           <Sparkline
-            values={samples.map(s => s.netIn)}
-            secondary={samples.map(s => s.netOut)}
-            area
+            values={netIn}
+            secondary={isFlat(netOut) ? undefined : netOut}
+            area={!isFlat(netIn)}
             label={last ? `Network, ${rate(last.netIn)} in, ${rate(last.netOut)} out` : 'Network, measuring'}
-            className={cn('my-1 h-12 w-full', !last && 'text-muted-foreground')}
+            className={cn('my-1 h-9 w-full', !last && 'text-muted-foreground')}
           />
         </div>
-        {(battery || disk) && (
-          <div className="flex min-w-0 flex-col justify-center gap-4">
-            {battery && (
-              <Meter
-                label={battery.charging ? 'Battery, charging' : 'Battery'}
-                value={battery.level}
-                max={100}
-                tone={batteryTone(battery)}
-                detail={`${battery.level}%${left ? ` · ${left} ${battery.charging ? 'to full' : 'left'}` : ''}`}
-              />
-            )}
-            {disk && (
-              <Meter
-                label="Startup disk"
-                value={disk.total - disk.free}
-                max={disk.total}
-                detail={`${bytes(disk.free)} free of ${bytes(disk.total)}`}
-              />
-            )}
-          </div>
+        {battery && (
+          <Gauge
+            icon={batteryIcon(battery)}
+            label="Battery"
+            value={battery.level / 100}
+            tone={batteryTone(battery)}
+            caption={`${battery.level}%${left ? ` · ${left} ${battery.charging ? 'to full' : 'left'}` : ''}${battery.charging ? ' · charging' : ''}`}
+          />
+        )}
+        {disk && (
+          <Gauge
+            icon={HardDrive}
+            label="Startup disk"
+            value={(disk.total - disk.free) / disk.total}
+            caption={`${bytes(disk.free)} free of ${bytes(disk.total)}`}
+          />
         )}
       </div>
 
@@ -417,9 +456,12 @@ function SystemStatsMinimal({ sample }: { sample?: StatsSample }) {
  * The hero is the CPU load, set large, with every reading so far as a
  * modo-ui Sparkline beside it (it spans the width however many readings
  * there are: the island stays open for seconds, too short to fill a fixed
- * window). The line turns to the warning hue from 75% and the error hue
- * from 90%, so the color comes from the load. When memory is what's tight,
- * `hero="memory"` makes memory pressure the figure and its trend instead.
+ * window). The trend draws up to its peak with headroom but never under
+ * 20%, so an idle machine's few percent still read as a line, and a flat
+ * series is a bare line with no fill. The line turns to the warning hue
+ * from 75% and the error hue from 90%, so the color comes from the load.
+ * When memory is what's tight, `hero="memory"` makes memory pressure the
+ * figure, as one meter: pressure is a level, not a history.
  * Under it one word for how the machine is doing and who's busiest, then
  * the facts: memory in use of all of it (or the CPU), the network's in and
  * out rates, and, when given, the battery with its time left and the
@@ -434,10 +476,12 @@ function SystemStatsMinimal({ sample }: { sample?: StatsSample }) {
  *
  * At the open island's tall snap (`layout="tall"`) it becomes a sheet: CPU
  * and memory pressure side by side, each its figure large over its trend
- * and a line on what it means (the hero's column first); then the
- * network's in and out as one graph, its rates over it, beside the battery
- * and the startup disk as Meter bars; then the top eight processes as a
- * table, each with its share of the CPU as a line and the memory it holds.
+ * (memory over its meter) and a line on what it means (the hero's column
+ * first); then the network's in and out as one graph (the out line only
+ * once it moves), its rates over it, beside the battery and the startup
+ * disk, each headed by its glyph like the others, as a level line; then the
+ * top three processes as a table, each with its share of the CPU as a line
+ * and the memory it holds.
  *
  * `SystemStats.Leading` and `SystemStats.Trailing` show the CPU load in the
  * compact island's wings, `SystemStats.Minimal` as a ring in the split
@@ -472,7 +516,7 @@ const SystemStats = Object.assign(
       )
 
     const last = samples.at(-1)
-    const series = hero === 'cpu' ? samples.map(s => s.cpu) : samples.map(pressureOf)
+    const series = samples.map(s => s.cpu)
     const load = last ? (hero === 'cpu' ? last.cpu : pressureOf(last)) : 0
     const name = hero === 'cpu' ? 'CPU' : 'Memory pressure'
     const busiest = processes?.length ? processes.reduce((a, b) => (b.cpu > a.cpu ? b : a)).name : undefined
@@ -490,14 +534,23 @@ const SystemStats = Object.assign(
             unit={hero === 'cpu' ? 'CPU' : 'pressure'}
             className="shrink-0"
           />
-          <Sparkline
-            values={series}
-            max={1}
-            area
-            tone={toneOf(load)}
-            label={last ? `${name}, ${percent(load)}` : `${name}, measuring`}
-            className={cn('mb-1.5 h-9 min-w-0 flex-1', !last && 'text-muted-foreground')}
-          />
+          {hero === 'cpu' ? (
+            <Sparkline
+              values={series}
+              max={ceilingOf(series)}
+              area={!isFlat(series)}
+              tone={toneOf(load)}
+              label={last ? `${name}, ${percent(load)}` : `${name}, measuring`}
+              className={cn('mb-1.5 h-9 min-w-0 flex-1', !last && 'text-muted-foreground')}
+            />
+          ) : (
+            <Meter
+              variant="line"
+              value={load}
+              label={last ? `${name}, ${percent(load)}` : `${name}, measuring`}
+              className="mb-3 min-w-0 flex-1"
+            />
+          )}
         </div>
         <Widget.Subtitle className="mb-1">
           {last ? [verdict(load), busiest && `${busiest} is busiest`].filter(Boolean).join(' · ') : 'Measuring…'}
