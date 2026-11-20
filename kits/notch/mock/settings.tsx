@@ -16,7 +16,7 @@ import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { Activity, CalendarDays, ClipboardList, Clock3, CloudSun, FolderDown, MapPin, Music, X } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
-import type { AboutRow, SettingsPermission, SettingsPlugin } from '../blocks/app/settings-window'
+import type { AboutHeader, AboutRow, SettingsPermission, SettingsPlugin } from '../blocks/app/settings-window'
 import { ZONES } from './clock'
 import { useFitScale } from './fit'
 
@@ -449,11 +449,30 @@ export const PERMISSIONS: SettingsPermission[] = [
   },
 ]
 
+/** The app's icon, made of tokens: the island hanging from a dark tile's top edge. */
+function AppIcon() {
+  return (
+    <span className="dark flex size-16 justify-center rounded-2xl bg-ink ring-1 ring-border ring-inset">
+      <span className="h-3 w-8 rounded-b-lg bg-foreground" />
+    </span>
+  )
+}
+
+export const ABOUT_HEADER: AboutHeader = {
+  icon: <AppIcon />,
+  name: 'Just Notch',
+  version: 'Version 1.7.0 (214)',
+  copyright: '© 2026 justAnArthur',
+}
+
 export const ABOUT: AboutRow[] = [
   { label: 'Version', value: '1.4.0' },
   { label: 'Mode', value: 'Release' },
   { label: 'Screen', value: '1512 × 982 panel, hardware notch' },
 ]
+
+/** The rows under `ABOUT_HEADER`, which already says the version. */
+export const ABOUT_DETAILS = ABOUT.filter(row => row.label !== 'Version')
 
 const LIGHTS = ['bg-status-error', 'bg-status-warning', 'bg-status-success']
 

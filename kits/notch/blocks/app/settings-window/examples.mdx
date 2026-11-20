@@ -1,5 +1,5 @@
 import SettingsWindow from './index'
-import { ABOUT, MockWindow, PERMISSIONS, PLUGINS } from '../../../mock/settings'
+import { ABOUT, ABOUT_DETAILS, ABOUT_HEADER, MockWindow, PERMISSIONS, PLUGINS } from '../../../mock/settings'
 import { LIBRARY_PAGE, LIBRARY_PLUGINS } from '../../../mock/library'
 
 # Settings
@@ -24,6 +24,14 @@ Allowed, Not asked, Off and Needs reset, each with its one action; a spinner whi
 
 <MockWindow title="Settings">
   <SettingsWindow name="Just Notch" defaultValue="permissions" plugins={PLUGINS} permissions={PERMISSIONS} about={ABOUT} />
+</MockWindow>
+
+# About
+
+`aboutHeader` sets the app's icon, name, version and © over the `about` rows; without it the page is titled About and holds the rows alone.
+
+<MockWindow title="Settings">
+  <SettingsWindow name="Just Notch" defaultValue="about" plugins={PLUGINS} permissions={PERMISSIONS} aboutHeader={ABOUT_HEADER} about={ABOUT_DETAILS} />
 </MockWindow>
 
 # A plugin's settings
