@@ -19,7 +19,7 @@ import { type ReactNode, useState } from 'react'
 import IslandTabs, { type IslandTab } from '../../../components/island/island-tabs'
 import { DEFAULT_NOTCH, INSET } from '../../../lib/geometry'
 import { useIsland } from '../../../lib/island-context'
-import { contentEnter, contentHidden, contentShown } from '../../../lib/motion'
+import { contentEnter, contentFade, contentHidden, contentShown } from '../../../lib/motion'
 
 interface ExpandedIslandTab extends IslandTab {
   /** The tab's view, in the content area. */
@@ -127,7 +127,7 @@ export default function ExpandedIsland({
             style={{ paddingInline: INSET }}
             initial={reduced ? { opacity: 0 } : contentHidden}
             animate={reduced ? { opacity: 1 } : contentShown}
-            transition={contentEnter}
+            transition={reduced ? contentFade : contentEnter}
           >
             {tab ? (
               tab.content

@@ -64,13 +64,40 @@ A context line, the hero (a number on the display role, a name on the title role
 
 # Message
 
-The empty, permission and error state, across the wide, short island.
+The empty, connect, permission and error state: it starts on the 20 px content inset, like the title above it, and its one primary button is `onAction` (Open settings unless `actionLabel` says otherwise).
 
 <WidgetIsland tab="calendar">
   <Widget.Message
     icon={CalendarDays}
     title="See what's next"
     description="Your next event with a countdown, and the rest of today and tomorrow."
-    actions={<Button size="compact">Connect calendar</Button>}
+    onAction={() => {}}
+    actionLabel="Connect calendar"
+  />
+</WidgetIsland>
+
+## Connect screen
+
+A plugin that needs setting up: Open settings, the default action.
+
+<WidgetIsland tab="weather">
+  <Widget.Message
+    icon={MapPin}
+    title="Pick a city"
+    description="The forecast for a city of your choice, or where you are."
+    onAction={() => {}}
+  />
+</WidgetIsland>
+
+## Tall
+
+At the tall snap, `layout="tall"` sets it at the top, not floating in the middle of the sheet.
+
+<WidgetIsland tab="calendar" tall>
+  <Widget.Message
+    layout="tall"
+    icon={CalendarDays}
+    title="Nothing planned"
+    description="No more events today or tomorrow."
   />
 </WidgetIsland>

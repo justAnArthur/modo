@@ -63,6 +63,8 @@ interface IslandTabsProps {
 // Literal tables: UnoCSS only generates the classes it can read whole.
 const TAB_WIDTH: Record<SizeVariant, number> = { default: 40, compact: 30 }
 const TAB_CLASS: Record<SizeVariant, string> = { default: 'w-10', compact: 'w-7.5' }
+// One weight across the strip, matching the content's glyphs: 16 px, stroke 1.75, 2 when selected.
+const TAB_ICON = 16
 const FADE = 16
 const NOTCH_FADE = 8
 
@@ -100,7 +102,7 @@ function TabButton({ tab, index, selected, lit, size: sizeProp, register, onSele
       )}
       onClick={() => onSelect(index)}
     >
-      <Icon size={size.icon} strokeWidth={lit ? 2 : 1.5} className="transition-[stroke-width] duration-fast" />
+      <Icon size={TAB_ICON} strokeWidth={lit ? 2 : 1.75} className="transition-[stroke-width] duration-fast" />
     </button>
   )
 }

@@ -6,10 +6,10 @@
 'use client'
 
 import { useReduceMotion } from '@justanarthur/modo-ui/lib/reduced-motion'
-import { spring } from '@justanarthur/modo-ui/lib/springs'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { motion } from 'motion/react'
 import { useEffect, useRef } from 'react'
+import { motionScale, tierMs } from '../../../lib/motion'
 
 // Each bar loops its own levels at its own pace, so together they read as random.
 const LOOPS = [
@@ -52,7 +52,7 @@ function Bar({ loop, live, level, className }: BarProps) {
     const animation = bar.animate(
       loop.levels.map(l => ({ transform: `scaleY(${l})` })),
       {
-        duration: spring.slow.duration * loop.beats * 1000,
+        duration: tierMs('small') * loop.beats,
         easing: 'ease-in-out',
         iterations: Number.POSITIVE_INFINITY,
       },
@@ -66,7 +66,7 @@ function Bar({ loop, live, level, className }: BarProps) {
       className={cn('h-full w-0.75 rounded-full', className)}
       initial={false}
       animate={{ scaleY: level }}
-      transition={spring.moderate}
+      transition={motionScale.small}
     />
   )
 }

@@ -10,14 +10,31 @@ export * from './blocks/system/recent-files'
 export * from './blocks/system/system-stats'
 export * from './components/indicators/countdown'
 export * from './components/indicators/equalizer'
+export * from './components/indicators/level'
 export * from './components/indicators/media-scrubber'
 export * from './components/island/island'
 export * from './components/island/island-flash'
 export * from './components/island/island-tabs'
 export * from './components/island/widget'
+export * from './components/settings/permission-list'
 export type { Artwork, ShownArtwork } from './lib/artwork'
 export { useArtworkTint, useStableArtwork } from './lib/artwork'
 export { formatClock, formatShort, useEdgeClock } from './lib/clock'
 export * from './lib/geometry'
 export type { IslandContextValue } from './lib/island-context'
 export { IslandContext, useIsland } from './lib/island-context'
+export type { MotionSpring, MotionTier } from './lib/motion'
+export {
+  bubbleTransition,
+  contentEnter,
+  contentFade,
+  contentGone,
+  contentHidden,
+  contentLeave,
+  contentShown,
+  hoverDelay,
+  motionScale,
+  settle,
+  shapeTransition,
+  tierMs,
+} from './lib/motion'

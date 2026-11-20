@@ -419,6 +419,7 @@ const Agenda = Object.assign(
     if (access === 'undetermined')
       return (
         <Widget.Message
+          layout={layout}
           icon={CalendarDays}
           title="See what's next"
           description="Your next event with a countdown, and the rest of today and tomorrow."
@@ -434,6 +435,7 @@ const Agenda = Object.assign(
     if (access === 'denied')
       return (
         <Widget.Message
+          layout={layout}
           icon={Lock}
           title="Calendar access is off"
           description="Turn it on in System Settings › Privacy & Security › Calendars."
@@ -457,6 +459,7 @@ const Agenda = Object.assign(
     if (!hero)
       return (
         <Widget.Message
+          layout={layout}
           icon={CalendarCheck}
           title={allDay.length ? allDay.map(event => event.title).join(', ') : 'Nothing planned'}
           description={

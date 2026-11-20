@@ -624,6 +624,7 @@ const Weather = Object.assign(
     if (access === 'undetermined')
       return (
         <Widget.Message
+          layout={layout}
           icon={MapPin}
           title="Weather where you are"
           description="The temperature now, the next hours and tomorrow, for your location."
@@ -639,6 +640,7 @@ const Weather = Object.assign(
     if (access === 'denied')
       return (
         <Widget.Message
+          layout={layout}
           icon={LocateOff}
           title="Location access is off"
           description="Turn it on in System Settings › Privacy & Security › Location Services."
@@ -654,6 +656,7 @@ const Weather = Object.assign(
     if (!current && status === 'error')
       return (
         <Widget.Message
+          layout={layout}
           icon={CloudOff}
           title="Couldn't load the weather"
           description="The forecast service didn't answer. It tries again on its own in a few minutes."
@@ -671,6 +674,7 @@ const Weather = Object.assign(
     if (!current && status === 'offline')
       return (
         <Widget.Message
+          layout={layout}
           icon={WifiOff}
           title="You're offline"
           description="The forecast loads as soon as you're back online."
