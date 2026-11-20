@@ -303,7 +303,7 @@ function ClipboardSettings() {
         <SwitchRow label="Pause recording" description="Nothing new is kept until you resume." />
         <SwitchRow label="Clear when quitting" description="Pinned clips are kept." />
       </List.Section>
-      <List.Section title="Never record from" aside={`${ignored.length} apps`}>
+      <List.Section title="Never record from" aside={`${ignored.length} ${ignored.length === 1 ? 'app' : 'apps'}`}>
         <SwitchRow
           label="Passwords and concealed text"
           description="Skips what password managers mark as concealed, whatever the app."

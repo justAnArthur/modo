@@ -53,7 +53,7 @@ Before the first reading the figures are dashes over the Sparkline's baseline; t
 
 # Tall
 
-`layout="tall"` at the island's tall snap: CPU and memory pressure side by side with their trends, the network's in and out as one graph beside the battery and the disk, and the top eight processes as a table.
+`layout="tall"` at the island's tall snap: CPU and memory pressure side by side with their trends, the network's in and out as one graph beside the battery and the disk, each headed by its glyph, and the top three processes as a table.
 
 <WidgetIsland tab="system" tall>
   <SystemStats samples={READINGS} battery={BATTERY} disk={DISK} uptime={UPTIME} processes={PROCESSES} layout="tall" />
