@@ -30,15 +30,29 @@ import {
   FileText,
   FileVideo,
   FolderSearch,
+  Inbox,
+  Share,
   Trash2,
   X,
 } from 'lucide-react'
-import type { DragEvent, ReactNode } from 'react'
+import { type DragEvent, type ReactNode, useEffect, useState } from 'react'
 import IslandFlash from '../../../components/island/island-flash'
 import Widget, { type WidgetLayout } from '../../../components/island/widget'
 import { MINUTE, useEdgeClock } from '../../../lib/clock'
+import { confirmWindow } from '../../../lib/motion'
 
-type RecentFilesSource = 'downloads' | 'screenshots'
+/** Where a file is: the Downloads folder, the screenshots folder, or the shelf of files dropped on the notch to keep (`Kept`). */
+type RecentFilesSource = 'downloads' | 'screenshots' | 'shelf'
+
+/** The shelf's room: what it holds, what it may hold, and how long it keeps a file. */
+interface RecentFilesShelf {
+  /** Bytes kept. */
+  bytes: number
+  /** Bytes it may keep. */
+  limitBytes: number
+  /** Hours a file stays before it goes, or `null` to keep files until removed. */
+  expiryHours: number | null
+}
 
 interface RecentFile {
   /** What tells it apart: its path. */
@@ -73,10 +87,14 @@ interface RecentDownload {
 }
 
 interface RecentFilesProps {
-  /** The files of both folders, in any order: each folder lists newest first. */
+  /** The files of every source, in any order: each lists newest first. */
   files: RecentFile[]
   /** A download under way: it takes the hero on Downloads, with its progress and speed. */
   download?: RecentDownload | null
+  /** The sources the switch offers, in order. Defaults to all three: Downloads, Screenshots and Kept. */
+  sources?: RecentFilesSource[]
+  /** The shelf's room, said on Kept's context line: how full it is and how long it keeps files. */
+  shelf?: RecentFilesShelf
   /** The folder shown (controlled). */
   value?: RecentFilesSource
   /** The folder shown at first (uncontrolled). Defaults to `'downloads'`. */
@@ -89,11 +107,13 @@ interface RecentFilesProps {
   onReveal?: (file: RecentFile) => void
   /** Called by Copy, to put the file on the clipboard. */
   onCopy?: (file: RecentFile) => void
+  /** Called by AirDrop, to share the file; without it the button hides. */
+  onAirDrop?: (file: RecentFile) => void
   /** Called when a file starts to be dragged out, with the drag event, for the host to start a native drag. Without it nothing drags. */
   onDragStart?: (file: RecentFile, event: DragEvent) => void
   /** Called by Move to Trash. */
   onDelete?: (file: RecentFile) => void
-  /** Called by Clear with the folder whose list to clear; without it the button hides. */
+  /** Called by Clear's second press with the source whose list to clear (the first press asks "Clear N files?"); without it the button hides. */
   onClear?: (source: RecentFilesSource) => void
   /** Called by the download's Cancel. */
   onCancelDownload?: (download: RecentDownload) => void
@@ -107,8 +127,38 @@ interface RecentFilesProps {
   className?: string
 }
 
-const SOURCE_LABEL: Record<RecentFilesSource, string> = { downloads: 'Downloads', screenshots: 'Screenshots' }
-const SOURCE_ICON: Record<RecentFilesSource, IconComponent> = { downloads: ArrowDownToLine, screenshots: Camera }
+const SOURCES: RecentFilesSource[] = ['downloads', 'screenshots', 'shelf']
+const SOURCE_LABEL: Record<RecentFilesSource, string> = {
+  downloads: 'Downloads',
+  screenshots: 'Screenshots',
+  shelf: 'Kept',
+}
+const SOURCE_ICON: Record<RecentFilesSource, IconComponent> = {
+  downloads: ArrowDownToLine,
+  screenshots: Camera,
+  shelf: Inbox,
+}
+const SAVED: Record<RecentFilesSource, string> = {
+  downloads: 'Downloaded',
+  screenshots: 'Screenshot saved',
+  shelf: 'Kept',
+}
+const EMPTY: Record<RecentFilesSource, { title: string; description: string }> = {
+  downloads: { title: 'No downloads yet', description: 'Files you download land here, ready to open or drag out.' },
+  screenshots: {
+    title: 'No screenshots yet',
+    description: 'Take one with ⇧⌘4 and it shows up here, ready to drag into a message.',
+  },
+  shelf: { title: 'Nothing kept', description: 'Drop files on the notch to keep them.' },
+}
+
+const count = (n: number) => `${n} ${n === 1 ? 'file' : 'files'}`
+
+/** The shelf's room in words: `120 MB of 1 GB · kept 24 h`. */
+const roomOf = (shelf: RecentFilesShelf) =>
+  [`${bytes(shelf.bytes)} of ${bytes(shelf.limitBytes)}`, shelf.expiryHours !== null && `kept ${shelf.expiryHours} h`]
+    .filter(Boolean)
+    .join(' · ')
 
 /** Rows the downloads list shows, and tiles the screenshots grid, before saying how many more. */
 const ROWS = 3
@@ -209,21 +259,26 @@ interface HeroProps {
   file: RecentFile
   now: number
   props: RecentFilesProps
+  /** At the tall snap the facts add where a download came from; the short island leaves it out. */
+  full: boolean
 }
 
-/** The newest file: its name, size, age and where it came from, Show in Finder, Copy, Move to Trash and Open. */
-function Hero({ file, now, props }: HeroProps) {
-  const { onOpen, onReveal, onCopy, onDelete } = props
+/** The newest file: its name, then its size and age (and, tall, where it came from), Show in Finder, AirDrop, Copy, Move to Trash and Open. */
+function Hero({ file, now, props, full }: HeroProps) {
+  const { onOpen, onReveal, onAirDrop, onCopy, onDelete } = props
   return (
     <div className="flex min-w-0 flex-col gap-2">
       <div className="flex min-w-0 flex-col gap-0.5">
         <Widget.Title>{file.name}</Widget.Title>
         <Widget.Subtitle>
-          {[bytes(file.size), ago(now - file.addedAt), file.from && `from ${file.from}`].filter(Boolean).join(' · ')}
+          {[bytes(file.size), ago(now - file.addedAt), full && file.from && `from ${file.from}`]
+            .filter(Boolean)
+            .join(' · ')}
         </Widget.Subtitle>
       </div>
       <div className="-mr-1 flex min-w-0 items-center justify-end gap-0.5">
         {onReveal && <Widget.Action icon={FolderSearch} label="Show in Finder" onClick={() => onReveal(file)} />}
+        {onAirDrop && <Widget.Action icon={Share} label="AirDrop" onClick={() => onAirDrop(file)} />}
         {onCopy && <Widget.Action icon={Copy} label="Copy" onClick={() => onCopy(file)} />}
         {onDelete && <Widget.Action icon={Trash2} label="Move to Trash" onClick={() => onDelete(file)} />}
         <Button
@@ -290,7 +345,7 @@ interface ListProps {
   onDragStart?: RecentFilesProps['onDragStart']
 }
 
-/** Earlier downloads as rows: how long ago, the file's glyph and name, its size. */
+/** Earlier files as rows: the file's glyph and name, then its size and how long ago, name first for scanning. */
 function Rows({ files, now, onOpen, onDragStart }: ListProps) {
   return (
     <FluidHover className="-mx-2 flex flex-col gap-0">
@@ -305,7 +360,10 @@ function Rows({ files, now, onOpen, onDragStart }: ListProps) {
             onClick={() => onOpen?.(file)}
             {...dragOf(file, onDragStart)}
           >
-            <Widget.Row className="w-full" leading={short(now - file.addedAt)} trailing={bytes(file.size)}>
+            <Widget.Row
+              className="w-full"
+              trailing={<span className="tabular-nums">{`${bytes(file.size)} · ${short(now - file.addedAt)}`}</span>}
+            >
               <span className="flex min-w-0 items-center gap-2">
                 <Icon size={14} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
                 <span className="min-w-0 truncate">{file.name}</span>
@@ -365,7 +423,38 @@ function Grid({ files, now, onOpen, onDragStart }: ListProps) {
   )
 }
 
-/** The compact island's left wing: the download glyph, or the camera for a screenshot. */
+interface ClearButtonProps {
+  files: number
+  armed: boolean
+  setArmed: (armed: boolean) => void
+  onClear: () => void
+}
+
+/** Clear in two presses: the first arms it ("Clear 3 files?", in the destructive hue) for a moment, the second clears. */
+function ClearButton({ files, armed, setArmed, onClear }: ClearButtonProps) {
+  useEffect(() => {
+    if (!armed) return
+    const timer = setTimeout(() => setArmed(false), confirmWindow)
+    return () => clearTimeout(timer)
+  }, [armed, setArmed])
+  return (
+    <Button
+      variant={armed ? 'destructive' : 'ghost'}
+      size="compact"
+      className="-mr-2 h-6 px-2"
+      aria-live="polite"
+      onClick={() => {
+        if (!armed) return setArmed(true)
+        setArmed(false)
+        onClear()
+      }}
+    >
+      {armed ? `Clear ${count(files)}?` : 'Clear'}
+    </Button>
+  )
+}
+
+/** The compact island's left wing: the source's glyph: the download arrow, the camera, the shelf. */
 function RecentFilesLeading({ source = 'downloads' }: { source?: RecentFilesSource }) {
   const Icon = SOURCE_ICON[source]
   return <Icon size={16} strokeWidth={1.5} className="text-foreground" />
@@ -409,12 +498,12 @@ interface SavedProps {
   onOpen?: (file: RecentFile) => void
 }
 
-/** The island's flash when a file lands: its thumbnail or glyph, `Downloaded` or `Screenshot saved`, and Open. */
+/** The island's flash when a file lands: its thumbnail or glyph, `Downloaded`, `Screenshot saved` or `Kept`, and Open. */
 function RecentFilesSaved({ file, onOpen }: SavedProps) {
   return (
     <IslandFlash
       icon={<Thumbnail file={file} glyph={16} className="size-9 rounded-lg" />}
-      title={file.source === 'screenshots' ? 'Screenshot saved' : 'Downloaded'}
+      title={SAVED[file.source]}
       caption={`${file.name} · ${bytes(file.size)}`}
       action={
         onOpen && (
@@ -434,17 +523,25 @@ function RecentFilesSaved({ file, onOpen }: SavedProps) {
  * The hero is the folder's newest file: its thumbnail, or its type's
  * glyph on a tile, then its name, its size, how long ago it landed and
  * where it came from, with Show in Finder, Copy, Move to Trash and Open.
- * Beside it, past a hairline, a switch picks the folder, Downloads or
- * Screenshots (`value` / `defaultValue` / `onValueChange`), over the ones
- * before the newest: downloads as rows of age, glyph, name and size, and
- * screenshots as a grid of image tiles, since a screenshot is found by
- * its look. A press opens a file, and with `onDragStart` every picture and
- * row drags out (the host starts the native drag); Clear empties the list.
+ * Beside it, past a hairline, a switch picks the source, Downloads,
+ * Screenshots or Kept, the shelf of files dropped on the notch (`sources`
+ * picks which; `value` / `defaultValue` / `onValueChange`), over the ones
+ * before the newest: downloads and kept files as rows of glyph, name, then
+ * size and age, and screenshots as a grid of image tiles, since a
+ * screenshot is found by its look. A press opens a file, and with
+ * `onDragStart` every picture and row drags out (the host starts the native
+ * drag). Clear empties the list in two presses: the first asks
+ * "Clear N files?" for a moment, the second clears. On Kept the context
+ * line says how full the shelf is, and at the tall snap how long it keeps
+ * files (`shelf`).
+ * With `onAirDrop` the hero shares the file over AirDrop.
  *
  * While a download is under way (`download`) it takes the hero on
  * Downloads: its name, the progress as a modo-ui Meter line, how much is
- * in, the speed and the time left, and Cancel. An empty folder says what
- * will land in it, the switch still beside it.
+ * in, the speed and the time left, and Cancel. An empty source says what
+ * will land in it (on Kept: "Drop files on the notch to keep them"), the
+ * switch still beside it. At the short island the hero's facts are its
+ * size and age; the tall snap adds where a download came from.
  *
  * At the open island's tall snap (`layout="tall"`) it becomes a sheet:
  * the switch and Clear across the top; the newest file (or the download
@@ -467,6 +564,8 @@ const RecentFiles = Object.assign(
     const {
       files,
       download,
+      sources = SOURCES,
+      shelf,
       value: valueProp,
       defaultValue = 'downloads',
       onValueChange,
@@ -482,6 +581,8 @@ const RecentFiles = Object.assign(
     const ticking = useEdgeClock(0, nowProp === undefined, MINUTE)
     const now = nowProp ?? ticking
     const [source, setSource] = useControllableState(valueProp, defaultValue, onValueChange)
+    const [armedFor, setArmedFor] = useState<RecentFilesSource | null>(null)
+    const armed = armedFor === source
     const step = size ?? 'default'
 
     const shown = files.filter(file => file.source === source).sort((a, b) => b.addedAt - a.addedAt)
@@ -491,13 +592,18 @@ const RecentFiles = Object.assign(
     const limit = source === 'screenshots' ? TILES : ROWS
 
     const empty = !newest && !active
+    // The shelf's room: in full at the tall snap; the short island says only how full it is.
+    const room =
+      source === 'shelf' && shelf && shelf.bytes > 0
+        ? layout === 'tall'
+          ? roomOf(shelf)
+          : `${bytes(shelf.bytes)} of ${bytes(shelf.limitBytes)}`
+        : undefined
     const header = (
       <Widget.Header icon={SOURCE_ICON[source]}>
         {active
           ? ['Downloading', active.from].filter(Boolean).join(' · ')
-          : [SOURCE_LABEL[source], shown.length && `${shown.length} ${shown.length === 1 ? 'file' : 'files'}`]
-              .filter(Boolean)
-              .join(' · ')}
+          : [SOURCE_LABEL[source], shown.length > 0 && count(shown.length), room].filter(Boolean).join(' · ')}
       </Widget.Header>
     )
 
@@ -514,23 +620,27 @@ const RecentFiles = Object.assign(
     const tabs = (
       <Tabs variant="subtle" size="compact" value={source} onValueChange={v => setSource(v as RecentFilesSource)}>
         <Tabs.List className="-ml-2">
-          <Tabs.Item value="downloads" label="Downloads" />
-          <Tabs.Item value="screenshots" label="Screenshots" />
+          {sources.map(item => (
+            <Tabs.Item key={item} value={item} label={SOURCE_LABEL[item]} />
+          ))}
         </Tabs.List>
       </Tabs>
     )
+    // Armed per source, so switching sources leaves a pending Clear behind.
     const clear = onClear && !empty && (
-      <Button variant="ghost" size="compact" className="-mr-2 h-6 px-2" onClick={() => onClear(source)}>
-        Clear
-      </Button>
+      <ClearButton
+        files={shown.length}
+        armed={armed}
+        setArmed={on => setArmedFor(on ? source : null)}
+        onClear={() => onClear(source)}
+      />
     )
     const nothing = (
       <div className="flex min-w-0 flex-col gap-0.5">
-        <Widget.Title>{source === 'downloads' ? 'No downloads yet' : 'No screenshots yet'}</Widget.Title>
+        <Widget.Title>{EMPTY[source].title}</Widget.Title>
         <span className="text-pretty text-caption text-muted-foreground">
-          {source === 'downloads'
-            ? 'Files you download land here, ready to open or drag out.'
-            : 'Take one with ⇧⌘4 and it shows up here, ready to drag into a message.'}
+          {EMPTY[source].description}
+          {source === 'shelf' && shelf?.expiryHours != null && ` They stay for ${shelf.expiryHours} h.`}
         </span>
       </div>
     )
@@ -558,7 +668,7 @@ const RecentFiles = Object.assign(
               {active ? (
                 <Downloading download={active} onCancel={onCancelDownload} />
               ) : newest ? (
-                <Hero file={newest} now={now} props={props} />
+                <Hero file={newest} now={now} props={props} full />
               ) : (
                 nothing
               )}
@@ -585,10 +695,11 @@ const RecentFiles = Object.assign(
         media={media}
         aside={
           <div className="flex min-w-0 flex-col gap-1.5">
-            <div className="flex min-w-0 items-center justify-between gap-2">
-              {tabs}
-              <span className="flex shrink-0 items-center gap-1.5 text-caption tabular-nums text-muted-foreground">
-                {earlier.length > limit && <span>{earlier.length - limit} more</span>}
+            {/* The short island's aside has no room for the tabs beside "Clear 4 files?": the confirm takes their row. */}
+            <div className="flex h-7 min-w-0 items-center justify-between gap-2">
+              {!armed && tabs}
+              <span className="ml-auto flex shrink-0 items-center gap-1.5 text-caption tabular-nums text-muted-foreground">
+                {!armed && earlier.length > limit && <span>{earlier.length - limit} more</span>}
                 {clear}
               </span>
             </div>
@@ -606,7 +717,7 @@ const RecentFiles = Object.assign(
         {active ? (
           <Downloading download={active} onCancel={onCancelDownload} />
         ) : newest ? (
-          <Hero file={newest} now={now} props={props} />
+          <Hero file={newest} now={now} props={props} full={false} />
         ) : (
           nothing
         )}
@@ -623,5 +734,5 @@ const RecentFiles = Object.assign(
 
 export default RecentFiles
 
-export type { RecentDownload, RecentFile, RecentFilesProps, RecentFilesSource }
+export type { RecentDownload, RecentFile, RecentFilesProps, RecentFilesShelf, RecentFilesSource }
 export { RecentFiles, RecentFilesLeading, RecentFilesMinimal, RecentFilesSaved, RecentFilesTrailing }

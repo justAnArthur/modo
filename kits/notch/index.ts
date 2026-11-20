@@ -26,6 +26,7 @@ export { IslandContext, useIsland } from './lib/island-context'
 export type { MotionSpring, MotionTier } from './lib/motion'
 export {
   bubbleTransition,
+  confirmWindow,
   contentEnter,
   contentFade,
   contentGone,

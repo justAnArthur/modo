@@ -1,10 +1,10 @@
 /*
- * Mock: a Downloads folder and a Screenshots folder for the recent-files
+ * Mock: a Downloads folder, a Screenshots folder and a shelf for the recent-files
  * widget, read at a pinned moment so the times hold, and a download under
  * way. Nothing here ships in the barrel.
  */
 
-import type { RecentDownload, RecentFile } from '../blocks/system/recent-files'
+import type { RecentDownload, RecentFile, RecentFilesShelf } from '../blocks/system/recent-files'
 import { MockArtwork } from './artwork'
 
 const MINUTE = 60_000
@@ -69,8 +69,19 @@ export const SCREENSHOTS: RecentFile[] = [3, 15, 22, 64, 140, 300, 1500, 1620, 2
   thumbnail: <MockArtwork variant={VARIANTS[i % VARIANTS.length]} />,
 }))
 
-/** Both folders. */
-export const RECENT_FILES: RecentFile[] = [...DOWNLOADS, ...SCREENSHOTS]
+/** Files dropped on the notch to keep for later. */
+export const SHELF: RecentFile[] = [
+  { id: 'brief', name: 'Launch brief.pdf', size: 1.8e6, addedAt: ago(9), source: 'shelf' },
+  { id: 'logo', name: 'Logo final.svg', size: 24e3, addedAt: ago(35), source: 'shelf' },
+  { id: 'cut', name: 'Teaser cut 3.mov', size: 96e6, addedAt: ago(140), source: 'shelf' },
+  { id: 'notes', name: 'Interview notes.md', size: 6e3, addedAt: ago(400), source: 'shelf' },
+]
+
+/** The shelf's room: 98 MB of 1 GB, each file kept a day. */
+export const SHELF_ROOM: RecentFilesShelf = { bytes: 98e6, limitBytes: 1e9, expiryHours: 24 }
+
+/** Every source. */
+export const RECENT_FILES: RecentFile[] = [...DOWNLOADS, ...SCREENSHOTS, ...SHELF]
 
 /** A download under way: 40% in, 6.2 MB/s. */
 export const DOWNLOAD: RecentDownload = {

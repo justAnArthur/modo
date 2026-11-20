@@ -1,6 +1,6 @@
 import RecentFiles from './index'
 import { FlashIsland, PLAYING, WidgetIsland, WingsIsland } from '../../../mock/island-content'
-import { DOWNLOAD, DOWNLOADS, FILES_NOW, RECENT_FILES, SCREENSHOTS } from '../../../mock/files'
+import { DOWNLOAD, DOWNLOADS, FILES_NOW, RECENT_FILES, SCREENSHOTS, SHELF_ROOM } from '../../../mock/files'
 import NowPlaying from '../../activities/now-playing'
 
 # Downloads
@@ -17,6 +17,20 @@ On Screenshots the ones before the newest are image tiles: a screenshot is found
 
 <WidgetIsland tab="files">
   <RecentFiles files={RECENT_FILES} defaultValue="screenshots" now={FILES_NOW} onReveal={() => {}} onCopy={() => {}} onDelete={() => {}} onClear={() => {}} />
+</WidgetIsland>
+
+# Kept
+
+The shelf of files dropped on the notch: name, size and age per row, and how full the shelf is on the context line. Clear asks first: press it once and it says how many files it will clear.
+
+<WidgetIsland tab="files">
+  <RecentFiles files={RECENT_FILES} defaultValue="shelf" shelf={SHELF_ROOM} now={FILES_NOW} onReveal={() => {}} onAirDrop={() => {}} onCopy={() => {}} onDelete={() => {}} onClear={() => {}} />
+</WidgetIsland>
+
+# Nothing kept
+
+<WidgetIsland tab="files">
+  <RecentFiles files={DOWNLOADS} defaultValue="shelf" shelf={{ bytes: 0, limitBytes: 1e9, expiryHours: 24 }} now={FILES_NOW} />
 </WidgetIsland>
 
 # Downloading

@@ -45,6 +45,9 @@ export const settle = (tier: MotionTier): MotionSpring => ({
 /** A tier's visual length in ms, for a timer or a Web Animation. */
 export const tierMs = (tier: MotionTier) => Math.round(motionScale[tier].visualDuration * 1000)
 
+/** How long a two-press destructive button (Clear) stays armed after its first press, in ms. */
+export const confirmWindow = 3000
+
 /** Waits before a hover opens the island and before leaving it closes it, in ms. */
 export const hoverDelay = { intent: 100, leave: 250 } as const
 
