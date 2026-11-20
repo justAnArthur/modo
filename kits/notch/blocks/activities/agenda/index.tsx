@@ -100,6 +100,9 @@ function length(ms: number) {
   return minutes % 60 ? `${hours} h ${minutes % 60} min` : `${hours} h`
 }
 
+/** How soon, short: `12m`, else `now` within the last minute, so the wings, the bubble, the flash and the hero agree. */
+const soon = (ms: number) => (ms > MINUTE ? formatShort(ms / SECOND) : 'now')
+
 /** The time until `start`, re-read on each `unit` edge before it, never in between. */
 function useUntil(start: number, unit = MINUTE) {
   const now = useEdgeClock(start, Date.now() < start + SECOND, unit)
@@ -136,9 +139,10 @@ interface HeroProps {
   onJoin?: (event: AgendaEvent) => void
 }
 
-/** How soon, as the figure: `in 12 min` within the hour, `Now` while on, else the start time. */
+/** How soon, as the figure: `in 12 min` within the hour, `Now` in its last minute and while on, else the start time. */
 function When({ event, now, midnight, locale }: Omit<HeroProps, 'onJoin'>) {
   if (event.start <= now) return <Widget.Figure value="Now" unit={`${length(event.end - now)} left`} />
+  if (event.start - now <= MINUTE) return <Widget.Figure value="Now" unit="starting" />
   if (event.start - now < 60 * MINUTE)
     return <Widget.Figure prefix="in" value={Math.max(1, Math.ceil((event.start - now) / MINUTE))} unit="min" />
   const { value, period } = timeParts(event.start, locale)
@@ -274,13 +278,13 @@ function AgendaLeading({ event }: PartProps) {
   return <CalendarDays size={16} strokeWidth={1.5} style={{ color: event.color }} />
 }
 
-/** The compact island's right wing: the event's color dot and the time until it starts, `12m` then `45s`. */
+/** The compact island's right wing: the event's color dot and the time until it starts, `12m`, then `now` in the last minute. */
 function AgendaTrailing({ event }: PartProps) {
   const left = useUntil(event.start)
   return (
     <span className="flex items-center gap-1 text-caption weight-semibold text-foreground tabular-nums">
       <Dot color={event.color} className="size-1.5" />
-      {left > 0 ? formatShort(left / SECOND) : 'now'}
+      {soon(left)}
     </span>
   )
 }
@@ -299,7 +303,7 @@ function AgendaMinimal({ event, lead = 10 * MINUTE }: MinimalProps) {
   return (
     <svg
       role="img"
-      aria-label={`${event.title}, in ${formatShort(left / SECOND)}`}
+      aria-label={left > MINUTE ? `${event.title}, in ${soon(left)}` : `${event.title}, starting now`}
       viewBox="0 0 20 20"
       className="size-5.5 -rotate-90"
     >
@@ -339,7 +343,7 @@ function AgendaUpNext({ event, locale, onJoin }: ActivityProps) {
 /** The island's flash a minute before the start: the calendar's color, the title, how soon and where, and Join. */
 function AgendaStarting({ event, onJoin }: Omit<ActivityProps, 'locale'>) {
   const left = useUntil(event.start, SECOND)
-  const when = left > 0 ? `Starts in ${formatShort(left / SECOND)}` : 'Starting now'
+  const when = left > MINUTE ? `Starts in ${soon(left)}` : 'Starting now'
   return (
     <IslandFlash
       icon={
@@ -362,12 +366,14 @@ function AgendaStarting({ event, onJoin }: Omit<ActivityProps, 'locale'>) {
  * tomorrow beside it.
  *
  * The hero is how soon the next event is, set large: `in 12 min` within the
- * hour, `Now` with the time left while it runs, else its start time. Under
+ * hour, `Now` in its last minute and with the time left while it runs, else
+ * its start time. Under
  * it the title after its calendar's color, the time range, the place and
  * whether it's a call, and a Join button when it has a `meetingUrl`. Today's
  * all-day events are chips on the date line above. Beside it, past a
  * hairline, the timeline: the rest of today as rows of start time, color
- * mark and title, then tomorrow folded to its first event
+ * mark and title (left out when nothing else is on), then tomorrow folded
+ * to its first event
  * (`tomorrowOpen` / `onTomorrowOpenChange`, or kept here). Ended events drop
  * off; `now` follows the clock on each minute unless you pin it.
  *
@@ -385,8 +391,8 @@ function AgendaStarting({ event, onJoin }: Omit<ActivityProps, 'locale'>) {
  *
  * The countdown to the next event is an activity of parts:
  * `Agenda.Leading` and `Agenda.Trailing` for the compact island's wings (the
- * glyph in the event's color, and its dot with `12m` that turns to seconds
- * in the last minute), `Agenda.Minimal`, a ring in its color that empties
+ * glyph in the event's color, and its dot with `12m` that turns to `now`
+ * in the last minute, as the hero and the flash do), `Agenda.Minimal`, a ring in its color that empties
  * toward the start, for the split island's bubble, `Agenda.UpNext` for the
  * open island and `Agenda.Starting`, the flash a minute before. Each
  * re-renders only on the edge of the unit it shows.
@@ -505,7 +511,7 @@ const Agenda = Object.assign(
           </div>
 
           <div className="flex min-w-0 flex-col gap-3">
-            <Day label="Later today" events={today} empty="Nothing else today" locale={locale} onJoin={onJoin} />
+            {today.length > 0 && <Day label="Later today" events={today} locale={locale} onJoin={onJoin} />}
             <Day
               label="Tomorrow"
               events={tomorrow}
@@ -538,14 +544,17 @@ const Agenda = Object.assign(
         className={className}
         aside={
           <>
-            <Widget.Section label="Later today">
-              {today.length ? (
+            {today.length > 0 && (
+              <Widget.Section label="Later today">
                 <Rows events={today.slice(0, ROWS)} locale={locale} />
-              ) : (
-                <span className="flex h-7 items-center text-body text-muted-foreground">Nothing else today</span>
-              )}
-              <More count={today.length - ROWS} />
-            </Widget.Section>
+                <More count={today.length - ROWS} />
+              </Widget.Section>
+            )}
+            {!today.length && !tomorrow.length && (
+              <span className="flex h-7 items-center text-body text-muted-foreground">
+                Nothing else today or tomorrow
+              </span>
+            )}
             {tomorrow.length > 0 && (
               <Widget.Section
                 className="mt-1"
