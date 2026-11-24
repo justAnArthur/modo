@@ -53,10 +53,12 @@ export function paceOf(profile: Profile): ProfilePace {
 
 /** A short duration: `17m`, `2h 20m`, `20h`, `4d`. */
 export function duration(hours: number) {
-  if (hours < 1) return `${Math.max(Math.round(hours * 60), 1)}m`
-  if (hours < 10) {
-    const h = Math.floor(hours)
-    const m = Math.round((hours - h) * 60)
+  // Whole minutes first: 2h 59.7m reads 3h, never 2h 60m.
+  const minutes = Math.max(Math.round(hours * 60), 1)
+  if (minutes < 60) return `${minutes}m`
+  if (minutes < 600) {
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
     return m === 0 ? `${h}h` : `${h}h ${m}m`
   }
   if (hours < 48) return `${Math.round(hours)}h`
