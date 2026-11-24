@@ -18,6 +18,7 @@ import Button from '@justanarthur/modo-ui/components/actions/button'
 import List, { LIST_POPOVER, LIST_SWITCH } from '@justanarthur/modo-ui/components/data-display/list'
 import Meter from '@justanarthur/modo-ui/components/feedback/meter'
 import ChoiceList from '@justanarthur/modo-ui/components/inputs/choice-list'
+import Input from '@justanarthur/modo-ui/components/inputs/input'
 import Select from '@justanarthur/modo-ui/components/inputs/select'
 import Slider from '@justanarthur/modo-ui/components/inputs/slider'
 import Switch from '@justanarthur/modo-ui/components/inputs/switch'
@@ -27,7 +28,7 @@ import { SURFACE_BG } from '@justanarthur/modo-ui/lib/surface-classes'
 import { useControllableState } from '@justanarthur/modo-ui/lib/use-controllable-state'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import { SizeProvider } from '@justanarthur/modo-ui/primitives/systems/sizes'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { useIcon } from '../../../lib/icons'
 import { RowTrigger } from '../../../lib/row-trigger'
 import type { Command, Model, PermissionMode, Profile, Project } from '../../../lib/types'
@@ -133,11 +134,20 @@ interface ProjectPickerProps {
   locked: boolean
   project: string
   onProjectChange: (path: string) => void
+  onRemoveProject?: (path: string) => void
   worktree: boolean
   onWorktreeChange: (worktree: boolean) => void
   baseBranch: string
   onBaseBranchChange: (branch: string) => void
   options: Required<ComposerTargetOptions>
+}
+
+/** Past this many projects the picker offers a search field. */
+const SEARCH_FROM = 6
+
+const matches = (p: Project, query: string) => {
+  const q = query.trim().toLowerCase()
+  return !q || p.label.toLowerCase().includes(q) || p.path.toLowerCase().includes(q)
 }
 
 /** Where a session runs: the project, a worktree of its own and how it is set up. */
@@ -148,45 +158,127 @@ function ProjectPicker({
   locked,
   project,
   onProjectChange,
+  onRemoveProject,
   worktree,
   onWorktreeChange,
   baseBranch,
   onBaseBranchChange,
   options,
 }: ProjectPickerProps) {
+  const [open, setOpen] = useState(false)
+  const [query, setQuery] = useState('')
+  const list = useRef<HTMLDivElement>(null)
   const label = projects.find(p => p.path === project)?.label ?? ''
   const Folder = useIcon('folder')
   const Branch = useIcon('git-branch')
+  const Search = useIcon('search')
+  const Remove = useIcon('x')
+  const searchable = !locked && projects.length > SEARCH_FROM
+  const shown = searchable ? projects.filter(p => matches(p, query)) : projects
+  const removable = !locked && onRemoveProject
+
+  // Each opening starts on the whole list.
+  const toggle = (next: boolean) => {
+    setOpen(next)
+    if (!next) setQuery('')
+  }
+  const pick = (path: string) => {
+    onProjectChange(path)
+    toggle(false)
+  }
+
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={toggle}>
       <Popover.Trigger
         render={
-          <RowTrigger aria-label={`Project: ${label}${worktree ? ', new worktree' : ''}`}>
+          // Capped: a long folder name must leave the profile and run settings their room.
+          <RowTrigger className="min-w-0 max-w-2/5" aria-label={`Project: ${label}${worktree ? ', new worktree' : ''}`}>
             <Folder size={14} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />
             <span className="min-w-0 truncate">{label}</span>
             {worktree && <Branch size={14} strokeWidth={1.5} className="shrink-0 text-muted-foreground" />}
           </RowTrigger>
         }
       />
-      <Popover.Content side="top" align="start" sideOffset={8} className={LIST_POPOVER}>
+      <Popover.Content
+        side="top"
+        align="start"
+        sideOffset={8}
+        className={cn(LIST_POPOVER, 'w-96 max-w-[min(92vw,24rem)]')}
+      >
         <SizeProvider size="default">
           <List.Section title={locked ? 'This session runs in' : 'Project'}>
-            <ChoiceList
-              label="Project"
-              value={project}
-              onValueChange={onProjectChange}
-              options={projects.map(g => ({
-                value: g.path,
-                label: g.label,
-                disabled: locked && g.path !== project,
-                content: (
-                  <span className="flex min-w-0 flex-1 items-baseline justify-between gap-2">
-                    <span className="text-body text-foreground">{g.label}</span>
-                    <span className="truncate font-mono text-caption text-muted-foreground">{g.path}</span>
-                  </span>
-                ),
-              }))}
-            />
+            {searchable && (
+              <Input
+                aria-label="Search projects"
+                placeholder="Search projects"
+                icon={Search}
+                size="compact"
+                value={query}
+                onValueChange={setQuery}
+                autoFocus
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && shown[0]) {
+                    e.preventDefault()
+                    pick(shown[0].path)
+                  }
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault()
+                    list.current?.querySelector<HTMLElement>('[role="radio"][tabindex="0"]')?.focus()
+                  }
+                }}
+              />
+            )}
+            {shown.length === 0 ? (
+              <p className="m-0 px-[var(--space-2)] py-[var(--space-2)] text-caption text-muted-foreground">
+                No project matches “{query.trim()}”
+              </p>
+            ) : (
+              // Many projects scroll inside the popover instead of running off the window.
+              // A click or Enter on a row picks it and closes; the arrow keys only move the pick (they click the row
+              // too, with no pointer: detail 0).
+              <div
+                ref={list}
+                className="max-h-72 overflow-y-auto"
+                onClickCapture={e => e.detail > 0 && (e.target as Element).closest('[role="radio"]') && toggle(false)}
+                onKeyDownCapture={e =>
+                  e.key === 'Enter' && (e.target as Element).closest('[role="radio"]') && toggle(false)
+                }
+              >
+                <ChoiceList
+                  label="Project"
+                  value={project}
+                  onValueChange={onProjectChange}
+                  options={shown.map(g => ({
+                    value: g.path,
+                    label: `${g.label}, ${g.path}`,
+                    disabled: locked && g.path !== project,
+                    content: (
+                      <span className="flex min-w-0 flex-1 items-baseline gap-3" title={g.path}>
+                        <span className="min-w-0 max-w-3/5 shrink-0 truncate text-body text-foreground">{g.label}</span>
+                        {/* rtl clips the start, so the path keeps its end: the folders nearest the project. */}
+                        <span
+                          dir="rtl"
+                          className="min-w-0 flex-1 truncate text-right font-mono text-caption text-muted-foreground group-focus-within/choice:pr-6 group-hover/choice:pr-6"
+                        >
+                          <bdi>{g.path}</bdi>
+                        </span>
+                      </span>
+                    ),
+                    actions: removable && (
+                      <Button
+                        variant="ghost"
+                        size="icon-compact"
+                        aria-label={`Remove ${g.label} from the list`}
+                        title="Remove from the list"
+                        onClick={() => onRemoveProject(g.path)}
+                      >
+                        <Remove />
+                      </Button>
+                    ),
+                  }))}
+                />
+              </div>
+            )}
           </List.Section>
           {(branch || options.worktree || options.setupScript || options.baseBranch) && (
             <List.Section title="Checkout">
@@ -431,6 +523,8 @@ interface ComposerProps {
   defaultProject?: string
   /** Called with the picked project's `path`. Only a new session (`target`) can pick one. */
   onProjectChange?: (path: string) => void
+  /** Called with a project's `path` when its Remove from the list action is pressed: the app drops it from `projects`. Omit to leave the action out. Only a new session (`target`) offers it. */
+  onRemoveProject?: (path: string) => void
   /** Whether the session gets a new git worktree, controlled. Pair with `onWorktreeChange`. */
   worktree?: boolean
   /** Start with a new worktree when uncontrolled. Defaults to `true`. */
@@ -559,7 +653,10 @@ interface ComposerProps {
  *
  * The row under it, on the shell, holds the rest. On the left, where the
  * session runs: the project, whose popover also holds the worktree, the
- * setup script and the base branch, and the profile, with two thin lines for
+ * setup script and the base branch, and the profile. Past six projects the
+ * project list takes a search field (by name or path; Enter picks the first
+ * match, ↓ moves into the list), scrolls, and clips each path from its start;
+ * `onRemoveProject` adds a Remove from the list action to each row. Then the profile, with two thin lines for
  * its session and weekly limits (see the profile switcher; its panel's "Add
  * profile" and "Manage" show when `onAddProfile` and `onManageProfiles` are
  * given). On the right,
@@ -612,6 +709,7 @@ const Composer = Object.assign(
     project: projectProp,
     defaultProject,
     onProjectChange,
+    onRemoveProject,
     worktree: worktreeProp,
     defaultWorktree = true,
     onWorktreeChange,
@@ -685,6 +783,7 @@ const Composer = Object.assign(
                 locked={!target}
                 project={inList(project, projectPaths)}
                 onProjectChange={setProject}
+                onRemoveProject={onRemoveProject}
                 worktree={worktree}
                 onWorktreeChange={setWorktree}
                 baseBranch={inList(baseBranch, branches)}
