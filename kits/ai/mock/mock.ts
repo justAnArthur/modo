@@ -285,6 +285,21 @@ export const PROJECTS: Project[] = GROUPS.flatMap(g =>
   g.kind === 'project' && g.path ? [{ label: g.label, path: g.path }] : [],
 )
 
+/** A long project list, as an app collects it from past sessions: long names, deep paths, look-alikes. */
+export const MANY_PROJECTS: Project[] = [
+  ...PROJECTS,
+  ...['api', 'web', 'mobile', 'infra', 'docs', 'design-tokens', 'billing', 'search'].map(name => ({
+    label: name,
+    path: `/Users/ada/work/acme/${name}`,
+  })),
+  { label: 'ui', path: '/Users/ada/work/other-org/ui' },
+  {
+    label: 'customer-onboarding-service-with-a-really-long-name',
+    path: '/Users/ada/work/acme-corporation/services/customer-onboarding-service-with-a-really-long-name',
+  },
+  { label: 'kit-ux-review', path: '/Users/ada/Projects/modo/.worktrees/kit-ux-review' },
+]
+
 export const BRANCHES = ['main', 'feat/v1-lib-fixes', 'refactor/clean-ds']
 
 export const MODELS: Model[] = [

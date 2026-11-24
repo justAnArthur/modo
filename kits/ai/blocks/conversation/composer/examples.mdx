@@ -2,7 +2,23 @@ import Composer from './index'
 import Button from '@justanarthur/modo-ui/components/actions/button'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
-import { COMPOSER, ZCODE_MODELS } from '../../../mock/mock'
+import { COMPOSER, MANY_PROJECTS, ZCODE_MODELS } from '../../../mock/mock'
+
+export function ManyProjects() {
+  const [projects, setProjects] = useState(MANY_PROJECTS)
+  return (
+    <div className="flex h-[480px] w-full max-w-2xl items-end">
+      <Composer
+        {...COMPOSER}
+        target
+        context={0}
+        projects={projects}
+        onRemoveProject={path => setProjects(all => all.filter(p => p.path !== path))}
+        targetOptions={{ worktree: false, baseBranch: false, setupScript: false }}
+      />
+    </div>
+  )
+}
 
 export function ControlledSettings() {
   const [project, setProject] = useState(COMPOSER.projects[0].path)
@@ -75,6 +91,12 @@ In the draft, the + palette and the run trigger (permission mode, model, effort,
 Every choice on the row is controllable: the caller holds the project (by its path), the worktree, the base branch, the profile, the model, the effort, the permission mode, fast mode and the output style, and passes them on to the agent.
 
 <ControlledSettings />
+
+# Many projects
+
+Past six projects the project popover takes a search field: type to filter by name or path, Enter picks the first match, ↓ moves into the list, whose arrow keys move the pick. The list scrolls, and a long path is clipped from its start, keeping the folders nearest the project. `onRemoveProject` adds a Remove from the list action to each row.
+
+<ManyProjects />
 
 # Near compaction
 

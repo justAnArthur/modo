@@ -195,8 +195,15 @@ function CommandList({ onPick, emptyMessage, className }: CommandListProps) {
   const pick = useCallback((item: CommandItem) => pickRef.current(item), [])
   const { itemRects, isMeasured, registerItem } = useFluidHover(containerRef, { isItemDisabled: isDisabledRow })
   const rect = isMeasured && highlight !== null ? (itemRects[highlight] ?? null) : null
-  const rows = (items: CommandItem[], start: number) =>
-    items.map((item, i) => <CommandRow key={item.label} item={item} index={start + i} onPick={pick} />)
+  // Labels can repeat (two sessions with one title): a repeat takes its count, so React keeps every row.
+  const rows = (items: CommandItem[], start: number) => {
+    const seen = new Map<string, number>()
+    return items.map((item, i) => {
+      const n = seen.get(item.label) ?? 0
+      seen.set(item.label, n + 1)
+      return <CommandRow key={n ? `${item.label}\n${n}` : item.label} item={item} index={start + i} onPick={pick} />
+    })
+  }
   let start = 0
 
   return (
