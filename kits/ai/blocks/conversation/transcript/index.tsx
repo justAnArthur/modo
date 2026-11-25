@@ -315,7 +315,9 @@ const Transcript = Object.assign(
         )}
         {/* On a short window a tall prompt gives up height (its plan or command scrolls) rather than run under what follows. */}
         {footer && (
-          <div className="mx-auto flex max-h-[75%] min-h-0 w-full max-w-3xl flex-col gap-3 overflow-y-auto px-6 pb-3">{footer}</div>
+          <div className="mx-auto flex max-h-[75%] min-h-0 w-full max-w-3xl flex-col gap-3 overflow-y-auto px-6 pb-3">
+            {footer}
+          </div>
         )}
       </div>
     )

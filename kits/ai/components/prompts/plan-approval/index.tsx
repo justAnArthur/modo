@@ -55,7 +55,12 @@ export default function PlanApproval({
       autoFocus={autoFocus}
       onEscape={keepPlanning}
       onKeyDown={event => {
-        if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey) || !(event.target instanceof HTMLTextAreaElement)) return
+        if (
+          event.key !== 'Enter' ||
+          !(event.metaKey || event.ctrlKey) ||
+          !(event.target instanceof HTMLTextAreaElement)
+        )
+          return
         event.preventDefault()
         keepPlanning()
       }}

@@ -120,7 +120,8 @@ export default function QuestionPrompt({
       return setChecked(next)
     }
     // A box takes a bare Enter as its toggle: with several answers, Enter submits from the Other field.
-    if (event.key !== 'Enter' || event.shiftKey || event.target instanceof HTMLButtonElement || (multiSelect && !field)) return
+    if (event.key !== 'Enter' || event.shiftKey || event.target instanceof HTMLButtonElement || (multiSelect && !field))
+      return
     event.preventDefault()
     submit()
   }
@@ -138,7 +139,13 @@ export default function QuestionPrompt({
       icon="message-circle"
       title={question}
       tag={tag}
-      hint={own ? 'Sends your own answer' : multiSelect ? 'Pick any · ⌘Enter submits' : `↑↓ or 1–${options.length} to pick · Enter submits`}
+      hint={
+        own
+          ? 'Sends your own answer'
+          : multiSelect
+            ? 'Pick any · ⌘Enter submits'
+            : `↑↓ or 1–${options.length} to pick · Enter submits`
+      }
       autoFocus={autoFocus}
       onKeyDown={onKeyDown}
       actions={
@@ -151,7 +158,11 @@ export default function QuestionPrompt({
         <div className={cn('grid gap-3', hasPreviews && '@lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]')}>
           <div
             data-autofocus
-            className={cn('flex min-w-0 flex-col gap-1 transition-opacity duration-fast', multiSelect ? '-mx-3' : '-mx-2', own && !multiSelect && 'opacity-50')}
+            className={cn(
+              'flex min-w-0 flex-col gap-1 transition-opacity duration-fast',
+              multiSelect ? '-mx-3' : '-mx-2',
+              own && !multiSelect && 'opacity-50',
+            )}
           >
             {list}
           </div>
