@@ -25,6 +25,8 @@ interface PlanApprovalProps {
   placeholder?: string
   /** Called with the decision and any feedback. */
   onDecide?: (decision: PlanDecision, feedback: string) => void
+  /** Takes focus in the feedback field when it appears, unless you are typing elsewhere. */
+  autoFocus?: boolean
 }
 
 /**
@@ -33,7 +35,8 @@ interface PlanApprovalProps {
  * The plan reads as Prose in a scrolling frame that fades at its edges,
  * with a feedback field under it. The decisions sit on the bottom row:
  * keep planning with the feedback, approve and review each edit, or approve
- * with edits accepted.
+ * with edits accepted. Escape, or ⌘Enter in the field, keeps planning with
+ * the feedback. On a short window the plan's frame gives up height first.
  *
  * @example {@include ./examples.mdx}
  */
@@ -43,16 +46,26 @@ export default function PlanApproval({
   tag = 'Plan mode',
   placeholder = 'Tell the agent what to change',
   onDecide,
+  autoFocus,
 }: PlanApprovalProps) {
   const [feedback, setFeedback] = useState('')
+  const keepPlanning = () => onDecide?.('keep-planning', feedback)
   return (
     <PromptCard
+      autoFocus={autoFocus}
+      onEscape={keepPlanning}
+      onKeyDown={event => {
+        if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey) || !(event.target instanceof HTMLTextAreaElement)) return
+        event.preventDefault()
+        keepPlanning()
+      }}
       icon="list-checks"
       title={title}
       tag={tag}
+      hint="Esc keeps planning"
       actions={
         <>
-          <Button size="compact" variant="ghost" onClick={() => onDecide?.('keep-planning', feedback)}>
+          <Button size="compact" variant="ghost" onClick={keepPlanning}>
             Keep planning
           </Button>
           <Button size="compact" variant="tertiary" onClick={() => onDecide?.('review', feedback)}>
@@ -64,10 +77,12 @@ export default function PlanApproval({
         </>
       }
     >
-      <ScrollArea className="max-h-72 rounded-xl border border-border" viewportClassName="scroll-fade">
+      <ScrollArea className="max-h-72 min-h-0 rounded-xl border border-border" viewportClassName="scroll-fade">
         <MarkdownProse className="p-[var(--space-3)]">{children}</MarkdownProse>
       </ScrollArea>
-      <Textarea minRows={1} maxRows={4} value={feedback} onValueChange={setFeedback} placeholder={placeholder} />
+      <div data-autofocus className="flex shrink-0 flex-col">
+        <Textarea minRows={1} maxRows={4} value={feedback} onValueChange={setFeedback} placeholder={placeholder} />
+      </div>
     </PromptCard>
   )
 }
