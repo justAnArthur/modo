@@ -44,6 +44,7 @@ import type { SessionFilter } from '../session-board'
 
 const STATES: { status: SessionStatus; label: string }[] = [
   { status: 'waiting', label: 'Needs you' },
+  { status: 'failed', label: 'Failed' },
   { status: 'running', label: 'Running' },
   { status: 'unread', label: 'To review' },
   { status: 'idle', label: 'Idle' },
@@ -336,7 +337,7 @@ function usePinnedOrder(pinned: Session[], onChange?: (ids: string[]) => void) {
 
 /** Sessions that need you: they stay in view past a group's `groupLimit` unless `keepVisible` says otherwise. */
 const needsAttention = (session: Session) =>
-  session.status === 'running' || session.status === 'waiting' || session.status === 'unread'
+  session.status === 'running' || session.status === 'waiting' || session.status === 'failed' || session.status === 'unread'
 
 /** A group's first `limit` sessions, plus those past them in `keep`, in the group's order. */
 function capped(sessions: Session[], limit: number | undefined, keep: string[]) {

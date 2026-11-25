@@ -57,6 +57,7 @@ type SessionFilter = 'all' | `state:${SessionStatus}` | `project:${string}` | `p
 
 const STATES: { status: SessionStatus; label: string }[] = [
   { status: 'waiting', label: 'Needs you' },
+  { status: 'failed', label: 'Failed' },
   { status: 'running', label: 'Running' },
   { status: 'unread', label: 'To review' },
   { status: 'idle', label: 'Idle' },
