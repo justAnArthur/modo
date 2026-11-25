@@ -10,7 +10,7 @@ import Badge from '@justanarthur/modo-ui/components/data-display/badge'
 import { useShape } from '@justanarthur/modo-ui/lib/shape-context'
 import { cn } from '@justanarthur/modo-ui/lib/utils'
 import Elevated from '@justanarthur/modo-ui/primitives/systems/surface'
-import type { ReactNode } from 'react'
+import { type KeyboardEvent, type ReactNode, type RefObject, useEffect, useRef } from 'react'
 import { type IconName, useIcon } from '../../../lib/icons'
 
 interface PromptCardProps {
@@ -28,6 +28,38 @@ interface PromptCardProps {
   hint?: ReactNode
   /** Classes for the frame. */
   className?: string
+  /** Takes focus when it appears, unless you are typing elsewhere: the element marked `data-autofocus`, else the card. Focus goes back where it was when the card leaves. */
+  autoFocus?: boolean
+  /** Called on Escape while focus is in the card. */
+  onEscape?: () => void
+  /** Keys pressed in the card, after its Escape. */
+  onKeyDown?: (event: KeyboardEvent<HTMLDivElement>) => void
+}
+
+const FOCUSABLE = 'button:not([disabled]), input, textarea, [tabindex="0"]'
+
+/** A text field with something in it has focus: a prompt that takes focus then would take your typing. */
+function typing() {
+  const active = document.activeElement
+  if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) return active.value !== ''
+  return active instanceof HTMLElement && active.isContentEditable && active.textContent !== ''
+}
+
+/** Focuses the card's `data-autofocus` element (or the first control in it), else the card, and restores focus when it leaves. */
+function useAutoFocus(card: RefObject<HTMLDivElement | null>, on: boolean) {
+  useEffect(() => {
+    const root = card.current
+    if (!on || !root || typing()) return
+    const before = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    const marked = root.querySelector<HTMLElement>('[data-autofocus]')
+    const target = marked?.matches(FOCUSABLE) ? marked : (marked?.querySelector<HTMLElement>(FOCUSABLE) ?? root)
+    target.focus({ preventScroll: true })
+    return () => {
+      // Answered: the focused control left with the card.
+      if (before?.isConnected && (document.activeElement === document.body || root.contains(document.activeElement)))
+        before.focus({ preventScroll: true })
+    }
+  }, [on])
 }
 
 /**
@@ -53,11 +85,30 @@ export default function PromptCard({
   actions,
   hint,
   className,
+  autoFocus = false,
+  onEscape,
+  onKeyDown,
 }: PromptCardProps) {
   const shape = useShape()
   const Icon = useIcon(icon)
+  const card = useRef<HTMLDivElement>(null)
+  useAutoFocus(card, autoFocus)
   return (
-    <Elevated offset={2} shadowLevel={3} className={cn('flex min-w-0 flex-col gap-3 p-3', shape.container, className)}>
+    <Elevated
+      ref={card}
+      tabIndex={-1}
+      onKeyDown={event => {
+        if (event.key === 'Escape' && onEscape) {
+          event.preventDefault()
+          event.stopPropagation()
+          return onEscape()
+        }
+        onKeyDown?.(event)
+      }}
+      offset={2}
+      shadowLevel={3}
+      className={cn('flex min-h-0 min-w-0 flex-col gap-3 p-3 outline-none', shape.container, className)}
+    >
       <div className="flex min-w-0 items-start gap-2">
         {/* Centered on the title's first line (20px), however many it wraps to. */}
         <Icon size={16} strokeWidth={1.5} className="mt-0.5 shrink-0 text-muted-foreground" />
@@ -68,11 +119,12 @@ export default function PromptCard({
           </Badge>
         )}
       </div>
-      {children && <div className="flex min-w-0 flex-col gap-2">{children}</div>}
+      {children && <div className="flex min-h-0 min-w-0 flex-col gap-2">{children}</div>}
       {(actions || hint) && (
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           {hint && <span className="min-w-0 flex-1 truncate text-caption text-muted-foreground">{hint}</span>}
-          <div className="ml-auto flex shrink-0 flex-wrap justify-end gap-2">{actions}</div>
+          {/* Shrinks to the row so its answers wrap in a narrow card, rather than run past its edge. */}
+          <div className="ml-auto flex min-w-0 flex-wrap justify-end gap-2">{actions}</div>
         </div>
       )}
     </Elevated>

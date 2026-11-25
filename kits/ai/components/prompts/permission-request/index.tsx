@@ -7,6 +7,7 @@
 
 import Button from '@justanarthur/modo-ui/components/actions/button'
 import Code from '@justanarthur/modo-ui/primitives/content/code'
+import ScrollArea from '@justanarthur/modo-ui/primitives/layout/scroll-area'
 import type { ReactNode } from 'react'
 import PromptCard from '../prompt-card'
 
@@ -25,6 +26,8 @@ interface PermissionRequestProps {
   hint?: ReactNode
   /** Called with the answer. */
   onAnswer?: (answer: PermissionAnswer) => void
+  /** Takes focus on Allow once when it appears (Enter allows, Escape denies), unless you are typing elsewhere. */
+  autoFocus?: boolean
 }
 
 /**
@@ -34,6 +37,8 @@ interface PermissionRequestProps {
  * a detail (a Diff for an edit) the command is the path above it, a quiet
  * line. The answers sit on the
  * bottom row, the safest first: deny, always allow the `rule`, or allow once.
+ * A long command wraps, every line of it shown, and scrolls past a few
+ * dozen lines: what you allow is all on the card. Escape denies.
  *
  * @example {@include ./examples.mdx}
  */
@@ -44,9 +49,12 @@ export default function PermissionRequest({
   rule,
   hint = 'Esc denies',
   onAnswer,
+  autoFocus,
 }: PermissionRequestProps) {
   return (
     <PromptCard
+      autoFocus={autoFocus}
+      onEscape={() => onAnswer?.('deny')}
       icon="shield-check"
       title={`Allow ${tool} to run this?`}
       tag={tool}
@@ -59,7 +67,7 @@ export default function PermissionRequest({
           <Button size="compact" variant="tertiary" onClick={() => onAnswer?.('always')}>
             Always allow{rule ? ` ${rule}` : ''}
           </Button>
-          <Button size="compact" onClick={() => onAnswer?.('once')}>
+          <Button size="compact" data-autofocus onClick={() => onAnswer?.('once')}>
             Allow once
           </Button>
         </>
@@ -71,9 +79,17 @@ export default function PermissionRequest({
           {command}
         </span>
       ) : (
-        <Code language="sh">{command}</Code>
+        <ScrollArea className="max-h-72 min-h-0 rounded-xl" viewportClassName="scroll-fade">
+          <Code language="sh" className="[&_pre]:w-auto [&_pre]:whitespace-pre-wrap [&_pre]:break-all">
+            {command}
+          </Code>
+        </ScrollArea>
       )}
-      {detail}
+      {detail && (
+        <ScrollArea className="max-h-72 min-h-0" viewportClassName="scroll-fade">
+          {detail}
+        </ScrollArea>
+      )}
     </PromptCard>
   )
 }

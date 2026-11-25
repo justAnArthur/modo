@@ -169,7 +169,9 @@ interface TranscriptProps {
  * titled hairline, and the ChapterNav in the corner jumps between them; in a
  * narrow column both controls take a row of their own above it. The
  * `footer` stays put under the column: that is where the TodoList, a pending
- * prompt and the Recap live. The session opens scrolled to its latest turn
+ * prompt and the Recap live; it takes at most three quarters of the height
+ * and scrolls past it, so a tall prompt on a short window stays answerable.
+ * The session opens scrolled to its latest turn
  * and follows it: while you read at the end, a turn that arrives or a reply
  * that streams keeps it in view; scroll up and it lets go, with a button to
  * jump back to the latest.
@@ -311,7 +313,10 @@ const Transcript = Object.assign(
             </Button>
           </div>
         )}
-        {footer && <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 px-6 pb-3">{footer}</div>}
+        {/* On a short window a tall prompt gives up height (its plan or command scrolls) rather than run under what follows. */}
+        {footer && (
+          <div className="mx-auto flex max-h-[75%] min-h-0 w-full max-w-3xl flex-col gap-3 overflow-y-auto px-6 pb-3">{footer}</div>
+        )}
       </div>
     )
   },
