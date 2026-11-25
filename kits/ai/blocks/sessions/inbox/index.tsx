@@ -294,8 +294,8 @@ interface InboxProps {
  * from (the session, its project and profile) and what to do about it, in
  * place: allow or deny a permission, answer a question, review a plan, open
  * a failed check, switch to a profile with room. A press anywhere else on a
- * row opens its session. Mark all read clears the count. `InboxList` is the
- * list without the bell, for a pane or a page.
+ * row opens its session, and the panel closes behind it. Mark all read clears
+ * the count. `InboxList` is the list without the bell, for a pane or a page.
  *
  * Statics:
  * - `Inbox.List` — the list on its own: `items`, `onAction`, `onMarkAllRead`, `header`.
@@ -317,10 +317,16 @@ const Inbox = Object.assign(
   }: InboxProps) {
     const Bell = useIcon('bell')
     const [cleared, setCleared] = useState(false)
+    const [ownOpen, setOwnOpen] = useState(defaultOpen)
+    const shown = open ?? ownOpen
+    const setShown = (next: boolean) => {
+      setOwnOpen(next)
+      onOpenChange?.(next)
+    }
     const unread = cleared ? 0 : items.filter(i => !i.read).length
 
     return (
-      <Popover open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
+      <Popover open={shown} onOpenChange={setShown}>
         <Popover.Trigger
           render={
             trigger ?? (
@@ -352,7 +358,11 @@ const Inbox = Object.assign(
           <SizeProvider size="default">
             <InboxList
               items={items}
-              onAction={onAction}
+              onAction={(item, action) => {
+                onAction?.(item, action)
+                // Opening a session takes you there: the popover would stand over it.
+                if (action === 'open') setShown(false)
+              }}
               onMarkAllRead={() => {
                 setCleared(true)
                 onMarkAllRead?.()

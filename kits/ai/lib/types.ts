@@ -40,7 +40,8 @@ export interface Profile {
   running: number
 }
 
-export type SessionStatus = 'running' | 'waiting' | 'unread' | 'idle'
+/** `failed`: its last turn errored or its process exited on its own. */
+export type SessionStatus = 'running' | 'waiting' | 'failed' | 'unread' | 'idle'
 
 /** What a waiting session asks, as the AgentPrompt that answers it. */
 export type SessionPrompt =
